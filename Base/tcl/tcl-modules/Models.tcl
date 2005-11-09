@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,7 +32,7 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        Models.tcl
 # PROCEDURES:  
@@ -46,14 +46,19 @@
 #   ModelsPropsApply
 #   ModelsPropsCancel
 #   ModelsSmoothNormals
+#   ModelsPickScalars  parentButton
+#   ModelsPickScalarsCallback mid ptdata scalars
+#   ModelsPickScalarsLut parentButton
+#   ModelsSetScalarsLut mid lutid setDefault
+#   ModelsAddScalars  scalarfile
 #   ModelsMeter
-#   commify
+#   commify num sep
 #   ModelsFreeSurferPropsApply
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
 # .PROC ModelsInit
-# 
+# Initialises global variables.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -85,7 +90,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.64 $} {$Date: 2005/09/25 15:57:48 $}]
+            {$Revision: 1.65 $} {$Date: 2005/11/09 22:02:00 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -101,8 +106,8 @@ proc ModelsInit {} {
 #-------------------------------------------------------------------------------
 # .PROC ModelsUpdateMRML
 # Handle all GUI-related things needed when MRML updates.
-#  Creates the GUI for any new models (that were read in 
-# in MainUpdateMRML or made through ModelMaker)
+# Creates the GUI for any new models (that were read in 
+# in MainUpdateMRML or made through ModelMaker).
 # Refreshes the GUI in case colors changed.  Also reconfigures the sliders.
 # .ARGS
 # .END
@@ -196,7 +201,7 @@ proc ModelsUpdateMRML {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelsBuildGUI
-# 
+# Build the models gui.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -876,7 +881,6 @@ DevCreateScrollList $Module(Models,fDisplay).fScroll \
 # Set the dimensions of the scrolledGUI
 #
 # .ARGS
-#
 # frame  canvasScrolledGUI  The canvas around the scrolled frame
 # frame  fScrolledGUI       The frame with the item list of models
 # .END   
@@ -921,7 +925,7 @@ proc ModelsConfigScrolledGUI {canvasScrolledGUI fScrolledGUI} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelsSetPropertyType
-# 
+# Raise the frame with the Model(propertyType).
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -986,6 +990,7 @@ proc ModelsPropsApplyButNotToNew {} {
     ModelsPropsApply
 
 }
+
 #-------------------------------------------------------------------------------
 # .PROC ModelsPropsApply
 # 
@@ -1090,7 +1095,7 @@ proc ModelsPropsApply {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelsPropsCancel
-# 
+# Cancel out of a setting model properties.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1150,9 +1155,10 @@ proc ModelsSmoothNormals {} {
 #-------------------------------------------------------------------------------
 # .PROC ModelsPickScalars 
 # 
-#  Pick which scalars should be visible for this model
+#  Pick which scalars should be visible for this model.
 #
 # .ARGS
+# windowpath parentButton the parent of the pop up menu
 # .END
 #-------------------------------------------------------------------------------
 proc ModelsPickScalars { parentButton } {
@@ -1210,6 +1216,9 @@ proc ModelsPickScalars { parentButton } {
 #
 # TODO - this has hardcoded special case for freesurfer labels
 # .ARGS
+# int mid model id for which scalars are changing
+# string ptdata the name of the point data variable who's scalars are changing
+# string scalars name of the scalars to set active for this model
 # .END
 #-------------------------------------------------------------------------------
 proc ModelsPickScalarsCallback { mid ptdata scalars } {
@@ -1243,6 +1252,7 @@ proc ModelsPickScalarsCallback { mid ptdata scalars } {
 # TODO - this lut and scalars need to be added to mrml
 #
 # .ARGS
+# windowpath parentButton the button to hang the pop up off of
 # .END
 #-------------------------------------------------------------------------------
 proc ModelsPickScalarsLut { parentButton } {
@@ -1273,14 +1283,23 @@ proc ModelsPickScalarsLut { parentButton } {
     .mpickscalarslut post $x $y
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ModelsSetScalarsLut
+# 
+# 1) set a default for this model if one hasn't been set yet <br>
+# 2) if no id specified, use default <br>
+# 3) if setDefault specified, save the value <br>
+# 4) set all lut for all the renderers <br>
+#
+# .ARGS
+# int mid model id
+# int lutid id of the look up table
+# boolean setDefault defaults to true, if true set this lut to be the default
+# .END
+#-------------------------------------------------------------------------------
 proc ModelsSetScalarsLut { mid lutid {setDefault "true"} } {
 
-    #
-    # 1) set a default for this model if one hasn't been set yet
-    # 2) if no id specified, use default
-    # 3) if setDefault specified, save the value
-    # 4) set all lut for all the renderers
-    #
+
     if { ![info exists ::Models($mid,defaultLut)] } {
         set ::Models($mid,defaultLut) 0
     }
@@ -1304,6 +1323,7 @@ proc ModelsSetScalarsLut { mid lutid {setDefault "true"} } {
 #  Pick a .vtk .anno file that has scalars for this model
 #
 # .ARGS
+# filename scalarfile optional, if empty, get the file name from the user
 # .END
 #-------------------------------------------------------------------------------
 proc ModelsAddScalars { {scalarfile ""} } {
@@ -1381,7 +1401,7 @@ proc ModelsAddScalars { {scalarfile ""} } {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelsMeter
-# 
+# Count the polygons in each model, measure how long it takes to render them.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1454,22 +1474,20 @@ proc ModelsMeter {} {
     }
 }
 
-#
-# - utility routine borrowed from http://aspn.activestate.com/ASPN/Cookbook/Tcl/Recipe/146220
-#
-# commify --
-#   puts commas into a decimal number
-# Arguments:
-#   num  number in acceptable decimal format
-#   sep  separator char (defaults to English format ",")
-# Returns:
-#   number with commas in the appropriate place
-#
-
 #-------------------------------------------------------------------------------
 # .PROC commify
 # 
+# Utility routine borrowed from http://aspn.activestate.com/ASPN/Cookbook/Tcl/Recipe/146220
+# <br>
+# commify --
+#   puts commas into a decimal number
+# <br>
+# Returns:
+#   number with commas in the appropriate place
+#
 # .ARGS
+# int num number in acceptable decimal format
+# char sep  separator char, defaults to English format comma
 # .END
 #-------------------------------------------------------------------------------
 proc commify {num {sep ,}} {

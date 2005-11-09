@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,26 +32,26 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        ModelHierarchy.tcl
 # PROCEDURES:  
 #   ModelHierarchyInit
 #   ModelHierarchyBuildGUI
-#   ModelHierarchyRootEntry frame
+#   ModelHierarchyRootEntry f
 #   ModelHierarchyEnter
-#   ModelHierarchyExit
+#   ModelHierarchyExit param
 #   ModelHierarchyRedrawFrame
-#   ModelHierarchyDeleteNode
+#   ModelHierarchyDeleteNode nodeType id
 #   ModelHierarchyCreate
-#   ModelHierarchyDeleteAsk
+#   ModelHierarchyDeleteAsk widget
 #   ModelHierarchyDelete
-#   ModelHierarchyCreateGroup
-#   ModelHierarchyCreateGroupOk
-#   ModelHierarchyDeleteModelGroup
-#   ModelHierarchyMoveModel id name is
-#   ModelHierarchyDrag drag-and-drop guess
-#   ModelHierarchyAddModel ID
+#   ModelHierarchyCreateGroup widget
+#   ModelHierarchyCreateGroupOk name
+#   ModelHierarchyDeleteModelGroup modelgroup
+#   ModelHierarchyMoveModel id targetGroup modelgroup trg_modelgroup
+#   ModelHierarchyDrag command args
+#   ModelHierarchyAddModel modelID
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -157,7 +157,7 @@ proc ModelHierarchyInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.17 $} {$Date: 2005/10/23 18:32:50 $}]
+        {$Revision: 1.18 $} {$Date: 2005/11/09 22:02:00 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -282,7 +282,7 @@ proc ModelHierarchyBuildGUI {} {
 # .PROC ModelHierarchyRootEntry
 # Creates the entry for the root level of the hierarchy display.
 # .ARGS
-# f: frame where the entry is created
+# windowpath f frame where the entry is created
 # .END
 #-------------------------------------------------------------------------------
 proc ModelHierarchyCreateRootEntry {f} {
@@ -433,6 +433,7 @@ proc ModelHierarchyEnter {} {
 # .PROC ModelHierarchyExit
 # Called when this module is exited by the user.
 # .ARGS
+# int param defaults to 1, if 1, destroy the models gui and then call models update
 # .END
 #-------------------------------------------------------------------------------
 proc ModelHierarchyExit {{param 1}} {
@@ -456,7 +457,6 @@ proc ModelHierarchyExit {{param 1}} {
     set ModelHierarchy(moduleActive) 0
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC ModelHierarchyRedrawFrame
 # Redraws the model hierarchy view.
@@ -468,14 +468,13 @@ proc ModelHierarchyRedrawFrame {} {
     ModelHierarchyEnter
 }
 
-
-
-
 #-------------------------------------------------------------------------------
 # .PROC ModelHierarchyDeleteNode
 # A downsized copy of MainMrmlDeleteNode. Removes only the node's ID from idList and
 # the node itself from the tree, doesn't call MainMrmlUpdate.
 # .ARGS
+# string nodeType 
+# int id
 # .END
 #-------------------------------------------------------------------------------
 proc ModelHierarchyDeleteNode {nodeType id} {
@@ -495,7 +494,6 @@ proc ModelHierarchyDeleteNode {nodeType id} {
     Mrml(dataTree) RemoveItem ${nodeType}($id,node)
     ${nodeType}($id,node) Delete
 }
-
 
 #-------------------------------------------------------------------------------
 # .PROC ModelHierarchyCreate
@@ -534,11 +532,11 @@ proc ModelHierarchyCreate {} {
     }
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC ModelHierarchyDeleteAsk
 # Asks for a confirmation of deleting the entire hierarchy
 # .ARGS
+# windowpath widget the parent to this popup
 # .END
 #-------------------------------------------------------------------------------
 proc ModelHierarchyDeleteAsk {widget} {
@@ -548,7 +546,6 @@ proc ModelHierarchyDeleteAsk {widget} {
         [winfo rooty $widget]\
         "Do you really want to delete the hierarchy?" ModelHierarchyDelete
 }
-
 
 #-------------------------------------------------------------------------------
 # .PROC ModelHierarchyDelete
@@ -591,11 +588,11 @@ proc ModelHierarchyDelete {} {
     MainUpdateMRML
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC ModelHierarchyCreateGroup
 # Shows a dialog to ask for the name of a new model group.
 # .ARGS
+# windowpath widget the parent of this dialog
 # .END
 #-------------------------------------------------------------------------------
 proc ModelHierarchyCreateGroup {widget} {
@@ -625,11 +622,11 @@ proc ModelHierarchyCreateGroup {widget} {
     }
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC ModelHierarchyCreateGroupOk
 # Creates a new model group.
 # .ARGS
+# string name defaults to empty string, the name of the new group.
 # .END
 #-------------------------------------------------------------------------------
 proc ModelHierarchyCreateGroupOk {{name ""}} {
@@ -692,11 +689,11 @@ proc ModelHierarchyCreateGroupOk {{name ""}} {
     }
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC ModelHierarchyDeleteModelGroup
 # Deletes a model group.
 # .ARGS
+# int modelgroup the id of the model group that is to be deleted
 # .END
 #-------------------------------------------------------------------------------
 proc ModelHierarchyDeleteModelGroup {modelgroup} {
@@ -735,14 +732,14 @@ proc ModelHierarchyDeleteModelGroup {modelgroup} {
     }
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC ModelHierarchyMoveModel
 # Moves a model (group) from one model group to another
 # .ARGS
-# id: id of the model
-# targetGroup: name of the target model group
-# modelgroup: is different from 0 if a modelgroup is moved
+# int id id of the model
+# string targetGroup name of the target model group
+# int modelgroup is different from 0 if a modelgroup is moved
+# int trg_modelgroup defaults to 1, the target model group id
 # .END
 #-------------------------------------------------------------------------------
 proc ModelHierarchyMoveModel {id targetGroup src_modelgroup {trg_modelgroup 1}} {
@@ -963,13 +960,12 @@ proc ModelHierarchyMoveModel {id targetGroup src_modelgroup {trg_modelgroup 1}} 
     }
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC ModelHierarchyDrag
 # Handles the Drag and Drop functions
 # .ARGS
-# command: drag-and-drop command
-# args: guess what...
+# string command drag-and-drop command: init, start, motion, start, over, leave, drop
+# list args arguments to the command
 # .END
 #-------------------------------------------------------------------------------
 proc ModelHierarchyDrag {command args} {
@@ -1173,12 +1169,11 @@ proc ModelHierarchyDrag {command args} {
     }
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC ModelHierarchyAddModel
 # Adds a model to the hierarchy
 # .ARGS
-# modelID: ID of the model to be added
+# int modelID ID of the model to be added
 # .END
 #-------------------------------------------------------------------------------
 proc ModelHierarchyAddModel {modelID} {
