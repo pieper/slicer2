@@ -35,7 +35,7 @@
 #include "vtkFloatArray.h" 
 
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.21 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.22 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -558,8 +558,8 @@ void vtkNRRDReader::ExecuteInformation()
 
    if (AIR_EXISTS(this->nrrd->measurementFrame[0][0])) 
    {
-     for (int j=0;j<2;j++)
-       for (int i=0;i<2;i++)
+     for (int j=0;j<3;j++)
+       for (int i=0;i<3;i++)
          MeasurementFrameMatrix->SetElement(i,j,this->nrrd->measurementFrame[i][j]);
    }
    
