@@ -71,6 +71,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkTensorUtilConfigure.h"
 #include "vtkHyperStreamline.h"
 #include "vtkHyperPointandArray.h"
+#include "vtkTensorMathematics.h"
 #include "vtkFloatArray.h"
 
 //class VTK_DTMRI_EXPORT vtkHyperStreamlineDTMRI : public vtkHyperStreamline 
@@ -91,9 +92,23 @@ public:
   // If degree curvature becomes larger than this number, tracking stops.
   vtkGetMacro(MaxCurvature,vtkFloatingPointType);
   vtkSetMacro(MaxCurvature,vtkFloatingPointType);
+
+
+  vtkGetMacro(StoppingMode,int);
+  vtkSetMacro(StoppingMode,int);
+  void SetStoppingModeToFractionalAnisotropy() 
+    {this->SetStoppingMode(VTK_TENS_FRACTIONAL_ANISOTROPY);};
+  void SetStoppingModeToLinearMeasure() 
+    {this->SetStoppingMode(VTK_TENS_LINEAR_MEASURE);};
+  void SetStoppingModeToPlanarMeasure() 
+    {this->SetStoppingMode(VTK_TENS_PLANAR_MEASURE);};
+  void SetStoppingModeToSphericalMeasure() 
+    {this->SetStoppingMode(VTK_TENS_SPHERICAL_MEASURE);};
+
+
   // If FA becomes smaller than this number, tracking stops.       
-  vtkGetMacro(MinFractionalAnisotropy,vtkFloatingPointType);
-  vtkSetMacro(MinFractionalAnisotropy,vtkFloatingPointType);
+  vtkGetMacro(StoppingThreshold,vtkFloatingPointType);
+  vtkSetMacro(StoppingThreshold,vtkFloatingPointType);
 
   // Description:                                                             
   // FA at points along the line (wherever the tensor was interpolated)    
@@ -109,7 +124,8 @@ protected:
   void BuildLines();
 
   vtkFloatingPointType MaxCurvature;
-  vtkFloatingPointType MinFractionalAnisotropy;
+  int StoppingMode;
+  vtkFloatingPointType StoppingThreshold;
 
   vtkFloatArray *FractionalAnisotropy[2];
   vtkFloatArray *FractionalAnisotropy0;

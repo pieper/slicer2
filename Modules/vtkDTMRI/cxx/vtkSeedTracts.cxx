@@ -159,8 +159,12 @@ vtkHyperStreamline * vtkSeedTracts::CreateHyperStreamline()
           // MaxCurvature
           currHSP->SetMaxCurvature(this->VtkHyperStreamlinePointsSettings->GetMaxCurvature());
 
-          // MinFractionalAnisotropy
-          currHSP->SetMinFractionalAnisotropy(this->VtkHyperStreamlinePointsSettings->GetMinFractionalAnisotropy());
+          // Stopping threshold
+         currHSP->SetStoppingThreshold(this->VtkHyperStreamlinePointsSettings->GetStoppingThreshold());
+     
+     // Stopping Mode
+     currHSP->SetStoppingMode(this->VtkHyperStreamlinePointsSettings->GetStoppingMode());
+     
 
           // Eigenvector to integrate
           currHSP->SetIntegrationEigenvector(this->VtkHyperStreamlinePointsSettings->GetIntegrationEigenvector());

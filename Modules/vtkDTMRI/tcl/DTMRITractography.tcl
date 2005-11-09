@@ -80,7 +80,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.38 $} {$Date: 2005/11/08 23:53:51 $}]
+                                 {$Revision: 1.39 $} {$Date: 2005/11/09 23:57:57 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -135,12 +135,12 @@ proc DTMRITractographyInit {} {
     set DTMRI(stream,variableList) \
         [list \
              MaximumPropagationDistance IntegrationStepLength \
-             StepLength Radius  NumberOfSides MaxCurvature MinFractionalAnisotropy]
+             StepLength Radius  NumberOfSides MaxCurvature StoppingThreshold]
 
     set DTMRI(stream,variableList,text) \
         [list \
              "Max Length" "Step Size" \
-             "Smoothness (along)" "Radius"  "Smoothness (around)" "Curvature Threshold" "FA Threshold"]
+             "Smoothness (along)" "Radius"  "Smoothness (around)" "Curvature Threshold" "Stopping Threshold"]
     set DTMRI(stream,variableList,tooltips) \
         [list \
              "MaximumPropagationDistance: Tractography will stop after this distance" \
@@ -149,10 +149,14 @@ proc DTMRITractographyInit {} {
              "Radius: Initial radius (thickness) of displayed tube" \
              "NumberOfSides: Number of sides of displayed tube" \
              "Curvature Threshold: Max curvature allowed in tracking"\
-             "FA Threshold: If FA falls below this value, tracking stops"]
+             "Stopping Threshold: If value falls below this value, tracking stops"]
+    
+    set DTMRI(stream,StoppingBy) LinearMeasure; # default must match the vtk class
+    set DTMRI(stream,StoppingByList) {LinearMeasure PlanarMeasure SphericalMeasure FractionalAnisotropy}         
+    
     #set DTMRI(stream,MaxCurvature) 1.3
     set DTMRI(stream,MaxCurvature) 1.15
-    set DTMRI(stream,MinFractionalAnisotropy) 0.07
+    set DTMRI(stream,StoppingThreshold) 0.07
     
 
     # B-spline tractography variables (lists are for GUI creation)
@@ -572,6 +576,25 @@ proc DTMRITractographyBuildGUI {} {
             pack $f.l$entry -side left  -padx $Gui(pad)
             pack $f.e$entry -side right  -padx $Gui(pad)
         }
+     
+     set f $DTMRI(stream,tractingFrame,NoSpline)     
+     frame $f.fMode -bg $Gui(activeWorkspace)
+     pack $f.fMode -side top -padx 0 -pady 1 -fill x
+     set f $f.fMode
+     eval {label $f.l -text "Stopping by: "} $Gui(WLA)
+     eval {menubutton $f.mb -text $DTMRI(stream,StoppingBy) \
+          -relief raised -bd 2 -width 12 \
+          -menu $f.mb.m} $Gui(WMBA)
+      eval {menu $f.mb.m} $Gui(WMA)
+      pack $f.l -side left -padx $Gui(pad)
+      pack $f.mb -side right -padx $Gui(pad)
+      set DTMRI(gui,mbStoppingMode) $f.mb
+      # Add menu items
+      foreach vis $DTMRI(stream,StoppingByList) {
+        $f.mb.m add command -label $vis \
+        -command "set DTMRI(stream,StoppingBy) $vis; $DTMRI(gui,mbStoppingMode) config -text $vis"
+      }
+        
 
     ##########################################################
     #
@@ -1016,6 +1039,7 @@ proc DTMRIUpdateStreamlineSettings {} {
             foreach var $DTMRI(stream,variableList) {
                 DTMRI(vtk,$streamline) Set$var $DTMRI(stream,$var)
             }
+        DTMRI(vtk,$streamline) SetStoppingModeTo$DTMRI(stream,StoppingBy)
 
             
         }

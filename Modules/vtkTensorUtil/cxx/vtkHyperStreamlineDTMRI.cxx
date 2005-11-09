@@ -50,7 +50,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkHyperPointandArray.cxx"
 #endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.12 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.13 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 // Construct object with initial starting position (0,0,0); integration step 
@@ -83,7 +83,8 @@ vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()
   this->FractionalAnisotropy[0] = this->FractionalAnisotropy0;
   this->FractionalAnisotropy[1] = this->FractionalAnisotropy1;
 
-  this->MinFractionalAnisotropy=0.07;
+  this->SetStoppingModeToLinearMeasure();
+  this->StoppingThreshold=0.07;
 
 }
 
@@ -179,7 +180,7 @@ void vtkHyperStreamlineDTMRI::Execute()
   // set up working matrices
   v[0] = v0; v[1] = v1; v[2] = v2; 
   m[0] = m0; m[1] = m1; m[2] = m2; 
-  float meanEV, fa;
+  float meanEV, stop;
   float sqrt3halves=sqrt((float)3/2);
   int keepIntegrating;
   
@@ -497,12 +498,27 @@ void vtkHyperStreamlineDTMRI::Execute()
         FixVectors(sPtr->V, sNext->V, iv, ix, iy);
 
         // compute invariants at final position                                         
-        meanEV=(sNext->W[0]+sNext->W[1]+sNext->W[2])/3;
-        fa=sqrt3halves*sqrt(((sNext->W[0]-meanEV)*(sNext->W[0]-meanEV)+(sNext->W[1]-meanEV)*(sNext->W[1]-meanEV)+(sNext->W[2]-meanEV)*(sNext->W[2]-meanEV))/(sNext->W[0]*sNext->W[0]+sNext->W[1]*sNext->W[1]+sNext->W[2]*sNext->W[2]));
-        this->FractionalAnisotropy[ptId]->InsertNextValue(fa);
+        //meanEV=(sNext->W[0]+sNext->W[1]+sNext->W[2])/3;
+        //fa=sqrt3halves*sqrt(((sNext->W[0]-meanEV)*(sNext->W[0]-meanEV)+(sNext->W[1]-meanEV)*(sNext->W[1]-meanEV)+(sNext->W[2]-meanEV)*(sNext->W[2]-meanEV))/(sNext->W[0]*sNext->W[0]+sNext->W[1]*sNext->W[1]+sNext->W[2]*sNext->W[2]));
+        //this->FractionalAnisotropy[ptId]->InsertNextValue(fa);
+    
+        switch (this->GetStoppingMode()) {
+      case VTK_TENS_FRACTIONAL_ANISOTROPY:
+          stop = vtkTensorMathematics::FractionalAnisotropy(sNext->W);
+          break;
+      case VTK_TENS_LINEAR_MEASURE:
+         stop = vtkTensorMathematics::LinearMeasure(sNext->W);
+         break;
+      case VTK_TENS_PLANAR_MEASURE:
+        stop = vtkTensorMathematics::PlanarMeasure(sNext->W);
+        break;
+      case VTK_TENS_SPHERICAL_MEASURE:
+        stop =  vtkTensorMathematics::SphericalMeasure(sNext->W);
+            break;
+    }    
 
         // test FA cutoff   
-        if (fa < this->MinFractionalAnisotropy) {
+        if (stop < this->StoppingThreshold) {
           keepIntegrating=0;
         }
 
