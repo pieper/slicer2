@@ -67,7 +67,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.24 $} {$Date: 2005/11/08 03:50:06 $}]
+                                 {$Revision: 1.25 $} {$Date: 2005/11/09 16:45:29 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -1207,8 +1207,15 @@ proc ConvertVolumeToTensors {} {
       _RasToVtk SetElement 1 3 0
       _RasToVtk SetElement 2 3 0
       
+      catch "vtkMatrix4x4 _Scale"
+      set sp [[Volume($v,vol) GetOutput] GetSpacing]
+      _Scale SetElement 0 0 [lindex $sp 0]
+      _Scale SetElement 1 1 [lindex $sp 1]
+      _Scale SetElement 2 2 [lindex $sp 2]
+      
       #Set measurement frame matrix
       catch "vtkMatrix4x4 _MF"
+      _MF Identity
       foreach axis "0 1 2" {
         set axdir [lindex $DTMRI(convert,measurementframe) $axis]
         foreach c "0 1 2" {
@@ -1219,9 +1226,11 @@ proc ConvertVolumeToTensors {} {
       trans PostMultiply
       trans SetMatrix _MF
       trans Concatenate _RasToVtk
+      trans Concatenate _Scale
       trans Update
       
       _RasToVtk Delete
+      _Scale Delete
       _MF Delete
       
     } else {         
