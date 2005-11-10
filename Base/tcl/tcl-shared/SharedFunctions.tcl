@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,15 +32,15 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        SharedFunctions.tcl
 # PROCEDURES:  
-#   SharedModelLookup
-#   SharedVolumeLookup
-#   SharedGetModelsInGroup the a if only
-#   SharedGetModelsInGroupOnly the a
-#   SharedGetModelGroupsInGroup
+#   SharedModelLookup ModelRefID
+#   SharedVolumeLookup VolumeRefID
+#   SharedGetModelsInGroup modelgroup umodels changeExpansion
+#   SharedGetModelsInGroupOnly modelgroup umodels
+#   SharedGetModelGroupsInGroup modelgroup umodelgroups
 #==========================================================================auto=
 
 
@@ -48,6 +48,7 @@
 # .PROC SharedModelLookup
 # Gets the internal model ID that belongs to a given alphanumerical model ID.
 # .ARGS
+# int ModelRefID the alphanumerical model ID
 # .END
 #-------------------------------------------------------------------------------
 proc SharedModelLookup {ModelRefID} {
@@ -68,6 +69,7 @@ proc SharedModelLookup {ModelRefID} {
 # .PROC SharedVolumeLookup
 # Gets the internal volume ID that belongs to a given alphanumerical volume ID.
 # .ARGS
+# int VolumeRefID alphanumerical volume ID
 # .END
 #-------------------------------------------------------------------------------
 proc SharedVolumeLookup {VolumeRefID} {
@@ -88,10 +90,9 @@ proc SharedVolumeLookup {VolumeRefID} {
 # .PROC SharedGetModelsInGroup
 # Gets all the models in a model group (including all dependent model groups).
 # .ARGS
-# modelgroup: the group where to get the dependent models from
-# umodels: a list where the models are stored
-# changeExpansion: if >=0, change the variable Model(id,expansion) to this value,
-# but only in the group $modelgroup
+# int modelgroup the group where to get the dependent models from
+# list umodels a list where the models are stored
+# int changeExpansion if >=0, change the variable Model(id,expansion) to this value, but only in the group $modelgroup. defaults to -1
 # .END
 #-------------------------------------------------------------------------------
 proc SharedGetModelsInGroup {modelgroup umodels {changeExpansion -1}} {
@@ -137,8 +138,8 @@ proc SharedGetModelsInGroup {modelgroup umodels {changeExpansion -1}} {
 # .PROC SharedGetModelsInGroupOnly
 # Gets all the models in a model group (without dependent model groups).
 # .ARGS
-# modelgroup: the group where to get the dependent models from
-# umodels: a list where the models are stored
+# int modelgroup the group where to get the dependent models from
+# list umodels a list where the models are stored
 # .END
 #-------------------------------------------------------------------------------
 proc SharedGetModelsInGroupOnly {modelgroup umodels} {
@@ -180,6 +181,8 @@ proc SharedGetModelsInGroupOnly {modelgroup umodels} {
 # .PROC SharedGetModelGroupsInGroup
 # Gets all model groups which depend of a given model group.
 # .ARGS
+# int modelgroup container group
+# int umodelgroups sub groups
 # .END
 #-------------------------------------------------------------------------------
 proc SharedGetModelGroupsInGroup {modelgroup umodelgroups} {
