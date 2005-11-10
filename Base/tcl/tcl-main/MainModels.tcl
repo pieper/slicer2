@@ -88,7 +88,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.67 $} {$Date: 2005/11/09 23:02:29 $}]
+        {$Revision: 1.68 $} {$Date: 2005/11/10 22:47:22 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -146,8 +146,8 @@ proc MainModelsUpdateMRML {} {
             
             # Read
             if {[MainModelsRead $m] < 0} {
-            # failed
-            MainMrmlDeleteNodeDuringUpdate Model $m
+                # failed
+                MainMrmlDeleteNodeDuringUpdate Model $m
             }
         }
     }
@@ -164,12 +164,7 @@ proc MainModelsUpdateMRML {} {
         MainModelsSetActive [lindex $Model(idList) 0]
     }
 
-    # Delete any old model groups
-    #--------------------------------------------------------
-    foreach mg $ModelGroup(idListDelete) {
-        MainModelGroupsDelete $f $mg
-    }
-    
+   
 
     # Refresh Actor (in case color changed)
     #--------------------------------------------------------
@@ -189,17 +184,14 @@ proc MainModelsUpdateMRML {} {
             eval Model($m,mapper,$rend) SetScalarRange [Model($m,node) GetScalarRange]
         }
         set Model(activeRenderer) $activeRenderer
+    
     }
 
-    # Set the opacity for each model group
+    # Update model groups
     #--------------------------------------------------------
-    foreach mg $ModelGroup(idList) {
-        if {$::Module(verbose)} { puts "MainModelsUpdateMRML: set group opacity for group $mg" }
-        # second parameter "1" means: this group only, doesn't affect
-        # anything that is below in the hierarchy
-        catch {MainModelGroupsSetOpacity $mg 1}
-    }
+    MainModelGroupsUpdateMRML
 
+    
     # Form the Active Model menu 
     #--------------------------------------------------------
     

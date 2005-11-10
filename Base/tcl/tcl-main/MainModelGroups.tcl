@@ -368,11 +368,15 @@ proc MainModelGroupsSetOpacity {modelgroup {grouponly 0}} {
 # windowpath widget the widget that we're configuring
 # int mg model group id
 # int nochange defaults to 0
+# int recursionlevel starts at zero, increment with each call 
 # .END
 #-------------------------------------------------------------------------------
-proc MainModelGroupsSetExpansion {frame widget mg {nochange 0}} {
+proc MainModelGroupsSetExpansion {frame widget mg {nochange 0} {recursionlevel 0}} {
     global ModelGroup Model OldColors OldOpacities RemovedModels
-    
+
+    if {$::Module(verbose)} {
+        puts "MainModelGroupsSetExpansion start: mg = $mg"
+    }
     if {$ModelGroup($mg,expansion) == 0} {
         ModelGroup($mg,node) SetExpansion 0
         # catch is necessary, because sometimes the widget parameter is empty
@@ -414,6 +418,9 @@ proc MainModelGroupsSetExpansion {frame widget mg {nochange 0}} {
             SharedGetModelsInGroup $mg models
         }
         SharedGetModelGroupsInGroup $mg modelgroups
+        if {$::Module(verbose)} {
+            puts "MainModelGroupsSetExpansion: models in group $mg = $models, groups in this group = $modelgroups"
+        }
         foreach m $models {
             if {($Model($m,expansion) == 1) && ($RemovedModels($m) == 1)} {
                 # only show the models of expanded groups
@@ -424,16 +431,30 @@ proc MainModelGroupsSetExpansion {frame widget mg {nochange 0}} {
             }
         }
         foreach m $modelgroups {
+            if {$::Module(verbose)} { 
+                puts "MainModelGroupsSetExpansion: recursing down for model group $m, current level = $recursionlevel"
+            }
             grid $frame.lg1_$m $frame.hcg$m $frame.cg$m $frame.eg$m $frame.sg$m
-            MainModelGroupsSetExpansion $frame "" $m 1
+            MainModelGroupsSetExpansion $frame "" $m 1 [expr $recursionlevel + 1]
         }
-            if {$::Module(verbose)} { puts "MainModelGroupsSetExpansion: about to call mainupdate mrml, expansion is 1" }
-        MainUpdateMRML
+        
+        # MainUpdateMRML
+        # should be able to get away with only calling MainModeslUpdateMRML here    
+            if {$recursionlevel == 0} {
+                if {$::Module(verbose)} { 
+                    puts "MainModelGroupsSetExpansion: about to call main models update mrml, expansion is 1" 
+                }
+                MainModelsUpdateMRML
+            } else {
+                if {$::Module(verbose)} {
+                    puts "MainModelGroupsSetExpansion: skipping update mrml, recursion level = $recursionlevel"
+                }
+            }
     }
-
+        
     Render3D
     ModelsConfigScrolledGUI $Model(canvasScrolledGUI) \
-                $Model(fScrolledGUI)
+            $Model(fScrolledGUI)
 }
 
 #-------------------------------------------------------------------------------
@@ -479,4 +500,44 @@ proc MainModelGroupsDelete {f mg} {
     }
 
     MainModelGroupsDeleteGUI $f $mg
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainModelGroupsUpdateMRML
+# Update model group mrml elements: delete groups in the 
+# ModelGroup(idListDelete list) and set the opacity for each model group.
+# .ARGS 
+# int mg optional argument, if set, only update this group
+# .END
+#-------------------------------------------------------------------------------
+proc MainModelGroupsUpdateMRML { { mg "-1" } } {
+    global Model ModelGroup
+
+    set f $Model(fScrolledGUI)
+
+    if {$::Module(verbose)} {
+        puts "MainModelGroupsUpdateMRML: mg = $mg"
+    }
+
+    
+    # Delete any old model groups
+    #--------------------------------------------------------
+    foreach mgID $ModelGroup(idListDelete) {
+        MainModelGroupsDelete $f $mgID
+    }
+
+    # Set the opacity for each model group
+    #--------------------------------------------------------
+    if {$mg != -1} {
+        catch {MainModelGroupsSetOpacity $mg 1}
+    } else {
+        foreach mgID $ModelGroup(idList) {
+            if {$::Module(verbose)} { 
+                puts "MainModelGroupsUpdatemMRML: set group opacity for group $mgID" 
+            }
+            # second parameter "1" means: this group only, doesn't affect
+            # anything that is below in the hierarchy
+            catch {MainModelGroupsSetOpacity $mgID 1}
+        }
+    }
 }
