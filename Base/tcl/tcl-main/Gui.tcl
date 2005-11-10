@@ -76,7 +76,7 @@ proc GuiInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo Gui \
-    {$Revision: 1.52 $} {$Date: 2005/11/08 20:13:01 $}]
+    {$Revision: 1.53 $} {$Date: 2005/11/10 15:53:02 $}]
 
 
     # enable tooltips by default.  This should check user preferences somehow.
@@ -97,9 +97,9 @@ proc GuiInit {} {
     set Gui(smallFont) 1
 
     if {$Gui(pc) == 0} {
-        set Gui(xViewer) 300
+        set Gui(xViewer) 365
     } else {
-        set Gui(xViewer) 300
+        set Gui(xViewer) 365
     }
 
     set Gui(progressText) "Working..."
