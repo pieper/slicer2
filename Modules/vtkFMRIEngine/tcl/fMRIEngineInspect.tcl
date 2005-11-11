@@ -105,7 +105,6 @@ proc fMRIEngineScaleActivation {v} {
 proc fMRIEngineUpdateViewTab {} {
     global fMRIEngine Gui Volume
 
-    set fMRIEngine(tcPlottingOption) "" 
     set fMRIEngine(currentTab) "Inspect"
 
     $fMRIEngine(inspectListBox) delete 0 end
@@ -296,6 +295,7 @@ proc fMRIEngineBuildUIForPlot {parent} {
         -variable fMRIEngine(tcPlottingOption) -value $param \
         -relief raised -offrelief raised -overrelief raised \
         -selectcolor white} $Gui(WEA)
+    set fMRIEngine(tcPlottingOption) "Long"
     pack $f.r$param -side top -pady 2 
 
     set f $parent.fPlot.fOptions.fPeristimulus
@@ -306,8 +306,6 @@ proc fMRIEngineBuildUIForPlot {parent} {
         -relief raised -offrelief raised -overrelief raised \
         -selectcolor white} $Gui(WEA)
     pack $f.r$param -side top -pady 2 
-
-    set fMRIEngine(tcPlottingOption) "" 
 }
 
 
