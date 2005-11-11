@@ -46,6 +46,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkPolyDataWriter.h"
 
 #include <sstream>
+#include <string>
 
 //------------------------------------------------------------------------------
 vtkSeedTracts* vtkSeedTracts::New()
@@ -145,32 +146,7 @@ vtkHyperStreamline * vtkSeedTracts::CreateHyperStreamline()
           // create object
           currHSP=vtkHyperStreamlinePoints::New();
 
-          // Now copy user's settings into this object:
-          // MaximumPropagationDistance 
-          currHSP->SetMaximumPropagationDistance(this->VtkHyperStreamlinePointsSettings->GetMaximumPropagationDistance());
-          // IntegrationStepLength
-          currHSP->SetIntegrationStepLength(this->VtkHyperStreamlinePointsSettings->GetIntegrationStepLength());
-          // StepLength
-          currHSP->SetStepLength(this->VtkHyperStreamlinePointsSettings->GetStepLength());
-          // Radius
-          currHSP->SetRadius(this->VtkHyperStreamlinePointsSettings->GetRadius());
-          // NumberOfSides
-          currHSP->SetNumberOfSides(this->VtkHyperStreamlinePointsSettings->GetNumberOfSides());
-          // MaxCurvature
-          currHSP->SetMaxCurvature(this->VtkHyperStreamlinePointsSettings->GetMaxCurvature());
-
-          // Stopping threshold
-         currHSP->SetStoppingThreshold(this->VtkHyperStreamlinePointsSettings->GetStoppingThreshold());
-     
-     // Stopping Mode
-     currHSP->SetStoppingMode(this->VtkHyperStreamlinePointsSettings->GetStoppingMode());
-     
-
-          // Eigenvector to integrate
-          currHSP->SetIntegrationEigenvector(this->VtkHyperStreamlinePointsSettings->GetIntegrationEigenvector());
-
-          // IntegrationDirection (set in this class, default both ways)
-          currHSP->SetIntegrationDirection(this->IntegrationDirection);
+          this->UpdateHyperStreamlinePointsSettings((vtkHyperStreamlinePoints *) currHSP);
 
           return((vtkHyperStreamline *)currHSP);
         }
@@ -251,6 +227,70 @@ vtkHyperStreamline * vtkSeedTracts::CreateHyperStreamline()
       break;
     }
   return (NULL);
+}
+
+// Loop through all of the hyperstreamline objects and set their
+// parameters according to the current vtkHyperStreamline*Settings object
+// which the user can modify. 
+//----------------------------------------------------------------------------
+void vtkSeedTracts::UpdateAllHyperStreamlineSettings()
+{
+  vtkObject *currStreamline;
+  vtkHyperStreamlinePoints *currHSP;
+
+  // traverse streamline collection
+  this->Streamlines->InitTraversal();
+
+  currStreamline= (vtkObject *)this->Streamlines->GetNextItemAsObject();
+
+  while(currStreamline)
+    {
+      std::cout << currStreamline->GetClassName() << endl;
+      if (strcmp(currStreamline->GetClassName(),"vtkHyperStreamlinePoints") == 0)
+        {
+          std::cout << " match" <<endl;
+          currHSP = (vtkHyperStreamlinePoints *) currStreamline;
+          this->UpdateHyperStreamlinePointsSettings(currHSP);
+          currHSP->Update();
+        }
+
+      currStreamline= (vtkObject *)this->Streamlines->GetNextItemAsObject();
+    }
+}
+
+// Update settings of one hyper streamline
+//----------------------------------------------------------------------------
+void vtkSeedTracts::UpdateHyperStreamlinePointsSettings( vtkHyperStreamlinePoints *currHSP)
+{
+
+  // Copy user's settings into this object:
+  
+  // MaximumPropagationDistance 
+  currHSP->SetMaximumPropagationDistance(this->VtkHyperStreamlinePointsSettings->GetMaximumPropagationDistance());
+  // IntegrationStepLength
+  currHSP->SetIntegrationStepLength(this->VtkHyperStreamlinePointsSettings->GetIntegrationStepLength());
+  // StepLength
+  currHSP->SetStepLength(this->VtkHyperStreamlinePointsSettings->GetStepLength());
+  // Radius
+  currHSP->SetRadius(this->VtkHyperStreamlinePointsSettings->GetRadius());
+  // NumberOfSides
+  currHSP->SetNumberOfSides(this->VtkHyperStreamlinePointsSettings->GetNumberOfSides());
+  // MaxCurvature
+  currHSP->SetMaxCurvature(this->VtkHyperStreamlinePointsSettings->GetMaxCurvature());
+  
+  // Stopping threshold
+  currHSP->SetStoppingThreshold(this->VtkHyperStreamlinePointsSettings->GetStoppingThreshold());
+  
+  // Stopping Mode
+  currHSP->SetStoppingMode(this->VtkHyperStreamlinePointsSettings->GetStoppingMode());
+  
+  
+  // Eigenvector to integrate
+  currHSP->SetIntegrationEigenvector(this->VtkHyperStreamlinePointsSettings->GetIntegrationEigenvector());
+  
+  // IntegrationDirection (set in this class, default both ways)
+  currHSP->SetIntegrationDirection(this->IntegrationDirection);
+
 }
 
 

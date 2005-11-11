@@ -254,6 +254,26 @@ void vtkDisplayTracts::ApplyUserSettingsToGraphicsObject(int index)
 
 }
 
+void vtkDisplayTracts::UpdateAllTubeFiltersWithCurrentSettings()
+{
+  vtkTubeFilter *currTubeFilter;
+
+  this->TubeFilters->InitTraversal();
+  currTubeFilter= (vtkTubeFilter *)this->TubeFilters->GetNextItemAsObject();
+  while(currTubeFilter)
+    {
+      vtkDebugMacro( << "Updating tube filter " << currTubeFilter);
+
+      // Set the tube width and number of sides as desired by the user
+      currTubeFilter->SetRadius(this->TubeRadius);     
+      currTubeFilter->SetNumberOfSides(this->TubeNumberOfSides);
+     
+      currTubeFilter= (vtkTubeFilter *)this->TubeFilters->GetNextItemAsObject();
+    }
+
+
+}
+
 // Make actors, mappers, and lookup tables as needed for streamlines
 // in the collection.
 //----------------------------------------------------------------------------

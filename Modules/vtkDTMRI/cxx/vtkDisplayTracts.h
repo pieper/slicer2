@@ -80,6 +80,14 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
   vtkSetMacro(TubeRadius, float);
 
   // Description
+  // Update NumberOfSides and Radius in all tube filters.
+  // The default behavior is just to apply radius/sides to newly created
+  // tracts, so changes are only seen in new ones.  
+  // Use this after changing TubeNumberOfSides or TubeRadius to apply 
+  // to all existing tract paths.
+  void UpdateAllTubeFiltersWithCurrentSettings();
+
+  // Description
   // Transformation that was used in seeding streamlines.  Their start
   // points are specified in the coordinate system of the ROI volume.
   // Transform world coordinates into scaled ijk of the tensor field.

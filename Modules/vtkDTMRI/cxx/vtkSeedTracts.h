@@ -195,6 +195,13 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   vtkGetObjectMacro(VtkPreciseHyperStreamlinePointsSettings,
                     vtkPreciseHyperStreamlinePoints);
 
+ // Description
+ // Update all tracts with current parameters.
+ // Loop through all of the hyperstreamline objects and set their
+ // parameters according to the current vtkHyperStreamline*Settings object
+ // which the user can modify. 
+ void UpdateAllHyperStreamlineSettings();
+
  protected:
   vtkSeedTracts();
   ~vtkSeedTracts();
@@ -233,6 +240,9 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   // this is the default of this class. This prevents the objects above
   // from changing the integration direction.
   int IntegrationDirection;
+
+
+  void UpdateHyperStreamlinePointsSettings( vtkHyperStreamlinePoints *currHSP);
 
 };
 

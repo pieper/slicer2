@@ -80,7 +80,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.39 $} {$Date: 2005/11/09 23:57:57 $}]
+                                 {$Revision: 1.40 $} {$Date: 2005/11/11 01:42:44 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -384,9 +384,6 @@ proc DTMRITractographyBuildGUI {} {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     }
-    # note the height is necessary to place frames inside later
-    $f.fTractingVar configure -height 500
-    #pack $f.fTractingVar -side top -padx 0 -pady $Gui(pad) -fill both -expand true
 
 
     #-------------------------------------------
@@ -438,6 +435,9 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
     set f $fSettings.fTractingVar
 
+    # note the height is necessary to place frames inside later
+    $f configure -height 500
+
     foreach frame $DTMRI(stream,tractingMethodList) {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         # for raising one frame at a time
@@ -445,7 +445,7 @@ proc DTMRITractographyBuildGUI {} {
         #pack $f.f$frame -side top -padx 0 -pady 1 -fill x
         set DTMRI(stream,tractingFrame,$frame) $f.f$frame
     }
-    
+
     #-------------------------------------------
     # Tract->Notebook->Settings->TractingVar->BSpline frame
     #-------------------------------------------
@@ -595,6 +595,13 @@ proc DTMRITractographyBuildGUI {} {
         -command "set DTMRI(stream,StoppingBy) $vis; $DTMRI(gui,mbStoppingMode) config -text $vis"
       }
         
+
+    set f $DTMRI(stream,tractingFrame,NoSpline)
+
+    eval {button $f.bApply -text "Apply to all tracts" \
+              -command "DTMRITractographyUpdateAllStreamlineSettings"} $Gui(WBA)
+    pack $f.bApply -padx $Gui(pad) -pady $Gui(pad) -side top
+
 
     ##########################################################
     #
@@ -1052,7 +1059,7 @@ proc DTMRIUpdateStreamlineSettings {} {
     set display [DTMRI(vtk,streamlineControl) GetDisplayTracts]
     $display SetTubeRadius $radius
     $display SetTubeNumberOfSides $sides
-    
+
 }
 
 
@@ -1811,4 +1818,16 @@ proc DTMRITractographySetClipping {{val ""}} {
     # display it
     Render3D
     
+}
+
+proc DTMRITractographyUpdateAllStreamlineSettings {} {
+
+    DTMRIUpdateStreamlineSettings
+
+    set seedTracts [DTMRI(vtk,streamlineControl) GetSeedTracts]
+    $seedTracts UpdateAllHyperStreamlineSettings
+
+    $display UpdateAllTubeFiltersWithCurrentSettings
+
+    Render3D
 }
