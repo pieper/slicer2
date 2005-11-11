@@ -1242,10 +1242,10 @@ proc fMRIEngineSaveRegionVoxels {} {
     set fileType {{"Text" *.txt}}
     set fileName [tk_getSaveFile -filetypes $fileType -parent .]
     if {[string length $fileName]} {
-        set txt "txt"
-        set ext [file tail $fileName]
+        set txt ".txt"
+        set ext [file extension $fileName]
         if {$ext != $txt} {
-            set fileName "$fileName\.$txt"
+            set fileName "$fileName$txt"
         }
         set fHandle [open $fileName w]
         set note "This text file saves the coordinates and t values \n of all voxels in the defined region of interest.\n"
@@ -1363,9 +1363,9 @@ proc fMRIEngineShowRegionStats {} {
     fMRIEngineComputeSignalChange
 
     # show region stats
-    label $w.f2.lPValue -text "p value:"
+    label $w.f2.lPValue -text "p threshold:"
     eval {label $w.f2.lPVal -textvariable fMRIEngine(pValue)} 
-    label $w.f2.lTValue -text "t stat:"
+    label $w.f2.lTValue -text "t threshold:"
     eval {label $w.f2.lTVal -textvariable fMRIEngine(tStat)} 
     label $w.f2.lCount -text "Voxel count:"
     eval {label $w.f2.lCountVal -textvariable fMRIEngine(regionVoxelCount)} 
