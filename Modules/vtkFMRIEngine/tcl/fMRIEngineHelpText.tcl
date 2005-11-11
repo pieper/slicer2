@@ -422,9 +422,25 @@ proc fMRIEngineHelpViewPlotting { } {
 <P><B>Timecourse plot</B>
 <P> In this plotting mode (previously called <I>voxel-natural</I>), the observed timecourse of a selected voxel is plotted horizontally along the time axis, and superimposed on a plot of the paradigm signal as reference. Different stimulus conditions within the paradigm are represented by different colors in the plot. Clicking on the voxel timecourse plot itself reveals the numerical voxel values at that timepoint.
 <P><B>Peristimulus histogram plot</B>
-<P> In this plotting mode (previously called <I>voxel-combined</I>), samples from the timecourse of a selected voxel are divided into bins representing each stimulus condition in the paradigm. Each bin contains the combined spans of time during which a stimulus condition of one type was presented. The values of samples spanning the timecourse of each bin are averaged together to depict an average response to the associated stimulus, and response maximum and minimum values are plotted around the average for each sample point.
-<P><B>ROI plot</B>
-<P> In the ROI plot (which is not yet implemented), timecourses of all voxels defined within a region of interest are averaged and plotted horizontally along the time axis, and superimposed on a plot of the paradigm signal as reference. As in the natural-timecourse plot, different conditions within the paradigm are represented by different colors in the plot. Clicking on the ROI averaged timecourse plot itself reveals the numerical voxel values at that timepoint."
+<P> In this plotting mode (previously called <I>voxel-combined</I>), samples from the timecourse of a selected voxel are divided into bins representing each stimulus condition in the paradigm. Each bin contains the combined spans of time during which a stimulus condition of one type was presented. The values of samples spanning the timecourse of each bin are averaged together to depict an average response to the associated stimulus, and response maximum and minimum values are plotted around the average for each sample point."
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt    
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpSelectLabels  
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineHelpSelectLabels { } {
+    #--- ROI->Stats
+    #--- Select labels for region analysis 
+    set i [ fMRIEngineGetHelpWinID ]
+    set txt "<H3>Label selections</H3>
+<P> For fMRI region analysis, a label map has to be created or loaded into Slicer and displayed in the foreground.
+<P> To select a label, click a region in any of the slice windows. All labels are originally displayed in white color; clicked labels are turned into green. Multiple selections may be done by clicking multiple labels. If a mistake has been made, click <B>Clear selections</B> button and all current selections will be cleared; green labels will change back to white. Repeat the above procedure to get right selection(s)."
+    DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
+}
+
 
