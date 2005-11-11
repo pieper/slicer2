@@ -67,7 +67,7 @@ proc fMRIEngineBuildUIForROITab {parent} {
                     -pages {{Region Map} Stats} \
                     -pad 2 \
                     -bg $Gui(activeWorkspace) \
-                    -height 356 \
+                    -height 350 \
                     -width 240
     pack $f.fNotebook -fill both -expand 1
  
@@ -119,7 +119,7 @@ proc fMRIEngineBuildUIForROITasks {parent} {
 
     # Add menu items
     set count 1
-    set cList [list {Shape} {Anatomy} {Activation}]
+    set cList [list {Anatomy} {Activation}]
     foreach mi $taskList {
         if {$mi == "New"} {
             $f.mbTask.m add cascade -label $mi -menu $f.mbTask.m.sub
@@ -139,7 +139,7 @@ proc fMRIEngineBuildUIForROITasks {parent} {
     #-------------------------------------------
     set f $parent.fBot
 
-    set fList [list {Load} {Shape} {Anatomy} {Activation}]
+    set fList [list {Load} {Anatomy} {Activation}]
     set count 1
     foreach m $fList {
         # Makes a frame for each submodule
@@ -454,26 +454,29 @@ proc fMRIEngineBuildUIForROIActivation {parent} {
 proc fMRIEngineBuildUIForROIStats {parent} {
     global fMRIEngine Gui Label 
 
-    frame $parent.fNote -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    frame $parent.fShow -bg $Gui(activeWorkspace)
+    frame $parent.fStats -bg $Gui(activeWorkspace) -relief groove -bd 2 
     frame $parent.fPlot -bg $Gui(activeWorkspace) -relief groove -bd 2 
     frame $parent.fReset -bg $Gui(activeWorkspace)
-    pack $parent.fNote -side top -fill x -pady 5 -padx 5 
-    pack $parent.fShow -side top -fill x -pady 5 -padx 20 
-    pack $parent.fPlot -side top -fill x -pady 5 -padx 5 
+    pack $parent.fStats $parent.fPlot -side top -fill x -pady 5 -padx 5 
     pack $parent.fReset -side top -fill x -pady 5 -padx 20 
 
-    set f $parent.fNote
-    set fMRIEngine(roiStatsNote) "Select label(s) by\n clicking region(s)."
-    eval {label $f.lNote -width 30 -bg $Gui(activeWorkspace) \
-        -textvariable fMRIEngine(roiStatsNote)}
-    pack $f.lNote -side top -fill x -pady 1 -padx 3 
-
-    set f $parent.fShow
-    DevAddButton $f.bShow "Show stats" "fMRIEngineDoROIStats t" 20 
-    pack $f.bShow -side top -fill x -pady 1 -padx 3 
+    set f $parent.fStats
+    DevAddLabel $f.lTitle "Region statistics:"
+    DevAddLabel $f.lNote "Select label(s) by clicking region(s)."
+    DevAddButton $f.bHelp "?" "fMRIEngineHelpSelectLabels" 2 
+    DevAddButton $f.bShow "Show stats" "fMRIEngineShowRegionStats" 20 
+    DevAddButton $f.bSave "Save region voxels" "fMRIEngineSaveRegionVoxels" 20 
+    blt::table $parent.fStats \
+        0,0 $f.lTitle -padx 1 -pady 5 -fill x -cspan 2 \
+        1,0 $f.bHelp -padx 1 -pady 5 -anchor e \
+        1,1 $f.lNote -padx 1 -pady 5 -anchor w \
+        2,0 $f.bShow -padx 1 -pady 5 -cspan 2 \
+        3,0 $f.bSave -padx 1 -pady 5 -cspan 2
 
     set f $parent.fPlot
+    DevAddLabel $f.lTitle "Region plot:"
+    pack $f.lTitle -side top -fill x -pady 5 -padx 3 
+
     frame $f.fConds        -bg $Gui(activeWorkspace)
     frame $f.fTimecourse   -bg $Gui(activeWorkspace)
     frame $f.fPeristimulus -bg $Gui(activeWorkspace)
@@ -506,6 +509,7 @@ proc fMRIEngineBuildUIForROIStats {parent} {
         -variable fMRIEngine(tcPlottingOption) -value $param \
         -relief raised -offrelief raised -overrelief raised \
         -selectcolor white} $Gui(WEA)
+    set fMRIEngine(tcPlottingOption) "Long"
     pack $f.r$param -side top -pady 2 
 
     set f $parent.fPlot.fPeristimulus
@@ -518,15 +522,15 @@ proc fMRIEngineBuildUIForROIStats {parent} {
     pack $f.r$param -side top -pady 2 
 
     set f $parent.fPlot.fPlot
-    DevAddButton $f.bPlot "Plot time series" "fMRIEnginePlotRegionTimecourse" 20 
+    DevAddButton $f.bPlot "Plot time series" "fMRIEngineDoRegionTimecourse" 20 
     pack $f.bPlot -side top -pady 5 -padx 1 
-    set fMRIEngine(tcPlottingOption) ""
 
     set f $parent.fReset
-    DevAddButton $f.bReset "Reset labelmap" "fMRIEngineResetLabelMap" 20 
+    DevAddButton $f.bReset "Clear selections" "fMRIEngineResetLabelMap" 20 
     pack $f.bReset -side top -fill x -pady 1 -padx 2 
 
 }
+
 
 #-------------------------------------------------------------------------------
 # .PROC fMRIEngineUpdateCondsForROIPlot
@@ -776,55 +780,28 @@ proc fMRIEnginePlotROIStats {type} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC fMRIEnginePlotRegionTimecourse
+# .PROC fMRIEngineDoRegionTimecourse
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEnginePlotRegionTimecourse {} {
+proc fMRIEngineDoRegionTimecourse {{plot 1}} {
     global fMRIEngine Slice Volume
 
-    if {$fMRIEngine(tcPlottingOption) == ""} {
-        DevErrorWindow "Timecourse or Peristimulus histogram?"
-        return  
+    set r [fMRIEnginePrepareForRegionStats]
+    # if error, return
+    if {$r == 1} {
+        return 
     }
-
-    set nId $Volume(idNone)
-    set lId $nId 
-    foreach s $Slice(idList) {
-        if {$lId == $nId} {
-            set lId $Slice($s,labelVolID)
-        }
-    }
-
-    if {$nId == $lId} {
-        DevErrorWindow "Label map is not visible."
-        return  
-    }
-
-    # always uses a new instance of vtkActivationRegionStats 
-    if {[info commands fMRIEngine(actROIStats)] != ""} {
-        fMRIEngine(actROIStats) Delete
-        unset -nocomplain fMRIEngine(actROIStats)
-    }
-    vtkActivationRegionStats fMRIEngine(actROIStats)
-
-    # Get all voxel indices in the labelmap volume, 
-    # which are inside the defined ROI.
-    fMRIEngine(actROIStats) AddInput [Volume($lId,vol) GetOutput]
-    fMRIEngine(actROIStats) SetLabel 16 
-    fMRIEngine(actROIStats) Update 
 
     set voxels [fMRIEngine(actROIStats) GetRegionVoxels]
-    if {$voxels == ""} {
-        DevErrorWindow "No label has been selected."
-        return
-    }
-
     fMRIEngine(actEstimator) SetRegionVoxels $voxels
     set fMRIEngine(timecourse) [fMRIEngine(actEstimator) GetRegionTimeCourse] 
     set fMRIEngine(timecoursePlot) "Region"
-    fMRIEnginePlotTimecourse 
+
+    if {$plot} {
+        fMRIEnginePlotTimecourse 
+    }
 }
 
 
@@ -1083,14 +1060,11 @@ proc fMRIEngineSetROITask {task} {
         "Load" {
             set count 1
         }
-        "Shape" {
+        "Anatomy" {
             set count 2 
         }
-        "Anatomy" {
-            set count 3 
-        }
         "Activation" {
-            set count 4 
+            set count 3 
         }
     }
 
@@ -1112,7 +1086,7 @@ proc fMRIEngineUpdateBGVolumeList {} {
     set fMRIEngine(currentTab) "ROI"
 
     $fMRIEngine(AnatomyBGListBox) delete 0 end
-    $fMRIEngine(ShapeBGListBox) delete 0 end
+    # $fMRIEngine(ShapeBGListBox) delete 0 end
  
     foreach v $Volume(idList) {
         if {$v > 0} {
@@ -1121,7 +1095,7 @@ proc fMRIEngineUpdateBGVolumeList {} {
                 set volName [Volume($v,node) GetName] 
                 if {$volName != ""} {
                     $fMRIEngine(AnatomyBGListBox) insert end $volName
-                    $fMRIEngine(ShapeBGListBox) insert end $volName
+                    # $fMRIEngine(ShapeBGListBox) insert end $volName
                 }
             }
         }
@@ -1235,10 +1209,346 @@ proc fMRIEngineClickROI {x y} {
 }
 
 
-proc fMRIEngineShowROIStats {} {
-    global fMRIEngine 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineCloseDataWindow
+# Cleans up if the data window is closed 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineCloseRegionStatsWindow {} {
+    global fMRIEngine
 
-    puts "do nothing in ROI."
+    destroy $fMRIEngine(regionStatsToplevel)
+    unset -nocomplain fMRIEngine(regionStatsToplevel)
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineSaveRegionVoxels
+# Saves voxel information in the defined roi
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineSaveRegionVoxels {} {
+    global fMRIEngine Volume Slice
+
+    set r [fMRIEnginePrepareForRegionStats]
+    # if error, return
+    if {$r == 1} {
+        return 
+    }
+
+    # write data to file
+    set fileType {{"Text" *.txt}}
+    set fileName [tk_getSaveFile -filetypes $fileType -parent .]
+    if {[string length $fileName]} {
+        set txt "txt"
+        set ext [file tail $fileName]
+        if {$ext != $txt} {
+            set fileName "$fileName\.$txt"
+        }
+        set fHandle [open $fileName w]
+        set note "This text file saves the coordinates and t values \n of all voxels in the defined region of interest.\n"
+        puts $fHandle $note
+        puts $fHandle "p threshold: $fMRIEngine(pValue)"
+        puts $fHandle "t threshold: $fMRIEngine(tStat)\n"
+        puts $fHandle "x\ty\tz\tt\n" 
+
+        set voxels [fMRIEngine(actROIStats) GetRegionVoxels]
+        set size [$voxels GetNumberOfTuples]
+        for {set idx 0} {$idx < $size} {incr idx} {
+            set x [$voxels GetComponent $idx 0]
+            set y [$voxels GetComponent $idx 1] 
+            set z [$voxels GetComponent $idx 2] 
+            set t [$voxels GetComponent $idx 3] 
+
+            set str [format "%d\t%d\t%d\t%.1f" $x $y $z $t]
+            puts $fHandle $str
+        }
+        close $fHandle
+    }
+}
+
+
+proc fMRIEnginePrepareForRegionStats {} {
+    global fMRIEngine Volume Slice
+
+    set n $Volume(idNone)
+    set tId $n 
+    set lId $n 
+    foreach s $Slice(idList) {
+        if {$tId == $n} {
+            set tId $Slice($s,backVolID)
+        }
+        if {$lId == $n} {
+            set lId $Slice($s,labelVolID)
+        }
+    }
+
+    if {$n == $tId} {
+        DevErrorWindow "Put your activation volume into the background."
+        return 1 
+    }
+    if {$n == $lId} {
+        DevErrorWindow "Your label map is not visible."
+        return 1 
+    }
+
+    # always uses a new instance of vtkActivationRegionStats 
+    if {[info commands fMRIEngine(actROIStats)] != ""} {
+        fMRIEngine(actROIStats) Delete
+        unset -nocomplain fMRIEngine(actROIStats)
+    }
+    vtkActivationRegionStats fMRIEngine(actROIStats)
+
+    fMRIEngine(actROIStats) AddInput [Volume($lId,vol) GetOutput]
+    fMRIEngine(actROIStats) AddInput [Volume($tId,vol) GetOutput]
+    fMRIEngine(actROIStats) SetLabel 16 
+    fMRIEngine(actROIStats) Update 
+
+    set count [fMRIEngine(actROIStats) GetCount] 
+    if {$count == 0} {
+        DevErrorWindow "No label has been selected."
+        return 1
+    }
+
+    return 0
+}
+
+
+proc fMRIEngineShowRegionStats {} {
+    global fMRIEngine Volume Slice
+
+    set r [fMRIEnginePrepareForRegionStats]
+    # if error, return
+    if {$r == 1} {
+        return 1
+    }
+
+    if {[info exists fMRIEngine(regionStatsToplevel)]} {
+        fMRIEngineCloseRegionStatsWindow
+    }
+
+    set input [fMRIEngine(actROIStats) GetOutput] 
+
+    # Create the GUI, i.e. two Tk image viewer, one for the image
+    # the other for the histogram, and a slice slider
+    set w .regionStats 
+    toplevel $w 
+    set fMRIEngine(regionStatsToplevel) $w
+ 
+    wm title $w "Region Stats" 
+#    wm minsize $w $plotWidth $plotHeight
+#    set plotGeometry "+335+200"
+    set plotGeometry "+400+30"
+    wm geometry $w $plotGeometry 
+
+    # Set the window manager (wm command) so that it registers a
+    # command to handle the WM_DELETE_WINDOW protocal request. This
+    # request is triggered when the widget is closed using the standard
+    # window manager icons or buttons. In this case the exit callback
+    # will be called and it will free up any objects we created then exit
+    # the application.
+    wm protocol $w WM_DELETE_WINDOW "fMRIEngineCloseRegionStatsWindow" 
+    
+    # Pack all gui elements
+    frame $w.f1
+    frame $w.f2 
+    pack $w.f1 $w.f2 -side left -padx 5 -pady 5 -fill both -expand t
+
+    # Create the histogram widget
+    fMRIEngineCreateHistogram $w.f1 600 400 $input
+
+    # compute signal change
+    fMRIEngineComputeSignalChange
+
+    # show region stats
+    label $w.f2.lPValue -text "p value:"
+    eval {label $w.f2.lPVal -textvariable fMRIEngine(pValue)} 
+    label $w.f2.lTValue -text "t stat:"
+    eval {label $w.f2.lTVal -textvariable fMRIEngine(tStat)} 
+    label $w.f2.lCount -text "Voxel count:"
+    eval {label $w.f2.lCountVal -textvariable fMRIEngine(regionVoxelCount)} 
+    label $w.f2.lMin -text "Min: "
+    eval {label $w.f2.lMinVal -textvariable fMRIEngine(regionMin)} 
+    label $w.f2.lMax -text "Max:"
+    eval {label $w.f2.lMaxVal -textvariable fMRIEngine(regionMax)} 
+    label $w.f2.lMean -text "Mean:"
+    eval {label $w.f2.lMeanVal -textvariable fMRIEngine(regionMean)} 
+    label $w.f2.lSD -text "Standard deviation:"
+    eval {label $w.f2.lSDVal -textvariable fMRIEngine(regionStandardDeviation)} 
+    blt::table $w.f2 \
+        0,0 $w.f2.lPValue -padx 1 -pady 1 -anchor e \
+        0,1 $w.f2.lPVal -fill x -padx 5 -pady 1 -anchor w \
+        1,0 $w.f2.lTValue -padx 1 -pady 1 -anchor e \
+        1,1 $w.f2.lTVal -fill x -padx 5 -pady 1 -anchor w \
+        2,0 $w.f2.lCount -padx 1 -pady 1 -anchor e \
+        2,1 $w.f2.lCountVal -fill x -padx 5 -pady 1 -anchor w \
+        3,0 $w.f2.lMin -padx 1 -pady 1 -anchor e \
+        3,1 $w.f2.lMinVal -fill x -padx 5 -pady 1 -anchor w \
+        4,0 $w.f2.lMax -padx 1 -pady 1 -anchor e \
+        4,1 $w.f2.lMaxVal -fill x -padx 5 -pady 1 -anchor w \
+        5,0 $w.f2.lMean -padx 1 -pady 1 -anchor e \
+        5,1 $w.f2.lMeanVal -fill x -padx 5 -pady 1 -anchor w \
+        6,0 $w.f2.lSD -padx 1 -pady 1 -anchor e \
+        6,1 $w.f2.lSDVal -fill x -padx 5 -pady 1 -anchor w 
+
+    set c 7
+    foreach ev $fMRIEngine(allConditionEVs) {
+        if {$ev != "baseline"} {
+            label $w.f2.l$ev -text "Signal change:\n($ev)"
+            eval {label $w.f2.lv$ev -textvariable fMRIEngine($ev,signalChange)} 
+
+            blt::table $w.f2 \
+                $c,0 $w.f2.l$ev -padx 1 -pady 1 -anchor e \
+                $c,1 $w.f2.lv$ev -fill x -padx 5 -pady 1 -anchor w \
+
+            incr c
+        }
+    }
+
+    button $w.f2.btn -text "Close" -command "fMRIEngineCloseRegionStatsWindow" -width 15 
+    blt::table $w.f2 \
+        $c,0 $w.f2.btn -padx 5 -pady 30 -cspan 2
+
+    return 0
+}
+
+
+# compute signal change for all conditions
+proc fMRIEngineComputeSignalChange {} {
+    global fMRIEngine
+
+    fMRIEngineDoRegionTimecourse 0
+    fMRIEngineCreateCurvesFromTimeCourse 
+
+    # compute average signal for each condition
+    foreach ev $fMRIEngine(allConditionEVs) {
+        set total 0.0
+        foreach v $fMRIEngine($ev,ave) {
+            set total [expr $total+$v]
+        }
+        set len [llength $fMRIEngine($ev,ave)]
+        set fMRIEngine($ev,averageSignal) [expr 1.0 * $total / $len]
+    }
+
+    # compute signal change for each condition 
+    foreach ev $fMRIEngine(allConditionEVs) {
+        if {$ev != "baseline"} {
+            set sc [expr 100 * ($fMRIEngine($ev,averageSignal)-$fMRIEngine(baseline,averageSignal)) \
+                    / $fMRIEngine(baseline,averageSignal)]
+
+            set sc [format "%.2f" $sc]
+            set fMRIEngine($ev,signalChange) "$sc %" 
+        }
+    }
+}
+
+
+proc fMRIEngineCreateHistogram {parent {width 350} {height 250} input} {
+    global fMRIEngine
+
+    set extent [$input GetWholeExtent] 
+    scan $extent "%d %d %d %d %d %d" x1 x2 y1 y2 z1 z2
+
+    # manually get min and max in the input valume
+    set minX 1000000.0
+    set maxX -1000000.0
+    for {set i $x1} {$i <= $x2} {incr i} {
+        set v [$input GetScalarComponentAsDouble $i 0 0 0]
+        if {$v > $maxX} {
+            set maxX $v
+        }
+        if {$v < $minX} {
+            set minX $v
+        }
+    }
+
+    # set numBins [expr $width / 2]
+    set numBins 100 
+
+    set origin $minX 
+    set spacing [expr 1.0 * ($maxX - $origin) / $numBins]
+
+    if {[info command fMRIEngine(imageAccumulate)] != ""} {
+        fMRIEngine(imageAccumulate) Delete
+        unset -nocomplain fMRIEngine(imageAccumulate)
+    }
+    vtkImageAccumulate fMRIEngine(imageAccumulate)
+    fMRIEngine(imageAccumulate) SetInput $input
+    fMRIEngine(imageAccumulate) SetComponentExtent 0 [expr $numBins - 1] 0 0 0 0
+    fMRIEngine(imageAccumulate) SetComponentOrigin $origin 0.0 0.0
+    fMRIEngine(imageAccumulate) SetComponentSpacing $spacing 1.0 1.0
+    fMRIEngine(imageAccumulate) Update 
+
+    # region stats
+    set fMRIEngine(regionVoxelCount) [fMRIEngine(imageAccumulate) GetVoxelCount]
+
+    set fMRIEngine(regionMin) [format "%.2f" $minX] 
+    set fMRIEngine(regionMax) [format "%.2f" $maxX]
+    set mean [format "%.2f" [lindex [fMRIEngine(imageAccumulate) GetMean] 0]]
+    set fMRIEngine(regionMean) $mean 
+    set sd 0.0
+    if {$fMRIEngine(regionVoxelCount) > 1} {
+        set sd [format "%.2f" [lindex [fMRIEngine(imageAccumulate) GetStandardDeviation] 0]]
+    }
+    set fMRIEngine(regionStandardDeviation) $sd   
+
+    set data [fMRIEngine(imageAccumulate) GetOutput]
+    set histRange [[[$data GetPointData] GetScalars] GetRange]
+    set minY [lindex $histRange 0]
+    set maxY [lindex $histRange 1]
+
+    # step size for x axis
+    set div [expr ($maxX-$minX)/18]
+    if {$div <= 0.25} {
+        set xStep 0.25
+    } elseif {$div > 0.25 && $div <= 0.5} {
+        set xStep 0.5
+    } elseif {$div > 0.5 && $div <= 1.0} {
+        set xStep 1.0
+    } else {
+        set xStep [expr ceil($div)]
+    }
+
+    # step size for y axis
+    set div [expr ($maxY-$minY)/18]
+    if {$div < 1.0} {
+        set yStep 1 
+    } else {
+        set yStep [expr ceil($div)]
+    }
+
+    blt::graph $parent.graph -plotbackground white -width $width -height $height 
+    pack $parent.graph -side top  
+    set fMRIEngine(regionHistogram) $parent.graph
+
+    if {$minX == $maxX} {
+        set maxX [expr $maxX + 1]
+    }
+    $fMRIEngine(regionHistogram) axis configure x \
+        -min $minX \
+        -max $maxX \
+        -stepsize $xStep \
+        -title "t value"
+
+    $fMRIEngine(regionHistogram) grid configure \
+        -color lightblue \
+        -hide no
+
+    $fMRIEngine(regionHistogram) axis configure y \
+        -min $minY \
+        -max $maxY \
+        -stepsize $yStep \
+        -title "No of voxels"
+
+    # draw histogram
+    for {set idx 0} {$idx < $numBins} {incr idx} {
+        set x [expr $origin + $idx * $spacing + ($spacing / 2.0)]
+        set y [$data GetScalarComponentAsDouble $idx 0 0 0]
+        set lmName "ln$idx"
+        $fMRIEngine(regionHistogram) marker create line \
+            -coords {$x 0 $x $y} -name $lmName -linewidth 1 \
+            -outline black 
+    }
+}
