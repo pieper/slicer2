@@ -666,6 +666,15 @@ foreach name [concat $suppressed $ignored] {
     }
 }
 
+# this should be using TCL_LIB_DIR, but Go.tcl currently isn't sourcing slicer_variables.tcl
+# This is to take care of the "BLT package is required..." error message on Darwin
+
+if {$::env(BUILD) == "darwin-ppc"} { 
+    if {[catch "load $::env(SLICER_HOME)/Lib/$::env(BUILD)/tcl-build/lib/libBLT24.so" ERRMSG] == 1} {
+        puts "Unable to load BLT: $ERRMSG"
+    }
+}
+
 foreach m $::env(SLICER_MODULES_TO_REQUIRE) {
     if {[lsearch $m $ignored] == -1} {
         puts "Loading Module $m..."
@@ -818,7 +827,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.99 2005/11/05 16:25:54 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.100 2005/11/11 20:33:01 hayes Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
