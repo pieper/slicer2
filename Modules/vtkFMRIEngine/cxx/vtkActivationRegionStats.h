@@ -70,39 +70,29 @@ public:
     vtkTypeMacro(vtkActivationRegionStats, vtkMultipleInputsImageToImageFilter);
 
     // Description:
-    // Returns the indices of all voxels in the defined ROI, 
+    // Returns the indices and intensities of all voxels in the defined ROI, 
     // in the labelmap volumes
-    vtkShortArray *GetRegionVoxels();
-
-    // Description:
-    // Gets the ROI stats 
-    vtkGetMacro(Count, int);
-    vtkGetMacro(Max, float);
-    vtkGetMacro(Min, float);
-    vtkGetMacro(Mean, float);
+    vtkFloatArray *GetRegionVoxels();
 
     vtkSetMacro(Label, int);
     vtkGetMacro(Label, int);
+
+    vtkSetMacro(Count, int);
+    vtkGetMacro(Count, int);
 
 protected:
     vtkActivationRegionStats();
     ~vtkActivationRegionStats();
 
-    void SimpleExecute(vtkImageData* input,vtkImageData* output);
+    void SimpleExecute(vtkImageData *input, vtkImageData *output);
+    void ExecuteInformation(vtkImageData *input, vtkImageData *output);
 
-    // the indices (i, j, k) of all voxels in the defined ROI, 
+    // the indices (i, j, k) and their intensities of all voxels in the defined ROI, 
     // in the labelmap volume.
-    vtkShortArray *Indices;  
-
-    // the intensities of all voxels in the defined ROI 
-    vtkFloatArray *Intensities;
+    vtkFloatArray *RegionVoxels;  
 
     int Label;
-
     int Count;
-    float Max;
-    float Min;
-    float Mean;
 };
 
 #endif

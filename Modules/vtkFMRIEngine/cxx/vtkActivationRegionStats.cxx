@@ -66,130 +66,55 @@ vtkStandardNewMacro(vtkActivationRegionStats);
 
 vtkActivationRegionStats::vtkActivationRegionStats()
 {
+    this->RegionVoxels = NULL; 
+    this->Label = 0;
     this->Count = 0;
-    this->Max = 0.0; 
-    this->Min = 0.0;
-    this->Mean = 0.0;
-    this->Indices = NULL; 
-    this->Intensities = NULL;
 }
 
 
 vtkActivationRegionStats::~vtkActivationRegionStats()
 {
-    if (this->Indices != NULL)
+    if (this->RegionVoxels != NULL)
     {
-        this->Indices->Delete();
-    }
-    if (this->Intensities != NULL)
-    {
-        this->Intensities->Delete();
+        this->RegionVoxels->Delete();
     }
 }
 
 
-vtkShortArray *vtkActivationRegionStats::GetRegionVoxels()
+vtkFloatArray *vtkActivationRegionStats::GetRegionVoxels()
 {
-    return this->Indices;
+    return this->RegionVoxels;
 }
 
 
 void vtkActivationRegionStats::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
 {
-    // we are not going to use the output 
-    output = NULL;
-
-    if (this->NumberOfInputs < 1)
+    if (this->NumberOfInputs != 2)
     {
-        vtkErrorMacro( << "This filter has no input of image data.");
+        vtkErrorMacro( << "This filter can only accept two input images.");
         return;
-    }
-    else if (this->NumberOfInputs > 2)
-    {
-        vtkErrorMacro( << "This filter has too many input of image data.");
-        return;
-    }
-    else if (this->NumberOfInputs == 1)
-    {
-        int dim[3];  
-        this->GetInput(0)->GetDimensions(dim);
-
-        // Array holding the indices of all voxels in
-        // the defined ROI.
-        vtkShortArray *tmpArray = vtkShortArray::New();
-        tmpArray->SetNumberOfTuples(dim[0]*dim[1]*dim[2]);
-        tmpArray->SetNumberOfComponents(3);
-        
-        int indx = 0;
-        // Voxel iteration through the entire image volume
-        for (int kk = 0; kk < dim[2]; kk++)
-        {
-            for (int jj = 0; jj < dim[1]; jj++)
-            {
-                for (int ii = 0; ii < dim[0]; ii++)
-                {
-                    short *l  
-                        = (short *)this->GetInput(0)->GetScalarPointer(ii, jj, kk);
-                    if (*l == this->Label)
-                    {
-                        tmpArray->SetComponent(indx, 0, (short)ii);
-                        tmpArray->SetComponent(indx, 1, (short)jj);
-                        tmpArray->SetComponent(indx, 2, (short)kk);
-                        indx++;
-                    }
-                }
-            } 
-        }
-
-        if (this->Indices != NULL)
-        {
-            this->Indices->Delete();
-            this->Indices = NULL;
-        }
-        if (indx > 0) 
-        {
-            // Array holding the indices of all voxels in
-            // the defined ROI.
-            if (this->Indices != NULL)
-            {
-                this->Indices->Delete();
-            }
-            this->Indices = vtkShortArray::New();
-            this->Indices->SetNumberOfTuples(indx);
-            this->Indices->SetNumberOfComponents(3);
-
-            for (int ii = 0; ii < indx; ii++) {
-                short c1 = (short)tmpArray->GetComponent(ii, 0);
-                short c2 = (short)tmpArray->GetComponent(ii, 1);
-                short c3 = (short)tmpArray->GetComponent(ii, 2);
-
-                // always use InsertTuple3, instead of SetTuple3
-                // since the former handles memory allocation if needed.
-                this->Indices->InsertTuple3(ii, c1, c2, c3);
-            }
-        }
-        tmpArray->Delete();
     }
     // this->NumberOfInputs == 2
     else
     {
         int dim[3];  
         this->GetInput(0)->GetDimensions(dim);
+        int size = dim[0]*dim[1]*dim[2];
 
-        // Array holding the intensities of all voxels
-        // in the defined ROI.
-        if (this->Intensities == NULL)
-        {
-            this->Intensities = vtkFloatArray::New();
-            this->Intensities->SetNumberOfTuples(dim[0]*dim[1]*dim[2]);
-            this->Intensities->SetNumberOfComponents(1);
-        }
+        // Array holding the intensities of all voxels in
+        // the defined ROI.
+        float *t = new float[size];
+
+        // Arrays holding the coordinates of all voxels in
+        // the defined ROI.
+        int *x = new int[size];
+        int *y = new int[size];
+        int *z = new int[size];
 
         // Number of inputs == 2 means we are going to compute stats 
         // for t volume: the first volume is the label map volume and 
         // and the second is the t volume.
         int indx = 0;
-        float total = 0.0;
         // Voxel iteration through the entire image volume
         for (int kk = 0; kk < dim[2]; kk++)
         {
@@ -197,28 +122,75 @@ void vtkActivationRegionStats::SimpleExecute(vtkImageData *inputs, vtkImageData*
             {
                 for (int ii = 0; ii < dim[0]; ii++)
                 {
-                    short *l  
-                        = (short *)this->GetInput(0)->GetScalarPointer(ii, jj, kk);
+                    short *l = (short *)this->GetInput(0)->GetScalarPointer(ii, jj, kk);
                     if (*l == this->Label)
                     {
-                        float *t  
-                            = (float *)this->GetInput(1)->GetScalarPointer(ii, jj, kk);
-                        this->Intensities->SetComponent(indx++, 0, *t);
-                        total += *t;
+                        x[indx] = ii;
+                        y[indx] = jj;
+                        z[indx] = kk;
+
+                        float *tv = (float *)this->GetInput(1)->GetScalarPointer(ii, jj, kk);
+                        t[indx++] = *tv;
                     }
                 }
             } 
         }
 
-        this->Intensities->Resize(indx);
-
-        // ROI stats
-        double range[2];
-        this->Intensities->GetRange(range, 0);
-        this->Min = (float) range[0];
-        this->Max = (float) range[1];
-        this->Mean = total / indx;
         this->Count = indx;
+
+        // Array holding all voxels in the defined ROI.
+        if (this->RegionVoxels != NULL)
+        {
+            this->RegionVoxels->Delete();
+            this->RegionVoxels = NULL;
+        }
+
+        if (indx > 0) 
+        {
+            this->RegionVoxels = vtkFloatArray::New();
+            this->RegionVoxels->SetNumberOfTuples(indx);
+            this->RegionVoxels->SetNumberOfComponents(4);
+
+            // create the output image
+            output->SetWholeExtent(0, this->Count-1, 0, 0, 0, 0);
+            output->SetScalarType(VTK_FLOAT);
+            output->SetOrigin(this->GetInput(0)->GetOrigin());
+            output->SetSpacing(this->GetInput(0)->GetSpacing());
+            output->SetNumberOfScalarComponents(1);
+            output->AllocateScalars();
+
+            float *ptr = (float *) output->GetScalarPointer();
+            for (int i = 0; i < indx; i++) 
+            {
+                *ptr++ = t[i];
+
+                // always use InsertTuple4, instead of SetTuple4
+                // since the former handles memory allocation if needed.
+                this->RegionVoxels->InsertTuple4(i, x[i], y[i], z[i], t[i]);
+            }
+        }
+
+        delete [] t;
+        delete [] x;
+        delete [] y;
+        delete [] z;
+    }
+} 
+
+
+// If the output image of a filter has different properties from the input image
+// we need to explicitly define the ExecuteInformation() method
+void vtkActivationRegionStats::ExecuteInformation(vtkImageData *input, vtkImageData *output)
+{
+    this->vtkSimpleImageToImageFilter::ExecuteInformation();
+
+    if (this->NumberOfInputs == 2 && this->Count > 0)
+    {
+        output->SetWholeExtent(0, this->Count-1, 0, 0, 0, 0);
+        output->SetScalarType(VTK_FLOAT);
+        output->SetOrigin(this->GetInput(0)->GetOrigin());
+        output->SetSpacing(this->GetInput(0)->GetSpacing());
+        output->SetNumberOfScalarComponents(1);
     }
 }
 
