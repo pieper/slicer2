@@ -92,7 +92,7 @@ public:
 
     // Description:
     // Sets the indices of all voxels in the defined ROI.
-    void SetRegionVoxels(vtkShortArray *voxels) {this->RegionVoxels = voxels;}
+    void SetRegionVoxels(vtkFloatArray *voxels) {this->RegionVoxels = voxels;}
 
     // Description:
     // Enables or disables high-pass filtering. 
@@ -117,7 +117,7 @@ protected:
     vtkActivationDetector *Detector;
     vtkFloatArray *TimeCourse;
     vtkFloatArray *RegionTimeCourse;
-    vtkShortArray *RegionVoxels;
+    vtkFloatArray *RegionVoxels;
 };
 
 
