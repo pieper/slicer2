@@ -297,8 +297,8 @@ if { ![file exists $::TK_TEST_FILE] } {
         if { ![file exists $SLICER_HOME/isPatched] } {
                 puts "Patching..."
                 runcmd curl -k -O https://share.spl.harvard.edu/share/birn/public/software/External/Patches/tkEventPatch.diff
-                cd $SLICER_LIB/tcl/tk/generic
                 runcmd cp tkEventPatch.diff $SLICER_LIB/tcl/tk/generic 
+                cd $SLICER_LIB/tcl/tk/generic
                 runcmd patch -i tkEventPatch.diff
 
                 # create a file to make sure tkEvent.c isn't patched twice
