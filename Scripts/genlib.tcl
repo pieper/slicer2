@@ -383,25 +383,18 @@ if { ![file exists $::BLT_TEST_FILE] } {
     if { $isWindows } {
         # can't do Windows
     } elseif { $isDarwin } {
-  #       if { ![file exists $SLICER_HOME/isPatchedBLT] } {
-#             if { [file exists $::BLT_PATCH] } {
-#                 puts "Patching..."
-#                 cd $SLICER_LIB/tcl
-#                 runcmd cp $SLICER_HOME/blt-patch.diff $SLICER_LIB/tcl 
-#                 runcmd patch -d blt -p 2< blt-patch.diff
-
-#                 # create a file to make sure BLT isn't patched twice
-#                 runcmd touch $SLICER_HOME/isPatchedBLT
-#                 file delete $SLICER_LIB/tcl/blt-patch.diff
-#             } else { 
-#                 puts "Download BLT patch from Xythos and place in $SLICER_HOME"  
-#                 puts "then run genlib.tcl again.  Download from:"
-#                 puts "https://share.spl.harvard.edu/xythoswfs/webui/share/birn/public/software/External/Patches"
-#                 exit
-#             } 
-#         } else {
-#             puts "BLT already patched."
-#         }
+        if { ![file exists $SLICER_HOME/isPatchedBLT] } {
+            puts "Patching..."
+            runcmd curl -k -O https://share.spl.harvard.edu/share/birn/public/software/External/Patches/bltPatch.diff
+            cd $SLICER_LIB/tcl/blt
+            runcmd patch -p 1 < ../bltPatch.diff
+            
+            # create a file to make sure BLT isn't patched twice
+            runcmd touch $SLICER_HOME/isPatchedBLT
+            file delete $SLICER_LIB/tcl/bltPatch.diff
+        } else {
+            puts "BLT already patched."
+        }
         
         # this fails, but gets blt far enough along to build what is needed 
         cd $SLICER_LIB/tcl/blt
