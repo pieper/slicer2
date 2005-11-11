@@ -295,21 +295,15 @@ if { ![file exists $::TK_TEST_FILE] } {
 
     if {$isDarwin} {
         if { ![file exists $SLICER_HOME/isPatched] } {
-            if { [file exists $::TK_EVENT_PATCH] } {
                 puts "Patching..."
+                runcmd curl -k -O https://share.spl.harvard.edu/share/birn/public/software/External/Patches/tkEventPatch.diff
                 cd $SLICER_LIB/tcl/tk/generic
-                runcmd cp $SLICER_HOME/tkEventPatch.diff $SLICER_LIB/tcl/tk/generic 
+                runcmd cp tkEventPatch.diff $SLICER_LIB/tcl/tk/generic 
                 runcmd patch -i tkEventPatch.diff
 
                 # create a file to make sure tkEvent.c isn't patched twice
                 runcmd touch $SLICER_HOME/isPatched
                 file delete $SLICER_LIB/tcl/tk/generic/tkEventPatch.diff
-            } else { 
-                puts "Download tkEvent patch from Xythos and place in $SLICER_HOME"  
-                puts "then run genlib.tcl again.  Download from:"
-                puts "https://share.spl.harvard.edu/xythoswfs/webui/share/birn/public/software/External/Patches"
-                exit
-            } 
         } else {
             puts "tkEvent.c already patched."
         }
