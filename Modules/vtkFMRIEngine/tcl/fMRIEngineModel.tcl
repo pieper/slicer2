@@ -82,7 +82,7 @@ proc fMRIEngineBuildUIForSetupTab {parent} {
     pack $f.bHelp -side left -padx 1 -pady 1 
 
     # Build pulldown menu image format 
-    eval {label $f.l -text "Choose method:"} $Gui(BLA)
+    eval {label $f.l -text "Analysis method:"} $Gui(BLA)
     pack $f.l -side left -padx $Gui(pad) -fill x -anchor w
 
     # GLM is default format 
@@ -108,12 +108,12 @@ proc fMRIEngineBuildUIForSetupTab {parent} {
     # Model frame 
     #-------------------------------------------
     set f $parent.fModel
-    DevAddButton $f.bLoad "Load Model" "fMRIEngineLoadModel"   13 
+    DevAddButton $f.bLoad "Load Design" "fMRIEngineLoadModel"   13 
     $f.bLoad configure -state disabled
-    DevAddButton $f.bSave "Save Model" "fMRIEngineSaveModel"   13 
+    DevAddButton $f.bSave "Save Design" "fMRIEngineSaveModel"   13 
     $f.bSave configure -state disabled
-    DevAddButton $f.bView "View Model" "fMRIEngineViewModel"   13 
-    DevAddButton $f.bClear "Clear Model" "fMRIEngineClearModel" 13 
+    DevAddButton $f.bView "View Design" "fMRIEngineViewModel"   13 
+    DevAddButton $f.bClear "Clear Design" "fMRIEngineClearModel" 13 
     grid $f.bLoad $f.bSave -padx 1 -pady 1 -sticky e
     grid $f.bView $f.bClear -padx 1 -pady 1 -sticky e
 
