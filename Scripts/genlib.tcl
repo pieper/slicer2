@@ -455,6 +455,43 @@ if { ![file exists $::GSL_TEST_FILE] } {
 
 }
 
+
+################################################################################
+# Get and build teem
+#
+
+if { ![file exists $::TEEM_TEST_FILE] } {
+    cd $SLICER_LIB
+
+    runcmd $::CVS -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/teem/ login 
+    runcmd $::CVS -z3 -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/teem/ checkout -r $::TEEM_TAG teem
+
+    file mkdir $SLICER_LIB/teem-build
+    cd $SLICER_LIB/teem-build
+
+
+
+    runcmd $CMAKE \
+        -G$GENERATOR \
+        -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
+        -DBUILD_SHARED_LIBS:BOOL=ON \
+        -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
+        -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
+        -DBUILD_TESTING:BOOL=OFF \
+        ../teem
+
+    if {$isWindows} {
+        if { $MSVC6 } {
+            runcmd $::MAKE teem.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
+        } else {
+            runcmd $::MAKE teem.SLN /build  $::VTK_BUILD_TYPE
+        }
+    } else {
+        eval runcmd $::MAKE -j 8
+    }
+}
+
+
 ################################################################################
 # Get and build vtk
 #

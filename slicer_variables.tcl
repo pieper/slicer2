@@ -57,6 +57,7 @@ puts stderr "SLICER_HOME is $::SLICER_HOME"
 # section below, or genlib will happily build the library again.
 
 set ::CMAKE_TAG "CMake-2-0-6"
+set ::TEEM_TAG "HEAD"
 set ::VTK_TAG "VTK-Slicer-2-5"
 # get the latest ITK from CVS
 set ::ITK_TAG "HEAD"
@@ -70,6 +71,7 @@ set ::GSL_TAG "release-1-4"
 # Set library, binary, etc. paths...
 
 set ::SLICER_LIB $::SLICER_HOME/Lib/$::env(BUILD)
+set ::TEEM_BIN_DIR  $::SLICER_LIB/teem-build
 set ::VTK_DIR  $::SLICER_LIB/VTK-build
 set ::VTK_SRC_DIR $::SLICER_LIB/VTK
 set ::VTK_BUILD_TYPE ""
@@ -99,6 +101,7 @@ switch $::tcl_platform(os) {
         set ::IWIDGETS_TEST_FILE $::TCL_LIB_DIR/iwidgets4.0.1/iwidgets.tcl
         set ::BLT_TEST_FILE $::TCL_BIN_DIR/bltwish
         set ::GSL_TEST_FILE $::GSL_LIB_DIR/libgsl.so
+        set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/bin/unu
         set ::VTK_TEST_FILE $::VTK_DIR/bin/vtk
         set ::VTK_TCL_LIB $::TCL_LIB_DIR/libtcl8.4.so 
         set ::VTK_TK_LIB $::TCL_LIB_DIR/libtk8.4.so
@@ -128,6 +131,7 @@ switch $::tcl_platform(os) {
         set ::IWIDGETS_TEST_FILE $::TCL_LIB_DIR/iwidgets4.0.2/iwidgets.tcl
         set ::BLT_TEST_FILE $::TCL_BIN_DIR/BLT24.dll
         set ::GSL_TEST_FILE $::GSL_LIB_DIR/gsl.lib
+        set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/bin/$::VTK_BUILD_TYPE/unu.exe
         set ::VTK_TEST_FILE $::VTK_DIR/bin/$::VTK_BUILD_TYPE/vtk.exe
         set ::VTK_TCL_LIB $::TCL_LIB_DIR/tcl84.lib
         set ::VTK_TK_LIB $::TCL_LIB_DIR/tk84.lib
