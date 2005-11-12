@@ -83,7 +83,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.55 $} {$Date: 2005/10/11 11:06:07 $}]
+        {$Revision: 1.56 $} {$Date: 2005/11/12 22:13:22 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -681,7 +681,7 @@ proc ModelMakerWrite {} {
     set m $Model(activeID)
     set ModelMaker(prefix) [MainFileSaveModel $m $ModelMaker(prefix)]
     if {$ModelMaker(prefix) == ""} {
-        if {::Module(verbose)} { puts "ModelMakerWrite: empty prefix for model $m" }
+        if {$::Module(verbose)} { puts "ModelMakerWrite: empty prefix for model $m" }
         return
     }
 
