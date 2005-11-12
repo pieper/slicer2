@@ -480,25 +480,25 @@ proc VolNrrdReaderProc {v} {
     if { $ncomp > 3 } {
        for {set i 0} {$i < $ncomp} {incr i} {
          catch "e$i Delete"
-     vtkImageExtractComponents e$i
-     e$i SetInput [nrrdReader1 GetOutput]
-     e$i SetComponents $i
-     e$i Update
-     ap AddInput [e$i GetOutput]
-    }
-    ap Update  
+         vtkImageExtractComponents e$i
+         e$i SetInput [nrrdReader1 GetOutput]
+         e$i SetComponents $i
+         e$i Update
+         ap AddInput [e$i GetOutput]
+      }
+      ap Update  
         for {set i 0} {$i <$ncomp} {incr i} {
-      e$i Delete
-    }
-    }       
-    
-    #Volume($v,vol) SetImageData [nrrdReader1 GetOutput]
-    Volume($v,vol) SetImageData [ap GetOutput]
+          e$i Delete
+       }
+      Volume($v,vol) SetImageData [ap GetOutput]
+    } else {       
+      Volume($v,vol) SetImageData [nrrdReader1 GetOutput]
+   }
+   
     set n [[[[nrrdReader1 GetOutput] GetPointData] GetScalars] GetNumberOfComponents]
     Volume($v,node) SetNumScalars $n
     
-    #flip Delete
-    ap Delete
+    catch "ap Delete"
     nrrdReader1 Delete
 
     set Volume(fileType) ""
