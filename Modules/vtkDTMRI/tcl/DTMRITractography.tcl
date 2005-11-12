@@ -80,7 +80,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.40 $} {$Date: 2005/11/11 01:42:44 $}]
+                                 {$Revision: 1.41 $} {$Date: 2005/11/12 05:03:07 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -1603,6 +1603,14 @@ proc DTMRISeedAndSaveStreamlinesFromSegmentation {{verbose 1}} {
 
     }
 
+    # cast to short (as these are labelmaps the values are really integers
+    # so this prevents errors with float labelmaps which come from editing
+    # scalar volumes derived from the tensors).
+    vtkImageCast castVSeedROI
+    castVSeedROI SetOutputScalarTypeToShort
+    castVSeedROI SetInput [Volume($v,vol) GetOutput] 
+    castVSeedROI Update
+
     # set base filename for all stored files
     set filename [tk_getSaveFile  -title "Save Tracts: Choose Initial Filename"]
     if { $filename == "" } {
@@ -1636,7 +1644,7 @@ proc DTMRISeedAndSaveStreamlinesFromSegmentation {{verbose 1}} {
 
     # set up the input segmented volume
     set seedTracts [DTMRI(vtk,streamlineControl) GetSeedTracts]
-    $seedTracts SetInputROI [Volume($v,vol) GetOutput] 
+    $seedTracts SetInputROI [castVSeedROI GetOutput] 
     $seedTracts SetInputROIValue $DTMRI(ROILabel)
 
     # Get positioning information from the MRML node
@@ -1658,6 +1666,8 @@ proc DTMRISeedAndSaveStreamlinesFromSegmentation {{verbose 1}} {
         set msg "Finished writing tracts. The filename is: $filename*.*"
         tk_messageBox -message $msg
     }
+
+    castVSeedROI Delete
 }
 
 #-------------------------------------------------------------------------------
@@ -1827,6 +1837,7 @@ proc DTMRITractographyUpdateAllStreamlineSettings {} {
     set seedTracts [DTMRI(vtk,streamlineControl) GetSeedTracts]
     $seedTracts UpdateAllHyperStreamlineSettings
 
+    set display [DTMRI(vtk,streamlineControl) GetDisplayTracts]
     $display UpdateAllTubeFiltersWithCurrentSettings
 
     Render3D
