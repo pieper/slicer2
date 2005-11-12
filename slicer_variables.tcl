@@ -93,6 +93,19 @@ set ::XVNC_EXECUTABLE " "
 
 switch $::tcl_platform(os) {
     "SunOS" -
+    "Linux" {
+        set shared_lib_ext "so"
+    }
+    "Darwin" {
+        set shared_lib_ext "dyld"
+    }
+    "Windows NT" {
+        set shared_lib_ext "dll"
+    }
+}
+
+switch $::tcl_platform(os) {
+    "SunOS" -
     "Linux" -
     "Darwin" {
         set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh8.4
@@ -100,13 +113,13 @@ switch $::tcl_platform(os) {
         set ::ITCL_TEST_FILE $::TCL_LIB_DIR/libitclstub3.2.a
         set ::IWIDGETS_TEST_FILE $::TCL_LIB_DIR/iwidgets4.0.1/iwidgets.tcl
         set ::BLT_TEST_FILE $::TCL_BIN_DIR/bltwish
-        set ::GSL_TEST_FILE $::GSL_LIB_DIR/libgsl.so
+        set ::GSL_TEST_FILE $::GSL_LIB_DIR/libgsl.$shared_lib_ext
         set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/bin/unu
         set ::VTK_TEST_FILE $::VTK_DIR/bin/vtk
-        set ::VTK_TCL_LIB $::TCL_LIB_DIR/libtcl8.4.so 
-        set ::VTK_TK_LIB $::TCL_LIB_DIR/libtk8.4.so
+        set ::VTK_TCL_LIB $::TCL_LIB_DIR/libtcl8.4.$shared_lib_ext 
+        set ::VTK_TK_LIB $::TCL_LIB_DIR/libtk8.4.$shared_lib_ext
         set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh8.4
-        set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/libITKCommon.so
+        set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/libITKCommon.$shared_lib_ext
         set ::TK_EVENT_PATCH $::SLICER_HOME/tkEventPatch.diff
         set ::BLT_PATCH $::SLICER_HOME/blt-patch.diff
     }
