@@ -465,7 +465,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.124 $} {$Date: 2005/11/03 22:04:56 $}]
+        {$Revision: 1.125 $} {$Date: 2005/11/13 16:51:55 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -595,6 +595,8 @@ proc MainBuildGUI {} {
     # File menu
     $Gui(mFile) add command -label "Open Scene..." -command \
         "MainMenu File Open"
+    $Gui(mFile) add command -label "Import Scene..." -command \
+        "MainMenu File Import"
     $Gui(mFile) add command -label "Save Scene" -command \
         "MainMenu File Save"
     $Gui(mFile) add command -label "Save Scene As..." -command \
@@ -1973,8 +1975,13 @@ proc MainExitProgram { "code 0" } {
         }
     }
 
-    # this is the original "exit" built in call, but renamed so we can shut down nicely
-    tcl_exit $code
+    # tcl_exit is the original "exit" built in call, but renamed so we can shut down nicely
+    # - if it hasn't been defined yet, call regular exit (e.g. during startup)
+    if { [info command tcl_exit] != "" } {
+        tcl_exit $code
+    } else {
+        exit $code
+    }
 }
 
 #-------------------------------------------------------------------------------
