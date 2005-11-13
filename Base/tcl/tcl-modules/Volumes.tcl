@@ -113,7 +113,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.117 $} {$Date: 2005/11/07 19:18:04 $}]
+            {$Revision: 1.118 $} {$Date: 2005/11/13 21:30:16 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -951,6 +951,9 @@ proc VolumesCheckForManualChanges {n} {
         if {[$n GetScalarTypeAsString] != $Volume(scalarType)} { return 1 }
         if {[$n GetNumScalars] != $Volume(numScalars)} { return 1 }
         if {[$n GetLittleEndian] != $Volume(littleEndian)} { return 1 }
+        if {[lindex [$n GetSpacing] 0 ]  != $Volume(pixelWidth) } { return 1 }
+        if {[lindex [$n GetSpacing] 1 ]  != $Volume(pixelHeight) } { return 1 }
+        if {[lindex [$n GetSpacing] 2 ]  != $Volume(sliceThickness) } { return 1 }
     }
     return 0
 }
