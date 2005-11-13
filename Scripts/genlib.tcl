@@ -265,7 +265,7 @@ if { ![file exists $::TEEM_TEST_FILE] } {
     cd $SLICER_LIB/teem-build
 
     if { $isDarwin } {
-        set C_FLAGS -DCMAKE_C_FLAGS:STRING=$C_FLAGS \
+        set C_FLAGS -DCMAKE_C_FLAGS:STRING=-fno-common \
     } else {
         set C_FLAGS ""
     }
