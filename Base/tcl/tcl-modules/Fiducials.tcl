@@ -104,7 +104,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.57 $} {$Date: 2005/10/15 19:51:00 $}]
+        {$Revision: 1.58 $} {$Date: 2005/11/13 21:18:36 $}]
     
     # Initialize module-level variables
     
@@ -582,6 +582,7 @@ proc FiducialsBuildVTK {} {
 
     vtkTransform Fiducials(tmpXform)
       Fiducials(tmpXform) PostMultiply
+      Fiducials(tmpXform) AddObserver WarningEvent ""
 
     ########################################################
     #
@@ -665,6 +666,7 @@ proc FiducialsVTKCreateFiducialsList { id type {scale ""} {textScale ""} {visibi
     # set the default size for text 
     if {[info command Point($id,textXform)] == ""} {
         vtkTransform Point($id,textXform)
+        Point($id,textXform) AddObserver WarningEvent ""
     } else {
          Point($id,textXform) Identity
     }
@@ -675,6 +677,7 @@ proc FiducialsVTKCreateFiducialsList { id type {scale ""} {textScale ""} {visibi
     # set the default size for symbols
     if {[info command Fiducials($id,symbolXform)] == ""} {
         vtkTransform Fiducials($id,symbolXform)
+        Fiducials($id,symbolXform) AddObserver WarningEvent ""
     } else {
         Fiducials($id,symbolXform) Identity
     }
