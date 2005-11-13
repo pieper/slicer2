@@ -645,8 +645,7 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
                       // the nearest voxel for path/ROI intersection.
                       vtkPoints * hs0
                         = newStreamline->GetOutput()->GetCell(0)->GetPoints();
-                      vtkPoints * hs1
-                        = newStreamline->GetOutput()->GetCell(1)->GetPoints();
+
                       int numPts=hs0->GetNumberOfPoints();
                       int ptidx=0;
                       int pt[3];
@@ -671,6 +670,9 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
                             }
                           ptidx++;
                         }
+
+                      vtkPoints * hs1
+                        = newStreamline->GetOutput()->GetCell(1)->GetPoints();
                       numPts=hs1->GetNumberOfPoints();
                       // Skip the first point in the second line since it
                       // is a duplicate of the initial point.
@@ -967,7 +969,6 @@ void vtkSeedTracts::SaveStreamlineAsTextFile(ofstream &filePoints,
   
   //GetHyperStreamline0/1 and write their points.
   hs0=currStreamline->GetOutput()->GetCell(0)->GetPoints();
-  hs1=currStreamline->GetOutput()->GetCell(1)->GetPoints();
 
   // Write the first one in reverse order since both lines
   // travel outward from the initial point.
@@ -981,6 +982,8 @@ void vtkSeedTracts::SaveStreamlineAsTextFile(ofstream &filePoints,
       filePoints << point[0] << "," << point[1] << "," << point[2] << " ";
       ptidx--;
     }
+
+  hs1=currStreamline->GetOutput()->GetCell(1)->GetPoints();
   numPts=hs1->GetNumberOfPoints();
   ptidx=1;
   while (ptidx < numPts)

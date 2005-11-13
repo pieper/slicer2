@@ -60,7 +60,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 
-vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.10 $");
+vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.11 $");
 vtkStandardNewMacro(vtkTractShapeFeatures);
 
 vtkCxxSetObjectMacro(vtkTractShapeFeatures, InputStreamlines, vtkCollection);
@@ -601,7 +601,6 @@ void vtkTractShapeFeatures::ComputeFeaturesEndPoints()
 
       // GetHyperStreamline0/1 
       hs0=currStreamline->GetOutput()->GetCell(0)->GetPoints();
-      hs1=currStreamline->GetOutput()->GetCell(1)->GetPoints();
 
       // Get both endpoints
       hs0->GetPoint(hs0->GetNumberOfPoints()-1,point);
@@ -610,6 +609,7 @@ void vtkTractShapeFeatures::ComputeFeaturesEndPoints()
       fv[2]=point[2];
       endpoint->PushBack( fv );
 
+      hs1=currStreamline->GetOutput()->GetCell(1)->GetPoints();
       hs1->GetPoint(hs1->GetNumberOfPoints()-1,point);
       fv[0]=point[0];      
       fv[1]=point[1];      
