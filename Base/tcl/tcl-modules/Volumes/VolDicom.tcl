@@ -123,7 +123,7 @@ proc VolDicomInit {} {
     set dir [file join [file join $Path(program) tcl-modules] Volumes]
     set Volumes(DICOMDataDictFile) $dir/datadict.txt
 
-    set Module(Volumes,presets) "DICOMStartDir='$Path(program)' FileNameSortParam='incr' \
+    set Module(Volumes,presets) "DICOMStartDir='[pwd]' FileNameSortParam='incr' \
 DICOMPreviewWidth='64' DICOMPreviewHeight='64' DICOMPreviewHighestValue='256' \
 DICOMDataDictFile='$Volumes(DICOMDataDictFile)'"
 
@@ -253,7 +253,7 @@ proc DICOMLoadStudy { dir {Pattern "*"} } {
 
     if { $dir == "choose" } {
         if { $::Volumes(DICOMStartDir) == "" } {
-            set ::Volumes(DICOMStartDir) $::env(SLICER_HOME)
+            set ::Volumes(DICOMStartDir) [pwd]
         }
         set dir [tk_chooseDirectory \
             -initialdir $::Volumes(DICOMStartDir) \
@@ -649,8 +649,10 @@ proc FindDICOM2 { StartDir AddDir Pattern } {
         set ::DICOMlabel "working..."
         pack [label $w.label -textvariable ::DICOMlabel] 
         pack [button $w.cancel -text "Stop Looking" -command {set ::DICOMabort "true"} ]
+
         update ;# make sure the window exists before grabbing events
-        catch "grab -global $w"
+        #catch "grab -global $w" ;# this stop everything on the machine, not just slicer
+        catch "grab $w" ;# this one just stops slicer from responding
     }
     
     vtkDCMParser parser
