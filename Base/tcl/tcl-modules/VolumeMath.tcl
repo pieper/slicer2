@@ -161,7 +161,7 @@ proc VolumeMathInit {} {
     #   appropriate info when the module is checked in.
     #   
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.44 $} {$Date: 2005/11/13 16:57:00 $}]
+        {$Revision: 1.45 $} {$Date: 2005/11/13 20:54:10 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -422,6 +422,7 @@ files. Sometimes it doesn't work.
 
     set f $fMath.fGrid
 
+    #### NOTE: Volume 2 is on top, volume 1 is in the middle
     DevAddSelectButton VolumeMath $f Volume2 "Volume2:"   Grid
     DevAddSelectButton VolumeMath $f Volume1 "- Volume1:" Grid
     DevAddSelectButton VolumeMath $f Volume3 "= Volume3:" Grid
@@ -910,7 +911,7 @@ proc VolumeMathBuildResampParamPopup {} {
 proc VolumeMathShowPopup {{x 255} {y 0}} {
     global Gui VolumeMath
  
-    if {[VolumeMathCheckErrors] == 1} {
+    if {[VolumeMathCheckErrors 1 "no"] == 1} {
         return
     }
    
@@ -1216,28 +1217,51 @@ proc VolumeMathPrepareResultVolume {{logic "0"}}  {
 # checks that the operation is doable
 # .END
 #-------------------------------------------------------------------------------
-proc VolumeMathCheckErrors {} {
+proc VolumeMathCheckErrors { {num_ops 2} {check_types "yes"} } {
     global VolumeMath Volume
-
-    if {($VolumeMath(Volume1) == $Volume(idNone)) || \
-            ($VolumeMath(Volume2) == $Volume(idNone)) || \
-            ($VolumeMath(Volume3) == $Volume(idNone))} {
-        DevErrorWindow "You cannot use Volume \"None\""
-        return 1
-    }
 
     set node1 Volume($VolumeMath(Volume1),node)
     set node2 Volume($VolumeMath(Volume2),node)
     set im1 [Volume($VolumeMath(Volume1),vol) GetOutput]
     set im2 [Volume($VolumeMath(Volume2),vol) GetOutput]
+    
+    if { $num_ops == 1 } {
+        # if the operation only needs one operand, make these
+        # the same so the tests below pass
+        # - note: volume1 is the middle, volume2 is on top
+        set node1 $node2
+        set im1 $im2
+    }
 
-    if { ( [$node1 GetScanOrder] != [$node2 GetScanOrder] ) ||
-         ( [$im1 GetDimensions] != [$im2 GetDimensions] ) ||
-         ( [$im1 GetScalarType] != [$im2 GetScalarType] ) } {
-        DevErrorWindow "Volumes must be same dimensions, type, and scan order."
+    if {($VolumeMath(Volume2) == $Volume(idNone)) || \
+            ($VolumeMath(Volume3) == $Volume(idNone))} {
+        DevErrorWindow "You cannot use Volume \"None\""
         return 1
     }
-        
+
+    if { ( $num_ops != 1 ) &&
+            ( $VolumeMath(Volume1) == $Volume(idNone) ) } {
+        DevErrorWindow "You cannot use Volume \"None\""
+        return 1
+    }
+
+
+    if { ( [$node1 GetScanOrder] != [$node2 GetScanOrder] ) ||
+         ( [$im1 GetDimensions] != [$im2 GetDimensions] ) } {
+        DevErrorWindow "Volumes must be same dimensions and scan order."
+        return 1
+    }
+
+    if { [$im1 GetNumberOfScalarComponents] != [$im2 GetNumberOfScalarComponents] } {
+        DevErrorWindow "Volumes must have same number of components."
+        return 1
+    }
+
+    if { ( $check_types == "yes" ) &&
+         ( [$im1 GetScalarType] != [$im2 GetScalarType] ) } {
+        DevErrorWindow "Volumes must be same scalar type."
+        return 1
+    }
 
     
 
@@ -1382,7 +1406,7 @@ proc VolumeMathDoHausdorff {} {
 
         # Check to make sure no volume is none
 
-    if {[VolumeMathCheckErrors] == 1} {
+    if {[VolumeMathCheckErrors 2 "no" ] == 1} {
         return
     }
     if {[VolumeMathPrepareResultVolume] == 1} {
@@ -1401,6 +1425,7 @@ proc VolumeMathDoHausdorff {} {
     vtkImageLogic Logic
     Logic SetOperationToNot
     Logic SetInput1 $vol1
+    Logic SetInput2 $vol1 ;# needed to avoid bug in vtkImageLogic
 
     vtkImageEuclideanDistance DistMap
     DistMap ConsiderAnisotropyOn
@@ -1513,7 +1538,7 @@ proc VolumeMathDoDistMap {} {
 
         # Check to make sure no volume is none
 
-    if {[VolumeMathCheckErrors] == 1} {
+    if {[VolumeMathCheckErrors 1 "no"] == 1} {
         return
     }
     if {[VolumeMathPrepareResultVolume] == 1} {
@@ -1529,16 +1554,19 @@ proc VolumeMathDoDistMap {} {
     vtkImageLogic Logic
     Logic SetOperationToNot
     Logic SetInput1 [Volume($v2,vol) GetOutput]
+    Logic SetInput2 [Volume($v2,vol) GetOutput] ;# needed to avoid bug in vtkImageLogic
 
     vtkImageEuclideanDistance DistMap
     DistMap ConsiderAnisotropyOn
     DistMap InitializeOn
 #    DistMap SetInput [Volume($v2,vol) GetOutput]
+    [Logic GetOutput] Update
     DistMap SetInput [Logic GetOutput]
 
     # Start copying in the output data.
     # Taken from MainVolumesCopyData
 
+    [DistMap GetOutput] Update
     Volume($v3,vol) SetImageData [DistMap GetOutput]
     MainVolumesUpdate $v3
 
@@ -1557,7 +1585,7 @@ proc VolumeMathDoAbs {} {
 
         # Check to make sure no volume is none
 
-    if {[VolumeMathCheckErrors] == 1} {
+    if {[VolumeMathCheckErrors 1 "no"] == 1} {
         return
     }
     if {[VolumeMathPrepareResultVolume] == 1} {
@@ -1598,7 +1626,7 @@ proc VolumeMathDoResample {} {
 
         # Check to make sure no volume is none
 
-    if {[VolumeMathCheckErrors] == 1} {
+    if {[VolumeMathCheckErrors 1 "no"] == 1} {
         return
     }
     if {[VolumeMathPrepareResultVolume] == 1} {
@@ -1665,7 +1693,7 @@ proc VolumeMathDoResample_Hanifa {} {
 
     # Check to make sure no volume is none
 
-    if {[VolumeMathCheckErrors] == 1} {
+    if {[VolumeMathCheckErrors 1 "no" ] == 1} {
         return
     }
     if {[VolumeMathPrepareResultVolume] == 1} {
@@ -1799,7 +1827,7 @@ proc VolumeMathDoMultiply {} {
 
         # Check to make sure no volume is none
 
-    if {[VolumeMathCheckErrors] == 1} {
+    if {[VolumeMathCheckErrors 2 "no"] == 1} {
         return
     }
     if {[VolumeMathPrepareResultVolume] == 1} {
@@ -1838,7 +1866,7 @@ proc VolumeMathDoMask {} {
 
     # Check to make sure no volume is none
 
-    if {[VolumeMathCheckErrors] == 1} {
+    if {[VolumeMathCheckErrors 2 "no" ] == 1} {
         return
     }
     if {[VolumeMathPrepareResultVolume] == 1} {
@@ -1886,7 +1914,7 @@ proc VolumeMathDoMaskStat {} {
     global VolumeMath Volume
 
     # Check to make sure no volume is none
-    if {[VolumeMathCheckErrors] == 1} {
+    if {[VolumeMathCheckErrors 2 "no" ] == 1} {
         return
     }
     if {[VolumeMathPrepareResultVolume] == 1} {
@@ -2036,7 +2064,7 @@ proc VolumeMathDoAnd {} {
     
     # Check to make sure no volume is none
 
-    if {[VolumeMathCheckErrors] == 1} {
+    if {[VolumeMathCheckErrors 2 "no"] == 1} {
         return
     }
     # the parameter 1 tells it  to use the name from the 
