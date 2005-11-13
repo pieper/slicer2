@@ -57,6 +57,9 @@ SET (VTKTENSORUTIL_BUILD_LIB CACHE PATH
 SET (VTKTENSORUTIL_BUILD_TCL_LIB CACHE PATH
     "name of the vtkTensorUtilTCL lib file (.lib or .a)"
 )
+SET (CMAKE_BUILD_TYPE CACHE STRING
+    "type of buld (debug or release)"
+)
 
 # This is the location of the NAMIC Sandbox (in-progress ITK code)
 # Used for clustering
@@ -64,7 +67,7 @@ SET ( SANDBOX_SRC_DIR
     ${SLICER_LIB}/NAMICSandBox
 ) 
 SET ( SANDBOX_BUILD_DIR
-    ${SLICER_LIB}/NAMICSandBox-build/bin
+    ${SLICER_LIB}/NAMICSandBox-build/bin/${CMAKE_BUILD_TYPE}
 ) 
 
 MESSAGE ("Sandbox is: ${SANDBOX_SRC_DIR} and build ${SANDBOX_BUILD_DIR}")
