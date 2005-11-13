@@ -90,7 +90,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.65 $} {$Date: 2005/11/09 22:02:00 $}]
+            {$Revision: 1.66 $} {$Date: 2005/11/13 16:54:31 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -125,6 +125,7 @@ proc ModelsUpdateMRML {} {
     
     set hierarchyModelList ""
 
+
     set hlevel 0; # hierarchy level
     Mrml(dataTree) InitTraversal
     set node [Mrml(dataTree) GetNextItem]
@@ -133,6 +134,7 @@ proc ModelsUpdateMRML {} {
         if {[string compare -length 10 $node "ModelGroup"] == 0} {
             incr hlevel
             
+
             # Set some ModelGroup properties
             set ModelGroup([$node GetID],visibility) [$node GetVisibility]
             set ModelGroup([$node GetID],opacity) [format %#.1f [$node GetOpacity]]
@@ -796,83 +798,83 @@ proc ModelsBuildGUI {} {
                     -indicatoron 0 \
                     -command "MainSlicesSetClipState $s; MainModelsRefreshClipping; Render3D" \
                 } $Gui(WCA) {-bg $Gui(slice$s)}
-        pack $f.f$s.r$value -side left -padx 0 -pady 0
+            pack $f.f$s.r$value -side left -padx 0 -pady 0
+        }
+        grid $f.l$s $f.f$s -pady $Gui(pad)
     }
-    grid $f.l$s $f.f$s -pady $Gui(pad)
-}
 
-#-------------------------------------------
-# fClip->ClipType frame
-#-------------------------------------------
-set f $fClip.fClipType
+    #-------------------------------------------
+    # fClip->ClipType frame
+    #-------------------------------------------
+    set f $fClip.fClipType
 
-eval {label $f.l  -justify left -text \
-        "Clipping can either be done as Intersection\n\
-        or Union. Intersection clips all regions that\n\
-        satisfy the constraints of all clipping planes.\n\
-        Union clips all regions that satisfy the\n\
-        constrains of at least one clipping plane.\n"} $Gui(WLA)
+    eval {label $f.l  -justify left -text \
+            "Clipping can either be done as Intersection\n\
+            or Union. Intersection clips all regions that\n\
+            satisfy the constraints of all clipping planes.\n\
+            Union clips all regions that satisfy the\n\
+            constrains of at least one clipping plane.\n"} $Gui(WLA)
 
-grid $f.l
+    grid $f.l
 
-foreach p "Union Intersection" {
-    eval {radiobutton $f.r$p -width 10 \
-            -text "$p" -value "$p" \
-            -variable Slice(clipType) \
-            -command "MainSlicesSetClipType $p; Render3D"\
-            -indicatoron 0 \
-        } $Gui(WCA) 
-    grid $f.r$p -padx 0 -pady 0
-}
+    foreach p "Union Intersection" {
+        eval {radiobutton $f.r$p -width 10 \
+                -text "$p" -value "$p" \
+                -variable Slice(clipType) \
+                -command "MainSlicesSetClipType $p; Render3D"\
+                -indicatoron 0 \
+            } $Gui(WCA) 
+        grid $f.r$p -padx 0 -pady 0
+    }
 
-#-------------------------------------------
-# Meter frame
-#-------------------------------------------
-set fMeter $Module(Models,fMeter)
-set f $fMeter
+    #-------------------------------------------
+    # Meter frame
+    #-------------------------------------------
+    set fMeter $Module(Models,fMeter)
+    set f $fMeter
 
-foreach frm "Apply Results" {
-    frame $f.f$frm -bg $Gui(activeWorkspace)
-    pack  $f.f$frm -side top -pady $Gui(pad)
-}
+    foreach frm "Apply Results" {
+        frame $f.f$frm -bg $Gui(activeWorkspace)
+        pack  $f.f$frm -side top -pady $Gui(pad)
+    }
 
-#-------------------------------------------
-# Meter->Apply frame
-#-------------------------------------------
-set f $fMeter.fApply
+    #-------------------------------------------
+    # Meter->Apply frame
+    #-------------------------------------------
+    set f $fMeter.fApply
 
-set text "Measure Performance"
-DevAddButton $f.bMeasure $text "ModelsMeter" \
-        [expr [string length $text] + 1]
-pack $f.bMeasure
+    set text "Measure Performance"
+    DevAddButton $f.bMeasure $text "ModelsMeter" \
+            [expr [string length $text] + 1]
+    pack $f.bMeasure
 
-#-------------------------------------------
-# Meter->Results frame
-#-------------------------------------------
-set f $fMeter.fResults
+    #-------------------------------------------
+    # Meter->Results frame
+    #-------------------------------------------
+    set f $fMeter.fResults
 
-frame $f.fTop -bg $Gui(activeWorkspace)
-frame $f.fBot -bg $Gui(activeWorkspace)
-pack $f.fTop $f.fBot -side top -pady $Gui(pad)
+    frame $f.fTop -bg $Gui(activeWorkspace)
+    frame $f.fBot -bg $Gui(activeWorkspace)
+    pack $f.fTop $f.fBot -side top -pady $Gui(pad)
 
-set f $fMeter.fResults.fTop
-eval {label $f.l -justify left -text ""} $Gui(WLA)
-pack $f.l
-set Model(meter,msgTop) $f.l
+    set f $fMeter.fResults.fTop
+    eval {label $f.l -justify left -text ""} $Gui(WLA)
+    pack $f.l
+    set Model(meter,msgTop) $f.l
 
-set f $fMeter.fResults.fBot
-eval {label $f.lL -justify left -text ""} $Gui(WLA)
-eval {label $f.lR -justify right -text ""} $Gui(WLA)
-pack $f.lL $f.lR -side left -padx $Gui(pad)
-set Model(meter,msgLeft) $f.lL
-set Model(meter,msgRight) $f.lR
+    set f $fMeter.fResults.fBot
+    eval {label $f.lL -justify left -text ""} $Gui(WLA)
+    eval {label $f.lR -justify right -text ""} $Gui(WLA)
+    pack $f.lL $f.lR -side left -padx $Gui(pad)
+    set Model(meter,msgLeft) $f.lL
+    set Model(meter,msgRight) $f.lR
 
-set Model(canvasScrolledGUI)  $Module(Models,fDisplay).fScroll.cGrid
-set Model(fScrolledGUI)       $Model(canvasScrolledGUI).fListItems
-DevCreateScrollList $Module(Models,fDisplay).fScroll \
-        MainModelsCreateGUI \
-        ModelsConfigScrolledGUI \
-        "$Model(idList)"
+    set Model(canvasScrolledGUI)  $Module(Models,fDisplay).fScroll.cGrid
+    set Model(fScrolledGUI)       $Model(canvasScrolledGUI).fListItems
+    DevCreateScrollList $Module(Models,fDisplay).fScroll \
+            MainModelsCreateGUI \
+            ModelsConfigScrolledGUI \
+            "$Model(idList)"
 }
 
 #-------------------------------------------------------------------------------
