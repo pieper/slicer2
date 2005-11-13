@@ -67,6 +67,7 @@ set ::ITCL_TAG "itcl-3-2-1"
 set ::IWIDGETS_TAG "iwidgets-4-0-1"
 set ::BLT_TAG "blt24z"
 set ::GSL_TAG "release-1-4"
+set ::SANDBOX_TAG "HEAD"
 
 # Set library, binary, etc. paths...
 
@@ -78,6 +79,7 @@ set ::VTK_BUILD_TYPE ""
 set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
 set ::KWWIDGETS_DIR  $::SLICER_LIB/Widgets-build
 set ::ITK_BINARY_PATH $::SLICER_LIB/Insight-build
+set ::SANDBOX_BIN_DIR $::SLICER_LIB/NAMICSandBox-build/bin
 set ::TCL_BIN_DIR $::SLICER_LIB/tcl-build/bin
 set ::TCL_LIB_DIR $::SLICER_LIB/tcl-build/lib
 set ::TCL_INCLUDE_DIR $::SLICER_LIB/tcl-build/include
@@ -116,6 +118,7 @@ switch $::tcl_platform(os) {
         set ::GSL_TEST_FILE $::GSL_LIB_DIR/libgsl.$shared_lib_ext
         set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/bin/unu
         set ::VTK_TEST_FILE $::VTK_DIR/bin/vtk
+        set ::SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/libSlicerClustering.a
         set ::VTK_TCL_LIB $::TCL_LIB_DIR/libtcl8.4.$shared_lib_ext 
         set ::VTK_TK_LIB $::TCL_LIB_DIR/libtk8.4.$shared_lib_ext
         set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh8.4
@@ -146,6 +149,7 @@ switch $::tcl_platform(os) {
         set ::GSL_TEST_FILE $::GSL_LIB_DIR/gsl.lib
         set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/bin/$::VTK_BUILD_TYPE/unu.exe
         set ::VTK_TEST_FILE $::VTK_DIR/bin/$::VTK_BUILD_TYPE/vtk.exe
+        set ::SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/$::VTK_BUILD_TYPE/SlicerClustering.lib
         set ::VTK_TCL_LIB $::TCL_LIB_DIR/tcl84.lib
         set ::VTK_TK_LIB $::TCL_LIB_DIR/tk84.lib
         set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh84.exe
@@ -157,7 +161,7 @@ switch $::tcl_platform(os) {
     }
 }
 
-# System dependant variables
+# System dependent variables
 
 switch $::tcl_platform(os) {
     "SunOS" {
@@ -233,10 +237,15 @@ switch $::tcl_platform(os) {
             set ::COMPILER_PATH "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET/Common7/Vc7/bin"
         }
 
+        #
         ## for Visual Studio 7.1:
-        #set ::GENERATOR "Visual Studio 7 .NET 2003" 
-        #set ::MAKE "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET 2003/Common7/IDE/devenv"
-        #set ::COMPILER_PATH "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET 2003/Common7/Vc7/bin"
+        # - automatically use newest if available
+        #
+        if { [file exists "c:/Program Files/Microsoft Visual Studio .NET 2003/Common7/IDE/devenv.exe"] } {
+            set ::GENERATOR "Visual Studio 7 .NET 2003" 
+            set ::MAKE "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET 2003/Common7/IDE/devenv"
+            set ::COMPILER_PATH "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET 2003/Common7/Vc7/bin"
+        }
 
         set ::COMPILER "cl"
 
