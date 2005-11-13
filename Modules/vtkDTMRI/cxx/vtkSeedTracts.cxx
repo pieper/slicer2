@@ -813,7 +813,6 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   fileCoordinateSystemInfo << "voxel dimensions of tensor volume" << endl; 
   this->InputTensorField->GetSpacing(spacing);
   fileCoordinateSystemInfo << spacing[0] << " " << spacing[1] << " " << spacing[2] << endl;
-  fileCoordinateSystemInfo.close();
   
   writer = vtkPolyDataWriter::New();
 
@@ -903,7 +902,7 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
                       newStreamline->Update();
 
                       // See if we like it enough to write
-                      if (newStreamline->GetOutput()->GetNumberOfPoints() > 56)
+                      if (newStreamline->GetOutput()->GetNumberOfPoints() > 100)
                         {
                           
                           // transform model
@@ -947,6 +946,10 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   
   // Tell user how many we wrote
   cout << "Wrote " << idx << "model files." << endl;
+
+  fileCoordinateSystemInfo << "Model files written:" << endl;
+  fileCoordinateSystemInfo << idx << endl;
+  fileCoordinateSystemInfo.close();
 
 }
 
