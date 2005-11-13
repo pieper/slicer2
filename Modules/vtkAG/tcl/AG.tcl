@@ -172,7 +172,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.14 $} {$Date: 2005/09/23 17:24:51 $}]
+        {$Revision: 1.15 $} {$Date: 2005/11/13 16:05:50 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -640,7 +640,7 @@ proc AGBuildTransformFrame {} {
     pack $f -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
     DevAddButton $f.bCreateLin "Create lin.tfm. matrix" "AGCreateLinMat"
     pack $f.bCreateLin  
-    TooltipAdd $f.bCreateLin "Save a just computed linear transform as a matrix in the main data view."
+    TooltipAdd $f.bCreateLin "Save a just computed linear transform as a matrix in the main data view. The matrix is RAS to RAS only if target and source volumes have the same scan order."
     
     set f $fTransform.fSaveGrid
     frame $f -bg $Gui(activeWorkspace)
