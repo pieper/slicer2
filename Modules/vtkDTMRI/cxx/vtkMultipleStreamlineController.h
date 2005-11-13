@@ -110,9 +110,15 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // Description
   // List of the output vtkHyperStreamlines (or subclasses)
   // These are what you see (could be clipped by the user)
-  vtkCollection *GetStreamlines() {return this->DisplayTracts->GetClippedStreamlines();}
+  vtkCollection *GetClippedStreamlines() {return this->DisplayTracts->GetClippedStreamlines();}
 
-  int GetNumberOfStreamlines() {return this->GetStreamlines()->GetNumberOfItems();}
+  // Description
+  // List of the output vtkHyperStreamlines (or subclasses)
+  vtkGetObjectMacro(Streamlines, vtkCollection);
+
+  // Description
+  // Number of streamlines that exist
+  int GetNumberOfStreamlines() {return this->Streamlines->GetNumberOfItems();}
 
   // Description
   // Input: list of the renderers whose scenes will have streamlines
