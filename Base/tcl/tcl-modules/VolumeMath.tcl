@@ -161,7 +161,7 @@ proc VolumeMathInit {} {
     #   appropriate info when the module is checked in.
     #   
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.43 $} {$Date: 2005/09/30 18:10:21 $}]
+        {$Revision: 1.44 $} {$Date: 2005/11/13 16:57:00 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1212,19 +1212,35 @@ proc VolumeMathPrepareResultVolume {{logic "0"}}  {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC VolumeMathPrepareResult
-#   Create the New Volume if necessary. Otherwise, ask to overwrite.
-#   returns 1 if there is are errors 0 otherwise
+# .PROC VolumeMathCheckErrors
+# checks that the operation is doable
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeMathCheckErrors {} {
     global VolumeMath Volume
+
     if {($VolumeMath(Volume1) == $Volume(idNone)) || \
             ($VolumeMath(Volume2) == $Volume(idNone)) || \
             ($VolumeMath(Volume3) == $Volume(idNone))} {
         DevErrorWindow "You cannot use Volume \"None\""
         return 1
     }
+
+    set node1 Volume($VolumeMath(Volume1),node)
+    set node2 Volume($VolumeMath(Volume2),node)
+    set im1 [Volume($VolumeMath(Volume1),vol) GetOutput]
+    set im2 [Volume($VolumeMath(Volume2),vol) GetOutput]
+
+    if { ( [$node1 GetScanOrder] != [$node2 GetScanOrder] ) ||
+         ( [$im1 GetDimensions] != [$im2 GetDimensions] ) ||
+         ( [$im1 GetScalarType] != [$im2 GetScalarType] ) } {
+        DevErrorWindow "Volumes must be same dimensions, type, and scan order."
+        return 1
+    }
+        
+
+    
+
     return 0
 }
 
@@ -1255,7 +1271,9 @@ proc VolumeMathDoMath {} {
     # happened. (skip for statistics that doesn't create a new volume)
     if { $VolumeMath(MathType) != "Statistics" } {  # && $VolumeMath(MathType) != "MaskStat"} {
         set v3 $VolumeMath(Volume3)
+        MainSlicesSetVolumeAll Back $v3
         MainVolumesUpdate $v3
+        RenderAll
     }
 }
 
@@ -1512,7 +1530,7 @@ proc VolumeMathDoDistMap {} {
     Logic SetOperationToNot
     Logic SetInput1 [Volume($v2,vol) GetOutput]
 
-    vtkImageEuclideanDistanceTransformation DistMap
+    vtkImageEuclideanDistance DistMap
     DistMap ConsiderAnisotropyOn
     DistMap InitializeOn
 #    DistMap SetInput [Volume($v2,vol) GetOutput]
