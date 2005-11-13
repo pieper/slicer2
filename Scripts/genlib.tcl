@@ -14,7 +14,7 @@
 # - configure (or cmake) with needed options
 # - build for this platform
 #
-# Packages: cmake, tcl, itcl, ITK, VTK, blt, gsl
+# Packages: cmake, tcl, itcl, ITK, VTK, blt, gsl, Teem
 # 
 # Usage:
 #   genlib [options] [target]
@@ -252,6 +252,40 @@ if { ![file exists $CMAKE] } {
 
 
 ################################################################################
+# Get and build teem
+#
+
+if { ![file exists $::TEEM_TEST_FILE] } {
+    cd $SLICER_LIB
+
+    runcmd $::CVS -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/teem/ login 
+    runcmd $::CVS -z3 -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/teem/ checkout -r $::TEEM_TAG teem
+
+    file mkdir $SLICER_LIB/teem-build
+    cd $SLICER_LIB/teem-build
+
+    runcmd $CMAKE \
+        -G$GENERATOR \
+        -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
+        -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+        -DCMAKE_C_FLAGS:STRING=-fno-common \
+        -DBUILD_SHARED_LIBS:BOOL=ON \
+        -DBUILD_TESTING:BOOL=OFF \
+        ../teem
+
+    if {$isWindows} {
+        if { $MSVC6 } {
+            runcmd $::MAKE teem.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
+        } else {
+            runcmd $::MAKE teem.SLN /build  $::VTK_BUILD_TYPE
+        }
+    } else {
+        eval runcmd $::MAKE -j 8
+    }
+}
+
+
+################################################################################
 # Get and build tcl, tk, itcl, widgets
 #
 
@@ -453,42 +487,6 @@ if { ![file exists $::GSL_TEST_FILE] } {
         file copy $SLICER_LIB/gsl/include/gsl_sf.h $SLICER_LIB/gsl/include/gsl/gsl_sf.h
     }
 
-}
-
-
-################################################################################
-# Get and build teem
-#
-
-if { ![file exists $::TEEM_TEST_FILE] } {
-    cd $SLICER_LIB
-
-    runcmd $::CVS -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/teem/ login 
-    runcmd $::CVS -z3 -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/teem/ checkout -r $::TEEM_TAG teem
-
-    file mkdir $SLICER_LIB/teem-build
-    cd $SLICER_LIB/teem-build
-
-
-
-    runcmd $CMAKE \
-        -G$GENERATOR \
-        -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
-        -DBUILD_SHARED_LIBS:BOOL=ON \
-        -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
-        -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
-        -DBUILD_TESTING:BOOL=OFF \
-        ../teem
-
-    if {$isWindows} {
-        if { $MSVC6 } {
-            runcmd $::MAKE teem.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
-        } else {
-            runcmd $::MAKE teem.SLN /build  $::VTK_BUILD_TYPE
-        }
-    } else {
-        eval runcmd $::MAKE -j 8
-    }
 }
 
 
