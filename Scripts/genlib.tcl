@@ -14,7 +14,7 @@
 # - configure (or cmake) with needed options
 # - build for this platform
 #
-# Packages: cmake, tcl, itcl, ITK, VTK, blt, gsl, Teem
+# Packages: cmake, tcl, itcl, ITK, VTK, blt, gsl
 # 
 # Usage:
 #   genlib [options] [target]
@@ -264,11 +264,17 @@ if { ![file exists $::TEEM_TEST_FILE] } {
     file mkdir $SLICER_LIB/teem-build
     cd $SLICER_LIB/teem-build
 
+    if { $isDarwin } {
+        set C_FLAGS -DCMAKE_C_FLAGS:STRING=$C_FLAGS \
+    } else {
+        set C_FLAGS ""
+    }
+
     runcmd $CMAKE \
         -G$GENERATOR \
         -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
         -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
-        -DCMAKE_C_FLAGS:STRING=-fno-common \
+        $C_FLAGS \
         -DBUILD_SHARED_LIBS:BOOL=ON \
         -DBUILD_TESTING:BOOL=OFF \
         ../teem
@@ -628,53 +634,58 @@ if { ![file exists $::ITK_TEST_FILE] } {
 
 ################################################################################
 # Get and build the sandbox
-cd $SLICER_LIB
 
-runcmd $::SVN checkout http://www.na-mic.org:8000/svn/NAMICSandBox
+if { ![file exists $::SANDBOX_TEST_FILE] } {
+    cd $SLICER_LIB
 
-file mkdir $SLICER_LIB/NAMICSandBox-build
-cd $SLICER_LIB/NAMICSandBox-build
+    runcmd $::SVN checkout -r $::SANDBOX_TAG http://www.na-mic.org:8000/svn/NAMICSandBox 
 
-runcmd $CMAKE \
-    -G$GENERATOR \
-    -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
-    -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
-    -DBUILD_SHARED_LIBS:BOOL=OFF \
-    -DBUILD_EXAMPLES:BOOL=OFF \
-    -DBUILD_TESTING:BOOL=OFF \
-    -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
-    -DVTK_DIR:PATH=$VTK_DIR \
-    -DITK_DIR:FILEPATH=$ITK_BINARY_PATH \
-    ../NAMICSandBox
+    file mkdir $SLICER_LIB/NAMICSandBox-build
+    cd $SLICER_LIB/NAMICSandBox-build
 
-if {$isWindows} {
-    if { $MSVC6 } {
-        runcmd $::MAKE NAMICSandBox.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
+    runcmd $CMAKE \
+        -G$GENERATOR \
+        -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
+        -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
+        -DBUILD_SHARED_LIBS:BOOL=OFF \
+        -DBUILD_EXAMPLES:BOOL=OFF \
+        -DBUILD_TESTING:BOOL=OFF \
+        -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
+        -DVTK_DIR:PATH=$VTK_DIR \
+        -DITK_DIR:FILEPATH=$ITK_BINARY_PATH \
+        ../NAMICSandBox
+
+    if {$isWindows} {
+        if { $MSVC6 } {
+            runcmd $::MAKE NAMICSandBox.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
+        } else {
+            #runcmd $::MAKE NAMICSandBox.SLN /build  $::VTK_BUILD_TYPE
+
+            # These two lines fail on windows because the .sln file has a problem.
+            # Perhaps this is a cmake issue.
+            #cd $SLICER_LIB/NAMICSandBox-build/SlicerTractClusteringImplementation
+            #runcmd $::MAKE SlicerClustering.SLN /build  $::VTK_BUILD_TYPE
+
+            # Building within the subdirectory works
+            cd $SLICER_LIB/NAMICSandBox-build/SlicerTractClusteringImplementation/Code
+            runcmd $::MAKE SlicerClustering.vcproj /build  $::VTK_BUILD_TYPE
+            cd $SLICER_LIB/NAMICSandBox-build/SlicerTractClusteringImplementation/Code
+            runcmd $::MAKE SlicerClustering.vcproj /build  $::VTK_BUILD_TYPE
+            # However then it doesn't pick up this needed library
+            cd $SLICER_LIB/NAMICSandBox-build/SpectralClustering
+            runcmd $::MAKE SpectralClustering.SLN /build  $::VTK_BUILD_TYPE
+        }
     } else {
-        #runcmd $::MAKE NAMICSandBox.SLN /build  $::VTK_BUILD_TYPE
 
-        # These two lines fail on windows because the .sln file has a problem.
-        # Perhaps this is a cmake issue.
-        #cd $SLICER_LIB/NAMICSandBox-build/SlicerTractClusteringImplementation
-        #runcmd $::MAKE SlicerClustering.SLN /build  $::VTK_BUILD_TYPE
-
-        # Building within the subdirectory works
-        cd $SLICER_LIB/NAMICSandBox-build/SlicerTractClusteringImplementation/Code
-        runcmd $::MAKE SlicerClustering.vcproj /build  $::VTK_BUILD_TYPE
-        # However then it doesn't pick up this needed library
-        cd $SLICER_LIB/NAMICSandBox-build/SpectralClustering
-        runcmd $::MAKE SpectralClustering.SLN /build  $::VTK_BUILD_TYPE
+        # Just build the two libraries we need, not the rest of the sandbox.
+        # This line builds the SlicerClustering library.
+        # It also causes the SpectralClustering lib to build, 
+        # since SlicerClustering depends on it.
+        # Later in the slicer Module build process, 
+        # vtkDTMRI links to SlicerClustering.
+        # At some point in the future, the classes in these libraries
+        # will become part of ITK and this will no longer be needed.
+        cd $SLICER_LIB/NAMICSandBox-build/SlicerTractClusteringImplementation   
+        eval runcmd $::MAKE -j 8
     }
-} else {
-
-    # Just build the two libraries we need, not the rest of the sandbox.
-    # This line builds the SlicerClustering library.
-    # It also causes the SpectralClustering lib to build, 
-    # since SlicerClustering depends on it.
-    # Later in the slicer Module build process, 
-    # vtkDTMRI links to SlicerClustering.
-    # At some point in the future, the classes in these libraries
-    # will become part of ITK and this will no longer be needed.
-    cd $SLICER_LIB/NAMICSandBox-build/SlicerTractClusteringImplementation   
-    eval runcmd $::MAKE -j 8
 }
