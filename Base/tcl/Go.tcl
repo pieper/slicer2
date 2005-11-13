@@ -33,8 +33,19 @@
 #   START_THE_SLICER
 #==========================================================================auto=
 
+# remove the toplevel window until it has something useful to show
 wm withdraw .
 update
+
+#
+# override the built in exit routine to provide cleanup
+# (for people who type exit into the console)
+#
+rename exit tcl_exit
+proc exit { "code 0" } {
+    MainExitProgram $code
+}
+
 
 
 #######################
@@ -827,7 +838,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.100 2005/11/11 20:33:01 hayes Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.101 2005/11/13 16:49:45 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
@@ -945,15 +956,6 @@ foreach arg $::SLICER(load-bxh) {
 
     set ::VolBXH(bxh-fileName) $arg
     VolBXHLoadVolumes  
-}
-
-#
-# override the built in exit routine to provide cleanup
-# (for people who type exit into the console)
-#
-rename exit tcl_exit
-proc exit { "code 0" } {
-    MainExitProgram $code
 }
 
 
