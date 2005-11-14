@@ -592,7 +592,7 @@ proc fMRIEngineUpdateConditionsForSignalModeling { } {
     #--- regenerate conditions menu and callbacks
     $fMRIEngine(gui,conditionsMenuForSignal) delete 0 end 
     set start 1
-    set end $fMRIEngine(noOfSpecifiedRuns)
+    set end $fMRIEngine(noOfRuns)
     #--- list all conditions for each run...
     set firstCondition ""
     set i $start
@@ -621,6 +621,9 @@ proc fMRIEngineUpdateConditionsForSignalModeling { } {
     }
     $fMRIEngine(gui,conditionsMenuForSignal) add command -label "all" \
         -command "fMRIEngineSelectConditionForSignalModeling all"            
+
+    set cond [$fMRIEngine(gui,conditionsMenuForSignal) entrycget 0 -label]
+    fMRIEngineSelectConditionForSignalModeling $cond
 }
 
 
