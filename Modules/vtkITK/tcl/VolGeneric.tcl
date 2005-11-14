@@ -495,12 +495,7 @@ proc VolGenericReaderProc {v} {
     flip SetInput  [genreader GetOutput]   
     flip Update
 
-    catch "flip2 Delete"
-    vtkImageFlip flip2
-    flip2 SetFilteredAxis 2
-    flip2 SetInput  [flip GetOutput]   
-    flip2 Update
-    Volume($v,vol) SetImageData [flip2 GetOutput]
+    Volume($v,vol) SetImageData [flip GetOutput]
 
     flip Delete
     genreader Delete
