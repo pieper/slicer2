@@ -383,7 +383,7 @@ proc TensorDelete {ModuleArray d} {
 
     # See if this data object exists
     #--------------------------------------------------------
-    if {[info command $data] != ""} {
+    if {[info command $data] == ""} {
         return 0
     }
 
@@ -501,7 +501,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.111 $} {$Date: 2005/11/07 01:51:34 $}]
+                  {$Revision: 1.112 $} {$Date: 2005/11/14 20:56:06 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -610,6 +610,8 @@ proc DTMRIUpdateMRML {} {
             [transform GetMatrix]
         transform Delete
 
+        # remove glyphs and tracts
+        DTMRIRemoveAllActors 
     }
     
      # Do MRML update of Tensor nodes.
