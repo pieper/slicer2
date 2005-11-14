@@ -155,7 +155,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.19 $} {$Date: 2005/11/11 14:44:02 $}]
+        {$Revision: 1.20 $} {$Date: 2005/11/14 17:28:43 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -198,6 +198,7 @@ proc fMRIEngineInit {} {
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineParadigmDesign.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineRegionAnalysis.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineUserInputForModelView.tcl"
+    source "$fMRIEngine(modulePath)/tcl/fMRIEngineSaveAndLoadParadigm.tcl"
 }
 
 
