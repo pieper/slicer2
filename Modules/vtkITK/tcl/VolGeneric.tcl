@@ -370,19 +370,8 @@ proc VolGenericApply {} {
     puts "Scan order: $Volume(scanOrder)"
     Volume($i,node) SetScanOrder $Volume(scanOrder)
 
-    #
-    # parse the 'space directions' and 'space origin' information into
-    # a slicer RasToIjk and related matrices by telling the mrml node
-    # the RAS corners of the volume
-    #
-    catch "Ijk_matrix Delete"
-    vtkMatrix4x4 Ijk_matrix
-    Ijk_matrix DeepCopy [genreader GetRasToIjkMatrix]
-    Ijk_matrix Invert
+    VolumesComputeNodeMatricesFromRasToIjkMatrix $i [genreader GetRasToIjkMatrix] $dims
 
-    VolumesComputeNodeMatricesFromIjkToRasMatrix2 $i Ijk_matrix $dims
-
-    Ijk_matrix Delete
     genreader Delete
 
     # so can read in the volume

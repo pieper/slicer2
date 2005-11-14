@@ -344,21 +344,8 @@ proc VolNrrdApply {} {
     puts "Scan order: $Volume(scanOrder)"
     Volume($i,node) SetScanOrder $Volume(scanOrder)
 
-    #
-    # parse the 'space directions' and 'space origin' information into
-    # a slicer RasToIjk and related matrices by telling the mrml node
-    # the RAS corners of the volume
-    #
-    catch "Ijk_matrix Delete"
-    vtkMatrix4x4 Ijk_matrix
-    Ijk_matrix DeepCopy [nrrdReader GetRasToIjkMatrix]
-    Ijk_matrix Invert
+    VolumesComputeNodeMatricesFromRasToIjkMatrix $i [nrrdReader GetRasToIjkMatrix] $dims
 
-    VolumesComputeNodeMatricesFromIjkToRasMatrix $i Ijk_matrix $dims
-
-    Ijk_matrix Delete
-
-    #Volume($i,node) SetRasToIjkMatrix [[nrrdReader GetRasToIjkMatrix] Print]
     #
     # Filling headerKeys in the volume array. This key might eventually belong to the MrmlNode
     #
