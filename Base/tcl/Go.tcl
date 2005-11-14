@@ -342,13 +342,26 @@ set Path(program) $prog
 ########################
  
 proc SplashRaise {} { 
-    if {[winfo exists .splash]} {raise .splash; after 100 "after idle SplashRaise"}
+    if {[winfo exists .splash]} {
+        raise .splash
+        if {[grab current .splash] == ""} {
+            # do a local grab so that all mouse clicks will go into the 
+            # splash screen and not queue up while it's up. 
+            grab set .splash
+        }
+        after 100 "after idle SplashRaise"
+    }
 }
 
 proc SplashKill {} { 
     global splashim
+
+    # release the grab
+    grab release .splash
+
     catch "destroy .splash" 
     catch "image delete $splashim"
+
 }
 
 proc SplashShow { {delayms 7000} } {
@@ -838,7 +851,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.101 2005/11/13 16:49:45 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.102 2005/11/14 19:24:11 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
