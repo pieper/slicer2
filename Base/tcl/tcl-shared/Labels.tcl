@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,7 +32,7 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        Labels.tcl
 # PROCEDURES:  
@@ -41,26 +41,27 @@
 #   LabelsBuildGUI
 #   LabelsHideLabels
 #   LabelsUnHideLabels
-#   LabelsColorSample
-#   ShowLabels
-#   ShowColors
+#   LabelsColorSample scale
+#   ShowLabels callback x y
+#   ShowColors callback x y
 #   LabelsDisplayColors
-#   LabelsBrowseColor
-#   LabelsSelectColor
+#   LabelsGetColorFromPosition x y
+#   LabelsBrowseColor x y
+#   LabelsSelectColor x y c
 #   LabelsLeaveGrid
 #   LabelsDisplayLabels
-#   LabelsSelectLabelClick
-#   LabelsSelectLabel
-#   LabelsSetColor
+#   LabelsSelectLabelClick index
+#   LabelsSelectLabel i
+#   LabelsSetColor colorName
 #   LabelsColorWidgets
 #   LabelsFindLabel
-#   LabelsSetOutputLabel
+#   LabelsSetOutputLabel p
 #   LabelsCreateColor
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
 # .PROC LabelsInit
-# 
+# Initialise global variables.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -78,7 +79,7 @@ proc LabelsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-                                  {$Revision: 1.26 $} {$Date: 2005/09/08 18:24:02 $}]
+                                  {$Revision: 1.27 $} {$Date: 2005/11/14 22:54:45 $}]
 
 
     # Props
@@ -107,7 +108,7 @@ proc LabelsInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC LabelsUpdateMRML
-# 
+# Update the Label mrml elements and redraw the gui elements.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -148,12 +149,27 @@ proc LabelsUpdateMRML {} {
             set highest $high
         }    
     }
+    # get the one behond the current highest
+    incr highest
+    if {$::Module(verbose)} {
+        puts "Resetting labelNew to $highest, and diffuseNew to white, and nameNew to empty string"
+    }
     set Label(labelNew) $highest
+    # also reset the new diffuse value and the new label name
+    set Label(diffuseNew) {1.0 1.0 1.0}
+    # resets the sliders
+    foreach slider "red green blue" {
+        set Label(sample,$slider) 1.0
+        ColorSlider $Label(s[Cap $slider]) $Label(diffuseNew)
+    }
+
+    set Label(nameNew) ""
+
 }
 
 #-------------------------------------------------------------------------------
 # .PROC LabelsBuildGUI
-# 
+# Build the labels popup window, .wLabels
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -310,7 +326,7 @@ proc LabelsBuildGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC LabelsHideLabels
-# 
+# Hide the label list Label(fList).
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -327,7 +343,7 @@ proc LabelsHideLabels {} {
 
 #-------------------------------------------------------------------------------
 # .PROC LabelsUnHideLabels
-# 
+# Show the label list.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -344,8 +360,9 @@ proc LabelsUnHideLabels {} {
 
 #-------------------------------------------------------------------------------
 # .PROC LabelsColorSample
-# 
+# Set the Label(diffuseNew) list, loop through RGB to color the sliders, and 
 # .ARGS
+# int scale optional argument, not used
 # .END
 #-------------------------------------------------------------------------------
 proc LabelsColorSample {{scale}} {
@@ -362,8 +379,11 @@ proc LabelsColorSample {{scale}} {
 
 #-------------------------------------------------------------------------------
 # .PROC ShowLabels
-# 
+# Shows the popup that allows you to pick labels.
 # .ARGS
+# string callback defaults to empty string, what to call when a selection is made
+# int x defaults to 100, horizontal position of the popup window, passed to wm geometry as +x
+# int y defaults to 100, vertical  position of the popup window, passed to wm geometry as +y
 # .END
 #-------------------------------------------------------------------------------
 proc ShowLabels {{callback ""} {x 100} {y 100}} {
@@ -383,8 +403,11 @@ proc ShowLabels {{callback ""} {x 100} {y 100}} {
 
 #-------------------------------------------------------------------------------
 # .PROC ShowColors
-# 
+# Display the pop up that allows you to select colors.
 # .ARGS
+# string callback defaults to empty string, what to call when a selection is made
+# int x defaults to 100, horizontal position of the popup window, passed to wm geometry as +x
+# int y defaults to 100, vertical  position of the popup window, passed to wm geometry as +y
 # .END
 #-------------------------------------------------------------------------------
 proc ShowColors {{callback ""} {x 100} {y 100}} {
@@ -404,7 +427,7 @@ proc ShowColors {{callback ""} {x 100} {y 100}} {
  
 #-------------------------------------------------------------------------------
 # .PROC LabelsDisplayColors
-# 
+# Create the canvas colour grid showing sample squares of each node in the color tree.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -447,10 +470,14 @@ proc LabelsDisplayColors {} {
 }
 
 #-------------------------------------------------------------------------------
-# LabelsGetColorFromPosition
+# .PROC LabelsGetColorFromPosition
 #
-# x,y are positions in color canvas on [1, $Label(dim)]
-# Returns color ID
+# x,y are positions in color canvas on [1, $Label(dim)].
+# Returns color ID.
+# .ARGS
+# int x x position on the color canvas
+# int y y position on the color canvas
+# .END
 #-------------------------------------------------------------------------------
 proc LabelsGetColorFromPosition {x y} {
     global Label Mrml
@@ -470,6 +497,9 @@ proc LabelsGetColorFromPosition {x y} {
 # .PROC LabelsBrowseColor
 #
 # Show the name of the color the mouse is over
+# .ARGS
+# int x x position on the color canvas
+# int y y position on the color canvas
 # .END
 #-------------------------------------------------------------------------------
 proc LabelsBrowseColor {x y} {
@@ -487,6 +517,10 @@ proc LabelsBrowseColor {x y} {
 # .PROC LabelsSelectColor
 #
 # Select the color the mouse is over
+# .ARGS
+# int x x position on the color canvas
+# int y y position on the color canvas
+# int c defaults to empty string, optional color id
 # .END
 #-------------------------------------------------------------------------------
 proc LabelsSelectColor {x y {c ""}} {
@@ -517,7 +551,7 @@ proc LabelsSelectColor {x y {c ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC LabelsLeaveGrid
-# 
+# Reset Label(nameBrowse) when the mouse leaves the color grid.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -534,7 +568,8 @@ proc LabelsLeaveGrid {} {
 
 #-------------------------------------------------------------------------------
 # .PROC LabelsDisplayLabels
-# 
+# Clear out the Label(fLabelList) and repopulate it from the list for the 
+# active color node.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -555,8 +590,9 @@ proc LabelsDisplayLabels {} {
 
 #-------------------------------------------------------------------------------
 # .PROC LabelsSelectLabelClick
-# 
+# Select the label, call the callback, and then close the popup.
 # .ARGS
+# int index defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc LabelsSelectLabelClick {{index ""}} {
@@ -574,8 +610,9 @@ proc LabelsSelectLabelClick {{index ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC LabelsSelectLabel
-# 
+# Set the active label, recolor gui elements when select a label.
 # .ARGS
+# int i label id, defaults to empty string to be reset from the currently selected label
 # .END
 #-------------------------------------------------------------------------------
 proc LabelsSelectLabel {{i ""}} {
@@ -608,8 +645,9 @@ proc LabelsSelectLabel {{i ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC LabelsSetColor
-# 
+# Update the gui when a label has been selected.
 # .ARGS
+# string colorName for testing against the color node names
 # .END
 #-------------------------------------------------------------------------------
 proc LabelsSetColor {colorName} {
@@ -654,7 +692,7 @@ proc LabelsSetColor {colorName} {
 
 #-------------------------------------------------------------------------------
 # .PROC LabelsColorWidgets
-# 
+# Loop through the Label(colorWidgetList) and recolor all of them.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -710,6 +748,8 @@ proc LabelsFindLabel { } {
 # .PROC LabelsSetOutputLabel
 #
 # Update the label value in the interactive filters.
+# .ARGS
+# int p defaults to empty string, not used
 # .END
 #-------------------------------------------------------------------------------
 proc LabelsSetOutputLabel {{p ""}} {
@@ -719,7 +759,7 @@ proc LabelsSetOutputLabel {{p ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC LabelsCreateColor
-# 
+# Called to add a new color.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
