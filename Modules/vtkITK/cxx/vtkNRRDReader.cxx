@@ -35,7 +35,7 @@
 #include "vtkFloatArray.h" 
 
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.22 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.23 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -454,11 +454,11 @@ void vtkNRRDReader::ExecuteInformation()
       case nrrdSpacingStatusNone:
         // Let ITK's defaults stay
         // this->SetSpacing(axii, 1.0);
-    spacings[axii]=1.0;
+        spacings[axii]=1.0;
         break;
       case nrrdSpacingStatusScalarNoSpace:
         spacings[axii]=spacing;
-    IjkToRasMatrix->SetElement(axii,axii,spacing);
+        IjkToRasMatrix->SetElement(axii,axii,spacing);
         break;
       case nrrdSpacingStatusDirection:
         if (AIR_EXISTS(spacing))
@@ -468,21 +468,21 @@ void vtkNRRDReader::ExecuteInformation()
           spacings[axii]=spacing;
 
         
-      for (int j=0; j<this->nrrd->spaceDim; j++) 
-        {
+          for (int j=0; j<this->nrrd->spaceDim; j++) 
+            {
              IjkToRasMatrix->SetElement(j,axii , spaceDir[j]*spacing);
             }  
           
           }
         break;
-      default:
-      case nrrdSpacingStatusUnknown:
-        vtkErrorMacro("ReadImageInformation: Error interpreting "
-                          "nrrd spacing (nrrdSpacingStatusUnknown)");
+          default:
+          case nrrdSpacingStatusUnknown:
+            vtkErrorMacro("ReadImageInformation: Error interpreting "
+                              "nrrd spacing (nrrdSpacingStatusUnknown)");
         break;
-      case nrrdSpacingStatusScalarWithSpace:
-        vtkErrorMacro("ReadImageInformation: Error interpreting "
-                          "nrrd spacing (nrrdSpacingStatusScalarWithSpace)");
+          case nrrdSpacingStatusScalarWithSpace:
+            vtkErrorMacro("ReadImageInformation: Error interpreting "
+                              "nrrd spacing (nrrdSpacingStatusScalarWithSpace)");
         break;
       }
     }
@@ -495,7 +495,7 @@ void vtkNRRDReader::ExecuteInformation()
       // only set info if we have something to set
       for (unsigned int saxi=0; saxi < nrrd->spaceDim; saxi++)
         {
-    origins[saxi] = nrrd->spaceOrigin[saxi];
+        origins[saxi] = nrrd->spaceOrigin[saxi];
         //this->SetOrigin(saxi, nrrd->spaceOrigin[saxi]);
         }
       }
@@ -514,9 +514,9 @@ void vtkNRRDReader::ExecuteInformation()
           // only set info if we have something to set
           // this->SetOrigin(saxi, 0.0);
           origins[saxi] = 0.0;
-      break;
+          break;
         case nrrdOriginStatusOkay:
-      origins[saxi] = spaceOrigin[saxi];
+          origins[saxi] = spaceOrigin[saxi];
           break;
         default:
         case nrrdOriginStatusUnknown:
@@ -528,10 +528,16 @@ void vtkNRRDReader::ExecuteInformation()
       }
     }
       
-
-   vtkMatrix4x4::Invert(IjkToRasMatrix, RasToIjkMatrix);
-   for (int i=0; i < this->nrrd->dim; i++) {
-       RasToIjkMatrix->SetElement(i, 3, (dataExtent[2*i+1] - dataExtent[2*i])/2.0);
+   if (AIR_EXISTS(nrrd->spaceOrigin[0])) {
+       for (int i=0; i < this->nrrd->dim; i++) {
+           IjkToRasMatrix->SetElement(i, 3, origins[i]);
+           vtkMatrix4x4::Invert(IjkToRasMatrix, RasToIjkMatrix);
+       }
+   } else {
+       vtkMatrix4x4::Invert(IjkToRasMatrix, RasToIjkMatrix);
+       for (int i=0; i < this->nrrd->dim; i++) {
+           RasToIjkMatrix->SetElement(i, 3, (dataExtent[2*i+1] - dataExtent[2*i])/2.0);
+       }
    }
   
    RasToIjkMatrix->SetElement(3,3,1.0);
