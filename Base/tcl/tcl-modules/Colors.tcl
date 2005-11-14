@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,7 +32,7 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        Colors.tcl
 # PROCEDURES:  
@@ -43,15 +43,22 @@
 #   ColorsApply
 #   ColorsUpdateMRML
 #   ColorsDisplayColors
-#   ColorsSelectColor optional
-#   ColorsSetColor
+#   ColorsSelectColor i
+#   ColorsSetColor value
 #   ColorsAddColor
 #   ColorsDeleteColor
 #   ColorsColorSample
 #   ColorsDisplayLabels
-#   ColorsSelectLabel
+#   ColorsSelectLabel i
 #   ColorsAddLabel
 #   ColorsDeleteLabel
+#   ColorsPickLUT parrentButton
+#   ColorsSetLUT id
+#   ColorsLUTSetNumberOfColors val
+#   ColorsLUTSetParam hilo Param val
+#   ColorsLUTSetAnno col
+#   ColorsLUTSetRamp ramp
+#   ColorsClose
 #==========================================================================auto=
 
 
@@ -78,13 +85,19 @@ proc ColorsInit {} {
     # Define Procedures
     set Module($m,procGUI)  ColorsBuildGUI
     set Module($m,procMRML) ColorsUpdateMRML
+    set Module($m,procMainFileCloseUpdateEntered) ColorsClose
 
     # Define Dependencies
     set Module($m,depend) ""
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.32 $} {$Date: 2005/09/06 22:00:13 $}]
+        {$Revision: 1.33 $} {$Date: 2005/11/14 23:10:17 $}]
+
+    # default color xml file
+    set Color(defaultColorFileName) [ExpandPath Colors.xml]
+    # init the color file to load from
+    set Color(fileName) $Color(defaultColorFileName)
 
     # the LUT to affect by the colour scale editing
     set Color(LUT,currentID) -1
@@ -130,18 +143,19 @@ proc ColorsBuildGUI {} {
     # Help frame
     #-------------------------------------------
     set help "
-Click on the name of a color in the <B>Color Name</B> listbox to view the
-<B>Label</B> values associated with this color.  Use the <B>Add</B> and
-<B>Delete</B> buttons to create/remove new colors or labels for colors.
+<UL>
+<LI><B>Edit Colors:</B><BR>
+Click on the name of a color in the <B>Color Name</B> listbox to view the <B>Label</B> values associated with this color.  Use the <B>Add</B> and <B>Delete</B> buttons to create/remove new colors or labels for colors. Make sure to add a new color name first, and then add labels for the new color, and edit the display color. <BR>
+The color changes will take effect through all of Slicer when you hit the <B>Update</B> button, otherwise just the color node here will be changed.
 <P>
-Your changes will not take effect until you click the <B>Apply</B> button.
-<P>
-The colors are saved in the MRML file when you select the <B>Save</B> option
-from the <B>File</B> menu if they differ from the default colors.
-<P>
-The Load Colors tab will allow you to open up mrml files with color nodes 
-and use the new ones as your default colors.
-"
+The colors are saved in the MRML file when you select the <B>Save</B> option from the <B>File</B> menu if they differ from the default colors. <BR>
+If you select the <B>Close</B> option from the <B>File</B> menu, all color changes will be backed out and the default slicer colors will be reloaded.
+<BR><LI><B>Edit Color Scale:</B><BR>
+Select a color look up table from the drop down menu and do real time adjustments. Not saved.
+<BR><LI><B>Load Colors:</B><BR>
+The Load Colors tab will allow you to open up mrml files with color nodes and use the new ones as your default colors.
+</UL>"
+
     regsub -all "\n" $help { } help
     MainHelpApplyTags Colors $help
     MainHelpBuildGUI Colors
@@ -373,7 +387,7 @@ and use the new ones as your default colors.
 
 #-------------------------------------------------------------------------------
 # .PROC ColorsSetFileName
-# 
+# The Color(fileName) is set via the interface, and printed out here.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -384,7 +398,8 @@ proc ColorsSetFileName {}  {
 
 #-------------------------------------------------------------------------------
 # .PROC ColorsLoadApply
-# 
+# Load an xml file, Color(fileName), that contains colour node definitions.
+# Deletes old colour nodes first.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -411,7 +426,8 @@ proc ColorsLoadApply {} {
 #-------------------------------------------------------------------------------
 # .PROC ColorsApply
 #
-# Update all uses of colors in the Slicer to show the current colors
+# Update all uses of colors in the Slicer to show the current colors, 
+# just calls MainUpdateMRML
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsApply {} {
@@ -440,7 +456,7 @@ proc ColorsUpdateMRML {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ColorsDisplayColors
-# 
+# Inserts colours from the Mrml color tree into the tk element Color(fColorList)
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsDisplayColors {} {
@@ -460,9 +476,10 @@ proc ColorsDisplayColors {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ColorsSelectColor
-# 
+# Select the colour clicked upon, and set the active color node, and redraw 
+# gui elements.
 # .ARGS
-# i optional color index in Color(idList)
+# int i optional color index in Color(idList), defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsSelectColor {{i ""}} {
@@ -483,8 +500,10 @@ proc ColorsSelectColor {{i ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC ColorsSetColor
-# Used by the color sliders
+# Used by the color sliders, sets the  color of the active color node from 
+# the Color red, green, blue array vars, and draws the sample sliders.
 # .ARGS
+# list value optional, not used, defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsSetColor {{value ""}} {
@@ -505,7 +524,7 @@ proc ColorsSetColor {{value ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC ColorsAddColor
-#
+# Calls MainColorsAddColor with the values set from the gui.
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsAddColor {} {
@@ -524,6 +543,7 @@ proc ColorsAddColor {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ColorsDeleteColor
+# Delete the active color node, and re-render.
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsDeleteColor {} {
@@ -535,6 +555,7 @@ proc ColorsDeleteColor {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ColorsColorSample
+# Loop over the call to redraw the color sliders.
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsColorSample {} {
@@ -542,12 +563,14 @@ proc ColorsColorSample {} {
     
     set color "$Color(red) $Color(green) $Color(blue)"
     foreach slider "Red Green Blue" {
-    ColorSlider $Color(s$slider) $color
+        ColorSlider $Color(s$slider) $color
     }
 }
 
 #-------------------------------------------------------------------------------
 # .PROC ColorsDisplayLabels
+# Clear out the Color fLabelList and create it from scratch from the labels in 
+# the active color node.
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsDisplayLabels {} {
@@ -568,6 +591,9 @@ proc ColorsDisplayLabels {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ColorsSelectLabel
+# Update the gui after selection of a label.
+# .ARGS
+# int i defaults to empty string, otherwise set to current selection.
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsSelectLabel {{i ""}} {
@@ -590,8 +616,8 @@ proc ColorsSelectLabel {{i ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC ColorsAddLabel
-#
-# returns 1 on success, else 0
+# Add a new label and redraw the gui.
+# Returns 1 on success, else 0
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsAddLabel {} {
@@ -607,6 +633,7 @@ proc ColorsAddLabel {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ColorsDeleteLabel
+# Delete the label  and redraw the gui.
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsDeleteLabel {} {
@@ -838,6 +865,13 @@ proc ColorsLUTSetAnno { col } {
     
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ColorsLUTSetRamp
+# Set the ramp value for the current colour table.
+# .ARGS
+# text ramp the ramp value, one of Linear, SCurve, SQRT
+# .END
+#-------------------------------------------------------------------------------
 proc ColorsLUTSetRamp { ramp } {
     global Color Lut
 
@@ -854,4 +888,21 @@ proc ColorsLUTSetRamp { ramp } {
     } else {
         puts "ColorsLUTSetRamp: colour table $id not in Lut(idList)"
     }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ColorsClose
+# Called when the File Close option is selected, to clean up the colors module.
+# Goes back to the default slicer colors.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ColorsClose {} {
+    global Color
+
+    if {$::Module(verbose)} {
+        puts "ColorsClose, reloading default colors from $Color(defaultColorFileName) "
+    }
+    set Color(fileName) $Color(defaultColorFileName)
+    ColorsLoadApply
 }
