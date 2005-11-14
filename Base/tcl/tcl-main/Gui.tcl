@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,34 +32,34 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        Gui.tcl
 # PROCEDURES:  
 #   GuiInit
-#   GuiApplyStyle stylenames
-#   ValidateFloat
-#   ValidateName
-#   ValidateInt
-#   InfoWidget
-#   MailWidget
-#   MsgPopup
-#   YesNoPopup win x y yesCmd yesCmd
-#   ShowPopup
-#   MakeVTKImageWindow
-#   ExposeTkImageViewer
-#   MakeVTKObject
-#   ScrollSet
-#   MakeColor
-#   MakeColorNormalized
-#   ColorSlider widget list
-#   ExpandPath
-#   Uncap
-#   Cap
-#   WaitWindow
-#   WaitPopup
+#   GuiApplyStyle stylenames args
+#   ValidateFloat var
+#   ValidateName s
+#   ValidateInt s
+#   InfoWidget f
+#   MailWidget f
+#   MsgPopup win x y msg title font
+#   YesNoPopup win x y msg yesCmd noCmd justify title font
+#   ShowPopup w x y
+#   MakeVTKImageWindow name input,
+#   ExposeTkImageViewer widget x y w h
+#   MakeVTKObject shape name
+#   ScrollSet scrollbar geoCmd offset size
+#   MakeColor str
+#   MakeColorNormalized str
+#   ColorSlider widget rgb
+#   ExpandPath filename
+#   Uncap s
+#   Cap s
+#   WaitWindow text x y
+#   WaitPopup text
 #   WaitDestroy
-#   IsInt
+#   IsInt str
 #   tkHorizontalLine name args
 #   tkVerticalLine name args
 #   tkSpace name args
@@ -68,7 +68,27 @@
 #-------------------------------------------------------------------------------
 # .PROC GuiInit
 #
-# This is my description.
+# Initialise global variables for this module. Defined Gui strings for a uniform
+# interface:<br>
+# Tab Attributes (TA)<br>
+# Workspace Button Attributes (WBA)<br>
+# Workspace Menu-Button Attributes (WMBA)<br>
+# Workspace Menu Attributes (WMA)<br>
+# Workspace Label Attributes (WLA)<br>
+# Workspace Frame Attributes (WFA)<br>
+# Workspace Title Attributes (WTA)<br>
+# Workspace Entry Attributes (WEA)<br>
+# Workspace Entry Disabled Attributes (WEDA)<br>
+# Workspace Checkbox Attributes (WCA)<br>
+# Workspace Radiobutton Attributes (WRA)<br>
+# Workspace Scale Attributes (WSA)<br>
+# Workspace Tooltip Attributes (WTTA)<br>
+# Workspace Pad Attributes (WPA)<br>
+# Backdrop Label Attributes (BLA)<br>
+# Backdrop Scale Attributes (BSA)<br>
+# System Menu Attributes (SMA)<br>
+# Workspace Scrollbar Attributes (WSBA)<br>
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc GuiInit {} {
@@ -76,7 +96,7 @@ proc GuiInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo Gui \
-    {$Revision: 1.53 $} {$Date: 2005/11/10 15:53:02 $}]
+    {$Revision: 1.54 $} {$Date: 2005/11/14 18:28:24 $}]
 
 
     # enable tooltips by default.  This should check user preferences somehow.
@@ -277,6 +297,7 @@ proc GuiInit {} {
 # 
 # .ARGS
 # list stylenames a list of stylenames to apply (in order)
+# list args a list of widgets to which to apply the styles
 # .END
 #-------------------------------------------------------------------------------
 proc GuiApplyStyle {stylenames args} {
@@ -290,9 +311,10 @@ proc GuiApplyStyle {stylenames args} {
 
 #-------------------------------------------------------------------------------
 # .PROC ValidateFloat
-# Return 1 if valid, else 0
+# Return 1 if valid float number, else 0
 # 
 # .ARGS
+# float var the value to check
 # .END
 #-------------------------------------------------------------------------------
 proc ValidateFloat { var } {
@@ -301,29 +323,32 @@ proc ValidateFloat { var } {
 
 #-------------------------------------------------------------------------------
 # .PROC ValidateName
-# 
+# Return 1 if valid, else 0. Only allow a-z, A-Z, 0-9, underscore and dashes in
+# a valid name.
 # .ARGS
+# str s the string to check
 # .END
 #-------------------------------------------------------------------------------
 proc ValidateName {s} {
-    # Return 1 if valid, else 0
     return [regexp {^([a-zA-Z0-9_-]*)$} $s]
 }
 
 #-------------------------------------------------------------------------------
 # .PROC ValidateInt
-# 
+# Return 1 if valid, else 0. Only allow minus sign, and numbers 0-9.
 # .ARGS
+# str s the number to check.
 # .END
 #-------------------------------------------------------------------------------
 proc ValidateInt {s} {
-    # Return 1 if valid, else 0
     return [expr {[regexp {^(-*[0-9][0-9]*)$} $s]}]
 }
+
 #-------------------------------------------------------------------------------
 # .PROC InfoWidget
-# 
+# Set up a text string and return it.
 # .ARGS
+# windowpath f the parent frame.
 # .END
 #-------------------------------------------------------------------------------
 proc InfoWidget {f} {
@@ -340,8 +365,9 @@ proc InfoWidget {f} {
 
 #-------------------------------------------------------------------------------
 # .PROC MailWidget
-# 
+# Set up a widget and return it.
 # .ARGS
+# windowpath f the parent window.
 # .END
 #-------------------------------------------------------------------------------
 proc MailWidget {f} {
@@ -359,8 +385,14 @@ proc MailWidget {f} {
 
 #-------------------------------------------------------------------------------
 # .PROC MsgPopup
-# 
+# Calls YesNoPopup with default values.
 # .ARGS
+# str win Window Name
+# int x positions on the screen
+# int y positions on the screen
+# str msg the message to display
+# str title optional title of the window, defaults to empty string
+# str font optional font information, defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc MsgPopup {win x y msg {title ""} {font ""}} {
@@ -378,8 +410,12 @@ proc MsgPopup {win x y msg {title ""} {font ""}} {
 # str win Window Name, almost irrelevant.
 # int x positions on the screen
 # int y positions on the screen
-# str yesCmd the command to perform if yes is chosen
-# str yesCmd the command to perform if no is chosen
+# str msg the message to display
+# str yesCmd the command to perform if yes is chosen, defaults to empty string
+# str noCmd the command to perform if no is chosen, defaults to empty string
+# str justify optional justification setting, defaults to center
+# str title  optional title of the window, defaults to empty string
+# str font optional font information, defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc YesNoPopup {win x y msg {yesCmd ""} {noCmd ""} \
@@ -428,6 +464,7 @@ proc YesNoPopup {win x y msg {yesCmd ""} {noCmd ""} \
 # and returns 1.  Else returns 0
 #
 # .ARGS
+# windowpath w the window to raise.
 # .END
 #-------------------------------------------------------------------------------
 proc RaisePopup {w} {
@@ -446,6 +483,10 @@ proc RaisePopup {w} {
 # Create window 'w' at screen coordinates (x, y) with 'title'
 #
 # .ARGS
+# windowpath w the window to create
+# str title the title of the window
+# int x horizontal display coordinate
+# int y vertical display coordinate
 # .END
 #-------------------------------------------------------------------------------
 proc CreatePopup {w title x y } {
@@ -463,9 +504,12 @@ proc CreatePopup {w title x y } {
 
 #-------------------------------------------------------------------------------
 # .PROC ShowPopup
-#
+# Deiconify and place a window.
 # 
 # .ARGS
+# windowpath w the window to display
+# int x horizontal position of the window
+# int y vertical position of the window
 # .END
 #-------------------------------------------------------------------------------
 proc ShowPopup {w x y} {
@@ -494,8 +538,10 @@ proc ShowPopup {w x y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MakeVTKImageWindow
-# 
+# Builds the vtk image mapper, actor, imager and win.
 # .ARGS
+# str name prefix string to use when naming vtk variables
+# str input, optional input to the vtk image mapper, defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc MakeVTKImageWindow {name {input ""}} {
@@ -528,8 +574,14 @@ proc MakeVTKImageWindow {name {input ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC ExposeTkImageViewer
-# 
+# Don't rerender if already rendering, but otherwise empty the queue of any other
+# expose events and render the widget.
 # .ARGS
+# windowpath widget the window to render
+# int x x position of the window
+# int y y position of the winodw
+# int w width of the window
+# int h height of the window
 # .END
 #-------------------------------------------------------------------------------
 proc ExposeTkImageViewer {widget x y w h} {
@@ -550,8 +602,10 @@ proc ExposeTkImageViewer {widget x y w h} {
 
 #-------------------------------------------------------------------------------
 # .PROC MakeVTKObject
-# 
+# Create a souce, mapper, and actor and add it via MainAddActor.
 # .ARGS
+# str shape a valid name for a vtk"shape"Source
+# str name prefix for vtk variables
 # .END
 #-------------------------------------------------------------------------------
 proc MakeVTKObject {shape name} {
@@ -573,8 +627,12 @@ proc MakeVTKObject {shape name} {
 
 #-------------------------------------------------------------------------------
 # .PROC ScrollSet
-# 
+# Set up a scrollbar.
 # .ARGS
+# windowpath scrollbar the path to the scrollbar to set 
+# list geoCmd list of commands, the manager should be the zeroth element
+# float offset scrollbar offset
+# float size scrollbar size
 # .END
 #-------------------------------------------------------------------------------
 proc ScrollSet {scrollbar geoCmd offset size} {
@@ -589,8 +647,13 @@ proc ScrollSet {scrollbar geoCmd offset size} {
 
 #-------------------------------------------------------------------------------
 # ScrolledListbox
-#
-# xAlways is 1 if the x scrollbar should be always visible
+# Create a scrolled list box.
+# .ARGS
+# windowpath frame to create and populate
+# int xAlways is 1 if the x scrollbar should be always visible
+# int yAlways is 1 if the y scrollbar should be always visible
+# list args used to configure the scrolled list box
+# .END
 #-------------------------------------------------------------------------------
 proc ScrolledListbox {f xAlways yAlways {args ""}} {
     global Gui
@@ -653,8 +716,9 @@ proc ScrolledListbox {f xAlways yAlways {args ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MakeColor
-# 
+# Returns a formatted colour string, as 3 floats from 0-1
 # .ARGS
+# list str R, G, B as floats 0-1
 # .END
 #-------------------------------------------------------------------------------
 proc MakeColor {str} {
@@ -666,8 +730,9 @@ proc MakeColor {str} {
 
 #-------------------------------------------------------------------------------
 # .PROC MakeColorNormalized
-# 
+# Returns a formatted colour string, as floats from 0-255.
 # .ARGS
+# list str R, G, B as floats between 0-1
 # .END
 #-------------------------------------------------------------------------------
 proc MakeColorNormalized {str} {
@@ -684,11 +749,11 @@ proc MakeColorNormalized {str} {
 # reconfigures the color if the color will change, since otherwise
 # there is a bug under Linux.  (Under Linux the slider gets into an
 # infinite loop since configuring it calls the procedure bound to it,
-# which generally configures it again.  This freezes the slicer.
+# which generally configures it again.  This freezes the slicer. 
 # This must be a bug in tcl/tk with configuring scale widgets.)
 # .ARGS
 # widget widget the name of the slider
-# rgb list three integers, in "R G B" format
+# list rgb three integers, in "R G B" format
 # .END
 #-------------------------------------------------------------------------------
 proc ColorSlider {widget rgb} {
@@ -711,8 +776,9 @@ proc ColorSlider {widget rgb} {
 
 #-------------------------------------------------------------------------------
 # .PROC ExpandPath
-# 
+# If the filename doesn't exist as is, return the Path(program) var prepended to it.
 # .ARGS
+# filepath filename the file to test and possibly expand
 # .END
 #-------------------------------------------------------------------------------
 proc ExpandPath {filename} {
@@ -729,8 +795,9 @@ proc ExpandPath {filename} {
 
 #-------------------------------------------------------------------------------
 # .PROC Uncap
-# 
+# Returns the input string with the first letter lower case.
 # .ARGS
+# str s the string to work on
 # .END
 #-------------------------------------------------------------------------------
 proc Uncap {s} {
@@ -741,8 +808,9 @@ proc Uncap {s} {
 
 #-------------------------------------------------------------------------------
 # .PROC Cap
-# 
+# Returns the input string with the first letter upper case.
 # .ARGS
+# str s the string to work on
 # .END
 #-------------------------------------------------------------------------------
 proc Cap {s} {
@@ -753,8 +821,11 @@ proc Cap {s} {
 
 #-------------------------------------------------------------------------------
 # .PROC WaitWindow
-# 
+# Wait for a window to appear on screen.
 # .ARGS
+# str text text to display in the waiting window
+# int x the horizontal location of the window
+# int y the vertical location of the window
 # .END
 #-------------------------------------------------------------------------------
 proc WaitWindow {text x y} {
@@ -777,11 +848,11 @@ proc WaitWindow {text x y} {
     return $tWait
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC WaitPopup
-# 
+# Set up and display a wait window, incrementing the wait semaphore.
 # .ARGS
+# str text optional message, defaults to "Please wait..."
 # .END
 #-------------------------------------------------------------------------------
 proc WaitPopup {{text "Please wait..."}} {
@@ -799,7 +870,7 @@ proc WaitPopup {{text "Please wait..."}} {
 
 #-------------------------------------------------------------------------------
 # .PROC WaitDestroy
-# 
+# Destroy the wait window if the wait semaphore is zero.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -817,8 +888,9 @@ proc WaitDestroy {} {
 
 #-------------------------------------------------------------------------------
 # .PROC IsInt
-# 
+# Returns one if the input string contains an integer (only minus and 0 to 9 allowed)
 # .ARGS
+# str str string to check
 # .END
 #-------------------------------------------------------------------------------
 proc IsInt {str} {
