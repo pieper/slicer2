@@ -108,12 +108,10 @@ proc fMRIEngineBuildUIForSetupTab {parent} {
     # Model frame 
     #-------------------------------------------
     set f $parent.fModel
-    DevAddButton $f.bLoad "Load Design" "fMRIEngineLoadModel"   13 
-    $f.bLoad configure -state disabled
-    DevAddButton $f.bSave "Save Design" "fMRIEngineSaveModel"   13 
-    $f.bSave configure -state disabled
-    DevAddButton $f.bView "View Design" "fMRIEngineViewModel"   13 
-    DevAddButton $f.bClear "Clear Design" "fMRIEngineClearModel" 13 
+    DevAddButton $f.bLoad "Load Design" "fMRIEngineLoadParadigm"   15 
+    DevAddButton $f.bSave "Save Design" "fMRIEngineSaveParadigm"   15 
+    DevAddButton $f.bView "View Design" "fMRIEngineViewModel"   15 
+    DevAddButton $f.bClear "Clear Design" "fMRIEngineClearModel" 15 
     grid $f.bLoad $f.bSave -padx 1 -pady 1 -sticky e
     grid $f.bView $f.bClear -padx 1 -pady 1 -sticky e
 
