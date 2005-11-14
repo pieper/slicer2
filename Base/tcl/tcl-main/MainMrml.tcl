@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,43 +32,46 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        MainMrml.tcl
 # PROCEDURES:  
 #   MainMrmlInit
 #   MainMrmlInitIdLists
+#   MainMrmlUpdateIdLists nodeTypeList
+#   MainMrmlAppendnodeTypeList  MRMLnodeTypeList
 #   MainMrmlUpdateMRML
-#   MainMrmlDumpTree
-#   MainMrmlPrint
+#   MainMrmlDumpTree type
+#   MainMrmlPrint tags
 #   MainMrmlClearList
-#   MainMrmlAddNode nodeType
-#   MainMrmlInsertBeforeNode nodeType
-#   MainMrmlInsertAfterNode nodeType
-#   MainMrmlUndoAddNode
-#   MainMrmlDeleteNodeDuringUpdate
-#   MainMrmlDeleteNode
-#   MainMrmlDeleteNodeNoUpdate
+#   MainMrmlAddNode nodeType globalArray
+#   MainMrmlInsertBeforeNode nodeBefore nodeType
+#   MainMrmlInsertAfterNode nodeBefore nodeType
+#   MainMrmlUndoAddNode nodeType n
+#   MainMrmlDeleteNodeDuringUpdate nodeType id
+#   MainMrmlDeleteNode nodeType id
+#   MainMrmlDeleteNodeNoUpdate nodeType id
 #   MainMrmlDeleteAll
-#   MainMrmlSetFile
+#   MainMrmlSetFile filename
 #   MainMrmlRead mrmlFile
-#   MainMrmlImport 
-#   MainMrmlBuildTreesVersion2.0
-#   MainMrmlReadVersion1.0
+#   MainMrmlImport  filename
+#   MainMrmlBuildTreesVersion2.0 tags
+#   MainMrmlReadVersion1.0 filename
 #   MainMrmlBuildTreesVersion1.0
-#   MainMrmlDeleteColors the
-#   MainMrmlAddColorsFromFile the
-#   MainMrmlAddColors
+#   MainMrmlDeleteColors
+#   MainMrmlAddColorsFromFile fileName
+#   MainMrmlAddColors tags
 #   MainMrmlCheckColors
-#   MainMrmlRelativity
-#   MainMrmlWrite
-#   MainMrmlWriteProceed
-#   MainMrmlCheckVolumes
+#   MainMrmlRelativity oldRoot
+#   MainMrmlWrite filename
+#   MainMrmlWriteProceed filename
+#   MainMrmlCheckVolumes filename
+#   MainMrmlAbsolutivity
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlInit
-# 
+# Set global variables for this module.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -98,7 +101,7 @@ proc MainMrmlInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainMrml \
-    {$Revision: 1.108 $} {$Date: 2005/05/30 19:34:37 $}]
+    {$Revision: 1.109 $} {$Date: 2005/11/14 18:37:28 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -125,6 +128,7 @@ proc MainMrmlInitIdLists {} {
 # Updates the Id list for each data type
 #
 # .ARGS
+# list nodeTypeList the list of nodes for this type
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlUpdateIdLists {nodeTypeList} {
@@ -137,12 +141,14 @@ proc MainMrmlUpdateIdLists {nodeTypeList} {
         set ${node}(idListDelete) ""
     }
 }
+
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlAppendnodeTypeList 
 #  Call this function in your init function if your module addds new nodes 
 #  to the Mrml Tree.
 #  Example: vtkEMLocalSegment/tcl/EMLocalSegment 
 # .ARGS
+# list MRMLnodeTypeList new type list
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlAppendnodeTypeList {MRMLnodeTypeList} {
@@ -151,9 +157,10 @@ proc MainMrmlAppendnodeTypeList {MRMLnodeTypeList} {
 
     MainMrmlUpdateIdLists "$MRMLnodeTypeList"
 }
+
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlUpdateMRML
-# 
+# Compute transforms for every node in the mrml data tree.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -168,8 +175,9 @@ proc MainMrmlUpdateMRML {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlDumpTree
-# 
+# Print out all the nodes in the tree (not their contents)
 # .ARGS
+# string type which tree to dump 
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlDumpTree {type} {
@@ -186,8 +194,9 @@ proc MainMrmlDumpTree {type} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlPrint
-# 
+# Print out the contents of the mrml tree.
 # .ARGS
+# list tags the pairs that make up the mrml tree information
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlPrint {tags} {
@@ -249,14 +258,15 @@ proc MainMrmlClearList {} {
 #  Returns the MrmlMode
 # 
 # .ARGS
-#  str nodeType the type of node, \"Volume\", \"Color\", etc.
+# str nodeType the type of node, \"Volume\", \"Color\", etc.
+# list globalArray defaults to empty list, optional, if empty is set to node type and upvar'd
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlAddNode {nodeType  {globalArray ""}} {
     global Mrml
 
     if {$globalArray == ""} {
-    set globalArray $nodeType
+        set globalArray $nodeType
     }
 
     # the #0 puts the array in global scope
@@ -294,11 +304,12 @@ proc MainMrmlAddNode {nodeType  {globalArray ""}} {
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlInsertBeforeNode
 #
-#  Adds a node to the data tree right after NodeBefore
+#  Adds a node to the data tree right after NodeBefore.
 #  Returns the MrmlMode
 # 
 # .ARGS
-#  str nodeType the type of node, \"Volume\", \"Color\", etc.
+# str nodeBefore the node to insert after
+# str nodeType the type of node, \"Volume\", \"Color\", etc.
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlInsertBeforeNode {nodeBefore nodeType} {
@@ -339,11 +350,12 @@ proc MainMrmlInsertBeforeNode {nodeBefore nodeType} {
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlInsertAfterNode
 #
-#  Adds a node to the data tree right after NodeBefore
+#  Adds a node to the data tree right after NodeBefore.
 #  Returns the MrmlNode
 # 
 # .ARGS
-#  str nodeType the type of node, \"Volume\", \"Color\", etc.
+# str nodeBefore the node to insert after
+# str nodeType the type of node, \"Volume\", \"Color\", etc.
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlInsertAfterNode {nodeBefore nodeType} {
@@ -384,13 +396,14 @@ proc MainMrmlInsertAfterNode {nodeBefore nodeType} {
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlUndoAddNode
 # 
-
-# use this routine to remove a node that was accidentally added.
+# Use this routine to remove a node that was accidentally added.
 #
 # Don't call this routine to delete a node, it should only
 # happen if adding one fails (i.e reading a volume from disk fails).
 #
 # .ARGS
+# string nodeType the type of node, \"Volume\", \"Color\", etc.
+# int n the node to undo the add of
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlUndoAddNode {nodeType n} {
@@ -419,6 +432,9 @@ proc MainMrmlUndoAddNode {nodeType n} {
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlDeleteNodeDuringUpdate
 # Call this routine to delete a node during MainUpdateMRML
+# .ARGS
+# string nodeType the type of node, \"Volume\", \"Color\", etc.
+# int id the node id 
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteNodeDuringUpdate {nodeType id} {
@@ -446,8 +462,10 @@ proc MainMrmlDeleteNodeDuringUpdate {nodeType id} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlDeleteNode
-# 
+# Call this routine to delete a node.
 # .ARGS
+# string nodeType the type of node, \"Volume\", \"Color\", etc.
+# int id the node id 
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteNode {nodeType id} {
@@ -482,6 +500,8 @@ proc MainMrmlDeleteNode {nodeType id} {
 # .PROC MainMrmlDeleteNodeNoUpdate
 #  Same as MainMrmlDeleteNode, but does not call UpdateMRML 
 # .ARGS
+# string nodeType the type of node, \"Volume\", \"Color\", etc.
+# int id the node id 
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteNodeNoUpdate {nodeType id} {
@@ -588,8 +608,10 @@ proc MainMrmlDeleteAll {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlSetFile
-# 
+# Store the directory of the MRML file as the Mrml(dir) and store the new
+# relative prefix.
 # .ARGS
+# path filename the name of the mrml file
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlSetFile {filename} {
@@ -609,7 +631,6 @@ proc MainMrmlSetFile {filename} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlRead
-#
 #
 #  Delete the loaded Mrml data from memory.  Replace with a new Mrml file.
 #  Append \".xml\" or \".mrml\" an necessary to the file name as necessary.
@@ -708,7 +729,8 @@ proc MainMrmlRead {mrmlFile} {
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlImport 
 # Bring nodes from a mrml file into the current tree
-# .ARGS filename
+# .ARGS 
+# path filename the mrml file to import
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlImport {filename} {
@@ -773,8 +795,10 @@ proc MainMrmlImport {filename} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlBuildTreesVersion2.0
-# 
+# Build a mrml tree by adding nodes of the correct types, and filling in information
+# from the tags
 # .ARGS
+# list tags the pairs of tags to build the tree from
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlBuildTreesVersion2.0 {tags} {
@@ -1462,8 +1486,9 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlReadVersion1.0
-# 
+# Calls MRMLRead on the filename. Deprecated.
 # .ARGS
+# path filename file containing mrml to be read in
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlReadVersion1.0 {fileName} {
@@ -1489,7 +1514,7 @@ proc MainMrmlReadVersion1.0 {fileName} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlBuildTreesVersion1.0
-# 
+# Add nodes to the mrml tree. Deprecated.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1617,11 +1642,11 @@ proc MainMrmlBuildTreesVersion1.0 {} {
         set n [MainMrmlAddNode EndTransform]
     }
 }
+
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlDeleteColors
 # Deletes all the color nodes.
 # .ARGS
-# tags the array to clear of colors
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlDeleteColors {} {
@@ -1660,7 +1685,7 @@ proc MainMrmlDeleteColors {} {
 # Reads in colour information from a given xml file, adding to the mrml tree.
 # Returns -1 if it cannot read the file, 1 on success.
 # .ARGS
-# fileName the name of the xml file to open and search for colours
+# filepath fileName the name of the xml file to open and search for colours
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlAddColorsFromFile {fileName} {
@@ -1680,17 +1705,17 @@ proc MainMrmlAddColorsFromFile {fileName} {
     MainMrmlBuildTreesVersion2.0 $tagsColors
     return 1
 }
+
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlAddColors
-# 
+# If there are no Color nodes, then read, and append default colors.
+# Return a new list of tags, possibly including default colors.
 # .ARGS
+# list tags information about the color nodes
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlAddColors {tags} {
     global Module
-
-    # If there are no Color nodes, then read, and append default colors.
-    # Return a new list of tags, possibly including default colors.
 
     set colors 0
     foreach pair $tags {
@@ -1701,7 +1726,15 @@ proc MainMrmlAddColors {tags} {
     }
     if {$colors == 1} {return $tags}
     
-    set fileName [ExpandPath Colors.xml]
+    if {[info exists ::Color(defaultColorFileName)] == 1} {
+        set fileName $::Color(defaultColorFileName)
+        if {$::Module(verbose)} {
+            puts "MainMrmlAddColors: using Color(defaultColorFileName)"
+        }
+    } else {
+        set fileName [ExpandPath Colors.xml]
+    }
+    
     set tagsColors [MainMrmlReadVersion2.x $fileName]
     if {$tagsColors == 0} {
         set msg "Unable to read file default MRML color file '$fileName'"
@@ -1731,17 +1764,21 @@ proc MainMrmlAddColors {tags} {
 }
 
 
-
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlCheckColors
-# 
+# Check to see if the colors have been saved.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlCheckColors {} {
     global Mrml
     
-    set fileName [ExpandPath Colors.xml]
+    if {[info exists ::Color(defaultColorFileName)] == 1} {
+        set fileName $::Color(defaultColorFileName)
+    } else {
+        set fileName [ExpandPath Colors.xml]
+    }
+    
     set tags [MainMrmlReadVersion2.x $fileName]
 
     if {$tags != 0} {
@@ -1890,8 +1927,9 @@ proc MainMrmlRelativity {oldRoot} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlWrite
-# 
+# Sets up for writing, called before MainMrmlWriteProceed.
 # .ARGS
+# filepath filename where to write the mrml file
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlWrite {filename} {
@@ -1915,10 +1953,12 @@ proc MainMrmlWrite {filename} {
     # Check if all the volumes also have relative path names 
     MainMrmlCheckVolumes $filename
 }
+
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlWriteProceed
-# 
+# Write out the mrml tree to file
 # .ARGS
+# filepath filename where to write the mrml file to
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlWriteProceed {filename} {
@@ -1969,10 +2009,13 @@ proc MainMrmlWriteProceed {filename} {
     # Colors don't need saving now
     set Mrml(colorsUnsaved) 0
 }
+
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlCheckVolumes
-# 
+# Make sure that the volumes have the first file present.
+# If the check succeeds, call MainMrmlWriteProceed with the filename.
 # .ARGS
+# filepath filename mrml file name
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlCheckVolumes {filename} {
