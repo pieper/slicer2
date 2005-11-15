@@ -922,18 +922,18 @@ proc fMRIEngineCreateLabelMapReal {} {
     # slicer
     #---------------------------------
  
-    # always uses a new instance of vtkLabelMapModifier
-    if {[info commands fMRIEngine(labelMapModifier)] != ""} {
-        fMRIEngine(labelMapModifier) Delete
-        unset -nocomplain fMRIEngine(labelMapModifier)
+    # always uses a new instance of vtkLabelMapWhitening
+    if {[info commands fMRIEngine(labelMapWhitening)] != ""} {
+        fMRIEngine(labelMapWhitening) Delete
+        unset -nocomplain fMRIEngine(labelMapWhitening)
     }
-    vtkLabelMapModifier fMRIEngine(labelMapModifier)
+    vtkLabelMapWhitening fMRIEngine(labelMapWhitening)
 
     set id [MIRIADSegmentGetVolumeByName $Editor(nameWorking)] 
     set lmVol [Volume($id,vol) GetOutput] 
-    fMRIEngine(labelMapModifier) SetInput $lmVol 
-    fMRIEngine(labelMapModifier) Update 
-    $lmVol DeepCopy [fMRIEngine(labelMapModifier) GetOutput]
+    fMRIEngine(labelMapWhitening) SetInput $lmVol 
+    fMRIEngine(labelMapWhitening) Update 
+    $lmVol DeepCopy [fMRIEngine(labelMapWhitening) GetOutput]
 
     MainUpdateMRML
     RenderAll
