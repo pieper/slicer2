@@ -272,10 +272,14 @@ vtkPoints* vtkPolygonList::GetSampledPolygon(int p)
 
     // Connect up the points in polygon p as a linked list of Points
     if (p < 0 || p > NUM_POLYGONS - 1) // out of range index
+    {
         return this->Samples;
+    }
     int n = poly->GetNumberOfPoints();
     if (n < 1) // empty polygon
+    {
         return this->Samples;
+    }
     // Polygon has one or more points
 
     // And now, the original GetPoints(density) function modified
@@ -288,7 +292,10 @@ vtkPoints* vtkPolygonList::GetSampledPolygon(int p)
     int closed = this->GetClosed(p);
 
     // Zero points--redundant, but logic matches vtkImageDrawROI's sampler
-    if (n < 1) return this->Samples;
+    if (n < 1)
+    {
+        return this->Samples;
+    }
     p2 = p1 + 1;
 
     // One point
@@ -365,41 +372,58 @@ vtkPoints* vtkPolygonList::GetSampledPolygon(int p)
             double p2_p1z = ras2[2] - ras1[2];
             double p2_p1sq = p2_p1x * p2_p1x + p2_p1y * p2_p1y +
                              p2_p1z * p2_p1z;
-            double Ax = p2_p1x;
-            double Ay = p2_p1y;
-            double Az = p2_p1z;
-            double C = 0.5 * ((ras1[0] - ras2[0]) * (ras1[0] + ras2[0]) +
-                              (ras1[1] - ras2[1]) * (ras1[1] + ras2[1]) +
-                              (ras1[2] - ras2[2]) * (ras1[2] + ras2[2]));
-            double x0 = ras2[0] + p2dx;
-            double y0 = ras2[1] + p2dy;
-            double z0 = ras2[2] + p2dz;
-            double ax0by0c = Ax * x0 + Ay * y0 + Az * z0 + C;
-            // Derivative at p0 is reflection of derivative at p2
-            // (p2dx, p2dy, p2dz) over the line bisecting the edge connecting
-            // p1 and p2
-            double p1dx = ras2[0] - ras1[0] + p2dx + 2.0 *
-                          (ras1[0] - ras2[0]) / p2_p1sq * ax0by0c;
-            double p1dy = ras2[1] - ras1[1] + p2dy + 2.0 *
-                          (ras1[1] - ras2[1]) / p2_p1sq * ax0by0c;
-            double p1dz = ras2[2] - ras1[2] + p2dz + 2.0 *
-                          (ras1[2] - ras2[2]) / p2_p1sq * ax0by0c;
-            // Plot left endpoint
-            Samples->InsertNextPoint(ras1[0], ras1[1], ras1[2]);
-            // Plot intermediate points
-            for (int j = 1; j <= density; j++)
+            // If p1 and p2 are identical points, then add "density" points
+            // between p1 and p2 that are identical to p1, so that the regular
+            // structure of the sampled polygon is maintained.
+            if (p2_p1sq < 0.00001)
             {
-                vtkFloatingPointType p[3];
-                double t = (double)j / (double)(density + 1.0);
-                Interpolate(p, t, ras1[0], ras1[1], ras1[2],
-                            ras1[0] + oneThird * p1dx,
-                            ras1[1] + oneThird * p1dy,
-                            ras1[2] + oneThird * p1dz,
-                            ras2[0] - oneThird * p2dx,
-                            ras2[1] - oneThird * p2dy,
-                            ras2[2] - oneThird * p2dz,
-                            ras2[0], ras2[1], ras2[2]);
-                Samples->InsertNextPoint(p[0], p[1], p[2]);
+                // Plot left endpoint
+                Samples->InsertNextPoint(ras1[0], ras1[1], ras1[2]);
+                // Plot intermediate points
+                for (int j = 1; j <= density; j++)
+                {
+                    Samples->InsertNextPoint(ras1[0], ras1[1], ras1[2]);
+                }
+            }
+            // Otherwise, interpolate a cardinal spline between p1 and p2
+            else
+            {
+                double Ax = p2_p1x;
+                double Ay = p2_p1y;
+                double Az = p2_p1z;
+                double C = 0.5 * ((ras1[0] - ras2[0]) * (ras1[0] + ras2[0]) +
+                                  (ras1[1] - ras2[1]) * (ras1[1] + ras2[1]) +
+                                  (ras1[2] - ras2[2]) * (ras1[2] + ras2[2]));
+                double x0 = ras2[0] + p2dx;
+                double y0 = ras2[1] + p2dy;
+                double z0 = ras2[2] + p2dz;
+                double ax0by0c = Ax * x0 + Ay * y0 + Az * z0 + C;
+                // Derivative at p0 is reflection of derivative at p2
+                // (p2dx, p2dy, p2dz) over the line bisecting the edge
+                // connecting p1 and p2
+                double p1dx = ras2[0] - ras1[0] + p2dx + 2.0 *
+                              (ras1[0] - ras2[0]) / p2_p1sq * ax0by0c;
+                double p1dy = ras2[1] - ras1[1] + p2dy + 2.0 *
+                              (ras1[1] - ras2[1]) / p2_p1sq * ax0by0c;
+                double p1dz = ras2[2] - ras1[2] + p2dz + 2.0 *
+                              (ras1[2] - ras2[2]) / p2_p1sq * ax0by0c;
+                // Plot left endpoint
+                Samples->InsertNextPoint(ras1[0], ras1[1], ras1[2]);
+                // Plot intermediate points
+                for (int j = 1; j <= density; j++)
+                {
+                    vtkFloatingPointType p[3];
+                    double t = (double)j / (double)(density + 1.0);
+                    Interpolate(p, t, ras1[0], ras1[1], ras1[2],
+                                ras1[0] + oneThird * p1dx,
+                                ras1[1] + oneThird * p1dy,
+                                ras1[2] + oneThird * p1dz,
+                                ras2[0] - oneThird * p2dx,
+                                ras2[1] - oneThird * p2dy,
+                                ras2[2] - oneThird * p2dz,
+                                ras2[0], ras2[1], ras2[2]);
+                    Samples->InsertNextPoint(p[0], p[1], p[2]);
+                }
             }
             p1++;
             p2++;
@@ -447,41 +471,58 @@ vtkPoints* vtkPolygonList::GetSampledPolygon(int p)
             double p1_p2z = ras1[2] - ras2[2];
             double p1_p2sq = p1_p2x * p1_p2x + p1_p2y * p1_p2y +
                              p1_p2z * p1_p2z;
-            double Ax = ras1[0] - ras2[0];
-            double Ay = ras1[1] - ras2[1];
-            double Az = ras1[2] - ras2[2];
-            double C = 0.5 * ((ras2[0] - ras1[0]) * (ras2[0] + ras1[0]) +
-                              (ras2[1] - ras1[1]) * (ras2[1] + ras1[1]) +
-                              (ras2[2] - ras1[2]) * (ras2[2] + ras1[2]));
-            double x0 = ras1[0] + p1dx;
-            double y0 = ras1[1] + p1dy;
-            double z0 = ras1[2] + p1dz;
-            double ax0by0c = Ax * x0 + Ay * y0 + Az * z0 + C;
-            // Derivative at p2 is reflection of derivative at p1
-            // (p1dx, p1dy, p1dz) over the line bisecting the edge connecting
-            // p2 and p1
-            double p2dx = ras1[0] - ras2[0] + p1dx + 2.0 *
-                          (ras2[0] - ras1[0]) / p1_p2sq * ax0by0c;
-            double p2dy = ras1[1] - ras2[1] + p1dy + 2.0 *
-                          (ras2[1] - ras1[1]) / p1_p2sq * ax0by0c;
-            double p2dz = ras1[2] - ras2[2] + p1dz + 2.0 *
-                          (ras2[2] - ras1[2]) / p1_p2sq * ax0by0c;
-            double plx = oneThird * p1dx + ras1[0];
-            double ply = oneThird * p1dy + ras1[1];
-            double plz = oneThird * p1dz + ras1[2];
-            double prx = ras2[0] - oneThird * p2dx;
-            double pry = ras2[1] - oneThird * p2dy;
-            double prz = ras2[2] - oneThird * p2dz;
-            // Plot left endpoint
-            Samples->InsertNextPoint(ras1[0], ras1[1], ras1[2]);
-            // Plot intermediate points
-            for (int j = 1; j <= density; j++)
+            // If p1 and p2 are identical points, then add "density" points
+            // between p1 and p2 that are identical to p1, so that the regular
+            // structure of the sampled polygon is maintained.
+            if (p1_p2sq < 0.00001)
             {
-                vtkFloatingPointType p[3];
-                double t = (double)j / (double)(density + 1.0);
-                Interpolate(p, t, ras1[0], ras1[1], ras1[2], plx, ply, plz,
-                            prx, pry, prz, ras2[0], ras2[1], ras2[2]);
-                Samples->InsertNextPoint(p[0], p[1], p[2]);
+                // Plot left endpoint
+                Samples->InsertNextPoint(ras1[0], ras1[1], ras1[2]);
+                // Plot intermediate points
+                for (int j = 1; j <= density; j++)
+                {
+                    Samples->InsertNextPoint(ras1[0], ras1[1], ras1[2]);
+                }
+            }
+            // Otherwise, interpolate a cardinal spline between p1 and p2
+            else
+            {
+                double Ax = ras1[0] - ras2[0];
+                double Ay = ras1[1] - ras2[1];
+                double Az = ras1[2] - ras2[2];
+                double C = 0.5 * ((ras2[0] - ras1[0]) * (ras2[0] + ras1[0]) +
+                                  (ras2[1] - ras1[1]) * (ras2[1] + ras1[1]) +
+                                  (ras2[2] - ras1[2]) * (ras2[2] + ras1[2]));
+                double x0 = ras1[0] + p1dx;
+                double y0 = ras1[1] + p1dy;
+                double z0 = ras1[2] + p1dz;
+                double ax0by0c = Ax * x0 + Ay * y0 + Az * z0 + C;
+                // Derivative at p2 is reflection of derivative at p1
+                // (p1dx, p1dy, p1dz) over the line bisecting the edge
+                // connecting p2 and p1
+                double p2dx = ras1[0] - ras2[0] + p1dx + 2.0 *
+                              (ras2[0] - ras1[0]) / p1_p2sq * ax0by0c;
+                double p2dy = ras1[1] - ras2[1] + p1dy + 2.0 *
+                              (ras2[1] - ras1[1]) / p1_p2sq * ax0by0c;
+                double p2dz = ras1[2] - ras2[2] + p1dz + 2.0 *
+                              (ras2[2] - ras1[2]) / p1_p2sq * ax0by0c;
+                double plx = oneThird * p1dx + ras1[0];
+                double ply = oneThird * p1dy + ras1[1];
+                double plz = oneThird * p1dz + ras1[2];
+                double prx = ras2[0] - oneThird * p2dx;
+                double pry = ras2[1] - oneThird * p2dy;
+                double prz = ras2[2] - oneThird * p2dz;
+                // Plot left endpoint
+                Samples->InsertNextPoint(ras1[0], ras1[1], ras1[2]);
+                // Plot intermediate points
+                for (int j = 1; j <= density; j++)
+                {
+                    vtkFloatingPointType p[3];
+                    double t = (double)j / (double)(density + 1.0);
+                    Interpolate(p, t, ras1[0], ras1[1], ras1[2], plx, ply, plz,
+                                prx, pry, prz, ras2[0], ras2[1], ras2[2]);
+                    Samples->InsertNextPoint(p[0], p[1], p[2]);
+                }
             }
             if (!closed)
             {
