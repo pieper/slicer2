@@ -58,66 +58,23 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #include <vtkFMRIEngineConfigure.h>
-#include "vtkFloatArray.h"
-#include "vtkShortArray.h"
-#include "vtkDataObject.h"
 #include "vtkActivationDetector.h"
 #include "vtkMultipleInputsImageFilter.h"
 
 class  VTK_FMRIENGINE_EXPORT vtkActivationEstimator : public vtkMultipleInputsImageFilter
 {
 public:
-    static vtkActivationEstimator *New();
     vtkTypeMacro(vtkActivationEstimator, vtkMultipleInputsImageFilter);
-
-    // Description:
-    // Returns the time course of a specified voxel (i, j, k).
-    vtkFloatArray *GetTimeCourse(int i, int j, int k);
-
-    // Description:
-    // Returns the time course of the defined ROI. 
-    vtkFloatArray *GetRegionTimeCourse();
 
     // Description:
     // Sets the activation detector.
     void SetDetector(vtkActivationDetector *detector);
 
-    // Description:
-    // Sets the lower threshold.
-    void SetLowerThreshold(float low) {this->LowerThreshold = low;}
-
-    // Description:
-    // Sets the cutoff frequency.
-    void SetCutoff(float c) {this->Cutoff = c;}
-
-    // Description:
-    // Sets the indices of all voxels in the defined ROI.
-    void SetRegionVoxels(vtkFloatArray *voxels) {this->RegionVoxels = voxels;}
-
-    // Description:
-    // Enables or disables high-pass filtering. 
-    void EnableHighPassFiltering(int yes) {
-        this->HighPassFiltering = yes;}
-
-    // Description:
-    // Gets HighPassFiltering.
-    vtkGetMacro(HighPassFiltering, int);
-
 protected:
     vtkActivationEstimator();
     ~vtkActivationEstimator();
 
-    void SimpleExecute(vtkImageData* input,vtkImageData* output);
-    void PerformHighPassFiltering();
-
-    int HighPassFiltering;
-    float LowerThreshold;
-    float Cutoff;
-
     vtkActivationDetector *Detector;
-    vtkFloatArray *TimeCourse;
-    vtkFloatArray *RegionTimeCourse;
-    vtkFloatArray *RegionVoxels;
 };
 
 

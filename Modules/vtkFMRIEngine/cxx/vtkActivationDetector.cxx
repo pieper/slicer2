@@ -36,7 +36,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
 /*==============================================================================
-(c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+(c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -54,62 +54,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ==============================================================================*/
 
 #include "vtkActivationDetector.h"
-#include "vtkObjectFactory.h"
-#include "GeneralLinearModel.h"
-#include "FMRIEngineConstants.h"
-
-
-vtkStandardNewMacro(vtkActivationDetector);
-
-
-void vtkActivationDetector::PrintSelf(ostream& os, vtkIndent indent)
-{
-    vtkObject::PrintSelf(os, indent);
-
-    os << indent << "Activation Detection method: ";
-    if (this->DetectionMethod == ACTIVATION_DETECTION_METHOD_GLM)
-    {
-        os << "GLM.\n";
-    }
-    else
-    {
-        os << "MI.\n";
-    }
-}
 
 
 vtkActivationDetector::vtkActivationDetector()
 {
-    this->DesignMatrix = NULL;
+
 }
 
 
 vtkActivationDetector::~vtkActivationDetector()
 {
-}
 
-
-vtkFloatArray *vtkActivationDetector::GetDesignMatrix()
-{
-    return this->DesignMatrix;
-}
-
-
-void vtkActivationDetector::SetDesignMatrix(vtkFloatArray *designMat)
-{
-    this->DesignMatrix = designMat;
-    GeneralLinearModel::SetDesignMatrix(designMat);
-}
-
- 
-void vtkActivationDetector::Detect(vtkFloatArray *timeCourse, float *beta, float *chisq)
-{
-    if (this->DetectionMethod == ACTIVATION_DETECTION_METHOD_GLM)
-    {
-        float *tcArray = timeCourse->GetPointer(0);
-        GeneralLinearModel::FitModel(tcArray,
-                                     beta,
-                                     chisq); 
-    }
 }
 

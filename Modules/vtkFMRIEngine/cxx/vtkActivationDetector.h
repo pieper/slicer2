@@ -36,7 +36,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
 /*==============================================================================
-(c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+(c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -64,14 +64,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #include <vtkFMRIEngineConfigure.h>
-#include "vtkFloatArray.h"
+#include "vtkObject.h"
 
 class VTK_FMRIENGINE_EXPORT vtkActivationDetector : public vtkObject
 {
 public:
-    static vtkActivationDetector *New();
     vtkTypeMacro(vtkActivationDetector, vtkObject);
-    void PrintSelf(ostream& os, vtkIndent indent);
 
     vtkActivationDetector();
     ~vtkActivationDetector();
@@ -81,22 +79,8 @@ public:
     vtkGetMacro(DetectionMethod, int);
     vtkSetMacro(DetectionMethod, int);
 
-    // Description:
-    // Gets the design matrix 
-    vtkFloatArray *GetDesignMatrix();
-
-    // Description:
-    // Sets the design matrix 
-    void SetDesignMatrix(vtkFloatArray *designMat);
-
-    // Description:
-    // Fits linear model (voxel by voxel) 
-    void Detect(vtkFloatArray *timeCourse, float *beta, float *chisq); 
-
-private:
+protected:
     int DetectionMethod;  // 1 - GLM; 2 - MI
-    int NoOfRegressors;
-    vtkFloatArray *DesignMatrix;
 };
 
 
