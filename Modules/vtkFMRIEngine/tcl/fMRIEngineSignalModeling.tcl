@@ -1510,7 +1510,7 @@ proc fMRIEngineFitModel {} {
         fMRIEngine(actEstimator) Delete
         unset -nocomplain fMRIEngine(actEstimator)
     }
-    vtkActivationEstimator fMRIEngine(actEstimator)
+    vtk$fMRIEngine(detectionMethod)Estimator fMRIEngine(actEstimator)
     fMRIEngineAddInputVolumes $fMRIEngine(curRunForModelFitting)
  
     # adds progress bar
@@ -1530,7 +1530,7 @@ proc fMRIEngineFitModel {} {
         fMRIEngine(detector) Delete
         unset -nocomplain fMRIEngine(detector)
     }
-    vtkActivationDetector fMRIEngine(detector)
+    vtk$fMRIEngine(detectionMethod)Detector fMRIEngine(detector)
 
     set rt [fMRIEngineAddRegressors $fMRIEngine(curRunForModelFitting)]
     if {$rt == 1} {
