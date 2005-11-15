@@ -36,7 +36,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
 /*==============================================================================
-(c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+(c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -62,13 +62,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "vtkShortArray.h"
 #include "vtkDataObject.h"
 #include "vtkActivationDetector.h"
-#include "vtkMultipleInputsImageToImageFilter.h"
+#include "vtkMultipleInputsImageFilter.h"
 
-class  VTK_FMRIENGINE_EXPORT vtkActivationEstimator : public vtkMultipleInputsImageToImageFilter
+class  VTK_FMRIENGINE_EXPORT vtkActivationEstimator : public vtkMultipleInputsImageFilter
 {
 public:
     static vtkActivationEstimator *New();
-    vtkTypeMacro(vtkActivationEstimator, vtkMultipleInputsImageToImageFilter);
+    vtkTypeMacro(vtkActivationEstimator, vtkMultipleInputsImageFilter);
 
     // Description:
     // Returns the time course of a specified voxel (i, j, k).

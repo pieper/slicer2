@@ -28,14 +28,14 @@ SET(FMRIENGINE_LOCAL_LIBS
 
 # note: - SET replaced SOURCE_FILES for cmake 1.6
 SET(LOCAL_MODULE_SRCS
-vtkMultipleInputsImageToImageFilter.cxx
+vtkMultipleInputsImageFilter.cxx
 vtkActivationEstimator.cxx
 vtkActivationVolumeGenerator.cxx
 vtkActivationDetector.cxx
 vtkCDF.cxx
 vtkActivationVolumeCaster.cxx
 vtkActivationRegionStats.cxx
-vtkLabelMapModifier.cxx
+vtkLabelMapWhitening.cxx
 )
 
 ## classes that one does not want tcl wrapped
@@ -49,7 +49,7 @@ GeneralLinearModel.cxx
 
 # replaced ABSTRACT_FILES from cmake before 1.6
 SET_SOURCE_FILES_PROPERTIES (
-vtkMultipleInputsImageToImageFilter.cxx
+vtkMultipleInputsImageFilter.cxx
 ABSTRACT
 )
 

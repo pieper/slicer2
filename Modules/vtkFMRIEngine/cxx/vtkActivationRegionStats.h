@@ -61,13 +61,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "vtkShortArray.h"
 #include "vtkFloatArray.h"
 #include "vtkDataObject.h"
-#include "vtkMultipleInputsImageToImageFilter.h"
+#include "vtkMultipleInputsImageFilter.h"
 
-class  VTK_FMRIENGINE_EXPORT vtkActivationRegionStats : public vtkMultipleInputsImageToImageFilter
+class  VTK_FMRIENGINE_EXPORT vtkActivationRegionStats : public vtkMultipleInputsImageFilter
 {
 public:
     static vtkActivationRegionStats *New();
-    vtkTypeMacro(vtkActivationRegionStats, vtkMultipleInputsImageToImageFilter);
+    vtkTypeMacro(vtkActivationRegionStats, vtkMultipleInputsImageFilter);
 
     // Description:
     // Returns the indices and intensities of all voxels in the defined ROI, 
