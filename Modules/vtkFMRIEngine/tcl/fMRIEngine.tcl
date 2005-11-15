@@ -155,7 +155,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.20 $} {$Date: 2005/11/14 17:28:43 $}]
+        {$Revision: 1.21 $} {$Date: 2005/11/15 20:35:54 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -169,6 +169,7 @@ proc fMRIEngineInit {} {
     set fMRIEngine(modulePath) "$env(SLICER_HOME)/Modules/vtkFMRIEngine"
 
     set fMRIEngine(baselineEVsAdded) 0
+    set fMRIEngine(detectionMethod) GLM 
 
     # For now, spew heavily.
     # this bypasses the command line setting of --verbose or -v
