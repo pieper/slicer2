@@ -136,7 +136,7 @@ proc fMRIEngineComputeContrasts {} {
                     fMRIEngine(actVolumeGenerator) Delete
                         unset -nocomplain fMRIEngine(actVolumeGenerator)
                 }
-                vtkActivationVolumeGenerator fMRIEngine(actVolumeGenerator)
+                vtk$fMRIEngine(detectionMethod)VolumeGenerator fMRIEngine(actVolumeGenerator)
 
                 # adds progress bar
                 set obs1 [fMRIEngine(actVolumeGenerator) AddObserver StartEvent MainStartProgress]
