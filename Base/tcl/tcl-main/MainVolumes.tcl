@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,32 +32,38 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        MainVolumes.tcl
 # PROCEDURES:  
 #   MainVolumesInit
 #   MainVolumesBuildVTK
 #   MainVolumesUpdateMRML
+#   MainVolumesBreakVolumeMenu menu
 #   MainVolumesCopyData dst src clear
-#   MainVolumesCreate
-#   MainVolumesRead
+#   MainVolumesCreate v
+#   MainVolumesRead v
 #   MainVolumesWrite v prefix
-#   MainVolumesDelete
+#   MainVolumesDelete v
 #   MainVolumesBuildGUI
-#   MainVolumesPopupGo
-#   MainVolumesPopup
-#   MainVolumesUpdate
-#   MainVolumesRender
-#   MainVolumesRenderActive
+#   MainVolumesPopupGo Layer s X Y
+#   MainVolumesPopup v X Y
+#   MainVolumesUpdate v
+#   MainVolumesRender scale
+#   MainVolumesRenderActive scale
 #   MainVolumesSetActive v
-#   MainVolumesSetParam
+#   MainVolumesSetParam Param value
 #   MainVolumesUpdateSliderRange
+#   MainVolumesSetGUIDefaults
+#   MainVolumesRenumber vid
+#   MainVolumesGetVolumeByName  name
+#   MainVolumesGetVolumesByNamePattern pattern
+#   MainVolumesDeleteVolumeByName  name
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesInit
-# 
+# Set the global variables for this module.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -72,7 +78,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.89 $} {$Date: 2005/11/02 22:01:42 $}]
+    {$Revision: 1.90 $} {$Date: 2005/11/15 16:21:04 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -94,7 +100,7 @@ proc MainVolumesInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesBuildVTK
-# 
+# Build the vtk objects for this module.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -132,7 +138,7 @@ proc MainVolumesBuildVTK {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesUpdateMRML
-# 
+# Build any new volumes, delete old volumes, set label map luts, form the menus
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -217,9 +223,9 @@ proc MainVolumesUpdateMRML {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesBreakVolumeMenu
-# 
+# Calculate if need to break up the volume menu into columns, return 1 if more than 40 volumes.
 # .ARGS
-# menu  The volume menu 
+# windowpath menu  The volume menu 
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesBreakVolumeMenu {menu} {
@@ -242,7 +248,7 @@ proc MainVolumesBreakVolumeMenu {menu} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesCopyData
-# 
+# Copy from the src volume to the dst volume.
 # .ARGS
 # int dst   The destination volume id.
 # int src   The source volume id.
@@ -264,10 +270,12 @@ proc MainVolumesCopyData {dst src clear} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesCreate
-#
-# Returns:
-#  1 - success
+# Create a vtkMrmlDataVolume and set it's parameters from the Volume array.<br>
+# Returns:<br>
+#  1 - success<br>
 #  0 - already built this volume
+# .ARGS
+# int v volume id
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesCreate {v} {
@@ -316,10 +324,12 @@ proc MainVolumesCreate {v} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesRead
-#
-# Returns:
-#  1 - success
-# -1 - failed to read files
+# Check and read in the volume, using registered readers if necessary.<br>
+# Returns:<br>
+#  1 - success<br>
+# -1 - failed to read files<br>
+# .ARGS
+# int v volume id
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesRead {v} {
@@ -660,13 +670,13 @@ proc MainVolumesWrite {v prefix} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesDelete
-#
-# DAVE fix
-# Returns:
-#  1 - success
+# Delete the volume VTK object and the associated tcl variables. <br>
+# DAVE fix <br>
+# Returns: <br>
+#  1 - success <br>
 #  0 - already deleted this volume
-# .ARG
-#   int m the id number of the volume to be deleted.
+# .ARGS
+# int v the id number of the volume to be deleted.
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesDelete {v} {
@@ -692,7 +702,7 @@ proc MainVolumesDelete {v} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesBuildGUI
-# 
+# Build the volumes gui elements.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -843,8 +853,12 @@ proc MainVolumesBuildGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesPopupGo
-# 
+# Set up and call MainVolumesPopup, getting the correct volume id.
 # .ARGS
+# str Layer one of Fore, Back, Label
+# int s slice number
+# int X horizontal position for the pop up
+# int Y vertical position for the pop up
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesPopupGo {Layer s X Y} {
@@ -862,8 +876,11 @@ proc MainVolumesPopupGo {Layer s X Y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesPopup
-# 
+# Build the main volumes gui if it hasn't already been built, set the active volume, and show the popup.
 # .ARGS
+# int v volume id
+# int X horizontal position for the pop up
+# int Y vertical position for the pop up
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesPopup {v X Y} {
@@ -881,8 +898,9 @@ proc MainVolumesPopup {v X Y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesUpdate
-# 
+# Update the pipeline for this volume, and the gui.
 # .ARGS
+# int v volume id
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesUpdate {v} {
@@ -925,14 +943,14 @@ proc MainVolumesUpdate {v} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesRender
-# 
+# Update the slice that has this volume as input, and render 3d if a slice was rendered.
 # .ARGS
+# str scale optional, not used, defaults to empty string.
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesRender {{scale ""}} {
     global Volume Slice 
-
-    # Update slice that has this volume as input
+   
     set v $Volume(activeID)
 
     set hit 0
@@ -950,8 +968,9 @@ proc MainVolumesRender {{scale ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesRenderActive
-# 
+# Render the active slice if it's from the active volume, otherwise call MainVolumesRender.
 # .ARGS
+# str scale optional, not used, defaults to empty string.
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesRenderActive {{scale ""}} {
@@ -963,7 +982,7 @@ proc MainVolumesRenderActive {{scale ""}} {
     set s $Slice(activeID)
     if {$v == $Slice($s,backVolID) || $v == $Slice($s,foreVolID)} {
         Volume($v,vol) Update
-            RenderSlice $s
+        RenderSlice $s
     } else {
         MainVolumesRender
     }
@@ -971,7 +990,7 @@ proc MainVolumesRenderActive {{scale ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesSetActive
-# 
+# Set the active voluem, and update gui elements
 # .ARGS
 # int v The id of the volume to set active 
 # .END
@@ -1099,8 +1118,10 @@ proc MainVolumesSetActive {v} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesSetParam
-# 
+# Set tcl and mrml node parameters.
 # .ARGS
+# str Param
+# str value optional value for the parameter, defaults to empty string, if empty, get it from the Volume array, otherwise set the volume array.
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesSetParam {Param {value ""}} {
@@ -1229,7 +1250,12 @@ proc MainVolumesSetParam {Param {value ""}} {
         }
 
         # Color of line in histogram
-        eval Volume($v,vol) SetHistogramColor $Lut($value,annoColor)
+        if {[info exists Lut($value,annoColor)] == 1} {
+            eval Volume($v,vol) SetHistogramColor $Lut($value,annoColor)
+        } else {
+            # use a default of yellow
+            eval Volume($v,vol) SetHistogramColor "1 1 0"
+        }        
 
         # Set LUT in mappers
         Slicer ReformatModified
@@ -1265,17 +1291,16 @@ proc MainVolumesSetParam {Param {value ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainVolumesUpdateSliderRange
-# 
+# The resolution of sliders may be changed due to the
+# scalar type of the volume:<br>
+# resolution = 0.5 for VTK_FLOAT or VTK_DOUBLE<br>
+# resolution = 1 for others
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesUpdateSliderRange {} {
     global Volume
 
-    # The resolution of sliders may be changed due to the
-    # scalar type of the volume:
-    # resolution = 0.5 for VTK_FLOAT or VTK_DOUBLE
-    # resolution = 1 for others
     set b 0
     if {[info exists Volume(scalarType)]} {
         # VTK_FLOAT = 10; VTK_DOUBLE = 11
@@ -1296,7 +1321,12 @@ proc MainVolumesUpdateSliderRange {} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainVolumesSetGUIDefaults
 # Set defaults for the Volumes-> Props GUI.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MainVolumesSetGUIDefaults {} {
     global Volume
 
@@ -1337,15 +1367,14 @@ proc MainVolumesSetGUIDefaults {} {
 # .PROC MainVolumesRenumber
 # This procedure will rename the files that were written out during the Volume($vid,vol) Write call.
 # A change to vtk caused the image writer to start writing volume files at 0 instead of 1, but 
-# we require the files to be numbered according to the actual image range, instead of image range - 1.
+# we require the files to be numbered according to the actual image range, instead of image range - 1.<br>
 # This does not check/change the mrml tree nor the mrml file, as the error condition resulted from 
-# the files being written out from 0 to n-1 while the mrml file records 1 to n.
-# Returns 1 if renumbered successfully, -1 if failed in renumbering, 0 if didn't need to renumber
+# the files being written out from 0 to n-1 while the mrml file records 1 to n.<br>
+# Returns 1 if renumbered successfully, -1 if failed in renumbering, 0 if didn't need to renumber.
 # .ARGS
-# vid the id of the volume that's just been written, and needs to be renumbered
+# int vid the id of the volume that's just been written, and needs to be renumbered
 # .END
 #-------------------------------------------------------------------------------
-
 proc MainVolumesRenumber {vid} {
     global Volume
 
@@ -1407,6 +1436,7 @@ proc MainVolumesRenumber {vid} {
 # .PROC MainVolumesGetVolumeByName 
 # returns the id of first match for a name
 # .ARGS
+# str name the name of the volume to search on
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesGetVolumeByName {name} {
@@ -1425,6 +1455,7 @@ proc MainVolumesGetVolumeByName {name} {
 # .PROC MainVolumesGetVolumesByNamePattern
 # returns a list of IDs for a given pattern
 # .ARGS
+# str pattern input pattern to match
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesGetVolumesByNamePattern {pattern} {
@@ -1444,6 +1475,7 @@ proc MainVolumesGetVolumesByNamePattern {pattern} {
 # .PROC MainVolumesDeleteVolumeByName 
 # clean up volumes before reloading them
 # .ARGS
+# str name name of the volume
 # .END
 #-------------------------------------------------------------------------------
 proc MainVolumesDeleteVolumeByName {name} {
