@@ -43,6 +43,11 @@
 proc fMRIEngineSaveParadigm {} {
     global fMRIEngine
 
+    if {! [info exists fMRIEngine(1,designType)]} {
+        DevErrorWindow "The paradigm is not ready to save."
+        return
+    }
+
     # write data to file
     set fileType {{"Text" *.txt}}
     set fileName [tk_getSaveFile -filetypes $fileType -parent .]
@@ -81,6 +86,7 @@ proc fMRIEngineSaveParadigm {} {
             puts $fHandle $comment
             set str "set fMRIEngine($r,conditionList) \[list $fMRIEngine($r,conditionList)\] \n"
             puts $fHandle $str
+
             foreach title $fMRIEngine($r,conditionList) {
                 set comment "# condition name in run $r"
                 puts $fHandle $comment
@@ -129,14 +135,10 @@ proc fMRIEngineLoadParadigm {} {
     
     set fHandle [open $fileName r]
     set data [read $fHandle]
-    set commands [split $data "\n"]
-    foreach cmd $commands {
-        set cmd [string trim $cmd]
-        # if it stats with "set", that's the command we want to run
-        set found [string first "set" $cmd 0]
-        if {$found >= 0} {
-            eval $cmd
-        }
+    set lines [split $data "\n"]
+    foreach line $lines {
+        set line [string trim $line]
+        eval $line
     }
     close $fHandle
 
