@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,29 +32,37 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        ModelMaker.tcl
 # PROCEDURES:  
 #   ModelMakerInit
 #   ModelMakerUpdateMRML
 #   ModelMakerBuildGUI
-#   ModelMakerTransform
+#   ModelMakerTransform volume
 #   ModelMakerWrite
+#   ModelMakerWriteAll
 #   ModelMakerRead
 #   ModelMakerEnter
-#   ModelMakerSetVolume
+#   ModelMakerSetVolume v
 #   ModelMakerCreate
+#   ModelMakerCreateAll
 #   ModelMakerLabelCallback
-#   ModelMakerSmoothWrapper
-#   ModelMakerSmooth
-#   ModelMakerReverseNormals
-#   ModelMakerMarch
+#   ModelMakerMultipleLabelCallback which
+#   ModelMakerSmoothWrapper m
+#   ModelMakerSmooth m iterations
+#   ModelMakerReverseNormals m
+#   ModelMakerMarch m v decimateIterations smoothIterations
+#   ModelMakerSetJointSmooth
+#   ModelMakerSetStartLabelButtonCallback
+#   ModelMakerSetStartLabelReturnCallback
+#   ModelMakerSetEndLabelButtonCallback
+#   ModelMakerSetEndLabelReturnCallback
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerInit
-# 
+# Set the global vars for this module.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -83,7 +91,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.56 $} {$Date: 2005/11/12 22:13:22 $}]
+        {$Revision: 1.57 $} {$Date: 2005/11/15 16:35:07 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -117,7 +125,7 @@ proc ModelMakerInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerUpdateMRML
-# 
+# Set the active volume.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -145,7 +153,7 @@ proc ModelMakerUpdateMRML {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerBuildGUI
-# 
+# Build the gui for this module.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -593,8 +601,9 @@ if {0} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerTransform
-# 
+# Transform a model.
 # .ARGS
+# int volume volume id
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerTransform {volume} {
@@ -670,7 +679,7 @@ proc ModelMakerTransform {volume} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerWrite
-# 
+# Write out the active model using MainModelsWrite.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -681,7 +690,7 @@ proc ModelMakerWrite {} {
     set m $Model(activeID)
     set ModelMaker(prefix) [MainFileSaveModel $m $ModelMaker(prefix)]
     if {$ModelMaker(prefix) == ""} {
-        if {$::Module(verbose)} { puts "ModelMakerWrite: empty prefix for model $m" }
+        if {::Module(verbose)} { puts "ModelMakerWrite: empty prefix for model $m" }
         return
     }
 
@@ -732,7 +741,7 @@ proc ModelMakerWriteAll {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerRead
-# 
+# Prompt the user for a file, and then read it in. 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -761,7 +770,7 @@ proc ModelMakerRead {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerEnter
-# 
+# Resets the values to those set from the current active volume.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -773,15 +782,28 @@ proc ModelMakerEnter {} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerSetVolume
-# 
+# Initialise the labels, taken as high and low values in the current volume label map.<br>
+# Only change things if it's a new volume, and if the new volume is a label map.
 # .ARGS
+# int v volume id
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerSetVolume {v} {
     global ModelMaker Volume Label
 
     if {$::Module(verbose)} {
-        puts "\nModelMakerSetVolume, Label(label) = $Label(label)"
+        puts "\nModelMakerSetVolume, Label(label) = $Label(label). New vol = $v, old vol = $ModelMaker(idVolume)"
+    }
+
+    if {$ModelMaker(idVolume) == $v} {
+        if {$::Module(verbose)} {
+            puts "ModelMakerSetVolume: not doing anything, it's the same volume."
+        }
+        return
+    }
+
+    if {[Volume($v,node) GetLabelMap] == 0} {
+        DevWarningWindow "WARNING: active volume '[Volume($v,node) GetName]' is not a label map. Please select a different volume."
     }
 
     set ModelMaker(idVolume) $v
@@ -818,8 +840,9 @@ proc ModelMakerSetVolume {v} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerCreate
-# Create a model from the voxels in the ModelMaker(idVolume) volume with the label Label(label). 
-# Will turn off the jointSmoothing option before calling ModelMakerMarch, and then return it to it's prior value.
+# Create a model from the voxels in the ModelMaker(idVolume) volume with the label Label(label). <br>
+# Will turn off the jointSmoothing option before calling ModelMakerMarch, and then 
+# return it to it's prior value.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -930,12 +953,13 @@ $ModelMaker(n,mcubes) polygons reduced to $ModelMaker(n,decimator)."
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerCreateAll
-# Create all models from the selected range of labels. 
-# Refers to the ModelMaker(jointSmooth) flag, which is set to 1 if wish to do preliminary smoothing so all models fit together like a jigsaw, 0 if wish to smooth models independently
+# Create all models from the selected range of labels. <br>
+# Refers to the ModelMaker(jointSmooth) flag, which is set to 1 if wish to do 
+# preliminary smoothing so all models fit together like a jigsaw, 0 if wish to smooth models independently
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc ModelMakerCreateAll { } {
+proc ModelMakerCreateAll {} {
     global Model ModelMaker Label Module Gui
 
     set numModels 0
@@ -1180,7 +1204,7 @@ proc ModelMakerCreateAll { } {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerLabelCallback
-# 
+# Set the model maker name and label from the Label tcl array.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1241,8 +1265,9 @@ proc ModelMakerMultipleLabelCallback { which } {
 }
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerSmoothWrapper
-# 
+# Get the model id and call ModelMakerSmooth.
 # .ARGS
+# int m model id, optional, defaults to empty string. If empty, use the active model id
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerSmoothWrapper {{m ""}} {
@@ -1264,8 +1289,10 @@ proc ModelMakerSmoothWrapper {{m ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerSmooth
-# 
+# Smooth a model and mark it as unsaved.
 # .ARGS
+# int m model id
+# int iterations number of iterations of smoothing
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerSmooth {m iterations} {
@@ -1330,8 +1357,9 @@ proc ModelMakerSmooth {m iterations} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerReverseNormals
-# 
+# Reverse the normals for a model, and set it to unsaved.
 # .ARGS
+# int m optional model id, defaults to empty string, use the active model id if empty
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerReverseNormals {{m ""}} {
@@ -1377,8 +1405,14 @@ proc ModelMakerReverseNormals {{m ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelMakerMarch
+# Marching cubes.<br>
 # Polina Goland (polina@ai.mit.edu) helped create this routine.  The example
 # on Bill Lorensen's web site was adapted to exploit our vtkToRasMatrix.
+# .ARGS
+# int m model id
+# int v volume id
+# int decimateIterations number of times to decimate.
+# int smoothIterations number of times to smooth
 # .END
 #-------------------------------------------------------------------------------
 proc ModelMakerMarch {m v decimateIterations smoothIterations} {
