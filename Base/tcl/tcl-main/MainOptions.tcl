@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,36 +32,36 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        MainOptions.tcl
 # PROCEDURES:  
 #   MainOptionsInit
 #   MainOptionsUpdateMRML
 #   MainOptionsBuildVTK
-#   MainOptionsCreate
-#   MainOptionsDelete
-#   MainOptionsSetActive
-#   MainOptionsParsePresets
+#   MainOptionsCreate t
+#   MainOptionsDelete t
+#   MainOptionsSetActive t
+#   MainOptionsParsePresets attr
 #   MainOptionsUseDefaultPresets
-#   MainOptionsUseDefaultPresetsForOneScene
-#   MainOptionsParseDefaults
+#   MainOptionsUseDefaultPresetsForOneScene p
+#   MainOptionsParseDefaults m
 #   MainOptionsRetrievePresetValues
-#   MainOptionsUnparsePresets
-#   MainOptionsPreset
-#   MainOptionsPresetCallback
-#   MainOptionsRecallPresets
-#   MainOptionsStorePresets
-#   MainOptionsPresetSaveCreateDialog path
+#   MainOptionsUnparsePresets presetNum
+#   MainOptionsPreset p state
+#   MainOptionsPresetCallback p
+#   MainOptionsRecallPresets p
+#   MainOptionsStorePresets p
+#   MainOptionsPresetSaveCreateDialog widget
 #   MainOptionsPresetSaveOk
-#   MainOptionsPresetDeleteDialog
-#   MainOptionsPresetDelete
+#   MainOptionsPresetDeleteDialog widget
+#   MainOptionsPresetDelete name
 #   MainOptionsPresetDeleteAll
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsInit
-# 
+# Initialise the global variables for this module.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -80,7 +80,7 @@ proc MainOptionsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainOptions \
-    {$Revision: 1.27 $} {$Date: 2005/04/15 16:44:19 $}]
+    {$Revision: 1.28 $} {$Date: 2005/11/16 18:16:51 $}]
 
     # Props
     set Options(program) "slicer"
@@ -104,7 +104,7 @@ proc MainOptionsInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsUpdateMRML
-# 
+# Called when the mrml tree is updated - deal with Options nodes.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -147,7 +147,7 @@ proc MainOptionsUpdateMRML {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsBuildVTK
-# 
+# Does nothing, no vtk objects for this module.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -158,11 +158,12 @@ proc MainOptionsBuildVTK {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsCreate
-#
-# Returns:
-#  1 - success
+# Check and set Options($t,created) if it's not already 1.<br>
+# Returns:<br>
+#  1 - success<br>
 #  0 - already built this Option
-# -1 - failed to read files
+# .ARGS
+# int t option id
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsCreate {t} {
@@ -177,13 +178,14 @@ proc MainOptionsCreate {t} {
     return 1
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsDelete
-#
-# Returns:
-#  1 - success
-#  0 - already deleted this Option
+# Delete all TCL variables of the form: Options($t,*)
+# Returns:<br>
+#  1 - success<br>
+#  0 - already deleted this Option<br>
+# .ARGS
+# int t the option id
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsDelete {t} {
@@ -206,11 +208,11 @@ proc MainOptionsDelete {t} {
     return 1
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsSetActive
-# 
+# Set the active option to t
 # .ARGS
+# int t option id
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsSetActive {t} {
@@ -252,8 +254,9 @@ proc MainOptionsSetActive {t} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsParsePresets
-# 
+# Parse the attribute list to get the key and value pairs of presets.
 # .ARGS
+# list attr the list of preset attributes
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsParsePresets {attr} {
@@ -273,7 +276,7 @@ proc MainOptionsParsePresets {attr} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsUseDefaultPresets
-# 
+# Set the presets to the default values for each module.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -294,8 +297,9 @@ proc MainOptionsUseDefaultPresets {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsUseDefaultPresetsForOneScene
-# 
+# For this scene, set the presets from each module.
 # .ARGS
+# int p view id
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsUseDefaultPresetsForOneScene {p} {
@@ -314,6 +318,8 @@ proc MainOptionsUseDefaultPresetsForOneScene {p} {
 # .PROC MainOptionsParseDefaults
 #  Parses the default presets string provided by each module in its Init.
 #  Initializes all presets (including "default" preset) to these defaults
+# .ARGS
+# int m module id
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsParseDefaults {m} {
@@ -350,6 +356,7 @@ proc MainOptionsParseDefaults {m} {
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsRetrievePresetValues
 #  Retrieves all preset values from the MRML tree.
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsRetrievePresetValues {} {
@@ -484,6 +491,8 @@ proc MainOptionsRetrievePresetValues {} {
 # .PROC MainOptionsUnparsePresets
 # Makes MRML nodes out of the presets.
 # Makes an Options node and adds it to data tree.
+# .ARGS
+# int presetNum optional, defaults to empty string - currently not used
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsUnparsePresets {{presetNum ""}} {
@@ -670,9 +679,15 @@ proc MainOptionsUnparsePresets {{presetNum ""}} {
                 set node [MainMrmlAddNode "ModelState"]
                 $node SetModelRefID [Model($m,node) GetModelID]
                 $node SetVisible $Preset(Models,$p,$m,visibility)
-                $node SetOpacity $Preset(Models,$p,$m,opacity)
-                $node SetClipping $Preset(Models,$p,$m,clipping)
-                $node SetBackfaceCulling $Preset(Models,$p,$m,backfaceCulling)
+                if {[info exists Preset(Models,$p,$m,opacity)] == 1} {
+                    $node SetOpacity $Preset(Models,$p,$m,opacity)
+                }
+                if {[info exists Preset(Models,$p,$m,clipping)] == 1} {
+                    $node SetClipping $Preset(Models,$p,$m,clipping)
+                }
+                if {[info exists Preset(Models,$p,$m,backfaceCulling)] == 1} {
+                    $node SetBackfaceCulling $Preset(Models,$p,$m,backfaceCulling)
+                }
             }
         }
 
@@ -712,8 +727,10 @@ proc MainOptionsUnparsePresets {{presetNum ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsPreset
-# 
+# Set Preset(p,state) to the value of state var.
 # .ARGS
+# int p view id
+# str state either Press or not
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsPreset {p state} {
@@ -731,8 +748,9 @@ proc MainOptionsPreset {p state} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsPresetCallback
-# 
+# Store the presets if the state is Press, otherwise recall them.
 # .ARGS
+# int p view id
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsPresetCallback {p} {
@@ -758,8 +776,9 @@ proc MainOptionsPresetCallback {p} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsRecallPresets
-# 
+# Call each module's recall presets procedure.
 # .ARGS
+# int p view id
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsRecallPresets {p} {
@@ -774,8 +793,9 @@ proc MainOptionsRecallPresets {p} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsStorePresets
-# 
+# Call each module's store presets procedure.
 # .ARGS
+# int p view id
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsStorePresets {p} {
@@ -791,9 +811,9 @@ proc MainOptionsStorePresets {p} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsPresetSaveCreateDialog
-# 
+# Create the dialog box to prompt the user for the name of a view.
 # .ARGS
-# widget: path of the widget that invokes this dialog
+# windowpath widget path of the widget that invokes this dialog
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsPresetSaveCreateDialog {widget} {
@@ -822,7 +842,7 @@ proc MainOptionsPresetSaveCreateDialog {widget} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsPresetSaveOk
-# 
+# Store the presets for this view and refresh the view menu.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -848,8 +868,9 @@ proc MainOptionsPresetSaveOk {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsPresetDeleteDialog
-# 
+# Prompt the user if they're sure they wish to delete the view 
 # .ARGS
+# windowpath widget path of the widget that invokes this dialog
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsPresetDeleteDialog {widget} {
@@ -868,14 +889,14 @@ proc MainOptionsPresetDeleteDialog {widget} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsPresetDelete
-# 
+# Delete the view from the scenes and preset lists.
 # .ARGS
+# str name the name of the view to delete
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsPresetDelete {name} {
     global Scenes Preset Gui
     
-    # delete the view from the scenes and preset lists
     set i [lsearch $Scenes(nameList) $name]
     set Scenes(nameList) [lreplace $Scenes(nameList) $i $i]
     set i [lsearch $Preset(idList) $name]
@@ -891,7 +912,7 @@ proc MainOptionsPresetDelete {name} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsPresetDeleteAll
-# 
+# Delete the view from the scenes and preset lists, refresh the view menu
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
