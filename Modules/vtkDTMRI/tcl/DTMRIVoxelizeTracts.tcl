@@ -6,7 +6,7 @@ proc DTMRIVoxelizeTractsInit {} {
     #------------------------------------
     set m "VoxelizeTracts"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.1 $} {$Date: 2005/11/07 01:51:35 $}]
+                                 {$Revision: 1.2 $} {$Date: 2005/11/16 20:47:06 $}]
 
     set DTMRI(VoxTractsROILabelmap) $Volume(idNone)
 }
@@ -114,6 +114,7 @@ proc DTMRIVoxelizeTractsColorROIFromTracts {} {
     # cast to short (as these are labelmaps the values are really integers
     # so this prevents errors with float labelmaps which come from editing
     # scalar volumes derived from the tensors).
+    catch "castVSeedROI Delete"
     vtkImageCast castVSeedROI
     castVSeedROI SetOutputScalarTypeToShort
     castVSeedROI SetInput [Volume($v,vol) GetOutput] 
