@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,7 +32,7 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        SessionLog.tcl
 # PROCEDURES:  
@@ -41,7 +41,9 @@
 #   SessionLogBuildGUI
 #   SessionLogEnter
 #   SessionLogExit
-#   SessionLogStartLogging
+#   SessionLogToggleLogging tk
+#   SessionLogStopLogging tk
+#   SessionLogStartLogging tk
 #   SessionLogGetVersionInfo
 #   SessionLogSetFilenameAutomatically
 #   SessionLogLog
@@ -49,19 +51,18 @@
 #   SessionLogEndSession
 #   SessionLogWriteLog
 #   SessionLogReadLog
-#   SessionLogShowRandomFortune
-#   SessionLogInitRandomFortune
-#   SessionLogStorePresets
-#   SessionLogRecallPresets
-#   SessionLogGenericLog
-#   SessionLogFollowSliceOffsets
-#   SessionLogTraceSliceOffsetsCallback 
-#   SessionLogTraceSliceDescriptionCallback
-#   SessionLogStartTimingSlice
+#   SessionLogStorePresets p
+#   SessionLogRecallPresets p
+#   SessionLogGenericLog m
+#   SessionLogTraceSliceOffsets
+#   SessionLogTraceSliceOffsetsCallback  variableName indexIfArray operation
+#   SessionLogTraceSliceDescriptionCallback variableName indexIfArray operation
+#   SessionLogStartTimingSlice s
 #   SessionLogStartTimingAllSlices
 #   SessionLogStopTimingAllSlices
-#   SessionLogStartTiming description
-#   SessionLogStopTiming description
+#   SessionLogStartTiming d
+#   SessionLogStopTiming d
+#   SessionLogUnTraceSliceOffsets
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -77,12 +78,11 @@
 #  widget SessionLog(textBox)  the text box widget
 #-------------------------------------------------------------------------------
 
-
 #-------------------------------------------------------------------------------
 # .PROC SessionLogInit
-#  The "Init" procedure is called automatically by the slicer.  
+#  The "Init" procedure is called automatically by the slicer. <br> 
 #  It puts information about the module into a global array called Module, 
-#  and it also initializes module-level variables.
+#  and it also initializes module-level variables.<br>
 # This procedure can automatically log certain users if the path is set
 # for logging and the file UsersToAutomaticallyLog exists.
 # .ARGS
@@ -119,12 +119,16 @@ proc SessionLogInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.20 $} {$Date: 2005/03/24 20:46:35 $}]
+        {$Revision: 1.21 $} {$Date: 2005/11/16 17:19:34 $}]
 
     # Initialize module-level variables
     set SessionLog(fileName)  ""
     set SessionLog(currentlyLogging) 0
     set SessionLog(autoLogging) 0
+
+    # list of variables that we will trace
+    set SessionLog(traceVarlist) "{Module(activeID)} {Editor(activeID)} {Editor(idWorking)} \
+        {Editor(idOriginal)} {Label(label)} {Slice(activeID)}"
 
     # default directory to log to (used for auto logging)
     # (should be set from Options.xml)
@@ -132,81 +136,77 @@ proc SessionLogInit {} {
     set SessionLog(defaultDir) ""
 
     if {[file isdirectory $SessionLog(defaultDir)] == 0} {
-    puts $SessionLog(defaultDir) 
-    #puts "No logging enabled"
-    set SessionLog(defaultDir) ""
+        puts $SessionLog(defaultDir) 
+        #puts "No logging enabled"
+        set SessionLog(defaultDir) ""
     }
     
     # event bindings
     set SessionLog(eventManager)  ""
-
-    # call init functions
-    #SessionLogInitRandomFortune
 
     # for now, automatically log everyone (use SessionLogShouldWeLog
     # to selectively log users).
     # if we know who this user is
     if {[info exists env(LOGNAME)] == 1} {
 
-    # if the logging directory exists
-    if {[file isdirectory $SessionLog(defaultDir)]} {
-
-        puts "Automatically logging user $env(LOGNAME).  Thanks!"
-        set SessionLog(autoLogging) 1
-        SessionLogStartLogging
-        SessionLogSetFilenameAutomatically
-    }
+        # if the logging directory exists
+        if {[file isdirectory $SessionLog(defaultDir)]} {
+            
+            puts "Automatically logging user $env(LOGNAME).  Thanks!"
+            set SessionLog(autoLogging) 1
+            SessionLogStartLogging
+            SessionLogSetFilenameAutomatically
+        }
     }
 }
 
 
 #-------------------------------------------------------------------------------
 # .PROC SessionLogShouldWeLog
-# 
+# Figure out if we should automatically log this user.<br>
+# (This info should be in Options.xml but then people could save their
+# own and old Options.xml files would ruin the auto-logging experiment)
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc SessionLogShouldWeLog {} {
     global SessionLog env
 
-    # figure out if we should automatically log this user.
-    # (this info should be in Options.xml but then people could save their
-    # own and old Options.xml files would ruin the auto-logging experiment)
-
+    
     # if username is set in the env global array
     if {[info exists env(LOGNAME)] == 1} {
-    #puts "logname: $env(LOGNAME)"
-    set logname $env(LOGNAME)
+        #puts "logname: $env(LOGNAME)"
+        set logname $env(LOGNAME)
 
 
-    # if the file listing which users to log exists
-    # ExpandPath looks first in current dir then in program directory
-    set filename [ExpandPath "UsersToAutomaticallyLog"]
-    if {[file exists $filename]} {
-
-        #puts "file $filename found"
-        set in [open $filename]
-        set users [read $in]
-        close $in
-
-        # check and see if this user in file (then should be logged)
-        foreach user $users {
-        #puts $user
-        if {$logname == $user} {
-            #puts "match: $user == $logname"
-
-            # automatically log this user
-            set SessionLog(autoLogging) 1
-            puts "Automatically logging user $user.  Thanks!"
-            SessionLogStartLogging
-            SessionLogSetFilenameAutomatically
-
-            return 1
-        }
+        # if the file listing which users to log exists
+        # ExpandPath looks first in current dir then in program directory
+        set filename [ExpandPath "UsersToAutomaticallyLog"]
+        if {[file exists $filename]} {
+            
+            #puts "file $filename found"
+            set in [open $filename]
+            set users [read $in]
+            close $in
+            
+            # check and see if this user in file (then should be logged)
+            foreach user $users {
+                #puts $user
+                if {$logname == $user} {
+                    #puts "match: $user == $logname"
+                    
+                    # automatically log this user
+                    set SessionLog(autoLogging) 1
+                    puts "Automatically logging user $user.  Thanks!"
+                    SessionLogStartLogging
+                    SessionLogSetFilenameAutomatically
+                    
+                    return 1
+                }
+            }
         }
     }
-    }
-
+    
     return 0
 }
 
@@ -273,8 +273,8 @@ proc SessionLogBuildGUI {} {
     set f $fStart
     
     foreach frame "Top Middle Bottom" {
-    frame $f.f$frame -bg $Gui(activeWorkspace)
-    pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     }
     
     #-------------------------------------------
@@ -299,10 +299,10 @@ proc SessionLogBuildGUI {} {
     
     # if we are already logging (automatically)
     if {$SessionLog(currentlyLogging) == "1"} {
-    set red [MakeColor "200 60 60"]
-    $SessionLog(lLogging) config -text \
-        "Logging is on." \
-        -fg $red
+        set red [MakeColor "200 60 60"]
+        $SessionLog(lLogging) config -text \
+            "Logging is on." \
+            -fg $red
     }
 
     #-------------------------------------------
@@ -312,8 +312,8 @@ proc SessionLogBuildGUI {} {
     
     # make frames inside the Bottom frame for nice layout
     foreach frame "Start" {
-    frame $f.f$frame -bg $Gui(activeWorkspace) 
-    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+        frame $f.f$frame -bg $Gui(activeWorkspace) 
+        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
 
     #-------------------------------------------
@@ -322,10 +322,13 @@ proc SessionLogBuildGUI {} {
     set f $fStart.fBottom.fStart
 
     # call start logging with a 1 if triggered by the button press
-    DevAddButton $f.bStart "Start Logging" {SessionLogStartLogging 1} 15
-    TooltipAdd $f.bStart "Start logging each time before editing."
+    # DevAddButton $f.bStart "Start Logging" {SessionLogStartLogging 1} 15
+    # TooltipAdd $f.bStart "Start logging each time before editing."
+    # pack $f.bStart -side top -padx $Gui(pad) -pady $Gui(pad)
 
-    pack $f.bStart -side top -padx $Gui(pad) -pady $Gui(pad)
+    DevAddButton $f.bToggle "Toggle Logging" {SessionLogToggleLogging 1} 15
+    TooltipAdd $f.bToggle "Start logging each time before editing."
+    pack $f.bToggle -side top -padx $Gui(pad) -pady $Gui(pad)
 
     #-------------------------------------------
     # Log frame
@@ -334,8 +337,8 @@ proc SessionLogBuildGUI {} {
     set f $fLog
 
     foreach frame "TextBox" {
-    frame $f.f$frame -bg $Gui(activeWorkspace) 
-    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+        frame $f.f$frame -bg $Gui(activeWorkspace) 
+        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
 
     $f.fTextBox config -relief groove -bd 3 
@@ -402,16 +405,71 @@ proc SessionLogExit {} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC SessionLogToggleLogging
+# Check SessionLog(currentlyLogging), if currently logging, call SessionLogStopLogging, if not, 
+# call SessionLogStartLogging.
+# .ARGS
+# int tk optional flag, defaults to 0, if 1, was called from a button press
+# .END
+#-------------------------------------------------------------------------------
+proc SessionLogToggleLogging {{tk "0"}} {
+    global SessionLog
+
+    if {$SessionLog(currentlyLogging) == 0} {
+        SessionLogStartLogging $tk
+    } else {
+        SessionLogStopLogging $tk
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC SessionLogStopLogging
+# Undo everything SessionLogStartLogging started.
+# .ARGS
+# int tk optional flag, defaults to 0, if 1, was called from a button press
+# .END
+#-------------------------------------------------------------------------------
+proc SessionLogStopLogging {{tk "0"}} {
+    global SessionLog
+
+    if {$::Module(verbose)} { 
+        puts "SessionLogStopLogging: tk $tk" 
+    }
+
+    # if this proc was called by hitting a button, tk is 1
+    if {$tk == "1"} {
+        if {$SessionLog(currentlyLogging) == 0} {
+            tk_messageBox -message "Already stopped logging."
+            return
+        }
+        # let users know we aren't logging any more
+        $SessionLog(lLogging) config -text \
+            "Logging is off" -fg black
+    }
+
+    # in case any module wants to know if we are logging or not
+    set SessionLog(currentlyLogging) 0
+
+    SessionLogEndSession
+
+    # stop tracing variables
+    SessionLogUnTraceSliceOffsets
+}
+
+#-------------------------------------------------------------------------------
 # .PROC SessionLogStartLogging
 # Start logging.  Set SessionLog(currentlyLogging) to 1, log initial items,
-# start timing slice info, display random quote, the works.
+# start timing slice info, the works.
 # .ARGS
+# int tk optional flag, defaults to 0, if 1, was called from a button press
 # .END
 #-------------------------------------------------------------------------------
 proc SessionLogStartLogging {{tk "0"}} {
     global SessionLog env
 
-    if {$::Module(verbose)} { puts "SessionLogStartLogging: tk $tk" }
+    if {$::Module(verbose)} { 
+        puts "SessionLogStartLogging: tk $tk" 
+    }
     # if this proc was called by hitting a button, $tk ==1
     if {$tk == "1"} {
         if {$SessionLog(currentlyLogging) == 1} {
@@ -430,9 +488,6 @@ proc SessionLogStartLogging {{tk "0"}} {
             -fg $red
     }
     
-    # make a funny joke
-    #SessionLogShowRandomFortune $tk
-
     # in case any module wants to know if we are logging or not
     set SessionLog(currentlyLogging) 1
 
@@ -445,7 +500,7 @@ proc SessionLogStartLogging {{tk "0"}} {
     set datatype "{{misc,user}}"
     set SessionLog(log,$datatype) ""
     if {[info exists env(LOGNAME)] == 1} {
-    set SessionLog(log,$datatype) $env(LOGNAME)
+        set SessionLog(log,$datatype) $env(LOGNAME)
     }
 
     SessionLogTraceSliceOffsets
@@ -454,29 +509,28 @@ proc SessionLogStartLogging {{tk "0"}} {
 
 #-------------------------------------------------------------------------------
 # .PROC SessionLogGetVersionInfo
-# 
+# Extract version info for each module, 
+# dependent on string formatting in $Module(versions)
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc SessionLogGetVersionInfo {}  {
     global SessionLog Module
 
-    # extract version info for each module
-    # dependent on string formatting in $Module(versions)
     foreach ver $Module(versions) {
-    set module [lindex $ver 0]
-    set revision [lindex [lindex $ver 1] 1]
-    set date [lindex [lindex $ver 2] 1]
-    set time [lindex [lindex $ver 2] 2]
-    set var "\{\{modversion,$module\},\{date,$date\},\{time,$time\}\}"
-    set value "$revision"
-    set SessionLog(log,$var) $value
+        set module [lindex $ver 0]
+        set revision [lindex [lindex $ver 1] 1]
+        set date [lindex [lindex $ver 2] 1]
+        set time [lindex [lindex $ver 2] 2]
+        set var "\{\{modversion,$module\},\{date,$date\},\{time,$time\}\}"
+        set value "$revision"
+        set SessionLog(log,$var) $value
     }
 }
 
 #-------------------------------------------------------------------------------
 # .PROC SessionLogSetFilenameAutomatically
-# create a unique log filename using the user's id and the time
+# Create a unique log filename using the user's id and the time
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -492,8 +546,8 @@ proc SessionLogSetFilenameAutomatically {} {
     
     # test if this has worked
     if {[file exists $wholename] == 1} {
-    set wholename [file join $SessionLog(defaultDir) "$SessionLog(log,userName)${unique}Error.log"]
-    puts "Automatically generated log filename already exists!"
+        set wholename [file join $SessionLog(defaultDir) "$SessionLog(log,userName)${unique}Error.log"]
+        puts "Automatically generated log filename already exists!"
     }
 
     puts "Session log will be automatically saved as $wholename"
@@ -503,7 +557,7 @@ proc SessionLogSetFilenameAutomatically {} {
 
 #-------------------------------------------------------------------------------
 # .PROC SessionLogLog
-# returns the things this module logs, in a formatted string
+# Returns the things this module logs, in a formatted string
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -521,7 +575,7 @@ proc SessionLogLog {} {
 
 #-------------------------------------------------------------------------------
 # .PROC SessionLogShowLog
-# show the current stuff each module is keeping track of
+# Show the current stuff each module is keeping track of<br>
 # (the log file will be written when the user exits)
 # .ARGS
 # .END
@@ -532,9 +586,9 @@ proc SessionLogShowLog {} {
     # display the output that will be written to the file.
     set log ""
     foreach m $Module(idList) {
-    if {[info exists Module($m,procSessionLog)] == 1} {
-        set log "${log}Module: $m\n[$Module($m,procSessionLog)]"
-    }
+        if {[info exists Module($m,procSessionLog)] == 1} {
+            set log "${log}Module: $m\n[$Module($m,procSessionLog)]"
+        }
     }
 
     # clear the text box
@@ -546,7 +600,7 @@ proc SessionLogShowLog {} {
 
 #-------------------------------------------------------------------------------
 # .PROC SessionLogEndSession
-#  called on program exit to finish logging and call WriteLog
+#  Called on program exit to finish logging and call WriteLog
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -575,7 +629,7 @@ proc SessionLogEndSession {} {
 
 #-------------------------------------------------------------------------------
 # .PROC SessionLogWriteLog
-#  actually grab log info from all modules and write the file
+# Actually grab log info from all modules and write the file
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -587,16 +641,16 @@ proc SessionLogWriteLog {} {
     
     # get the goods:
     foreach m $Module(idList) {
-    if {[info exists Module($m,procSessionLog)] == 1} {
-        puts "LOGGING: $m"
-        set info [$Module($m,procSessionLog)]
-
-        set info "\{\n\{_Module $m\}\n\{$info\}\n\}\n"
-        #puts $out "\n_Module $m"
-        #puts $out "\n_ModuleLogItems"
-        puts $out $info
-        #puts $out "\n_EndModule"
-    }
+        if {[info exists Module($m,procSessionLog)] == 1} {
+            puts "LOGGING: $m"
+            set info [$Module($m,procSessionLog)]
+            
+            set info "\{\n\{_Module $m\}\n\{$info\}\n\}\n"
+            #puts $out "\n_Module $m"
+            #puts $out "\n_ModuleLogItems"
+            puts $out $info
+            #puts $out "\n_EndModule"
+        }
     }
 
     close $out
@@ -605,7 +659,7 @@ proc SessionLogWriteLog {} {
 
 #-------------------------------------------------------------------------------
 # .PROC SessionLogReadLog
-# read in a log (text) file and display in the box
+# Read in a log (text) file and display in the box
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -620,55 +674,11 @@ proc SessionLogReadLog {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC SessionLogShowRandomFortune
-# pop up a message box or use cout to display a random quote
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc SessionLogShowRandomFortune {{tk "0"}} {
-    global SessionLog
-
-    set length [expr [llength $SessionLog(fortunes)] -1]
-    set random [expr rand()]
-    set index [expr round([expr $random * $length])]
-
-    set fortune [lindex $SessionLog(fortunes) $index]
-
-    set message "Thanks for logging!\n\n$fortune\n"
-    if {$tk == "1"} {
-    tk_messageBox -message $message
-    } else {
-    puts $message
-    }
-    
-}
-
-#-------------------------------------------------------------------------------
-# .PROC SessionLogInitRandomFortune
-# init the list of quotes
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc SessionLogInitRandomFortune {} {
-    global SessionLog
-
-    set SessionLog(fortunes) {\
-        {'Outside of a dog, a book is man's best friend. Inside of a dog, it's too dark to read.'
-    Groucho Marx} 
-    {'I told my psychiatrist that everyone hates me. He said I was being ridiculous - everyone hasn't met me yet.'
-    Rodney Dangerfield.}
-    {'Did you ever walk in a room and forget why you walked in? I think that's how dogs spend their lives.'
-    Sue Murphy}
-
-}
-
-}
-
-#-------------------------------------------------------------------------------
 # .PROC SessionLogStorePresets
-#  Put things into the presets Options node in Options.xml
-# (This file is read in when slicer starts up)
+# Put things into the presets Options node in Options.xml, which is
+# read in when slicer starts up)
 # .ARGS
+# int p not used - view id?
 # .END
 #-------------------------------------------------------------------------------
 proc SessionLogStorePresets {p} {
@@ -681,10 +691,11 @@ proc SessionLogStorePresets {p} {
 
 #-------------------------------------------------------------------------------
 # .PROC SessionLogRecallPresets
-# Get startup info from the Options.xml file (through the Preset array)
+# Get startup info from the Options.xml file (through the Preset array). <br>
 # This is used for a configurable default storage dir for automatic
 # logging.  Edit slicer/program/Options.xml to change this directory.
 # .ARGS
+# int p not used
 # .END
 #-------------------------------------------------------------------------------
 proc SessionLogRecallPresets {p} {
@@ -692,18 +703,17 @@ proc SessionLogRecallPresets {p} {
     
     # test if the default dir exists
     if {[info exists Preset(SessionLog,defaultDir)] == 1} {
-    set dir $Preset(SessionLog,defaultDir)
-    if {[file isdirectory $dir] == 1} {
-        set SessionLog(defaultDir) $dir
+        set dir $Preset(SessionLog,defaultDir)
+        if {[file isdirectory $dir] == 1} {
+            set SessionLog(defaultDir) $dir
+        } else {
+            puts "Error in SessionLog: default directory from Options.xml does not exist"
+        }
     } else {
-        puts "Error in SessionLog: default directory from Options.xml does not exist"
-    }
-    } else {
-    puts "SessionLog: no default dir in Options.xml."
+        puts "SessionLog: no default dir in Options.xml."
     }
     # get the user names we should log for. ???
 }
-
 
 ########################################################
 # Utility functions to help other modules log
@@ -711,10 +721,11 @@ proc SessionLogRecallPresets {p} {
 
 #-------------------------------------------------------------------------------
 # .PROC SessionLogGenericLog
-# generic logging procedure 
+# Generic logging procedure
 # which grabs everything in $m(log,*) and returns a formatted 
-# string that can then be returned by a module's logging procedure
+# string that can then be returned by a module's logging procedure.
 # .ARGS
+# str m global array name that contains the log.
 # .END
 #-------------------------------------------------------------------------------
 proc SessionLogGenericLog {m} {
@@ -728,14 +739,14 @@ proc SessionLogGenericLog {m} {
 
     # format the things this module will log
     foreach item $loglist {
-    set name ""
-    # get name without leading 'log,'
-    regexp {log,(.*)} $item match name
-    # get matching value stored in array
-    eval {set val} \$${m}($item)
-    # append to list
-    lappend log "\{$name   \{$val\}\}"
-    #set log "${log}\{${name}: ${val}\}\n"
+        set name ""
+        # get name without leading 'log,'
+        regexp {log,(.*)} $item match name
+        # get matching value stored in array
+        eval {set val} \$${m}($item)
+        # append to list
+        lappend log "\{$name   \{$val\}\}"
+        #set log "${log}\{${name}: ${val}\}\n"
     }
 
     # alphabetize the list
@@ -744,17 +755,17 @@ proc SessionLogGenericLog {m} {
     # add newlines between items so it's readable
     set final ""
     foreach item $alpha {
-    set final "$final\n$item"
+        set final "$final\n$item"
     }
 
     return $final
 }
 
 #-------------------------------------------------------------------------------
-# .PROC SessionLogFollowSliceOffsets
-# uses tcl "trace variable" command to be notified whenever slice offsets change.
-# this allows timing of editing, etc., per slice without hacking MainSlices.
-# also traces other variables used in the "description" of the slice time
+# .PROC SessionLogTraceSliceOffsets
+# Uses tcl "trace variable" command to be notified whenever slice offsets change.<br>
+# This allows timing of editing, etc., per slice without hacking MainSlices.<br>
+# Also traces other variables used in the "description" of the slice time
 # (like current label, etc.) so that we can time, for example, time per slice per label.
 # .ARGS
 # .END
@@ -763,13 +774,13 @@ proc SessionLogTraceSliceOffsets {}  {
     global Slice SessionLog
     global Module Editor Label
     foreach s $Slice(idList) {
-    # callback will be called whenever variable is written to ("w")
-    trace variable Slice($s,offset) w SessionLogTraceSliceOffsetsCallback
-
-    # initialize vars
-    if {[info exists SessionLog(trace,prevSlice$s)] == 0} {
-        set SessionLog(trace,prevSlice$s) ""
-    }
+        # callback will be called whenever variable is written to ("w")
+        trace variable Slice($s,offset) w SessionLogTraceSliceOffsetsCallback
+        
+        # initialize vars
+        if {[info exists SessionLog(trace,prevSlice$s)] == 0} {
+            set SessionLog(trace,prevSlice$s) ""
+        }
     }
 
     # trace all variables we are using as part of the slice time description
@@ -777,30 +788,24 @@ proc SessionLogTraceSliceOffsets {}  {
     # otherwise we won't start and stop timing when description 
     # changes and none of this will work.
 
-    set varlist "{Module(activeID)} {Editor(activeID)} {Editor(idWorking)} \
-        {Editor(idOriginal)} {Label(label)} {Slice(activeID)}"
-
-    foreach var $varlist {
-    trace variable $var w SessionLogTraceSliceDescriptionCallback
-    #puts $var
-    #eval {puts } \$$var
+    foreach var $SessionLog(traceVarlist) {
+        trace variable $var w SessionLogTraceSliceDescriptionCallback
+        #puts $var
+        #eval {puts } \$$var
     }
 
     return
 
-    trace variable Module(activeID) w SessionLogTraceSliceDescriptionCallback
-    trace variable Editor(activeID) w SessionLogTraceSliceDescriptionCallback
-    trace variable Editor(idWorking) w SessionLogTraceSliceDescriptionCallback
-    trace variable Editor(idOriginal) w SessionLogTraceSliceDescriptionCallback
-    trace variable Label(label) w SessionLogTraceSliceDescriptionCallback
-    trace variable Slice(activeID) w SessionLogTraceSliceDescriptionCallback
 }
 
 #-------------------------------------------------------------------------------
 # .PROC SessionLogTraceSliceOffsetsCallback 
-# called when slice offset tcl var changes.
-# initiates timing of time spent in slice
+# Called when slice offset tcl var changes.<br>
+# Initiates timing of time spent in slice
 # .ARGS
+# str variableName where to find the slice number
+# int indexIfArray index into variableName
+# str operation not used
 # .END
 #-------------------------------------------------------------------------------
 proc SessionLogTraceSliceOffsetsCallback {variableName indexIfArray operation} {
@@ -809,7 +814,10 @@ proc SessionLogTraceSliceOffsetsCallback {variableName indexIfArray operation} {
 
     # we only care about editing time per slice
     if {$Module(activeID) != "Editor"} {
-    return
+        if {$::Module(verbose)} {
+            puts "SessionLogTraceSliceOffsetsCallback: active module is not Editor, returning."
+        }
+        return
     }
 
     # Lauren what if slice is not active?
@@ -826,9 +834,12 @@ proc SessionLogTraceSliceOffsetsCallback {variableName indexIfArray operation} {
 
 #-------------------------------------------------------------------------------
 # .PROC SessionLogTraceSliceDescriptionCallback
-# called when any var that is used as part of the description of
-# the slice time changes.  restarts timing of all slices w/ new description
+# Called when any var that is used as part of the description of
+# the slice time changes.  Restarts timing of all slices w/ new description.
 # .ARGS
+# str variableName not used
+# int indexIfArray not used
+# str operation not used
 # .END
 #-------------------------------------------------------------------------------
 proc SessionLogTraceSliceDescriptionCallback {variableName indexIfArray operation} {
@@ -839,9 +850,10 @@ proc SessionLogTraceSliceDescriptionCallback {variableName indexIfArray operatio
 
 #-------------------------------------------------------------------------------
 # .PROC SessionLogStartTimingSlice
-# Form description string that describes current situation we are timing.
+# Form description string that describes current situation we are timing.<br>
 # Record start time for this description. Stop timing previous description.
 # .ARGS
+# int s slice number
 # .END
 #-------------------------------------------------------------------------------
 proc SessionLogStartTimingSlice {s} {
@@ -869,21 +881,21 @@ proc SessionLogStartTimingSlice {s} {
     # actually record the time
     if {$var != $prev} {
 
-    SessionLogStartTiming $var
-    
-    # stop timing previous slice
-    if {$prev != ""} {
-        SessionLogStopTiming $prev
-    }
-    # remember this one for next time
-    set SessionLog(trace,prevSlice$s)  $var
+        SessionLogStartTiming $var
+        
+        # stop timing previous slice
+        if {$prev != ""} {
+            SessionLogStopTiming $prev
+        }
+        # remember this one for next time
+        set SessionLog(trace,prevSlice$s)  $var
     }
 }
 
 
 #-------------------------------------------------------------------------------
 # .PROC SessionLogStartTimingAllSlices
-# 
+# For each slice, start timing that slice
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -891,7 +903,7 @@ proc SessionLogStartTimingAllSlices {} {
     global SessionLog Slice
     
     foreach s $Slice(idList) {
-    SessionLogStartTimingSlice $s
+        SessionLogStartTimingSlice $s
     }
 
 }
@@ -899,7 +911,7 @@ proc SessionLogStartTimingAllSlices {} {
 #-------------------------------------------------------------------------------
 # .PROC SessionLogStopTimingAllSlices
 # Only use this before exiting the program to record final time
-# for all slices
+# for all slices.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -908,23 +920,21 @@ proc SessionLogStopTimingAllSlices {} {
     
     foreach s $Slice(idList) {
 
-    # stop timing previous slice
-    set prev $SessionLog(trace,prevSlice$s)
-    if {$prev != ""} {
-        SessionLogStopTiming $prev
+        # stop timing previous slice
+        set prev $SessionLog(trace,prevSlice$s)
+        if {$prev != ""} {
+            SessionLogStopTiming $prev
+        }
+        # clear the previous slice since we are not timing one
+        set SessionLog(trace,prevSlice$s)  ""
     }
-    # clear the previous slice since we are not timing one
-    set SessionLog(trace,prevSlice$s)  ""
-
-    }
-
 }
 
 #-------------------------------------------------------------------------------
 # .PROC SessionLogStartTiming
-# grab clock value now
+# Grab clock value now
 # .ARGS
-# d  description pseudo-list of whatever we are timing
+# str d  description pseudo-list of whatever we are timing
 # .END
 #-------------------------------------------------------------------------------
 proc SessionLogStartTiming {d} {
@@ -935,9 +945,9 @@ proc SessionLogStartTiming {d} {
 
 #-------------------------------------------------------------------------------
 # .PROC SessionLogStopTiming
-# add to the total time in editor (or submodule) so far
+# Add to the total time in editor (or submodule) so far
 # .ARGS
-# d  description pseudo-list of whatever we are timing
+# str d description pseudo-list of whatever we are timing
 # .END
 #-------------------------------------------------------------------------------
 proc SessionLogStopTiming {d} {
@@ -945,7 +955,7 @@ proc SessionLogStopTiming {d} {
 
     # can't stop if we never started
     if {[info exists SessionLog(logInfo,$d,startTime)] == 0} {
-    return
+        return
     }
 
     set SessionLog(logInfo,$d,endTime) [clock seconds]
@@ -959,7 +969,7 @@ proc SessionLogStopTiming {d} {
 
     # initialize the variable if needed
     if {[info exists SessionLog(log,$var)] == 0} {
-    set SessionLog(log,$var) 0
+        set SessionLog(log,$var) 0
     }
     
     # increment total time
@@ -967,3 +977,28 @@ proc SessionLogStopTiming {d} {
     set SessionLog(log,$var) $total    
 }
 
+#-------------------------------------------------------------------------------
+# .PROC SessionLogUnTraceSliceOffsets
+# Undo what SessionLogTraceSliceOffsets does, removing trace commands from variables.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc SessionLogUnTraceSliceOffsets {} {
+    global Slice SessionLog Module Editor Label
+
+    foreach s $Slice(idList) {
+        trace vdelete Slice($s,offset) w SessionLogTraceSliceOffsetsCallback
+
+        # reset vars
+        if {[info exists SessionLog(trace,prevSlice$s)] == 1} {
+            set SessionLog(trace,prevSlice$s) ""
+        }
+    }
+
+    foreach var $SessionLog(traceVarlist) {
+        if {$::Module(verbose)} {
+            puts "SessionLogUnTraceSliceOffsets: deleting trace on $var"
+        }
+        trace vdelete $var w SessionLogTraceSliceDescriptionCallback
+    }
+}
