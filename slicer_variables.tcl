@@ -99,7 +99,7 @@ switch $::tcl_platform(os) {
         set shared_lib_ext "so"
     }
     "Darwin" {
-        set shared_lib_ext "dyld"
+        set shared_lib_ext "dylib"
     }
     "Windows NT" {
         set shared_lib_ext "dll"
