@@ -1374,26 +1374,17 @@ void vtkImageDrawROI::DrawSpline(vtkImageData *outData, int outExt[6])
     // Draw first segment (curve connecting p0 and p1)
     double p1dx = 0.5 * (p2->x - p0->x);
     double p1dy = 0.5 * (p2->y - p0->y);
-    double p1_p0x = p1->x - p0->x;
-    double p1_p0y = p1->y - p0->y;
-    double p1_p0sq = p1_p0x * p1_p0x + p1_p0y * p1_p0y;
-    double A = p1_p0x;
-    double B = p1_p0y;
-    double C = 0.5 * ((p0->x - p1->x) * (p0->x + p1->x) +
-                      (p0->y - p1->y) * (p0->y + p1->y));
-    double x0 = p1->x + p1dx;
-    double y0 = p1->y + p1dy;
-    double ax0by0c = A * x0 + B * y0 + C;
-    // Derivative at p0 is reflection of derivative at p1 (p1dx, p1dy) over the
-    // line bisecting the edge connecting p0 and p1
+    double p0_p1x = p0->x - p1->x;
+    double p0_p1y = p0->y - p1->y;
+    double p0_p1sq = p0_p1x * p0_p1x + p0_p1y * p0_p1y;
     double p0dx = p1dx;
     double p0dy = p1dy;
-    if (p1_p0sq > 0.0)
+    if (p0_p1sq > 0.0)
     {
-        p0dx = p1->x - p0->x + p1dx + 2.0 * (p0->x - p1->x) / p1_p0sq *
-               ax0by0c;
-        p0dy = p1->y - p0->y + p1dy + 2.0 * (p0->y - p1->y) / p1_p0sq *
-               ax0by0c;
+        double dotprod = p1dx * p0_p1x + p1dy * p0_p1y;
+        dotprod *= 2.0 / p0_p1sq;
+        p0dx = p0_p1x * dotprod - p1dx;
+        p0dy = p0_p1y * dotprod - p1dy;
     }
     unsigned char color[3];
     color[0] = 0;
@@ -1423,24 +1414,17 @@ void vtkImageDrawROI::DrawSpline(vtkImageData *outData, int outExt[6])
     // Draw last segment (curve connecting p1 and p2)
     p1dx = 0.5 * (p2->x - p0->x);
     p1dy = 0.5 * (p2->y - p0->y);
-    double p1_p2x = p1->x - p2->x;
-    double p1_p2y = p1->y - p2->y;
-    double p1_p2sq = p1_p2x * p1_p2x + p1_p2y * p1_p2y;
-    A = p1->x - p2->x;
-    B = p1->y - p2->y;
-    C = 0.5 * ((p2->x - p1->x) * (p2->x + p1->x) +
-               (p2->y - p1->y) * (p2->y + p1->y));
-    ax0by0c = A * x0 + B * y0 + C;
-    // Derivative at p2 is reflection of derivative at p1 (p1dx, p1dy) over the
-    // line bisecting the edge connecting p2 and p1
+    double p2_p1x = p2->x - p1->x;
+    double p2_p1y = p2->y - p1->y;
+    double p2_p1sq = p2_p1x * p2_p1x + p2_p1y * p2_p1y;
     p2dx = p1dx;
     p2dy = p1dy;
-    if (p1_p2sq > 0.0)
+    if (p2_p1sq > 0.0)
     {
-        p2dx = p1->x - p2->x + p1dx + 2.0 * (p2->x - p1->x) / p1_p2sq *
-               ax0by0c;
-        p2dy = p1->y - p2->y + p1dy + 2.0 * (p2->y - p1->y) / p1_p2sq *
-               ax0by0c;
+        double dotprod = p1dx * p2_p1x + p1dy * p2_p1y;
+        dotprod *= 2.0 / p2_p1sq;
+        p2dx = dotprod * p2_p1x - p1dx;
+        p2dy = dotprod * p2_p1y - p1dy;
     }
     plx = oneThird * p1dx + p1->x;
     ply = oneThird * p1dy + p1->y;

@@ -367,15 +367,15 @@ vtkPoints* vtkPolygonList::GetSampledPolygon(int p)
             double p2dx = 0.5 * (ras3[0] - ras1[0]);
             double p2dy = 0.5 * (ras3[1] - ras1[1]);
             double p2dz = 0.5 * (ras3[2] - ras1[2]);
-            double p2_p1x = ras2[0] - ras1[0];
-            double p2_p1y = ras2[1] - ras1[1];
-            double p2_p1z = ras2[2] - ras1[2];
-            double p2_p1sq = p2_p1x * p2_p1x + p2_p1y * p2_p1y +
-                             p2_p1z * p2_p1z;
+            double p1_p2x = ras1[0] - ras2[0];
+            double p1_p2y = ras1[1] - ras2[1];
+            double p1_p2z = ras1[2] - ras2[2];
+            double p1_p2sq = p1_p2x * p1_p2x + p1_p2y * p1_p2y +
+                             p1_p2z * p1_p2z;
             // If p1 and p2 are identical points, then add "density" points
             // between p1 and p2 that are identical to p1, so that the regular
             // structure of the sampled polygon is maintained.
-            if (p2_p1sq < 0.00001)
+            if (p1_p2sq < 0.00001)
             {
                 // Plot left endpoint
                 Samples->InsertNextPoint(ras1[0], ras1[1], ras1[2]);
@@ -385,28 +385,16 @@ vtkPoints* vtkPolygonList::GetSampledPolygon(int p)
                     Samples->InsertNextPoint(ras1[0], ras1[1], ras1[2]);
                 }
             }
-            // Otherwise, interpolate a cardinal spline between p1 and p2
+            // Otherwise, interpolate a cardinal spline between p1 and p2,
+            // where the derivative (p1dx,p1dy,p1dz) at p1 is the reflection of
+            // the derivative (p2dx,p2dy,p2dz) at p2 across the edge p1p2.
             else
             {
-                double Ax = p2_p1x;
-                double Ay = p2_p1y;
-                double Az = p2_p1z;
-                double C = 0.5 * ((ras1[0] - ras2[0]) * (ras1[0] + ras2[0]) +
-                                  (ras1[1] - ras2[1]) * (ras1[1] + ras2[1]) +
-                                  (ras1[2] - ras2[2]) * (ras1[2] + ras2[2]));
-                double x0 = ras2[0] + p2dx;
-                double y0 = ras2[1] + p2dy;
-                double z0 = ras2[2] + p2dz;
-                double ax0by0c = Ax * x0 + Ay * y0 + Az * z0 + C;
-                // Derivative at p0 is reflection of derivative at p2
-                // (p2dx, p2dy, p2dz) over the line bisecting the edge
-                // connecting p1 and p2
-                double p1dx = ras2[0] - ras1[0] + p2dx + 2.0 *
-                              (ras1[0] - ras2[0]) / p2_p1sq * ax0by0c;
-                double p1dy = ras2[1] - ras1[1] + p2dy + 2.0 *
-                              (ras1[1] - ras2[1]) / p2_p1sq * ax0by0c;
-                double p1dz = ras2[2] - ras1[2] + p2dz + 2.0 *
-                              (ras1[2] - ras2[2]) / p2_p1sq * ax0by0c;
+                double dotprod = p2dx * p1_p2x + p2dy * p1_p2y + p2dz * p1_p2z;
+                dotprod *= 2.0 / p1_p2sq;
+                double p1dx = p1_p2x * dotprod - p2dx;
+                double p1dy = p1_p2y * dotprod - p2dy;
+                double p1dz = p1_p2z * dotprod - p2dz;
                 // Plot left endpoint
                 Samples->InsertNextPoint(ras1[0], ras1[1], ras1[2]);
                 // Plot intermediate points
@@ -466,15 +454,15 @@ vtkPoints* vtkPolygonList::GetSampledPolygon(int p)
             double p1dx = 0.5 * (ras2[0] - ras0[0]);
             double p1dy = 0.5 * (ras2[1] - ras0[1]);
             double p1dz = 0.5 * (ras2[2] - ras0[2]);
-            double p1_p2x = ras1[0] - ras2[0];
-            double p1_p2y = ras1[1] - ras2[1];
-            double p1_p2z = ras1[2] - ras2[2];
-            double p1_p2sq = p1_p2x * p1_p2x + p1_p2y * p1_p2y +
-                             p1_p2z * p1_p2z;
+            double p2_p1x = ras2[0] - ras1[0];
+            double p2_p1y = ras2[1] - ras1[1];
+            double p2_p1z = ras2[2] - ras1[2];
+            double p2_p1sq = p2_p1x * p2_p1x + p2_p1y * p2_p1y +
+                             p2_p1z * p2_p1z;
             // If p1 and p2 are identical points, then add "density" points
             // between p1 and p2 that are identical to p1, so that the regular
             // structure of the sampled polygon is maintained.
-            if (p1_p2sq < 0.00001)
+            if (p2_p1sq < 0.00001)
             {
                 // Plot left endpoint
                 Samples->InsertNextPoint(ras1[0], ras1[1], ras1[2]);
@@ -485,27 +473,15 @@ vtkPoints* vtkPolygonList::GetSampledPolygon(int p)
                 }
             }
             // Otherwise, interpolate a cardinal spline between p1 and p2
+            // where the derivative (p2dx,p2dy,p2dz) at p2 is the reflection of
+            // the derivative (p1dx,p1dy,p1dz) at p1 across the edge p1p2.
             else
             {
-                double Ax = ras1[0] - ras2[0];
-                double Ay = ras1[1] - ras2[1];
-                double Az = ras1[2] - ras2[2];
-                double C = 0.5 * ((ras2[0] - ras1[0]) * (ras2[0] + ras1[0]) +
-                                  (ras2[1] - ras1[1]) * (ras2[1] + ras1[1]) +
-                                  (ras2[2] - ras1[2]) * (ras2[2] + ras1[2]));
-                double x0 = ras1[0] + p1dx;
-                double y0 = ras1[1] + p1dy;
-                double z0 = ras1[2] + p1dz;
-                double ax0by0c = Ax * x0 + Ay * y0 + Az * z0 + C;
-                // Derivative at p2 is reflection of derivative at p1
-                // (p1dx, p1dy, p1dz) over the line bisecting the edge
-                // connecting p2 and p1
-                double p2dx = ras1[0] - ras2[0] + p1dx + 2.0 *
-                              (ras2[0] - ras1[0]) / p1_p2sq * ax0by0c;
-                double p2dy = ras1[1] - ras2[1] + p1dy + 2.0 *
-                              (ras2[1] - ras1[1]) / p1_p2sq * ax0by0c;
-                double p2dz = ras1[2] - ras2[2] + p1dz + 2.0 *
-                              (ras2[2] - ras1[2]) / p1_p2sq * ax0by0c;
+                double dotprod = p1dx * p2_p1x + p1dy * p2_p1y + p1dz * p2_p1z;
+                dotprod *= 2.0 / p2_p1sq;
+                double p2dx = dotprod * p2_p1x - p1dx;
+                double p2dy = dotprod * p2_p1y - p1dy;
+                double p2dz = dotprod * p2_p1z - p1dz;
                 double plx = oneThird * p1dx + ras1[0];
                 double ply = oneThird * p1dy + ras1[1];
                 double plz = oneThird * p1dz + ras1[2];
