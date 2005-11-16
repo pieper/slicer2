@@ -133,9 +133,9 @@ proc MainInteractorBind {widget} {
 
     # Control-B1
     bind $widget <Control-B1-Motion>      {MainInteractorControlB1Motion %W %x %y}
-    bind $widget <Control-ButtonPress-1>  {MainInteractorShiftB1 %W %x %y}
+    bind $widget <Control-ButtonPress-1>  {MainInteractorControlB1 %W %x %y}
     bind $widget <Control-ButtonRelease-1> \
-        {MainInteractorShiftB1Release %W %x %y}
+        {MainInteractorControlB1Release %W %x %y}
 
     # NOTE: since this has been disabled for years, AltB1 is now
     # mapped to PAN to support two-button mice. - sp 2002-11-14
@@ -755,7 +755,7 @@ proc MainInteractorB1Motion {widget x y} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorControlB1Motion {widget x y} {
-    global Interactor
+    global Interactor Module
     
     set s $Interactor(s)
     scan [MainInteractorXY $s $x $y] "%d %d %d %d" xs ys x y 
