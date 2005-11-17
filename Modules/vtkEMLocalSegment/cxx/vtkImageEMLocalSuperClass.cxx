@@ -376,7 +376,7 @@ void vtkImageEMLocalSuperClass::ExecuteData(vtkDataObject *)
          ((vtkImageEMLocalClass*) this->ClassList[i])->Update();
          // Add Messages to own errror messages 
          if (((vtkImageEMLocalClass*) this->ClassList[i])->GetErrorFlag()) {
-       vtkEMJustAddMessage(((vtkImageEMLocalClass*) this->ClassList[i])->GetErrorMessages());
+       vtkEMJustAddErrorMessage(((vtkImageEMLocalClass*) this->ClassList[i])->GetErrorMessages());
        return;
          }
      if ((ProbDataPtrIndex < 0) && ((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataPtr())  ProbDataPtrIndex = i;
@@ -385,7 +385,7 @@ void vtkImageEMLocalSuperClass::ExecuteData(vtkDataObject *)
          ((vtkImageEMLocalSuperClass*) this->ClassList[i])->Update();
          // Add Messages to own errror messages 
          if (((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetErrorFlag()) {
-       vtkEMJustAddMessage(((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetErrorMessages());
+       vtkEMJustAddErrorMessage(((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetErrorMessages());
        return;
          }
 

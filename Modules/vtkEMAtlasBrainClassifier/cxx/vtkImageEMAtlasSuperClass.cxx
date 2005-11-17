@@ -376,7 +376,7 @@ void vtkImageEMAtlasSuperClass::ExecuteData(vtkDataObject *)
          ((vtkImageEMAtlasClass*) this->ClassList[i])->Update();
          // Add Messages to own errror messages 
          if (((vtkImageEMAtlasClass*) this->ClassList[i])->GetErrorFlag()) {
-       vtkEMJustAddMessage(((vtkImageEMAtlasClass*) this->ClassList[i])->GetErrorMessages());
+       vtkEMJustAddErrorMessage(((vtkImageEMAtlasClass*) this->ClassList[i])->GetErrorMessages());
        return;
          }
      if ((ProbDataPtrIndex < 0) && ((vtkImageEMAtlasClass*) this->ClassList[i])->GetProbDataPtr())  ProbDataPtrIndex = i;
@@ -385,7 +385,7 @@ void vtkImageEMAtlasSuperClass::ExecuteData(vtkDataObject *)
          ((vtkImageEMAtlasSuperClass*) this->ClassList[i])->Update();
          // Add Messages to own errror messages 
          if (((vtkImageEMAtlasSuperClass*) this->ClassList[i])->GetErrorFlag()) {
-       vtkEMJustAddMessage(((vtkImageEMAtlasSuperClass*) this->ClassList[i])->GetErrorMessages());
+       vtkEMJustAddErrorMessage(((vtkImageEMAtlasSuperClass*) this->ClassList[i])->GetErrorMessages());
        return;
          }
 
