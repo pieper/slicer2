@@ -97,8 +97,8 @@ proc fMRIEngineBuildUIForROITasks {parent} {
     # Top frame 
     #-------------------------------------------
     set f $parent.fTop
-    DevAddButton $f.bHelp "?" "fMRIEngineHelpSetup" 2 
-    pack $f.bHelp -side left -padx 1 -pady 1 
+    eval {label $f.l -text "Label map:"} $Gui(BLA)
+    pack $f.l -side left -padx $Gui(pad) -fill x -anchor w
  
     # Build pulldown task menu 
     # eval {label $f.l -text "Label map:"} $Gui(BLA)
@@ -218,7 +218,7 @@ proc fMRIEngineBuildUIForROILoad {parent} {
     global fMRIEngine Gui
    
     frame $parent.fLabel   -bg $Gui(activeWorkspace)
-    frame $parent.fFile    -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    frame $parent.fFile    -bg $Gui(activeWorkspace) -relief groove -bd 1 
     frame $parent.fApply   -bg $Gui(activeWorkspace)
     pack $parent.fLabel $parent.fFile $parent.fApply -side top -pady 1 
 
@@ -297,7 +297,7 @@ proc fMRIEngineBuildUIForROIShape {parent} {
     global fMRIEngine Gui
 
     frame $parent.fTitle  -bg $Gui(activeWorkspace)
-    frame $parent.fTop -bg $Gui(activeWorkspace) -relief groove -bd 2
+    frame $parent.fTop -bg $Gui(activeWorkspace) -relief groove -bd 1 
     pack $parent.fTitle $parent.fTop -side top -fill x -pady 5 -padx 5 
 
     set f $parent.fTitle
@@ -340,18 +340,16 @@ proc fMRIEngineBuildUIForROIShape {parent} {
 proc fMRIEngineBuildUIForROIAnatomy {parent} {
     global fMRIEngine Gui
 
-    frame $parent.fTitle  -bg $Gui(activeWorkspace)
-    frame $parent.fTop -bg $Gui(activeWorkspace) -relief groove -bd 2
-    pack $parent.fTitle $parent.fTop -side top -fill x -pady 5 -padx 5 
+    frame $parent.fTop -bg $Gui(activeWorkspace) -relief groove -bd 1 
+    frame $parent.fMiddle -bg $Gui(activeWorkspace) -relief groove -bd 1
+    frame $parent.fBottom -bg $Gui(activeWorkspace) -relief groove -bd 1
+    pack $parent.fTop $parent.fMiddle $parent.fBottom -side top -fill x -pady 5 -padx 5 
 
-    set f $parent.fTitle
-    DevAddLabel $f.l "Create a label map from anatomy:"
-    pack $f.l -side top -fill x -pady 2 -padx 5 
-
+    # tope frame
     set f $parent.fTop
     frame $f.fBox    -bg $Gui(activeWorkspace)
-    frame $f.fButtons -bg $Gui(activeWorkspace)
-    pack $f.fBox $f.fButtons -side top -fill x -pady 2 -padx 1 
+    frame $f.fButton -bg $Gui(activeWorkspace)
+    pack $f.fBox $f.fButton -side top -fill x -pady 2 -padx 1 
 
     set f $parent.fTop.fBox
     DevAddLabel $f.l "Choose a background volume:"
@@ -369,9 +367,41 @@ proc fMRIEngineBuildUIForROIAnatomy {parent} {
         1,0 $fMRIEngine(AnatomyBGListBox) -fill x -padx 1 -pady 1 \
         1,1 $fMRIEngine(AnatomyBGVerScroll) -fill y -padx 1 -pady 1
 
-    set f $parent.fTop.fButtons
-    DevAddButton $f.bCompute "Go to Editor Module" "fMRIEngineSelectBG {AnatomyBGListBox}" 20 
-    grid $f.bCompute -padx 1 -pady 3
+    set f $parent.fTop.fButton
+    DevAddButton $f.bSelect "Select" "fMRIEngineSelectBG {AnatomyBGListBox}" 20 
+    grid $f.bSelect -padx 1 -pady 3
+
+    # middle frame
+    set f $parent.fMiddle
+    DevAddLabel $f.lName "Label map name:"
+    eval {entry $f.eName -width 15  \
+        -textvariable fMRIEngine(entry,labelMapName) } $Gui(WEA)
+    pack $f.lName $f.eName -side top -fill x -pady 3 -padx 3 
+
+    # bottom frame
+    set f $parent.fBottom
+    DevAddLabel $f.lNote "Label map will be created \nin the Editor module \nusing its drawing tools:"
+    DevAddButton $f.bGo "Go to Editor Module" "fMRIEngineGotoEditor" 20 
+    pack $f.lNote $f.bGo -side top -padx 3 -pady 3
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineGotoEditor
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineGotoEditor {} {
+    global fMRIEngine Editor 
+
+    set name $fMRIEngine(entry,labelMapName)
+    set name [string trim $name]
+    if {$name != ""} {
+        set Editor(nameWorking) $fMRIEngine(entry,labelMapName)
+    }
+
+    Tab Editor row1 Volumes 
 }
 
 
@@ -390,9 +420,6 @@ proc fMRIEngineSelectBG {lb} {
         set id [MIRIADSegmentGetVolumeByName $name] 
         MainSlicesSetVolumeAll Back $id
         RenderAll
-
-        # Switch to Editor module
-        Tab Editor row1 Volumes 
     }
 }
 
@@ -454,8 +481,8 @@ proc fMRIEngineBuildUIForROIActivation {parent} {
 proc fMRIEngineBuildUIForROIStats {parent} {
     global fMRIEngine Gui Label 
 
-    frame $parent.fStats -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    frame $parent.fPlot -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    frame $parent.fStats -bg $Gui(activeWorkspace) -relief groove -bd 1 
+    frame $parent.fPlot -bg $Gui(activeWorkspace) -relief groove -bd 1 
     frame $parent.fReset -bg $Gui(activeWorkspace)
     pack $parent.fStats $parent.fPlot -side top -fill x -pady 5 -padx 5 
     pack $parent.fReset -side top -fill x -pady 5 -padx 20 
