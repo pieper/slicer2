@@ -401,7 +401,8 @@ proc fMRIEngineBuildUIForModelEstimation {parent} {
     global Gui fMRIEngine
     
     frame $parent.fEstimate -bg $::Gui(activeWorkspace) -relief groove -bd 1
-    pack $parent.fEstimate -side top -fill x -pady 4 -padx 1
+    frame $parent.fBetaVol -bg $::Gui(activeWorkspace) -relief groove -bd 1
+    pack $parent.fEstimate $parent.fBetaVol -side top -fill x -pady 4 -padx 1
 
     #-------------------------------------------
     # Estimate frame 
@@ -436,6 +437,8 @@ proc fMRIEngineBuildUIForModelEstimation {parent} {
     #--- add buttons for estimating
     DevAddButton $f.bHelp "?" "fMRIEngineHelpSetupEstimate" 2
     DevAddButton $f.bEstimate "Fit Model" "fMRIEngineFitModel" 15 
+    DevAddButton $f.bSave "Save Beta" "fMRIEngineSaveBetaVolume" 15 
+    DevAddButton $f.bLoad "Load Beta" "fMRIEngineLoadBetaVolume" 15 
 
     set fMRIEngine(curRunForModelFitting) run1 
     # Save menubutton for config
@@ -447,11 +450,101 @@ proc fMRIEngineBuildUIForModelEstimation {parent} {
         1,0 $f.lRun -padx 2 -pady 1 -anchor e \
         1,1 $f.mbWhichRun -padx 1 -pady 1 -anchor e -fill x \
         2,1 $f.bEstimate -padx 1 -pady 1 -anchor e -fill x \
-        2,2 $f.bHelp -padx 1 -pady 1 -anchor e 
+        2,2 $f.bHelp -padx 1 -pady 1 -anchor e \
+        3,1 $f.bSave -padx 1 -pady 1 -anchor e \
+        4,1 $f.bLoad -padx 1 -pady 1 -anchor e 
 
-#    set f $parent.fEstimate.fBot
+#    set f $parent.fBetaVol.fBot
 #    DevAddButton $f.bView "View Coefficients" "fMRIEngineViewCoefficients" 27 
 
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineLoadBetaVolume
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineLoadBetaVolume {} {
+    global fMRIEngine 
+
+    if {$fMRIEngine(curRunForModelFitting) == "none"} {
+        DevErrorWindow "Select a valid run for beta volume loading."
+        return 
+    }
+
+    # Pvti file is the output of vtkXMLPImageDataWriter
+    # Basically, pvti file is an xml header for the image data.
+    # Vti file is the real image file whose contents are not 
+    # human readable. There are probably multiple vti files.
+    set fileType {{"PVTI" *.pvti}}
+    set fileName [tk_getOpenFile -filetypes $fileType -parent .]
+
+    if {[string length $fileName]} {
+
+        # the following commands set some parameters for
+        # contrast computation
+        if { ! [ fMRIEngineCountEVs] } {
+            return
+        }
+        set done [fMRIModelViewGenerateModel]
+        if {! $done} {
+            DevErrorWindow "Error in generating model for model fitting."
+            return 
+        }
+        set run $fMRIEngine(curRunForModelFitting)
+        fMRIEngineAddRegressors $run
+
+        # read data from file
+        if {[info commands fMRIEngine(pvtiReader)] != ""} {
+            fMRIEngine(pvtiReader) Delete
+            unset -nocomplain fMRIEngine(pvtiReader)
+        }
+        vtkXMLPImageDataReader fMRIEngine(pvtiReader)
+
+        fMRIEngine(pvtiReader) SetFileName $fileName
+        fMRIEngine(pvtiReader) Update
+        set fMRIEngine(actBetaVolume) [fMRIEngine(pvtiReader) GetOutput]
+    }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineSaveBetaVolume
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineSaveBetaVolume {} {
+    global fMRIEngine 
+
+    if {! [info exists fMRIEngine(actBetaVolume)]} {
+        DevErrorWindow "Estimate the model first."
+        return
+    }
+
+    # write data to file
+    set fileType {{"PVTI" *.pvti}}
+    set fileName [tk_getSaveFile -filetypes $fileType -parent .]
+    if {[string length $fileName]} {
+        set pvti ".pvti"
+        set ext [file extension $fileName]
+        if {$ext != $pvti} {
+            set fileName "$fileName$pvti"
+        }
+
+        if {[info commands fMRIEngine(pvtiWriter)] != ""} {
+            fMRIEngine(pvtiWriter) Delete
+            unset -nocomplain fMRIEngine(pvtiWriter)
+        }
+        vtkXMLPImageDataWriter fMRIEngine(pvtiWriter)
+
+        fMRIEngine(pvtiWriter) SetInput $fMRIEngine(actBetaVolume)
+        fMRIEngine(pvtiWriter) SetNumberOfPieces 1 
+        fMRIEngine(pvtiWriter) SetFileName $fileName
+        fMRIEngine(pvtiWriter) Write
+    }
 }
 
 
@@ -463,12 +556,9 @@ proc fMRIEngineBuildUIForModelEstimation {parent} {
 #-------------------------------------------------------------------------------
 proc fMRIEngineViewCoefficients {} {
     global fMRIEngine 
-
+ 
 
 }
-
-
-
 
 
 #-------------------------------------------------------------------------------
@@ -1545,7 +1635,7 @@ proc fMRIEngineFitModel {} {
     }
     fMRIEngine(actEstimator) SetDetector fMRIEngine(detector)  
     fMRIEngine(actEstimator) Update
-    set fMRIEngine(actBetaAndStd) [fMRIEngine(actEstimator) GetOutput]
+    set fMRIEngine(actBetaVolume) [fMRIEngine(actEstimator) GetOutput]
 
     fMRIEngine(actEstimator) RemoveObserver $obs1 
     fMRIEngine(actEstimator) RemoveObserver $obs2 
