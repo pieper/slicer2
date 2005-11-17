@@ -397,6 +397,9 @@ proc fMRIEngineGotoEditor {} {
 
     set name $fMRIEngine(entry,labelMapName)
     set name [string trim $name]
+
+    # if the user has a name for the label map, use it;
+    # otherwise, use the default name, i.e. Working
     if {$name != ""} {
         set Editor(nameWorking) $fMRIEngine(entry,labelMapName)
     }
