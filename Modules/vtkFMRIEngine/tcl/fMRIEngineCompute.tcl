@@ -107,7 +107,7 @@ proc fMRIEngineComputeContrasts {} {
 
     set curs [$fMRIEngine(computeListBox) curselection] 
     if {$curs != ""} {
-        if {! [info exists fMRIEngine(actBetaAndStd)]} {
+        if {! [info exists fMRIEngine(actBetaVolume)]} {
             DevErrorWindow "Estimating the model first."
             return
         }
@@ -194,7 +194,7 @@ proc fMRIEngineComputeContrasts {} {
 
                 fMRIEngine(actVolumeGenerator) SetContrastVector fMRIEngine(contrast) 
                 fMRIEngine(actVolumeGenerator) SetDesignMatrix fMRIEngine(designMatrix)
-                fMRIEngine(actVolumeGenerator) SetInput $fMRIEngine(actBetaAndStd) 
+                fMRIEngine(actVolumeGenerator) SetInput $fMRIEngine(actBetaVolume) 
                 set act [fMRIEngine(actVolumeGenerator) GetOutput]
                 $act Update
                 set fMRIEngine(act) $act
