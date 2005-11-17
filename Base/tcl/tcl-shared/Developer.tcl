@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,7 +32,7 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        Developer.tcl
 # PROCEDURES:  
@@ -43,31 +43,28 @@
 #   DevErrorWindow message
 #   DevFatalErrorWindow message
 #   DevAddLabel LabelName Message Color
-#   DevAddEntry
+#   DevAddEntry ArrayName Variable EntryName Width
 #   DevAddButton ButtonName Message Command Width
-#   DevAddSelectButton TabName f Label Message Pack Tooltip width color
-#   DevUpdateNodeSelectButton ArrayName type Label Name CommandSet None New LabelMap
-#   DevUpdateNodeSelectButton
+#   DevAddSelectButton TabName f aLabel message pack tooltip width color
+#   DevUpdateNodeSelectButton type ArrayName Label Name CommandSet None New LabelMap Command2Set
 #   DevUpdateSelectButton ArrayName Label Name ChoiceList Command
 #   DevSelectNode type id ArrayName ModelLabel ModelName
-#   DevCreateNewCopiedVolume VolumeId Description VolName
+#   DevCreateNewCopiedVolume OrigId Description VolName
 #   DevGetFile filename MustPop DefaultExt DefaultDir Title Action PathType
 #   DevAddFileBrowse Frame ArrayName VarFileName Message Command DefaultExt DefaultDir Action Title Tooltip PathType
 #   DevCreateScrollList ScrollFrame ItemCreateGui ScrollListConfigScrolledGUI: ItemList
-#   DevCheckScrollLimits 
-#   DevCheckScrollLimits
-#   DevFileExists
+#   DevCheckScrollLimits  args
+#   DevFileExists filename
 #   DevSourceTclFilesInDirectory dir verbose
-#   DevPrintMrmlDataTree class if
-#   DevPrintMatrix
-#   DevPrintMatrix
-#   DevPrintMatrix4x4
+#   DevPrintMrmlDataTree tagList justMatrices
+#   DevPrintMatrix mat name
+#   DevPrintMatrix4x4 mat name
 #   DevCreateTextPopup topicWinName title x textBoxHit txt
 #   DevApplyTextTags str
-#   configures text widget w
-#   DevTextLink
-#   DevLaunchBrowser
-#   DevLaunchBrowserURL
+#   DevInsertPopupText w
+#   DevTextLink w linkTag
+#   DevLaunchBrowser section
+#   DevLaunchBrowserURL url
 #==========================================================================auto=
 # This file exists specifically for user to help fast development
 # of Slicer modules
@@ -81,8 +78,8 @@
 #   DevAddSelectButton              Add a volume or model select button
 #   DevSelect                       Called upon selection from a SelectButton.
 #   DevCreateNewCopiedVolume        Create a New Volume, Copying an existing one's param
-#proc DevGetFile                    Looks for a file, makes a pop-up window if necessary
-#proc DevAddFileBrowse              Creates a File Browsing Frame
+#   DevGetFile                    Looks for a file, makes a pop-up window if necessary
+#   DevAddFileBrowse              Creates a File Browsing Frame
 #
 # Other Useful stuff:
 #
@@ -95,11 +92,14 @@
 # Useful Variables
 # $Mrml(dir)  The directory from which the slicer was run.
 #
+
+
 #-------------------------------------------------------------------------------
 # .PROC DevYesNo
 #
-#  Ask the user a Yes/No question. Force the user to decide before continuing.
-#  returns "yes" or "no" 
+#  Ask the user a Yes/No question. Force the user to decide before continuing.<br>
+#  Returns "yes" or "no"<br>
+#  Resets the tk scaling to 1 and then returns it to the original value. 
 #
 # .ARGS
 #  str message The question to ask.
@@ -107,33 +107,47 @@
 #-------------------------------------------------------------------------------
 proc DevYesNo {message} {
     set oscaling [tk scaling]
+
+    if {$::Module(verbose)} {
+        puts "DevYesNo: original scaling is $oscaling, changing it to 1 and then back"
+    }
     tk scaling 1
-    return [tk_messageBox -title Slicer -icon question -type yesno -message $message]
+    set retval [tk_messageBox -title Slicer -icon question -type yesno -message $message]
     tk scaling $oscaling
+
+    return $retval
 }
 
 #-------------------------------------------------------------------------------
 # .PROC DevOKCancel
 #
-#  Ask the user a Yes/No question. Force the user to decide before continuing.
-#  returns "yes" or "no" 
-#
+#  Ask the user an OK/Cancel question. Force the user to decide before continuing.<br>
+#  Returns "ok" or "cancel". <br>
+#  Resets the tk scaling to 1 and then returns it to the original value.
 # .ARGS
 #  str message The message to give.
 # .END
 #-------------------------------------------------------------------------------
 proc DevOKCancel {message} {
     set oscaling [tk scaling]
+    
+    if {$::Module(verbose)} {
+        puts "DevOKCancel: original scaling is $oscaling, changing it to 1 and then back"
+    }
+
     tk scaling 1
-    return [tk_messageBox -title Slicer -icon question -type okcancel -message $message]
+    set retval [tk_messageBox -title Slicer -icon question -type okcancel -message $message]
     tk scaling $oscaling
+
+    return $retval
 }
 
 
 #-------------------------------------------------------------------------------
 # .PROC DevWarningWindow
 #
-#  Report a Warning to the user. Force them to click OK to continue.
+#  Report a Warning to the user. Force them to click OK to continue.<br>
+#  Resets the tk scaling to 1 and then returns it to the original value.
 #
 # .ARGS
 #  str message The error message. Default: \"Unknown Warning\"
@@ -149,7 +163,8 @@ proc DevWarningWindow {{message "Unknown Warning"}} {
 #-------------------------------------------------------------------------------
 # .PROC DevInfoWindow
 #
-#  Report Information to the user. Force them to click OK to continue.
+#  Report Information to the user. Force them to click OK to continue.<br>
+#  Resets the tk scaling to 1 and then returns it to the original value.
 #
 # .ARGS
 #  str message The error message. Default: \"Unknown Warning\"
@@ -165,7 +180,8 @@ proc DevInfoWindow {message} {
 #-------------------------------------------------------------------------------
 # .PROC DevErrorWindow
 #
-#  Report an Error to the user. Force them to click OK to continue.
+#  Report an Error to the user. Force them to click OK to continue.<br>
+#  Resets the tk scaling to 1 and then returns it to the original value.
 #
 # .ARGS
 #  str message The error message. Default: \"Unknown Error\"
@@ -198,7 +214,7 @@ proc DevFatalErrorWindow {{message "Fatal Error"}} {
 #-------------------------------------------------------------------------------
 # .PROC DevAddLabel
 #
-#  Creates a label
+#  Creates a label.<br>
 #  Example:  DevAddLabel $f.lmylabel \"Have a nice day\"
 #
 # 
@@ -215,14 +231,18 @@ proc DevAddLabel { LabelName Message {Color WLA}} {
 
 #-------------------------------------------------------------------------------
 # .PROC DevAddEntry
-# 
 #
-# Example: DevAddEntry View parallelScale $f.eParallelScale 
-# Example: DevAddEntry View parallelScale $f.eParallelScale 20
-# adds an entry corresponding to variable View(parallelScale)
-# the first one has width 10, the second has width 20
+# Adds an entry box.<br>
+# Example: DevAddEntry View parallelScale $f.eParallelScale <br>
+# Example: DevAddEntry View parallelScale $f.eParallelScale 20<br>
+# Adds an entry corresponding to variable View(parallelScale).
+# The first one has width 10, the second has width 20
 #
 # .ARGS
+# str ArrayName the name of the array containing the variable to update.
+# str Variable the name of the varriable in the array, this is changed when the entry is updated
+# str EntryName the name of the entry box, ie f.fStuff.eStuff
+# int Width optional width of the entry box, defaults to 10
 # .END
 #-------------------------------------------------------------------------------
 proc DevAddEntry { ArrayName Variable EntryName {Width 10}} {
@@ -236,11 +256,11 @@ proc DevAddEntry { ArrayName Variable EntryName {Width 10}} {
 #-------------------------------------------------------------------------------
 # .PROC DevAddButton
 #
-#  Creates a button.
-#  Example:  DevAddButton $f.bmybutton \"Run me\" \"DoStuff\" 10
-#  Example:  DevAddButton $f.bmybutton \"Run me\" \"DoStuff\"
+#  Creates a button.<br>
+#  Example:  DevAddButton $f.bmybutton \"Run me\" \"DoStuff\" 10<br>
+#  Example:  DevAddButton $f.bmybutton \"Run me\" \"DoStuff\"<br>
 #  The first example creates a button of width 10 that says \"Run me\",
-#  and Calls procedure \"DoStuff\" when pressed.
+#  and Calls procedure \"DoStuff\" when pressed.<br>
 #  The second example does the same except it automatically determines 
 #  the width of the button.
 #
@@ -260,33 +280,32 @@ proc DevAddButton { ButtonName Message Command {Width 0} } {
             -command $Command } $Gui(WBA)
 } 
 
-
 #-------------------------------------------------------------------------------
 # .PROC DevAddSelectButton
 #
 #  Add a Select Button to the GUI
 #
-#  Example: DevAddSelectButton MyModule $f Volume1 "Reference Volume" Grid
-#    Creates a Volume select button with text "Reference Volume" to the left.
+#<br>  Example: DevAddSelectButton MyModule $f Volume1 "Reference Volume" Grid
+#<br>    Creates a Volume select button with text "Reference Volume" to the left.
 #      Grids the result.
-#    Creates $f.lVolume1     : The Label
-#    Creates $f.mbVolume1   : The Menubutton
-#    Creates $f.mbVolume1.m : The Menu
-#    Creates MyModule(mbVolume1) = $f.mbVolume1; This is for update
+#<br>    Creates $f.lVolume1     : The Label
+#<br>    Creates $f.mbVolume1   : The Menubutton
+#<br>    Creates $f.mbVolume1.m : The Menu
+#<br>    Creates MyModule(mbVolume1) = $f.mbVolume1; This is for update
 #       in MyModuleUpdateMrml 
 #
-#  Example2: DevAddSelectButton MyModule $f Model1 "Model Choice" Grid
+#<br>  Example2: DevAddSelectButton MyModule $f Model1 "Model Choice" Grid
 #
-# Note that we have not yet chosen the variable we are going to effect.
-# Also, we need a procedure like DevUpdate to make the update.
+#<br> Note that we have not yet chosen the variable we are going to effect.
+#<br> Also, we need a procedure like DevUpdate to make the update.
 #
 # .ARGS
-#  Array TabName  This is typically the name of the module.
-#  Widget f       Frame the button should go on
-#  Str   Label    This is the name of the button widget (i.e. MySelectVolumeButton)
-#  Str  Message   The message label to put to the left of the Volume Select button. Default \"Select Volume\"
-#  Str  Pack          "Pack" packs the buttons. \"Grid\" grids the buttons.
-#  Str Tooltip    The tooltip to display over the button. Optional.
+#  array TabName  This is typically the name of the module.
+#  widget f       Frame the button should go on
+#  str   aLabel    This is the name of the button widget (i.e. MySelectVolumeButton)
+#  str  message   The message label to put to the left of the Volume Select button. Default \"Select Volume\"
+#  str  pack          "Pack" packs the buttons. \"Grid\" grids the buttons.
+#  str tooltip    The tooltip to display over the button. Optional.
 #  str width      The width to make the button. Optional
 #  str color      Message label color and attribs from Gui.tcl (BLA or WLA). Optional
 # .END
@@ -350,31 +369,7 @@ proc DevAddSelectButton { TabName f aLabel message pack {tooltip ""} \
     # or we can use DevUpdateVolume in the MyModuleUpdate procedure
 }   
 
-#-------------------------------------------------------------------------------
-# .PROC DevUpdateNodeSelectButton
-#
-#  Call this routine from MyModuleUpdateDev or its eqivalent.
-#  Example: DevUpdateSelectButton Volume MyModule Volume1 Volume1 DevSelect
-#     Updates the menubutton Volume List for the button with label Volume1.
-#     Updates the menubutton Face text  for the button with label Volume1.
-#     Sets the Command to call to set the Volume to be DevSelect.
-#
-# Example2: DevUpdateSelectButton Model MyModule Model1 Model1 DevSelect
-#
-# Note that ArrayName(Name) must exist.
-#
-# .ARGS
-#  array ArrayName The array name containing the Volume Choice. Usually the module name.
-#  str type Either \"Model\" or \"Volume\".
-#  str Label This is the label of the bottons.
-#  str Name  The Volume or Model choice is stored in ArrayName(Name)
-#  str CommandSet This is the command to run to set the volume or model name. The default is DevSetVolume.  Arguments sent to it are type, the volume id and then ArrayName VolumeLabel VolumeName. Note that if you decide to make your own SetVolume command which requires other arguments, you can do this by setting CommandSetVolume to \"YourCommand arg1 arg2\" You must be able to deal with a \"\" id.
-#  bool None 1/0 means do/don't include the None NodeType. 1 is the defaulte
-#  bool New 1/0 means do/don't include the New NodeType. 0 is the defaulte
-#  bool LabelMap 1/0 means do/don't include LabelMaps. For Volumes Only. 0 is the defaulte
-#
-# .END
-#-------------------------------------------------------------------------------
+
 ## 
 ## I left this code here as an example of how to update Volumes alone.
 ## The code is slightly less complicated then my implementation for
@@ -418,8 +413,27 @@ proc DevAddSelectButton { TabName f aLabel message pack {tooltip ""} \
 
 #-------------------------------------------------------------------------------
 # .PROC DevUpdateNodeSelectButton
-# 
+#
+#  Call this routine from MyModuleUpdateDev or its eqivalent.
+#<br>  Example: DevUpdateSelectButton Volume MyModule Volume1 Volume1 DevSelect
+#<br>     Updates the menubutton Volume List for the button with label Volume1.
+#<br>     Updates the menubutton Face text  for the button with label Volume1.
+#<br>     Sets the Command to call to set the Volume to be DevSelect.
+#
+#<br> Example2: DevUpdateSelectButton Model MyModule Model1 Model1 DevSelect
+#
+#<br> Note that ArrayName(Name) must exist.
+#
 # .ARGS
+#  str type Either \"Model\" or \"Volume\".
+#  array ArrayName The array name containing the Volume Choice. Usually the module name.
+#  str Label This is the label of the bottons.
+#  str Name  The Volume or Model choice is stored in ArrayName(Name)
+#  str CommandSet This is the command to run to set the volume or model name. The default is DevSelectNode.  Arguments sent to it are type, the volume id and then ArrayName VolumeLabel VolumeName. Note that if you decide to make your own SetVolume command which requires other arguments, you can do this by setting CommandSetVolume to \"YourCommand arg1 arg2\" You must be able to deal with a \"\" id.
+#  bool None 1/0 means do/don't include the None NodeType. 1 is the default
+#  bool New 1/0 means do/don't include the New NodeType. 0 is the default
+#  bool LabelMap 1/0 means do/don't include LabelMaps. For Volumes Only. 0 is the defaulte
+#  str Command2Set a second CommandSet, defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc DevUpdateNodeSelectButton { type ArrayName Label Name { CommandSet "DevSelectNode" } { None 1 } { New 0 } { LabelMap 1 } {Command2Set ""} } {
@@ -472,11 +486,10 @@ proc DevUpdateNodeSelectButton { type ArrayName Label Name { CommandSet "DevSele
     }
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC DevUpdateSelectButton
 #
-# Updates a Simple Select Button.
+# Updates a Simple Select Button.<br>
 # Note that ArrayName(Name) and ArrayName(ChoiceList) must exist.
 #
 # .ARGS
@@ -485,7 +498,6 @@ proc DevUpdateNodeSelectButton { type ArrayName Label Name { CommandSet "DevSele
 #  str Name  The Current choice is stored in ArrayName(Name)
 #  array ChoiceList The possible choices are ArrayName(ChoiceList)
 #  str Command  The command to run. The default is no command. (Though, in both cases, the Button display is updated).  Arguments sent to it are the selected choice. Note that if the command requires other arguments, you can do this by setting Command to \"YourCommand arg1 arg2\" You should be able to deal with a \"\" selection. 
-#
 # .END
 #-------------------------------------------------------------------------------
 proc DevUpdateSelectButton { ArrayName Label Name ChoiceList {Command ""} } {
@@ -516,7 +528,7 @@ proc DevUpdateSelectButton { ArrayName Label Name ChoiceList {Command ""} } {
 # .ARGS
 # str type \"Volume\" or \"Model\"
 # int id the id of the selected volume
-# Array ArrayName The name of the array whose variables will be changed.
+# array ArrayName The name of the array whose variables will be changed.
 # str ModelLabel The name of the menubutton, without the \"mb\"
 # str ModelName  The name of the variable to set.
 # .END
@@ -549,13 +561,13 @@ proc DevSelectNode { type id ArrayName ModelLabel ModelName} {
 #-------------------------------------------------------------------------------
 # .PROC DevCreateNewCopiedVolume
 # 
-# returns the idnumber of the new Volume.
+# Returns the id number of the new Volume.<br>
 # Note: does not copy the volume data. Use MainVolumesCopyData to do that.
 #
 # .ARGS
-# int VolumeId  The id of the volume to copy.
-# str Description The Description of the new Volume.Default:Copy VolumeId's Description.
-# str VolName     The Name of the new Volume. Default: copy the VolumeId's Name.
+# int OrigId  The id of the volume to copy.
+# str Description The Description of the new Volume. Default if empty string: Copy VolumeId's Description.
+# str VolName     The Name of the new Volume. Default if empty string: copy the VolumeId's Name.
 # .END
 #-------------------------------------------------------------------------------
 proc DevCreateNewCopiedVolume { OrigId {Description ""} { VolName ""} } {
@@ -622,38 +634,34 @@ proc DevCreateNewCopiedVolume { OrigId {Description ""} { VolName ""} } {
 #-------------------------------------------------------------------------------
 # .PROC DevGetFile
 # 
-# If a filename exists, simply returns it.
-# Otherwise pops up a window to find a filename.
-# Default directory to start searching is the one Slicer was called from
+# If a file with filename exists, simply return it.<br>
+# Otherwise pops up a window to find a filename.<br>
+# Default directory to start searching in is the one Slicer was called from
 #
 # .ARGS
 # str filename The name of the file entered so far
-# int MustPop  1 means that we will pop up a window even if \"filename\" exists. 
+# int MustPop  1 means that we will pop up a window even if \"filename\" exists. Default is 0.
 # str DefaultExt The name of the extension for the type of file: Default \"\"
 # str DefaultDir The name of the default directory to choose from: Default is the directory Slicer was started from.
-# str Title      The title of the window to display.  Optional.
+# str Title      The title of the window to display.  Optional, defaults to \"Choose File\"
 # str Action     Whether to Open (file must exist) or Save.  Default is \"Open\".
-# str PathType   Relative or Absolute
+# str PathType   Relative or Absolute, defaults to Relative
 # .END
 #-------------------------------------------------------------------------------
 proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Title "Choose File"} {Action "Open"} {PathType "Relative"}} {
     global Mrml
-#        puts "filename: $filename"
-#        puts "DefaultExt $DefaultExt"
-#        puts "DefaultDir $DefaultDir"
-#        puts "Title $Title"
 
     # Default Directory Choice
     if {$DefaultDir == ""} {
             set DefaultDir $Mrml(dir);
     }
 
-       ############################################################
-       ######  Check if the filename exists
-       ######  Check with/without DefaulExt, and with or without
-       ######  Default dir.
-       ######  Do this only if the filename is not "" and is not a dir.
-       ############################################################
+    ############################################################
+    ######  Check if the filename exists
+    ######  Check with/without DefaulExt, and with or without
+    ######  Default dir.
+    ######  Do this only if the filename is not "" and is not a dir.
+    ############################################################
     if {$::Module(verbose)} {
         puts "DevGetFile: filename = $filename, pathtype = $PathType"
     }
@@ -685,9 +693,7 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
             " \{\"$DefaultExt Files\" \{\*.$DefaultExt\}\} \{\"All Files\" \{\*\}\}"
         #            set typelist [ eval $typelist ]
     } else {
-        set typelist {
-            {"All Files" {*}}
-        }
+        set typelist {{"All Files" {*}}}
     }
     
     ############################################################
@@ -699,12 +705,12 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
     if { [file isdir $filename] } { set dir $filename }
     
     # if we are saving, the file doesn't have to exist yet.
+        
     if {$Action == "Save"} {
         set filename [tk_getSaveFile -title $Title \
                           -filetypes $typelist -initialdir "$dir" -initialfile $filename]
     } else {
-        set filename [tk_getOpenFile -title $Title \
-                          -filetypes $typelist -initialdir "$dir" -initialfile $filename]
+        set filename [tk_getOpenFile -title $Title -filetypes $typelist -initialdir "$dir" -initialfile "$filename"]                
     }
     
     
@@ -737,31 +743,28 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
 #-------------------------------------------------------------------------------
 # .PROC DevAddFileBrowse
 #
-# Calls DevGetFile, so defaults for Optional Arguments are set there.
-# ArrayName(VarFileName) must exist already!
+# Calls DevGetFile, so defaults for Optional Arguments are set there.<br>
+# ArrayName(VarFileName) must exist already!<br>
 # 
-# Make a typical button for browsing for files
-#  Example:  DevAddFileBrowse $f.fPrefix Custom Prefix \"File\"
-#  Example:  DevAddFileBrowse $f.fPrefix Custom Prefix \"vtk File\" \"vtk\" \"\" \"Browse for a model\"
-#  Example: DevAddFileBrowse $f Volume firstFile "First Image File:" "VolumesSetFirst" "" "\$Volume(DefaultDir)"  "Browse for the first Image file" #
+# Make a typical button for browsing for files.<br>
+#  Example:  DevAddFileBrowse $f.fPrefix Custom Prefix \"File\"<br>
+#  Example:  DevAddFileBrowse $f.fPrefix Custom Prefix \"vtk File\" \"vtk\" \"\" \"Browse for a model\"<br>
+#  Example: DevAddFileBrowse $f Volume firstFile "First Image File:" "VolumesSetFirst" "" "\$Volume(DefaultDir)"  "Browse for the first Image file" <br>
 #
 # In the last example, the trick using "\$Volume(DefaultDir)" allows you
-# to change the default directory later.
-#
-# Calls DevGetFile, so defaults for Optional Arguments are set there.
-# ArrayName(VarFileName) must exist already!
+# to change the default directory later.<br>
 #
 # .ARGS
 # str Frame      The name of the existing frame to modify.
-# Array ArrayName The name of the array whose variables will be changed.
+# array ArrayName The name of the array whose variables will be changed.
 # str VarFileName The name of the file name variable within the array.
 # str Message     The message to display near the "Browse" button.
-# str Command     A command to run when a file name is entered AND the file entered exists (unless Action is Save, when the file need not exist yet). 
-# str DefaultExt The name of the extension for the type of file. Optional
-# str DefaultDir The name of the default directory to choose from. Optional
-# str Action     Whether this is \"Open\" or \"Save\".  Optional
-# str Title      The title of the window to display. Optional
-# str Tooltip    The tooltip to display over the button. Optional
+# str Command     A command to run when a file name is entered AND the file entered exists (unless Action is Save, when the file need not exist yet). Optional, defaults to empty string.
+# str DefaultExt The name of the extension for the type of file. Optional, defaults to empty string.
+# str DefaultDir The name of the default directory to choose from. Optional, defaults to emtpy string
+# str Action     Whether this is \"Open\" or \"Save\".  Optional, defaults to emtpy string
+# str Title      The title of the window to display. Optional, defaults to emtpy string
+# str Tooltip    The tooltip to display over the button. Optional, defaults to emtpy string
 # str PathType   Default is filename is relative to Mrml(dir).  Use "Absolute" for absolute pathnames
 # .END
 #-------------------------------------------------------------------------------
@@ -807,31 +810,30 @@ proc DevAddFileBrowse {Frame ArrayName VarFileName Message { Command ""} { Defau
         -expand 1 -fill x
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC DevCreateScrollList
 #
 # Creates a Scrolled List. The programmer can pass a procedure on how
-# to create each line in the list. 
-# Note: Checks if the list already exists and deletes it if it does.
+# to create each line in the list. <br>
+# Note: Checks if the list already exists and deletes it if it does.<br>
 #
-# Creates $ScrollFrame.cGrid which is the canvas.
-# Creates $ScrollFrame.cGrid.fListItems which is the item frame
+# Creates $ScrollFrame.cGrid which is the canvas.<br>
+# Creates $ScrollFrame.cGrid.fListItems which is the item frame<br>
 #
-# Example Usage : See Models.tcl
-#   frame $f.fScroll -bg $Gui(activeWorkspace)
-#   pack  .... $f.fScroll -side top -pady 1
+# Example Usage : See Models.tcl<br>
+#   frame $f.fScroll -bg $Gui(activeWorkspace)<br>
+#   pack  .... $f.fScroll -side top -pady 1<br>
 #
-#   DevCreateScrollList $Module(Models,fDisplay).fScroll MainModelsCreateGUI \
-#                       ModelsConfigScrolledGUI "$Model(idList)"
+#   DevCreateScrollList $Module(Models,fDisplay).fScroll MainModelsCreateGUI \<br>
+#                       ModelsConfigScrolledGUI "$Model(idList)"<br>
 #
 #
 # 
 # .ARGS
 #   frame ScrollFrame
-#   func  ItemCreateGui 2 args: the frame for the Item list and the item. 
-#   func  ScrollListConfigScrolledGUI: 2 args: canvas and item frame.
-#   func  ItemList list of items
+#   list  ItemCreateGui 2 args: the frame for the Item list and the item. 
+#   list  ScrollListConfigScrolledGUI: 2 args: canvas and item frame.
+#   list  ItemList list of items
 # .END
 #-------------------------------------------------------------------------------
 proc DevCreateScrollList {ScrollFrame ItemCreateGui ScrollListConfigScrolledGUI ItemList} {
@@ -881,13 +883,7 @@ proc DevCreateScrollList {ScrollFrame ItemCreateGui ScrollListConfigScrolledGUI 
 # This procedure allows scrolling only if the entire frame is not visible
 #
 # .ARGS
-# .END
-#-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# .PROC DevCheckScrollLimits
-# 
-# .ARGS
+# list args a list containing the canvas, and view
 # .END
 #-------------------------------------------------------------------------------
 proc DevCheckScrollLimits {args} {
@@ -898,37 +894,36 @@ proc DevCheckScrollLimits {args} {
 
     if {double([lindex $fracs 0]) == 0.0 && \
         double([lindex $fracs 1]) == 1.0} {
-    return
+        return
     }
     eval $args
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC DevFileExists
 # 
+# Returns 1 if file exists, either relative to mrml directory or not.
 # .ARGS
+# str filename the file the check
 # .END
 #-------------------------------------------------------------------------------
 proc DevFileExists {filename} {
     global Mrml
 
-    # returns 1 if file exists, either relative to mrml directory or not
-
     if {[file exists $filename]} {
-    return 1
+        return 1
     }
 
     if {[file exists [file join $Mrml(dir) $filename]]} {
-    return 1
+        return 1
     }
 
     return 0
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC DevSourceTclFilesInDirectory
+#
 # Source all tcl files found in directory dir.  Returns a list of
 # the files (without the leading path or file extension).
 # .ARGS
@@ -964,7 +959,7 @@ proc DevSourceTclFilesInDirectory {dir {verbose "0"}} {
 # .PROC DevPrintMrmlDataTree
 # A helper proc to print out bits of the mrml data tree for debugging volumes and transforms.
 # .ARGS 
-# array tagList class names to match, ie Volume
+# array tagList class names to match, optional, defaults to Volume
 # int justMatrices if 1, just print the matrices in the volume
 # .END
 #-------------------------------------------------------------------------------
@@ -1020,8 +1015,10 @@ proc DevPrintMrmlDataTree { { tagList "Volume" } { justMatrices 1 } } {
 
 #-------------------------------------------------------------------------------
 # .PROC DevPrintMatrix
-# 
+# Print out a string as a 4 by 4 matrix.
 # .ARGS
+# varname mat the matrix string to print
+# str name optional describtive string, defaults to \"matrix\"
 # .END
 #-------------------------------------------------------------------------------
 proc DevPrintMatrix { mat {name "matrix"} } { 
@@ -1041,8 +1038,10 @@ proc DevPrintMatrix { mat {name "matrix"} } {
 
 #-------------------------------------------------------------------------------
 # .PROC DevPrintMatrix4x4
-# 
+# Prints out a vtk 4x4 matrix.
 # .ARGS
+# varname mat the matrix string to print
+# str name optional describtive string, defaults to \"matrix\"
 # .END
 #-------------------------------------------------------------------------------
 proc DevPrintMatrix4x4 { mat { name "matrix"} } {
@@ -1063,11 +1062,11 @@ proc DevPrintMatrix4x4 { mat { name "matrix"} } {
 #  that dismisses the window.
 #
 # .ARGS
-#  string topicWinName (=unique window name)
-#  string title (=window title)
-#  int x y (=position of window)
-#  int textBoxHit (=number of textlines that set initial window height)
-#  str txt (=formatted text string to display)
+#  string topicWinName unique window name
+#  string title window title
+#  int x y position of window
+#  int textBoxHit number of textlines that set initial window height
+#  str txt formatted text string to display
 # .END
 #-------------------------------------------------------------------------------
 proc DevCreateTextPopup { topicWinName title x y textBoxHit txt  } {
@@ -1124,17 +1123,15 @@ proc DevCreateTextPopup { topicWinName title x y textBoxHit txt  } {
 #    DevRaisePopup $w
 }
 
-
-
 #-------------------------------------------------------------------------------
 # .PROC DevApplyTextTags
 #
-#  processes tagged string and sets some
+#  Processes tagged string and sets some
 #  global variables Dev(*) to contain formatting info
 #  and text string to display.
 #
 # .ARGS
-#  string str (string that includes formatting)
+#  string str string that includes formatting
 # .END
 #-------------------------------------------------------------------------------
 proc DevApplyTextTags { str } {
@@ -1231,18 +1228,16 @@ proc DevApplyTextTags { str } {
 
 }
 
-
-
 #-------------------------------------------------------------------------------
-# .PROC 
+# .PROC DevInsertPopupText
 #
-#  configures text widget
+#  Configures text widget
 #
 # .ARGS
-#  string w (=text widget name in which to insert text)
+#  string w text widget name in which to insert text
 # .END
 #-------------------------------------------------------------------------------
-proc  DevInsertPopupText { w } {
+proc DevInsertPopupText { w } {
 
     #--- configure text tags 
     #--- I'm borrowing this from Help module, but
@@ -1286,11 +1281,12 @@ proc  DevInsertPopupText { w } {
     }
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC DevTextLink
-# 
+# Format a text string.
 # .ARGS
+# widget w the name of the text widget
+# str linkTag helps find the text 
 # .END
 #-------------------------------------------------------------------------------
 proc DevTextLink {w linkTag} {
@@ -1309,11 +1305,11 @@ proc DevTextLink {w linkTag} {
     }
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC DevLaunchBrowser
-# 
+# Gets the browserUrl from the Path array and calls DevLaunchBrowserURL.
 # .ARGS
+# str section optional name tag in the page, defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc DevLaunchBrowser {{section ""}} {
@@ -1326,13 +1322,12 @@ proc DevLaunchBrowser {{section ""}} {
     DevLaunchBrowserURL $url
 }
 
-
-
-
 #-------------------------------------------------------------------------------
 # .PROC DevLaunchBrowserURL
-# 
+# Tries to launch the default browser in Path(browserPath) with the given url
+# as the starting page.
 # .ARGS
+# str url the url to open in the browser
 # .END
 #-------------------------------------------------------------------------------
 proc DevLaunchBrowserURL { url } {
@@ -1346,4 +1341,3 @@ proc DevLaunchBrowserURL { url } {
         DevWarningWindow "Could not detect your default browser.\n\nYou may need to set your BROWSER environment variable.\n\nPlease open $url manually."
     }
 }
-
