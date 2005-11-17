@@ -563,12 +563,6 @@ proc MainInteractorShiftMotion {widget x y} {
 
     $Interactor(activeSlicer) SetReformatPoint $s $x $y
     scan [$Interactor(activeSlicer) GetWldPoint] "%g %g %g" rRas aRas sRas 
-    # scan [$Interactor(activeSlicer) GetIjkPoint] "%g %g %g" iIjk jIjk kIjk
-
-    # round off the pixel coordinates
-    # set iIjk [expr round($iIjk)]
-    # set jIjk [expr round($jIjk)]
-    # set kIjk [expr round($kIjk)]
 
     for {set slice 0} {$slice < 3} {incr slice} {
         if {$slice != $s} {
@@ -580,24 +574,14 @@ proc MainInteractorShiftMotion {widget x y} {
                 "Axial" { MainSlicesSetOffset $slice $sRas}
                 "Sagittal" { MainSlicesSetOffset $slice $rRas}
                 "Coronal" { MainSlicesSetOffset $slice $aRas}
+
+                # TODO need to get the unscaled pixel coordinates for RAS and
+                # know the offset relative to the I, L, P origin of the volume
+                "AxiSlice" { MainSlicesSetOffset $slice $sRas}
+                "SagSlice" { MainSlicesSetOffset $slice $rRas}
+                "CorSlice" { MainSlicesSetOffset $slice $aRas}
                 
             }
-
-                # TODO - to make these modes work one must map from IJK space back to 
-                # original slice numbers and that depends on the original scan order
-                # (that is, the sliders don't move in IJK space but in a flipped/rotated space)
-                # "AxiSlice" { 
-                    # switch $scanorder {
-                        # IS {}
-                        # SI {}
-                        # RL {}
-                        # LR {}
-                        # AP {}
-                        # PA {}
-                    # }
-                    # MainSlicesSetOffset $slice $jIjk}
-                # "SagSlice" { MainSlicesSetOffset $slice $kIjk}
-                # "CorSlice" { MainSlicesSetOffset $slice $iIjk}
         }
     }
     RenderAll
