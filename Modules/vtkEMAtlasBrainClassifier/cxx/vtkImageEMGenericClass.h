@@ -104,9 +104,16 @@ private:
    vtkEMAddMessageNoOutput((&this->ErrorMessage), x) ; \
  }
 
-// Message is not printed out 
+#define vtkEMJustAddErrorMessageSelf(x) {        \
+   vtkEMAddMessageNoOutput((self->GetErrorMessagePtr()), x) ; \
+ }
+
 #define vtkEMJustAddWarningMessage(x) {        \
    vtkEMAddMessageNoOutput((&this->WarningMessage), x) ; \
+ }
+
+#define vtkEMJustAddWarningMessageSelf(x) {        \
+   vtkEMAddMessageNoOutput((self->GetWarningMessagePtr()), x) ; \
  }
 
 #ifdef _WIN32
