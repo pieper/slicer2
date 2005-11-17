@@ -126,6 +126,4 @@ protected:
 };
 
 #endif
-// I believe it is from Samson -> throw out 
-// float  ShapeParameter;
 
