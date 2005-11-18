@@ -566,20 +566,49 @@ proc MainInteractorShiftMotion {widget x y} {
 
     for {set slice 0} {$slice < 3} {incr slice} {
         if {$slice != $s} {
-            # set vol [Slicer GetBackVolume $s]
-            # set node [$vol GetMrmlNode]
-            # set scanorder [$node GetScanOrder]
-            # set hi [Slicer GetOffsetRangeHigh $s]
-            switch [$Interactor(activeSlicer) GetOrientString $slice] {
+            
+            switch -glob [$Interactor(activeSlicer) GetOrientString $slice] {
                 "Axial" { MainSlicesSetOffset $slice $sRas}
                 "Sagittal" { MainSlicesSetOffset $slice $rRas}
                 "Coronal" { MainSlicesSetOffset $slice $aRas}
 
                 # TODO need to get the unscaled pixel coordinates for RAS and
                 # know the offset relative to the I, L, P origin of the volume
-                "AxiSlice" { MainSlicesSetOffset $slice $sRas}
-                "SagSlice" { MainSlicesSetOffset $slice $rRas}
-                "CorSlice" { MainSlicesSetOffset $slice $aRas}
+
+                *Slice {
+                    set vol [Slicer GetBackVolume $s]
+                    set node [$vol GetMrmlNode]
+                    set scanorder [$node GetScanOrder]
+                    set dims [concat [[$vol GetOutput] GetDimensions] 1]
+                    catch "IjkToRas Delete"
+                    vtkMatrix4x4 IjkToRas 
+                    eval IjkToRas DeepCopy [$node GetRasToIjkMatrix]
+                    IjkToRas Invert
+                    set ras_origin [IjkToRas MultiplyPoint 0 0 0 0]
+                    set ras_extent [eval IjkToRas MultiplyPoint $dims]
+                    IjkToRas Delete
+
+                    switch -glob [$Interactor(activeSlicer) GetOrientString $slice] {
+                        "AxiSlice" { 
+                            switch [$node GetScanOrder] {
+                                "RL" - "LR" {
+                                    set off [expr $sRas - [lindex $ras_origin 0] / [lindex $ras_extent 0]]
+                                    MainSlicesSetOffset $slice $off
+                                }
+                                "PA" - "AP" {
+                                    set off [expr $sRas - [lindex $ras_origin 1] / [lindex $ras_extent 1]]
+                                    MainSlicesSetOffset $slice $off
+                                }
+                                "IS" - "SI" {
+                                    set off [expr $sRas - [lindex $ras_origin 2] / [lindex $ras_extent 2]]
+                                    MainSlicesSetOffset $slice $off
+                                }
+                            }
+                        }
+                        "SagSlice" { MainSlicesSetOffset $slice $rRas}
+                        "CorSlice" { MainSlicesSetOffset $slice $aRas}
+                    }
+                }
                 
             }
         }
