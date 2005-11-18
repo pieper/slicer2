@@ -60,7 +60,7 @@ proc DTMRICalculateScalarsInit {} {
     #------------------------------------
     set m "CalculateScalars"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.12 $} {$Date: 2005/09/11 18:39:46 $}]
+                                 {$Revision: 1.13 $} {$Date: 2005/11/18 20:39:49 $}]
 
     #------------------------------------
     # Variables for producing scalar volumes
@@ -284,7 +284,11 @@ proc DTMRICreateEmptyVolume {OrigId {Description ""} { VolName ""}} {
     # Create the volume (vtkMrmlDataVolume class)
     set n [$newvol GetID]
     MainVolumesCreate $n
-
+   
+    #Set up Node matrices from tensor volume
+    set ext [[Tensor($OrigId,data) GetOutput] GetWholeExtent]
+    DTMRIComputeRasToIjkFromCorners Tensor($OrigId,node) Volume($n,node) $ext
+   
     # This updates all the buttons to say that the
     # Volume List has changed.
     MainUpdateMRML
