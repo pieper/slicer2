@@ -91,7 +91,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.57 $} {$Date: 2005/11/15 16:35:07 $}]
+        {$Revision: 1.58 $} {$Date: 2005/11/18 20:13:44 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -722,7 +722,7 @@ proc ModelMakerWriteAll {} {
                                 -title "Select Directory In Which To Save Model Files" \
                                 -parent .tMain ]
     if {$ModelMaker(prefix) == ""} {
-        if {::Module(verbose)} { puts "ModelMakerWriteAll: empty prefix for model $m" }
+        if {$::Module(verbose)} { puts "ModelMakerWriteAll: empty prefix for model $m" }
         return
     }
 
