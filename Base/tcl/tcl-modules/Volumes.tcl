@@ -113,7 +113,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.119 $} {$Date: 2005/11/18 18:26:26 $}]
+            {$Revision: 1.120 $} {$Date: 2005/11/18 22:40:40 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -2656,9 +2656,9 @@ proc VolumesComputeNodeMatricesFromRasToIjkMatrix {volumeNode RasToIjkMatrix dim
     switch $max_comp {
         0 {
             if { [lindex $k_vec 0] > 0 } {
-                set scan_order "RL"
-            } else {
                 set scan_order "LR"
+            } else {
+            set scan_order "RL"
             }
         }
         1 {
