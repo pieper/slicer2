@@ -1193,30 +1193,44 @@ char* vtkMrmlVolumeNode::ComputeScanOrderFromRasToIjk(vtkMatrix4x4 *RasToIjk)
   vtkMatrix4x4 *IjkToRas = vtkMatrix4x4::New();
   vtkMatrix4x4::Invert(RasToIjk, IjkToRas);
 
-  vtkFloatingPointType dir[3];
-  for (int i=0; i<3; i++) {
-    dir[i] = IjkToRas->GetElement(i,2);
+  vtkFloatingPointType dir[4]={0,0,1,0};
+  vtkFloatingPointType kvec[4];
+ 
+  IjkToRas->MultiplyPoint(dir,kvec);
+  int max_comp = 0;
+  double max = fabs(kvec[0]);
+  
+  for (int i=1; i<3; i++) {
+    if (fabs(kvec[i]) > max) {
+        max = fabs(kvec[i]);
+        max_comp=i;
+     }   
   }
-  double l = vtkMath::Normalize(dir);
-  if (l == 0.0) {
-    return 0;
-  }
-  if (fabs(dir[0] - 1.0) < 0.01 ) {
-    return "LR";
-  } else  if (fabs(dir[0] + 1.0) < 0.01 ) {
-    return "RL";
-  } else  if (fabs(dir[1] - 1.0) < 0.01 ) {
-    return "PA";
-  } else  if (fabs(dir[1] + 1.0) < 0.01 ) {
-    return "AP";
-  } else  if (fabs(dir[2] - 1.0) < 0.01 ) {
-    return "IS";
-  } else  if (fabs(dir[2] + 1.0) < 0.01 ) {
-    return "SI";
-  }
-  else {
-    return 0;
-  }
+  
+  switch(max_comp) {
+     case 0:
+        if (kvec[max_comp] > 0 ) {
+           return "LR";
+        } else {
+           return "RL";
+        }
+           break;
+      case 1:     
+         if (kvec[max_comp] > 0 ) {
+            return "PA";
+         } else {
+            return "AP";
+         }
+         break;
+      case 2:
+         if (kvec[max_comp] > 0 ) {
+            return "IS";
+         } else {
+            return "SI";
+         }
+         break;
+   }        
+ 
 }
 
 // End
