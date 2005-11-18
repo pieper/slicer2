@@ -113,7 +113,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.118 $} {$Date: 2005/11/13 21:30:16 $}]
+            {$Revision: 1.119 $} {$Date: 2005/11/18 18:26:26 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -2606,6 +2606,7 @@ proc VolumesCreateNewLabelOutline { {v ""} } {
 # .ARGS
 #  node id,  RasToIjkMatrix
 # the matrix includes spacing
+# also compute the closest fit to the scanorder
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesComputeNodeMatricesFromRasToIjkMatrix {volumeNode RasToIjkMatrix dims} {
@@ -2637,4 +2638,48 @@ proc VolumesComputeNodeMatricesFromRasToIjkMatrix {volumeNode RasToIjkMatrix dim
     Volume($volumeNode,node) ComputePositionMatrixFromRasToVtk RasToVtkMatrix
     
     RasToVtkMatrix Delete
+
+    #
+    # compute scan order by looking at the vector for the 'k' direction (slice direction)
+    # and then saying that the largest 
+
+    set k_vec [IjkToRasMatrix MultiplyPoint 0 0 1 0]
+    set max_comp 0
+    set max [expr abs([lindex $k_vec 0])]
+    for {set i 1} {$i < 3} {incr i} {
+        if { [expr abs([lindex $k_vec $i])] > $max } {
+            set max [expr abs([lindex $k_vec $i])]
+            set max_comp $i
+        }
+    }
+
+    switch $max_comp {
+        0 {
+            if { [lindex $k_vec 0] > 0 } {
+                set scan_order "RL"
+            } else {
+                set scan_order "LR"
+            }
+        }
+        1 {
+            if { [lindex $k_vec 1] > 0 } {
+                set scan_order "PA"
+            } else {
+                set scan_order "AP"
+            }
+        }
+        2 {
+            if { [lindex $k_vec 2] > 0 } {
+                set scan_order "IS"
+            } else {
+                set scan_order "SI"
+            }
+        }
+        
+    }
+    Volume($volumeNode,node) SetScanOrder $scan_order
+
+    IjkToRasMatrix Delete
+
 }
+
