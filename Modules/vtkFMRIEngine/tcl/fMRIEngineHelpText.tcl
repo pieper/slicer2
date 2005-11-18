@@ -252,8 +252,7 @@ proc fMRIEngineHelpSelectHighpassCutoff { } {
     set txt "<H3>Nuissance signal frequency characteristics</H3>
 <P> The default cutoff period for nuissance signal modeling is set (as recommended in S.M. Smith, 'Preparing fMRI data for statistical analysis', in <I>Functional MRI, an introduction to methods</I>, P. Jezzard, P.M. Matthews, and S.M. Smith, Eds., 2002, Oxford University Press) at 1.5 times the maximum time interval between the most infrequently occuring event or epoch in the paradigm, multiplied by TR. (The reciprocal of this value represents the cutoff frequency in Hz.)
 <P> Use of this default cutoff period is selected by default in the interface, and also by clicking the 'use default' button 
-in  the GUI panel. The default period value (as a multiple of TR) is displayed in the entry widget once the full model is computed; prior 
-to that, the text 'default' will be shown in the widget.  The user may also specify a different (custom) cutoff period instead by typing that value (as a multiple of TR) directly into the entry widget and hitting 'enter'."
+in  the GUI panel. The computed default period (as a multiple of TR) for a run is displayed in the entry widget once the full model is computed and any EV in that run is selected for editing; otherwise, the text 'default' will be shown in the widget.  The user may also specify a different (custom) cutoff period instead by typing that value (as a multiple of TR) directly into the entry widget and hitting 'enter'."
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
 }
 
@@ -312,6 +311,15 @@ proc fMRIEngineHelpSetupCustomFX { } {
 }
 
 
+proc fMRIENgineHelpEstimateWhichRun { } {
+    set i [ fMRIEngineGetHelpWinID ]
+    set txt "<H3>Select single or combined runs</H3>
+<P> Select the run for which the model should be estimated. If multiple runs are specified, each can be estimated individually. If a least squares fit to a GLM (y = XB + e) has been computed for each run and regression weights appear appropriate to compare across runs, multiple runs may be combined together in a single analysis. This combined-run analysis can be accomplished by selecting 'combined' from the pull down menu.<P> In a combined analysis, <B> it's important that signal modeling and contrast vectors be specified accurately </B>, or the 
+analysis may fail or produce incorrect results: when combining runs, only the explanatory variables (EVs) which represent or are derived from the stimulus schedule (condition-related EVs) are combined -- baselines for each run, and EVs that capture nuissance signals for each run are not combined. So, to combine runs properly, <B>(1)</B> each run should have the same set of condition-related EVs; <B>(2)</B> corresponding condition-related EVs across runs should have the same name; <B>(3)</B> the previous requirements imply that, if derivatives are being used to model latency, each corresponding stimulus signal across runs should have the same number of derivatives; <B>(4)</B> and identical contrast weights should be specified for corresponding condition-related EVs across runs. If these conditions are not met, the analysis will fail."
+    DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt    
+}
+
+
 #-------------------------------------------------------------------------------
 # .PROC fMRIEngineHelpSetupEstimate
 # 
@@ -342,7 +350,8 @@ proc fMRIEngineHelpSetupContrasts { } {
     set i [ fMRIEngineGetHelpWinID ]
     set txt "<H3>Contrast specification</H3>
 <P> To determine whether one EV is more related to the data than another, known as <I>contrasting</I> EVs, a <I>contrast vector</I> containing one element for every EV in the design matrix is used to describe which EVs to compare.
-<P> For instance, a contrast vector that compares one stimulus type (e.g. EV1) to the baseline uses '1' for the vector element representing the design matrix column in which EV1 appears, and '0' for vector elements representing every other column. To compare EV1 to another stimulus type (e.g. EV2), EV1's contrast value may be specified as '-1', EV2's contrast value as '1', and all vector elements representing other columns of the design matrix are specified as '0'. All contrasts are given a name and a vector specification in the Contrasts GUI panel; the fMRIEngine will automatically add any non-specified trailing zeros to a contrast vector, so only the elements up to and including the last non-zero element need to be entered.
+<P> For instance, a contrast vector that compares one stimulus type (e.g. EV1) to the baseline uses '1' for the vector element representing the design matrix column in which EV1 appears, and '0' for vector elements representing every other column. To compare EV1 to another stimulus type (e.g. EV2), EV1's contrast value may be specified as '-1', EV2's contrast value as '1', and all vector elements representing other columns of the design matrix are specified as '0'.
+<P> All contrasts are given a name and a vector specification (elements separated by spaces) in the Contrasts GUI panel; the fMRIEngine will automatically add any non-specified trailing zeros to a contrast vector, so only the elements up to and including the last non-zero element need to be entered.
 <P> Once each contrast has been named and defined, clicking the <I>OK</I> button will add the resulting contrast to a list displayed at the bottom of the GUI panel. Any contrast in this list may be selected and either edited or deleted using the associated <I>edit</I> or <I>delete</I> buttons. It is useful to use the design matrix as visual reference (by clicking the <I>Show model</I> button) while specifying each contrast vector. As contrasts are specified, clicking the <I>update</I> button on the popup model view window will visually display all defined contrasts below the design matrix.
 <P> All defined contrasts are used to determine evidence of effects in the <I>Compute</I> tab's GUI panel."
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt    
