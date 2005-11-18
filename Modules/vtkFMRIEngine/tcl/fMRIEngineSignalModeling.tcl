@@ -44,7 +44,7 @@
 #   fMRIEngineSelectConditionForSignalModeling condition
 #   fMRIEngineSelectWaveFormForSignalModeling form
 #   fMRIEngineSelectConvolutionForSignalModeling conv
-#   fMRIEngineSelectHighpassForSignalModeling pass
+#   fMRIEngineSelectTrendModelForSignalModeling pass
 #   fMRIEngineSelectLowpassForSignalModeling pass
 #   fMRIEngineAddOrEditEV
 #   fMRIEngineDeleteEV index
@@ -118,7 +118,8 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
           -indicatoron 1 \
           -menu $f.mbType.m} $Gui(WMBA)
     eval {menu $f.mbType.m} $Gui(WMA)
-    #bind $f.mbType <1> "fMRIEngineUpdateConditionsForSignalModeling"
+    #--- wjp 11/11/05 may want to uncomment this...
+    bind $f.mbType <1> "fMRIEngineUpdateConditionsForSignalModeling"
     
     foreach m $condiList  {
         $f.mbType.m add command -label $m \
@@ -242,7 +243,7 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
 
     foreach m $highpassFilters  {
         $f.mbType.m add command -label $m \
-            -command "fMRIEngineSelectHighpassForSignalModeling \{$m\}" 
+            -command "fMRIEngineSelectTrendModelForSignalModeling \{$m\}" 
     }
     set fMRIEngine(gui,highpassMenuButtonForSignal) $f.mbType
     set fMRIEngine(gui,highpassMenuForSignal) $f.mbType.m
@@ -257,6 +258,7 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
     set ::fMRIEngine(entry,highpassCutoff) "default"
     DevAddButton $f.bHighpassCutoffHelp "?" "fMRIEngineHelpSelectHighpassCutoff" 2 
     DevAddButton $f.bHighpassDefault "use default cutoff" "fMRIEngineSelectDefaultHighpassTemporalCutoff" 2
+    set ::fMRIEngine(curHighpassCutoff) "default"
     blt::table $f \
         0,0 $f.lHighpass -padx 1 -pady 1 \
         0,1 $f.mbType -fill x -padx 1 -pady 1 \
@@ -435,6 +437,7 @@ proc fMRIEngineBuildUIForModelEstimation {parent} {
             -command "fMRIEngineUpdateRunsForModelFitting" 
     }
     #--- add buttons for estimating
+    DevAddButton $f.bWhichRunHelp "?" "fMRIENgineHelpEstimateWhichRun" 2
     DevAddButton $f.bHelp "?" "fMRIEngineHelpSetupEstimate" 2
     DevAddButton $f.bEstimate "Fit Model" "fMRIEngineFitModel" 15 
     DevAddButton $f.bSave "Save Beta" "fMRIEngineSaveBetaVolume" 15 
@@ -449,6 +452,7 @@ proc fMRIEngineBuildUIForModelEstimation {parent} {
         0,0 $f.lTitle -padx 2 -pady 7 -anchor c -fill x \
         1,0 $f.lRun -padx 2 -pady 1 -anchor e \
         1,1 $f.mbWhichRun -padx 1 -pady 1 -anchor e -fill x \
+        1,2 $f.bWhichRunHelp -padx 1 -pady 1 -anchor e \
         2,1 $f.bEstimate -padx 1 -pady 1 -anchor e -fill x \
         2,2 $f.bHelp -padx 1 -pady 1 -anchor e \
         3,1 $f.bSave -padx 1 -pady 1 -anchor e \
@@ -630,12 +634,26 @@ proc fMRIEngineSelectAllConditionsForSignalModeling { } {
     if { $fMRIEngine(checkbuttonApplyAllConditions) } {
         $fMRIEngine(gui,conditionsMenuButtonForSignal) config -text "all"
         set fMRIEngine(curConditionForSignal) "all"
+        $fMRIEngine(gui,conditionsMenuButtonForSignal) config -text "all"
     } else {
         $fMRIEngine(gui,conditionsMenuButtonForSignal) config -text "none"
         set fMRIEngine(curConditionForSignal) "none"
+        $fMRIEngine(gui,conditionsMenuButtonForSignal) config -text "none"
     }
-}
 
+    #--- which run are we talking about?
+    set ::fMRIEngine(curRunForSignal) [ fMRIEngineGetRunForCurrentCondition ]
+
+    #--- display the current selection for run's cosine transforms
+    set r $::fMRIEngine(curRunForSignal)
+    if { [info exists ::fMRIEngine(Design,Run$r,HighpassCutoff)] } {
+        set ::fMRIEngine(entry,highpassCutoff) "default"
+        #set ::fMRIEngine(entry,highpassCutoff) $::fMRIEngine(Design,Run$r,HighpassCutoff)
+    } else {
+        set ::fMRIEngine(entry,highpassCutoff) "default"
+    }
+
+}
 
 
 
@@ -652,11 +670,12 @@ proc fMRIEngineSelectConditionForSignalModeling { cond } {
     #--- which run are we talking about?
     set fMRIEngine(curConditionForSignal) $cond
     $fMRIEngine(gui,conditionsMenuButtonForSignal) config -text $cond
+
     set ::fMRIEngine(curRunForSignal) [ fMRIEngineGetRunForCurrentCondition ]
 
     #--- display the current selection for run's cosine transforms
     set r $::fMRIEngine(curRunForSignal)
-    if { [info exists ::fMRIEngine(Design,Run$r,HighpassCutoff)] } {
+    if { ([info exists ::fMRIEngine(Design,Run$r,HighpassCutoff)]) && ($cond != "all") } {
         set ::fMRIEngine(entry,highpassCutoff) $::fMRIEngine(Design,Run$r,HighpassCutoff)
     } else {
         set ::fMRIEngine(entry,highpassCutoff) "default"
@@ -676,8 +695,9 @@ proc fMRIEngineSelectConditionForSignalModeling { cond } {
 proc fMRIEngineUpdateConditionsForSignalModeling { } {
     global fMRIEngine 
 
-    #--- reset the checkbox.
-    set ::fMRIEngine(checkbuttonApplyAllConditions) 0
+    #--- wjp 11/11/05 commenting out reset....
+    #--- reset the checkbox. 
+    #set ::fMRIEngine(checkbuttonApplyAllConditions) 0
     
     #--- regenerate conditions menu and callbacks
     $fMRIEngine(gui,conditionsMenuForSignal) delete 0 end 
@@ -706,6 +726,7 @@ proc fMRIEngineUpdateConditionsForSignalModeling { } {
     #--- add the none and all options onto the list at the end
     if {$firstCondition == ""} {
         set firstCondition "none"
+        fMRIEngineSelectConditionForSignalModeling $firstCondition
         $fMRIEngine(gui,conditionsMenuForSignal) add command -label "none" \
             -command "fMRIEngineSelectConditionForSignalModeling none"
     }
@@ -800,68 +821,120 @@ proc fMRIEngineSelectNumDerivativesForSignalModeling { option } {
 
 
 
-#-------------------------------------------------------------------------------
-# .PROC fMRIEngineSelectHighpassForSignalModeling
-# 
-# .ARGS
-# string pass
-# .END
-#-------------------------------------------------------------------------------
-proc fMRIEngineSelectHighpassForSignalModeling {pass} {
-    global fMRIEngine 
+proc fMRIEngineShowTrendModelForSignalModeling { pass } {
 
-   #--- configure menubutton
-    $fMRIEngine(gui,highpassMenuButtonForSignal) config -text $pass
-    set fMRIEngine(curHighpassForSignal) $pass 
+    #--- configure menubutton; right now, the only trend model
+    #--- we have available is a set of Discrete Cosine basis functions.
+    #--- This routine sets the variable that configures a condition,
+    #--- or configures ALL conditions, if they're to be modeled identically.
+    $::fMRIEngine(gui,highpassMenuButtonForSignal) config -text $pass
+    set ::fMRIEngine(curHighpassForSignal) $pass 
+}
+
+
+proc fMRIEngineShowDefaultHighpassTemporalCutoff { } {
+
+    #--- configures entry widget to reflect use of default temporal
+    #--- trend model cutoff frequency
+    set ::fMRIEngine(entry,highpassCutoff) "default"
+}
+
+
+proc fMRIEngineShowCustomHighpassTemporalCutoff { r } {
+
+    #--- configures entry widget to reflect use of custom temporal
+    #--- trend model cutoff frequency
+    if {$::fMRIModelView(Design,Run$r,UseDCBasis) } {
+        set ::fMRIEngine(entry,highpassCutoff) $::fMRIEngine(Design,Run$r,HighpassCutoff)
+    }
 }
 
 
 
 
-proc fMRIEngineInitDefaultHighpassTemporalCutoff { } {
-    set ::fMRIEngine(entry,highpassCutoff) "default"
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineSelectTrendModelForSignalModeling
+# 
+# .ARGS
+# string pass
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineSelectTrendModelForSignalModeling {pass} {
+    global fMRIEngine 
+
+    #--- configure menubutton; right now, the only trend model
+    #--- we have available is a set of Discrete Cosine basis functions.
+    #--- This routine sets the variable that configures a condition,
+    #--- or configures ALL conditions, if they're to be modeled identically.
+    fMRIEngineShowTrendModelForSignalModeling $pass
+    if { $pass == "Discrete Cosine" } {
+        set run $::fMRIEngine(curRunForSignal)
+        set ::fMRIModelView(Design,Run$run,UseDCBasis) 1
+        fMRIEngineSelectDefaultHighpassTemporalCutoff
+    }
+
 }
 
 
 
 proc fMRIEngineSelectDefaultHighpassTemporalCutoff { } {
 
+    #--- error checking...
     #--- set default cutoff frequency for the chosen highpass temporal filter
     set run $::fMRIEngine(curRunForSignal)
+    if { [ info exists ::fMRIModelView(Design,Run$run,UseDCBasis)] } {
+        if {$::fMRIModelView(Design,Run$run,UseDCBasis) == 0 } {
+            DevErrorWindow "Please select trend model first."
+            return
+        }
+    }
     if { ![ info exists ::fMRIEngine(curConditionForSignal) ]} {
         DevErrorWindow "Either no runs have been defined or no condition is selected."
-        set ::fMRIEngine(entry,highpassCutoff) "default"
+        fMRIEngineShowDefaultHighpassTemporalCutoff
         return
     }
     if { $run <= 0 } {
         DevErrorWindow "No runs have been defined yet!"
         #--- reset widget to default state
-        set ::fMRIEngine(entry,highpassCutoff) "default"
+        fMRIEngineShowDefaultHighpassTemporalCutoff
         return
     }
-    set ::fMRIEngine(entry,highpassCutoff) "default"
-    if { $run != 0 } {
-        set ::fMRIEngine(Design,Run$run,useCustomCutoff) 0
-        set ::fMRIEngine(Design,Run$run,HighpassCutoff) "default"
-    }
+    #--- setting default conditions...
+    fMRIEngineShowDefaultHighpassTemporalCutoff
+
+    #---11/15/05 try this instead
+    set ::fMRIEngine(curUseCustomCutoff) 0
+    set ::fMRIEngine(curHighpassCutoff) "default"
+
 }
+
+
 
 
 
 proc fMRIEngineSelectCustomHighpassTemporalCutoff { } {
 
+    #--- error checking
     set run $::fMRIEngine(curRunForSignal)
     if { $run <= 0 } {
-        DevErrorWindow "No runs have been defined yet!"
+        DevErrorWindow "No runs have been defined yet! No parameters set."
         #--- reset widget to default state
-        set ::fMRIEngine(entry,highpassCutoff) "default"
+        fMRIEngineShowDefaultHighpassTemporalCutoff
         return
     }
-    if { ($::fMRIEngine(entry,highpassCutoff) == "default") && ($::fMRIEngine(Design,Run$run,useCustomCutoff)) } {
-        DevErrorWindow "Please click button to select default cutoff."
+    if { [ info exists ::fMRIModelView(Design,Run$run,UseDCBasis)] } {
+        if {$::fMRIModelView(Design,Run$run,UseDCBasis) == 0 } {
+            DevErrorWindow "Please select trend model first."
+            return
+        }
+    }
+    if { ($::fMRIEngine(entry,highpassCutoff) == "default") ||
+     ($::fMRIEngine(entry,highpassCutoff) == "Default") ||
+     ($::fMRIEngine(entry,highpassCutoff) == "DEFAULT") } {
+        fMRIEngineSelectDefaultHighpassTemporalCutoff
         return
     }
-    #--- check to see if it's a valid entry....
+    #--- more error checking and setting custom value
     if { $::fMRIEngine(entry,highpassCutoff) != "default" } {
         set tst $::fMRIEngine(entry,highpassCutoff)
         if { (! [ string is integer -strict $tst]) && (! [ string is double -strict $tst]) } {
@@ -872,16 +945,16 @@ proc fMRIEngineSelectCustomHighpassTemporalCutoff { } {
         if { $tst == 0 || $tst == 0.0 } {
             DevErrorWindow "Cutoff period should be non-zero."
             fMRIEngineSelectDefaultHighpassTemporalCutoff 
-            set $::fMRIEngine(Design,Run$run,useCustomCutoff) 0
             return
         }
-        #--- set custom cutoff frequency for the chosen highpass temporal filter
-        if { $run != 0 } {
-            set ::fMRIEngine(Design,Run$run,useCustomCutoff) 1
-            set ::fMRIEngine(Design,Run$run,HighpassCutoff)  $::fMRIEngine(entry,highpassCutoff) 
-        }
+
+        #---11/15/05 try this instead
+        set ::fMRIEngine(curUseCustomCutoff) 1
+        set ::fMRIEngine(curHighpassCutoff) $::fMRIEngine(entry,highpassCutoff)
     }
 }
+
+
 
 
 
@@ -889,6 +962,7 @@ proc fMRIEngineSelectCustomHighpassTemporalCutoff { } {
 proc fMRIEngineComputeDefaultHighpassTemporalCutoff { r } {
 
     #--- Here's how the default cutoff frequency is computed:
+    #--- Presume T = 1/f_lowest, is the longest epoch spacing in the run.
     #--- fmin is the cutoff frequency of the high-pass filter (lowest frequency
     #--- that we let pass through. Choose to let fmin = 0.666666/T (just less than the
     #--- lowest frequency in paradigm). As recommended in S.M. Smith, "Preparing fMRI
@@ -899,8 +973,12 @@ proc fMRIEngineComputeDefaultHighpassTemporalCutoff { r } {
         set T $::fMRIModelView(Design,Run$r,longestEpoch)
         #--- set the model parameter, cutoff Period
         set ::fMRIEngine(Design,Run$r,HighpassCutoff)  [ expr 1.5 * $T ]
-        set ::fMRIEngine(entry,highpassCutoff) $::fMRIEngine(Design,Run$r,HighpassCutoff)
         #--- update the GUI
+        if { $::fMRIEngine(checkbuttonApplyAllConditions) } {
+            set ::fMRIEngine(entry,highpassCutoff) "default"
+        } else {
+            set ::fMRIEngine(entry,highpassCutoff) $::fMRIEngine(Design,Run$r,HighpassCutoff)
+        }
         #set ::fMRIEngine(entry,highpassCutoff) $::fMRIEngine(Design,Run$r,HighpassCutoff)
     } else {
         #--- set the model parameter
@@ -908,7 +986,6 @@ proc fMRIEngineComputeDefaultHighpassTemporalCutoff { r } {
         #--- update the GUI
         #set ::fMRIEngine(entry,highpassCutoff) 0.0
     }
-
 }
 
 
@@ -961,8 +1038,8 @@ proc fMRIEngineAddOrEditEV {} {
     #--- wjp 11/02/05
     #--- if current condition is "all", then just pick the first in the list.
     if {$con == "all"} {
-        set conditiontitle [lindex $fMRIEngine($0,conditionList) $count]
-        set con "r$i:$title"
+        set conditiontitle [lindex $fMRIEngine(1,conditionList) 0 ]
+        set con "r1:$conditiontitle"
     }
 
     set wform $fMRIEngine(curWaveFormForSignal) 
@@ -976,11 +1053,14 @@ proc fMRIEngineAddOrEditEV {} {
     set effes $fMRIEngine(checkbuttonGlobalEffects) 
     #set ev "$con:$wform:$conv:$deriv:$hpass:$lpass:$effes"
     set ev "$con:$wform:$conv:$deriv:$hpass:$effes"
+    
+    if { 0 } {
     if {[info exists fMRIEngine($ev,ev)]} {
         DevErrorWindow "This EV already exists:\n$ev"
         if {! $fMRIEngine(checkbuttonApplyAllConditions)} {
             return
         }
+    }
     }
 
     #--- Deleting evs from the evlistbox
@@ -993,7 +1073,8 @@ proc fMRIEngineAddOrEditEV {} {
         set v [$fMRIEngine(evsListBox) get $i] 
         if {$v != ""} {
             if {! $fMRIEngine(checkbuttonApplyAllConditions)} {
-                # If an EV exists with the same conditon, remove it
+                #--- If adding an edited version of the EV, find old
+                #--- version and delete it  remove it;
                 set found [string first $con $v]
                 if {$found >= 0} {
                     fMRIEngineDeleteEV $i
@@ -1001,6 +1082,9 @@ proc fMRIEngineAddOrEditEV {} {
                 }
             } else {
                 set found [string first "baseline" $v]
+                #--- else, if adding or editing evs for all conditions,
+                #--- delete all EVs but baselines; We'll add each of these
+                #--- again with their new modeling specifications.
                 if {$found == -1} {
                     $fMRIEngine(evsListBox) delete $i end 
                     break
@@ -1015,7 +1099,7 @@ proc fMRIEngineAddOrEditEV {} {
     set end [$fMRIEngine(gui,conditionsMenuForSignal) index end] 
     while {$j <= $end} {  
         set v [$fMRIEngine(gui,conditionsMenuForSignal) entrycget $j -label] 
-        if {$v != ""} {
+        if { ($v != "") && ($v != "all") && ($v != "none") } {
             set i 1 
             set i2 [string first ":" $v]
             set run [string range $v $i [expr $i2-1]] 
@@ -1039,6 +1123,7 @@ proc fMRIEngineAddOrEditEV {} {
                 set fMRIEngine($ev,highpass,ev)      $hpass
                 #set fMRIEngine($ev,lowpass,ev)       $lpass
                 set fMRIEngine($ev,globaleffects,ev) $effes
+                set fMRIEngine($ev,highpassCutoff,ev) $::fMRIEngine(curHighpassCutoff)
 
                 $fMRIEngine(evsListBox) insert end $ev
             }
@@ -1078,6 +1163,7 @@ proc fMRIEngineDeleteEV {{index -1}} {
             unset -nocomplain fMRIEngine($ev,highpass,ev) 
             #unset -nocomplain fMRIEngine($ev,lowpass,ev) 
             unset -nocomplain fMRIEngine($ev,globaleffects,ev)
+            unset -nocomplain fMRIEngine($ev,highpassCutoff,ev) 
         }
 
         $fMRIEngine(evsListBox) delete $curs 
@@ -1101,18 +1187,23 @@ proc fMRIEngineShowEVToEdit {} {
         set ev [$fMRIEngine(evsListBox) get $curs] 
         if {$ev != "" &&
             [info exists fMRIEngine($ev,ev)]} {
+            #--- update gui to reflect parameters of current ev's signal
             fMRIEngineSelectConditionForSignalModeling   $fMRIEngine($ev,condition,ev)
             fMRIEngineSelectWaveFormForSignalModeling    $fMRIEngine($ev,waveform,ev)   
             fMRIEngineSelectConvolutionForSignalModeling $fMRIEngine($ev,convolution,ev)
             #fMRIEngineSelectNumDerivativesForSignalModeling $fMRIEngine($ev,derivative,ev)
             set m [ lindex $::fMRIEngine(derivOptions) $::fMRIEngine($ev,derivative,ev) ]
             fMRIEngineSelectNumDerivativesForSignalModeling $m
-            fMRIEngineSelectHighpassForSignalModeling    $fMRIEngine($ev,highpass,ev) 
+            fMRIEngineShowTrendModelForSignalModeling    $fMRIEngine($ev,highpass,ev) 
+            #--- this was computed post-input, so is represented differently from others
+            fMRIEngineShowCustomHighpassTemporalCutoff $::fMRIEngine(curRunForSignal)
             #fMRIEngineSelectLowpassForSignalModeling     $fMRIEngine($ev,lowpass,ev) 
             #--- wjp 09/06/05
             set fMRIEngine(numDerivatives) $fMRIEngine($ev,derivative,ev)
             #set fMRIEngine(checkbuttonTempDerivative) $fMRIEngine($ev,derivative,ev)
             set fMRIEngine(checkbuttonGlobalEffects)  $fMRIEngine($ev,globaleffects,ev) 
+            #--- need to update gui with DCBasis info
+            set fMRIEngine(entry,highpassCutoff) $fMRIEngine($ev,highpassCutoff,ev) 
         }
     } else {
         DevErrorWindow "Select an EV to edit." 
@@ -1181,27 +1272,9 @@ proc fMRIEngineCheckMultiRuns {} {
         foreach n1 $fMRIEngine(1,namesOfEVs) \
                 n2 $fMRIEngine($r,namesOfEVs) {
             if {! [string equal -nocase $n1 $n2]} {
-                DevErrorWindow "Run1 and run$r don't have the same types of condition EVs."
+                DevErrorWindow "The names of condition EVs differ between Run1 and run$r."
                 return 1
             }
-        }
-    }
-
-    # check baseline for each run 
-    for {set r 2} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
-        if {$::fMRIModelView(Design,Run1,UseBaseline) !=  
-            $::fMRIModelView(Design,Run$r,UseBaseline)} {
-            DevErrorWindow "Run1 and run$r are different in baseline modeling."
-            return 1
-        }
-    }
-
-    # check baseline for each run 
-    for {set r 2} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
-        if {$::fMRIModelView(Design,Run1,UseDCBasis) !=  
-            $::fMRIModelView(Design,Run$r,UseDCBasis)} {
-            DevErrorWindow "Run1 and run$r are different in DCBasis modeling."
-            return 1
         }
     }
 
@@ -1268,28 +1341,125 @@ proc fMRIEngineAddRegressors {run} {
             set seqName $fMRIEngine($r,sequenceName)
             set vols [expr $MultiVolumeReader($seqName,noOfVolumes) + $vols]
         }
+        fMRIEngine(designMatrix) SetNumberOfTuples $vols
+        
+        #--- How many columns are in the design matrix when we are combining
+        #--- multiple runs into the same analysis?
+        #--- * We will combine matching conditions into one design matrix column.
+        #--- * We will combine the matching condition derivatives into one design matrix column.
+        #---    (Actually, we should take a new derivative of each combined condition.)
+        #--- * We must keep the means for each run in an independent design matrix column.
+        #--- * We must keep the basis functions modeling nuissance signals (i.e. Discrete Cosines)
+        #---    for each run in an independent design matrix column.
+        #--- SO: total number of columns for combined analysis = number of condition EVs +
+        #--- number of runs (for the means) + number of DCbasis functions for each run.
 
-        fMRIEngine(designMatrix) SetNumberOfTuples $vols 
-        fMRIEngine(designMatrix) SetNumberOfComponents $fMRIEngine(1,totalEVs) 
 
-        for {set i 1} {$i <= $fMRIEngine(1,totalEVs)} {incr i} { 
+        #--- wjp 11/07/05 changing this:
+        if { 0 } {
+            fMRIEngine(designMatrix) SetNumberOfComponents $fMRIEngine(1,totalEVs) 
+            #--- make a set of long arrays that contain all combined ev data.
+            for {set i 1} {$i <= $fMRIEngine(1,totalEVs)} {incr i} { 
+                set data ""
+                for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} { 
+                    set data [concat $data $fMRIModelView(Data,Run$r,EV$i,EVData)]
+                }
+                set fMRIEngine($i,combinedEVs) $data 
+            }
+            #---insert the data into the design matrix.
+            for {set j 0} {$j < $vols} {incr j} { 
+                for {set i 0} {$i < $fMRIEngine(1,totalEVs)} {incr i} { 
+                    set index [expr $i+1]
+                    set data $fMRIEngine($index,combinedEVs)
+                    set e [lindex $data $j]
+                    fMRIEngine(designMatrix) InsertComponent $j $i $e 
+                }
+            }
+        }
+        #--- end wjp 11/07/05 commented out section
+
+        #--- to the following:
+        #--- count up number of columns the design matrix needs for combined runs
+        set numcols [expr $fMRIEngine(1,noOfEVs)]
+        for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
+            #--- add a column for the mean for this run.
+            if {$::fMRIModelView(Design,Run$r,UseBaseline)} {
+                incr numcols
+            }
+            #--- add columns for the basis functions for this run
+            if {$::fMRIModelView(Design,Run$r,UseDCBasis)} {
+                set numcols [expr $numcols + [ expr int ($::fMRIEngine(Design,Run$r,numCosines))] ]
+            }
+        }
+        fMRIEngine(designMatrix) SetNumberOfComponents $numcols
+        
+        #--- Now make a set of long data arrays for the combined condition-related data
+        #--- and a set of long data arrays with the mean and basis functions inserted
+        #--- at the right timepoint.
+        #--- data arrays for conditions (with signal inserted):
+        set startcol 1
+        set stopcol $::fMRIEngine(1,noOfEVs)
+        for { set i $startcol } { $i <= $stopcol } { incr i } {
             set data ""
             for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} { 
                 set data [concat $data $fMRIModelView(Data,Run$r,EV$i,EVData)]
             }
-            set fMRIEngine($i,combinedEVs) $data 
+            set fMRIEngine($i,combinedEVs) $data
         }
 
+        #--- Now make a set of data arrays for the means and basis functions.
+        #--- data arrays for for baseline and basis functions; fill with zeros:
+        set startcol [ expr $stopcol + 1 ]
+        set stopcol $numcols
+        for {set i $startcol } {$i <= $stopcol } {incr i} {
+            set data ""
+            for { set t 0 } { $t < $vols } { incr t } {
+                lappend data 0.0
+            }
+            set fMRIEngine($i,combinedEVs) $data                         
+        }
+
+        #--- insert baseline and basis functions for each run into data arrays
+        set col $startcol
+        set offset 0
+        for {set r 1 } {$r <= $::fMRIEngine(noOfSpecifiedRuns) } {incr r} {
+            set runlen [ llength $fMRIModelView(Data,Run$r,EV1,EVData)]
+            #--- insert the baseline and move to next data array:
+            set ev [ expr $::fMRIEngine($r,noOfEVs) + 1 ]
+            set newvals $::fMRIModelView(Data,Run$r,EV$ev,EVData)
+            #set newvals $::fMRIModelView(Data,Run$zz,EV$ev,EVData)
+            set end [ expr $offset + $runlen ]
+            lreplace $::fMRIEngine($col,combinedEVs) $offset $end $newvals
+            incr col
+            incr ev
+            #--- insert each basisfunction and move to next data array:
+            set num $::fMRIEngine(Design,Run$r,numCosines)
+            for { set count 0 } { $count < $num } { incr count } {
+                set newvals $::fMRIModelView(Data,Run$r,EV$ev,EVData)
+                #set newvals $::fMRIModelView(Data,Run$zz,EV$ev,EVData)
+                set end [ expr $offset + $runlen ]
+                lreplace $::fMRIEngine($col,combinedEVs) $offset $end $newvals
+                incr col
+                incr ev
+            }
+            #--- compute the offset in the data array
+            set offset [ expr $offset + $runlen ]
+        }
+        
+        #--- Now add all that data into the design matrix.
+        #--- order of columns will be:
+        #--- cond1-condN, baseline1, basis1-basisM, baseline2, basis 2-basisM, etc.
+        #--- Will have to re-interpret contrast vector to match this.
         for {set j 0} {$j < $vols} {incr j} { 
-            for {set i 0} {$i < $fMRIEngine(1,totalEVs)} {incr i} { 
+            for { set i 0 } { $i < $numcols } { incr i } { 
                 set index [expr $i+1]
                 set data $fMRIEngine($index,combinedEVs)
                 set e [lindex $data $j]
                 fMRIEngine(designMatrix) InsertComponent $j $i $e 
             }
         }
+        #--- end of wjp 11/07/05 changes.
     }
-
     return 0
 }
 
@@ -1329,12 +1499,13 @@ proc fMRIEngineCountEVs {} {
                 set r [string range $ev $i1 [expr $i2-1]] 
                 set r [string trim $r]
                 set ::fMRIModelView(Design,Run$r,UseBaseline) 1
-            } else {
+            } else { 
                 set run $fMRIEngine($ev,run)
                 set wform $fMRIEngine($ev,waveform,ev)   
                 set conv  $fMRIEngine($ev,convolution,ev)
                 set deriv $fMRIEngine($ev,derivative,ev)
                 set hpass $fMRIEngine($ev,highpass,ev)
+                set cutoff $fMRIEngine($ev,highpassCutoff,ev)
                 set title $fMRIEngine($ev,title,ev)
                 set mycon [ lsearch $::fMRIEngine($run,conditionList) $title ]
                 incr mycon
@@ -1372,6 +1543,7 @@ proc fMRIEngineCountEVs {} {
                 } else { 
                     #--- Now if we ARE using temporal derivatives in modeling
                     if {$conv == "none"} {
+                        #--- using derivatives without convolution
                         if {$wform == "Box Car"} {
                             set base "boxcar"
                             if { $deriv == 1 } {
@@ -1405,6 +1577,7 @@ proc fMRIEngineCountEVs {} {
                             }
                         }
                     } else {
+                        #--- using derivatives and convolution
                         if {$wform == "Box Car"} {
                             set base "boxcar_cHRF"
                             if { $deriv == 1 } {
@@ -1445,6 +1618,7 @@ proc fMRIEngineCountEVs {} {
                 # DCBasis
                 if {$hpass == "Discrete Cosine"} {
                     set ::fMRIModelView(Design,Run$run,UseDCBasis) 1
+                    #--- we are flagging this here, but not counting the basis functions yet.
                     #---WJP: 09/15/05
                     #lappend fMRIEngine($run,namesOfEVs) $title
                     #if {! [info exists fMRIEngine($run,noOfEVs)]} {
@@ -1453,8 +1627,20 @@ proc fMRIEngineCountEVs {} {
                     #    incr fMRIEngine($run,noOfEVs) 
                     #}
                 }
+                #--- set the highpass cutoff.
+                set run $::fMRIEngine($ev,run)
+                if { $cutoff == "default" } {
+                    set ::fMRIEngine(Design,Run$run,useCustomCutoff) 0
+                    set ::fMRIEngine(Design,Run$run,HighpassCutoff) $cutoff
+                } else {
+                    set ::fMRIEngine(Design,Run$run,useCustomCutoff) 1
+                    set ::fMRIEngine(Design,Run$run,HighpassCutoff) $cutoff
+                }
             }
+
+            #--- end if ev != baseline
         }
+        #-- end if ev != ""
         incr i
     }
     #--- Re-order the name lists of all runs to match the order of EVs
@@ -1490,6 +1676,7 @@ proc fMRIEngineCountEVs {} {
             }
         }
     }
+
     return 1
 }
 
@@ -1549,6 +1736,18 @@ proc fMRIEngineAddDerivativeSignalsToRun { run title base derivnum condition } {
 
 
 
+proc fMRIEngineCombineRunDerivativeCheck { } {
+    
+
+    #--- currently, don't do any checking.
+    #--- instead, we rely on the text in the help button
+    #--- in estimation panel to guide user to specify the
+    #--- modeling correctly.
+    #--- Eventually, please build this check into code.
+    #--- successful
+    return 1
+}
+
 
 
 #-------------------------------------------------------------------------------
@@ -1579,6 +1778,15 @@ proc fMRIEngineFitModel {} {
     if {$start == "combined"} {
         set start 1
         set last $fMRIEngine(noOfSpecifiedRuns)
+        #--- check to see if all condition EVs have same
+        #--- number of derivatives across runs:
+        #--- if run1: ev1 has 2 derivatives, run2: ev2 should have 2
+        #--- so runs combine properly. If not, error and return.
+        set chk [ fMRIEngineCombineRunDerivativeCheck ]
+        if { $chk == 0 } {
+            DevErrorWindow "To combine them, corresponding conditions should be modeled with same number of derivatives across runs."
+            return
+        }
     }
     for {set r $start} {$r <= $last} {incr r} { 
         if {! [info exists fMRIEngine($r,noOfEVs)]} {

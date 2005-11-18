@@ -1279,23 +1279,27 @@ proc fMRIModelViewBuildModelSignals { r i imghit imgwid signalType } {
 
 proc fMRIModelViewFindNumCosineBasis { run } {
 
-    set N $::fMRIModelView(Design,Run$run,numTimePoints)
-    set TR $::fMRIModelView(Design,Run$run,TR)
-    set TC $::fMRIEngine(Design,Run$run,HighpassCutoff)
-    set fc [ expr ( 1.0 / $TC ) ]
-    #--- think this is right...
-    #--- have cos (PI*u(2t+1) / 2N) as the basic basis functions ...
-    #--- Tcutoff/TR is the cutoff period in samples.
-    #--- 2PI TR / Tcutoff is max cutoff omega;
-    #--- so to find out how many basis functions we need,
-    #--- take (PI*u(2t+1)/2N) and pull out omega,
-    #--- set it equal to cutoff omega, and solve for u.
-    #--- u is the number of frequencies (basis functions) we need.
-    #--- get something like this.
-    set k [ expr floor ( 2.0 * $TR * $N / $TC)  ]
-    #--- because we don't want the DC term (baseline models this...)
-    set k [expr $k - 1]
-    set ::fMRIEngine(Design,Run$run,numCosines) $k
+    if { $::fMRIModelView(Design,Run$run,UseDCBasis) == 1 } {
+        set N $::fMRIModelView(Design,Run$run,numTimePoints)
+        set TR $::fMRIModelView(Design,Run$run,TR)
+        set TC $::fMRIEngine(Design,Run$run,HighpassCutoff)
+        set fc [ expr ( 1.0 / $TC ) ]
+        #--- think this is right...
+        #--- have cos (PI*u(2t+1) / 2N) as the basic basis functions ...
+        #--- Tcutoff/TR is the cutoff period in samples.
+        #--- 2PI TR / Tcutoff is max cutoff omega;
+        #--- so to find out how many basis functions we need,
+        #--- take (PI*u(2t+1)/2N) and pull out omega,
+        #--- set it equal to cutoff omega, and solve for u.
+        #--- u is the number of frequencies (basis functions) we need.
+        #--- get something like this.
+        set k [ expr floor ( 2.0 * $TR * $N / $TC)  ]
+        #--- because we don't want the DC term (baseline models this...)
+        set k [expr $k - 1]
+        set ::fMRIEngine(Design,Run$run,numCosines) $k
+    } else {
+        set ::fMRIEngine(Design,Run$run,numCosines) 0
+    }
 }
 
     

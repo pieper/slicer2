@@ -148,35 +148,83 @@ proc fMRIEngineComputeContrasts {} {
                 set Gui(progressText) "Computing $name..."
                 puts $Gui(progressText)
 
-                # Extract contrast info from the long 
-                # contrast vector
+                # Extract contrast info from the long contrast vector for all combined runs.
                 set vec $fMRIEngine($name,contrastVector) 
                 set originalContrastVector [split $vec " "]
 
+                #--- determine contrast string for each run specified...
                 set first 0
                 for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
                     set last [expr $first+$fMRIEngine($r,totalEVs)-1]
+                    set last [ expr int ($last) ]
                     set fMRIEngine($r,contrastVector) [lrange $originalContrastVector $first $last]
                     set fMRIEngine($r,contrastString) [join $fMRIEngine($r,contrastVector) " "]
-                     
                     set first [expr $first+$fMRIEngine($r,totalEVs)]
+                    set first [ expr int ($first) ]
                 }
-
+                #--- wjp 11/08/05
+                #--- The contrast string must be the same for each run being combined
+                #--- for matching conditions. Since we only combine condition-EVs in
+                #--- the combined run analysis (and don't combine baselines or
+                #--- columns containing low frequency nuissance filters), we only
+                #--- need to check that corresponding conditions have identical
+                #--- contrast specifications.
                 set run $fMRIEngine(curRunForModelFitting)
                 if {$run == "combined"} {
-                    # combined runs
+                    #--- wjp 11/08/05
+                    #--- First find target contrast string for run1 (only need condition-related EVs):
+                    #--- here, fMRIEngine(1,noOfEVs) counts up only condition-related EVs.
+                    #--- search for $numConditionEVs spaces in the string and use all characters
+                    #--- but for the last space....
+                    set spacecntr 0
+                    set indx 0
+                    set cntrst [ string trim $::fMRIEngine(1,contrastString) ]
+                    while { $spacecntr < $::fMRIEngine(1,noOfEVs) } {
+                        incr indx
+                        set indx [ string first " " $cntrst $indx ]
+                        incr spacecntr
+                    }
+                    set len [ string len $cntrst ]
+                    set target [ string range $cntrst 0 $indx ]
+                    set target [ string trim $target ]
+                    #--- and get contrast weights for other EVs (baseline and DC basis) in run 1
+                    set other [ string range $cntrst $indx $len ]
+                    set other [ string trim $other ]
+                    set contrVector $target
+                    set contrVector [ concat $contrVector $other ]
+
+                    #--- compare all other contrast strings to this target for run 1
                     for {set r 2} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
-                        if {! [string equal -nocase $fMRIEngine(1,contrastString) $fMRIEngine($r,contrastString)]} {
+                        set spacecntr 0
+                        set indx 0
+                        set cntrst [ string trim $::fMRIEngine($r,contrastString) ]
+                        while { $spacecntr < $::fMRIEngine($r,noOfEVs) } {
+                            incr indx
+                            set indx [ string first " " $cntrst $indx ]
+                            incr spacecntr
+                        }
+                        set len [ string len $cntrst ]
+                        set snip [ string range $cntrst 0 $indx ]
+                        set snip [ string trim $snip ]
+                        if {! [string equal -nocase $target $snip ] } {
+                            #if {! [string equal -nocase $fMRIEngine(1,contrastString) $fMRIEngine($r,contrastString)]} 
                             DevErrorWindow "Bad contrast vector for combined runs:\nName: $name\nVector: $vec"
                             return 
                         }
+                        #--- and get contrast weights for other EVs (baseline and DC basis) in run
+                        set other [ string range $cntrst $indx $len ]
+                        set other [ string trim $other ]
+                        set contrVector [ concat $contrVector $other ]
                     }
 
-                    set contrVector $fMRIEngine(1,contrastVector)
+                    #--- Ok, now we know all runs contain combinable contrasts.
+                    #--- now assemble a new contrast vector for combined analysis.
+                    #--- This has to look like $target run1basis run1DCs run2basis, run2DCs etc.
                 } else {
                     set contrVector $fMRIEngine($run,contrastVector)
                 }
-
+                #--- end wjp 11/08/05 changes.
+                
                 set len [llength $contrVector]
                 if {[info commands fMRIEngine(contrast)] != ""} {
                     fMRIEngine(contrast) Delete

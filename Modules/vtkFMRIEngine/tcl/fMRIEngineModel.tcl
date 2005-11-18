@@ -192,8 +192,8 @@ proc fMRIEngineClearModel {} {
     fMRIEngineUpdateConditionsForSignalModeling 
     fMRIEngineSelectWaveFormForSignalModeling {Box Car} 
     fMRIEngineSelectConvolutionForSignalModeling {none} 
-    fMRIEngineSelectHighpassForSignalModeling {none} 
-    fMRIEngineInitDefaultHighpassTemporalCutoff 
+    fMRIEngineSelectTrendModelForSignalModeling {none} 
+    fMRIEngineShowDefaultHighpassTemporalCutoff 
     #fMRIEngineSelectLowpassForSignalModeling {none}
     #--- wjp 09/01/05
     set fMRIEngine(numDerivatives) 0
