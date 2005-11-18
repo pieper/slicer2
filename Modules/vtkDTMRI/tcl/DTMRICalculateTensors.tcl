@@ -67,7 +67,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.25 $} {$Date: 2005/11/09 16:45:29 $}]
+                                 {$Revision: 1.26 $} {$Date: 2005/11/18 20:38:10 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -1400,13 +1400,9 @@ proc ConvertVolumeToTensors {} {
           eval {Volume($id,node) SetSpacing} [Volume($id,node) GetSpacing]
 
           set order [Volume($id,node) GetScanOrder]
-          puts "-------computing ras to ijk from scan order----"
-          Volume($id,node) ComputeRasToIjkFromScanOrder $order
-          
-      if {$DTMRI(convert,nrrd)} {
-            DTMRIComputeRasToIjkFromCorners Volume($v,node) Volume($id,node) $extent
-          }
 
+          DTMRIComputeRasToIjkFromCorners Volume($v,node) Volume($id,node) $extent
+      
           # update slicer internals
           MainVolumesUpdate $id
 
@@ -1473,11 +1469,9 @@ proc ConvertVolumeToTensors {} {
           eval {Volume($id,node) SetImageRange} $range
           # recompute the matrices using this offset to center vol in the cube
           set order [Volume($id,node) GetScanOrder]
-          Volume($id,node) ComputeRasToIjkFromScanOrder $order
-          
-      if {$DTMRI(convert,nrrd)} {
-            DTMRIComputeRasToIjkFromCorners Volume($v,node) Volume($id,node) $extent
-          }
+ 
+          DTMRIComputeRasToIjkFromCorners Volume($v,node) Volume($id,node) $extent
+
           # update slicer internals
           MainVolumesUpdate $id
 
@@ -1573,12 +1567,9 @@ proc ConvertVolumeToTensors {} {
      # Lauren test 
       eval {Volume($id,node) SetSpacing} [Volume($id,node) GetSpacing]
       set order [Volume($id,node) GetScanOrder]
-      puts "-------computing ras to ijk from scan order----"
-      Volume($id,node) ComputeRasToIjkFromScanOrder $order
+
+      DTMRIComputeRasToIjkFromCorners Volume($v,node) Volume($id,node) $extent
       
-      if {$DTMRI(convert,nrrd)} {
-        DTMRIComputeRasToIjkFromCorners Volume($v,node) Volume($id,node) $extent
-      }
       # update slicer internals
       MainVolumesUpdate $id
 
@@ -1659,12 +1650,9 @@ proc ConvertVolumeToTensors {} {
      # Lauren test 
       eval {Volume($id,node) SetSpacing} [Volume($id,node) GetSpacing]
       set order [Volume($id,node) GetScanOrder]
-      puts "-------computing ras to ijk from scan order----"
-      Volume($id,node) ComputeRasToIjkFromScanOrder $order
       
-      if {$DTMRI(convert,nrrd)} {
-        DTMRIComputeRasToIjkFromCorners Volume($v,node) Volume($id,node) $extent
-      }
+      DTMRIComputeRasToIjkFromCorners Volume($v,node) Volume($id,node) $extent
+      
       # update slicer internals
       MainVolumesUpdate $id
 
@@ -1709,20 +1697,17 @@ proc ConvertVolumeToTensors {} {
     eval {$newvol SetImageRange} $range
     # recompute the matrices using this offset to center vol in the cube
     set order [$newvol GetScanOrder]
-    
-    $newvol ComputeRasToIjkFromScanOrder $order
-        
+            
     puts "SPACING [$newvol GetSpacing] DIMS [$newvol GetDimensions] MAT [$newvol GetRasToIjkMatrix]"
     TensorCreateNew $n 
-    
+         
     # Set the slicer object's image data to what we created
     DTMRI Update
-    #Tensor($n,data) SetData [DTMRI GetOutput]
+
     Tensor($n,data) SetImageData [DTMRI GetOutput]
     
-    if {$DTMRI(convert,nrrd)} {
-      DTMRIComputeRasToIjkFromCorners Volume($v,node) $newvol [[Tensor($n,data) GetOutput] GetExtent]
-    }
+     #Set Tensor matrices
+     DTMRIComputeRasToIjkFromCorners Volume($v,node) Tensor($n,node) [[Tensor($n,data) GetOutput] GetExtent]  
     
     # Registration
     # put the new tensor volume inside the same transform as the Original volume
@@ -1764,10 +1749,10 @@ proc ConvertVolumeToTensors {} {
     if {$numberOfNoGradientImages > 1} {
         math SetOutput ""
         math2 SetOutput ""
-    _cast SetOutput ""
+        _cast SetOutput ""
         math Delete
         math2 Delete
-    _cast Delete
+        _cast Delete
     }
     
     math_g SetOutput ""
@@ -1858,15 +1843,10 @@ proc DTMRIComputeRasToIjkFromCorners {refnode node extent} {
   
   #Set Translation to center of the output volume.
   #This is a particular thing of the slicer: all volumes are centered in their centroid.
-  _Ras SetElement 0 3 [expr ([lindex $extent 1] - [lindex $extent 0])/2.0]
-  _Ras SetElement 1 3 [expr ([lindex $extent 3] - [lindex $extent 2])/2.0]
-  _Ras SetElement 2 3 [expr ([lindex $extent 5] - [lindex $extent 4])/2.0]  
-  
-  #Trick: Negate y axis to compensate for flip in nrrd.
-  #_Ijk SetElement 1 0 [expr -1 * [_Ijk GetElement 1 0]]
-  #_Ijk SetElement 1 1 [expr -1 * [_Ijk GetElement 1 1]]
-  #_Ijk SetElement 1 2 [expr -1 * [_Ijk GetElement 1 2]]
-    
+  #_Ras SetElement 0 3 [expr ([lindex $extent 1] - [lindex $extent 0])/2.0]
+  #_Ras SetElement 1 3 [expr ([lindex $extent 3] - [lindex $extent 2])/2.0]
+  #_Ras SetElement 2 3 [expr ([lindex $extent 5] - [lindex $extent 4])/2.0]  
+      
   set dims "[expr [lindex $extent 1] - [lindex $extent 0] + 1] \
               [expr [lindex $extent 3] - [lindex $extent 2] + 1] \
               [expr [lindex $extent 5] - [lindex $extent 4] + 1]"           
