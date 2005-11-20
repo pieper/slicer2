@@ -178,35 +178,39 @@ public:
     
     if( rsoptimizer && typeid( event ) == typeid( itk::EndEvent ) ) {
       RSGDOptimizerType::StopConditionType stopCondition = rsoptimizer->GetStopCondition();
-      m_fo << "Optimizer stopped : " << std::endl;
-      m_fo << "Stop condition   =  " << stopCondition << std::endl;
-      switch(stopCondition) {
-      case RSGDOptimizerType::GradientMagnitudeTolerance:
-        m_fo << "GradientMagnitudeTolerance" << std::endl; 
-        break;
-      case RSGDOptimizerType::StepTooSmall:
-        m_fo << "StepTooSmall" << std::endl; 
-        break;
-      case RSGDOptimizerType::ImageNotAvailable:
-        m_fo << "ImageNotAvailable" << std::endl; 
-        break;
-      case RSGDOptimizerType::SamplesNotAvailable:
-        m_fo << "SamplesNotAvailable" << std::endl; 
-        break;
-      case RSGDOptimizerType::MaximumNumberOfIterations:
-        m_fo << "MaximumNumberOfIterations" << std::endl; 
-        break;
+      if (m_fo.good()) {
+        m_fo << "Optimizer stopped : " << std::endl;
+        m_fo << "Stop condition   =  " << stopCondition << std::endl;
+        switch(stopCondition) {
+        case RSGDOptimizerType::GradientMagnitudeTolerance:
+          m_fo << "GradientMagnitudeTolerance" << std::endl; 
+          break;
+        case RSGDOptimizerType::StepTooSmall:
+          m_fo << "StepTooSmall" << std::endl; 
+          break;
+        case RSGDOptimizerType::ImageNotAvailable:
+          m_fo << "ImageNotAvailable" << std::endl; 
+          break;
+        case RSGDOptimizerType::SamplesNotAvailable:
+          m_fo << "SamplesNotAvailable" << std::endl; 
+          break;
+        case RSGDOptimizerType::MaximumNumberOfIterations:
+          m_fo << "MaximumNumberOfIterations" << std::endl; 
+          break;
+        }
       }
     }
     
     if( gdoptimizer && typeid( event ) == typeid( itk::EndEvent ) ) {
       GDOptimizerType::StopConditionType stopCondition = gdoptimizer->GetStopCondition();
-      m_fo << "Optimizer stopped : " << std::endl;
-      m_fo << "Stop condition   =  " << stopCondition << std::endl;
-      switch(stopCondition) {
-      case GDOptimizerType::MaximumNumberOfIterations:
-        m_fo << "MaximumNumberOfIterations" << std::endl; 
-        break;
+      if (m_fo.good()) {
+        m_fo << "Optimizer stopped : " << std::endl;
+        m_fo << "Stop condition   =  " << stopCondition << std::endl;
+        switch(stopCondition) {
+        case GDOptimizerType::MaximumNumberOfIterations:
+          m_fo << "MaximumNumberOfIterations" << std::endl; 
+          break;
+        }
       }
     }
 
@@ -216,19 +220,21 @@ public:
       
       vtkMatrix4x4 *mat = vtkMatrix4x4::New();
       m_registration->GetCurrentTransformationMatrix(mat);
-      
-      m_fo << "  ====== ITERATION =" << m_registration->GetCurrentIteration() << 
-        " LEVEL =" <<  m_registration->GetCurrentLevel() <<"   " << std::endl;
-      mat->Print(m_fo);
-      if (rsoptimizer) {
-        m_fo << "Value=" << rsoptimizer->GetValue() << "   ";
-        m_fo << "Position=" << rsoptimizer->GetCurrentPosition() << std::endl;
+
+      if (m_fo.good()) {
+        m_fo << "  ====== ITERATION =" << m_registration->GetCurrentIteration() << 
+          " LEVEL =" <<  m_registration->GetCurrentLevel() <<"   " << std::endl;
+        mat->Print(m_fo);
+        if (rsoptimizer) {
+          m_fo << "Value=" << rsoptimizer->GetValue() << "   ";
+          m_fo << "Position=" << rsoptimizer->GetCurrentPosition() << std::endl;
+        }
+        if (gdoptimizer) {
+          m_fo << "Value=" << gdoptimizer->GetValue() << "   ";
+          m_fo << "Position=" << gdoptimizer->GetCurrentPosition() << std::endl;
+        }
       }
-      if (gdoptimizer) {
-        m_fo << "Value=" << gdoptimizer->GetValue() << "   ";
-        m_fo << "Position=" << gdoptimizer->GetCurrentPosition() << std::endl;
-      }
-      
+
       float maxNumIter = 0;
       std::vector<float> maxProgressIter;
       int i;

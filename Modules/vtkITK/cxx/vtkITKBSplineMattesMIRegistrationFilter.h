@@ -146,7 +146,7 @@ private:
   void operator=(const vtkITKBSplineMattesMIRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKBSplineMattesMIRegistrationFilter, "$Revision: 1.2 $");
+//vtkCxxRevisionMacro(vtkITKBSplineMattesMIRegistrationFilter, "$Revision: 1.3 $");
 //vtkStandardNewMacro(vtkITKBSplineMattesMIRegistrationFilter);
 vtkRegistrationNewMacro(vtkITKBSplineMattesMIRegistrationFilter);
 
@@ -202,8 +202,9 @@ public:
       int iter = m_registration->GetCurrentIteration();
       double progress = (iter + 0.0)/m_registration->GetMaximumNumberOfIterations();
       m_registration->UpdateProgress( progress );     
-      
-      m_fo << "Iteration = " << iter  << "  Metric = " << optimizer->GetValue() << std::endl;
+      if (m_fo.good()) {
+        m_fo << "Iteration = " << iter  << "  Metric = " << optimizer->GetValue() << std::endl;
+      }
       m_registration->SetCurrentIteration(iter+1);
       if (m_registration->GetAbortExecute()) {
         m_registration->AbortIterations();
@@ -211,9 +212,13 @@ public:
       }
     }
     else {
-      m_fo << "Error in BSplineMattesMIRegistrationFilterCommand::Execute" << std::endl;
+      if (m_fo.good()) {
+        m_fo << "Error in BSplineMattesMIRegistrationFilterCommand::Execute" << std::endl;
+      }
     }
-    m_fo.flush();
+    if (m_fo.good()) {
+      m_fo.flush();
+    }
     
   }
 };

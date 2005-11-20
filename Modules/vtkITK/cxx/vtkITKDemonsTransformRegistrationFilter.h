@@ -158,7 +158,7 @@ private:
   void operator=(const vtkITKDemonsTransformRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKDemonsTransformRegistrationFilter, "$Revision: 1.8 $");
+//vtkCxxRevisionMacro(vtkITKDemonsTransformRegistrationFilter, "$Revision: 1.9 $");
 //vtkStandardNewMacro(vtkITKDemonsTransformRegistrationFilter);
 vtkRegistrationNewMacro(vtkITKDemonsTransformRegistrationFilter);
 
@@ -226,7 +226,9 @@ public:
     if (filter) {
       unsigned int level = m_registration->GetCurrentLevel();
       int iter = m_registration->GetCurrentIteration();
-      m_fo << "Iteration = " << iter << "   Metric = " << filter->GetMetric() << std::endl;
+      if (m_fo.good()) {
+        m_fo << "Iteration = " << iter << "   Metric = " << filter->GetMetric() << std::endl;
+      }
       m_registration->SetCurrentIteration(iter+1);
       if (m_registration->GetAbortExecute()) {
         m_registration->AbortIterations();
@@ -244,9 +246,13 @@ public:
       m_registration->UpdateProgress( progress );
     }
     else {
-     m_fo << "Error in DemonsTransformRegistrationFilterCommand::Execute" << std::endl;
+      if (m_fo.good()) {
+        m_fo << "Error in DemonsTransformRegistrationFilterCommand::Execute" << std::endl;
+      }
     }
-    m_fo.flush();
+    if (m_fo.good()) {
+      m_fo.flush();
+    }
   }
 };
 //ETX
