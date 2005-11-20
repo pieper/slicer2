@@ -13,12 +13,12 @@ if {[::vtk::load_component vtkRigidIntensityRegistrationTCL] == "" } {
     # source all the files
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/ItkToSlicerTransform.tcl]
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/RigidIntensityRegistration.tcl]
-    source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/MutualInformationRegistration.tcl]
+    #source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/MutualInformationRegistration.tcl]
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/AffineMattesMIRegistration.tcl]
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/VersorMattesMIRegistration.tcl]
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/TranslationMattesMIRegistration.tcl]
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/TranslationMIGradientDescentRegistration.tcl]
-    source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/KullbackLeiblerRegistration.tcl]
+    #source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/KullbackLeiblerRegistration.tcl]
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/DeformableDemonsRegistration.tcl]
     source [file join $PACKAGE_DIR_VTKRigidIntensityRegistration/../../../tcl/DeformableBSplineRegistration.tcl]
 

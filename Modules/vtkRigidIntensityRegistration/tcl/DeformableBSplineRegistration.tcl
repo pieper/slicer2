@@ -155,7 +155,7 @@ proc DeformableBSplineRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2005/09/29 20:00:38 $}]
+        {$Revision: 1.4 $} {$Date: 2005/11/20 14:55:38 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -628,6 +628,7 @@ proc DeformableBSplineRegistrationAutoRun {} {
     #}
 
     .mi.reg config \
+        -normalize  0 \
         -source          $RigidIntensityRegistration(sourceId)          \
         -target          $RigidIntensityRegistration(targetId)          \
         -update_procedure RigidIntensityRegistrationUpdateParam        \

@@ -152,7 +152,7 @@ proc RigidIntensityRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.18 $} {$Date: 2005/10/15 19:57:57 $}]
+        {$Revision: 1.19 $} {$Date: 2005/11/20 14:55:38 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -166,6 +166,7 @@ proc RigidIntensityRegistrationInit {} {
     set RigidIntensityRegistration(targetId) $Volume(idNone)
     set RigidIntensityRegistration(matrixId) ""
     set RigidIntensityRegistration(Repeat) 1
+    set RigidIntensityRegistration(Resolution) 128
 }
 
 # NAMING CONVENTION:
@@ -226,8 +227,8 @@ proc RigidIntensityRegistrationBuildSubGui {f} {
     eval {menu $f.mbType.m} $Gui(WMA)
     pack  $f.mbType -side left -pady 1 -padx $Gui(pad)
     # Add menu items
-    foreach RegType {{MI} {TranslationMI} {TranslationMattesMI} {VersorMattesMI} {AffineMattesMI} {DeformableDemons} {DeformableBSpline} {KL}} \
-        name {{Rigid MI} {Translation MI} {Translation Mattes MI} {Rigid Mattes MI} {Affine Mattes MI} {Deformable Demons} {Deformable BSpline} {KL}} { 
+    foreach RegType {{TranslationMI} {TranslationMattesMI} {VersorMattesMI} {AffineMattesMI} {DeformableDemons} {DeformableBSpline}} \
+        name {{Translation MI} {Translation Mattes MI} {Rigid Mattes MI} {Affine Mattes MI} {Deformable Demons} {Deformable BSpline}} { 
             set RigidIntensityRegistration($RegType) $name 
             $f.mbType.m add command -label $name \
                 -command "RigidIntensityRegistrationSetRegType $RegType"
@@ -246,22 +247,19 @@ proc RigidIntensityRegistrationBuildSubGui {f} {
     #
     # Swappable Frames for MI/KL methods
     #
-    foreach type "MI TranslationMI TranslationMattesMI VersorMattesMI AffineMattesMI DeformableDemons DeformableBSpline KL" {
+    foreach type "TranslationMI TranslationMattesMI VersorMattesMI AffineMattesMI DeformableDemons DeformableBSpline" {
         frame $f.f${type} -bg $Gui(activeWorkspace)
         place $f.f${type} -in $f -relheight 1.0 -relwidth 1.0
         set RigidIntensityRegistration(f${type}) $f.f${type}
     }
     raise $RigidIntensityRegistration(fVersorMattesMI)
 
-    MutualInformationRegistrationBuildSubGui $f.fMI
     TranslationMIGradientDescentRegistrationBuildSubGui $f.fTranslationMI
     VersorMattesMIRegistrationBuildSubGui $f.fVersorMattesMI
     AffineMattesMIRegistrationBuildSubGui $f.fAffineMattesMI
     TranslationMattesMIRegistrationBuildSubGui $f.fTranslationMattesMI
     DeformableDemonsRegistrationBuildSubGui $f.fDeformableDemons
     DeformableBSplineRegistrationBuildSubGui $f.fDeformableBSpline
-    KullbackLeiblerRegistrationBuildSubGui $f.fKL
-    set fKL $f.fKL
 }
 
 #-------------------------------------------------------------------------------
