@@ -159,19 +159,20 @@ proc fMRIEngineBuildUIForViewTab {parent} {
 
     set f $parent
     Notebook-create $f.fNotebook \
-                    -pages {Choose Plot Display} \
+                    -pages {Select Threshold Plot} \
                     -pad 2 \
                     -bg $Gui(activeWorkspace) \
                     -height 356 
     # width 240
     pack $f.fNotebook -fill both -expand 1
  
-    set w [Notebook-frame $f.fNotebook Choose]
+    set w [Notebook-frame $f.fNotebook Select ]
     fMRIEngineBuildUIForChoose $w
+    set w [Notebook-frame $f.fNotebook Threshold ]
+    fMRIEngineBuildUIForThreshold $w
     set w [Notebook-frame $f.fNotebook Plot]
     fMRIEngineBuildUIForPlot $w
-    set w [Notebook-frame $f.fNotebook Display]
-    fMRIEngineBuildUIForDisplay $w
+
 }
 
 
@@ -326,13 +327,13 @@ proc fMRIEngineToggleCutoff {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC fMRIEngineBuildUIForDisplay
+# .PROC fMRIEngineBuildUIForThreshold
 # Creates UI for the display tab 
 # .ARGS
 # windowpath parent
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineBuildUIForDisplay {parent} {
+proc fMRIEngineBuildUIForThreshold {parent} {
     global fMRIEngine Gui
 
     frame $parent.fThreshold -bg $Gui(activeWorkspace)
