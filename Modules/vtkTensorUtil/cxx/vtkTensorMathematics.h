@@ -199,6 +199,10 @@ public:
   static vtkFloatingPointType Mode(vtkFloatingPointType w[3]);
   static void ColorByMode(vtkFloatingPointType w[3], vtkFloatingPointType &R,vtkFloatingPointType &G, vtkFloatingPointType &B);
 
+  //Description
+  //Wrap function to teem eigen solver
+  static int TeemEigenSolver(double **m, double *w, double **v);
+
 protected:
   vtkTensorMathematics();
   ~vtkTensorMathematics() {};

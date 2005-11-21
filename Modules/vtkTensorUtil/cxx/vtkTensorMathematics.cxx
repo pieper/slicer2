@@ -56,6 +56,10 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "time.h"
 #include "vtkLookupTable.h"
 
+extern "C" {
+#include "teem/ten.h"
+}
+
 #define VTK_EPS 10e-15
 
 //----------------------------------------------------------------------------
@@ -382,7 +386,8 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
             }
             }
           // compute eigensystem
-          vtkMath::Jacobi(m, w, v);
+          //vtkMath::Jacobi(m, w, v);
+           vtkTensorMathematics::TeemEigenSolver(m,w,v);
         }
           else
         {
@@ -719,3 +724,34 @@ void vtkTensorMathematics::ModeToRGB(double Mode, double FA,
    B = FA*B;
 }
 
+int vtkTensorMathematics::TeemEigenSolver(double **m, double *w, double **v) 
+{
+    double t[7];
+    double evec[9];
+    double eval[3];
+    int res;
+    //TEN_M2T(t,m);
+     t[1] = m[0][0];
+     t[2] = m[0][1];
+     t[3] = m[0][2];
+     t[4] = m[1][1];
+     t[5] = m[1][2];
+     t[6] = m[2][2];
+       
+    if (v == NULL)
+        res=tenEigensolve_d(eval,NULL,t);
+    else 
+         res=tenEigensolve_d(eval,evec,t);
+         
+    //Asigned output eigenvalues
+    if (v != NULL) {
+        v[0][0] = evec[0]; v[1][0] = evec[1]; v[2][0] = evec[2];
+        v[0][1] = evec[3]; v[1][1] = evec[4]; v[2][1] = evec[5];
+        v[0][2] = evec[6]; v[1][2] = evec[7]; v[2][2] = evec[8];
+    }
+    w[0]=eval[0];
+    w[1]=eval[1];
+    w[2]=eval[2];
+    return res;    
+
+}      
