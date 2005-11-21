@@ -103,6 +103,19 @@ public:
   vtkGetMacro(NumberOfComponents,int);
   
 
+  // Description:
+  // Use image origin from the file
+  void SetUseNativeOriginOn() 
+  {
+    UseNativeOrigin = true;
+  }
+
+  // Description:
+  // Use image center as origin
+  void SetUseNativeOriginOff() 
+  {
+    UseNativeOrigin = false;
+  }
 
   int NrrdToVTKScalarType( const int nrrdPixelType ) const
   {
@@ -219,6 +232,7 @@ protected:
   int PointDataType;
   int DataType;
   int NumberOfComponents;
+  bool UseNativeOrigin;
 
   //BTX
   std::map <std::string, std::string> HeaderKeyValue;

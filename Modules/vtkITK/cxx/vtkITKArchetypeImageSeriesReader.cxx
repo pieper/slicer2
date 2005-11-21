@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/10/14 02:04:03 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2005/11/21 22:52:19 $
+  Version:   $Revision: 1.5 $
 
   Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -56,7 +56,7 @@
 #include "itkGDCMImageIO.h"
 #include <itksys/SystemTools.hxx>
 
-vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.4 $");
+vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.5 $");
 vtkStandardNewMacro(vtkITKArchetypeImageSeriesReader);
 
 //----------------------------------------------------------------------------
@@ -69,7 +69,7 @@ vtkITKArchetypeImageSeriesReader::vtkITKArchetypeImageSeriesReader()
   this->FileNameSliceOffset = 0;
   this->FileNameSliceSpacing = 1;
   this->FileNameSliceCount = 0;
-
+  this->UseNativeOrigin = false;
   this->OutputScalarType = VTK_FLOAT;
   this->UseNativeScalarType = 0;
   for (int i = 0; i < 3; i++)
@@ -341,22 +341,17 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
   vtkMatrix4x4* LpsToRasMatrix = vtkMatrix4x4::New();
   LpsToRasMatrix->Identity();
   LpsToRasMatrix->SetElement(0,0,-1);
-  if (this->UseNativeCoordinateOrientation)
-    {
-    LpsToRasMatrix->SetElement(1,1,1);
-    }
-  else
-    {
-    LpsToRasMatrix->SetElement(1,1,-1);
-    }
-  vtkMatrix4x4::Multiply4x4(IjkToLpsMatrix, LpsToRasMatrix, RasToIjkMatrix);
+  LpsToRasMatrix->SetElement(1,1,-1);
+
+  vtkMatrix4x4::Multiply4x4(LpsToRasMatrix,IjkToLpsMatrix, RasToIjkMatrix);
   RasToIjkMatrix->Invert();
+
+  LpsToRasMatrix->Delete();
 
   // If it looks like the pipeline did not provide the spacing and
   // origin, modify the spacing and origin with the defaults
   for (int j = 0; j < 3; j++)
     {
-    RasToIjkMatrix->SetElement(j, 3, (extent[2*j+1] - extent[2*j])/2.0);
     if (spacing[j] == 1.0)
       {
       spacing[j] = this->DefaultDataSpacing[j];
@@ -364,6 +359,14 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
     if (origin[j] == 0.0)
       {
       origin[j] = this->DefaultDataOrigin[j];
+      }
+    if (this->UseNativeOrigin)
+      {
+        RasToIjkMatrix->SetElement(j, 3, origin[j]);
+      }
+    else
+      {
+        RasToIjkMatrix->SetElement(j, 3, (extent[2*j+1] - extent[2*j])/2.0);
       }
     }
 

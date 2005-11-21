@@ -35,7 +35,7 @@
 #include "vtkFloatArray.h" 
 
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.24 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.25 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -45,6 +45,7 @@ vtkNRRDReader::vtkNRRDReader()
   HeaderKeys = NULL;
   CurrentFileName = NULL;
   nrrd = nrrdNew();
+  UseNativeOrigin = false;
 }
 
 vtkNRRDReader::~vtkNRRDReader() 
@@ -263,9 +264,6 @@ void vtkNRRDReader::ExecuteInformation()
   MeasurementFrameMatrix = vtkMatrix4x4::New();
   MeasurementFrameMatrix->Identity();   
 
-
-
-
   if (nrrdTypeBlock == nrrd->type)
     {
     vtkErrorMacro("ReadImageInformation: Cannot currently "
@@ -467,7 +465,25 @@ void vtkNRRDReader::ExecuteInformation()
           //this->SetSpacing(axii, spacing);
           spacings[axii]=spacing;
 
-        
+          switch (nrrd->space)
+            {
+              // on read, convert non-RAS coords into RAS coords, when we can
+            case nrrdSpaceRightAnteriorSuperior:
+              // no change needed
+              break;
+            case nrrdSpaceLeftAnteriorSuperior:
+              spaceDir[0] *= -1;   // L -> R
+              break;
+            case nrrdSpaceLeftPosteriorSuperior:
+              spaceDir[0] *= -1;   // L -> R
+              spaceDir[1] *= -1;   // P -> A
+              break;
+            default:
+              // we're not coming from a space for which the conversion
+              // to LPS is well-defined
+              break;
+            }
+
           for (int j=0; j<this->nrrd->spaceDim; j++) 
             {
              IjkToRasMatrix->SetElement(j,axii , spaceDir[j]*spacing);
@@ -497,6 +513,24 @@ void vtkNRRDReader::ExecuteInformation()
         {
         origins[saxi] = nrrd->spaceOrigin[saxi];
         //this->SetOrigin(saxi, nrrd->spaceOrigin[saxi]);
+        }
+      switch (nrrd->space)
+        {
+          // convert non-RAS coords into RAS coords, when we can
+        case nrrdSpaceRightAnteriorSuperior:
+          // no change needed
+          break;
+        case nrrdSpaceLeftAnteriorSuperior:
+          origins[0] *= -1;   // L -> R
+          break;
+        case nrrdSpaceLeftPosteriorSuperior:
+          origins[0] *= -1;   // L -> R
+          origins[1] *= -1;   // P -> A
+          break;
+        default:
+          // we're not coming from a space for which the conversion
+          // to LPS is well-defined
+          break;
         }
       }
     }
@@ -528,7 +562,7 @@ void vtkNRRDReader::ExecuteInformation()
       }
     }
       
-   if (AIR_EXISTS(nrrd->spaceOrigin[0])) {
+  if (this->UseNativeOrigin && AIR_EXISTS(nrrd->spaceOrigin[0])) {
        for (int i=0; i < 3; i++) {
            IjkToRasMatrix->SetElement(i, 3, origins[i]);
            vtkMatrix4x4::Invert(IjkToRasMatrix, RasToIjkMatrix);

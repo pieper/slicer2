@@ -171,6 +171,20 @@ public:
     UseNativeScalarType = 1;
     this->Modified();
   }
+  
+  // Description:
+  // Use image origin from the file
+  void SetUseNativeOriginOn() 
+  {
+    UseNativeOrigin = true;
+  }
+
+  // Description:
+  // Use image center as origin
+  void SetUseNativeOriginOff() 
+  {
+    UseNativeOrigin = false;
+  }
 
   // Description:
   // Get the file format.  Pixels are this type in the file.
@@ -201,6 +215,7 @@ protected:
 
   char UseNativeCoordinateOrientation;
   char UseNativeScalarType;
+  bool UseNativeOrigin;
 
 //BTX
   std::vector<std::string> FileNames;

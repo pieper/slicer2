@@ -43,14 +43,40 @@ void ITKWriteVTKImage(vtkImageData *inputImage, char *fileName,
       //mag[i] = -mag[i];
     //}
   }
+
+  for ( i=0; i<3; i++) {
+    int j;
+    for (j=0; j<3; j++) {
+      ijkToRasMatrix->SetElement(i, j, ijkToRasMatrix->GetElement(i,j)/mag[i]);
+    }
+  }
+  
+  
+  // ITK image direction are in LPS space
+  // convert from ijkToRas to ijkToLps
+  vtkMatrix4x4* rasToLpsMatrix = vtkMatrix4x4::New();
+  rasToLpsMatrix->Identity();
+  rasToLpsMatrix->SetElement(0,0,-1);
+  rasToLpsMatrix->SetElement(1,1,-1);
+
+  vtkMatrix4x4* ijkToLpsMatrix = vtkMatrix4x4::New();
+  vtkMatrix4x4::Multiply4x4(ijkToRasMatrix, rasToLpsMatrix, ijkToLpsMatrix);
+
   for ( i=0; i<3; i++) {
     origin[i] =  ijkToRasMatrix->GetElement(3,i);
     int j;
     for (j=0; j<3; j++) {
-      direction[j][i] =  ijkToRasMatrix->GetElement(i,j)/mag[i];
+      direction[j][i] =  ijkToLpsMatrix->GetElement(i,j);
     }
   }
-  
+
+  rasToLpsMatrix->Delete();
+  ijkToRasMatrix->Delete();
+  ijkToLpsMatrix->Delete();
+
+  origin[0] *= -1;
+  origin[1] *= -1;
+
   // itk import for input itk images
   typedef typename itk::VTKImageImport<ImageType> ImageImportType;
   typename ImageImportType::Pointer itkImporter = ImageImportType::New();
@@ -84,7 +110,6 @@ void ITKWriteVTKImage(vtkImageData *inputImage, char *fileName,
   // clean up
   vtkExporter->Delete();
   vtkFlip->Delete();
-  ijkToRasMatrix->Delete();
 }
 
 
