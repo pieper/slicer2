@@ -1728,9 +1728,14 @@ proc fMRIModelViewComputeGaussianFilter { r } {
     #--- and sigma = 1/ ((2pi * numsigmas) * 2TR)
     #--- Assumes that all explanatory variables within a run
     #--- have the same TR.
-    #---
+    #--- wjp 11/21/05
+    #--- The signal we're filtering has sampling freq = fs = 1/1sec
+    #--- update: not sure whether to use fmax = 1/(2*1sec) or
+    #--- fmax = 1/(2*TRsec). Try former for now -- results
+    #--- look better -- and check later.
     if { ! [ info exists ::fMRIModelView(Design,Run$r,GaussianFilter) ] } {
         set TR $::fMRIModelView(Design,Run$r,TR)
+        set TR 1
         set PI 3.14159265
         #--- use 2 or 3 sigmas out for now, 
         #--- where gaussian approaches zero...
@@ -1740,7 +1745,7 @@ proc fMRIModelViewComputeGaussianFilter { r } {
 
         #--- how many samples of the time-domain kernel do
         #--- we need? Choose t = numsigmas x 1/sigma as a guess.
-        set numsecs [ expr round ($numsigmas / $sigma) ]
+        set numsecs [ expr round ($numsigmas / $sigma ) ]
         #--- now compute the gaussian to convolve with.
         for {set t -$numsecs } { $t <= $numsecs } { set t [ expr $t + $inc] } {
             set v  [ expr ( 1.0 / (sqrt (2.0 * $PI)) ) * \
