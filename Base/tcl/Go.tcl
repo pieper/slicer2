@@ -1,35 +1,51 @@
 #=auto==========================================================================
-# (c) Copyright 2001 Massachusetts Institute of Technology
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for any purpose, 
-# provided that the above copyright notice and the following three paragraphs 
-# appear on all copies of this software.  Use of this software constitutes 
-# acceptance of these terms and conditions.
-#
-# IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, 
-# INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE 
-# AND ITS DOCUMENTATION, EVEN IF MIT HAS BEEN ADVISED OF THE POSSIBILITY OF 
-# SUCH DAMAGE.
-#
-# MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING, 
-# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR 
-# A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-#
-# THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE 
-# MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. 
-#
+# and distribute this software and its documentation, if any, for  
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
+# 
 #===============================================================================
 # FILE:        Go.tcl
 # PROCEDURES:  
-#   Usage
-#   SplashShow
-#   SplashRaise
+#   exit code
+#   Usage msg
+#   SplashRaise fileName verbose
 #   SplashKill
-#   ReadModuleNames
-#   FindNames
-#   ReadModuleNamesLocalOrCentral
-#   GetFullPath
+#   SplashShow delayms
+#   VTK_AT_LEAST version
+#   ReadModuleNames filename
+#   FindNames dir
+#   ReadModuleNamesLocalOrCentral name ext
+#   GetFullPath name ext dir verbose
 #   START_THE_SLICER
 #==========================================================================auto=
 
@@ -37,10 +53,15 @@
 wm withdraw .
 update
 
+#-------------------------------------------------------------------------------
+# .PROC exit
 #
 # override the built in exit routine to provide cleanup
 # (for people who type exit into the console)
-#
+# .ARGS
+# str code optional exit code to pass back to the calling process
+# .END
+#-------------------------------------------------------------------------------
 rename exit tcl_exit
 proc exit { "code 0" } {
     MainExitProgram $code
@@ -82,10 +103,13 @@ set ::SLICER(version) "$::SLICER(major_version).$::SLICER(minor_version)$::SLICE
 
 
 
-#
+#-------------------------------------------------------------------------------
+# .PROC Usage
 # simple command line argument parsing
-#
-
+# .ARGS
+# str msg optional preamble to the message, defaults to empty string
+# .END
+#-------------------------------------------------------------------------------
 proc Usage { {msg ""} } {
     global SLICER
     
@@ -135,6 +159,9 @@ set ::SLICER(load-bxh) ""
 set ::SLICER(script) ""
 set ::SLICER(exec) ""
 set ::SLICER(versionInfo) ""
+# these scripts will be evaluated after Slicer is done booting up
+set ::SLICER(utilScripts) ""
+
 set strippedargs ""
 set argc [llength $argv]
 for {set i 0} {$i < $argc} {incr i} {
@@ -333,28 +360,51 @@ if {[file isdirectory $prog] == 0} {
 set Path(program) $prog
 
 
-########################
-# simple splash screen 
-#                      
-# do this before loading vtk dlls so people have something
+#-------------------------------------------------------------------------------
+# .PROC SplashRaise
+#
+# Simple splash screen 
+# <br>                    
+# Do this before loading vtk dlls so people have something
 # to look at during startup (and so they see the important
 # warning message!)
-########################
- 
+# .ARGS
+# str fileName the name of the file to read
+# int verbose if 1, print out information. Defaults to 1.
+# .END
+#------------------------------------------------------------------------------- 
 proc SplashRaise {} { 
     if {[winfo exists .splash]} {
         raise .splash
+
+        # and keep the focus on it so that it captures key presses
+        focus .splash
+
         if {[grab current .splash] == ""} {
             # do a local grab so that all mouse clicks will go into the 
             # splash screen and not queue up while it's up. 
             grab set .splash
+            update idletasks
         }
         after 100 "after idle SplashRaise"
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC SplashKill
+# Release the application grab on the splash window, destroy the window, and delete the image.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc SplashKill {} { 
     global splashim
+
+    if {$::verbose} {
+        puts "Releasing grab and destroying splash window."
+    }
+
+    # clear out the event queue
+    update
 
     # release the grab
     grab release .splash
@@ -364,6 +414,13 @@ proc SplashKill {} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC SplashShow
+# Builds and displays a splash screen, .splash
+# .ARGS
+# int delayms how long to show the splash screen, defaults to 7000, in milliseconds
+# .END
+#-------------------------------------------------------------------------------
 proc SplashShow { {delayms 7000} } {
     global Path SLICER splashim
 
@@ -386,10 +443,13 @@ proc SplashShow { {delayms 7000} } {
     place .splash.t2 -relx 0.5 -rely 0.80 -anchor center
     label .splash.v -text "Version: $::SLICER(version)" -bg white -fg darkblue -font $splashfont
     place .splash.v -relx 0.5 -rely 0.95 -anchor center
-    after $delayms SplashKill
+    # after $delayms SplashKill
+    # add SplashKill to a list of procs to call after startup   
+    lappend ::SLICER(utilScripts) "SplashKill"
     SplashRaise
     update
-    bind .splash <1> SplashKill
+    # commented the bind - don't allow bypass of the grab
+#    bind .splash <1> SplashKill
     tk scaling $oscaling
 }
 
@@ -420,6 +480,14 @@ update
 puts "Loading VTK..."
 set ::SLICER(VTK_VERSION) [package require vtk]
 
+#-------------------------------------------------------------------------------
+# .PROC VTK_AT_LEAST
+# Compares the passed in required version to the currnet vtk version. Returns 0 
+# if vtk is not at least the required version, 1 otherwise.
+# .ARGS
+# str version a string in %d.%d.%d format giving the major, minor and patch versions
+# .END
+#-------------------------------------------------------------------------------
 proc VTK_AT_LEAST {version} {
 
     foreach "major minor patch" "0 0 0" {}
@@ -479,8 +547,10 @@ if { $::SLICER(threaded) == "false" } {
 
 #-------------------------------------------------------------------------------
 # .PROC ReadModuleNames
-# Reads Options.xml 
-# Returns ordered and suppressed modules
+# Reads Options.xml. <br>
+# Returns ordered and suppressed modules.
+# .ARGS 
+# str filename the full path to Options.xml
 # .END
 #-------------------------------------------------------------------------------
 proc ReadModuleNames {filename} {
@@ -536,10 +606,12 @@ proc ReadModuleNames {filename} {
 #-------------------------------------------------------------------------------
 # .PROC FindNames
 #
-# Looks for all the modules.
-# For example, for a non-essential module, looks first for ./tcl-modules/*.tcl
+# Looks for all the modules.<br>
+# For example, for a non-essential module, looks first for ./tcl-modules/*.tcl <br>
 # Then looks for $::SLICER_HOME/program/tcl-modules/*.tcl
 #
+# .ARGS
+# path dir name of the directory in which to look for file names
 # .END
 #-------------------------------------------------------------------------------
 proc FindNames {dir} {
@@ -570,8 +642,10 @@ proc FindNames {dir} {
 
 #-------------------------------------------------------------------------------
 # .PROC ReadModuleNamesLocalOrCentral
-# 
+# Read module names from path built from the name and ext.
 # .ARGS
+# str name  name of the file to check
+# str ext extension of the file to check
 # .END
 #-------------------------------------------------------------------------------
 proc ReadModuleNamesLocalOrCentral {name ext} {
@@ -585,8 +659,12 @@ proc ReadModuleNamesLocalOrCentral {name ext} {
 
 #-------------------------------------------------------------------------------
 # .PROC GetFullPath
-# 
-#
+# Try to find a full path to a file from the local dir or a the global prog dir.
+# .ARGS
+# str name name of the file to check
+# str ext extension of the file to check
+# str dir optional, defaults to empty string
+# int verbose Print out information if 1. Optional, defaults to zero.
 # .END
 #-------------------------------------------------------------------------------
 proc GetFullPath {name ext {dir "" } {verbose 0}} {
@@ -621,15 +699,16 @@ proc GetFullPath {name ext {dir "" } {verbose 0}} {
 #-------------------------------------------------------------------------------
 # .PROC START_THE_SLICER
 #
-# Looks in ./tcl-shared ./tcl-modules and ./tcl-shared for names of tcl files
-# Also looks in $central/tcl-shared ... (which is $::SLICER_HOME/program/..)
+# Looks in ./tcl-shared ./tcl-modules and ./tcl-shared for names of tcl files.<br>
+# Also looks in $central/tcl-shared ... (which is $::SLICER_HOME/program/..)<br>
 #
-# Source those files
-# Boot the slicer
+# Source those files<br>
+# Boot the slicer<br>
 #
 # If the environment variable ::SLICER_SCRIPT exist, 
-# and it points to a tcl file, source the file. 
-# Then, if the function SlicerScript exists, run it after booting.
+# and it points to a tcl file, source the file. <br>
+# Then, if the function SlicerScript exists, run it after booting.<br>
+# (not a callable procedure, just a series of statements in Go.tcl)
 #
 # .END
 #-------------------------------------------------------------------------------
@@ -851,7 +930,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.102 2005/11/14 19:24:11 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.103 2005/11/21 20:19:00 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
@@ -999,3 +1078,9 @@ if { $::SLICER(exec) != "" } {
     eval $::SLICER(exec)
 }
 
+### and then run any utility scripts that we set up (ie killing the splash screen)
+if { $::SLICER(utilScripts) != ""} {
+    foreach cmd $::SLICER(utilScripts) {
+        eval $cmd
+    }
+}
