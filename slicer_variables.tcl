@@ -171,8 +171,8 @@ switch $::tcl_platform(os) {
         set ::COMPILER_PATH "/local/os/bin"
         set ::COMPILER "g++"
         set ::CMAKE $::CMAKE_PATH/bin/cmake
-        # set ::MAKE "gmake -j15"
-        set ::MAKE "gmake"
+        set ::MAKE "gmake -j15"
+        set ::SERIAL_MAKE "gmake"
     }
     "Linux" {
         set ::VTKSLICERBASE_BUILD_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/vtkSlicerBase.so
@@ -182,6 +182,7 @@ switch $::tcl_platform(os) {
         set ::COMPILER "g++"
         set ::CMAKE $::CMAKE_PATH/bin/cmake
         set ::MAKE make
+        set ::SERIAL_MAKE "make"
     }
     "Darwin" {
         set ::VTKSLICERBASE_BUILD_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/vtkSlicerBase.dylib
@@ -191,6 +192,7 @@ switch $::tcl_platform(os) {
         set ::COMPILER "g++-3.3"
         set ::CMAKE $::CMAKE_PATH/bin/cmake
         set ::MAKE make
+        set ::SERIAL_MAKE make
     }
     default {
         # different windows machines say different things, so assume
@@ -248,6 +250,7 @@ switch $::tcl_platform(os) {
         }
 
         set ::COMPILER "cl"
+        set ::SERIAL_MAKE $::MAKE
 
     }
 }

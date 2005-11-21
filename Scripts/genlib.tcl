@@ -398,8 +398,9 @@ if { ![file exists $::IWIDGETS_TEST_FILE] } {
         cd $SLICER_LIB/tcl/iwidgets
         runcmd ../iwidgets/configure --with-tcl=$SLICER_LIB/tcl-build/lib --with-tk=$SLICER_LIB/tcl-build/lib --with-itcl=$SLICER_LIB/tcl/incrTcl --prefix=$SLICER_LIB/tcl-build
         # make all doesn't do anything... 
-        eval runcmd $::MAKE all
-        eval runcmd $::MAKE install
+        # iwidgets won't compile in parallel (with -j flag)
+        eval runcmd $::SERIAL_MAKE all
+        eval runcmd $::SERIAL_MAKE install
     }
 }
 
