@@ -1433,12 +1433,19 @@ proc fMRIModelViewComputeBoxCar { onset duration imgwid r i } {
     set sigstart  [ expr ($onset * $::fMRIModelView(Design,Run$r,TR)) / \
                        $::fMRIModelView(Design,Run$r,TimeIncrement) ]
     set sigLen [ expr ($duration * $::fMRIModelView(Design,Run$r,TR)) / \
-                    $::fMRIModelView(Design,Run$r,TimeIncrement) ]
+                     $::fMRIModelView(Design,Run$r,TimeIncrement) ]
     
     #--- compute a boxcar signal footprint and insert into signal list
     #--- boxcar signal goes from 0.0 to 1.0
+    #--- if event-related or mixed design, footprint might be delta function.
+    #--- In that case, we molde duration as one TimeIncrement.
     set sigstart [ expr round($sigstart) ]
-    set sigLen [ expr round ($sigLen) ]
+    if { $sigLen == 0.0 } {
+        set sigLen 1.0
+    } else {
+        set sigLen [ expr round ($sigLen) ]
+    }
+
     for { set t $sigstart } { $t < [ expr $sigstart + $sigLen ] } { incr t } {
         set ::fMRIModelView(Data,Run$r,EV$i,Signal) [ lreplace $::fMRIModelView(Data,Run$r,EV$i,Signal) $t $t 1.0 ]
     }
@@ -1470,17 +1477,29 @@ proc fMRIModelViewComputeHalfSine { onset duration imgwid r i } {
                     $::fMRIModelView(Design,Run$r,TimeIncrement) ]
     set PI 3.14159265
     set period [ expr 2 * $sigLen ]
-    set m [ expr 2 * $PI / $period ]
-    set tau 0
-    #--- signal:
-    #--- compute a half-sine signal footprint and insert into signal list
-    #--- signal values vary between 0.0 and 1.0
-    set sigstart [ expr round ($sigstart) ]
-    set sigLen [ expr round ($sigLen) ]
-    for { set t $sigstart } { $t < [ expr $sigstart + $sigLen ] } { incr t } {
-        set v [ expr sin ($m * $tau ) ]
-        set ::fMRIModelView(Data,Run$r,EV$i,Signal) [ lreplace $::fMRIModelView(Data,Run$r,EV$i,Signal) $t $t $v ]
-        set tau [ expr $tau + $::fMRIModelView(Design,Run$r,TimeIncrement) ]
+    #--- if period is zero, then duration is zero. Just return the signal
+    #--- filled with zeros.
+    if { $period != 0.0 } {
+        set m [ expr 2 * $PI / $period ]
+        set tau 0
+        #--- signal:
+        #--- compute a half-sine signal footprint and insert into signal list
+        #--- signal values vary between 0.0 and 1.0
+        #--- if event-related or mixed design, footprint might be delta function.
+        #--- In that case, we molde duration as one TimeIncrement.
+        set sigstart [ expr round($sigstart) ]
+        if { $sigLen == 0.0 } {
+            set sigLen 1.0
+        } else {
+            set sigLen [ expr round ($sigLen) ]
+        }
+        for { set t $sigstart } { $t < [ expr $sigstart + $sigLen ] } { incr t } {
+            set v [ expr sin ($m * $tau ) ]
+            set ::fMRIModelView(Data,Run$r,EV$i,Signal) [ lreplace $::fMRIModelView(Data,Run$r,EV$i,Signal) $t $t $v ]
+            set tau [ expr $tau + $::fMRIModelView(Design,Run$r,TimeIncrement) ]
+        }
+    } else {
+
     }
 }
 

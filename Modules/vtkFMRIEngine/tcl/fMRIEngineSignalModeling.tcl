@@ -780,6 +780,10 @@ proc fMRIEngineSelectWaveFormForSignalModeling {form} {
     global fMRIEngine 
 
     # configure menubutton
+    if { ($form == "Half Sine") && ($::fMRIEngine(paradigmDesignType) != "blocked") } {
+        DevErrorWindow "Must use box-car waveform for event-related or mixed designs."
+        return
+    }
     $fMRIEngine(gui,waveFormsMenuButtonForSignal) config -text $form
     set fMRIEngine(curWaveFormForSignal) $form 
 }

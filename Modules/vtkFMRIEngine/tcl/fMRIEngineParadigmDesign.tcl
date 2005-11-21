@@ -84,14 +84,15 @@ proc fMRIEngineBuildUIForParadigmDesign {parent} {
     set f $parent.fTop.fUp.fChoice
     DevAddButton $f.bHelp "?" "fMRIEngineHelpSetupBlockEventMixed" 2 
     foreach param "blocked event-related mixed" \
-        name "{Blocked} {Event-r} {Mixed}" {
-        eval {radiobutton $f.r$param -width 6 -text $name \
+        name "{Blocked} {Event} {Mixed}" {
+            eval {radiobutton $f.r$param -width 6 -text $name \
             -variable fMRIEngine(paradigmDesignType) -value $param \
             -relief raised -offrelief raised -overrelief raised \
             -command "" \
             -selectcolor white} $Gui(WEA)
-        $f.r$param configure -state disabled 
-    } 
+            #--- wjp 11/21/05 work on enabling event and mixed designs.
+            #--- $f.r$param configure -state disabled 
+        } 
     $f.rblocked select
     $f.rblocked configure -state normal 
     grid $f.bHelp $f.rblocked $f.revent-related $f.rmixed \
@@ -536,7 +537,7 @@ proc fMRIEngineAddCondition {} {
     set startVol [string trim $fMRIEngine(entry,startVol)]
     set onsets [string trim $fMRIEngine(entry,onsets)]
     set durations [string trim $fMRIEngine(entry,durations)]
-
+  
     set currRun $fMRIEngine(curRunForConditionConfig)
     set found -1
     if {[info exists fMRIEngine($currRun,conditionList)]} {
@@ -647,6 +648,9 @@ proc fMRIEngineAddOrEditCondition {} {
         }
     }
 
+    #--- wjp 11/21/05
+    set ::fMRIEngine(entry,onsets) $onsets
+
     if {$fMRIEngine(paradigmDesignType) != "event-related"} {
         set errorMsg "Input the durations vector in multiples of TR."
         set durations [string trim $fMRIEngine(entry,durations)]
@@ -675,6 +679,42 @@ proc fMRIEngineAddOrEditCondition {} {
                 return
             }
         }
+    } elseif { $::fMRIEngine(paradigmDesignType) == "event-related" } {
+        #--- wjp 11/21/05 adding event related modeling.
+        set durations [string trim $fMRIEngine(entry,durations)]
+        #--- if user hasn't entered any duratins, then
+        #--- automatically set the durations vector to contain zeros.
+        if {$durations == ""} {
+            set len [ llength $onsets ]
+            for { set i 0 } { $i < $len }  {incr i } {
+                lappend durations "0"
+            }
+        } else {
+            #--- otherwise check to see if the right number of durations
+            #--- has been specified by user.
+            #--- replace multiple spaces in the middle of the string by one space  
+            regsub -all {( )+} $durations " " durations 
+            set durationsList [split $durations " "]     
+            set len2 [llength $durationsList]
+
+            # onsets vector must have the same length as the durations vector
+            if {$len1 != $len2} {
+                DevErrorWindow "Onsets and durations vectors must have the same length." 
+                return
+            }
+            foreach i $durationsList { 
+                set v [string trim $i]
+                set b [string is integer -strict $v]
+                set c [string is double -strict $v]
+                
+                if {$b == 0 && $c == 0} {
+                    DevErrorWindow $errorMsg 
+                    return
+                }
+            }
+        }
+        #--- wjp 11/21/05
+        set ::fMRIEngine(entry,durations) $durations
     }
 
     set curs [$fMRIEngine(condsListBox) curselection]
