@@ -38,7 +38,6 @@
 # PROCEDURES:  
 #   DTMRICalculateTensorsInit
 #   DTMRICalculateTensorsBuildGUI
-#   RunLSDIrecon
 #   ShowPatternFrame
 #   DTMRIDisplayScrollBar module tab
 #   DTMRICreatePatternSlice
@@ -46,7 +45,6 @@
 #   DTMRILoadPattern
 #   DTMRIUpdateTipsPattern
 #   DTMRIViewProps
-#   DTMRIDisplayNewData
 #   ConvertVolumeToTensors
 #   DTMRICreateNewVolume volume name desc scanOrder
 #==========================================================================auto=
@@ -67,26 +65,11 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.27 $} {$Date: 2005/11/22 03:26:25 $}]
+                                 {$Revision: 1.28 $} {$Date: 2005/11/22 05:22:09 $}]
 
     # Initial path to search when loading files
     #------------------------------------
     set DTMRI(DefaultDir) ""
-
-    #------------------------------------
-    # LSDI conversion variables
-    #------------------------------------
-   
-    # These variables should be in the main-variables 
-    # file and must be modified the first time slicer is 
-    # installed to tell the program where are the python 
-    # interpreter and the lsdi_slicer.py script.
-
-    #variable that indicates where is the python interpreter
-    set DTMRI(pythonintdir) /projects/lmi/local/SunOS/bin/python
-
-    #variable that indicates where is the binary of the lsdi_slicer.py script
-    set DTMRI(LSDIpydir) /projects/lmi/local/SunOS/bin/lsdi_slicer.py
 
     #------------------------------------
     # handling patterns variables
@@ -651,61 +634,6 @@ proc DTMRIConvertUpdate {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC RunLSDIrecon
-# Convert volume data from scanner to a module readable data 
-# so that DTMRI can convert tensors
-#  active MRML node (this is NEW or an existing node). 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc RunLSDIrecon {} {
-    global DTMRI Volume  Mrml Module PACKAGE_DIR_VTKDTMRI
-    
-    set v $Volume(activeID)
-    if {$v == "" || $v == $Volume(idNone)} {
-        puts "Can't create new data from NONE Volume. Load a Volume Data and Select it."
-        DevInfoWindow "Can't create new data from NONE Volume.\n Load a Volume Data and Select it."
-        return
-    }
-
-    #
-    # Copy LSDIrecon.par in the selected volume data directory  
-    #
-
-    #puts $Mrml(dir)/Modules/vtkDTMRI/LSDIrecon_par
-    #puts $Volume(DefaultDir)
-
-    if {![file exists $PACKAGE_DIR_VTKDTMRI/../../../LSDIrecon_par]} {
-        DevErrorWindow "Error: script file not found: Modules/vtkDTMRI/LSDIrecon_par"
-        return
-    }
-    puts "Copying LSDIrecon_par to Volume Data directory $Volume(DefaultDir)..."
-    set a [catch {file copy -force $PACKAGE_DIR_VTKDTMRI/../../../LSDIrecon_par $Volume(DefaultDir)} errMsg]
-    if {$a} {
-       DevInfoWindow "You don't have permission to write in the selected directory\n$Volume(DefaultDir).\n$errMsg"
-       return
-    }
-
-    puts "Changing to Volume Data directory..."
-    cd $Volume(DefaultDir)
-
-    #
-    # Running LSDI script 
-    #
-
-    if {[file exists $DTMRI(LSDIpydir)] == 1 &&
-        [file executable $DTMRI(pythonintdir)] == 1} {
-        puts "Creating new volume data (D.###)..."
-
-        catch {exec $DTMRI(pythonintdir) $DTMRI(LSDIpydir)} convertingerror
-    } else {
-        DevInfoWindow "Error: Cannot find $DTMRI(LSDIpydir)\nor execute $DTMRI(pythonintdir)\nUnable to create new volume data"
-        return
-    }
-}
-
-
-#-------------------------------------------------------------------------------
 # .PROC ShowPatternFrame
 #  Show and hide Create-Pattern Frame from the Convert Tab.  
 # .ARGS
@@ -1040,51 +968,6 @@ proc DTMRIViewProps {} {
 
 }
                                          
-
-#-------------------------------------------------------------------------------
-# .PROC DTMRIDisplayNewData
-#  Once converted the volume data with LSDI script, load and display new data.
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc DTMRIDisplayNewData {} {
-    
-    global DTMRI Volume  Mrml Module
-    
-    set v $Volume(activeID)
-    if {$v == "" || $v == $Volume(idNone)} {
-        puts "Can't create new data from NONE Volume. Load a Volume Data and Select it."
-        DevInfoWindow "Can't create new data from NONE Volume.\n Load a Volume Data and Select it."
-        return
-    }
-
-    #
-    # Copy LSDIrecon.par in the selected volume data directory  
-    #
-
-    
-
-    puts "Ready."
-
-    #
-    # Load the new volume data (D.#) 
-    #
-
-    set Volume(activeID) NEW
-    set Volume(firstFile) $Volume(DefaultDir)/D.001
-    VolumesSetFirst
-    VolumesSetLast
-    puts "Reading $Volume(name)..."
-    VolumesPropsApply
-    puts "Displaying New Volume Data..."
-    RenderAll
-    
-
-  
-}
-
-
-
 
 ################################################################
 # procedures for converting volumes into DTMRIs.

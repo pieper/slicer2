@@ -501,7 +501,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.112 $} {$Date: 2005/11/14 20:56:06 $}]
+                  {$Revision: 1.113 $} {$Date: 2005/11/22 05:20:46 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -823,7 +823,7 @@ especially Diffusion DTMRI MRI.
 
 
     Notebook:create $f.fNotebook \
-                        -pages {{Option 1} {Option 2} {Option 3}} \
+                        -pages {{Option 1} {Option 2}} \
                         -pad 2 \
                         -bg $Gui(activeWorkspace) \
                         -height 260 \
@@ -834,26 +834,25 @@ especially Diffusion DTMRI MRI.
 
     set FrameOption1 [Notebook:frame $f {Option 1}] 
     set FrameOption2 [Notebook:frame $f {Option 2}]
-    set FrameOption3 [Notebook:frame $f {Option 3}]
 
-#    foreach frame "$FrameOption1 $FrameOption2 $FrameOption3" {
+#    foreach frame "$FrameOption1 $FrameOption2" {
 #        frame $frame -bg $Gui(activeWorkspace)
 #        pack $frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
 #    }
 
     # $f.fTitle configure -bg $Gui(backdrop)
-    foreach frame "$FrameOption1 $FrameOption2 $FrameOption3" {
+    foreach frame "$FrameOption1 $FrameOption2" {
         $frame configure  -relief groove -bd 3 
         foreach secframe "OptionNumber Input What How" {
         frame $frame.f$secframe -bg $Gui(activeWorkspace)
         pack $frame.f$secframe -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
     }
     DevAddLabel $frame.fInput.l1 "The input is:"
-    $frame.fInput.l1 configure -font {helvetica 7 normal}
+    $frame.fInput.l1 configure -font {helvetica 10 normal}
     DevAddLabel $frame.fWhat.l1 "What to do:"
-    $frame.fWhat.l1 configure -font {helvetica 7 normal}
+    $frame.fWhat.l1 configure -font {helvetica 10 normal}
     DevAddLabel $frame.fHow.l1 "How to:"
-    $frame.fHow.l1 configure -font {helvetica 7 normal}
+    $frame.fHow.l1 configure -font {helvetica 10 normal}
 
     foreach secframe "Input What How" {
         pack $frame.f$secframe.l1 -side top -anchor w -padx $Gui(pad) -pady 0
@@ -886,6 +885,7 @@ especially Diffusion DTMRI MRI.
     pack $f.lOption -side top -padx $Gui(pad) -pady 0
 
 
+
     #-------------------------------------------
     # Input->Option1 frame->OptionNumber
     #-------------------------------------------
@@ -901,7 +901,9 @@ especially Diffusion DTMRI MRI.
     #-------------------------------------------
     set f $FrameOption1.fInput
 
-    DevAddLabel $f.l2 "You have loaded LSDI gradient data\n from scanner ( I.* )"
+    DevAddLabel $f.l2 "You have loaded DTMRI gradient data\n \
+                                 (LSDI or EPI).  A sequence of volumes\n \
+                                  are displayed in the Slice viewer"
     $f.l2 configure -font {helvetica 8 bold}
     pack $f.l2 -side top -padx 10 -pady 2 -anchor w
     
@@ -911,8 +913,8 @@ especially Diffusion DTMRI MRI.
     #-------------------------------------------
     set f $FrameOption1.fWhat
 
-    DevAddLabel $f.l2 "Run LSDI script"
-    $f.l2 configure -font {helvetica 8 bold} -justify left
+    DevAddLabel $f.l2 "Calculate tensors from gradient data"
+    $f.l2 configure -font {helvetica 8 bold}
     pack $f.l2 -side top -padx 10 -pady 2 -anchor w
     
 
@@ -921,31 +923,9 @@ especially Diffusion DTMRI MRI.
     #-------------------------------------------
     set f $FrameOption1.fHow
 
-    frame $f.f1 -bg $Gui(activeWorkspace)
-    pack $f.f1 -side left -padx 8 -pady 2 -anchor w
-
-    # menu to select a volume: will set Volume(activeID)
-    DevAddSelectButton  Volume $f.f1 Active "Select Input Volume:" left "Input Volume to Run LSDI Script to." 13 BLA
-    $f.f1.lActive configure -bg $Gui(activeWorkspace) -fg black -font {helvetica 8 bold} -justify left
-    $f.f1.mbActive configure -heigh 1 -bd 2 -pady 4 -bg $Gui(activeWorkspace)
-    
-    # Append these menus and buttons to lists 
-    # that get refreshed during UpdateMRML
-    lappend Volume(mbActiveList) $f.f1.mbActive
-    lappend Volume(mActiveList) $f.f1.mbActive.m
-    
-    frame $f.f2 -bg $Gui(activeWorkspace)
-    pack $f.f2 -side left -padx 0 -pady 2 -anchor w
-
-    label $f.f2.l -bg $Gui(activeWorkspace) -text and -font {helvetica 8 bold}
-    pack $f.f2.l -side top -padx 0 -pady 2 -anchor n
-
-    button $f.f2.bButton -bg $Gui(activeWorkspace) -text "Run Script" -font {helvetica 6 normal} -heigh 1 -command {
-    RunLSDIrecon
-        DTMRIDisplayNewData
-    }
-    pack $f.f2.bButton -side top -padx 0 -pady $Gui(pad) -anchor n -anchor s
-    TooltipAdd $f.f2.bButton "Once Selected a Volume Data, \n Press this Button to Run Script.\n Notice that the Volume Data to convert \n must be in a separate directory \n with no other data."
+    DevAddLabel $f.l2 "Press 'Convert' Tab above\n and follow instructions"
+    $f.l2 configure -font {helvetica 8 bold}
+    pack $f.l2 -side top -padx 10 -pady 2 -anchor w
 
     #-------------------------------------------
     # Input->Option2 frame->OptionNumber
@@ -962,7 +942,7 @@ especially Diffusion DTMRI MRI.
     #-------------------------------------------
     set f $FrameOption2.fInput
 
-    DevAddLabel $f.l2 "You have loaded DTMRI gradient data\n or output data from LSDI scripts (D.*)\n This option for non LSDI data!"
+    DevAddLabel $f.l2 "You have loaded a vtk tensor volume"
     $f.l2 configure -font {helvetica 8 bold}
     pack $f.l2 -side top -padx 10 -pady 2 -anchor w
     
@@ -972,54 +952,15 @@ especially Diffusion DTMRI MRI.
     #-------------------------------------------
     set f $FrameOption2.fWhat
 
-    DevAddLabel $f.l2 "Calculate tensors from gradient data"
-    $f.l2 configure -font {helvetica 8 bold}
-    pack $f.l2 -side top -padx 10 -pady 2 -anchor w
-    
-
-    #-------------------------------------------
-    # Input->Option2 frame->How
-    #-------------------------------------------
-    set f $FrameOption2.fHow
-
-    DevAddLabel $f.l2 "Press 'Convert' Tab above\n and follow instructions"
-    $f.l2 configure -font {helvetica 8 bold}
-    pack $f.l2 -side top -padx 10 -pady 2 -anchor w
-
-    #-------------------------------------------
-    # Input->Option3 frame->OptionNumber
-    #-------------------------------------------
-    set f $FrameOption3.fOptionNumber
-
-    DevAddLabel $f.lnumber "Option 3"
-    $f.lnumber configure -font {helvetica 10 bold}
-    pack $f.lnumber -side top -padx $Gui(pad) -pady $Gui(pad) -anchor w
-    
-
-    #-------------------------------------------
-    # Input->Option3 frame->Input
-    #-------------------------------------------
-    set f $FrameOption3.fInput
-
-    DevAddLabel $f.l2 "You have loaded a vtk tensor volume"
-    $f.l2 configure -font {helvetica 8 bold}
-    pack $f.l2 -side top -padx 10 -pady 2 -anchor w
-    
-
-    #-------------------------------------------
-    # Input->Option3 frame->What
-    #-------------------------------------------
-    set f $FrameOption3.fWhat
-
     DevAddLabel $f.l2 "The data does not need to be\n further converted. Ready to start\n visualizing and working"
     $f.l2 configure -font {helvetica 8 bold}
     pack $f.l2 -side top -padx 10 -pady 2 -anchor w
 
 
     #-------------------------------------------
-    # Input->Option3 frame->How
+    # Input->Option2 frame->How
     #-------------------------------------------
-    set f $FrameOption3.fHow
+    set f $FrameOption2.fHow
 
     DevAddLabel $f.l2 "Press 'Display',\n 'ROI' or 'Scalar' Tab"
     $f.l2 configure -font {helvetica 8 bold} -justify left
