@@ -148,6 +148,7 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
     } else {
         set do_upload "true"
     }
+    set suffix ""
     switch $destdir {
         "auto" -
         "local" {
@@ -166,10 +167,9 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
             }
             set date [clock format [clock seconds] -format %Y-%m-%d]
             if { $::tcl_platform(machine) == "x86_64" } {
-                set destdir $destdir/slicer$::SLICER(version)-${target}_64-$date
-            } else {
-                set destdir $destdir/slicer$::SLICER(version)-$target-$date
-            }
+                set suffix "_64"
+            } 
+            set destdir $destdir/slicer$::SLICER(version)-${target}${suffix}-$date
         }
         "birn" {
             set destdir /usr/local/birn/install/slicer2
@@ -194,11 +194,18 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
 
     #
     # grab the top-level files - the launch executable and script
+    # - add suffix, for example, _64 to name of launcher
     #
     puts " -- copying launcher files"
-    file copy slicer2-$target$exe $destdir
+    file copy slicer2-$target$exe $destdir/slicer2-$target$suffix$exe
     file copy launch.tcl $destdir
     file copy slicer_variables.tcl $destdir
+
+    #
+    # grab the copyright text file
+    #
+    file mkdir $destdir/Doc
+    file copy -force Doc/copyright $destdir/Doc
 
     #
     # grab the tcl libraries and binaries
