@@ -584,32 +584,68 @@ proc MainInteractorShiftMotion {widget x y} {
                     vtkMatrix4x4 IjkToRas 
                     eval IjkToRas DeepCopy [$node GetRasToIjkMatrix]
                     IjkToRas Invert
-                    set ras_origin [IjkToRas MultiplyPoint 0 0 0 0]
-                    set ras_extent [eval IjkToRas MultiplyPoint $dims]
+                    set ras_origin [IjkToRas MultiplyPoint 0 0 0 1]
+                    set ras_bound [eval IjkToRas MultiplyPoint $dims]
+                    set ras_extent [list \
+                        [expr abs([lindex $ras_bound 0] - [lindex $ras_origin 0])] \
+                        [expr abs([lindex $ras_bound 1] - [lindex $ras_origin 1])] \
+                        [expr abs([lindex $ras_bound 2] - [lindex $ras_origin 2])] ]
                     IjkToRas Delete
+                    set lpi_point [list \
+                        [expr min([lindex $ras_bound 0],[lindex $ras_origin 0])] \
+                        [expr min([lindex $ras_bound 1],[lindex $ras_origin 1])] \
+                        [expr min([lindex $ras_bound 2],[lindex $ras_origin 2])] ]
+
+
 
                     switch -glob [$Interactor(activeSlicer) GetOrientString $slice] {
                         "AxiSlice" { 
                             switch [$node GetScanOrder] {
                                 "RL" - "LR" {
-                                    set off [expr $sRas - [lindex $ras_origin 0] / [lindex $ras_extent 0]]
-                                    MainSlicesSetOffset $slice $off
+                                    set dim [lindex $dims 1]
                                 }
                                 "PA" - "AP" {
-                                    set off [expr $sRas - [lindex $ras_origin 1] / [lindex $ras_extent 1]]
-                                    MainSlicesSetOffset $slice $off
+                                    set dim [lindex $dims 1]
                                 }
                                 "IS" - "SI" {
-                                    set off [expr $sRas - [lindex $ras_origin 2] / [lindex $ras_extent 2]]
-                                    MainSlicesSetOffset $slice $off
+                                    set dim [lindex $dims 2]
                                 }
                             }
+                            set off [expr $dim * ($sRas - [lindex $lpi_point 2]) / [lindex $ras_extent 2]]
+                            MainSlicesSetOffset $slice $off
                         }
-                        "SagSlice" { MainSlicesSetOffset $slice $rRas}
-                        "CorSlice" { MainSlicesSetOffset $slice $aRas}
+                        "SagSlice" { 
+                            switch [$node GetScanOrder] {
+                                "RL" - "LR" {
+                                    set dim [lindex $dims 2]
+                                }
+                                "PA" - "AP" {
+                                    set dim [lindex $dims 0]
+                                }
+                                "IS" - "SI" {
+                                    set dim [lindex $dims 1]
+                                }
+                            }
+                            set off [expr $dim * ($rRas - [lindex $lpi_point 0]) / [lindex $ras_extent 0]]
+                            MainSlicesSetOffset $slice $off
+                        }
+                        "CorSlice" {
+                            switch [$node GetScanOrder] {
+                                "RL" - "LR" {
+                                    set dim [lindex $dims 0]
+                                }
+                                "PA" - "AP" {
+                                    set dim [lindex $dims 2]
+                                }
+                                "IS" - "SI" {
+                                    set dim [lindex $dims 1]
+                                }
+                            }
+                            set off [expr $dim * ($aRas - [lindex $lpi_point 1]) / [lindex $ras_extent 1]]
+                            MainSlicesSetOffset $slice $off
+                        }
                     }
                 }
-                
             }
         }
     }
