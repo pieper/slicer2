@@ -155,8 +155,7 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
       EMSegmentSetVtkGenericClassSetting EMSegment(Cattrib,$i,vtkImageEMClass) $i
 
       EMSegment(Cattrib,$i,vtkImageEMClass) SetLabel             $EMSegment(Cattrib,$i,Label) 
-      EMSegment(Cattrib,$i,vtkImageEMClass) SetShapeParameter    $EMSegment(Cattrib,$i,ShapeParameter)
-
+ 
       for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
           EMSegment(Cattrib,$i,vtkImageEMClass) SetLogMu $EMSegment(Cattrib,$i,LogMean,$y) $y
           for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} {
@@ -347,6 +346,9 @@ proc EMSegmentAlgorithmStart { } {
        vtkImageEMLocalSegmenter EMSegment(vtkEMSegment)
    }
    # How many input images do you have
+   puts "Kilian: Generalize it later"
+   EMSegment(vtkEMSegment) SetDisableMultiThreading 0
+
    EMSegment(vtkEMSegment) SetNumInputImages $EMSegment(NumInputChannel) 
    EMSegment(vtkEMSegment) SetNumberOfTrainingSamples $EMSegment(NumberOfTrainingSamples)
 
