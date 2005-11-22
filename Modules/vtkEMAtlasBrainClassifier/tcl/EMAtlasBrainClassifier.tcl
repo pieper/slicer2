@@ -106,7 +106,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.21 $} {$Date: 2005/11/03 23:20:01 $}]
+        {$Revision: 1.22 $} {$Date: 2005/11/22 07:13:32 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -128,6 +128,10 @@ proc EMAtlasBrainClassifierInit {} {
 
     set EMAtlasBrainClassifier(Normalize,SPGR) "90"
     set EMAtlasBrainClassifier(Normalize,T2W)  "310"
+
+    set EMAtlasBrainClassifier(AlgorithmVersion) "Standard" 
+    set EMAtlasBrainClassifier(NonRigidRegistrationFlag) 1
+
 
     if {$tcl_platform(byteOrder) == "littleEndian"} {
         set EMAtlasBrainClassifier(LittleEndian) 1
@@ -283,7 +287,7 @@ proc EMAtlasBrainClassifierBuildGUI {} {
     set fSeg $Module(EMAtlasBrainClassifier,fAdvanced)
     set f $fSeg
 
-    foreach frame "Save Misc" {
+    foreach frame "Save Algo Misc" {
       frame $f.f$frame -bg $Gui(activeWorkspace) -relief sunken -bd 2
       pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
@@ -291,9 +295,22 @@ proc EMAtlasBrainClassifierBuildGUI {} {
     DevAddLabel $f.fSave.lTitle "Save"  
     pack $f.fSave.lTitle -side top -padx $Gui(pad) -pady 2 
     foreach Att "SPGR T2W Atlas XMLFile"  Text "{Normalized SPGR} {Normalized T2W} {Aligned Atlas} {XML-File}" {
-    eval {checkbutton  $f.fSave.c$Att -text "$Text" -variable EMAtlasBrainClassifier(Save,$Att) -indicatoron 1} $Gui(WCA)
-    pack $f.fSave.c$Att  -side top -padx $Gui(pad) -pady 0 -anchor w 
+       eval {checkbutton  $f.fSave.c$Att -text "$Text" -variable EMAtlasBrainClassifier(Save,$Att) -indicatoron 1} $Gui(WCA)
+       pack $f.fSave.c$Att  -side top -padx $Gui(pad) -pady 0 -anchor w 
     }
+
+    DevAddLabel $f.fAlgo.lTitle "Segmentation Algorithm"  
+    pack $f.fAlgo.lTitle -side top -padx $Gui(pad) -pady 2 
+    foreach Value "Standard Rigid RegSeg"  Text "{Standard (Validated)} {Standard with Affine Registration only} {Joint Registration and Segmentation}" {
+    frame $f.fAlgo.f$Value -bg $Gui(activeWorkspace) 
+        pack $f.fAlgo.f$Value  -side top -padx $Gui(pad) -pady 0 -fill x
+
+    eval {radiobutton $f.fAlgo.f$Value.rbutton -variable EMAtlasBrainClassifier(AlgorithmVersion) -command EMAtlasBrainClassifierChangeAlgorithm -value $Value -indicatoron 1} $Gui(WCA)
+    DevAddLabel $f.fAlgo.f$Value.lText "$Text"
+
+        pack $f.fAlgo.f$Value.rbutton $f.fAlgo.f$Value.lText -side left -padx 0 -pady 0 
+    }
+
 
     DevAddLabel $f.fMisc.lTitle "Miscellaneous"  
     pack  $f.fMisc.lTitle -side top -padx $Gui(pad) -pady 2 
@@ -425,6 +442,43 @@ proc EMAtlasBrainClassifierDefineNodeAttributeList {MrmlNodeType} {
 
     return "{$SetList} {$SetListLower} {$AttributeList} {$InitList}" 
 }
+
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierChangeAlgorithm 
+# Sets the flags correctly for the different algorithm versions
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+    proc EMAtlasBrainClassifierChangeAlgorithm { } { 
+    global EMAtlasBrainClassifier env
+ 
+    switch $EMAtlasBrainClassifier(AlgorithmVersion) {
+    "Standard" { set EMAtlasBrainClassifier(NonRigidRegistrationFlag)  1
+                 set EMAtlasBrainClassifier(SegmentationMode) "EMAtlasBrainClassifier"
+                 set EMAtlasBrainClassifier(XMLTemplate)      "$env(SLICER_HOME)/Modules/vtkEMAtlasBrainClassifier/data/template5_c2.xml"
+
+
+               }
+    "Rigid"    { set EMAtlasBrainClassifier(NonRigidRegistrationFlag)  0
+                 set EMAtlasBrainClassifier(SegmentationMode) "EMAtlasBrainClassifier"
+                 set EMAtlasBrainClassifier(XMLTemplate)      "$env(SLICER_HOME)/Modules/vtkEMAtlasBrainClassifier/data/template5_c2.xml"
+
+    }
+    "RegSeg"   { 
+                 set EMAtlasBrainClassifier(NonRigidRegistrationFlag)  0
+                 set EMAtlasBrainClassifier(SegmentationMode) "EMLocalSegment"
+                     set EMAtlasBrainClassifier(XMLTemplate)      "$env(SLICER_HOME)/Modules/vtkEMAtlasBrainClassifier/data/template5_c2-regseg.xml"
+               }
+    default {
+        DevErrorWindow "Do not understand EMAtlasBrainClassifier(AlgorithmVersion) with value $EMAtlasBrainClassifier(AlgorithmVersion)" 
+        return 
+    }
+    }
+}
+
+
+
+
 
 #-------------------------------------------------------------------------------
 # .PROC EMAtlasBrainClassifierDefineWorkingDirectory
@@ -696,6 +750,8 @@ proc EMAtlasBrainClassifier_InitilizePipeline { } {
 
     EMAtlasBrainClassifierDeleteAllVolumeNodesButSPGRAndT2W
     EMAtlasBrainClassifierResetEMSegment 
+
+
 
     return 1
 }
@@ -1271,7 +1327,7 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource} {
     TransformEMAtlasBrainClassifier Concatenate [[GCR GetGeneralTransform] GetConcatenatedTransform 1]
 
     # puts "For debigging only linear registration"     
-    if {1} {
+    if {$EMAtlasBrainClassifier(NonRigidRegistrationFlag)} {
       ###### Warp #######
       catch "warp Delete"
       vtkImageWarp warp
@@ -2052,7 +2108,7 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     # ---------------------------------------------------------------
     # Register Atlases 
     if {$RegisterAtlasDirList != "" } {
-       set RunRegistrationFlag [EMAtlasBrainClassifier_RegistrationInitialize "$RegisterAtlasDirList"] 
+       set RunRegistrationFlag [EMAtlasBrainClassifier_RegistrationInitialize "$RegisterAtlasDirList" ] 
        if {$RunRegistrationFlag < 0} {return} 
        if {$RunRegistrationFlag} { 
           EMAtlasBrainClassifier_AtlasRegistration "$RegisterAtlasDirList" "$RegisterAtlasNameList"
