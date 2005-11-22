@@ -9,7 +9,6 @@
 package require vtk
 package require vtkSlicerBase
 package require vtkEMAtlasBrainClassifier 
-package require vtkEMLocalSegment
 
 #-------------------------------------------------------------------------------
 # 1. Step Initialize 
