@@ -501,7 +501,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.113 $} {$Date: 2005/11/22 05:20:46 $}]
+                  {$Revision: 1.114 $} {$Date: 2005/11/22 22:32:58 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -649,6 +649,7 @@ proc DTMRIUpdateMRML {} {
     DevUpdateNodeSelectButton Volume DTMRI MaskLabelmap MaskLabelmap DevSelectNode 0 0 1 DTMRIUpdate
     DevUpdateNodeSelectButton Volume DTMRI ROILabelmap ROILabelmap DevSelectNode 0 0 1
     DevUpdateNodeSelectButton Volume DTMRI ROI2Labelmap ROI2Labelmap DevSelectNode 1 0 1
+    DevUpdateNodeSelectButton Volume DTMRI  ROISelection  ROISelection DevSelectNode 0 0 1
     DevUpdateNodeSelectButton Volume DTMRI VoxTractsROILabelmap VoxTractsROILabelmap DevSelectNode 0 0 1
     DevUpdateNodeSelectButton Volume DTMRI ColorByVolume ColorByVolume DevSelectNode 0 0 0 DTMRIUpdateTractColorToMulti
     DevUpdateNodeSelectButton Volume DTMRI convertID convertID DevSelectNode 0 0 1 DTMRIConvertUpdate

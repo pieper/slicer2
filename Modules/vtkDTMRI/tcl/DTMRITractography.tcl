@@ -80,7 +80,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.41 $} {$Date: 2005/11/12 05:03:07 $}]
+                                 {$Revision: 1.42 $} {$Date: 2005/11/22 22:32:45 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -248,6 +248,12 @@ proc DTMRITractographyInit {} {
     # Color value corresponding to the label
     set DTMRI(ROI2LabelColorID) ""
 
+
+    #------------------------------------
+    # Tab 3: Selection (select tracts using ROI)
+    #------------------------------------  
+    set DTMRI(ROISelection) $Volume(idNone)
+    
     #------------------------------------
     # Tab 3: Display of (all) streamlines
     #------------------------------------
@@ -332,10 +338,10 @@ proc DTMRITractographyBuildGUI {} {
     frame $f.fActive    -bg $Gui(backdrop) -relief sunken -bd 2
     pack $f.fActive -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
-    # notebook frame (to contain settings, seeding, display frames)
+    # notebook frame (to contain settings, seeding,  select, display frames)
     Notebook:create $f.fNotebook \
-        -pages {{Settings} {Seeding} {Display}} \
-        -pad 2 \
+        -pages {{Settings} {Seed} {Select} {Display}} \
+        -pad 0 \
         -bg $Gui(activeWorkspace) \
         -height 500 \
         -width 400
@@ -362,9 +368,10 @@ proc DTMRITractographyBuildGUI {} {
     set f $fTract.fNotebook
 
     set fSettings [Notebook:frame $f {Settings}]
-    set fSeeding [Notebook:frame $f {Seeding}]
+    set fSeeding [Notebook:frame $f {Seed}]
+    set fSelection [Notebook:frame $f {Select}]
     set fDisplay [Notebook:frame $f {Display}]
-    foreach frame "$fSettings $fSeeding $fDisplay" {
+    foreach frame "$fSettings $fSeeding $fSelection $fDisplay" {
         $frame configure -relief groove -bd 3
     }
 
@@ -614,13 +621,12 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
     set f $fSeeding
 
-    foreach frame "Title ROIMethod Entries" {
+    foreach frame "Title ROIMethod" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     }
     $f.fROIMethod config -relief groove -bd 2 
-    $f.fEntries config -relief groove -bd 2
-
+ 
     #-------------------------------------------
     # Tract->Notebook->Seeding->Title frame
     #-------------------------------------------
@@ -724,38 +730,59 @@ proc DTMRITractographyBuildGUI {} {
         {puts "Seeding streamlines"; DTMRISeedStreamlinesInROI}
     pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
     TooltipAdd  $f.bApply "Seed tracts in the region of interest.\nThis can be slow for large ROIs."
+ 
+
+    ##########################################################
+    #
+    #  Selection Frame
+    #
+    ##########################################################
 
     #-------------------------------------------
-    # Tract->Notebook->Seeding->Entries frame
+    # Tract->Notebook->Selection frame
     #-------------------------------------------
-    set f $fSeeding.fEntries
-    foreach frame "FindTracts" {
+    set f $fSelection
+    
+    foreach frame "Title SelectMethod" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
-        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     }
+    $f.fSelectMethod config -relief groove -bd 2 
+  
+    #-------------------------------------------
+    # Tract->Notebook->Selection->Title frame
+    #-------------------------------------------
+    set f $fSelection.fTitle
 
-    #-------------------------------------------
-    # Tract->Notebook->Seeding->Entries->FindTracts frame
-    #-------------------------------------------
-    set f $fSeeding.fEntries.fFindTracts
-    
-    foreach frame "Title ListANDLabels ListNOTLabels Sensitivity Apply1 Apply2" {
-        frame $f.f$frame -bg $Gui(activeWorkspace)
-        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
-    }
-    
-    #-------------------------------------------
-    # Tract->Notebook->Seeding->Entries->FindTracts->Title frame
-    #-------------------------------------------
-    set f $fSeeding.fEntries.fFindTracts.fTitle
-    
     DevAddLabel $f.l "Choose Tracts that pass through\na set of labels"
-    pack $f.l -side top
-    
+    pack $f.l -side top -padx $Gui(pad) -pady $Gui(pad)
+
+
     #-------------------------------------------
-    # Tract->Notebook->Seeding->Entries->FindTracts->ListLabels frame
+    # Tract->Notebook->Selection->SelectMethod frame
     #-------------------------------------------
-    set f $fSeeding.fEntries.fFindTracts.fListANDLabels
+    set f $fSelection.fSelectMethod
+    foreach frame "ROI ListANDLabels ListNOTLabels Sensitivity Apply1 Apply2" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
+    }
+
+    #-------------------------------------------
+    # Tract->Notebook->Selection->SelectMethod->ROI frame
+    #-------------------------------------------
+    set f $fSelection.fSelectMethod.fROI
+
+    # menu to select a volume: will set DTMRI(ROISelection)
+    # works with DevUpdateNodeSelectButton in UpdateMRML
+    set name ROISelection
+    DevAddSelectButton  DTMRI $f $name "ROI Labelmap:" Pack \
+        "Labelmap with the regions to use in the selection method."\
+        13
+
+    #-------------------------------------------
+    # Tract->Notebook->Selection->SelectMethod->ListLabels frame
+    #-------------------------------------------
+    set f $fSelection.fSelectMethod.fListANDLabels
     
     DevAddLabel $f.l "List of labels:"
     pack $f.l
@@ -766,8 +793,11 @@ proc DTMRITractographyBuildGUI {} {
         {-bg $Gui(activeWorkspace)}
     
     pack $f.lAND $f.eAND -side left
-    
-    set f $fSeeding.fEntries.fFindTracts.fListNOTLabels
+    set tip "List of label numbers that tracts are intersecting.\n \
+                The list is defined as a list of number with spaces in between."
+    TooltipAdd  $f.eAND $tip
+        
+    set f $fSelection.fSelectMethod.fListNOTLabels
     
     DevAddLabel $f.lNOT "NOT:"
     eval {entry $f.eNOT -width 25 \
@@ -775,8 +805,11 @@ proc DTMRITractographyBuildGUI {} {
         {-bg $Gui(activeWorkspace)}
     
     pack $f.lNOT $f.eNOT -side left
+    set tip "List of label numbers that tracts are not intersecting.\n \
+                The list is defined as a list of number with spaces in between."
+    TooltipAdd  $f.eNOT $tip
     
-    set f $fSeeding.fEntries.fFindTracts.fSensitivity
+    set f $fSelection.fSelectMethod.fSensitivity
     
     DevAddLabel $f.l "Sensitivity (H<->L):"
     eval {entry $f.e -width 3 \
@@ -790,17 +823,30 @@ proc DTMRITractographyBuildGUI {} {
           } $Gui(WSA)
       
     pack $f.l $f.e $f.s -side left
+    set tip "Sensitivity of tract selection. A low number means HIGH \n \
+                sensitivity while a high number means LOW. \n \
+                With high sensitivity, a fiber just needs to cross a voxel of the\n \
+                ROI to be selected. With low sensitivity, several voxels need to be \n \
+                crossed by the fiber before this is selected."
+                
+    TooltipAdd  $f.s $tip
     
     #-------------------------------------------
-    # Tract->Notebook->Seeding->Entries->FindTracts->Apply frame
+    # Tract->Notebook->Selection->SelectMethod->Apply frame
     #-------------------------------------------
-    set f $fSeeding.fEntries.fFindTracts.fApply1
+    set f $fSelection.fSelectMethod.fApply1
     
     DevAddButton $f.bApply1 "Find 'Tracts' through ROI" \
         {DTMRIFindStreamlinesThroughROI}
     pack $f.bApply1 -side top -padx $Gui(pad) -pady $Gui(pad)
 
-    set f $fSeeding.fEntries.fFindTracts.fApply2
+    set tip "Find tracts that fulfill the criterion defines by the list of labels.\n \
+                Selected labels will be shown in red. Use this button before\n \
+                Apply or Reset."
+    TooltipAdd  $f.bApply1 $tip
+
+    set f $fSelection.fSelectMethod.fApply2
+    
     DevAddButton $f.bApply2 "Apply" \
         {DTMRIDeleteStreamlinesNotPassTest}
     DevAddButton $f.bApply3 "Reset" \
@@ -808,6 +854,14 @@ proc DTMRITractographyBuildGUI {} {
         
     pack $f.bApply2 $f.bApply3 -side left -padx $Gui(pad) -pady $Gui(pad)
     
+    set tip "Apply the result: selected tracts will be kept and the rest will be removed.\n \
+                Use this button when you are happy with your result after using\n \
+                \" Find 'Tracts' through ROI\" "
+    TooltipAdd  $f.bApply2 $tip
+    
+    set tip "Reset the result: restate the 3D viewer to the state that is was before you\n \
+                hit  \" Find 'Tracts' through ROI\"."
+   TooltipAdd  $f.bApply3 $tip                 
     
     ##########################################################
     #
@@ -1681,7 +1735,7 @@ proc DTMRIFindStreamlinesThroughROI { {verbose 1} } {
     global DTMRI Label Tensor Volume
 
     set t $Tensor(activeID)
-    set v $DTMRI(ROILabelmap)
+    set v $DTMRI(ROISelection)
 
     # make sure they are using a segmentation (labelmap)
     if {[Volume($v,node) GetLabelMap] != 1} {
