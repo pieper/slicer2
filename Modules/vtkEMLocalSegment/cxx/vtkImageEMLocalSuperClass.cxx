@@ -1,38 +1,24 @@
 /*=auto=========================================================================
 
-(c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+(c) Copyright 2001 Massachusetts Institute of Technology
 
-This software ("3D Slicer") is provided by The Brigham and Women's 
-Hospital, Inc. on behalf of the copyright holders and contributors.
 Permission is hereby granted, without payment, to copy, modify, display 
-and distribute this software and its documentation, if any, for  
-research purposes only, provided that (1) the above copyright notice and 
-the following four paragraphs appear on all copies of this software, and 
-(2) that source code to any modifications to this software be made 
-publicly available under terms no more restrictive than those in this 
-License Agreement. Use of this software constitutes acceptance of these 
-terms and conditions.
+and distribute this software and its documentation, if any, for any purpose, 
+provided that the above copyright notice and the following three paragraphs 
+appear on all copies of this software.  Use of this software constitutes 
+acceptance of these terms and conditions.
 
-3D Slicer Software has not been reviewed or approved by the Food and 
-Drug Administration, and is for non-clinical, IRB-approved Research Use 
-Only.  In no event shall data or images generated through the use of 3D 
-Slicer Software be used in the provision of patient care.
+IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, 
+INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE 
+AND ITS DOCUMENTATION, EVEN IF MIT HAS BEEN ADVISED OF THE POSSIBILITY OF 
+SUCH DAMAGE.
 
-IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-POSSIBILITY OF SUCH DAMAGE.
+MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING, 
+BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR 
+A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
 
-THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-NON-INFRINGEMENT.
-
-THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-
+THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE 
+MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
 #include "vtkImageEMLocalSuperClass.h"
@@ -66,7 +52,27 @@ void vtkImageEMLocalSuperClass::CreateVariables() {
   this->PrintFrequency      = 0;
   this->PrintBias           = 0;
   this->PrintLabelMap       = 0;
+  this->PrintEMLabelMapConvergence  = 0;
+  this->PrintEMWeightsConvergence   = 0;
+  this->PrintShapeSimularityMeasure = 0;
+
+  this->StopEMType          = EMSEGMENT_STOP_FIXED;
+  this->StopEMValue         = 0.0; 
+  this->StopEMMaxIter       = 0; 
+
+  this->PrintMFALabelMapConvergence  = 0;
+  this->PrintMFAWeightsConvergence   = 0;
+  this->StopMFAType          = EMSEGMENT_STOP_FIXED;
+  this->StopMFAValue         = 0.0; 
+  this->StopMFAMaxIter       = 0; 
+  this->StopBiasCalculation  = -1;
+ 
+  this->RegistrationType  = 0 ;
+  this->GenerateBackgroundProbability = 0;
+
+  this->PCAShapeModelType = EMSEGMENT_PCASHAPE_INDEPENDENT;
   
+  this->RegistrationIndependentSubClassFlag =0;
 }
 
 //------------------------------------------------------------------------------
@@ -234,22 +240,60 @@ void vtkImageEMLocalSuperClass::LabelAllSuperClasses(short *TakenLabelList, int 
 
 //------------------------------------------------------------------------------
 int vtkImageEMLocalSuperClass::GetTotalNumberOfProbDataPtr() {
+  // If a superclass has a probability data defined than we assign to each subclass the probability of the superclass
+  if (this->ProbImageData) {
+    return this->GetTotalNumberOfClasses(0);
+  } else {
+    int result = 0;
+    for (int i=0;  i< this->NumClasses; i++) {
+      if (this->ClassListType[i] == SUPERCLASS) {
+    result += ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetTotalNumberOfProbDataPtr(); 
+      } else { 
+    if (((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataWeight() >  0.0) result++;
+      }
+    }
+    return result;
+  }
+}
+
+//------------------------------------------------------------------------------
+int vtkImageEMLocalSuperClass::GetTotalNumberOfEigenModes() {
   int result = 0;
   for (int i=0;  i< this->NumClasses; i++) {
     if (this->ClassListType[i] == SUPERCLASS) {
-      result += ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetTotalNumberOfProbDataPtr(); 
+      result += ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetTotalNumberOfEigenModes(); 
     } else { 
-      if (((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataWeight() >  0.0) result++;
+      result += (((vtkImageEMLocalClass*) this->ClassList[i])->GetPCANumberOfEigenModes()); 
     }
   }
   return result;
 }
 
+int vtkImageEMLocalSuperClass::GetPCANumberOfEigenModesList(int *NumberOfEigenModesList, int index) {
+  for (int i=0;  i< this->NumClasses; i++) {
+    if (this->ClassListType[i] == SUPERCLASS) {
+      index= ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetPCANumberOfEigenModesList(NumberOfEigenModesList,index); 
+    } else { 
+      NumberOfEigenModesList[index] = (((vtkImageEMLocalClass*) this->ClassList[i])->GetPCANumberOfEigenModes()); 
+      index ++;
+    }
+  }
+  return index;
+}
+
+int vtkImageEMLocalSuperClass::GetPCANumberOfEigenModes(int *NumberOfEigenModesList) {
+  this->GetPCANumberOfEigenModesList(NumberOfEigenModesList,0);
+}
+
+
 //------------------------------------------------------------------------------
 int vtkImageEMLocalSuperClass::GetProbDataPtrFlag() {
+  if (this->ProbImageData) {
+    return 1;
+  } 
   for (int i = 0; i < this->NumClasses; i++) {
     if (this->ClassListType[i] == CLASS) {
-      if (((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataPtr()) return 1;
+      if (((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataPtr(0)) return 1;
     } else {
       if (((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetProbDataPtrFlag()) return 1;
     }
@@ -257,32 +301,168 @@ int vtkImageEMLocalSuperClass::GetProbDataPtrFlag() {
   return 0;
 }
 
+
+
 //------------------------------------------------------------------------------
-int vtkImageEMLocalSuperClass::GetProbDataPtr(void **PointerList, int index) {
- int i;
-  for (i = 0; i <this->NumClasses; i++) {
+int vtkImageEMLocalSuperClass::GetPCAPtrFlag() {
+  for (int i = 0; i < this->NumClasses; i++) {
     if (this->ClassListType[i] == CLASS) {
-      PointerList[index] = ((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataPtr();
+      if (((vtkImageEMLocalClass*) this->ClassList[i])->GetPCAMeanShapePtr(0)) return 1;
+    } else {
+      if (((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetPCAPtrFlag()) return 1;
+    }
+  }
+  return 0;
+}
+
+
+
+
+//------------------------------------------------------------------------------
+int vtkImageEMLocalSuperClass::GetPCAParametersPtr(void** PCAMeanShapePtr, void*** PCAEigenVectorPtr, int index, int BoundaryType) {
+  // cout << "Start vtkImageEMLocalSuperClass::GetPCAParametersPtr" << endl;
+  for (int i = 0; i <this->NumClasses; i++) {
+    if (this->ClassListType[i] == CLASS) {
+      PCAMeanShapePtr[index]    = ((vtkImageEMLocalClass*) this->ClassList[i])->GetPCAMeanShapePtr(BoundaryType);
+
+      int NumOfEigenVectors = ((vtkImageEMLocalClass*) this->ClassList[i])->GetPCANumberOfEigenModes();
+      for (int j = 0 ; j < NumOfEigenVectors; j++) {
+    PCAEigenVectorPtr[index][j] = ((vtkImageEMLocalClass*) this->ClassList[i])->GetPCAEigenVectorPtr(j,BoundaryType);
+      }
       index ++;
-    } else index = ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetProbDataPtr(PointerList,index); 
+    } else index = ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetPCAParametersPtr(PCAMeanShapePtr, PCAEigenVectorPtr, index,BoundaryType);
+  }
+  // cout << "End vtkImageEMLocalSuperClass::GetPCAParametersPtr" << endl;
+  return index;
+}
+// BoundaryType = do we want to consider the segmentation boundary or not 
+//------------------------------------------------------------------------------
+int vtkImageEMLocalSuperClass::GetPCAParameters(float **ShapeParametersList, int *PCAMeanShapeIncY, int *PCAMeanShapeIncZ, 
+                                                  int **PCAEigenVectorIncY, int **PCAEigenVectorIncZ, double **PCAEigenValues,  float *PCALogisticSlope, 
+                                                  float *PCALogisticBoundary, float *PCALogisticMin, float *PCALogisticMax, int index, int BoundaryType) {
+  for (int i = 0; i <this->NumClasses; i++) {
+    if (this->ClassListType[i] == CLASS) {
+      ShapeParametersList[index]    = ((vtkImageEMLocalClass*) this->ClassList[i])->GetPCAShapeParameters();
+      PCAMeanShapeIncY[index]       = ((vtkImageEMLocalClass*) this->ClassList[i])->GetPCAMeanShapeIncY(BoundaryType); 
+      PCAMeanShapeIncZ[index]       = ((vtkImageEMLocalClass*) this->ClassList[i])->GetPCAMeanShapeIncZ(BoundaryType); 
+      int NumOfEigenVectors = ((vtkImageEMLocalClass*) this->ClassList[i])->GetPCANumberOfEigenModes();
+      for (int j = 0; j < NumOfEigenVectors ; j++) {
+    PCAEigenVectorIncY[index][j] = ((vtkImageEMLocalClass*) this->ClassList[i])->GetPCAEigenVectorIncY(j,BoundaryType); 
+    PCAEigenVectorIncZ[index][j] = ((vtkImageEMLocalClass*) this->ClassList[i])->GetPCAEigenVectorIncY(j,BoundaryType);
+      }
+      PCAEigenValues[index]         = ((vtkImageEMLocalClass*) this->ClassList[i])->GetPCAEigenValues(); 
+      PCALogisticSlope[index]       = ((vtkImageEMLocalClass*) this->ClassList[i])->GetPCALogisticSlope();
+      PCALogisticBoundary[index]    = ((vtkImageEMLocalClass*) this->ClassList[i])->GetPCALogisticBoundary();
+      PCALogisticMin[index]         = ((vtkImageEMLocalClass*) this->ClassList[i])->GetPCALogisticMin();
+      PCALogisticMax[index]         = ((vtkImageEMLocalClass*) this->ClassList[i])->GetPCALogisticMax();
+      index ++;
+    } else index = ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetPCAParameters(ShapeParametersList,PCAMeanShapeIncY,PCAMeanShapeIncZ, PCAEigenVectorIncY, PCAEigenVectorIncZ,PCAEigenValues, PCALogisticSlope, PCALogisticBoundary, PCALogisticMin, PCALogisticMax,index, BoundaryType); 
+  }
+  return index;
+}
+
+//------------------------------------------------------------------------------
+int vtkImageEMLocalSuperClass::GetProbDataPtrList(void **PointerList, int index, int BoundaryType) {
+  int i;
+  // if the super class has prob data defined than we just use that 
+  if (this->ProbImageData) {
+    int Num = this->GetTotalNumberOfClasses(0);
+    void *Pointer = this->GetProbDataPtr(BoundaryType);
+    for (i = 0; i < Num; i++) {
+      PointerList[index] = Pointer;
+      index ++;
+    }
+  } else {
+    for (i = 0; i <this->NumClasses; i++) {
+      if (this->ClassListType[i] == CLASS) {
+    PointerList[index] = ((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataPtr(BoundaryType);
+    index ++;
+      } else index = ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetProbDataPtrList(PointerList,index,BoundaryType); 
+    }
+  }
+  return index;
+} 
+
+// just indicate the first probdata of all subclasses if it was defined by the super class - this is necessary so that 
+// for shape and registration we can properly normalize !
+ 
+int vtkImageEMLocalSuperClass::GetProbImageDataCount(char *list, int index) {
+  int i;
+  // if the super class has prob data defined than we just use that 
+  if (this->ProbImageData) {
+    int Num = this->GetTotalNumberOfClasses(0);
+    for (i = 0; i < Num; i++) {
+      list[index] = (i > 0 ? 0 : 1);
+      index ++;
+    }
+  } else {
+    for (i = 0; i <this->NumClasses; i++) {
+      if (this->ClassListType[i] == CLASS) {
+    list[index] = (((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataPtr(0) ? 1 : 0) ;
+    index ++;
+      } else index = ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetProbImageDataCount(list, index); 
+    }
   }
   return index;
 } 
 
 //------------------------------------------------------------------------------
-int vtkImageEMLocalSuperClass::GetProbDataIncYandZ(int* ProbDataIncY,int* ProbDataIncZ,int index) {
+int vtkImageEMLocalSuperClass::GetProbDataIncYandZ(int* ProbDataIncY,int* ProbDataIncZ,int index, int BoundaryType) {
   int i;
-  for (i = 0; i <this->NumClasses; i++) {
-    if (this->ClassListType[i] == CLASS) {
-      if (((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataWeight() > 0.0) {
-        ProbDataIncY[index] = ((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataIncY();
-        ProbDataIncZ[index] = ((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataIncZ();
-        index ++;
-      }
-    } else index = ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetProbDataIncYandZ(ProbDataIncY,ProbDataIncZ,index); 
+  // if the super class has prob data defined than we just use that 
+  if (this->ProbImageData) {
+    int Num = this->GetTotalNumberOfClasses(0);
+    int DataIncY = this->GetProbDataIncY(BoundaryType);
+    int DataIncZ = this->GetProbDataIncZ(BoundaryType);
+    for (i = 0; i < Num; i++) {
+      ProbDataIncY[index] =  DataIncY;
+      ProbDataIncZ[index] =  DataIncZ;
+      index ++;
+    }
+  } else {
+    for (i = 0; i <this->NumClasses; i++) {
+      if (this->ClassListType[i] == CLASS) {
+    if (((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataWeight() > 0.0) {
+      ProbDataIncY[index] = ((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataIncY(BoundaryType);
+      ProbDataIncZ[index] = ((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataIncZ(BoundaryType);
+    } else {
+      ProbDataIncY[index] = ProbDataIncZ[index] = 0; 
+    }
+    index ++;
+      } else index = ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetProbDataIncYandZ(ProbDataIncY,ProbDataIncZ,index,BoundaryType); 
+    }
   }
   return index;
 } 
+//------------------------------------------------------------------------------
+void vtkImageEMLocalSuperClass::GetRegistrationClassSpecificParameterList(int *RegistrationIndependentSubClassFlag, int *RegistrationClassSpecificRegistrationFlag,int &NumParaSets) {
+
+  if (this->RegistrationType != EMSEGMENT_REGISTRATION_CLASS_ONLY) NumParaSets = 1; 
+  else NumParaSets = 0;
+
+  for (int i = 0; i < this->NumClasses; i++) {
+    if  (this->ClassListType[i] == SUPERCLASS) {
+      RegistrationIndependentSubClassFlag[i] = ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetRegistrationIndependentSubClassFlag();
+      cout << "Registration Indepdent Sub Class Flag  " << i << ": " << ( (RegistrationIndependentSubClassFlag[i] == 1) ? "On" : "Off" ) << endl;
+      RegistrationClassSpecificRegistrationFlag[i] = ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetRegistrationClassSpecificRegistrationFlag();
+    } else {
+      RegistrationIndependentSubClassFlag[i] = 0;
+      RegistrationClassSpecificRegistrationFlag[i] = ((vtkImageEMLocalClass*) this->ClassList[i])->GetRegistrationClassSpecificRegistrationFlag();
+    }
+    // Only add a new parameter set if the registration includes strucutre specific registration and structure specific registration is activated 
+    if (RegistrationType > EMSEGMENT_REGISTRATION_GLOBAL_ONLY) {
+      cout << "Registration Class Specific Registration Flag " << i << ": "  ;
+      if (RegistrationClassSpecificRegistrationFlag[i] && (i || !GenerateBackgroundProbability)) {
+    NumParaSets ++;
+    cout << "On " << endl;
+      } else {
+    cout << "Off " << endl;
+      }
+    }
+  }
+} 
+
+
 
 //------------------------------------------------------------------------------
 int vtkImageEMLocalSuperClass::GetTissueDefinition(int *LabelList,double** LogMu, double ***LogCov, int index) {
@@ -309,15 +489,31 @@ classType vtkImageEMLocalSuperClass::GetClassType(void* active) {
 //------------------------------------------------------------------------------
 void vtkImageEMLocalSuperClass::PrintSelf(ostream& os,vtkIndent indent) {
   os << indent << "---------------------------------------- SUPERCLASS ----------------------------------------------" << endl;
-  this->vtkImageEMGenericClass::PrintSelf(os,indent); 
-  os << indent << "NumClasses:              " << this->NumClasses << endl;
-  os << indent << "PrintFrequency:          " << this->PrintFrequency << endl;
-  os << indent << "PrintBias:               " << this->PrintBias<< endl;
-  os << indent << "PrintLabelMap:           " << this->PrintLabelMap << endl;
+  this->vtkImageEMLocalGenericClass::PrintSelf(os,indent); 
+  os << indent << "NumClasses:                    " << this->NumClasses << endl;
+  os << indent << "PrintFrequency:                " << this->PrintFrequency << endl;
+  os << indent << "PrintBias:                     " << this->PrintBias<< endl;
+  os << indent << "PrintLabelMap:                 " << this->PrintLabelMap << endl;
+  os << indent << "PrintEMLabelMapConvergence:    " << this->PrintEMLabelMapConvergence << endl;
+  os << indent << "PrintEMWeightsConvergence:     " << this->PrintEMWeightsConvergence  << endl;
+  os << indent << "PrintMFALabelMapConvergence:   " << this->PrintMFALabelMapConvergence << endl;
+  os << indent << "PrintMFAWeightsConvergence:    " << this->PrintMFAWeightsConvergence  << endl;
+  os << indent << "PrintShapeSimularityMeasure:   " << this->PrintShapeSimularityMeasure << endl;
+  os << indent << "StopEMType:                    " << this->StopEMType  << endl;
+  os << indent << "StopEMValue:                   " << this->StopEMValue << endl;
+  os << indent << "StopEMMaxIter:                 " << this->StopEMMaxIter << endl;
+  os << indent << "StopMFAType:                   " << this->StopMFAType  << endl;
+  os << indent << "StopMFAValue:                  " << this->StopMFAValue << endl;
+  os << indent << "StopMFAMaxIter:                " << this->StopMFAMaxIter << endl;
+  os << indent << "StopBiasCalculation:           " << this->StopBiasCalculation << endl;
+  os << indent << "RegistrationType:              " << this->RegistrationType << endl;
+  os << indent << "GenerateBackgroundProbability: " << this->GenerateBackgroundProbability << endl;
+  os << indent << "RegistrationIndependentSubClassFlag " << this->RegistrationIndependentSubClassFlag << endl; 
+  os << indent << "PCAShapeModelType:             " << this->PCAShapeModelType  << endl;
 
   char** Directions= new char*[6];
   Directions[0] = "West "; Directions[1] = "North"; Directions[2] = "Up   "; Directions[3] = "East "; Directions[4] = "South"; Directions[5] = "Down ";
-  os << indent << "MrfParams:               " << endl;
+  os << indent << "MrfParams:                    " << endl;
   for (int z=0; z < 6; z++) { 
     os << indent << "   " << Directions[z] << ":    ";   
     for (int y=0;y < this->NumClasses; y ++) {
@@ -352,7 +548,7 @@ void vtkImageEMLocalSuperClass::ExecuteData(vtkDataObject *)
      vtkEMAddWarningMessage("The error flag for this module was set with the following messages (the error messages will be reset now:\n"<<this->GetErrorMessages());
 
    this->ResetErrorMessage();
-   this->vtkImageEMGenericClass::ExecuteData(NULL);
+   this->vtkImageEMLocalGenericClass::ExecuteData(NULL);
    // Error Occured
    // Kilian change this 
    if (this->GetErrorFlag()) return;
@@ -363,8 +559,9 @@ void vtkImageEMLocalSuperClass::ExecuteData(vtkDataObject *)
    }
 
    
-   {
+   if (this->ProbImageData == NULL) {
      int ProbDataPtrIndex = -1; 
+     int PCAPtrIndex      = -1; 
 
      for (int i = 0; i <this->NumClasses; i++) {
        if (!this->ClassList[i]) {
@@ -379,7 +576,8 @@ void vtkImageEMLocalSuperClass::ExecuteData(vtkDataObject *)
        vtkEMJustAddErrorMessage(((vtkImageEMLocalClass*) this->ClassList[i])->GetErrorMessages());
        return;
          }
-     if ((ProbDataPtrIndex < 0) && ((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataPtr())  ProbDataPtrIndex = i;
+     if ((ProbDataPtrIndex < 0) && ((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataPtr(0))  ProbDataPtrIndex = i;
+     if ((PCAPtrIndex < 0)      && ((vtkImageEMLocalClass*) this->ClassList[i])->GetPCAMeanShapePtr(0)) PCAPtrIndex  = i;
 
        } else {
          ((vtkImageEMLocalSuperClass*) this->ClassList[i])->Update();
@@ -388,19 +586,20 @@ void vtkImageEMLocalSuperClass::ExecuteData(vtkDataObject *)
        vtkEMJustAddErrorMessage(((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetErrorMessages());
        return;
          }
-
      if ((ProbDataPtrIndex < 0) &&  ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetProbDataPtrFlag()) ProbDataPtrIndex = i;
+     if ((PCAPtrIndex  < 0)     &&  ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetPCAPtrFlag())  PCAPtrIndex  = i;
        }
      }
-     if ((ProbDataPtrIndex < 0) && (this->ProbDataWeight > 0.0) ) { 
+     // Kilian : Currently the name of ProbDataWeight is not good bc it also defines the influence for  PCAPtr
+     if ((ProbDataPtrIndex < 0) && (PCAPtrIndex < 0) && (this->ProbDataWeight > 0.0) ) { 
        this->ProbDataWeight = 0.0; 
-       vtkEMAddWarningMessage("No PropDataPtr defined for any sub classes  => ProbDataWeight is set to 0! "); 
+       vtkEMAddWarningMessage("No PropDataPtr or PCAPtr defined for any sub classes  => ProbDataWeight is set to 0! "); 
      }
 
      // ==================================================
      // Set values 
-     if (ProbDataPtrIndex > -1) {
-       int index = ProbDataPtrIndex;
+     if ((ProbDataPtrIndex > -1) || (PCAPtrIndex > -1)) {
+       int index = (ProbDataPtrIndex > -1 ? ProbDataPtrIndex : PCAPtrIndex);
        if (this->ClassListType[index] == CLASS) {
      memcpy(this->SegmentationBoundaryMax,((vtkImageEMLocalClass*) this->ClassList[index])->GetSegmentationBoundaryMax(),sizeof(int)*3);
      memcpy(this->SegmentationBoundaryMin,((vtkImageEMLocalClass*) this->ClassList[index])->GetSegmentationBoundaryMin(),sizeof(int)*3);
@@ -414,22 +613,28 @@ void vtkImageEMLocalSuperClass::ExecuteData(vtkDataObject *)
      memcpy(this->DataSpacing,((vtkImageEMLocalSuperClass*) this->ClassList[index])->GetDataSpacing(),sizeof(float)*3);
        }
      }
-   } 
-   // Look for the first ProbData entry and then define scalar type accordingly
-   int i;
-   for (i = 0; i <this->NumClasses; i++) {
-     if (this->ClassListType[i] == CLASS) {
-       this->ProbDataScalarType = ((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataScalarType(); 
-       if (this->ProbDataScalarType > -1) i = this->NumClasses;
-     } else {
-       this->ProbDataScalarType = ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetProbDataScalarType(); 
-       if (this->ProbDataScalarType > -1) i = this->NumClasses;
+     // Look for the first ProbData entry and then define scalar type accordingly
+     for (int i = 0; i <this->NumClasses; i++) {
+       if (this->ClassListType[i] == CLASS) {
+     this->ProbDataScalarType = ((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataScalarType(); 
+     if (this->ProbDataScalarType > -1) i = this->NumClasses;
+       } else {
+     this->ProbDataScalarType = ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetProbDataScalarType(); 
+     if (this->ProbDataScalarType > -1) i = this->NumClasses;
+       }
      }
-   }
+   } else {
+     cout << "Warning:: Probability Data of SuperClass activated - Class specific probability maps are overwritten!" << endl; 
+     // Kilian: Currently we also disreagard the the SHAPE model - change this later  
+     if (this->GetTotalNumberOfEigenModes()) {
+       cout << "Error::vtkImageEMLocalSuperClass:: SuperClass has Probability Data but sub classes have PCAShape model activated - Conflict of interest !" << endl;
+       exit(1);
+     }
      
+   }
    // ==================================================
    // Check own values
-   for (i=0;i <  this->NumClasses; i++) {
+   for (int i=0;i <  this->NumClasses; i++) {
     for (int j = 0; j < this->NumClasses; j++) {
       for (int k = 0; k < 6; k++) {
     if ((this->MrfParams[k][j][i] < 0) || (this->MrfParams[k][j][i] > 1)) {
@@ -442,9 +647,9 @@ void vtkImageEMLocalSuperClass::ExecuteData(vtkDataObject *)
 
    // ==================================================
    // Check values of subclasses
-   for (i = 0; i <this->NumClasses; i++) {
+   for (int i = 0; i <this->NumClasses; i++) {
      if (this->ClassListType[i] == CLASS) {
-       if (((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataPtr()) {
+       if (((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataPtr(0)  || ((vtkImageEMLocalClass*) this->ClassList[i])->GetPCAMeanShapePtr(0)) {
          // Check if any input data was defined 
      
      if ((((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataScalarType() > -1) && (this->ProbDataScalarType != ((vtkImageEMLocalClass*) this->ClassList[i])->GetProbDataScalarType())) {
@@ -483,8 +688,9 @@ void vtkImageEMLocalSuperClass::ExecuteData(vtkDataObject *)
      }
        } 
      } else {
-       // If data is part of the subclasses - check dimension
-       if (    ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetProbDataPtrFlag()) {
+       // If data is par t of the subclasses - check dimension
+       if (    ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetProbDataPtrFlag() 
+            || ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetPCAPtrFlag()) {
 
      if ((((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetProbDataScalarType() > -1) 
             && (this->ProbDataScalarType != ((vtkImageEMLocalSuperClass*) this->ClassList[i])->GetProbDataScalarType())) {
@@ -528,4 +734,5 @@ void vtkImageEMLocalSuperClass::ExecuteData(vtkDataObject *)
        } 
      }
    }
+   // cout << "End vtkImageEMLocalSuperClass::ExecuteData" << endl; 
 }

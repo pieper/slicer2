@@ -1,38 +1,24 @@
 /*=auto=========================================================================
 
-(c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+(c) Copyright 2001 Massachusetts Institute of Technology 
 
-This software ("3D Slicer") is provided by The Brigham and Women's 
-Hospital, Inc. on behalf of the copyright holders and contributors.
 Permission is hereby granted, without payment, to copy, modify, display 
-and distribute this software and its documentation, if any, for  
-research purposes only, provided that (1) the above copyright notice and 
-the following four paragraphs appear on all copies of this software, and 
-(2) that source code to any modifications to this software be made 
-publicly available under terms no more restrictive than those in this 
-License Agreement. Use of this software constitutes acceptance of these 
-terms and conditions.
+and distribute this software and its documentation, if any, for any purpose, 
+provided that the above copyright notice and the following three paragraphs 
+appear on all copies of this software.  Use of this software constitutes 
+acceptance of these terms and conditions.
 
-3D Slicer Software has not been reviewed or approved by the Food and 
-Drug Administration, and is for non-clinical, IRB-approved Research Use 
-Only.  In no event shall data or images generated through the use of 3D 
-Slicer Software be used in the provision of patient care.
+IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, 
+INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE 
+AND ITS DOCUMENTATION, EVEN IF MIT HAS BEEN ADVISED OF THE POSSIBILITY OF 
+SUCH DAMAGE.
 
-IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-POSSIBILITY OF SUCH DAMAGE.
+MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING, 
+BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR 
+A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
 
-THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-NON-INFRINGEMENT.
-
-THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-
+THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE 
+MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
 // .NAME vtkImageEMLocalClass
@@ -40,12 +26,14 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkImageEMLocalClass_h 
   
 #include <vtkEMLocalSegmentConfigure.h> 
-#include "vtkImageEMGenericClass.h"
-#include "vtkSlicer.h"
 
-// #define EMSEGMENT_NUM_OF_QUALITY_MEASURE 1
+// #include "vtkSlicer.h"
+#include "vtkImageEMLocalGenericClass.h"
+#include "assert.h"
 
-class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalClass : public vtkImageEMGenericClass
+#define EMSEGMENT_NUM_OF_QUALITY_MEASURE 1
+
+class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalClass : public vtkImageEMLocalGenericClass
 {
   public:
   // -----------------------------------------------------
@@ -59,23 +47,42 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalClass : public vtkImageEMGenericC
   // Image Data input 
 
   // Description:
-  // Probability Data defining the spatial conditional label distribution
-  void SetProbDataPtr(vtkImageData *image) {this->SetInput(1,image);}
-  //BTX
-  void SetProbDataPtr(void* initptr) {this->ProbDataPtr = initptr;}
-  void* GetProbDataPtr() {return this->ProbDataPtr;}
-  //ETX
-
-  // Description:
-  // Increments for probability data in Y and Z Dimension 
-  vtkGetMacro(ProbDataIncY,int);
-  vtkGetMacro(ProbDataIncZ,int);
-
-  // Description:
   // Reference standard to define the performance of the algorithm, e.g. output is compared to the Dice Measure 
   void SetReferenceStandard(vtkImageData *image) {this->ReferenceStandardPtr = image;}
   //BTX
   vtkImageData* GetReferenceStandard() {return this->ReferenceStandardPtr;}
+  //ETX
+
+  // Description:
+  // The Eigen Vectors of the PCA analysis
+  void SetPCAEigenVector(vtkImageData *image, int index);
+
+  //BTX
+  // Description:
+  // SegmentationBoundary condition are taken into account (Type == 1) or not (Type == 0);
+  void* GetPCAEigenVectorPtr(int index, int type) { assert(this->PCAEigenVectorImageData); return this->GetDataPtr(this->PCAEigenVectorImageData[index],type); }
+
+  // Description:
+  // Increments for PCAEigenVector in Y and Z Dimension 
+  int   GetPCAEigenVectorIncY(int index, int type) { return this->GetImageDataInc(this->PCAEigenVectorImageData[index],type,0);}
+  int   GetPCAEigenVectorIncZ(int index, int type) { return this->GetImageDataInc(this->PCAEigenVectorImageData[index],type,1);}
+
+  //ETX  
+
+  // Description:
+  // Probability Data defining the spatial conditional label distribution
+  void   SetPCAMeanShape(vtkImageData *image) {this->SetInput(2,image);}
+
+  //BTX
+  void* GetPCAMeanShapePtr(int Type) { return this->GetDataPtr(this->PCAMeanShapeImageData,Type);}
+  //ETX
+
+  // Description:
+  // Increments for PCAMeanShape in Y and Z Dimension, where 
+  // SegmentationBoundary condition are taken into account (Type == 1) or not (Type == 0);
+  int GetPCAMeanShapeIncY(int Type) {return this->GetImageDataInc(this->PCAMeanShapeImageData, Type,0);}
+  int GetPCAMeanShapeIncZ(int Type) {return this->GetImageDataInc(this->PCAMeanShapeImageData, Type,1);}
+
   //ETX
 
   // --------------------------------------------
@@ -89,7 +96,7 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalClass : public vtkImageEMGenericC
   // Set the Number of Input Images for subclasses
   void SetNumInputImages(int number); 
 
-   void     SetLogCovariance(double value, int y, int x);
+  void     SetLogCovariance(double value, int y, int x);
   //BTX
    double** GetLogCovariance() {return this->LogCovariance;}
    double*  GetLogCovariance(int i) {return this->LogCovariance[i];}
@@ -101,6 +108,23 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalClass : public vtkImageEMGenericC
   //ETX
 
   // -------------------------------------------------------
+  // PCA Stuff
+  void     SetPCAEigenValues(int index , double value) { this->PCAEigenValues[index] = value; }
+  //BTX
+  double   *GetPCAEigenValues() {return this->PCAEigenValues;}
+  //ETX
+
+  void     SetPCANumberOfEigenModes(int init);
+  int      GetPCANumberOfEigenModes() {return this->PCANumberOfEigenModes;}
+
+  
+  void     SetPCAShapeParameters(float* init) {memcpy(this->PCAShapeParameters,init, sizeof(float)*this->PCANumberOfEigenModes);} 
+  //BTX
+  float*  GetPCAShapeParameters() {return this->PCAShapeParameters;} 
+  //ETX
+  void     PrintPCAParameters(ostream& os,vtkIndent indent);
+  
+  // -------------------------------------------------------
   // Print Functions
  
   // Description:
@@ -111,16 +135,39 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalClass : public vtkImageEMGenericC
 
   vtkGetMacro(PrintQuality,int);
   
-  // Check if the input image data is consistence with what we expect
-  int CheckInputImage(vtkImageData * inData,int DataTypeOrig, int num, int outExt[6]);
+  vtkSetMacro(PrintPCA,int);
+  vtkGetMacro(PrintPCA,int);
+  
+  
   // Check and Assign ImageData to the different parameters 
-  int CheckAndAssignImageData(vtkImageData *inData, int outExt[6]);
+  int CheckAndAssignPCAImageData(vtkImageData *inData, int ImageIndex);
+
+  // Description: 
+  // From which value should we assign the probability 1 to it 
+  vtkSetMacro(PCALogisticMax,float) ;     
+  vtkGetMacro(PCALogisticMax,float) ;  
+
+  // Description: 
+  // From which distanc should we assign the probability 0 (e.g. 5)
+  vtkSetMacro(PCALogisticMin,float) ;     
+  vtkGetMacro(PCALogisticMin,float) ;     
+
+  // Description:
+  // Which value should 0.5 be assigned to 
+  vtkSetMacro(PCALogisticBoundary,float);
+  vtkGetMacro(PCALogisticBoundary,float);
+ 
+  // Description:
+  // What is the stepness of the slope 
+  vtkSetMacro(PCALogisticSlope,float);
+  vtkGetMacro(PCALogisticSlope,float);
 
 protected:
   vtkImageEMLocalClass();
   vtkImageEMLocalClass(const vtkImageEMLocalClass&) {};
   ~vtkImageEMLocalClass() {this->DeleteClassVariables();}
   void DeleteClassVariables();
+  void DeletePCAParameters(); 
 
   void operator=(const vtkImageEMLocalClass&) {};
   void ThreadedExecute(vtkImageData **inData, vtkImageData *outData,int outExt[6], int id) {};
@@ -129,13 +176,24 @@ protected:
   double *LogMu;                 // Intensity distribution of the classes (changed for Multi Dim Version)
   double **LogCovariance;        // Intensity distribution of the classes (changed for Multi Dim Version) -> This is the Coveriance Matrix
                                  // Be careful: the Matrix must be symmetric and positiv definite,
-  void   *ProbDataPtr;           // Pointer to Probability Data 
-  int    ProbDataIncY;           // Increments for probability data in Y Dimension 
-  int    ProbDataIncZ;           // Increments for probability data in Z Dimension
-
   vtkImageData*  ReferenceStandardPtr;  // Reference Standard for measuring the performance of the algorithm
+   // -------------------------------------------------------
+   // PCA Stuff 
+   float *PCAShapeParameters;    // Defines the shape parameter for a model. If all parameters are 0 => MeanShape
+   int    PCANumberOfEigenModes;  // Number of Eigenmodes used for shape model -> by the way can be different from NumberOfEigenModes defined by PCAShapePtr
 
-  int PrintQuality;        // Prints out a quality measure of the current result ( 1=  Dice )
+   vtkImageData **PCAEigenVectorImageData;
+   vtkImageData *PCAMeanShapeImageData;
+
+   double *PCAEigenValues;
+
+   int PrintQuality;        // Prints out a quality measure of the current result ( 1=  Dice )
+   int PrintPCA;            // Print out PCA Parameters at each step 
+  
+   float  PCALogisticMax;     // From which value should we assign the probability 1 to it 
+   float  PCALogisticMin;     // From which value should we assign the probability 0 
+   float  PCALogisticBoundary; // Which value should 0.5 be assigned to 
+   float  PCALogisticSlope;    // Ehat is the stepness of the slope 
 };
 #endif
 
