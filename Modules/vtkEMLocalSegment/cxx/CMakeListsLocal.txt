@@ -10,15 +10,17 @@
 # and 'MYCLASS' to your module name (all CAPS)
 #
 
-IF (WIN32) 
-    SET (LOCAL_MODULE_SRCS
+SET (LOCAL_MODULE_SRCS
          vtkTimeDef.h
          vtkImageEMMarkov.cxx
- 
+
+	 vtkImageEMLocalGenericClass.cxx
          vtkImageEMLocalSuperClass.cxx
          vtkImageEMLocalClass.cxx
          vtkImageEMLocalSegmenter.cxx
- 
+   
+         vtkSimonParameterReaderWriter.cxx
+
          vtkMrmlSegmenterNode.cxx 
      	 vtkMrmlEndSegmenterNode.cxx 
          vtkMrmlSegmenterGenericClassNode.cxx 
@@ -30,30 +32,19 @@ IF (WIN32)
          vtkMrmlSegmenterCIMNode.cxx 
          vtkMrmlSegmenterGraphNode.cxx 
          vtkMrmlSegmenterPCAEigenNode.cxx
-    )
-    SET_SOURCE_FILES_PROPERTIES ( vtkThread.cxx ABSTRACT )
-ELSE (WIN32)
-    SET (LOCAL_MODULE_SRCS
-         vtkTimeDef.h
-         vtkImageEMMarkov.cxx
- 
-         vtkImageEMLocalSuperClass.cxx
-         vtkImageEMLocalClass.cxx
-         vtkImageEMLocalSegmenter.cxx
- 
-         vtkMrmlSegmenterNode.cxx 
-     	 vtkMrmlEndSegmenterNode.cxx 
-         vtkMrmlSegmenterGenericClassNode.cxx 
-         vtkMrmlSegmenterClassNode.cxx    	
-         vtkMrmlEndSegmenterClassNode.cxx  
-         vtkMrmlSegmenterSuperClassNode.cxx 
-         vtkMrmlEndSegmenterSuperClassNode.cxx
-         vtkMrmlSegmenterInputNode.cxx  
-         vtkMrmlSegmenterCIMNode.cxx 
-         vtkMrmlSegmenterGraphNode.cxx 
-         vtkMrmlSegmenterPCAEigenNode.cxx
-    )
-ENDIF (WIN32)
+ )
+
+SET ( LOCAL_NO_WRAP_SRCS
+    ${VTKEMLOCALSEGMENT_SOURCE_DIR}/NumericalRecipes/nrutil.cxx
+    ${VTKEMLOCALSEGMENT_SOURCE_DIR}/NumericalRecipes/mnbrak.cxx
+    ${VTKEMLOCALSEGMENT_SOURCE_DIR}/NumericalRecipes/conjugateMethods.cxx 
+    ${VTKEMLOCALSEGMENT_SOURCE_DIR}/NumericalRecipes/simplex.cxx
+    ${VTKEMLOCALSEGMENT_SOURCE_DIR}/PriorModels/EMLocalInterface.cxx
+    ${VTKEMLOCALSEGMENT_SOURCE_DIR}/PriorModels/EMLocalRegistration.cxx
+    ${VTKEMLOCALSEGMENT_SOURCE_DIR}/PriorModels/EMLocalShape.cxx
+) 
+
+# MESSAGE(STATUS  ${VTKEMLOCALSEGMENT_SOURCE_DIR}) 
 
 # You can add additional include paths here
 #INCLUDE_DIRECTORIES(
@@ -70,6 +61,11 @@ INCLUDE_DIRECTORIES(
 
    ${VTKEMATLAS_SOURCE_DIR}/cxx 
    ${VTKEMATLAS_BUILD_DIR}
+
+   ${VTKEMLOCALSEGMENT_SOURCE_DIR}/NumericalRecipes
+   ${VTKEMLOCALSEGMENT_SOURCE_DIR}/PriorModels
+   ${VTKEMLOCALSEGMENT_SOURCE_DIR}/Algorithm
+
 )
 LINK_LIBRARIES (
    ${VTKSLICERBASE_BUILD_LIB} 
@@ -97,4 +93,4 @@ LINK_LIBRARIES (
 # It should happen in the CMakeLists.txt file that includes this one,
 # but because of a CMake bug that doesn't work.
 #
-ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} ${LOCAL_MODULE_SRCS})
+ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} ${LOCAL_MODULE_SRCS} ${LOCAL_NO_WRAP_SRCS})
