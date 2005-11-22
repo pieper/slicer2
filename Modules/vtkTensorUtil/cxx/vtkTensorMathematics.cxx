@@ -724,7 +724,7 @@ void vtkTensorMathematics::ModeToRGB(double Mode, double FA,
    B = FA*B;
 }
 
-int vtkTensorMathematics::TeemEigenSolver(double **m, double *w, double **v) 
+inline int vtkTensorMathematics::TeemEigenSolver(double **m, double *w, double **v) 
 {
     double t[7];
     double evec[9];
