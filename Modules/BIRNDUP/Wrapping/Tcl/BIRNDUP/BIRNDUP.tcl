@@ -12,7 +12,6 @@ if { [info commands dup] == "" } {
 
     # source the Module's tcl file that contains it's init procedure
     set files {
-        VolDeface.tcl
         BIRNDUP.tcl
         dup.tcl
         dup_sort.tcl
