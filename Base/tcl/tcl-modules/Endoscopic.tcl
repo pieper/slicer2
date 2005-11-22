@@ -262,7 +262,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.99 $} {$Date: 2005/07/27 21:50:42 $}] 
+    {$Revision: 1.100 $} {$Date: 2005/11/22 16:54:47 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -4106,9 +4106,19 @@ proc EndoscopicFiducialsPointSelectedCallback {fid pid} {
     
     global Endoscopic Fiducials Select Module Model Point
 
+    if {$::Module(verbose)} {
+        puts "EndoscopicFiducialsPointSelectedCallback fid = $fid, pid = $pid, active list id = $Fiducials(activeListID)"
+    }
+
     set Endoscopic(selectedFiducialPoint) $pid
     set Endoscopic(selectedFiducialList) $fid
-    FiducialsSetActiveList $Fiducials($fid,name)
+    # only reset the active list if it's changed
+    if {$Fiducials(activeListID) != $Endoscopic(selectedFiducialList)} {
+        FiducialsSetActiveList $Fiducials($fid,name)
+        if {$::Module(verbose)} {
+            puts "EndoscopicFiducialsPointSelectedCallback: after fid set active list to $fid"
+        }
+    }
 
     # if the source or sink button are on, then make that point the 
     if { $Endoscopic(sourceButton,on) == 1 } {
