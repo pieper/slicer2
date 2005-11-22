@@ -249,10 +249,10 @@ proc VolGenericApply {} {
 
     if { ![info exists Volume(name)] } { set Volume(name) "Generic"}
 
-    if {[ValidateName $Volume(name)] == 0} {
-        DevErrorWindow "The name can consist of letters, digits, dashes, or underscores"
-        return
-    }
+#    if {[ValidateName $Volume(name)] == 0} {
+#        DevErrorWindow "The name can consist of letters, digits, dashes, or underscores"
+#        return
+#    }
 
     # add a mrml node
     set n [MainMrmlAddNode Volume]
