@@ -47,15 +47,19 @@ SET (TEEM_SRC_DIR
         ${SLICER_LIB}/teem
 )
 
-SET(TEEM_BUILD_DIR
-       ${SLICER_LIB}/teem-build/${CMAKE_BUILD_TYPE}
+SET(TEEM_BIN_DIR
+       ${SLICER_LIB}/teem-build/bin/${CMAKE_BUILD_TYPE}
 )
 
-MESSAGE ("Teem is: ${TEEM_SRC_DIR} and build ${TEEM_BUILD_DIR}")
+SET(TEEM_BUILD_DIR
+       ${SLICER_LIB}/teem-build
+)
+
+MESSAGE ("Teem is: ${TEEM_SRC_DIR} and build ${TEEM_BUILD_DIR} and bin ${TEEM_BIN_DIR}")
 
 SET(TEEM_BUILD_LIB air hest biff nrrd ell unrrdu dye moss gage bane
 	limn hoover alan echo ten
-	mite coil push)
+	mite coil )
        
                
 #
