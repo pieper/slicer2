@@ -403,10 +403,23 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
           w[2] = vtkMath::Normalize(v2);
         }
 
-        //Correct for negative eigenvalues: absolute value
-        w[0] = fabs(w[0]);
-        w[1] = fabs(w[1]);
-        w[2] = fabs(w[2]);
+        //Correct for negative eigenvalues. Three possible options:
+        //  1. Round to zero
+        //  2. Take absolute value
+        //  3. Increase eigenvalues by negative part
+        // The two first options have been problematic. Try 3 
+        if(w[2]<0) {
+            w[2] = 0;
+            w[1] += (-w[2]);
+            w[0] += (-w[2]);
+        }
+        if (w[1]<0) {
+            w[1] = 0;
+            w[0] += (-w[1]);
+        }
+        if (w[0] <0) {
+            w[0]=0;
+        }    
           
           // Lauren note that RA and LA could be computed
           // without diagonalization.  This should be implementred
