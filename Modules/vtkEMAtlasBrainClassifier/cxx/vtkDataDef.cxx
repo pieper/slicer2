@@ -36,7 +36,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
 #include "vtkDataDef.h"
-#include "vtkThread.h"
 
 // Convolution and polynomial multiplication . 
 // This is assuming u and 'this' have the same dimensio
@@ -227,7 +226,6 @@ void EMVolume::ConvZ(float *v, int vLen) {
 } 
 
 
-#ifndef _WIN32
 // ---------------------------------------------------------
 // Functions to Multi Thread Convolution
 // somehow copied from Simon convolution.cxx
@@ -235,164 +233,164 @@ void EMVolume::ConvZ(float *v, int vLen) {
 // Be Carefull ouput will be written to the instance - and input must be of the same dimension
 // as *this 
 
-
-void ConvolutionFilterWorker(void *jobparm)
-{
-  convolution_filter_work *job = (convolution_filter_work *)jobparm;
-
-  /* For each image pixel,
-   *   fill array with image values,
-   *   copy convolution into output image
-   */
-  int i; int j; int k;
-  int n; int m; int o;
-  int nvals = 0;
-
-  int index; 
-  int M1 = job->M1;
-  int M2 = job->M2;
-  int N1 = job->N1;
-  int N2 = job->N2;
-  int O1 = job->O1;
-  int O2 = job->O2;
-
-  int filterSliceSize = (M2 - M1 +1)*(N2 - N1 + 1);
-  int filterRowSize = (N2 - N1 + 1);
-  int nrow = job->nrow;
-  int ncol = job->ncol;
-  int nslice = job->nslice;
-
-  float *input = NULL;
-  float *output = NULL;
-  float *filter = job->filter;
-
-  float sum = 0.0;
-  int coeff = -1;
-
-
-  index = job->startindex;
-  m = (index / job->ncol) % job->nrow;
-  n = index % job->ncol;
-  o = index / (job->ncol * job->nrow);
-
-  input = &job->input[o*nrow*ncol+m*ncol+n];
-  output = &job->output[o*nrow*ncol+m*ncol+n];
-
-  for (index = job->startindex; index < job->endindex; index++) {
-    m = (index / job->ncol) % job->nrow;
-    n = index % job->ncol;
-    o = index / (job->ncol * job->nrow);
-    sum = 0.0;
-    coeff = -1;
-    for (k = O1; k <= O2; k++) {
-      for (i = M1; i <= M2; i++) {
-        for (j = N1; j <= N2; j++) {
-          coeff++;
-      // cout << coeff << endl;
-          if (o < k || o > k + nslice - 1) continue;
-          if (m < i || m > i + nrow - 1) continue;
-          if (n < j || n > j + ncol - 1) continue;
-            sum += (*(input + job->indexes[coeff])) * filter[coeff];
-        }
-      }
-    }
-    (*output) = sum;
-    input++;
-    output++;
-  }
-
-}
-
-int EMVolume::ConvolutionFilter_workpile(float *input, float *filter, int M1, int M2, int N1, int N2, int O1, int O2)
-{
-  #define MAXCONVOLUTIONWORKERTHREADS 32
-  int numthreads = 0;
-  workpile_t workpile;
-  int npixels = this->MaxXYZ;
-  int jobsize;
-
-  convolution_filter_work job[MAXCONVOLUTIONWORKERTHREADS];
-  int i; int j; int k;
-  int icount;
-  int *indexes = NULL;
-  int numindexes = (M2-M1+1)*(N2-N1+1)*(O2-O1+1);
-
-  indexes = (int *)malloc(sizeof(int)*numindexes);
-  assert(indexes != NULL);
-
-  /* y[n] = \sum_k(-inf, +inf) h[k] x[n-k] */
-  icount = 0;
-  for (k = O1; k <= O2; k++) {
-    for (i = M1; i <= M2; i++) {
-      for (j = N1; j <= N2; j++) {
-        indexes[icount] = -(i)*this->MaxX + -(k)*this->MaxXY - j;
-        icount++;
-      }
-    }
-  }
- 
-  numthreads = vtkThreadNumCpus(void);
-  vtkThread thread;
-  assert((numthreads <= MAXCONVOLUTIONWORKERTHREADS) && (numthreads > 0));
-  workpile = thread.work_init(numthreads, ConvolutionFilterWorker, numthreads);
-
-  jobsize = npixels/numthreads;
-  for (i = 0; i < numthreads; i++) {
-    if (i == 0) {
-      job[i].startindex = 0;
-    } else {
-      job[i].startindex = job[i-1].endindex;
-    }
-    if (i == (numthreads - 1)) {
-      job[i].endindex = npixels;
-    } else {
-      job[i].endindex = (i+1)*jobsize;
-    }
-    job[i].input  = input;
-    job[i].nrow   = this->MaxY;
-    job[i].ncol   = this->MaxX;
-    job[i].nslice = this->MaxZ;
-    job[i].filter = filter;
-    job[i].indexes = indexes;
-    job[i].numindexes = numindexes;
-    job[i].M1 = M1;
-    job[i].M2 = M2;
-    job[i].N1 = N1;
-    job[i].N2 = N2;
-    job[i].O1 = O1;
-    job[i].O2 = O2;
-    job[i].output = this->Data;
-    thread.work_put(workpile, &job[i]);
-  }
-
-  /* At this point all the jobs are done and the workers are waiting */
-  /* In order to avoid a memory leak they should now all be killed off,
-   *   or asked to suicide
-   */
-  thread.work_wait(workpile);
-  thread.work_finished_forever(workpile);
-
-  free(indexes);
-
-  return 0; /* Success */
-}
-
-// Be Carefull ouput will be written to the instance - and input must be of the same dimension
-// as *this 
-int EMVolume::ConvMultiThread(float* filter, int filterLen) {
-  int min_filter = - filterLen /2;
-  int max_filter = min_filter + filterLen -1; // -1 for 0 !!!
-  EMVolume temp(this->MaxZ,this->MaxY,this->MaxX);
-  /* Filter in the y direction with f2 */
-  temp.ConvolutionFilter_workpile(this->Data,filter,0,0,min_filter,max_filter,0,0);
-  /* Filter in the x direction with f1 */
-  this->ConvolutionFilter_workpile(temp.Data,filter,min_filter,max_filter,0,0,0,0);
-
-  /* Filter in the z direction with f1 */
-  temp.ConvolutionFilter_workpile(this->Data,filter,0,0,0,0,min_filter,max_filter);
-
-  *this = temp;
-
-  return 0; /* success */
-}
-#endif
+// #include "vtkThread.h"
+// Did not work 
+// void ConvolutionFilterWorker(void *jobparm)
+// {
+//   convolution_filter_work *job = (convolution_filter_work *)jobparm;
+// 
+//   /* For each image pixel,
+//    *   fill array with image values,
+//    *   copy convolution into output image
+//    */
+//   int i; int j; int k;
+//   int n; int m; int o;
+//   int nvals = 0;
+// 
+//   int index; 
+//   int M1 = job->M1;
+//   int M2 = job->M2;
+//   int N1 = job->N1;
+//   int N2 = job->N2;
+//   int O1 = job->O1;
+//   int O2 = job->O2;
+// 
+//   int filterSliceSize = (M2 - M1 +1)*(N2 - N1 + 1);
+//   int filterRowSize = (N2 - N1 + 1);
+//   int nrow = job->nrow;
+//   int ncol = job->ncol;
+//   int nslice = job->nslice;
+// 
+//   float *input = NULL;
+//   float *output = NULL;
+//   float *filter = job->filter;
+// 
+//   float sum = 0.0;
+//   int coeff = -1;
+// 
+// 
+//   index = job->startindex;
+//   m = (index / job->ncol) % job->nrow;
+//   n = index % job->ncol;
+//   o = index / (job->ncol * job->nrow);
+// 
+//   input = &job->input[o*nrow*ncol+m*ncol+n];
+//   output = &job->output[o*nrow*ncol+m*ncol+n];
+// 
+//   for (index = job->startindex; index < job->endindex; index++) {
+//     m = (index / job->ncol) % job->nrow;
+//     n = index % job->ncol;
+//     o = index / (job->ncol * job->nrow);
+//     sum = 0.0;
+//     coeff = -1;
+//     for (k = O1; k <= O2; k++) {
+//       for (i = M1; i <= M2; i++) {
+//         for (j = N1; j <= N2; j++) {
+//           coeff++;
+//       // cout << coeff << endl;
+//           if (o < k || o > k + nslice - 1) continue;
+//           if (m < i || m > i + nrow - 1) continue;
+//           if (n < j || n > j + ncol - 1) continue;
+//             sum += (*(input + job->indexes[coeff])) * filter[coeff];
+//         }
+//       }
+//     }
+//     (*output) = sum;
+//     input++;
+//     output++;
+//   }
+// 
+// }
+// 
+// int EMVolume::ConvolutionFilter_workpile(float *input, float *filter, int M1, int M2, int N1, int N2, int O1, int O2)
+// {
+//   #define MAXCONVOLUTIONWORKERTHREADS 32
+//   int numthreads = 0;
+//   workpile_t workpile;
+//   int npixels = this->MaxXYZ;
+//   int jobsize;
+// 
+//   convolution_filter_work job[MAXCONVOLUTIONWORKERTHREADS];
+//   int i; int j; int k;
+//   int icount;
+//   int *indexes = NULL;
+//   int numindexes = (M2-M1+1)*(N2-N1+1)*(O2-O1+1);
+// 
+//   indexes = (int *)malloc(sizeof(int)*numindexes);
+//   assert(indexes != NULL);
+// 
+//   /* y[n] = \sum_k(-inf, +inf) h[k] x[n-k] */
+//   icount = 0;
+//   for (k = O1; k <= O2; k++) {
+//     for (i = M1; i <= M2; i++) {
+//       for (j = N1; j <= N2; j++) {
+//         indexes[icount] = -(i)*this->MaxX + -(k)*this->MaxXY - j;
+//         icount++;
+//       }
+//     }
+//   }
+//  
+//   numthreads = vtkThreadNumCpus(void);
+//   vtkThread thread;
+//   assert((numthreads <= MAXCONVOLUTIONWORKERTHREADS) && (numthreads > 0));
+//   workpile = thread.work_init(numthreads, ConvolutionFilterWorker, numthreads);
+// 
+//   jobsize = npixels/numthreads;
+//   for (i = 0; i < numthreads; i++) {
+//     if (i == 0) {
+//       job[i].startindex = 0;
+//     } else {
+//       job[i].startindex = job[i-1].endindex;
+//     }
+//     if (i == (numthreads - 1)) {
+//       job[i].endindex = npixels;
+//     } else {
+//       job[i].endindex = (i+1)*jobsize;
+//     }
+//     job[i].input  = input;
+//     job[i].nrow   = this->MaxY;
+//     job[i].ncol   = this->MaxX;
+//     job[i].nslice = this->MaxZ;
+//     job[i].filter = filter;
+//     job[i].indexes = indexes;
+//     job[i].numindexes = numindexes;
+//     job[i].M1 = M1;
+//     job[i].M2 = M2;
+//     job[i].N1 = N1;
+//     job[i].N2 = N2;
+//     job[i].O1 = O1;
+//     job[i].O2 = O2;
+//     job[i].output = this->Data;
+//     thread.work_put(workpile, &job[i]);
+//   }
+// 
+//   /* At this point all the jobs are done and the workers are waiting */
+//   /* In order to avoid a memory leak they should now all be killed off,
+//    *   or asked to suicide
+//    */
+//   thread.work_wait(workpile);
+//   thread.work_finished_forever(workpile);
+// 
+//   free(indexes);
+// 
+//   return 0; /* Success */
+// }
+// 
+// // Be Carefull ouput will be written to the instance - and input must be of the same dimension
+// // as *this 
+// int EMVolume::ConvMultiThread(float* filter, int filterLen) {
+//   int min_filter = - filterLen /2;
+//   int max_filter = min_filter + filterLen -1; // -1 for 0 !!!
+//   EMVolume temp(this->MaxZ,this->MaxY,this->MaxX);
+//   /* Filter in the y direction with f2 */
+//   temp.ConvolutionFilter_workpile(this->Data,filter,0,0,min_filter,max_filter,0,0);
+//   /* Filter in the x direction with f1 */
+//   this->ConvolutionFilter_workpile(temp.Data,filter,min_filter,max_filter,0,0,0,0);
+// 
+//   /* Filter in the z direction with f1 */
+//   temp.ConvolutionFilter_workpile(this->Data,filter,0,0,0,0,min_filter,max_filter);
+// 
+//   *this = temp;
+// 
+//   return 0; /* success */
+// }

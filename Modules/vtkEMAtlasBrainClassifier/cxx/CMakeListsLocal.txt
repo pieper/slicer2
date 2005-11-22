@@ -10,8 +10,7 @@
 # and 'MYCLASS' to your module name (all CAPS)
 #
 
-IF (WIN32) 
-    SET (LOCAL_MODULE_SRCS
+SET (LOCAL_MODULE_SRCS
         vtkDataDef.cxx
         vtkFileOps.cxx
 
@@ -27,28 +26,8 @@ IF (WIN32)
         vtkImageEMAtlasClass.cxx
         vtkImageEMAtlasSuperClass.cxx
         vtkImageEMAtlasSegmenter.cxx
-    )
-    SET_SOURCE_FILES_PROPERTIES ( vtkThread.cxx ABSTRACT )
-ELSE (WIN32)
-    SET (LOCAL_MODULE_SRCS
-        vtkDataDef.cxx
-        vtkFileOps.cxx
-        vtkThread.cxx
+)
 
-	vtkMrmlSegmenterAtlasGenericClassNode.cxx 
-        vtkMrmlSegmenterAtlasClassNode.cxx    	
-        vtkMrmlSegmenterAtlasSuperClassNode.cxx 
-        vtkMrmlSegmenterAtlasInputNode.cxx  
-        vtkMrmlSegmenterAtlasCIMNode.cxx 
-        vtkMrmlSegmenterAtlasNode.cxx 
-
-        vtkImageEMGeneral.cxx
-        vtkImageEMGenericClass.cxx
-        vtkImageEMAtlasClass.cxx
-        vtkImageEMAtlasSuperClass.cxx
-        vtkImageEMAtlasSegmenter.cxx
-    )
-ENDIF (WIN32)
 
 # You can add additional include paths here
 #INCLUDE_DIRECTORIES(

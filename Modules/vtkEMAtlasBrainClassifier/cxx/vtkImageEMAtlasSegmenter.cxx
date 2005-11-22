@@ -968,19 +968,12 @@ int vtkImageEMAtlasSegmenter::MF_Approx_Workpile(float **w_m_input,unsigned char
   int NumInputImages = this->NumInputImages;
 
   EMAtlas_MF_Approximation_Work_Private job[MAXMFAPPROXIMATIONWORKERTHREADS];
-#ifdef _WIN32  
-  numthreads = 1;
-#else 
-  workpile_t workpile;
-  vtkThread thread;
+
   // Sylvain did not like this because different results are produced on different machines - Kilian
+  // I threw threaded function out - however to reduce labor I did not change the structure, which I should
+
   // numthreads = vtkThreadNumCpus(void) ;
   numthreads = 1;
-
-  assert((numthreads <= MAXMFAPPROXIMATIONWORKERTHREADS) && (numthreads > 0));
-
-  workpile = thread.work_init(numthreads,vtkImageEMAtlasSegmenter_MeanFieldApproximation3DThreadPrivate, numthreads);
-#endif
   jobsize = this->ImageProd/numthreads;
 
   for (i = 0; i < numthreads; i++) {
@@ -1041,21 +1034,10 @@ int vtkImageEMAtlasSegmenter::MF_Approx_Workpile(float **w_m_input,unsigned char
     job[i].TissueProbability     = TissueProbability;
     job[i].VirtualNumInputImages =  VirtualNumInputImages;
     StartIndex += jobsize;
-#ifdef _WIN32
+
     vtkImageEMAtlasSegmenter_MeanFieldApproximation3DThreadPrivate(&job[i]);
-#else
-    thread.work_put(workpile, &job[i]);
-#endif
   }
 
-  /* At this point all the jobs are done and the workers are waiting */
-  /* In order to avoid a memory leak they should now all be killed off,
-   *   or asked to suicide
-   */
-#ifndef _WIN32
-  thread.work_wait(workpile);
-  thread.work_finished_forever(workpile);
-#endif
   // Delete here
   for (i=0; i <numthreads; i++) {
     delete[] job[i].w_m_input;
@@ -1858,7 +1840,6 @@ int vtkImageEMAtlasSegmenter::HierarchicalSegmentation(vtkImageEMAtlasSuperClass
   // 2. Segment Subject
   // ---------------------------------------------------------------
 
-  // Normal Segmentation without Samson stuff
   switch (this->GetInput(0)->GetScalarType()) {
     vtkTemplateMacro9(vtkImageEMAtlasAlgorithm,this,(VTK_TT**) ProbDataPtr, InputVector, ROI,iv_m,r_m,w_m, LevelName, SegmentLevelSucessfullFlag);
   }
@@ -1928,9 +1909,6 @@ static void vtkImageEMAtlasSegmenterExecute(vtkImageEMAtlasSegmenter *self,float
   EMVolume *r_m  = new EMVolume[NumInputImages]; // weighted residuals
   for (int i=0; i < NumInputImages; i++) r_m[i].Resize(DimensionZ,DimensionY,DimensionX);
   // Print information
-#ifndef _WIN32
-  cout << "This Computer has " << vtkThreadNumCpus(void)  << " Processors" << endl;
-#endif
 
   if ( (DimensionX != (outExt[1] - outExt[0] +1)) ||(DimensionY != (outExt[3] - outExt[2] +1)) ||(DimensionZ != (outExt[5] - outExt[4] +1)))  
     cout << "Segmentation Boundary is activated (" <<DimensionX  <<"," << DimensionY << "," << DimensionZ <<") !" << endl;    
@@ -1950,14 +1928,6 @@ static void vtkImageEMAtlasSegmenterExecute(vtkImageEMAtlasSegmenter *self,float
   // self->GetHeadClass()->DefineAllLogInvCovParamters();
   // self->GetHeadClass()->Print("");  
   sprintf(LevelName,"1");
-
-  // Run Algorithm
-  cout << "Deformable Model Setting: ";
-#ifdef VTKEMPRIVATE_TETRA_MESH_FLAG
-  cout << "On" << endl;
-#else
-  cout << "Off" << endl;
-#endif
 
   // -----------------------------------------------------
   // 2.) Run  Hierarchical Segmentation

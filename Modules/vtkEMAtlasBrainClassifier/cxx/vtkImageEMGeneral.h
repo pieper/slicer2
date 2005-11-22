@@ -58,7 +58,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageAccumulate.h"
 #include "vtkImageData.h" 
 // Just made for vtkImageEMGeneral and its kids
-#include "vtkThread.h"
 #include "vtkDataDef.h"
 #include "vtkFileOps.h" 
 #include "vtkImageReader.h"

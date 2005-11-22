@@ -106,10 +106,6 @@ public:
   }
   // Kilian : Just to be compatible with older version
   void Conv(double *v,int vLen);
-  int ConvMultiThread(float* filter, int filterLen);
-  // Start -  Multi Thread Function
-  int ConvolutionFilter_workpile(float *input, float *filter, int M1, int M2, int N1, int N2, int O1, int O2);
-
   // End -  Multi Thread Function
   void ConvY(float *v, int vLen);
   void ConvX(float *v, int vLen);
