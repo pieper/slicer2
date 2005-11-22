@@ -182,8 +182,8 @@ proc EMSegmentInit {} {
 
 
     # For later version where we can use local prios
-    # Public Version  = 1
-    # Private Version = 2
+    # Public Version  = 0
+    # Private Version = 1
    
     #if { [catch "package require vtkEMPrivateSegment"] } {
     #  set EMSegment(SegmentMode) 0
@@ -288,7 +288,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.62 $} {$Date: 2005/09/21 07:54:31 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.63 $} {$Date: 2005/11/22 07:14:31 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -497,50 +497,44 @@ proc EMSegmentInit {} {
        set EMSegment(Gui${Name}EntryTypeList) ""
     }
 
-    if {$EMSegment(SegmentMode)} {
-        # For Printing parameters 
-        set LeftOverList $EMSegment(MrmlNode,SegmenterSuperClass,AttributeList) 
-        foreach LeftOut "Name NumClasses Prob LocalPriorWeight InputChannelWeights" {
-            set index [lsearch -exact $LeftOverList $LeftOut] 
-            set LeftOverList [lreplace $LeftOverList $index $index] 
-        } 
-
-        foreach index [lsearch -glob -all $EMSegment(MrmlNode,SegmenterSuperClass,AttributeList)  Print*] {
-          set attribute [lindex $EMSegment(MrmlNode,SegmenterSuperClass,AttributeList) $index]
-          lappend EMSegment(GuiPrintNameList) [string range $attribute 5 end]
-          lappend EMSegment(GuiPrintAttributeList) $attribute
-
-          if {$attribute != "PrintFrequency"} {
-            lappend EMSegment(GuiPrintEntryTypeList) check 
-          } else {
-            lappend EMSegment(GuiPrintEntryTypeList) entry 
-          }
-      
-          set LeftOverIndex [lsearch $LeftOverList $attribute]  
-          set LeftOverList [lreplace $LeftOverList $LeftOverIndex $LeftOverIndex]
-        }
-
-        # Boundary calculation parameters    
-       foreach index [lsearch -glob -all $EMSegment(MrmlNode,SegmenterSuperClass,AttributeList)  Stop*] {
-          set attribute [lindex $EMSegment(MrmlNode,SegmenterSuperClass,AttributeList) $index]
-          lappend EMSegment(GuiStopNameList) [string range $attribute 4 end]
-          lappend EMSegment(GuiStopAttributeList) $attribute
-          lappend EMSegment(GuiStopEntryTypeList) entry
-
-          set LeftOverIndex [lsearch $LeftOverList $attribute]  
-          set LeftOverList [lreplace $LeftOverList $LeftOverIndex $LeftOverIndex]
+     # For Printing parameters 
+     set LeftOverList $EMSegment(MrmlNode,SegmenterSuperClass,AttributeList) 
+     foreach LeftOut "Name NumClasses Prob LocalPriorWeight InputChannelWeights" {
+         set index [lsearch -exact $LeftOverList $LeftOut] 
+         set LeftOverList [lreplace $LeftOverList $index $index] 
+     } 
+    
+     foreach index [lsearch -glob -all $EMSegment(MrmlNode,SegmenterSuperClass,AttributeList)  Print*] {
+       set attribute [lindex $EMSegment(MrmlNode,SegmenterSuperClass,AttributeList) $index]
+       lappend EMSegment(GuiPrintNameList) [string range $attribute 5 end]
+       lappend EMSegment(GuiPrintAttributeList) $attribute
+    
+       if {$attribute != "PrintFrequency"} {
+         lappend EMSegment(GuiPrintEntryTypeList) check 
+       } else {
+         lappend EMSegment(GuiPrintEntryTypeList) entry 
        }
-    # Misc Parameter
-        foreach attribute $LeftOverList {
-        lappend EMSegment(GuiMiscellaneousNameList) $attribute
-        lappend EMSegment(GuiMiscellaneousAttributeList) $attribute
-        lappend EMSegment(GuiMiscellaneousEntryTypeList) entry
-    } 
-    } else {
-       set EMSegment(GuiPrintNameList)       "Print Weights Bias LabelMap"
-       set EMSegment(GuiPrintAttributeList)  "PrintFrequency PrintWeights PrintBias PrintLabelMap"
-       set EMSegment(GuiPrintEntryTypeList)  "check check check check"
+    
+       set LeftOverIndex [lsearch $LeftOverList $attribute]  
+       set LeftOverList [lreplace $LeftOverList $LeftOverIndex $LeftOverIndex]
+     }
+    
+     # Boundary calculation parameters    
+    foreach index [lsearch -glob -all $EMSegment(MrmlNode,SegmenterSuperClass,AttributeList)  Stop*] {
+       set attribute [lindex $EMSegment(MrmlNode,SegmenterSuperClass,AttributeList) $index]
+       lappend EMSegment(GuiStopNameList) [string range $attribute 4 end]
+       lappend EMSegment(GuiStopAttributeList) $attribute
+       lappend EMSegment(GuiStopEntryTypeList) entry
+    
+       set LeftOverIndex [lsearch $LeftOverList $attribute]  
+       set LeftOverList [lreplace $LeftOverList $LeftOverIndex $LeftOverIndex]
     }
+    # Misc Parameter
+    foreach attribute $LeftOverList {
+      lappend EMSegment(GuiMiscellaneousNameList) $attribute
+      lappend EMSegment(GuiMiscellaneousAttributeList) $attribute
+      lappend EMSegment(GuiMiscellaneousEntryTypeList) entry
+    } 
     
     EMSegmentCreateDeleteClasses 0 1 1 
     # Set Head Class to superclass
@@ -1086,9 +1080,8 @@ Description of the tabs:
     set EMSegment(Cl-f0-fPrintParameter)  $f.fparameters
 
     pack $f.fparameters.cWeight -side left -anchor n -pady 4 -padx 3
-    if {$EMSegment(SegmentMode)} {
-      pack $f.fparameters.cPCA -side left -anchor n -pady 4 -padx 3
-    }
+    pack $f.fparameters.cPCA -side left -anchor n -pady 4 -padx 3
+ 
     pack $f.fparameters.cQuality  $f.fparameters.mReferenceStandardSelect -side left -anchor n -pady 4 -padx 3
 
     EMSegmentCreateGraphDisplayButton $EMSegment(Cl-fClass).f0
@@ -1325,10 +1318,6 @@ Description of the tabs:
     eval {entry $f.fSect1.fCol2.eEMI -width 4 -textvariable EMSegment(Cattrib,0,StopEMMaxIter) } $Gui(WEA)
     TooltipAdd $f.fSect1.fCol2.eEMI "Number of EM Iterations"
 
-    DevAddLabel $f.fSect1.fCol1.lMRFI "MFA-Iterations:"
-    eval {entry $f.fSect1.fCol2.eMRFI -width 4 -textvariable $EMSegment(Cattrib,0,StopMFAMaxIter) } $Gui(WEA)
-    TooltipAdd $f.fSect1.fCol2.eMRFI "Number of Mean Field Approximation Iterations to regularize weights"
-
     DevAddLabel $f.fSect1.fCol1.lAlpha "Alpha:"
     eval {entry $f.fSect1.fCol2.eAlpha -width 4 -textvariable EMSegment(Alpha) } $Gui(WEA)
     TooltipAdd $f.fSect1.fCol2.eAlpha "Alpha defines the influence of the Markov Field! \n Alpha = 0 => Normal EM EMSegment without Markov Field! Alpha has to be 0 <= alpha <= 1"
@@ -1464,8 +1453,8 @@ Description of the tabs:
     # pack $f.fSect1.fCol1.lESI -side top -padx $Gui(pad) -pady 2 -anchor w 
     # pack $f.fSect1.fCol2.eESI -side top -anchor w
 
-    pack $f.fSect1.fCol1.lEMI $f.fSect1.fCol1.lMRFI $f.fSect1.fCol1.lAlpha -side top -padx $Gui(pad) -pady 2 -anchor w 
-    pack $f.fSect1.fCol2.eEMI $f.fSect1.fCol2.eMRFI $f.fSect1.fCol2.eAlpha -side top -anchor w
+    pack $f.fSect1.fCol1.lEMI $f.fSect1.fCol1.lAlpha -side top -padx $Gui(pad) -pady 2 -anchor w 
+    pack $f.fSect1.fCol2.eEMI $f.fSect1.fCol2.eAlpha -side top -anchor w
     pack $f.fSect1.fCol1.lEmpty2 $f.fSect1.fCol2.lEmpty2 -side top -padx $Gui(pad) -pady 1 -anchor w  
 
     #Pack 4.Block
@@ -2659,8 +2648,7 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
           }
 
           if {$EMSegment(Cattrib,$i,PCAMeanData) != $Volume(idNone) } {
-             Segmente
-rClass($pid,node) SetPCAMeanName  [Volume($EMSegment(Cattrib,$i,PCAMeanData),node) GetName]
+             SegmenterClass($pid,node) SetPCAMeanName  [Volume($EMSegment(Cattrib,$i,PCAMeanData),node) GetName]
           } else {
              SegmenterClass($pid,node) SetPCAMeanName  ""
           }

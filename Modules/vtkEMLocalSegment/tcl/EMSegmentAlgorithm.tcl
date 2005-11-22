@@ -37,8 +37,7 @@
 # FILE:        EMSegmentAlgorithm.tcl
 # PROCEDURES:  
 #   EMSegmentSetVtkGenericClassSetting vtkGenericClass Sclass
-#   EMSegmentSetVtkPrivateSuperClassSetting SuperClass
-#   EMSegmentSetVtkLocalSuperClassSetting SuperClass
+#   EMSegmentSetVtkSuperClassSetting SuperClass
 #   EMSegmentAlgorithmStart
 #   EMSegmentSuperClassChildren  SuperClass
 #   EMSegmentTrainCIMField
@@ -71,27 +70,23 @@ proc EMSegmentSetVtkGenericClassSetting {vtkGenericClass Sclass} {
       if {[info exists EMSegment(Cattrib,$Sclass,InputChannelWeights,$y)]} {$vtkGenericClass SetInputChannelWeights $EMSegment(Cattrib,$Sclass,InputChannelWeights,$y) $y}
   }
 
-  if {$EMSegment(SegmentMode)}  {
-    eval $vtkGenericClass SetRegistrationTranslation $EMSegment(Cattrib,$Sclass,RegistrationTranslation)
-    eval $vtkGenericClass SetRegistrationRotation    $EMSegment(Cattrib,$Sclass,RegistrationRotation)
-    eval $vtkGenericClass SetRegistrationScale       $EMSegment(Cattrib,$Sclass,RegistrationScale)
-    eval $vtkGenericClass SetRegistrationCovariance  $EMSegment(Cattrib,$Sclass,RegistrationCovariance)   
-    eval $vtkGenericClass SetPrintRegistrationParameters                $EMSegment(Cattrib,$Sclass,PrintRegistrationParameters)   
-    eval $vtkGenericClass SetPrintRegistrationSimularityMeasure         $EMSegment(Cattrib,$Sclass,PrintRegistrationSimularityMeasure) 
-    eval $vtkGenericClass SetRegistrationClassSpecificRegistrationFlag  $EMSegment(Cattrib,$Sclass,RegistrationClassSpecificRegistrationFlag) 
-    $vtkGenericClass      SetExcludeFromIncompleteEStepFlag             $EMSegment(Cattrib,$Sclass,ExcludeFromIncompleteEStepFlag) 
-
-    if {$EMSegment(Cattrib,$Sclass,ProbabilityData) != $Volume(idNone) } {
+  eval $vtkGenericClass SetRegistrationTranslation $EMSegment(Cattrib,$Sclass,RegistrationTranslation)
+  eval $vtkGenericClass SetRegistrationRotation    $EMSegment(Cattrib,$Sclass,RegistrationRotation)
+  eval $vtkGenericClass SetRegistrationScale       $EMSegment(Cattrib,$Sclass,RegistrationScale)
+  eval $vtkGenericClass SetRegistrationCovariance  $EMSegment(Cattrib,$Sclass,RegistrationCovariance)   
+  eval $vtkGenericClass SetPrintRegistrationParameters                $EMSegment(Cattrib,$Sclass,PrintRegistrationParameters)   
+  eval $vtkGenericClass SetPrintRegistrationSimularityMeasure         $EMSegment(Cattrib,$Sclass,PrintRegistrationSimularityMeasure) 
+  eval $vtkGenericClass SetRegistrationClassSpecificRegistrationFlag  $EMSegment(Cattrib,$Sclass,RegistrationClassSpecificRegistrationFlag) 
+  $vtkGenericClass      SetExcludeFromIncompleteEStepFlag             $EMSegment(Cattrib,$Sclass,ExcludeFromIncompleteEStepFlag) 
+  
+  if {$EMSegment(Cattrib,$Sclass,ProbabilityData) != $Volume(idNone) } {
     # Pipeline does not automatically update volumes bc of fake first input  
     Volume($EMSegment(Cattrib,$Sclass,ProbabilityData),vol) Update
     $vtkGenericClass SetProbDataPtr [Volume($EMSegment(Cattrib,$Sclass,ProbabilityData),vol) GetOutput]
-      
     # Kilian: Currently LocalPriorWeight is also used for shape parameters - should change it later
-    } elseif {($EMSegment(Cattrib,$Sclass,IsSuperClass) == 0 ) && ($EMSegment(Cattrib,$Sclass,PCAMeanData) ==  $Volume(idNone))} {
+  } elseif {($EMSegment(Cattrib,$Sclass,IsSuperClass) == 0 ) && ($EMSegment(Cattrib,$Sclass,PCAMeanData) ==  $Volume(idNone))} {
     # set EMSegment(Cattrib,$Sclass,LocalPriorWeight) 0.0
-    }
   }
-
 }
 
 #-------------------------------------------------------------------------------
@@ -102,13 +97,16 @@ proc EMSegmentSetVtkGenericClassSetting {vtkGenericClass Sclass} {
 # string SuperClass
 # .END
 #-------------------------------------------------------------------------------
-proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
+proc EMSegmentSetVtkSuperClassSetting {SuperClass} {
   global EMSegment Volume
   # Reads in the value for each class individually
   # puts "EMSegmentSetVtkPrivateSuperClassSetting $SuperClass $EMSegment(Cattrib,$SuperClass,Name)"
   catch { EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) Delete}
-  vtkImageEMPrivateSuperClass EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass)      
-
+  if {$EMSegment(SegmentMode)} {
+    vtkImageEMPrivateSuperClass EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass)      
+  } else {
+    vtkImageEMLocalSuperClass EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass)      
+  }
   # Define SuperClass specific parameters
   EMSegmentSetVtkGenericClassSetting EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) $SuperClass
 
@@ -139,19 +137,22 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
   if {$EMSegment(Cattrib,$SuperClass,StopMFAMaxIter) == 0} {set EMSegment(Cattrib,$SuperClass,StopMFAMaxIter) $EMSegment(Cattrib,0,StopMFAMaxIter) }
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopMFAMaxIter               $EMSegment(Cattrib,$SuperClass,StopMFAMaxIter)
 
-  if {$EMSegment(SegmentMode)} {
-      EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetRegistrationType              $EMSegment(Cattrib,$SuperClass,RegistrationType)
-      EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetGenerateBackgroundProbability $EMSegment(Cattrib,$SuperClass,GenerateBackgroundProbability)
-  }
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetRegistrationType              $EMSegment(Cattrib,$SuperClass,RegistrationType)
+  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetGenerateBackgroundProbability $EMSegment(Cattrib,$SuperClass,GenerateBackgroundProbability)
 
   set ClassIndex 0
   foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
     if {$EMSegment(Cattrib,$i,IsSuperClass)} {
-        if {[EMSegmentSetVtkPrivateSuperClassSetting $i]} {return [EMSegment(Cattrib,$i,vtkImageEMSuperClass) GetErrorFlag]}
+        if {[EMSegmentSetVtkSuperClassSetting $i]} {return [EMSegment(Cattrib,$i,vtkImageEMSuperClass) GetErrorFlag]}
           EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) AddSubClass EMSegment(Cattrib,$i,vtkImageEMSuperClass) $ClassIndex
     } else {
       catch {EMSegment(Cattrib,$i,vtkImageEMClass) destroy}
+      if {$EMSegment(SegmentMode)} {
       vtkImageEMPrivateClass EMSegment(Cattrib,$i,vtkImageEMClass)      
+      } else {
+      vtkImageEMLocalClass EMSegment(Cattrib,$i,vtkImageEMClass)      
+
+      }
       EMSegmentSetVtkGenericClassSetting EMSegment(Cattrib,$i,vtkImageEMClass) $i
 
       EMSegment(Cattrib,$i,vtkImageEMClass) SetLabel             $EMSegment(Cattrib,$i,Label) 
@@ -235,98 +236,6 @@ proc EMSegmentSetVtkPrivateSuperClassSetting {SuperClass} {
   return [EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) GetErrorFlag] 
 }
 
-#-------------------------------------------------------------------------------
-# .PROC  EMSegmentSetVtkLocalSuperClassSetting
-# Setting up everything for the super classes  
-# Only loaded for private version 
-# .ARGS
-# string SuperClass
-# .END
-#-------------------------------------------------------------------------------
-proc EMSegmentSetVtkLocalSuperClassSetting {SuperClass} {
-  global EMSegment Volume
-  # Reads in the value for each class individually
-  # puts "EMSegmentSetVtkLocalSuperClassSetting $SuperClass $EMSegment(Cattrib,$SuperClass,Name)"
-  catch { EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) Delete}
-  vtkImageEMLocalSuperClass EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass)      
-
-  # Define SuperClass specific parameters
-  EMSegmentSetVtkGenericClassSetting EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) $SuperClass
-
-  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintFrequency $EMSegment(Cattrib,$SuperClass,PrintFrequency)
-  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintBias      $EMSegment(Cattrib,$SuperClass,PrintBias)
-  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintLabelMap  $EMSegment(Cattrib,$SuperClass,PrintLabelMap)
-  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetProbDataWeight $EMSegment(Cattrib,$SuperClass,LocalPriorWeight)
-  
-  set ClassIndex 0
-  foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
-    if {$EMSegment(Cattrib,$i,IsSuperClass)} {
-        if {[EMSegmentSetVtkLocalSuperClassSetting $i]} {return [EMSegment(Cattrib,$i,vtkImageEMSuperClass) GetErrorFlag]}
-          EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) AddSubClass EMSegment(Cattrib,$i,vtkImageEMSuperClass) $ClassIndex
-    } else {
-      catch {EMSegment(Cattrib,$i,vtkImageEMClass) destroy}
-      vtkImageEMLocalClass EMSegment(Cattrib,$i,vtkImageEMClass)      
-      EMSegmentSetVtkGenericClassSetting EMSegment(Cattrib,$i,vtkImageEMClass) $i
-
-      EMSegment(Cattrib,$i,vtkImageEMClass) SetLabel             $EMSegment(Cattrib,$i,Label) 
-
-      if {$EMSegment(Cattrib,$i,ProbabilityData) != $Volume(idNone)} {
-          # Pipeline does not automatically update volumes bc of fake first input  
-          Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) Update
-          EMSegment(Cattrib,$i,vtkImageEMClass) SetProbDataPtr [Volume($EMSegment(Cattrib,$i,ProbabilityData),vol) GetOutput]
-      
-      } else {
-         set EMSegment(Cattrib,$i,LocalPriorWeight) 0.0
-      }
-      EMSegment(Cattrib,$i,vtkImageEMClass) SetProbDataWeight $EMSegment(Cattrib,$i,LocalPriorWeight)
-
-      for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
-          EMSegment(Cattrib,$i,vtkImageEMClass) SetLogMu $EMSegment(Cattrib,$i,LogMean,$y) $y
-          for {set x 0} {$x < $EMSegment(NumInputChannel)} {incr x} {
-            EMSegment(Cattrib,$i,vtkImageEMClass) SetLogCovariance $EMSegment(Cattrib,$i,LogCovariance,$y,$x) $y $x
-          }
-      }
-      # if {$EMSegment(IntensityAvgClass) == $EMSegment(Cattrib,$i,Label)} {
-      #     # Transfere Intensity correction filter stuff
-      #     set index 0
-      #     EMSegment(vtkEMSegment) EMSetIntensityAvgClass  EMSegment(Cattrib,$i,vtkImageEMClass)
-      #     foreach v $EMSegment(SelVolList,VolumeList) {       
-      #        EMSegment(vtkEMSegment) SetIntensityAvgValuePreDef $EMSegment(IntensityAvgValue,$v) $index
-      #        incr index
-      #     } 
-      # }
-      # Setup Quality Related information
-      if {($EMSegment(Cattrib,$i,ReferenceStandardData) !=  $Volume(idNone)) && $EMSegment(Cattrib,$i,PrintQuality) } {
-        EMSegment(Cattrib,$i,vtkImageEMClass) SetReferenceStandard [Volume($EMSegment(Cattrib,$i,ReferenceStandardData),vol) GetOutput]
-      } 
-
-      EMSegment(Cattrib,$i,vtkImageEMClass) SetPrintQuality $EMSegment(Cattrib,$i,PrintQuality)
-      # After everything is defined add CLASS to its SUPERCLASS
-      EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) AddSubClass EMSegment(Cattrib,$i,vtkImageEMClass) $ClassIndex
-    }
-    incr ClassIndex
-  }
-
-  # After attaching all the classes we can defineMRF parameters
-  set x 0  
- #  puts "EMSegmentSetVtkLocalSuperClassSetting $SuperClass $EMSegment(Cattrib,$SuperClass,Name)"
-  foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
-      set y 0
-
-      foreach j $EMSegment(Cattrib,$SuperClass,ClassList) {
-        for {set k 0} { $k < 6} {incr k} {
-       # puts "$EMSegment(Cattrib,$SuperClass,CIMMatrix,$i,$j,[lindex $EMSegment(CIMList) $k]) [lindex $EMSegment(CIMList) $k] $y $x --- $i $j $k"
-           EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetMarkovMatrix $EMSegment(Cattrib,$SuperClass,CIMMatrix,$i,$j,[lindex $EMSegment(CIMList) $k]) $k $y $x
-        }
-        incr y
-      }
-      incr x
-  }
-  # Automatically all the subclass are updated too and checked if values are set correctly 
-  EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) Update
-  return [EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) GetErrorFlag] 
-}
-
 
 #-------------------------------------------------------------------------------
 # .PROC EMSegmentAlgorithmStart
@@ -352,12 +261,7 @@ proc EMSegmentAlgorithmStart { } {
    EMSegment(vtkEMSegment) SetNumInputImages $EMSegment(NumInputChannel) 
    EMSegment(vtkEMSegment) SetNumberOfTrainingSamples $EMSegment(NumberOfTrainingSamples)
 
-   if {$EMSegment(SegmentMode)} {
-       # EMSegment(vtkEMSegment) SetNumEMShapeIter  $EMSegment(EMShapeIter)  
-       if {[EMSegmentSetVtkPrivateSuperClassSetting 0]} { return 0 }
-   }  else {
-       if {[EMSegmentSetVtkLocalSuperClassSetting 0]} { return 0 }
-   }
+   if {[EMSegmentSetVtkSuperClassSetting 0]} { return 0 }
 
    # Transfer image information
    set NumInputImagesSet 0
@@ -390,13 +294,7 @@ proc EMSegmentAlgorithmStart { } {
    EMSegment(vtkEMSegment) SetSmoothingWidth  $EMSegment(SmWidth)    
    EMSegment(vtkEMSegment) SetSmoothingSigma  $EMSegment(SmSigma)      
 
-   if {$EMSegment(SegmentMode)}  {
-       # New Private Variables 
-       EMSegment(vtkEMSegment) SetRegistrationInterpolationType  $EMSegment(RegistrationInterpolationType)      
-   } else {
-       EMSegment(vtkEMSegment) SetNumIter         $EMSegment(Cattrib,0,StopEMMaxIter) 
-       EMSegment(vtkEMSegment) SetNumRegIter      $EMSegment(Cattrib,0,StopMFAMaxIter) 
-   }
+   EMSegment(vtkEMSegment) SetRegistrationInterpolationType  $EMSegment(RegistrationInterpolationType)      
 
    return  $EMSegment(NumInputChannel) 
 }
