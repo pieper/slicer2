@@ -67,7 +67,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.26 $} {$Date: 2005/11/18 20:38:10 $}]
+                                 {$Revision: 1.27 $} {$Date: 2005/11/22 03:26:25 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -1629,7 +1629,7 @@ proc ConvertVolumeToTensors {} {
       
       set baseline [_cast_g GetOutput]
  
-    #Make a MRML node with BaseLine
+    #Make a MRML node with Average Gradient
      set name [Volume($v,node) GetName]
      set description "Average gradient from volume $name"
      set name ${name}_AvGradient
@@ -1843,9 +1843,9 @@ proc DTMRIComputeRasToIjkFromCorners {refnode node extent} {
   
   #Set Translation to center of the output volume.
   #This is a particular thing of the slicer: all volumes are centered in their centroid.
-  #_Ras SetElement 0 3 [expr ([lindex $extent 1] - [lindex $extent 0])/2.0]
-  #_Ras SetElement 1 3 [expr ([lindex $extent 3] - [lindex $extent 2])/2.0]
-  #_Ras SetElement 2 3 [expr ([lindex $extent 5] - [lindex $extent 4])/2.0]  
+  _Ras SetElement 0 3 [expr ([lindex $extent 1] - [lindex $extent 0])/2.0]
+  _Ras SetElement 1 3 [expr ([lindex $extent 3] - [lindex $extent 2])/2.0]
+  _Ras SetElement 2 3 [expr ([lindex $extent 5] - [lindex $extent 4])/2.0]  
       
   set dims "[expr [lindex $extent 1] - [lindex $extent 0] + 1] \
               [expr [lindex $extent 3] - [lindex $extent 2] + 1] \
