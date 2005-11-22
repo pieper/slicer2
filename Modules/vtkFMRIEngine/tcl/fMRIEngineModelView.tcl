@@ -255,9 +255,21 @@ proc fMRIModelViewLaunchModelView { {toplevelName .wfMRIModelView} } {
     #--- not sure if this works!
     if { ! [fMRIModelViewDisplayModelView $root.fDesignMatrix] } {
         fMRIModelViewCloseAndClean
+        return 0
     }
-
+    return 1
 }
+
+
+
+
+proc fMRIModelViewCatchGenerateModel { } {
+
+    if { ! [ fMRIModelViewGenerateModel ] } {
+        DevErrorWindow "Error generating model: please check model specification."
+    }
+}
+
 
 
 #-------------------------------------------------------------------------------
@@ -295,7 +307,10 @@ proc fMRIModelViewGenerateModel { {toplevelName .wfMRIModelView} } {
         }
         #--- wjp: end of addition 09/19/05
         
-        fMRIModelViewLaunchModelView
+        if { ! [ fMRIModelViewLaunchModelView ] } {
+            return 0
+        }
+
         set ::fMRIModelView(Layout,NoDisplay) 0
     } else {
         #--- otherwise, no view update is required or requested.
@@ -326,7 +341,7 @@ proc fMRIModelViewGenerateModel { {toplevelName .wfMRIModelView} } {
                 fMRIModelViewBuildModelSignals $r $i $imghit $imgwid $signalType 
                 set ok [ fMRIModelViewBuildEVData  $r $i ]
                 if {$ok == 0 } {
-                    DevErrorWindow "Error: no model generated. Please check your inputs."
+                    DevErrorWindow "Error generating model signals. Please check your inputs."
                     return 0
                 }
             }
@@ -1000,6 +1015,14 @@ proc fMRIModelViewBuildEVData { r i } {
     } else {
         #--- compute new...
         set timepoints $::fMRIModelView(Design,Run$r,numTimePoints)
+        #--- If there are too few timepoints, the signal processing code will break.
+        #--- so let's set an adhoc minimum number of timepoints that
+        #--- are required in order to generate a model and carry out an
+        #--- analysis.
+        if { $timepoints < 4 } {
+            DevErrorWindow "An fMRI dataset must have at least 6 timepoints to be analyzed."
+            return 0
+        }
         for { set t 0 } { $t < $timepoints } { incr t } {
             lappend ::fMRIModelView(Data,Run$r,EV$i,EVData) 0.0
         }
@@ -1737,7 +1760,7 @@ proc fMRIModelViewComputeGaussianFilter { r } {
         set TR $::fMRIModelView(Design,Run$r,TR)
         set TR 1
         set PI 3.14159265
-        #--- use 2 or 3 sigmas out for now, 
+        #--- use 2 or 3 sigmas out for the kernel size now, 
         #--- where gaussian approaches zero...
         set numsigmas 3.0
         set sigma [ expr 2.0 * $PI / ( $numsigmas *2.0*$TR ) ]
@@ -1784,7 +1807,12 @@ proc fMRIModelViewGaussianDownsampleList { i r olen nlen inputList } {
     set numsamps [ llength $Gkernel ]
     set half [ expr floor ($numsamps / 2) ]
     set inc [ expr $olen / $nlen ]
-    
+
+    #--- what if no downsampling is required!
+    if { $inc == 1.0 } {
+        return $inputList
+    }
+
     #---filter and subsample
     for { set t 0 } { $t < $olen } { set t [ expr $t + $inc] } {
         if { $t < $half  } {
@@ -1807,7 +1835,6 @@ proc fMRIModelViewGaussianDownsampleList { i r olen nlen inputList } {
         }
         lappend evlist [ expr $sum / double ($numsamps) ]
     }
-
     return $evlist
 }
 
@@ -2208,13 +2235,13 @@ proc fMRIModelViewSetupButtonImages { c refX refY dmatHit dmatWid cmatHit cmatWi
         "%W itemconfig $::fMRIModelView(Layout,UpdateRectTag) -outline $::fMRIModelView(Colors,hexblack) "
     $c bind $::fMRIModelView(Layout,UpdateTag) <Leave> \
         "%W itemconfig $::fMRIModelView(Layout,UpdateRectTag) -outline $::fMRIModelView(Colors,liteGrey) "
-    $c bind $::fMRIModelView(Layout,UpdateTag) <Button-1> "fMRIModelViewGenerateModel" 
+    $c bind $::fMRIModelView(Layout,UpdateTag) <Button-1> "fMRIModelViewCatchGenerateModel" 
 
     $c bind $::fMRIModelView(Layout,UpdateRectTag) <Enter> \
         "%W itemconfig $::fMRIModelView(Layout,UpdateRectTag) -outline $::fMRIModelView(Colors,hexblack) "
     $c bind $::fMRIModelView(Layout,UpdateRectTag) <Leave> \
         "%W itemconfig $::fMRIModelView(Layout,UpdateRectTag) -outline $::fMRIModelView(Colors,liteGrey) "
-    $c bind $::fMRIModelView(Layout,UpdateRectTag) <Button-1> "fMRIModelViewGenerateModel" 
+    $c bind $::fMRIModelView(Layout,UpdateRectTag) <Button-1> "fMRIModelViewCatchGenerateModel" 
 
     #--- draw surrounding CLOSE rect and text; tag...
     set y1 [ expr $y2 + $::fMRIModelView(Layout,VSpace) ]

@@ -258,11 +258,11 @@ proc fMRIEngineViewModel {} {
     #--- wjp 10/27/05 -- need to count evs before viewing model...
     if {$fMRIEngine(noOfSpecifiedRuns) == 0} {
         DevErrorWindow "No run has been specified."
-        return
+        return 
     }
 
     if { ! [ fMRIEngineCountEVs] } {
-        return
+        return 
     }
 
     #--- are EVs defined for each specified run?
@@ -270,7 +270,7 @@ proc fMRIEngineViewModel {} {
     for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} { 
         if {! [info exists fMRIEngine($r,noOfEVs)]} {
             DevErrorWindow "Complete signal modeling first for run$r."
-            return
+            return 
         }
     }
 
@@ -288,12 +288,15 @@ proc fMRIEngineViewModel {} {
     #--- are all conditions modeled?
     if { ($size != $count) && ($size != $count2) } {
         DevErrorWindow "Please model all conditions first"
-        return
+        return 
     }
 
     #--- looks reasonable. Count evs and launch view.
     if { [ fMRIEngineCountEVs ] } {
-        fMRIModelViewLaunchModelView
+        if { ! [ fMRIModelViewLaunchModelView ] } {
+            DevErrorWindow "Error in model specification. No model generated."
+            return 
+        } 
     }
 }
 

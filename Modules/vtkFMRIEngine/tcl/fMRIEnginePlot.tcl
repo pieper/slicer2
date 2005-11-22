@@ -654,9 +654,8 @@ proc fMRIEngineDrawPlotLong {} {
 
     set totalVolumes [$timeCourse GetNumberOfTuples]
 
-    set done [fMRIModelViewGenerateModel]
-    if {! $done} {
-        puts "Failed in generating model for model view."
+    if {! [fMRIModelViewGenerateModel ] } {
+        DevErrorWindow "Error in model specification. No model generated."
         return 
     }
 

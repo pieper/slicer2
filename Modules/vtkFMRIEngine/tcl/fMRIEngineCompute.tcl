@@ -113,10 +113,8 @@ proc fMRIEngineComputeContrasts {} {
         }
 
         # generates data without popping up the model image 
-        set done [fMRIModelViewGenerateModel]
-        if {! $done} {
-            DevErrorWindow "Error in generating model for activation computation."
-            puts "Error in generating model for activation computation."
+        if {! [fMRIModelViewGenerateModel ]} {
+            DevErrorWindow "Error in model specification. No model generated."
             return 
         }
 

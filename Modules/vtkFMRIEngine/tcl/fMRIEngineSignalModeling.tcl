@@ -1803,7 +1803,6 @@ proc fMRIEngineFitModel {} {
     set done [fMRIModelViewGenerateModel]
     if {! $done} {
         DevErrorWindow "Error in generating model for model fitting."
-        puts "Error in generating model for model fitting."
         return 
     }
 
