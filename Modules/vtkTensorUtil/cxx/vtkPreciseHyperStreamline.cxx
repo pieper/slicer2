@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 Program:   Visualization Toolkit
 Module:    $RCSfile: vtkPreciseHyperStreamline.cxx,v $
 Language:  C++
-Date:      $Date: 2005/04/19 22:07:04 $
-Version:   $Revision: 1.7 $
+Date:      $Date: 2005/11/22 00:27:56 $
+Version:   $Revision: 1.8 $
 
 Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
 All rights reserved.
@@ -66,8 +66,10 @@ PURPOSE.  See the above copyright notice for more information.
 #include "vtkTensorImplicitFunctionToFunctionSet.h"
 #include "vtkPreciseHyperArray.h"
 #include "vtkPreciseHyperPoint.h"
+#include "vtkTensorMathematics.h"
 
-vtkCxxRevisionMacro(vtkPreciseHyperStreamline, "$Revision: 1.7 $");
+
+vtkCxxRevisionMacro(vtkPreciseHyperStreamline, "$Revision: 1.8 $");
 vtkStandardNewMacro(vtkPreciseHyperStreamline);
 
 
@@ -464,42 +466,42 @@ void vtkPreciseHyperStreamline::Execute()
       
       // interpolate tensor, compute eigenfunctions
       ((vtkTensorImplicitFunctionToFunctionSet *)this->GetMethod()->GetFunctionSet())->GetTensor(xNext,m0);
-      if ( vtkMath::Jacobi(m, sPtr->W, sPtr->V) ) {
-    //vtkMath::Jacobi(m, sPtr->W, sPtr->V);
-    FixVectors(NULL, sPtr->V, iv, ix, iy);
+      if ( vtkTensorMathematics::TeemEigenSolver(m, sPtr->W, sPtr->V) ) {
+        //vtkMath::Jacobi(m, sPtr->W, sPtr->V);
+        FixVectors(NULL, sPtr->V, iv, ix, iy);
     
-    if ( sPtr->W[iv] > 0 ) {
-      sPtr->S = 0.5*(( sPtr->W[iv] - sPtr->W[ix] ) *( sPtr->W[iv] - sPtr->W[ix] )  +  ( sPtr->W[ix] - sPtr->W[iy] )*( sPtr->W[ix] - sPtr->W[iy] ) +  ( sPtr->W[iv] - sPtr->W[iy] )*( sPtr->W[iv] - sPtr->W[iy] ));
-      sPtr->S = sqrt(sPtr->S/(sPtr->W[iv]*sPtr->W[iv] + sPtr->W[iy]*sPtr->W[iy] + sPtr->W[ix]*sPtr->W[ix] ));
-    }
-    else
-      sPtr->S = -1.0;
-    if ( this->IntegrationDirection == VTK_INTEGRATE_BOTH_DIRECTIONS )
-      {
-        this->Streamers[1].Direction = -1.0;
-        sNext = this->Streamers[1].InsertNextPreciseHyperPoint();
-        *sNext = *sPtr;
-      }
-    else if ( this->IntegrationDirection == VTK_INTEGRATE_BACKWARD )
-      {
-        this->Streamers[0].Direction = -1.0;
-      }
+        if ( sPtr->W[iv] > 0 ) {
+            sPtr->S = 0.5*(( sPtr->W[iv] - sPtr->W[ix] ) *( sPtr->W[iv] - sPtr->W[ix] )  +  ( sPtr->W[ix] - sPtr->W[iy] )*( sPtr->W[ix] - sPtr->W[iy] ) +  ( sPtr->W[iv] - sPtr->W[iy] )*(                                  sPtr->W[iv] - sPtr->W[iy] ));
+            sPtr->S = sqrt(sPtr->S/(sPtr->W[iv]*sPtr->W[iv] + sPtr->W[iy]*sPtr->W[iy] + sPtr->W[ix]*sPtr->W[ix] ));
+        }
+        else
+            sPtr->S = -1.0;
+        if ( this->IntegrationDirection == VTK_INTEGRATE_BOTH_DIRECTIONS )
+            {
+            this->Streamers[1].Direction = -1.0;
+            sNext = this->Streamers[1].InsertNextPreciseHyperPoint();
+            *sNext = *sPtr;
+            }
+        else if ( this->IntegrationDirection == VTK_INTEGRATE_BACKWARD )
+            {
+            this->Streamers[0].Direction = -1.0;
+            }
       }
       else {
-    sPtr->W[0] = 0;
-    sPtr->W[1] = 0;
-    sPtr->W[2] = 0;
-    sPtr->V[0][0] = 1;
-    sPtr->V[1][0] = 0;
-    sPtr->V[2][0] = 0;
-    sPtr->V[0][1] = 0;
-    sPtr->V[1][1] = 1;
-    sPtr->V[2][1] = 0;
-    sPtr->V[0][2] = 0;
-    sPtr->V[1][2] = 0;
-    sPtr->V[2][2] = 1;
-    sPtr->D = 0.0;
-    sPtr->S = 0;
+        sPtr->W[0] = 0;
+        sPtr->W[1] = 0;
+        sPtr->W[2] = 0;
+        sPtr->V[0][0] = 1;
+        sPtr->V[1][0] = 0;
+        sPtr->V[2][0] = 0;
+        sPtr->V[0][1] = 0;
+        sPtr->V[1][1] = 1;
+        sPtr->V[2][1] = 0;
+        sPtr->V[0][2] = 0;
+        sPtr->V[1][2] = 0;
+        sPtr->V[2][2] = 1;
+        sPtr->D = 0.0;
+        sPtr->S = 0;
       }
     }
   //

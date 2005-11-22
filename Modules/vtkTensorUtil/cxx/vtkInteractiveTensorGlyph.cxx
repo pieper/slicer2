@@ -359,8 +359,8 @@ void vtkInteractiveTensorGlyph::Execute()
               m[i][j] = tensor[j][i];
             }
         }
-          vtkMath::Jacobi(m, w, v);
-
+         //vtkMath::Jacobi(m, w, v);
+         vtkTensorMathematics::TeemEigenSolver(m,w,v);
           //copy eigenvectors
           xv[0] = v[0][0]; xv[1] = v[1][0]; xv[2] = v[2][0];
           yv[0] = v[0][1]; yv[1] = v[1][1]; yv[2] = v[2][1];

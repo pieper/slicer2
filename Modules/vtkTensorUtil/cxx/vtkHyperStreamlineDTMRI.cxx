@@ -50,7 +50,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkHyperPointandArray.cxx"
 #endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.13 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.14 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 // Construct object with initial starting position (0,0,0); integration step 
@@ -280,7 +280,8 @@ void vtkHyperStreamlineDTMRI::Execute()
         }
       }
 
-    vtkMath::Jacobi(m, sPtr->W, sPtr->V);
+    //vtkMath::Jacobi(m, sPtr->W, sPtr->V);
+    vtkTensorMathematics::TeemEigenSolver(m,sPtr->W,sPtr->V);
     FixVectors(NULL, sPtr->V, iv, ix, iy);
 
     // compute invariants                                                               
@@ -434,7 +435,8 @@ void vtkHyperStreamlineDTMRI::Execute()
           }
         }
 
-      vtkMath::Jacobi(m, ev, v);
+      //vtkMath::Jacobi(m, ev, v);
+      vtkTensorMathematics::TeemEigenSolver(m,ev,v);
       FixVectors(sPtr->V, v, iv, ix, iy);
 
       //now compute final position
@@ -494,7 +496,8 @@ void vtkHyperStreamlineDTMRI::Execute()
             }
           }
 
-        vtkMath::Jacobi(m, sNext->W, sNext->V);
+        //vtkMath::Jacobi(m, sNext->W, sNext->V);
+        vtkTensorMathematics::TeemEigenSolver(m,sNext->W,sNext->V);
         FixVectors(sPtr->V, sNext->V, iv, ix, iy);
 
         // compute invariants at final position                                         

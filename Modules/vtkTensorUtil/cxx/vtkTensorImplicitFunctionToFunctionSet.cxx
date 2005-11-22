@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: vtkTensorImplicitFunctionToFunctionSet.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/04/19 22:07:04 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2005/11/22 00:28:13 $
+  Version:   $Revision: 1.6 $
 
   Copyright (c) 2002 Insight Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -55,10 +55,12 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define _vtkTensorImplicitFunctionToFunctionSet_txx
 
 #include "vtkMath.h"
+#include "vtkTensorMathematics.h"
 #include "vtkObjectFactory.h"
 #include "vtkTensorImplicitFunctionToFunctionSet.h"
 
-vtkCxxRevisionMacro(vtkTensorImplicitFunctionToFunctionSet, "$Revision: 1.5 $");
+
+vtkCxxRevisionMacro(vtkTensorImplicitFunctionToFunctionSet, "$Revision: 1.6 $");
 vtkStandardNewMacro(vtkTensorImplicitFunctionToFunctionSet);
 
 void vtkTensorImplicitFunctionToFunctionSet::PrintSelf(ostream& os, vtkIndent indent)
@@ -139,9 +141,11 @@ int vtkTensorImplicitFunctionToFunctionSet::FunctionValues(vtkFloatingPointType*
       val[i][j] += eigVal[0]*correction*CorrectionBias*Direction[i]*Direction[j];
     }
       }
-      vtkMath::Jacobi(val,eigVal,eigVec);
+      //vtkMath::Jacobi(val,eigVal,eigVec);
+     vtkTensorMathematics::TeemEigenSolver(val,eigVal,eigVec);
     }
-    vtkMath::Jacobi(val,eigVal,eigVec);
+    //vtkMath::Jacobi(val,eigVal,eigVec);
+    vtkTensorMathematics::TeemEigenSolver(val,eigVal,eigVec);
     for ( i=0; i < 3 ; i++ ) 
       {
     res[i] = eigVec[i][this->IntegrationDirection];
