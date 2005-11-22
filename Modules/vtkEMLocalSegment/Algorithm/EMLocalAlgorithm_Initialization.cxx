@@ -26,18 +26,18 @@ template  <class T> int EMLocalAlgorithm<T>::Initialize(vtkImageEMLocalSegmenter
                               float **initw_mPtr, char *initLevelName, float initGlobalRegInvRotation[9], float initGlobalRegInvTranslation[3], 
                               int initRegistrationType, int DataType)
 {
-  cout << "Change this here so initialization is completed before returninig 0" << endl;
+    int SuccessFlag = 1;
     this->InitializeEM(vtk_filter, initLevelName, initRegistrationType, initInputVector, initROI, vtk_filter->GetActiveSuperClass()->GetLabel(), initw_mPtr); 
-    if (!this->InitializeClass(vtk_filter->GetActiveSuperClass(), initProbDataPtrStart)) return 0;
+    if (!this->InitializeClass(vtk_filter->GetActiveSuperClass(), initProbDataPtrStart)) SuccessFlag = 0;
     this->InitializeHierarchicalParameters();
     this->InitializeBias();
     this->InitializePrint();
 
-    if (!this->InitializeShape()) return 0;
-    if (!this->InitializeRegistration(initGlobalRegInvRotation, initGlobalRegInvTranslation)) return 0;
+    if (!this->InitializeShape()) SuccessFlag = 0;
+    if (!this->InitializeRegistration(initGlobalRegInvRotation, initGlobalRegInvTranslation)) SuccessFlag = 0;
 
     this->InitializeEStepMultiThreader(DataType);
-    return 1;
+    return SuccessFlag;
 }
 
 
@@ -668,6 +668,7 @@ template <class T> int EMLocalAlgorithm<T>::InitializeShape() {
 // ==========================================================
 
 template <class T> int EMLocalAlgorithm<T>::InitializeRegistration(float initGlobalRegInvRotation[9], float initGlobalRegInvTranslation[3]) {
+  int SuccessFlag = 1;
   // -----------------------------------------------------------
   // Registration Parameter Setup 
   // -----------------------------------------------------------
@@ -761,7 +762,7 @@ template <class T> int EMLocalAlgorithm<T>::InitializeRegistration(float initGlo
        cout << "Number Of Parametersets " << NumParaSets << endl;
        this->RegistrationParameters->SetDimensionOfParameter(NumParaSets,this->TwoDFlag, this->RigidFlag);
  
-       if (!this->DefineGlobalAndStructureRegistrationMatrix()) return 0; 
+       if (!this->DefineGlobalAndStructureRegistrationMatrix()) SuccessFlag =  0; 
 
        this->RegistrationParameters->SetGlobalToAtlasTranslationVector(this->GlobalRegInvTranslation);
        this->RegistrationParameters->SetGlobalToAtlasRotationMatrix(this->GlobalRegInvRotation);
@@ -780,12 +781,12 @@ template <class T> int EMLocalAlgorithm<T>::InitializeRegistration(float initGlo
        if (actSupCl->GetPrintRegistrationParameters() && actSupCl->GetPrintFrequency()) {
      //cout << "Open Registratation ParameterFiles" << endl;
      RegistrationParameterFile = new FILE*[NumParaSets];
-     if (!this->DefinePrintRegistrationParameters(NumParaSets)) return 0; 
+     if (!this->DefinePrintRegistrationParameters(NumParaSets)) SuccessFlag = 0; 
      // cout << "End" << endl;
        }
     } else { 
       // We only apply registration and wont optimize over it 
-      if (!this->DefineGlobalAndStructureRegistrationMatrix()) return 0;
+      if (!this->DefineGlobalAndStructureRegistrationMatrix()) SuccessFlag =  0;
     }
     cout << "Registration Applied to Atlas Space:" << endl;
     cout << "Global Matrix: "; EMLocalAlgorithm_PrintVector(GlobalRegInvRotation,0,8); EMLocalAlgorithm_PrintVector(GlobalRegInvTranslation,0,2);
@@ -844,7 +845,7 @@ template <class T> int EMLocalAlgorithm<T>::InitializeRegistration(float initGlo
     //cout << "Min " << Registration_ROI_ProbData.MinCoord[0] << " " << Registration_ROI_ProbData.MinCoord[1] << " "<< Registration_ROI_ProbData.MinCoord[2] << endl;
     //cout << "Max " << Registration_ROI_ProbData.MaxCoord[0] << " " << Registration_ROI_ProbData.MaxCoord[1] << " "<< Registration_ROI_ProbData.MaxCoord[2] << endl;
   }
-  return 1;
+  return SuccessFlag;
 
 }
 
