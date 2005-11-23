@@ -1714,9 +1714,9 @@ proc DICOMPredictScanOrder { file1 file2 } {
         if { abs($dx) > abs($dz) } {
             # sagittal
             if { $dx > 0 } {
-                VolumesSetScanOrder "LR"
-            } else {
                 VolumesSetScanOrder "RL"
+            } else {
+                VolumesSetScanOrder "LR"
             }
         } else {
             if { $dz > 0 } {
