@@ -1280,7 +1280,11 @@ proc fMRIEngineSaveRegionVoxels {} {
         set fHandle [open $fileName w]
         set note "This text file saves the coordinates and t values \n of all voxels in the defined region of interest.\n"
         puts $fHandle $note
-        puts $fHandle "p threshold: $fMRIEngine(pValue)"
+        if {$fMRIEngine(thresholdingOption) == "uncorrected"} {
+            puts $fHandle "p threshold: $fMRIEngine(pValue)(uncorrected)"
+        } else {
+            puts $fHandle "p threshold: $fMRIEngine(pValue)(corrected)"
+        }
         puts $fHandle "t threshold: $fMRIEngine(tStat)\n"
         puts $fHandle "x\ty\tz\tt\n" 
 
@@ -1393,7 +1397,12 @@ proc fMRIEngineShowRegionStats {} {
     fMRIEngineComputeSignalChange
 
     # show region stats
-    label $w.f2.lPValue -text "p threshold:"
+    if {$fMRIEngine(thresholdingOption) == "uncorrected"} {
+        set pLabel "p threshold\n(uncorrected)"
+    } else {
+        set pLabel "p threshold\n(corrected)"
+    }
+    label $w.f2.lPValue -text $pLabel 
     eval {label $w.f2.lPVal -textvariable fMRIEngine(pValue)} 
     label $w.f2.lTValue -text "t threshold:"
     eval {label $w.f2.lTVal -textvariable fMRIEngine(tStat)} 
