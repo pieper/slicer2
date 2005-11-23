@@ -39,6 +39,8 @@ vtkCDF.cxx
 vtkActivationVolumeCaster.cxx
 vtkActivationRegionStats.cxx
 vtkLabelMapWhitening.cxx
+vtkActivationFalseDiscoveryRate.cxx
+
 )
 
 ## classes that one does not want tcl wrapped
