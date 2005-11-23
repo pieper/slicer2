@@ -54,44 +54,68 @@
 proc fMRIEngineScaleActivation {v} {
     global Volume fMRIEngine MultiVolumeReader Slicer
 
-    if {[info exists fMRIEngine(currentActVolID)]} {
-        if {[info command cdf] == ""} {
-            vtkCDF cdf
-        }
+    if {! [info exists fMRIEngine(currentActVolID)]} {
+        DevErrorWindow "Choose an activation volume to view."
+        return
+    }
 
-        set dof [expr $MultiVolumeReader(noOfVolumes) - 1]
+    set dof [expr $MultiVolumeReader(noOfVolumes) - 1]
+    if {[ValidateInt $fMRIEngine(pValue)] == 0 &&
+        [ValidateFloat $fMRIEngine(pValue)] == 0} {
+        DevErrorWindow "p Value must be a floating point or integer number."
+        return
+    }
 
-        if {[ValidateInt $fMRIEngine(pValue)] == 0 &&
-            [ValidateFloat $fMRIEngine(pValue)] == 0} {
-            DevErrorWindow "p Value must be a floating point or integer number."
-            return
-        }
+    set delta 0.0
+    set delta [expr {$v == "+" ? 0.01 : $delta}]
+    set delta [expr {$v == "-" ? -0.01 : $delta}]
+    set fMRIEngine(pValue) [expr {$fMRIEngine(pValue) + $delta}] 
+    set fMRIEngine(pValue) [expr {$fMRIEngine(pValue) < 0.0 ? 0.0 : $fMRIEngine(pValue)}] 
+    set fMRIEngine(pValue) [expr {$fMRIEngine(pValue) > 1.0 ? 1.0 : $fMRIEngine(pValue)}] 
 
-        set delta 0.0
-        set delta [expr {$v == "+" ? 0.01 : $delta}]
-        set delta [expr {$v == "-" ? -0.01 : $delta}]
-        set fMRIEngine(pValue) [expr {$fMRIEngine(pValue) + $delta}] 
-
-        set fMRIEngine(pValue) [expr {$fMRIEngine(pValue) < 0.0 ? 0.0 : $fMRIEngine(pValue)}] 
-        set fMRIEngine(pValue) [expr {$fMRIEngine(pValue) > 1.0 ? 1.0 : $fMRIEngine(pValue)}] 
+    if {$fMRIEngine(pValue) <= 0.0} {
+        set fMRIEngine(tStat) "Inf" 
+        # 32767 = max of signed short
+        set t 32767.0
+    } else {
+        if {$fMRIEngine(thresholdingOption) == "uncorrected"} {
+            if {[info command cdf] == ""} {
+                vtkCDF cdf
+            }
  
-        if {$fMRIEngine(pValue) > 0.0} {
             set t [cdf p2t $fMRIEngine(pValue) $dof]
             cdf Delete
-            set fMRIEngine(tStat) [format "%.1f" $t]
         } else {
-            set fMRIEngine(tStat) "Inf" 
-            # 32767 = max of signed short
-            set t 32767.0
-        }
+            if {[info commands fMRIEngine(fdrThreshold)] != ""} {
+                fMRIEngine(fdrThreshold) Delete
+                unset -nocomplain fMRIEngine(fdrThreshold)
+            }
+            vtkActivationFalseDiscoveryRate fMRIEngine(fdrThreshold)
 
-        set id $fMRIEngine(currentActVolID) 
-        if {$id > 0} {
-            Volume($id,node) AutoThresholdOff
-            Volume($id,node) ApplyThresholdOn
-            Volume($id,node) SetLowerThreshold $t 
-            MainVolumesRender
+            set id $fMRIEngine(currentActVolID) 
+            fMRIEngine(fdrThreshold) SetQ $fMRIEngine(pValue)
+
+            set option 1
+            if {$fMRIEngine(thresholdingOption) == "cdep"} {
+                set option 2
+            }
+            fMRIEngine(fdrThreshold) SetOption $option 
+
+            fMRIEngine(fdrThreshold) SetDOF $dof
+            fMRIEngine(fdrThreshold) SetInput [Volume($id,vol) GetOutput]  
+            fMRIEngine(fdrThreshold) Update
+            set t [fMRIEngine(fdrThreshold) GetFDRThreshold]
         }
+        set fMRIEngine(tStat) [format "%.1f" $t]
+    }
+
+    # render the thresheld image
+    set id $fMRIEngine(currentActVolID) 
+    if {$id > 0} {
+        Volume($id,node) AutoThresholdOff
+        Volume($id,node) ApplyThresholdOn
+        Volume($id,node) SetLowerThreshold $t 
+        MainVolumesRender
     }
 }
 
@@ -336,12 +360,41 @@ proc fMRIEngineToggleCutoff {} {
 proc fMRIEngineBuildUIForThreshold {parent} {
     global fMRIEngine Gui
 
-    frame $parent.fThreshold -bg $Gui(activeWorkspace)
-    pack $parent.fThreshold \
-        -side top -fill x -padx 5 -pady 3 
+    frame $parent.fOptions -bg $Gui(activeWorkspace) -relief groove -bd 1
+    frame $parent.fThreshold -bg $Gui(activeWorkspace) -relief groove -bd 1
+    pack $parent.fOptions $parent.fThreshold \
+        -side top -fill x -padx 5 -pady 2 
 
     #-------------------------------------------
-    # Threshold tab 
+    # Options frame 
+    #-------------------------------------------
+    set f $parent.fOptions
+    foreach m "Title Buttons" {
+        frame $f.f${m} -bg $Gui(activeWorkspace)
+        pack $f.f${m} -side top -fill x -pady 2 
+    }
+
+    set f $parent.fOptions.fTitle 
+    DevAddButton $f.bHelp "?" "fMRIEngineHelpViewActivationThreshold" 2
+    DevAddLabel $f.lLabel "Choose a thresholding option:"
+    grid $f.bHelp $f.lLabel -padx 1 -pady 2 
+
+    set f $parent.fOptions.fButtons 
+    foreach param "Uncorrected CorrectedCind CorrectedCdep" \
+            name "{uncorrected p value} {corrected p value (cind)} {corrected p value (cdep)}" \
+            value "uncorrected cind cdep" {
+
+        eval {radiobutton $f.r$param -width 25 -text $name \
+            -variable fMRIEngine(thresholdingOption) -value $value \
+            -relief raised -offrelief raised -overrelief raised \
+            -selectcolor white} $Gui(WEA)
+
+        pack $f.r$param -side top -pady 2 
+    }
+    set fMRIEngine(thresholdingOption) uncorrected 
+
+    #-------------------------------------------
+    # Threshold frame 
     #-------------------------------------------
     set f $parent.fThreshold
     foreach m "Title Params" {
@@ -350,9 +403,8 @@ proc fMRIEngineBuildUIForThreshold {parent} {
     }
 
     set f $parent.fThreshold.fTitle 
-    DevAddButton $f.bHelp "?" "fMRIEngineHelpViewActivationThreshold" 2
-    DevAddLabel $f.lLabel "Activation thresholding:"
-    grid $f.bHelp $f.lLabel -padx 1 -pady 2 
+    DevAddLabel $f.lLabel "Threshold the activation:"
+    grid $f.lLabel -padx 1 -pady 2 
 
     set f $parent.fThreshold.fParams 
     frame $f.fStat  -bg $Gui(activeWorkspace) 
