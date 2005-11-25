@@ -11,8 +11,13 @@ If that is not present, it tries the Slice Location (0x0020,0x1041) data element
 If neither data element is available, the files will be ordered as they were found,
 possibly not in the correct order.<br>
 Also, Slicer has a restriction that the slice thickness and spacing
-must be the same for every slice.
+must be the same for every slice.  
+Also, any oblique scans are shown as the nearest
+approximate scan order (axial, sagittal, or coronal).
+
 </p>
+
+<p><b>Note Also:</b> Slicer assumes that the subject is scanned supine (face up).  Scans of prone subjects (face down) may be flipped.</p>
 
 <p>To load DICOM volumes:</p>
 
