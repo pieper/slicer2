@@ -72,6 +72,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkTensorUtilConfigure.h"
 #include "vtkImageTwoInputFilter.h"
 #include "vtkMatrix4x4.h"
+#include "vtkImageData.h"
 
 class VTK_TENSORUTIL_EXPORT vtkTensorMathematics : public vtkImageTwoInputFilter
 {
@@ -179,6 +180,19 @@ public:
   vtkSetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
   vtkGetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
 
+  // Description
+  // Input scalars are a binary mask: 0 prevents display
+  // of tensor quantity at that point
+  vtkBooleanMacro(MaskWithScalars, int);
+  vtkSetMacro(MaskWithScalars, int);
+  vtkGetMacro(MaskWithScalars, int);
+
+  // Description:
+  // Scalar mask
+  vtkSetObjectMacro(ScalarMask, vtkImageData);
+  vtkGetObjectMacro(ScalarMask, vtkImageData);
+  
+
   // Public for access from threads
   static void ModeToRGB(double Mode, double FA,
                  double &R, double &G, double &B);
@@ -214,6 +228,9 @@ protected:
   vtkFloatingPointType ScaleFactor; // Scale factor for output scalars
   int ExtractEigenvalues; // Boolean controls eigenfunction extraction
 
+  int MaskWithScalars;
+  vtkImageData *ScalarMask;
+  
   vtkMatrix4x4 *TensorRotationMatrix;
 
   void ExecuteInformation(vtkImageData **inDatas, vtkImageData *outData);

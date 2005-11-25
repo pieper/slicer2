@@ -88,6 +88,8 @@ vtkTensorMathematics::vtkTensorMathematics()
   this->ScaleFactor = 1.0;
   this->ExtractEigenvalues = 1;
   this->TensorRotationMatrix = NULL;
+  this->ScalarMask = NULL;
+  this->MaskWithScalars = 0;
 }
 
 
@@ -199,7 +201,24 @@ static void vtkTensorMathematicsExecute1(vtkTensorMathematics *self,
   inPtId = ((outExt[0] - inFullUpdateExt[0]) * inInc[0]
      + (outExt[2] - inFullUpdateExt[2]) * inInc[1]
      + (outExt[4] - inFullUpdateExt[4]) * inInc[2]);
+  
+  int doMasking = 0;
+  vtkDataArray *inMask = NULL;
+  if (self->GetScalarMask())
+    {
+      inMask = self->GetScalarMask()->GetPointData()->GetScalars();
+    }
 
+  if (self->GetMaskWithScalars())
+    {
+      if (inMask) {
+      doMasking = 1;
+      }
+      else {
+      doMasking = 0;
+      //vtkWarningMacro("User has not set input mask, but has requested MaskWithScalars.\n Avoiding masking");
+      }
+    }
 
 
   for (idxZ = 0; idxZ <= maxZ; idxZ++)
@@ -217,51 +236,57 @@ static void vtkTensorMathematicsExecute1(vtkTensorMathematics *self,
 
       for (idxR = 0; idxR < rowLength; idxR++)
         {
-          // tensor at this voxel
-          inTensors->GetTuple(inPtId,(vtkFloatingPointType *)tensor);
+          if (doMasking && inMask->GetTuple1(inPtId)==0) {
+            *outPtr = 0;
+          }
+          else {   
+          
+            // tensor at this voxel
+            inTensors->GetTuple(inPtId,(vtkFloatingPointType *)tensor);
 
-          // pixel operation
-          switch (op)
-        {
-        case VTK_TENS_D11:
-          *outPtr = (T)(scaleFactor*tensor[0][0]);
-          break;
+            // pixel operation
+            switch (op)
+                {
+                case VTK_TENS_D11:
+                    *outPtr = (T)(scaleFactor*tensor[0][0]);
+                    break;
 
-        case VTK_TENS_D22:
-          *outPtr = (T)(scaleFactor*tensor[1][1]);
-          break;
+                case VTK_TENS_D22:
+                    *outPtr = (T)(scaleFactor*tensor[1][1]);
+                    break;
 
-        case VTK_TENS_D33:
-          *outPtr = (T)(scaleFactor*tensor[2][2]);
-          break;
+                case VTK_TENS_D33:
+                    *outPtr = (T)(scaleFactor*tensor[2][2]);
+                    break;
 
-        case VTK_TENS_TRACE:
-          //*outPtr = (T)(scaleFactor*(tensor[0][0]
-          //               +tensor[1][1]
-          //               +tensor[2][2]));
-          *outPtr = static_cast<T> (scaleFactor*vtkTensorMathematics::Trace(tensor));
-          break;
+                case VTK_TENS_TRACE:
+                    //*outPtr = (T)(scaleFactor*(tensor[0][0]
+                    //               +tensor[1][1]
+                    //               +tensor[2][2]));
+                    *outPtr = static_cast<T> (scaleFactor*vtkTensorMathematics::Trace(tensor));
+                break;
 
-        case VTK_TENS_DETERMINANT:
-          //*outPtr = 
-          //  (T)(scaleFactor*(vtkMath::Determinant3x3(tensor)));
-          *outPtr = static_cast<T> (scaleFactor*vtkTensorMathematics::Determinant(tensor));
-          break;
+                case VTK_TENS_DETERMINANT:
+                    //*outPtr = 
+                    //  (T)(scaleFactor*(vtkMath::Determinant3x3(tensor)));
+                    *outPtr = static_cast<T> (scaleFactor*vtkTensorMathematics::Determinant(tensor));
+                    break;
+                }
+            }
+
+            if (inPtId > numPts) 
+            {
+            vtkGenericWarningMacro(<<"not enough input pts for output extent "<<numPts<<" "<<inPtId);
+            }
+            outPtr++;
+            inPtId++;
         }
-
-          if (inPtId > numPts) 
-        {
-          vtkGenericWarningMacro(<<"not enough input pts for output extent "<<numPts<<" "<<inPtId);
-        }
-          outPtr++;
-          inPtId++;
-        }
-      outPtr += outIncY;
-          inPtId += inIncY;
+        outPtr += outIncY;
+        inPtId += inIncY;
     }
-      outPtr += outIncZ;
-      inPtId += outIncZ;
-    }
+     outPtr += outIncZ;
+     inPtId += outIncZ;
+  }
 
   //cout << "tensor math time: " << clock() - tStart << endl;
 }
@@ -354,6 +379,28 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
       useTransform = 1;
     }
 
+  // Check for masking
+  int doMasking = 0;
+  vtkDataArray *inMask = NULL;
+  if (self->GetScalarMask())
+    {
+      inMask = self->GetScalarMask()->GetPointData()->GetScalars();
+    }
+
+  if (self->GetMaskWithScalars())
+    {
+      if (inMask) {
+      doMasking = 1;
+      }
+      else {
+      doMasking = 0;
+      //vtkWarningMacro("User has not set input mask, but has requested MaskWithScalars.\n Avoiding masking");
+      }
+    }
+
+
+  cout<<"Do masking: "<<doMasking<<endl;
+
   // Loop through output pixels and input points
 
   for (idxZ = 0; idxZ <= maxZ; idxZ++)
@@ -371,6 +418,20 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
 
       for (idxR = 0; idxR < rowLength; idxR++)
         {
+         
+         if (doMasking && inMask->GetTuple1(inPtId)==0) {
+            *outPtr = 0;
+            
+            if (op ==  VTK_TENS_COLOR_MODE || 
+                 op == VTK_TENS_COLOR_ORIENTATION) {
+                outPtr++;
+                *outPtr = 0;
+                outPtr++;
+                *outPtr = 0;
+             }
+          }
+          else {   
+          
           // tensor at this voxel
           inTensors->GetTuple(inPtId,(vtkFloatingPointType *)tensor);
 
@@ -501,12 +562,12 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
 
         }
 
-
           // scale vtkFloatingPointType if the user requested this
           if (scaleFactor != 1 && op != VTK_TENS_COLOR_ORIENTATION 
               && op != VTK_TENS_COLOR_MODE)
         *outPtr = (T) ((*outPtr) * scaleFactor);
-
+        }
+        
           outPtr++;
           inPtId++;
         }
