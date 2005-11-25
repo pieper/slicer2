@@ -113,7 +113,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.120 $} {$Date: 2005/11/18 22:40:40 $}]
+            {$Revision: 1.121 $} {$Date: 2005/11/25 18:05:57 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -716,20 +716,10 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
 
     # Frames
     frame $f.fActive -bg $Gui(backdrop) -relief sunken -bd 2
-    frame $f.fFile -bg $Gui(activeWorkspace) -relief groove -bd 3
-    frame $f.fCORFile -bg $Gui(activeWorkspace) -relief groove -bd 3
-    frame $f.fNrrdFile -bg $Gui(activeWorkspace) -relief groove -bd 3
     frame $f.fGenericFile -bg $Gui(activeWorkspace) -relief groove -bd 3
 
     pack $f.fActive -side top -pady $Gui(pad) -padx $Gui(pad)
     pack $f.fGenericFile  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
-    pack $f.fFile  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
-    eval {label $fExport.l -text "Export Analyze Format\nWarning: there is a pixel shift\nbug in the output\nOnly isometric voxels exported"} $Gui(WLA)
-    pack  $fExport.l -side top -padx $Gui(pad)    
-    pack $f.fCORFile  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
-    eval {label $fExport.ll -text "Export COR Format\nWarning: only 1mm 256 cubed\n8 bit images supported"} $Gui(WLA)
-    pack  $fExport.ll -side top -padx $Gui(pad)    
-    pack $f.fNrrdFile  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
 
     #-------------------------------------------
     # Export->Active frame
@@ -758,7 +748,7 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     TooltipAdd $f.bWrite "Save the Volume."
     pack  $f.bWrite -side bottom -padx $Gui(pad)    
 
-    DevAddFileBrowse $f Volumes "prefixGenericSave" "Generic File:" "" "\$Volumes(extentionGenericSave)" "\$Volume(DefaultDir)" "Save" "Browse for a file location (will save image file and .nhdr file to directory)" "Absolute"
+    DevAddFileBrowse $f Volumes "prefixGenericSave" "Select Export File:" "" "\$Volumes(extentionGenericSave)" "\$Volume(DefaultDir)" "Save" "Browse for a file location (will save image file and .nhdr file to directory)" "Absolute"
 
     eval {label $f.l -text "Select File Type"} $Gui(BLA)
     pack $f.l -side left -padx $Gui(pad) -pady 0
@@ -783,61 +773,6 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     # put a tooltip over the menu
     TooltipAdd $f.mbType \
             "Choose file type."
-
-
-    #-------------------------------------------
-    # Export->Filename frame
-    #-------------------------------------------
-
-    set f $fExport.fFile
-
-
-    eval {button $f.bWrite -text "Save" -width 5 \
-        -command "VolumesAnalyzeExport"} $Gui(WBA)
-    TooltipAdd $f.bWrite "Save the Volume."
-    pack  $f.bWrite -side bottom -padx $Gui(pad)    
-
-    DevAddFileBrowse $f Volumes "prefixSave" "Analyze File:" "" "hdr" "\$Volume(DefaultDir)" "Save" "Browse for a Analyze save file (will save .hdr and .img)" "Absolute"
-
-
-    DevAddLabel $f.l "File Type: "
-    pack $f.l -side left -padx $Gui(pad) -pady 0
-    #set gridList $f.l
-
-    foreach type $Volumes(exportFileTypeList) tip $Volumes(exportFileTypeList,tooltips) {
-        eval {radiobutton $f.rMode$type \
-                  -text "$type" -value "$type" \
-                  -variable Volumes(exportFileType)\
-                  -indicatoron 0} $Gui(WCA) 
-        pack $f.rMode$type -side left -padx $Gui(pad) -pady 0
-        TooltipAdd  $f.rMode$type $tip
-    }
-    
-    #-------------------------------------------
-    # Export->CORFilename frame
-    #-------------------------------------------
-
-    set f $fExport.fCORFile
-
-    eval {button $f.bWrite -text "Save" -width 5 \
-        -command "VolumesCORExport"} $Gui(WBA)
-    TooltipAdd $f.bWrite "Save the Volume."
-    pack  $f.bWrite -side bottom -padx $Gui(pad)    
-
-    DevAddFileBrowse $f Volumes "prefixCORSave" "COR File:" "" "info" "\$Volume(DefaultDir)" "Save" "Browse for a COR file location (will save images and COR-.info file to directory)" "Absolute"
-
-    #-------------------------------------------
-    # Export->NrrdFilename frame
-    #-------------------------------------------
-
-    set f $fExport.fNrrdFile
-
-    eval {button $f.bWrite -text "Save" -width 5 \
-        -command "VolumesNrrdExport"} $Gui(WBA)
-    TooltipAdd $f.bWrite "Save the Volume."
-    pack  $f.bWrite -side bottom -padx $Gui(pad)    
-
-    DevAddFileBrowse $f Volumes "prefixNrrdSave" "Nrrd File:" "" "nrrd" "\$Volume(DefaultDir)" "Save" "Browse for a Nrrd file location (will save image file and .nhdr file to directory)" "Absolute"
 
     #-------------------------------------------
     # Other frame
