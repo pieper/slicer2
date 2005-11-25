@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/11/21 22:52:19 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2005/11/25 17:58:15 $
+  Version:   $Revision: 1.6 $
 
   Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -56,7 +56,7 @@
 #include "itkGDCMImageIO.h"
 #include <itksys/SystemTools.hxx>
 
-vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.5 $");
+vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.6 $");
 vtkStandardNewMacro(vtkITKArchetypeImageSeriesReader);
 
 //----------------------------------------------------------------------------
@@ -344,7 +344,6 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
   LpsToRasMatrix->SetElement(1,1,-1);
 
   vtkMatrix4x4::Multiply4x4(LpsToRasMatrix,IjkToLpsMatrix, RasToIjkMatrix);
-  RasToIjkMatrix->Invert();
 
   LpsToRasMatrix->Delete();
 
@@ -360,14 +359,26 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
       {
       origin[j] = this->DefaultDataOrigin[j];
       }
-    if (this->UseNativeOrigin)
-      {
-        RasToIjkMatrix->SetElement(j, 3, origin[j]);
-      }
-    else
-      {
-        RasToIjkMatrix->SetElement(j, 3, (extent[2*j+1] - extent[2*j])/2.0);
-      }
+    }
+
+  origin[0] *= -1;   // L -> R
+  origin[1] *= -1;   // P -> A
+  
+  if (this->UseNativeOrigin)
+    {
+      for (int j = 0; j < 3; j++)
+        {
+          RasToIjkMatrix->SetElement(j, 3, origin[j]);
+        }
+      RasToIjkMatrix->Invert();
+    }
+  else
+    {
+      RasToIjkMatrix->Invert();
+      for (int j = 0; j < 3; j++)
+        {
+          RasToIjkMatrix->SetElement(j, 3, (extent[2*j+1] - extent[2*j])/2.0);
+        }
     }
 
   output->SetSpacing(spacing);

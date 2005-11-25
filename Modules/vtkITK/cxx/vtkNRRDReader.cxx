@@ -35,7 +35,7 @@
 #include "vtkFloatArray.h" 
 
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.25 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.26 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -565,8 +565,8 @@ void vtkNRRDReader::ExecuteInformation()
   if (this->UseNativeOrigin && AIR_EXISTS(nrrd->spaceOrigin[0])) {
        for (int i=0; i < 3; i++) {
            IjkToRasMatrix->SetElement(i, 3, origins[i]);
-           vtkMatrix4x4::Invert(IjkToRasMatrix, RasToIjkMatrix);
        }
+       vtkMatrix4x4::Invert(IjkToRasMatrix, RasToIjkMatrix);
    } else {
        vtkMatrix4x4::Invert(IjkToRasMatrix, RasToIjkMatrix);
        for (int i=0; i < 3; i++) {

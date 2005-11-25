@@ -67,7 +67,7 @@ proc VolNrrdInit {} {
 
     # for closing out a scene
     set Volume(VolNrrd,idList) ""
-
+    set Volume(imageCentered) 1
     # register the procedures in this file that will read in volumes
     set Module(Volumes,readerProc,Nrrd) VolNrrdReaderProc
 }
@@ -104,6 +104,8 @@ proc VolNrrdBuildGUI {parentFrame} {
 
     frame $f.fLabelMap -bg $Gui(activeWorkspace)
 
+    frame $f.fImageCenter -bg $Gui(activeWorkspace)
+
     frame $f.fDesc     -bg $Gui(activeWorkspace)
 
     frame $f.fName -bg $Gui(activeWorkspace)
@@ -111,6 +113,7 @@ proc VolNrrdBuildGUI {parentFrame} {
     frame $f.fComp -bg $Gui(activeWorkspace)
 
     pack $f.fLabelMap -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    pack $f.fImageCenter -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fDesc -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fName -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fComp -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
@@ -146,6 +149,25 @@ proc VolNrrdBuildGUI {parentFrame} {
         width "9 9 " {
         eval {radiobutton $f.fBtns.rMode$value -width $width \
             -text "$text" -value "$value" -variable Volume(labelMap) \
+            -indicatoron 0 } $Gui(WCA)
+        pack $f.fBtns.rMode$value -side left -padx 0 -pady 0
+    }
+
+    # Image Origin
+    set f $parentFrame.fVolume.fImageCenter
+
+    frame $f.fTitle -bg $Gui(activeWorkspace)
+    frame $f.fBtns -bg $Gui(activeWorkspace)
+    pack $f.fTitle $f.fBtns -side left -pady 5
+
+    DevAddLabel $f.fTitle.l "Image Origin:"
+    pack $f.fTitle.l -side left -padx $Gui(pad) -pady 0
+
+    foreach text "{Centered} {From File}" \
+        value "1 0" \
+        width "9 9 " {
+        eval {radiobutton $f.fBtns.rMode$value -width $width \
+            -text "$text" -value "$value" -variable Volume(imageCentered) \
             -indicatoron 0 } $Gui(WCA)
         pack $f.fBtns.rMode$value -side left -padx 0 -pady 0
     }
@@ -254,6 +276,12 @@ proc VolNrrdApply {} {
         return
     }
     nrrdReader SetFileName $Volume(VolNrrd,FileName)
+
+    if {$Volume(imageCentered)} {
+        nrrdReader SetUseNativeOriginOff
+    } else {
+        nrrdReader SetUseNativeOriginOn
+    }
    
     if {$Module(verbose) == 1} {
         puts "proc VolNrrd: filename = $Volume(VolNrrd,FileName) "

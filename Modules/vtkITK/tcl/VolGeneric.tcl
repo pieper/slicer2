@@ -70,7 +70,7 @@ proc VolGenericInit {} {
     # for closing out a scene
     set Volume(VolGeneric,idList) ""
     set Module($e,procMainFileCloseUpdateEntered) VolGenericMainFileCloseUpdate
-
+    set Volume(imageCentered) 1
     # register the procedures in this file that will read in volumes
     set Module(Volumes,readerProc,Generic) VolGenericReaderProc
 }
@@ -107,6 +107,8 @@ proc VolGenericBuildGUI {parentFrame} {
 
     frame $f.fLabelMap -bg $Gui(activeWorkspace)
 
+    frame $f.fImageCenter -bg $Gui(activeWorkspace)
+
     frame $f.fDesc     -bg $Gui(activeWorkspace)
 
     frame $f.fName -bg $Gui(activeWorkspace)
@@ -115,6 +117,7 @@ proc VolGenericBuildGUI {parentFrame} {
     
 
     pack $f.fLabelMap -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+    pack $f.fImageCenter -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fDesc -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fName -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fscalarType -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
@@ -167,6 +170,26 @@ proc VolGenericBuildGUI {parentFrame} {
         width "9 9 " {
         eval {radiobutton $f.fBtns.rMode$value -width $width \
             -text "$text" -value "$value" -variable Volume(labelMap) \
+            -indicatoron 0 } $Gui(WCA)
+        pack $f.fBtns.rMode$value -side left -padx 0 -pady 0
+    }
+
+
+    # Image Origin
+    set f $parentFrame.fVolume.fImageCenter
+
+    frame $f.fTitle -bg $Gui(activeWorkspace)
+    frame $f.fBtns -bg $Gui(activeWorkspace)
+    pack $f.fTitle $f.fBtns -side left -pady 5
+
+    DevAddLabel $f.fTitle.l "Image Origin:"
+    pack $f.fTitle.l -side left -padx $Gui(pad) -pady 0
+
+    foreach text "{Centered} {From File}" \
+        value "1 0" \
+        width "9 9 " {
+        eval {radiobutton $f.fBtns.rMode$value -width $width \
+            -text "$text" -value "$value" -variable Volume(imageCentered) \
             -indicatoron 0 } $Gui(WCA)
         pack $f.fBtns.rMode$value -side left -padx 0 -pady 0
     }
@@ -279,6 +302,11 @@ proc VolGenericApply {} {
     genreader UpdateInformation
     genreader SetOutputScalarTypeToNative
     genreader SetDesiredCoordinateOrientationToNative
+    if {$Volume(imageCentered)} {
+        genreader SetUseNativeOriginOff
+    } else {
+        genreader SetUseNativeOriginOn
+    }
    
 
     if { 0 } {
