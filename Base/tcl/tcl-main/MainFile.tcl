@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,7 +32,7 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        MainFile.tcl
 # PROCEDURES:  
@@ -41,32 +41,33 @@
 #   MainFileBuildOpenGUI
 #   MainFileBuildSaveAsGUI
 #   MainFileClose
-#   MainFileSaveAsPopup
+#   MainFileSaveAsPopup callback x y
 #   MainFileSaveAs
 #   MainFileSaveAsApply
 #   MainFileSave
 #   MainFileSaveWithOptions
 #   MainFileSaveOptions
-#   MainFileOpenPopup
+#   MainFileOpenPopup callback x y
 #   MainFileOpen
 #   MainFileOpenApply
-#   MainFileSaveModel
-#   MainFileOpenModel
-#   MainFileSaveVolume
-#   MainFileOpenVolume
-#   MainFileGetRelativePrefix
-#   MainFileGetRelativeDirPrefix
-#   MainFileFindUniqueName
-#   MainFileCreateDirectory
-#   CheckVolumeExists the the the the set the
+#   MainFileSaveModel m prefix
+#   MainFileOpenModel m prefix
+#   MainFileSaveVolume v prefix
+#   MainFileOpenVolume v prefix
+#   MainFileGetRelativePrefix filename
+#   MainFileGetRelativeDirPrefix dir
+#   MainFileGetRelativePrefixNew dir
+#   MainFileFindUniqueName root prefix ext
+#   MainFileCreateDirectory filename
+#   CheckVolumeExists filePrefix filePattern firstNum lastNum verbose afterStuff
 #   MainFileParseImageFile ImageFile postfixFlag
-#   MainFileFindImageNumber which firstfile
+#   MainFileFindImageNumber which firstFile
 #==========================================================================auto=
 
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileInit
-# 
+# Initialise the global variables for this module.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -88,14 +89,14 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.64 $} {$Date: 2005/11/08 20:13:01 $}]
+        {$Revision: 1.65 $} {$Date: 2005/11/25 19:36:28 $}]
 
     set File(filePrefix) data
 }
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileBuildGUI
-# 
+# Build the Open gui and the Save As gui.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -108,7 +109,7 @@ proc MainFileBuildGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileBuildOpenGUI
-# 
+# Builds the Open File popup window.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -175,7 +176,7 @@ proc MainFileBuildOpenGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileBuildSaveAsGUI
-# 
+# Builds the SaveAs File popup window. 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -243,8 +244,8 @@ proc MainFileBuildSaveAsGUI {} {
 #-------------------------------------------------------------------------------
 # .PROC MainFileClose
 #  At the beginning, there is a hook for modules who wish to delete anything
-#  that doesnt get deleted in the MainMrmlDeleteAll callback
-#  To use this, declare the following in your module's init routine:
+#  that doesnt get deleted in the MainMrmlDeleteAll callback.<br>
+#  To use this, declare the following in your module's init routine:<br>
 #  set Module($m,procMainFileCloseUpdateEntered) MyModuleMainFileCloseUpdate.
 # .ARGS
 # .END
@@ -275,8 +276,11 @@ proc MainFileClose {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileSaveAsPopup
-# 
+# Recreate the save as popup if the user killed it and then show it.
 # .ARGS
+# str callback The procedure to call after the popup is closed. Optional, defaults to empty string.
+# int x horizontal location of the popup, optional, defaults to 100
+# int y vertical location of the popup, optional, defaults to 100
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileSaveAsPopup {{callback ""} {x 100} {y 100}} {
@@ -312,8 +316,11 @@ proc MainFileSaveAs {} {
         {"XML Files" {.xml}}
         {"All Files" {*}}
     }
-    set filename [tk_getSaveFile -title "Save Scene" -defaultextension ".xml"\
-        -filetypes $typelist -initialdir "$dir" -initialfile $filename]
+    if {[catch {set filename [tk_getSaveFile -title "Save Scene" -defaultextension ".xml"\
+                                  -filetypes $typelist -initialdir "$dir" -initialfile $filename]} errMsg] == 1} {
+        DevErrorWindow "MainFileSaveAs: error saving file $filename:\n$errMsg"
+        return ""
+    }
 
     # Do nothing if the user cancelled
     if {$filename == ""} {return}
@@ -327,7 +334,7 @@ proc MainFileSaveAs {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileSaveAsApply
-# 
+# Join the mrml dir to the file prefix and call MainMrmlWrite. 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -347,7 +354,7 @@ proc MainFileSaveAsApply {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileSave
-# 
+# Let the user set the file prefix, and then call MainFileSaveAsApply
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -436,8 +443,11 @@ proc MainFileSaveOptions {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileOpenPopup
-# 
+# Recreate the open popup if the user killed it and then show it.
 # .ARGS
+# str callback The procedure to call after the popup is closed. Optional, defaults to empty string.
+# int x horizontal location of the popup, optional, defaults to 100
+# int y vertical location of the popup, optional, defaults to 100
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileOpenPopup {{callback ""} {x 100} {y 100}} {
@@ -456,7 +466,7 @@ proc MainFileOpenPopup {{callback ""} {x 100} {y 100}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileOpen
-# 
+# Set the file prefix, check it, and call MainFileOpenApply
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -471,13 +481,21 @@ proc MainFileOpen {} {
      # Show popup initialized to the last file saved
     set filename [file join $Mrml(dir) $File(filePrefix)]
     set dir [file dirname $filename]
+    if {[file exists $dir] == 0 || [file readable $dir] == 0} {
+        puts "MainFileOpen: resetting dir from $dir it's not there or readable."
+        set dir ""
+    }
     set typelist {
         {"XML Files" {.xml}}
         {"MRML Files" {.mrml}}
         {"All Files" {*}}
     }
-    set filename [tk_getOpenFile -title "Open File" -defaultextension ".xml" \
-        -filetypes $typelist -initialdir "$dir" -initialfile $filename]
+    if {[catch {set filename [tk_getOpenFile -title "Open File" -defaultextension ".xml" \
+                                  -filetypes $typelist -initialdir "$dir" -initialfile $filename]} errMsg] == 1} {
+        DevErrorWindow "MainFileOpen: error opening file $filename:\n$errMsg"
+        return ""
+    }
+
     if {$filename == ""} {return}
 
     # Do nothing if the user cancelled
@@ -497,7 +515,7 @@ proc MainFileOpen {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileOpenApply
-# 
+# Check that the file prefix isn't blank, then read the xml file and call MainUpdateMRML. 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -532,8 +550,10 @@ proc MainFileOpenApply {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileSaveModel
-# 
+# Check that the model exists, set the relative file prefix, return the relative file name.
 # .ARGS
+# int m model id
+# str prefix file prefix, without the vtk, where to save the model.
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileSaveModel {m prefix} {
@@ -561,8 +581,11 @@ To save a model, it must already exist in the 3D Slicer."
         {"VTK Files" {.vtk}}
         {"All Files" {*}}
     }
-    set filename [tk_getSaveFile -title "Save Model" -defaultextension .vtk \
-        -filetypes $typelist -initialdir $dir -initialfile $filename]
+    if {[catch {set filename [tk_getSaveFile -title "Save Model" -defaultextension .vtk \
+                                  -filetypes $typelist -initialdir $dir -initialfile $filename]} errMsg] == 1} {
+         DevErrorWindow "MainFileSaveModel: error saving file $filename:\n$errMsg"
+        return ""
+    }
 
     # Do nothing if the user cancelled
     if {$filename == ""} {return ""}
@@ -573,8 +596,11 @@ To save a model, it must already exist in the 3D Slicer."
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileOpenModel
-# 
+# Check that the model exists, so can re-read it. Check the file prefix and return
+# it as a relative path.
 # .ARGS
+# int m model id
+# str prefix file prefix, where to save the model 
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileOpenModel {m prefix} {
@@ -603,8 +629,11 @@ To read a model for the first time, click 'Add Model' on the Data panel."
         {"VTK Files" {.vtk}}
         {"All Files" {*}}
     }
-    set filename [tk_getOpenFile -title "Open Model" -defaultextension .vtk \
-        -filetypes $typelist -initialdir $dir -initialfile $filename]
+    if {[catch {set filename [tk_getOpenFile -title "Open Model" -defaultextension .vtk \
+                                  -filetypes $typelist -initialdir $dir -initialfile $filename]} errMsg] == 1} {
+        DevErrorWindow "MainFileSaveModel: error opening file $filename:\n$errMsg"
+        return ""
+    }
 
     # Do nothing if the user cancelled
     if {$filename == ""} {return ""}
@@ -615,8 +644,10 @@ To read a model for the first time, click 'Add Model' on the Data panel."
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileSaveVolume
-# 
+# Check that the volume exists, return the relative file name
 # .ARGS
+# int v volume id
+# str prefix the path to save the volume to
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileSaveVolume {v prefix} {
@@ -637,14 +668,17 @@ To save a volume, it must already exist in the 3D Slicer."
         }
     }
 
-     # Show popup initialized to "prefix"
+    # Show popup initialized to "prefix"
     set filename [file join $Mrml(dir) $prefix]
     set dir [file dirname $filename]
     set typelist {
         {"All Files" {*}}
     }
-    set filename [tk_getSaveFile -title "Save Volume" \
-        -filetypes $typelist -initialdir $dir -initialfile $filename]
+    if {[catch {set filename [tk_getSaveFile -title "Save Volume" \
+                                  -filetypes $typelist -initialdir $dir -initialfile $filename]} errMsg] == 1} {
+        DevErrorWindow "MainFileSaveVolume: error saving file $filename:\n$errMsg"
+        return ""
+    }
 
     # Do nothing if the user cancelled
     if {$filename == ""} {return ""}
@@ -655,8 +689,10 @@ To save a volume, it must already exist in the 3D Slicer."
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileOpenVolume
-# 
+# Ensure the volume exists, set the prefix, return the relative prefix.
 # .ARGS
+# int v volume id
+# str prefix the path to save the volume to
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileOpenVolume {v prefix} {
@@ -684,8 +720,12 @@ To read a volume for the first time, click 'Add Volume' on the Data panel."
     set typelist {
         {"All Files" {*}}
     }
-    set filename [tk_getOpenFile -title "Open Volume" \
-        -filetypes $typelist -initialdir $dir -initialfile $filename]
+    if {[catch {set filename [tk_getOpenFile -title "Open Volume" \
+        -filetypes $typelist -initialdir $dir -initialfile $filename]} errMsg] == 1} {
+        DevErrorWindow "MainFileOpenVolume: error reading file $filename:\n$errMsg"
+        return ""
+    }
+
 
     # Do nothing if the user cancelled
     if {$filename == ""} {return ""}
@@ -701,6 +741,7 @@ To read a volume for the first time, click 'Add Volume' on the Data panel."
 # absolute path.
 # 
 # .ARGS
+# str filename the filename to get the relative prefix for
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileGetRelativePrefix {filename} {
@@ -722,11 +763,12 @@ proc MainFileGetRelativePrefix {filename} {
 # Get the dir prefix relative to Mrml(dir), where the Mrml file was last
 # saved.  If there is no way to make a relative path, returns the 
 # absolute path.
-# 
+# <br>
 # This was added to fix dicom files in dirs that have . extensions 
-# that were getting truncated by the routine above.
+# that were getting truncated by the routine above.<br>
 # Also, the regexp doesn't work on windows - sp 2002-08-20
 # .ARGS
+# path dir the path to the directory to process.
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileGetRelativeDirPrefix {dir} {
@@ -763,9 +805,10 @@ proc MainFileGetRelativeDirPrefix {dir} {
 # saved.  If there is no way to make a relative path, returns the 
 # absolute path. Returns an empty string if Mrml(dir) and dir are the same. Returns just a 
 # relative dir (with trailing file separator) if no file name specified at the end of dir.
-# 
+# <br>
 # This is an update to GetRelativeDirPrefix to work with generally relative files (works going up the tree as well as down)
 # .ARGS
+# path dir the directory to check
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileGetRelativePrefixNew {dir} {
@@ -837,10 +880,14 @@ proc MainFileGetRelativePrefixNew {dir} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileFindUniqueName
-# Form an absolute filename by concatenating the root, name, and ext.
+# Form an absolute filename by concatenating the root, name, and ext.<br>
 # If a file of this name already exists, then find a number to add before the
-# extension that would make it unique.  Return this filename.
+# extension that would make it unique.  Return this filename.<br>
 # Note: the prefix cannot be blank, or "" is returned.
+# .ARGS
+# str root the root of the file (dir path)
+# str prefix the file prefix 
+# str ext the file extension
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileFindUniqueName {root prefix ext} {
@@ -874,13 +921,13 @@ proc MainFileFindUniqueName {root prefix ext} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileCreateDirectory
-# 
+# Create directory if it does not exist.<br>
+# If this fails, then use the current directory
 # .ARGS
+# path filename create the parent directory in this file's name (dirname on the file)
 # .END
 #-------------------------------------------------------------------------------
 proc MainFileCreateDirectory {filename} {
-    # Create directory if it does not exist.
-    # If this fails, then use the current directory
 
     set dir [file dirname $filename]
     if {[file isdirectory $dir] == 0} {
@@ -895,14 +942,15 @@ proc MainFileCreateDirectory {filename} {
 
 #-------------------------------------------------------------------------------
 # .PROC CheckVolumeExists
-# 
+# Check that all the files in a volume exist. If they do, reutrn emtpy string, 
+# else return the missing file name.
 # .ARGS
-# filePrefix the directory path and file name up to the separator
-# filePattern the argument passed to format that builds the full file name
-# firstNum the number of the first file in the volume
-# lastNum the number of the last file in the volume
-# verbose set to 1 if you wish more information about execution
-# afterStuff the final characters in the file name pattern
+# path filePrefix the directory path and file name up to the separator
+# str filePattern the argument passed to format that builds the full file name
+# int firstNum the number of the first file in the volume
+# int lastNum the number of the last file in the volume
+# int verbose set to 1 if you wish more information about execution
+# str afterStuff the final characters in the file name pattern
 # .END
 #-------------------------------------------------------------------------------
 proc CheckVolumeExists {filePrefix filePattern firstNum lastNum  {verbose 0} } {
@@ -945,8 +993,13 @@ proc CheckVolumeExists {filePrefix filePattern firstNum lastNum  {verbose 0} } {
 #-------------------------------------------------------------------------------
 # CheckFileExists
 #
-# Checks if a file exists, is not a directory, and is readable.
-# Returns 1 on success, else 0.
+# Checks if a file exists, is not a directory, and is readable.<br>
+# Returns 1 on success, else 0.<br>
+# Will check in teh mrml directory as well.
+# .ARGS
+# path filename file to check
+# int verbose if 1, print out debugging information, optional, defaults to 1
+# .END
 #-------------------------------------------------------------------------------
 proc CheckFileExists {filename {verbose 1}} {
     global Gui
@@ -994,16 +1047,15 @@ proc CheckFileExists {filename {verbose 1}} {
 # .PROC MainFileParseImageFile
 #
 # Takes in the imagefile and returns
-# the pattern,prefix, number, and stuff after the number in a list
+# the pattern, prefix, number, and stuff after the number in a list<br>
 #
-# example: /tmp/file.001.gz returns  %s.%03d%s /tmp/file 1 .gz
-# example: /tmp/file.001    returns  %s.%03d%s /tmp/file 1  
+# example: /tmp/file.001.gz returns  %s.%03d%s /tmp/file 1 .gz <br>
+# example: /tmp/file.001    returns  %s.%03d%s /tmp/file 1  <br>
 #
 # .ARGS
 # str ImageFile the file name
 # int postfixFlag set to true by default, processes the filename with a postfix after the number
 # .END
-# 
 #-------------------------------------------------------------------------------
 proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
 
@@ -1149,12 +1201,11 @@ proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainFileFindImageNumber
-#
+# Parse out the image number from the file name.
 # .ARGS
 # str which \"First\" means the image being sent is the first one. Otherwise, it means nothing.
-# str firstfile the full path
+# str firstFile the full path
 # .END
-# 
 #-------------------------------------------------------------------------------
 proc MainFileFindImageNumber {which firstFile} {
     if {$::Module(verbose)} {
