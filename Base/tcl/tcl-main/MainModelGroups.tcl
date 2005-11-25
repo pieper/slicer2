@@ -156,11 +156,11 @@ proc MainModelGroupsRefreshGUI {mg c} {
     set button $f.cg$mg
 
     # Find the color for this model group
-    if {$c != ""} {
+    if {$c != "" && [info var Color($c,node)] != ""} {
         set rgb [Color($c,node) GetDiffuseColor]
     } else {
-        set rgb "0 0 0"
-        if {$::Module(verbose)} { puts "MainModelGroupsRefreshGUI: setting rgb to 0 0 0" }
+        set rgb "1 1 1"
+        if {$::Module(verbose)} { puts "MainModelGroupsRefreshGUI: setting rgb to 1 1 1" }
     }
     set color [MakeColorNormalized $rgb]
 
