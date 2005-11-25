@@ -122,9 +122,8 @@ proc VolumesInit {} {
     set Module($m,depend) Fiducials
 
     # Set version info
-    lappend Module(versions) [ParseCVSInfo $m \                                  
-            {$Revision: 1.122 $} {$Date: 2005/11/25 18:51:27 $}]
-
+    lappend Module(versions) [ParseCVSInfo $m \
+             {$Revision: 1.123 $} {$Date: 2005/11/25 21:14:22 $}]
 
     # Props
     set Volume(propertyType) VolBasic
