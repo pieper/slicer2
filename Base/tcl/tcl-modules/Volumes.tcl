@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,7 +32,7 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        Volumes.tcl
 # PROCEDURES:  
@@ -41,34 +41,44 @@
 #   VolumesCheckForManualChanges n
 #   VolumesManualSetPropertyType n
 #   VolumesAutomaticSetPropertyType n
-#   VolumesSetPropertyType
+#   VolumesSetPropertyType type
 #   VolumesPropsApply
 #   VolumesPropsCancel
 #   VolumesSetFirst
-#   VolumesSetScanOrder
-#   VolumesSetScalarType
+#   VolumesSetScanOrder order
+#   VolumesSetScalarType type
 #   VolumesSetLast
 #   VolumesEnter
 #   VolumesExit
-#   VolumesStorePresets
-#   VolumesRecallPresets
-#   VolumesSetReformatOrientation
-#   VolumesProjectVectorOnPlane
-#   VolumesReformatSlicePlane
-#   VolumesRotateSlicePlane
-#   VolumesReformatSave orientation slice
+#   VolumesStorePresets p
+#   VolumesRecallPresets p
+#   VolumesSetReformatOrientation or
+#   VolumesProjectVectorOnPlane A B C D V1x V1y V1z V2x V2y V2z
+#   VolumesReformatSlicePlane orientation
+#   VolumesRotateSlicePlane orientation
 #   VolumesReformatSave
+#   VolumesAnalyzeExport
+#   VolumesCORExport
+#   VolumesNrrdExport
+#   VolumesGenericExportSetFileType fileType
+#   VolumesGenericExport
+#   VolumesVtkToNrrdScalarType type
+#   VolumesVtkToSlicerScalarType type
+#   VolumesComputeNodeMatricesFromIjkToRasMatrix volumeNode ijkToRasMatrix dims
+#   VolumesComputeNodeMatricesFromIjkToRasMatrix2 volumeNode ijkToRasMatrix dims
+#   VolumesCreateNewLabelOutline v
+#   VolumesComputeNodeMatricesFromRasToIjkMatrix volumeNode RasToIjkMatrix dims
 #==========================================================================auto=
 
 
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesInit
+#
 # Default proc called on program start.
 # .ARGS
 # .END
 #------------------------------------------------------------------------------
-
 proc VolumesInit {} {
     global Volumes Volume Module Gui Path prog
 
@@ -112,8 +122,9 @@ proc VolumesInit {} {
     set Module($m,depend) Fiducials
 
     # Set version info
-    lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.121 $} {$Date: 2005/11/25 18:05:57 $}]
+    lappend Module(versions) [ParseCVSInfo $m \                                  
+            {$Revision: 1.122 $} {$Date: 2005/11/25 18:51:27 $}]
+
 
     # Props
     set Volume(propertyType) VolBasic
@@ -129,7 +140,7 @@ proc VolumesInit {} {
 
     set Volume(DefaultDir) ""
 
-    #reformatting variable
+    #reformatting variables
     #---------------------------------------------
     vtkImageWriter Volumes(writer)
     vtkImageReformat Volumes(reformatter)
@@ -856,7 +867,6 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     TooltipAdd $f.bCreateLabelVolume "Copies active volume (must be a labelmap) and then filters it to outlines only"
     pack $f.bCreateLabelVolume
 }
-    
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesCheckForManualChanges
@@ -865,7 +875,7 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
 # were changed that might require re-reading the volume.
 #
 # .ARGS
-#  vtkMrmlVolumeNode n is the vtkMrmlVolumeNode to edit.
+#  int n is id of the vtkMrmlVolumeNode to edit.
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesCheckForManualChanges {n} {
@@ -896,13 +906,13 @@ proc VolumesCheckForManualChanges {n} {
 #-------------------------------------------------------------------------------
 # .PROC VolumesManualSetPropertyType
 # 
-# Sets all necessary info into a vtkMrmlVolumeNode.
+# Sets all necessary info into a vtkMrmlVolumeNode.<br>
 #
 # This procedure is called when manually setting the properties
-# to read in a volume
+# to read in a volume.
 #
 # .ARGS
-#  vtkMrmlVolumeNode n is the vtkMrmlVolumeNode to edit.
+#  int n is id of the vtkMrmlVolumeNode to edit.
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesManualSetPropertyType {n} {
@@ -975,13 +985,13 @@ proc VolumesManualSetPropertyType {n} {
 #-------------------------------------------------------------------------------
 # .PROC VolumesAutomaticSetPropertyType
 # 
-# Sets all necessary info into a vtkMrmlVolumeNode.
+# Sets all necessary info into a vtkMrmlVolumeNode.<br>
 #
 # This procedure is called when reading the header of a volume
-# to get the header information. Returns 1 on success
+# to get the header information. Returns 1 on success.
 #
 # .ARGS
-#  vtkMrmlVolumeNode n is the vtkMrmlVolumeNode to edit.
+#  int n is the id of the vtkMrmlVolumeNode to edit.
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesAutomaticSetPropertyType {n} {
@@ -1016,6 +1026,7 @@ proc VolumesAutomaticSetPropertyType {n} {
 # Switch the visible volumes->props GUI.  Either
 # Basic, Header, or DICOM
 # .ARGS
+# str type Basic, Header, or DICOM
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesSetPropertyType {type} {
@@ -1033,8 +1044,8 @@ proc VolumesSetPropertyType {type} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesPropsApply
-# Called from Volumes->Props GUI's apply button.
-# Updates volume properties and calls update MRML.
+# Called from Volumes->Props GUI's apply button.<br>
+# Updates volume properties and calls update MRML.<br>
 # If volume is NEW, causes volume to be read in.
 # .ARGS
 # .END
@@ -1293,6 +1304,7 @@ proc VolumesPropsApply {} {
 
     return $m
 }
+
 #-------------------------------------------------------------------------------
 # .PROC VolumesPropsCancel
 # Cancel: do not read in a new volume if in progress.
@@ -1321,7 +1333,7 @@ proc VolumesPropsCancel {} {
 #-------------------------------------------------------------------------------
 # .PROC VolumesSetFirst
 # 
-# Called after the User Selects the first file of the volume.
+# Called after the User Selects the first file of the volume.<br>
 # Finds the filename, directory, and last image number.
 # .ARGS
 # .END
@@ -1354,11 +1366,11 @@ proc VolumesSetFirst {} {
 # .PROC VolumesSetScanOrder
 # Set scan order for active volume, configure menubutton.
 # .ARGS
+# str order a valid scan order
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesSetScanOrder {order} {
     global Volume
-    
 
     set Volume(scanOrder) $order
 
@@ -1375,6 +1387,7 @@ proc VolumesSetScanOrder {order} {
 # .PROC VolumesSetScalarType
 # Set scalar type and config menubutton to match.
 # .ARGS
+# str type a valid scalar type.
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesSetScalarType {type} {
@@ -1384,7 +1397,6 @@ proc VolumesSetScalarType {type} {
 
     # update the button text
     $Volume(mbscalarType) config -text $type
-
 }
 
 #-------------------------------------------------------------------------------
@@ -1440,8 +1452,9 @@ proc VolumesExit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesStorePresets
-# Store preset values from this module into global array
+# Store preset values for this module into global array
 # .ARGS
+# int p preset id
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesStorePresets {p} {
@@ -1457,9 +1470,10 @@ proc VolumesStorePresets {p} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesRecallPresets
-# Set preset values from this module from global array
+# Set preset values for this module from global array
 # 
 # .ARGS
+# int p preset id
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesRecallPresets {p} {
@@ -1475,9 +1489,11 @@ proc VolumesRecallPresets {p} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesSetReformatOrientation
-# This procedures changes the text of the buttons on the reformat panel based on the current reformat orientation chosen by the user.
+# This procedures changes the text of the buttons on the reformat panel based on the 
+# current reformat orientation chosen by the user.
 #
-# .ARGS str or the orientation string: either ReformatAxial, ReformatSagittal, ReformatCoronal, or NewOrient
+# .ARGS 
+# str or the orientation string: either ReformatAxial, ReformatSagittal, ReformatCoronal, or NewOrient
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesSetReformatOrientation {or} {
@@ -1490,14 +1506,21 @@ proc VolumesSetReformatOrientation {or} {
 
 }
 
-
-
-
 #-------------------------------------------------------------------------------
 # .PROC VolumesProjectVectorOnPlane
 # Given a Vector V defined by V1{xyz} and V2{xyz} and a plane defined by its
 # coefficients {A,B,C,D}, return a vector P that is the projection of V onto the plane
 # .ARGS 
+# float A plane coefficient
+# float B plane coefficient
+# float C plane coefficient
+# float D plane coefficient
+# float V1x x coord of first vector
+# float V1y y coord of first vector
+# float V1z z coord of first vector
+# float V2x x coord of second vector
+# float V2y y coord of second vector
+# float V2z z coord of second vector
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesProjectVectorOnPlane {A B C D V1x V1y V1z V2x V2y V2z} {
@@ -1550,19 +1573,20 @@ proc VolumesProjectVectorOnPlane {A B C D V1x V1y V1z V2x V2y V2z} {
 # .PROC VolumesReformatSlicePlane
 #  This procedure changes the reformat matrix of either the ReformatAxial, 
 # ReformatSagittal,ReformatCoronal orientation or NewOrient. The new 
-# orientation is the plane defined by the 3 selected Fiducials.
+# orientation is the plane defined by the 3 selected Fiducials.<br>
 # If the reformat orientation is either ReformatAxial, ReformatSagittal or 
 # ReformatCoronal, then and the other 2 orthogonal orientations are also 
 # calculated. This means that if the user decides to redefine the 
 # ReformatAxial orientation, then the ReformatSagittal and ReformatCoronal 
-# are automatically computed so that the 3 orientations are orthogonal.
+# are automatically computed so that the 3 orientations are orthogonal.<br>
 #
 # If the reformat orientation is NewOrient, then it doesn't affect any other
-# slice orientations.
+# slice orientations.<br>
 #
 #  If there are more or less than 3 selected Fiducials, this procedure tells 
-#  the user and is a no-op
-# .ARGS str orientation has to be either reformatAxial, reformatSagittal, reformatCoronal or NewOrient
+#  the user and is a no-op.
+# .ARGS 
+# str orientation has to be either reformatAxial, reformatSagittal, reformatCoronal or NewOrient
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesReformatSlicePlane {orientation} {
@@ -1579,7 +1603,7 @@ proc VolumesReformatSlicePlane {orientation} {
     set list [FiducialsGetAllSelectedPointIdList]
     if { [llength $list] < 3 } {
         # give warning and exit
-        tk_messageBox -message "You have to create and select 3 fiducials"
+        tk_messageBox -message "You have to create (p) and select (q) 3 fiducials.\nSelected fiducials are red."
         return
     } elseif { [llength $list] > 3 } {
         # give warning and exit
@@ -1708,8 +1732,9 @@ proc VolumesReformatSlicePlane {orientation} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesRotateSlicePlane
-# 
+# Rotate the slice plane to line up with the plane formed by two selected fiducials.
 # .ARGS
+# str orientation has to be either reformatAxial, reformatSagittal, reformatCoronal or NewOrient
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesRotateSlicePlane {orientation} {
@@ -1814,23 +1839,11 @@ proc VolumesRotateSlicePlane {orientation} {
 
 }
 
-
-
 #-------------------------------------------------------------------------------
 # .PROC VolumesReformatSave
 #  Save the Active Volume slice by slice with the reformat matrix of the 
-#  chosen slice orientation in $Volumes(reformat,scanOrder)
-# .ARGS
-#       str orientation orientation of that slice to use when saving the 
-#       volume slice by slice
-# .END
-#-------------------------------------------------------------------------------
-# turn into smart image writer
-
-
-#-------------------------------------------------------------------------------
-# .PROC VolumesReformatSave
-# 
+#  chosen slice orientation in $Volumes(reformat,scanOrder).<br>
+#  Turn into smart image writer.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1863,8 +1876,6 @@ proc VolumesReformatSave {} {
         DevErrorWindow "Set a file prefix to save the volume"
         return
     }
-    
-    
     
     # the idea is to slide the volume from the low to the high offset and
     # save a slice each time
@@ -1935,7 +1946,9 @@ proc VolumesReformatSave {} {
         set iii [format %03d $ii]
         Volumes(writer) SetFileName "$Volumes(prefixSave).$iii"
         set Gui(progressText) "Writing slice $ext"
-        Volumes(writer) Write
+        if {[catch {Volumes(writer) Write} errMsg] == 1} {
+            DevErrorWindow "VolumesReformatSave: error writing [Volumes(writer) GetFileName]:\n$errMsg"
+        }
         incr ii
     }
     set Gui(progressText) "Done!"
@@ -1948,7 +1961,7 @@ proc VolumesReformatSave {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesAnalyzeExport
-# - export to Analyze Format 
+# Export the active volume to Analyze Format 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -2039,7 +2052,7 @@ proc VolumesAnalyzeExport {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesCORExport
-# - export to COR Format 
+# Export the active volume to COR Format 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -2129,7 +2142,7 @@ c_ras 0.000000 0.000000 0.000000"
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesNrrdExport
-# - export to Nrrd Format 
+# Export the active volume to Nrrd Format 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -2208,11 +2221,11 @@ proc VolumesNrrdExport {} {
 
 }
 
-
 #-------------------------------------------------------------------------------
-# .PROC VolumesGenericExport
-# 
+# .PROC VolumesGenericExportSetFileType
+# Set Volumes(extentionGenericSave) and update the save file type menu.
 # .ARGS
+# str fileType the type for the file
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesGenericExportSetFileType {fileType} {
@@ -2224,7 +2237,7 @@ proc VolumesGenericExportSetFileType {fileType} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesGenericExport
-# - export to any  Format 
+# Export the active volume to any format 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -2268,10 +2281,10 @@ proc VolumesGenericExport {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesVtkToNrrdScalarType
-#  convert VTK scalar type (like "unsigned char") into
+#  Convert VTK scalar type (like "unsigned char") into
 #  Nrrd type string like "uchar"
 # .ARGS
-#  type is vtk scalar type
+#  str type is vtk scalar type
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesVtkToNrrdScalarType {type} {
@@ -2313,10 +2326,10 @@ proc VolumesVtkToNrrdScalarType {type} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesVtkToSlicerScalarType
-#  convert VTK scalar type (like "unsigned char") into
+#  Convert VTK scalar type (like "unsigned char") into
 #  Slicer type string like "UnsignedChar"
 # .ARGS
-#  type is vtk scalar type
+#  str type is vtk scalar type
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesVtkToSlicerScalarType {type} {
@@ -2356,12 +2369,13 @@ proc VolumesVtkToSlicerScalarType {type} {
     return ""
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC VolumesComputeNodeMatricesFromIjkToRasMatrix
-#  ComputeNodeMatricesFromIjkToRasMatrix
+#  Compute node matrices from IJK to RAS matrix.
 # .ARGS
-#  node id,  IjkToRasMatrix, dimensions list
+# int volumeNode node id
+# vtkMatrix4x4 ijkToRasMatrix
+# list dims dimensions list
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesComputeNodeMatricesFromIjkToRasMatrix {volumeNode ijkToRasMatrix dims} {
@@ -2402,11 +2416,13 @@ proc VolumesComputeNodeMatricesFromIjkToRasMatrix {volumeNode ijkToRasMatrix dim
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesComputeNodeMatricesFromIjkToRasMatrix2
-#  ComputeNodeMatricesFromIjkToRasMatrix
+#  Compute mode matrices from IJK to RAS matrix.<br>
+# Columns of IjkToRasMatrix are space direction vectors and space origin.<br>
+# The matrix includes spacing.
 # .ARGS
-#  node id,  IjkToRasMatrix, dimensions list
-# columns of IjkToRasMatrix are space direction vectors and space origin
-# the matrix includes spacing
+# int volumeNode node id
+# vtkMatrix4x4 ijkToRasMatrix
+# list dims dimensions list
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesComputeNodeMatricesFromIjkToRasMatrix2 {volumeNode ijkToRasMatrix dims} {
@@ -2486,7 +2502,6 @@ puts [Position Print]
     Position Delete
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC VolumesCreateNewLabelOutline
 # Add a new volume to the mrml tree, that just has the outline
@@ -2537,11 +2552,13 @@ proc VolumesCreateNewLabelOutline { {v ""} } {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumesComputeNodeMatricesFromRasToIjkMatrix
-#  Compute Node Matrices From RasToIjkMatrix
+# Compute Node Matrices From RasToIjkMatrix.<br>
+# The matrix includes spacing.<br>
+# Also compute the closest fit to the scanorder.
 # .ARGS
-#  node id,  RasToIjkMatrix
-# the matrix includes spacing
-# also compute the closest fit to the scanorder
+# int volumeNode the volume node id
+# vtkMatrix4x4 RasToIjkMatrix the input RAS to IJK matrix
+# list dims contains the extents along the x, y, z axes. Only y is used.
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesComputeNodeMatricesFromRasToIjkMatrix {volumeNode RasToIjkMatrix dims} {
@@ -2576,8 +2593,8 @@ proc VolumesComputeNodeMatricesFromRasToIjkMatrix {volumeNode RasToIjkMatrix dim
 
     #
     # compute scan order by looking at the vector for the 'k' direction (slice direction)
-    # and then saying that the largest 
-
+    # and then saying that the largest
+    
     set k_vec [IjkToRasMatrix MultiplyPoint 0 0 1 0]
     set max_comp 0
     set max [expr abs([lindex $k_vec 0])]
@@ -2587,13 +2604,13 @@ proc VolumesComputeNodeMatricesFromRasToIjkMatrix {volumeNode RasToIjkMatrix dim
             set max_comp $i
         }
     }
-
+    
     switch $max_comp {
         0 {
             if { [lindex $k_vec 0] > 0 } {
                 set scan_order "LR"
             } else {
-            set scan_order "RL"
+                set scan_order "RL"
             }
         }
         1 {
@@ -2610,11 +2627,9 @@ proc VolumesComputeNodeMatricesFromRasToIjkMatrix {volumeNode RasToIjkMatrix dim
                 set scan_order "SI"
             }
         }
-        
     }
+    
     Volume($volumeNode,node) SetScanOrder $scan_order
 
     IjkToRasMatrix Delete
-
 }
-
