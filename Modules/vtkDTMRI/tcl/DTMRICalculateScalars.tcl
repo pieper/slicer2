@@ -60,7 +60,7 @@ proc DTMRICalculateScalarsInit {} {
     #------------------------------------
     set m "CalculateScalars"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.13 $} {$Date: 2005/11/18 20:39:49 $}]
+                                 {$Revision: 1.14 $} {$Date: 2005/11/25 02:58:30 $}]
 
     #------------------------------------
     # Variables for producing scalar volumes
@@ -375,6 +375,7 @@ proc DTMRIDoMath {{operation ""}} {
     puts "DTMRI: scale factor $DTMRI(scalars,scaleFactor)"
 
     # create vtk object to do the operation
+    catch "math Delete"
     vtkTensorMathematics math
     math SetScaleFactor $DTMRI(scalars,scaleFactor)
     math SetInput 0 $input
@@ -392,6 +393,15 @@ proc DTMRIDoMath {{operation ""}} {
     math AddObserver EndEvent MainEndProgress
     set Gui(progressText) "Creating Volume $operation"
 
+    # mask DTMRIs if required
+    #------------------------------------
+    set mode $DTMRI(mode,mask)
+    if {$mode != "None"} {
+        set m $DTMRI(MaskLabelmap)
+        math SetScalarMask [Volume($m,vol) GetOutput]
+        math MaskWithScalarsOn
+    }
+
     # put the filter output into a slicer volume
     math Update
     #puts [[math GetOutput] Print]
@@ -399,8 +409,7 @@ proc DTMRIDoMath {{operation ""}} {
     MainVolumesUpdate $v
     # tell the node what type of data so MRML file will be okay
     Volume($v,node) SetScalarType [[math GetOutput] GetScalarType]
-
-
+    
     math SetInput 0 ""    
     math SetInput 1 ""
     # this is to disconnect the pipeline
