@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,16 +32,19 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        Measure.tcl
 # PROCEDURES:  
 #   MeasureInit
-#   Test
+#   Test event W X Y x y t
 #   MeasureBuildGUI
 #   TopFrameBuildGUI
 #   MeasureSetCsysVisibility
 #   MiddleFrameBuildGUI
+#   BuildModelSelector fRoot
+#   UpdateModelSelector fRoot
+#   SelectModel  fRoot id
 #   MeasureRefreshGUI
 #   MeasureBuildVTK
 #   MeasureEnter
@@ -49,20 +52,22 @@
 #   MeasurePosition
 #   MeasureDistance
 #   MeasureAngle
+#   MeasureVolume
 #   MeasureSurface
 #   MeasureIntersection
-#   get_distance
-#   get_angle
+#   MeasureOutput msg
+#   get_distance a_id b_id
+#   get_angle a_id b_id c_id
 #   MeasureXSection
 #   MeasureXSection1
-#   addGlyphPoint
-#   delGlyphPoint
-#   selGlyphPoint
-#   MeasureSetModelsPickable
-#   MeasureSetCsysPickable
-#   MeasureSetGlyphsPickable
-#   MeasureSetAllPickable
-#   MeasureCsysMotion
+#   addGlyphPoint widget x y
+#   delGlyphPoint widget x y
+#   selGlyphPoint widget x y
+#   MeasureSetModelsPickable pickable
+#   MeasureSetCsysPickable pickable
+#   MeasureSetGlyphsPickable pickable
+#   MeasureSetAllPickable pickable
+#   MeasureCsysMotion actor angle dotprod unitX unitY unitZ
 #==========================================================================auto=
 
 
@@ -71,13 +76,9 @@
 # 12/19/01 Krishna C. Yeshwant kcy@bwh.harvard.edu: Edited
 # 05/21/02 Delphine Nain delfin@bwh : Edited
 
-#------------
-# MeasureInit
-#------------
-
 #-------------------------------------------------------------------------------
 # .PROC MeasureInit
-# 
+# Initialise the global variables for the Measure module.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -109,7 +110,7 @@ proc MeasureInit {} {
     
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.24 $} {$Date: 2005/01/28 21:45:01 $}]
+        {$Revision: 1.25 $} {$Date: 2005/11/25 21:30:37 $}]
     
     # Initialize module-level variables
     #    set Measure(Model1) $Model(idNone)
@@ -128,27 +129,26 @@ proc MeasureInit {} {
 #    {$Gui(fViewWin) <Shift-1> {addGlyphPoint %W %x %y}} }
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC Test
-# 
+# Does nothing.
 # .ARGS
+# str event
+# widget W
+# int X
+# int Y
+# int x
+# int y
+# int t
 # .END
 #-------------------------------------------------------------------------------
 proc Test {event W X Y x y t } {
     #    puts "Button 1 pressed"
 }
 
-
-
-
-#----------------
-# MeasureBuildGUI
-#----------------
-
 #-------------------------------------------------------------------------------
 # .PROC MeasureBuildGUI
-# 
+# Build the GUI for the Measure module.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -318,10 +318,9 @@ NOTE: None of the slicer measurement tools have been validated...the results may
     
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC TopFrameBuildGUI
-# 
+# Build the top frame of the Measure module's gui.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -369,10 +368,10 @@ proc TopFrameBuildGUI {} {
 
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MeasureSetCsysVisibility
-# 
+# Set the Csys actor in the Measure module to be visible and pickable or not,
+# depending on the value of the Measure(Csys,visible) variable.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -384,10 +383,9 @@ proc MeasureSetCsysVisibility {} {
     Render3D 
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MiddleFrameBuildGUI
-# 
+# Build the middle frame of the Measure module's gui.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -398,15 +396,20 @@ proc MiddleFrameBuildGUI {} {
     #    UpdateModelSelector $Module(Measure,fMeasure).fSelModel.mb.m 1
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC BuildModelSelector
 # places a model selector in {$fRoot}.fSelModel
-# with structure:
-# fRoot
-#   fSelModel : Selector containing frame
-#     .l      : "Models:" label
-#     .mb     : menubutton labeled "0-Selected" initially
-#       .m    : menu of models
-#     .bPick  : button labeled "Pick..."
+# with structure:<br>
+# fRoot<br>
+#   fSelModel : Selector containing frame<br>
+#     .l      : "Models:" label<br>
+#     .mb     : menubutton labeled "0-Selected" initially<br>
+#       .m    : menu of models<br>
+#     .bPick  : button labeled "Pick..."<br>
+# .ARGS
+# windowpath fRoot where to build the model selector
+# .END
+#-------------------------------------------------------------------------------
 proc BuildModelSelector {fRoot} {
     global Gui Selected Model Module
     
@@ -434,7 +437,13 @@ proc BuildModelSelector {fRoot} {
     #    puts "done test"
 }
 
-# updates model selector passed in
+#-------------------------------------------------------------------------------
+# .PROC UpdateModelSelector
+# Updates model selector passed in
+# .ARGS
+# windowpath fRoot where to update the model selector
+# .END
+#-------------------------------------------------------------------------------
 proc UpdateModelSelector {fRoot} {
     global Model Measure Module
     global Mrml(dataTree)
@@ -479,12 +488,15 @@ proc UpdateModelSelector {fRoot} {
     $m add command -label "<None>" -command "SelectModel $fRoot -1"
 }
 
-
-
-
-
+#-------------------------------------------------------------------------------
+# .PROC SelectModel 
 # Selects the model with id of second parameter and updates
-# fSelModel button in fRoot with number of models selected
+# fSelModel button in fRoot with number of models selected.
+# .ARGS
+# windowpath fRoot the model selector window
+# int id the selected model id
+# .END
+#-------------------------------------------------------------------------------
 proc SelectModel { fRoot id } {
     global Selected Model Module
     
@@ -525,10 +537,9 @@ proc SelectModel { fRoot id } {
     Render3D
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MeasureRefreshGUI
-# 
+# Update the model selector.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -539,10 +550,9 @@ proc MeasureRefreshGUI {} {
     UpdateModelSelector $Module(Measure,fMeasure)
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MeasureBuildVTK
-# 
+# Build the vtk structures needed in this module: coordinate system actor, cutter 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -572,10 +582,9 @@ proc MeasureBuildVTK {} {
 #    set Measure(surfProps) [vtkSurfaceProps Measure(surfProps)]
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MeasureEnter
-# 
+# Called when enter this module, refresh the gui. 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -588,7 +597,7 @@ proc MeasureEnter {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MeasureExit
-# 
+# Called when exit this module. Currently does nothing.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -597,24 +606,28 @@ proc MeasureExit {} {
 #    popEventManager
 }
 
-
 #--------------------------------------
 # Code to Report Surface Properties
 #--------------------------------------
 
-
 #-------------------------------------------------------------------------------
 # .PROC MeasurePosition
-# 
+# Get the point coordinates for all selected fiducials and report them in the 
+# output list box.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MeasurePosition {} {
     set list [FiducialsGetAllSelectedPointIdList]
+
+    if {[llength $list] < 1} {
+        DevInfoWindow "Select a fiducial to see it's position."
+        return
+    }
     foreach id $list {
-    set name [Point($id,node) GetName]
-    set msg "$name: [FiducialsGetPointCoordinates $id]"
-    MeasureOutput $msg
+        set name [Point($id,node) GetName]
+        set msg "$name: [FiducialsGetPointCoordinates $id]"
+        MeasureOutput $msg
     }
 
 #    global Point
@@ -635,7 +648,7 @@ proc MeasurePosition {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MeasureDistance
-# 
+# Measure the distance between the first selected points on the active fiducials list.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -676,7 +689,8 @@ proc MeasureDistance {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MeasureAngle
-# 
+#  Measure the angle between the first three active points on the active fiducials list.<br>
+# Will print out an error message if three are not selected.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -690,47 +704,28 @@ proc MeasureAngle {} {
     set idB [lindex $list 1]
     set idC [lindex $list 2]
     set npts [llength $list]
+
     if {$idA == "" || $idB == "" || $idC == ""} {
         set msg "Warning: the active list ($::Fiducials(activeList)) does not have three points selected to measure the angle between."
         MeasureOutput $msg
         return
-    }
-    ##    set idA [lindex $Point(selected) 0]
-    ##    set idB [lindex $Point(selected) 1]
-    ##    set idC [lindex $Point(selected) 2]
-    ##    set npts [llength $Point(selected)]
-    
+    }    
     
     if { $npts == 4 } {
-    ##    set idD [lindex $Point(selected) 3]
-    ##    set xyzB $Point($idB,xyz)
-    ##    set xyzC $Point($idC,xyz)
-    ##    set xyzD $Point($idD,xyz)
-    set idD [lindex $list 3]
+        set idD [lindex $list 3]
     
-    set xyzB [FiducialsGetPointCoordinates $idB]
-    set xyzC [FiducialsGetPointCoordinates $idC]
-    set xyzD [FiducialsGetPointCoordinates $idD]
+        set xyzB [FiducialsGetPointCoordinates $idB]
+        set xyzC [FiducialsGetPointCoordinates $idC]
+        set xyzD [FiducialsGetPointCoordinates $idD]
         
-    set cx [expr [lindex $xyzD 0] - \
-        [lindex $xyzC 0] + [lindex $xyzB 0 ]]
-    set cy [expr [lindex $xyzD 1] - \
-        [lindex $xyzC 1] + [lindex $xyzB 1 ]]
-    set cz [expr [lindex $xyzD 2] - \
-        [lindex $xyzC 2] + [lindex $xyzB 2 ]]
-    ##    PointsSelect $idD 0
-    ##    PointsSelect $idC 0
-    ##    set Point(model) ""
-    set idC [PointsNew $cx $cy $cz]
-    }
-    #    MeasureTmpPoints SetNumberOfPoints 3
-    #    eval MeasureTmpPoints InsertPoint 0 $Point($idA,xyz)
-    #    eval MeasureTmpPoints InsertPoint 1 $Point($idB,xyz)
-    #    eval MeasureTmpPoints InsertPoint 2 $Point($idC,xyz)
-    #    MeasureTmpLines InsertNextCell 3
-    #        MeasureTmpLines InsertCellPoint 0
-    #        MeasureTmpLines InsertCellPoint 1
-    #        MeasureTmpLines InsertCellPoint 2
+        set cx [expr [lindex $xyzD 0] - \
+                    [lindex $xyzC 0] + [lindex $xyzB 0 ]]
+        set cy [expr [lindex $xyzD 1] - \
+                    [lindex $xyzC 1] + [lindex $xyzB 1 ]]
+        set cz [expr [lindex $xyzD 2] - \
+                    [lindex $xyzC 2] + [lindex $xyzB 2 ]]
+        set idC [PointsNew $cx $cy $cz]
+    }    
     set angle [format "%.2f" [get_angle $idA $idB $idC]]
 
     set nameA [Point($idA,node) GetName]
@@ -740,23 +735,31 @@ proc MeasureAngle {} {
     set msg [concat "Angle" $nameA $nameB \
         $nameC "=" $angle "deg."]
     MeasureOutput $msg
-##    PointsSelect $idA 0
-##    PointsSelect $idB 0
-##    PointsSelect $idC 0
     Render3D
     MeasureRefreshGUI
 }
 
-
-
+#-------------------------------------------------------------------------------
+# .PROC MeasureVolume
 # Reports the volume of all selected models
 # in the output listbox
+# .END
+#-------------------------------------------------------------------------------
 proc MeasureVolume {} {
     global Model Selected Module
     global Mrml(dataTree)
+
+    if {[llength $Selected(Model)] < 1} {
+        DevInfoWindow "Please select a model from the Measure module's Models drop down menu"
+        return
+    }
+
+    catch "surfProps Delete"
     vtkSurfaceProps surfProps
     set vol -1000
     
+    
+
     foreach id $Selected(Model) {
         set currModel [Mrml(dataTree) GetNthModel $id]
         #    puts $name
@@ -791,13 +794,19 @@ proc MeasureVolume {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MeasureSurface
-# 
+# Show the surface area, for each selected model, in the output list box.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MeasureSurface {} {
     global Model Selected
     
+    if {[llength $Selected(Model)] < 1} {
+        DevInfoWindow "Please select a model from the Measure module's Models drop down menu"
+        return
+    }
+
+    catch "surfProps Delete"
     vtkSurfaceProps surfProps
     
     foreach id $Selected(Model) {
@@ -813,22 +822,19 @@ proc MeasureSurface {} {
     surfProps Delete
 }
 
-
-
 #-------------------------------------------------------------------------------
 # .PROC MeasureIntersection
-# 
+# create large single triangle model<br>
+# select single triangle model<br>
+# orient triangle with Csys tool<br>
+# select polyData model<br>
+# intersect between polyData model and triangle<br>
+# count number  of intersected triangles<br>
+# scale and report count
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MeasureIntersection { } {
-    # create large single triangle model
-    # select single triangle model
-    # orient triangle with Csys tool
-    # select polyData model
-    # intersect between polyData model and triangle
-    # count # of intersected triangles
-    # scale and report count
     
     global Selected Measure Model
         
@@ -892,26 +898,27 @@ proc MeasureIntersection { } {
     }
 }
 
-
-
-
-
-# writes message into output listbox
+#-------------------------------------------------------------------------------
+# .PROC MeasureOutput
+# Writes message into output listbox
+# .ARGS
+# str msg insert this string to the end of each Measure(listbox)
+# .END
+#-------------------------------------------------------------------------------
 proc MeasureOutput { msg } {
     global Gui Measure
     
-    foreach foo $Measure(listbox) {
-        $foo insert end $msg
+    foreach l $Measure(listbox) {
+        $l insert end $msg
     }
 }
 
-
-
-
 #-------------------------------------------------------------------------------
 # .PROC get_distance
-# 
+# Get the posistions of two fiducials, and return the distance between them.
 # .ARGS
+# int a_id id of the first point
+# int b_id id of the second point
 # .END
 #-------------------------------------------------------------------------------
 proc get_distance { a_id b_id } {
@@ -934,8 +941,11 @@ proc get_distance { a_id b_id } {
 
 #-------------------------------------------------------------------------------
 # .PROC get_angle
-# 
+# Get the locations of three points, and return the angle between them
 # .ARGS
+# int a_id id of the first point
+# int b_id id of the second point
+# int c_id id of the third point
 # .END
 #-------------------------------------------------------------------------------
 proc get_angle { a_id b_id c_id } {
@@ -949,12 +959,12 @@ proc get_angle { a_id b_id c_id } {
     set b_pos [FiducialsGetPointCoordinates $b_id]
     set dotprod 0
     for { set ii 0 } { $ii<3 } { incr ii } {
-    set delta [expr [lindex $a_vec $ii] - [lindex $b_pos $ii]]
-    set a_vec [lreplace $a_vec $ii $ii $delta]
-    set delta [expr [lindex $c_vec $ii] - [lindex $b_pos $ii]]
-    set c_vec [lreplace $c_vec $ii $ii $delta]
-    set dotprod [expr $dotprod + \
-        [lindex $a_vec $ii]*[lindex $c_vec $ii] ]
+        set delta [expr [lindex $a_vec $ii] - [lindex $b_pos $ii]]
+        set a_vec [lreplace $a_vec $ii $ii $delta]
+        set delta [expr [lindex $c_vec $ii] - [lindex $b_pos $ii]]
+        set c_vec [lreplace $c_vec $ii $ii $delta]
+        set dotprod [expr $dotprod + \
+                         [lindex $a_vec $ii]*[lindex $c_vec $ii] ]
     }
     set xprodX [expr [lindex $a_vec 1]*[lindex $c_vec 2] - \
         [lindex $a_vec 2]*[lindex $c_vec 1] ]
@@ -973,21 +983,21 @@ proc get_angle { a_id b_id c_id } {
 ### JUNK
 
 
-
 #-------------------------------------------------------------------------------
 # .PROC MeasureXSection
+# Old intersection code:<br>
+# create large single triangle model<br>
+# select single triangle model<br>
+# orient triangle with Csys tool<br>
+# select polyData model<br>
+# intersect between polyData model and triangle<br>
+# count number of intersected triangles<br>
+# scale and report count
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MeasureXSection { } {
-    # create large single triangle model
-    # select single triangle model
-    # orient triangle with Csys tool
-    # select polyData model
-    # intersect between polyData model and triangle
-    # count # of intersected triangles
-    # scale and report count
     
     global Selected Measure Model
     
@@ -1001,36 +1011,34 @@ proc MeasureXSection { } {
     #    DebugMsg "finding cross section of $idA with $idB"
     
     if { $idA > -1 && $idB > -1 && $idA != $idB } {
-    Measure(filterA) SetInput [Model($idA,mapper,viewRen) GetInput]
-    Measure(filterB) SetInput [Model($idB,mapper,viewRen) GetInput]
-    Measure(cutter) SetXformA [Model($idA,actor,viewRen) GetMatrix]
-    Measure(cutter) SetXformB [Model($idB,actor,viewRen) GetMatrix]
-    #    Model($idA,mapper,viewRen) SetInput [Measure(cutter) GetOutput]
-    Measure(cutter) UpdateCutter
-    Measure(cutResult) Initialize
-    Measure(cutResult) CopyStructure [Measure(cutter) GetOutput]
-    Measure(cutResult) Squeeze
-    Measure(cutResult) Modified
-    Model($idB,mapper,viewRen) SetInput Measure(cutResult)
-    #    puts [Measure(cutter) GetIntersectionCount]
-    #    puts [Measure(cutter) GetTriangleCount]
-    #    puts  Measure(cutter) NodeCount
-    
-    Render3D
+        Measure(filterA) SetInput [Model($idA,mapper,viewRen) GetInput]
+        Measure(filterB) SetInput [Model($idB,mapper,viewRen) GetInput]
+        Measure(cutter) SetXformA [Model($idA,actor,viewRen) GetMatrix]
+        Measure(cutter) SetXformB [Model($idB,actor,viewRen) GetMatrix]
+        #    Model($idA,mapper,viewRen) SetInput [Measure(cutter) GetOutput]
+        Measure(cutter) UpdateCutter
+        Measure(cutResult) Initialize
+        Measure(cutResult) CopyStructure [Measure(cutter) GetOutput]
+        Measure(cutResult) Squeeze
+        Measure(cutResult) Modified
+        Model($idB,mapper,viewRen) SetInput Measure(cutResult)
+        #    puts [Measure(cutter) GetIntersectionCount]
+        #    puts [Measure(cutter) GetTriangleCount]
+        #    puts  Measure(cutter) NodeCount
+        
+        Render3D
     } else {
-    puts "Cutting not defined."
+        puts "Cutting not defined."
     }
 }
 
-# Code to Measure Cross Section
-# related to Cutting Code
-# use Csys tool to orient a cross section tool
-# select the model to measure
-# measure intersection of cross section tool and selected model
-
 #-------------------------------------------------------------------------------
 # .PROC MeasureXSection1
-# 
+# Code to Measure Cross Section<br>
+# related to Cutting Code<br>
+# use Csys tool to orient a cross section tool<br>
+# select the model to measure<br>
+# measure intersection of cross section tool and selected model
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1059,25 +1067,20 @@ proc MeasureXSection1 { } {
 }
 
 
-
-
-
-
-
-
 #--------------------------------------
 # Code to deal with Coordinate System
 #--------------------------------------
 
-
-# if a model is picked, places a landmark on the model
-# if the Csys is picked allows movement of Csys
-# otherwise does nothing
-
 #-------------------------------------------------------------------------------
 # .PROC addGlyphPoint
+# If a model is picked, places a landmark on the model.<br>
+# If the Csys is picked allows movement of Csys,
+# otherwise does nothing
 # 
 # .ARGS
+# windowpath widget which window the picked model is in.
+# int x picked point x coordinate
+# int y picked point y coordinate
 # .END
 #-------------------------------------------------------------------------------
 proc addGlyphPoint { widget x y } {
@@ -1124,12 +1127,13 @@ proc addGlyphPoint { widget x y } {
     }
 }
 
-
-
 #-------------------------------------------------------------------------------
 # .PROC delGlyphPoint
-# 
+#  Delete a selected glyph point.
 # .ARGS
+# windowpath widget which window the picked model is in.
+# int x picked point x coordinate
+# int y picked point y coordinate
 # .END
 #-------------------------------------------------------------------------------
 proc delGlyphPoint { widget x y } {
@@ -1149,12 +1153,13 @@ proc delGlyphPoint { widget x y } {
     Render3D
 }
 
-
-
 #-------------------------------------------------------------------------------
 # .PROC selGlyphPoint
-# 
+# Select a glyph point.
 # .ARGS
+# windowpath widget which window the picked model is in.
+# int x picked point x coordinate
+# int y picked point y coordinate
 # .END
 #-------------------------------------------------------------------------------
 proc selGlyphPoint { widget x y } {
@@ -1166,49 +1171,47 @@ proc selGlyphPoint { widget x y } {
     MeasureSetGlyphsPickable 1
     #MeasureSetCsysPickable 1
     if { [SelectPick Point(picker) $widget $x $y] == 0 } {
-    #    DebugMsg [concat "Nothing picked at" $x "," $y "in" $widget ]
-    return -1
+        #    DebugMsg [concat "Nothing picked at" $x "," $y "in" $widget ]
+        return -1
     } else {
-    set actor [Point(picker) GetActor]
-    #    DebugMsg [concat "Picked actor:" $actor]
-    if { [$actor GetProperty] == [Measure(Csys,Xactor) GetProperty] } {
-        #do nothing, handled by the main interactor
-    } elseif { [$actor GetProperty] == [Measure(Csys,Yactor) GetProperty] } {
-    #do nothing, handled by the main interactor
-    } elseif { [$actor GetProperty] == [Measure(Csys,Zactor) GetProperty] } {
-    #do nothing, handled by the main interactor
-    } else {
-        set pntid [PointIdFromGlyphCellId \
-            [Point(picker) GetCellId]]
-        if { $pntid > -1 } {
-        #        DebugMsg [concat "PointId: " $pntid \
-            ", Location: " $Point($pntid,xyz) ]
-        PointsSelect $pntid 1
-        MeasureRefreshGUI
-        Render3D
+        set actor [Point(picker) GetActor]
+        #    DebugMsg [concat "Picked actor:" $actor]
+        if { [$actor GetProperty] == [Measure(Csys,Xactor) GetProperty] } {
+            #do nothing, handled by the main interactor
+        } elseif { [$actor GetProperty] == [Measure(Csys,Yactor) GetProperty] } {
+            #do nothing, handled by the main interactor
+        } elseif { [$actor GetProperty] == [Measure(Csys,Zactor) GetProperty] } {
+            #do nothing, handled by the main interactor
+        } else {
+            set pntid [PointIdFromGlyphCellId \
+                           [Point(picker) GetCellId]]
+            if { $pntid > -1 } {
+                PointsSelect $pntid 1
+                MeasureRefreshGUI
+                Render3D
+            }
+            return $pntid
         }
-        return $pntid
-    }
     }
     return -1
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MeasureSetModelsPickable
-# 
+# Go through the model list and set them all pickable or not. Invisible actors are not pickable.
 # .ARGS
+# int pickable if 1, set the models to be pickable, else not
 # .END
 #-------------------------------------------------------------------------------
 proc MeasureSetModelsPickable { pickable } {
     global Model Slice Module
     
     #    DebugMsg MeasureSetModelsPickable
-    foreach foo $Model(idList) {
+    foreach m $Model(idList) {
         set r  [lindex $Module(Renderers) 0]
 
-        set actor Model($foo,actor,$r)
-        #    DebugMsg [concat Model $foo SetPickable $pickable]
+        set actor Model($m,actor,$r)
+        #    DebugMsg [concat Model $m SetPickable $pickable]
         if { [$actor GetVisibility] } {
             $actor SetPickable $pickable
         } else {
@@ -1217,30 +1220,27 @@ proc MeasureSetModelsPickable { pickable } {
     }
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MeasureSetCsysPickable
-# 
+# Set the cooridinate system x, y, z actors and the active csys to be pickable or not
 # .ARGS
+# int pickable if 1, set the csys model to be pickable, else not
 # .END
 #-------------------------------------------------------------------------------
 proc MeasureSetCsysPickable { pickable } {
     global Csys
 
-    #    DebugMsg "MeasureSetCsysPickable"
-    foreach foo {Measure(Csys,Xactor) Measure(Csys,Yactor) Measure(Csys,Zactor)} {
-    #    DebugMsg [concat $foo SetPickable $pickable]
-    $foo SetPickable $pickable
+    foreach m {Measure(Csys,Xactor) Measure(Csys,Yactor) Measure(Csys,Zactor)} {
+        $m SetPickable $pickable
     }
-
     set Csys(active) $pickable
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MeasureSetGlyphsPickable
-# 
+# Set the active point actor to be pickable or not.
 # .ARGS
+# int pickable if 1, set the model to be pickable, else not
 # .END
 #-------------------------------------------------------------------------------
 proc MeasureSetGlyphsPickable { pickable } {
@@ -1249,35 +1249,37 @@ proc MeasureSetGlyphsPickable { pickable } {
     $Point(actor) SetPickable $pickable
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MeasureSetAllPickable
-# 
+# Go through the list of vtk actors and followers and set them all pickable or not
 # .ARGS
+# int pickable if 1, set the object to be pickable, else not
 # .END
 #-------------------------------------------------------------------------------
 proc MeasureSetAllPickable { pickable } {
-    #    DebugMsg MeasureSetAllPickable
-    foreach foo [vtkActor ListInstances] {
-    #    DebugMsg [concat $foo SetPickable $pickable]
-    if { [$foo GetVisibility] } {
-        $foo SetPickable $pickable
-    } else {
-        $foo SetPickable 0
+
+    foreach a [vtkActor ListInstances] {
+        if { [$a GetVisibility] } {
+            $a SetPickable $pickable
+        } else {
+            $a SetPickable 0
+        }
     }
-    }
-    foreach foo [vtkFollower ListInstances] {
-    #    DebugMsg [concat $foo SetPickable $pickable]
-    $foo SetPickable $pickable
+    foreach f [vtkFollower ListInstances] {
+        $f SetPickable $pickable
     }
 }
 
-
-
 #-------------------------------------------------------------------------------
 # .PROC MeasureCsysMotion
-# 
+# Apply the rotation and translation of the cys to a selected model
 # .ARGS
+# str actor the name of the actor, only do stuff if it's the Measure(Csys,actor)
+# float angle rotate using this angle
+# float dotprod to multiply with the arbitrary vector
+# float unitX x component of arbitrary vector to rotate around
+# float unitY y component of arbitrary vector to rotate around
+# float unitZ z component of arbitrary vector to rotate around
 # .END
 #-------------------------------------------------------------------------------
 proc MeasureCsysMotion {actor angle dotprod unitX unitY unitZ} {
@@ -1286,26 +1288,24 @@ proc MeasureCsysMotion {actor angle dotprod unitX unitY unitZ} {
 
      if {$actor == "Measure(Csys,actor)"} {
     
-     foreach id $Selected(Model) {
-         Model($id,actor,viewRen) RotateWXYZ $angle $unitX $unitY $unitZ
-         Model($id,actor,viewRen) AddPosition [expr $unitX*$dotprod] \
-             [expr $unitY*$dotprod] [expr $unitZ*$dotprod]
+         foreach id $Selected(Model) {
+             Model($id,actor,viewRen) RotateWXYZ $angle $unitX $unitY $unitZ
+             Model($id,actor,viewRen) AddPosition [expr $unitX*$dotprod] \
+                 [expr $unitY*$dotprod] [expr $unitZ*$dotprod]
+         }
+         
+         if { [info commands cutactor] != "" } {
+             cutactor AddPosition [expr $unitX*$dotprod] \
+                 [expr $unitY*$dotprod] [expr $unitZ*$dotprod]
+             if { $lastAxis == 0 } {
+                 cutactor RotateX $angle
+             } else {
+                 if { $lastAxis == 1 } {
+                     cutactor RotateY $angle
+                 } else {
+                     cutactor RotateZ $angle
+                 }   
+             }
+         }
      }
-     
-     if { [info commands cutactor] != "" } {
-         cutactor AddPosition [expr $unitX*$dotprod] \
-             [expr $unitY*$dotprod] [expr $unitZ*$dotprod]
-         if { $lastAxis == 0 } {
-         cutactor RotateX $angle
-         } else {
-         if { $lastAxis == 1 } {
-             cutactor RotateY $angle
-         } else {
-             cutactor RotateZ $angle
-         }   }
-     }
-     }
- }
-
-
-
+}
