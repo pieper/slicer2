@@ -123,7 +123,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-             {$Revision: 1.123 $} {$Date: 2005/11/25 21:14:22 $}]
+             {$Revision: 1.124 $} {$Date: 2005/11/26 17:28:21 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -726,10 +726,14 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
 
     # Frames
     frame $f.fActive -bg $Gui(backdrop) -relief sunken -bd 2
+    frame $f.fCORFile -bg $Gui(activeWorkspace) -relief groove -bd 3
     frame $f.fGenericFile -bg $Gui(activeWorkspace) -relief groove -bd 3
 
     pack $f.fActive -side top -pady $Gui(pad) -padx $Gui(pad)
     pack $f.fGenericFile  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+    pack $f.fCORFile  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x   
+    eval {label $fExport.ll -text "Export COR Format\nWarning: only 1mm 256 cubed\n8 bit images supported"} $Gui(WLA)   
+    pack  $fExport.ll -side top -padx $Gui(pad) 
 
     #-------------------------------------------
     # Export->Active frame
@@ -783,6 +787,20 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     # put a tooltip over the menu
     TooltipAdd $f.mbType \
             "Choose file type."
+
+     #-------------------------------------------   
+     # Export->CORFilename frame   
+     #-------------------------------------------   
+    
+     set f $fExport.fCORFile   
+    
+     eval {button $f.bWrite -text "Save" -width 5 \
+         -command "VolumesCORExport"} $Gui(WBA)   
+     TooltipAdd $f.bWrite "Save the Volume."   
+     pack  $f.bWrite -side bottom -padx $Gui(pad)   
+    
+     DevAddFileBrowse $f Volumes "prefixCORSave" "COR File:" "" "info" "\$Volume(DefaultDir)" "Save" "Browse for a COR file location (will save images and COR-.info file to directory)" "Absolute"   
+  
 
     #-------------------------------------------
     # Other frame
