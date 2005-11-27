@@ -424,32 +424,38 @@ proc VolTensorMake6ComponentScalarVolIntoTensors {v} {
 
     # if we do not need to flip the y axis
     if {$Volume(VolTensor,YAxis) == "vtk"} {
-        vtkImageAppendComponents ap1
-        vtkImageAppendComponents ap2
-        # [Txx Txy Txz Txy Tyy Tyz Txz Tyz Tzz]
-        # [0   1   2   1   3   4   2   4   5] (indices into input scalars)
-        for {set i 0} {$i < 3} {incr i} {
-            vtkImageExtractComponents ex$i
-            ex$i SetInput [Volume($v,vol) GetOutput]
-        }
-        ex0 SetComponents 0 1 2
-        ex1 SetComponents 1 3 4
-        ex2 SetComponents 2 4 5
-        ap1 SetInput1 [ex0 GetOutput]
-        ap1 SetInput2 [ex1 GetOutput]
-        ap2 SetInput1 [ap1 GetOutput]
-        ap2 SetInput2 [ex2 GetOutput]
-        ap2 Update
-    
-        # set input to aa to be the output of the last filter above
-        aa SetInput [ap2 GetOutput]
+       vtkImageAppendComponents ap1
+       vtkImageAppendComponents ap2
+       # [Txx Txy Txz Txy Tyy Tyz Txz Tyz Tzz]
+       # [0   1   2   1   3   4   2   4   5] (indices into input scalars)
+       for {set i 0} {$i < 3} {incr i} {
+           vtkImageExtractComponents ex$i
+           ex$i SetInput [Volume($v,vol) GetOutput]
+       }
+       ex0 SetComponents 0 1 2
+       ex1 SetComponents 1 3 4
+       ex2 SetComponents 2 4 5
+#        ap1 SetInput1 [ex0 GetOutput]
+       ap1 AddInput [ex0 GetOutput]
+#        ap1 SetInput2 [ex1 GetOutput]
+       ap1 AddInput [ex1 GetOutput]
+#        ap2 SetInput1 [ap1 GetOutput]
+       ap2 AddInput [ap1 GetOutput]
+#        ap2 SetInput2 [ex2 GetOutput]
+       ap2 AddInput [ex2 GetOutput]
+       ap2 Update
 
-        # Delete all temporary vtk objects
-        for {set i 0} {$i < 3} {incr i} {
-            ex$i Delete
-        }
-        ap1 Delete
-        ap2 Delete
+       # set input to aa to be the output of the last filter above
+       aa SetInput [ap2 GetOutput]
+
+       # Delete all temporary vtk objects
+       for {set i 0} {$i < 3} {incr i} {
+           ex$i Delete
+       }
+       ap1 Delete
+       ap2 Delete
+
+
 
     } else {
         # DAN, this part is not yet implemented
