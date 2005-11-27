@@ -273,7 +273,7 @@ Clicking \"Ok\" below binds you to the license agreement.
 See www.slicer.org for details.
 "
 set argv0 [lindex $argv 0]
-if { $argv == "-y" || $argv0 == "--agree_to_license" } {
+if { $argv0 == "-y" || $argv0 == "--agree_to_license" } {
     set argv [lreplace $argv 0 0]
 } else {
     if { ![file exists $::env(HOME)/.IAgreeToSlicersLicense] } {
