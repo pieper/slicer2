@@ -292,6 +292,7 @@ for {set i 0} {$i < $argc} {incr i} {
                 # allow a ".," to mean ";" in argument to facilitate scripting
                 # (it looks like a semicolon turned on it side
                 regsub -all ".," $::SLICER(exec) ";" ::SLICER(exec)
+                regsub -all ",." $::SLICER(exec) ";" ::SLICER(exec)
             }
         }
         "--all-info" {
@@ -449,7 +450,7 @@ proc SplashShow { {delayms 7000} } {
     SplashRaise
     update
     # commented the bind - don't allow bypass of the grab
-#    bind .splash <1> SplashKill
+    bind .splash <1> SplashKill
     tk scaling $oscaling
 }
 
@@ -930,7 +931,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.103 2005/11/21 20:19:00 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.104 2005/11/27 21:28:03 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
