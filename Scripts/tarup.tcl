@@ -223,6 +223,10 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
     file mkdir $destdir/Lib/$::env(BUILD)/gsl
     file copy -force $::env(GSL_LIB_DIR) $destdir/Lib/$::env(BUILD)/gsl/lib
 
+    puts " -- copying teem files"
+    file mkdir $destdir/Lib/$::env(BUILD)/teem-build
+    file copy -force $::env(TEEM_BIN_DIR) $destdir/Lib/$::env(BUILD)/teem-build
+
     #
     # grab the vtk libraries and binaries
     # - bring in the tcl wrapping files and a specially modified
