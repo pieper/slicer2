@@ -200,6 +200,7 @@ public:
 
   // Description:
   // Helper functions to perform operations pixel-wise
+  static void FixNegativeEigenvalues(vtkFloatingPointType w[3]);
   static vtkFloatingPointType Determinant(vtkFloatingPointType D[3][3]);
   static vtkFloatingPointType Trace(vtkFloatingPointType D[3][3]);
   static vtkFloatingPointType RelativeAnisotropy(vtkFloatingPointType w[3]);

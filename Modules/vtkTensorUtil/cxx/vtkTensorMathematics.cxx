@@ -469,22 +469,7 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
         //  2. Take absolute value
         //  3. Increase eigenvalues by negative part
         // The two first options have been problematic. Try 3 
-        if(w[2]<0) {
-            w[2] = 0;
-            w[1] += (-w[2]);
-            w[0] += (-w[2]);
-        }
-        if (w[1]<0) {
-            w[1] = 0;
-            w[0] += (-w[1]);
-        }
-        if (w[0] <0) {
-            w[0]=0;
-        }    
-          
-          // Lauren note that RA and LA could be computed
-          // without diagonalization.  This should be implementred
-          // instead for speed.
+        vtkTensorMathematics::FixNegativeEigenvalues(w);
 
           // pixel operation
           switch (op)
@@ -656,6 +641,22 @@ void vtkTensorMathematics::ThreadedExecute(vtkImageData **inData,
       break;
     }
 
+}
+
+void  vtkTensorMathematics::FixNegativeEigenvalues(vtkFloatingPointType w[3])
+{
+       if(w[2]<0) {
+            w[2] = 0;
+            w[1] += (-w[2]);
+            w[0] += (-w[2]);
+        }
+        if (w[1]<0) {
+            w[1] = 0;
+            w[0] += (-w[1]);
+        }
+        if (w[0] <0) {
+            w[0]=0;
+        }    
 }
 
 vtkFloatingPointType vtkTensorMathematics::Trace(vtkFloatingPointType D[3][3])
