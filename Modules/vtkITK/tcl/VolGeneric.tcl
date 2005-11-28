@@ -299,7 +299,13 @@ proc VolGenericApply {} {
     catch "genreader Delete"
     vtkITKArchetypeImageSeriesReader genreader
     genreader SetArchetype $Volume(VolGeneric,FileName)
-    genreader UpdateInformation
+    if {[catch "genreader UpdateInformation"]} {
+        DevErrorWindow "Cannot read information for file $Volume(VolGeneric,FileName)"
+        VolGenericMainFileCloseUpdate
+        MainMrmlDeleteNode Volume $i
+        return;
+    }
+
     genreader SetOutputScalarTypeToNative
     genreader SetDesiredCoordinateOrientationToNative
     if {$Volume(imageCentered)} {
