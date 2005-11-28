@@ -138,7 +138,7 @@ void  vtkFileOps::WriteDoubleToUShortToGEFile(char* FileName, double* vec,int XS
     vec ++;
   }
   result -= XYSize;
-  if (FlagUpsideDown) WriteToFlippedGEFile(FileName,result, XSize,YSize, XYSize);
+  if (FlagUpsideDown) vtkFileOps_WriteToFlippedGEFile(FileName,result, XSize,YSize, XYSize);
   else WriteToGEFile(FileName,result, XYSize);;
   delete[] result;
 }
@@ -147,7 +147,7 @@ void  vtkFileOps::WriteDoubleToUShortToGEFile(char* FileName, double* vec,int XS
 // Functions to write Short Data to an MRI File
 // ---------------------------------------------------------
 /* Copyright (c) Simon Warfield simonw@bwh.harvard.edu */
-/* $Id: vtkFileOps.cxx,v 1.1 2005/09/02 15:26:00 pohl Exp $ */
+/* $Id: vtkFileOps.cxx,v 1.2 2005/11/28 21:11:17 pohl Exp $ */
 int vtkFileOps::uncompressedFileName(char *fname, char **newFileName)
 {
 #ifndef _WIN32

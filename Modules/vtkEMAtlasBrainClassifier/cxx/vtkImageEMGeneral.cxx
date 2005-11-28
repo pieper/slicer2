@@ -639,7 +639,7 @@ int vtkImageEMGeneral::GEImageWriter(vtkImageData *Volume, char *FileName,int Pr
     for (int i = Extent[4]; i <= Extent[5]; i++) {
       sprintf(SliceFileName,"%s.%03d",FileName,i);
       switch (Volume->GetScalarType()) {
-    vtkTemplateMacro5(WriteToFlippedGEFile,SliceFileName,(VTK_TT*)  VolumeDataPtr, ImageX, ImageY, ImageXY);
+    vtkTemplateMacro5(vtkFileOps_WriteToFlippedGEFile,SliceFileName,(VTK_TT*)  VolumeDataPtr, ImageX, ImageY, ImageXY);
       }
     }
     delete []SliceFileName;

@@ -123,7 +123,7 @@ void FlipXAxis(T *invec, T *outvec, int XSize, int YSize, int XYSize) {
 // res -= XYSize;
 
 template <class T> 
-static void WriteToFlippedGEFile(char *filename,T *vec, int XSize, int YSize, int XYSize) {
+static void vtkFileOps_WriteToFlippedGEFile(char *filename,T *vec, int XSize, int YSize, int XYSize) {
   T* res = new T[XYSize];
   FlipXAxis(vec,res,XSize,YSize,XYSize);
   WriteToGEFile(filename,res,XYSize);
