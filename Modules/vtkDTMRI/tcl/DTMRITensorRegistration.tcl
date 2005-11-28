@@ -90,7 +90,7 @@ proc DTMRITensorRegistrationInit {} {
     #------------------------------------
     set m "TensorRegistration"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.16 $} {$Date: 2005/11/25 18:40:45 $}]
+                                 {$Revision: 1.17 $} {$Date: 2005/11/28 20:24:33 $}]
 
     # Does the AG module exist? If not the registration tab will not be displayed
     if {[catch "package require vtkAG"]} {
@@ -165,6 +165,7 @@ proc DTMRITensorRegistrationInit {} {
     set DTMRI(reg,Verbose)  "2"
     set DTMRI(reg,Scale)    "-1"
     set DTMRI(reg,2D)        "0"
+    set DTMRI(reg,Labelmap) 0
 
     DTMRIRegHelpUpdate 1
 
@@ -605,7 +606,7 @@ proc DTMRITensorRegistrationBuildGUI {} {
     grid $f.lCriterion $f.mbCriterion   -pady 2 -padx $Gui(pad) -sticky w
 
     # Scalar measure
-    eval {label $f.lScalmeas -text "Scalar measure:"} $Gui(WLA)
+    eval {label $f.lScalmeas -text "Linear channel:"} $Gui(WLA)
     set DTMRI(reg,ScalmeasName) "Trace"
     eval {menubutton $f.mbScalmeas -text "$DTMRI(reg,Scalarmeas)" -relief raised -bd 2 -width 15 \
         -menu $f.mbScalmeas.m} $Gui(WMBA)
@@ -1908,6 +1909,7 @@ proc DTMRIRegCoregister {SourceVolume TargetTensor} {
     vtkImageData NormalizedSource
     set  SourceScanOrder [Volume($SourceVolume,node) GetScanOrder]
     set  TargetScanOrder [Tensor($TargetTensor,node) GetScanOrder]
+    set DTMRI(reg,Labelmap) 1
     DTMRIRegNormalize Source Target NormalizedSource $SourceScanOrder $TargetScanOrder
     Source DeepCopy NormalizedSource
     NormalizedSource Delete
@@ -1937,6 +1939,7 @@ proc DTMRIRegCoregister {SourceVolume TargetTensor} {
 
     Source Delete
     Target Delete
+    set DTMRI(reg,Labelmap) 0
 
 }
 
@@ -2107,7 +2110,11 @@ proc DTMRIRegResample {Source Target Resampled} {
   Reslicer SetInput [ITrans GetOutput]
   Reslicer SetInterpolationMode $ResampleOptions(interp)
   Reslicer SetInterpolationModeToCubic
-
+  if {$DTMRI(reg,Labelmap)} {
+    Reslicer SetInterpolationModeToNearestNeighbor
+    Reslicer SetInterpolationMode 0
+  }
+  
 # Should it be this way, or inverse in the other way?     
   if {$ResampleOptions(inverse) == 1} {
       Reslicer SetResliceTransform $DTMRI(reg,Transform) 
@@ -2193,6 +2200,10 @@ proc DTMRIRegNormalize { SourceImage TargetImage NormalizedSource SourceScanOrde
    
     reslice SetInterpolationModeToCubic
     reslice SetInterpolationMode $DTMRI(reg,Interpolation)
+    if {$DTMRI(reg,Labelmap)} {
+      reslice SetInterpolationModeToNearestNeighbor
+      reslice SetInterpolationMode 0
+    }
   
     catch "xform Delete"
     catch "changeinfo Delete"
@@ -2546,33 +2557,33 @@ proc DTMRIPrmdSetup {} {
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRIReg2DUpdate {} {
-    global DTMRI Tensor Gui
-    if {$DTMRI(InputTensorTarget)!=$Tensor(idNone)} {
-      set DTMRI(reg,scanorder) [Tensor($DTMRI(InputTensorTarget),node) GetScanOrder]
-      switch $DTMRI(reg,scanorder) {
-        "IS" {
-          $DTMRI(reg,2dlabel) config -text "Axial" -bg $Gui(slice0)
-    }
-        "SI" {
-          $DTMRI(reg,2dlabel) config -text "Axial" -bg $Gui(slice0)
-    }
-    "LR" {
-          $DTMRI(reg,2dlabel) config -text "Sagittal" -bg $Gui(slice1)
-    }
-    "RL" {
-          $DTMRI(reg,2dlabel) config -text "Sagittal" -bg $Gui(slice1)
-    }
-    "AP" {
-          $DTMRI(reg,2dlabel) config -text "Coronal" -bg $Gui(slice2)
-    }
-    "PA" {
-          $DTMRI(reg,2dlabel) config -text "Coronal" -bg $Gui(slice2)
-    }
-      }
-      if {$DTMRI(reg,Scope)} {
-        $DTMRI(reg,2dlabel) config -text "" -bg $Gui(activeWorkspace)
-      }    
-    }
+    #global DTMRI Tensor Gui
+    #if {$DTMRI(InputTensorTarget)!=$Tensor(idNone)} {
+    #  set DTMRI(reg,scanorder) [Tensor($DTMRI(InputTensorTarget),node) GetScanOrder]
+    #  switch $DTMRI(reg,scanorder) {
+    #    "IS" {
+    #      $DTMRI(reg,2dlabel) config -text "Axial" -bg $Gui(slice0)
+    #}
+    #    "SI" {
+    #      $DTMRI(reg,2dlabel) config -text "Axial" -bg $Gui(slice0)
+    #}
+    #"LR" {
+    #      $DTMRI(reg,2dlabel) config -text "Sagittal" -bg $Gui(slice1)
+    #}
+    #"RL" {
+    #      $DTMRI(reg,2dlabel) config -text "Sagittal" -bg $Gui(slice1)
+    #}
+    #"AP" {
+    #      $DTMRI(reg,2dlabel) config -text "Coronal" -bg $Gui(slice2)
+    #}
+    #"PA" {
+    #      $DTMRI(reg,2dlabel) config -text "Coronal" -bg $Gui(slice2)
+    #}
+    #  }
+    #  if {$DTMRI(reg,Scope)} {
+    #    $DTMRI(reg,2dlabel) config -text "" -bg $Gui(activeWorkspace)
+    #  }    
+    #}
 }
 
 #-------------------------------------------------------------------------------
