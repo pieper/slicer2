@@ -47,6 +47,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkSuperquadricSource.h"
 #include <time.h>
 #include "vtkTensorMathematics.h"
+#include "vtkInteractiveTensorGlyph.h"
 
 //------------------------------------------------------------------------------
 vtkSuperquadricTensorGlyph* vtkSuperquadricTensorGlyph::New()
@@ -388,10 +389,11 @@ void vtkSuperquadricTensorGlyph::Execute()
       double cp = 2*(w[1]-w[2])/(w[0]+w[1]+w[2]);
       double alpha;
       double beta;
+
       //cout<<"Computing alpha and beta"<<endl;
       if(cp<cl) {
         alpha = pow((1-cp),this->Gamma);
-    beta = pow((1-cl),this->Gamma);
+        beta = pow((1-cl),this->Gamma);
        } else {
         alpha = pow((1-cl),this->Gamma);     
         beta= pow((1-cp),this->Gamma);
@@ -456,29 +458,18 @@ void vtkSuperquadricTensorGlyph::Execute()
         }
       else 
         {
-          // create scalar data from computed features
-          vtkFloatingPointType trace = w[0]+w[1]+w[2];
-
-          // avoid division by 0
-          vtkFloatingPointType eps = 1;
-          if (trace == 0) 
-        trace = eps;
-          vtkFloatingPointType norm;
-
-          // regularization to compensate for small eigenvalues
-          vtkFloatingPointType r = 0.001;
-          trace += r;
-
-          switch (this->ScalarMeasure) 
+        vtkTensorMathematics::FixNegativeEigenvalues(w);
+        
+        switch (this->ScalarMeasure) 
         {
         case VTK_LINEAR_MEASURE:
-          s = (w[0] - w[1])/trace;
+          s = vtkTensorMathematics::LinearMeasure(w);
           break;
         case VTK_PLANAR_MEASURE:
-          s = 2*(w[1] - w[2])/trace;
+          s = vtkTensorMathematics::PlanarMeasure(w);
           break;
         case VTK_SPHERICAL_MEASURE:
-          s = 3*w[2]/trace;
+          s = vtkTensorMathematics::SphericalMeasure(w);
           break;
         case VTK_MAX_EIGENVAL_MEASURE:
           s = w[0];
@@ -496,27 +487,31 @@ void vtkSuperquadricTensorGlyph::Execute()
           // vary color only with x and y, since unit vector
           // these two determine z component.
           // use max evector for direction
-          s = fabs(xv[0])/(fabs(yv[0]) + eps);
+          //s = fabs(xv[0])/(fabs(yv[0]) + eps);
+          double v_maj[3];
+          v_maj[0]=v[0][0];
+          v_maj[1]=v[1][0];
+          v_maj[2]=v[2][0];
+          if (this->TensorRotationMatrix)
+            {
+              vtkTransform *rotate = vtkTransform::New();
+              rotate->SetMatrix(this->TensorRotationMatrix);
+              rotate->TransformPoint(v_maj,v_maj);
+            }
+          
+          vtkInteractiveTensorGlyph::RGBToIndex(fabs(v_maj[0]),fabs(v_maj[1]),fabs(v_maj[2]),s);
+          
           break;
         case VTK_RELATIVE_ANISOTROPY_MEASURE:
-          // 1/sqrt(2) is the constant used here
-          s = (0.70710678)*(sqrt((w[0]-w[1])*(w[0]-w[1]) + 
-                     (w[2]-w[1])*(w[2]-w[1]) +
-                     (w[2]-w[0])*(w[2]-w[0])))/trace;
+          s = vtkTensorMathematics::RelativeAnisotropy(w);
           break;
         case VTK_FRACTIONAL_ANISOTROPY_MEASURE:
-          norm = sqrt(w[0]*w[0]+ w[1]*w[1] +  w[2]*w[2]);
-          if (norm == 0) 
-            norm = eps;
-          s = (0.70710678)*(sqrt((w[0]-w[1])*(w[0]-w[1]) + 
-                     (w[2]-w[1])*(w[2]-w[1]) +
-                     (w[2]-w[0])*(w[2]-w[0])))/norm;
-
+          s = vtkTensorMathematics::FractionalAnisotropy(w);
           break;
         default:
           s = 0;
           break;
-        }
+        } 
         }          
 
       for (i=0; i < numSourcePts; i++) 
