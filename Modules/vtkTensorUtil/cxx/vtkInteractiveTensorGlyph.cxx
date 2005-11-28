@@ -391,11 +391,8 @@ void vtkInteractiveTensorGlyph::Execute()
         }
       else 
         {
-          //Correct for negative eigenvalues: absolute value
-          w[0] = fabs(w[0]);
-          w[1] = fabs(w[1]);
-          w[2] = fabs(w[2]);
-       
+          //Correct for negative eigenvalues: used logic coded in vtkTensorMathematics
+        vtkTensorMathematics::FixNegativeEigenvalues(w);
 
         switch (this->ScalarMeasure) 
         {
