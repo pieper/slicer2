@@ -65,7 +65,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.29 $} {$Date: 2005/11/25 14:22:39 $}]
+                                 {$Revision: 1.30 $} {$Date: 2005/11/28 16:29:22 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -1355,8 +1355,6 @@ proc ConvertVolumeToTensors {} {
      set description "Baseline from volume $name"
      set name ${name}_Baseline
      set id [DTMRICreateNewNode Volume($v,node) $baseline $name $description]
-     
-     puts "_cast Output: [_cast GetOutput]"
      
       # average gradient images for display and checking mechanism. 
       catch "vtkImageMathematics math_g"
