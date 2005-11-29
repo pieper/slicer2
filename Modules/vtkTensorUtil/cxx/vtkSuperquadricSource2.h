@@ -42,13 +42,14 @@
 #ifndef __vtkSuperquadricSource2_h
 #define __vtkSuperquadricSource2_h
 
+#include "vtkTensorUtilConfigure.h"
 #include "vtkPolyDataSource.h"
 
 #define VTK_MAX_SUPERQUADRIC_RESOLUTION 1024
 #define VTK_MIN_SUPERQUADRIC_THICKNESS  1e-4
 #define VTK_MIN_SUPERQUADRIC_ROUNDNESS  1e-24
 
-class VTK_GRAPHICS_EXPORT vtkSuperquadricSource2 : public vtkPolyDataSource 
+class VTK_TENSORUTIL_EXPORT vtkSuperquadricSource2 : public vtkPolyDataSource 
 {
 public:
   // Description:
