@@ -111,6 +111,8 @@ switch $::tcl_platform(os) {
     "SunOS" -
     "Linux" -
     "Darwin" {
+        set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin
+
         set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh8.4
         set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish8.4
         set ::ITCL_TEST_FILE $::TCL_LIB_DIR/libitclstub3.2.a
@@ -126,8 +128,6 @@ switch $::tcl_platform(os) {
         set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/libITKCommon.$shared_lib_ext
         set ::TK_EVENT_PATCH $::SLICER_HOME/tkEventPatch.diff
         set ::BLT_PATCH $::SLICER_HOME/blt-patch.diff
-
-        set ::TEEM_BIN_DIR  $::SLICER_LIB/teem-build/bin
     }
     "Windows NT" {
     # Windows NT currently covers WinNT, Win2000, XP Home, XP Pro
@@ -142,6 +142,8 @@ switch $::tcl_platform(os) {
         #set ::VTK_BUILD_TYPE Release  ;# faster, but no debugging
         set ::VTK_BUILD_TYPE Debug  ;# a good default
 
+        set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin/$::VTK_BUILD_TYPE
+
         #  
         set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
         set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh84.exe
@@ -150,7 +152,7 @@ switch $::tcl_platform(os) {
         set ::IWIDGETS_TEST_FILE $::TCL_LIB_DIR/iwidgets4.0.2/iwidgets.tcl
         set ::BLT_TEST_FILE $::TCL_BIN_DIR/BLT24.dll
         set ::GSL_TEST_FILE $::GSL_LIB_DIR/gsl.lib
-        set ::TEEM_TEST_FILE $::TEEM_BUILD_DIR/bin/$::VTK_BUILD_TYPE/unu.exe
+        set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/unu.exe
         set ::VTK_TEST_FILE $::VTK_DIR/bin/$::VTK_BUILD_TYPE/vtk.exe
         set ::SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/$::VTK_BUILD_TYPE/SlicerClustering.lib
         set ::VTK_TCL_LIB $::TCL_LIB_DIR/tcl84.lib
@@ -158,7 +160,6 @@ switch $::tcl_platform(os) {
         set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh84.exe
         set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/$::VTK_BUILD_TYPE/ITKCommon.dll
 
-        set ::TEEM_BIN_DIR  $::SLICER_LIB/teem-build/bin/$::VTK_BUILD_TYPE
     }
     default {
         puts stderr "Could not match platform \"$::tcl_platform(os)\"."
