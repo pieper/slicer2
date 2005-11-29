@@ -273,7 +273,7 @@ Clicking \"Ok\" below binds you to the license agreement.
 See www.slicer.org for details.
 "
 set argv0 [lindex $argv 0]
-if { $argv0 == "-y" || $argv0 == "--agree_to_license" } {
+if { $argv0 == "-y" || $argv0 == "--agree_to_license" || $argv0 == "--batch" } {
     set argv [lreplace $argv 0 0]
 } else {
     if { ![file exists $::env(HOME)/.IAgreeToSlicersLicense] } {
@@ -284,6 +284,14 @@ if { $argv0 == "-y" || $argv0 == "--agree_to_license" } {
         }
     }
 }
+
+if { $argv == "--batch" } {
+    set ::BATCH "true"
+    puts "Note: By specifying --batch on the command line, you have agreed to slicer's license terms."
+} else {
+    set ::BATCH "false"
+}
+
 
 
 # 
@@ -299,7 +307,11 @@ if { [string match *.tcl $argv0] } {
 }
 
 
-# 
+#
+# if in batch mode, exec vtk with slicer args and return the exit code of the child
+# process as the exit code of this script.
+#
+# Otherwise,
 # launch the slicer main script as a sub-process and monitor the output
 # - process is started with the 'open' command through a pipe
 # - the file_event callback is triggered when subprocess has written to stdout
@@ -311,6 +323,32 @@ if { [string match *.tcl $argv0] } {
 # work right.
 #
 
+#
+# run in batch mode 
+#
+if { $::BATCH == "true" } {
+    if {$::env(BUILD) == $solaris || 
+        $::env(BUILD) == $darwin ||
+        $::env(BUILD) == $linux} {
+            # - need to run the specially modified tcl interp in the executable 'vtk' on unix
+            regsub -all "{|}" $argv "\\\"" argv
+            set ret [catch "exec $::env(VTK_DIR)/bin/vtk \"$mainscript\" $argv" res]
+        } elseif {$::env(BUILD) == $windows} {
+            regsub -all "{|}" $argv "" argv
+            puts "exec \"$::env(TCL_BIN_DIR)/wish84.exe\" \"$mainscript\" $argv" 
+            set ret [catch "exec \"$::env(TCL_BIN_DIR)/wish84.exe\" \"$mainscript\" $argv" res]
+        } else {
+            puts stderr "Run: Unknown build: $::env(BUILD)"
+            exit -1
+        }
+
+    puts stdout $res
+    exit $ret
+}
+
+#
+# the rest of the file used to run in interactive mode
+#
 proc file_event {fp} {
     global END
     if {[eof $fp]} {
