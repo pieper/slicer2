@@ -191,11 +191,11 @@ public:
         case RSGDOptimizerType::ImageNotAvailable:
           m_fo << "ImageNotAvailable" << std::endl; 
           break;
-        case RSGDOptimizerType::SamplesNotAvailable:
-          m_fo << "SamplesNotAvailable" << std::endl; 
-          break;
         case RSGDOptimizerType::MaximumNumberOfIterations:
           m_fo << "MaximumNumberOfIterations" << std::endl; 
+          break;
+        default:
+          m_fo << "Unknown Stop Condition" << std::endl;
           break;
         }
       }

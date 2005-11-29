@@ -132,11 +132,11 @@ public:
         case OptimizerType::ImageNotAvailable:
           m_fo << "ImageNotAvailable" << std::endl; 
           break;
-        case OptimizerType::SamplesNotAvailable:
-          m_fo << "SamplesNotAvailable" << std::endl; 
-          break;
         case OptimizerType::MaximumNumberOfIterations:
           m_fo << "MaximumNumberOfIterations" << std::endl; 
+          break;
+        default:
+          m_fo << "Unknown Stop Condition" << std::endl;
           break;
         }
       }
