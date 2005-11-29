@@ -90,7 +90,7 @@ proc DTMRITensorRegistrationInit {} {
     #------------------------------------
     set m "TensorRegistration"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.17 $} {$Date: 2005/11/28 20:24:33 $}]
+                                 {$Revision: 1.18 $} {$Date: 2005/11/29 20:58:27 $}]
 
     # Does the AG module exist? If not the registration tab will not be displayed
     if {[catch "package require vtkAG"]} {
@@ -106,10 +106,11 @@ proc DTMRITensorRegistrationInit {} {
     set DTMRI(InputTensorTarget) $Tensor(idNone)
     set DTMRI(ResultTensor) -5
     set DTMRI(InputCoregVol) $Volume(idNone)
-    set DTMRI(MaskVol) $Volume(idNone)
+    set DTMRI(TargetMaskVol) $Volume(idNone)
+    set DTMRI(SourceMaskVol) $Volume(idNone)
     
     # set DTMRI(reg,DEBUG) to 1 to display more information.
-    set DTMRI(reg,Debug) 1
+    set DTMRI(reg,Debug) 0
    
     set DTMRI(reg,Linear)    "1"
     set DTMRI(reg,Warp)      "1"
@@ -136,10 +137,10 @@ proc DTMRITensorRegistrationInit {} {
     set DTMRI(reg,Iteration_max)  "50"
     set DTMRI(reg,Level_min)  "-1"
     set DTMRI(reg,Level_max)  "-1"
-    set DTMRI(reg,Epsilon)    "1e-3"
+    set DTMRI(reg,Epsilon)    "1e-4"
     set DTMRI(reg,Stddev_min) "0.85"
     # [expr sqrt(-1./(2.*log(.5)))] = 0.85
-    set DTMRI(reg,Stddev_max) "1.25"
+    set DTMRI(reg,Stddev_max) "1"
     set DTMRI(reg,SSD)    "1" 
 
     #Intensity correction
@@ -287,12 +288,20 @@ proc DTMRITensorRegistrationBuildGUI {} {
     lappend Tensor(mbResultTensor) $f.mbResultTensor
     lappend Tensor(mResultTensor) $f.mbResultTensor.m
 
-    set f $FrameMain.fMask
+    set f $FrameMain.fTargetMask
     frame $f -bg $Gui(activeWorkspace) -width 30
     pack $f -side top -padx $Gui(pad) -pady 0 -anchor w 
-    DevAddSelectButton DTMRI $f MaskVol "Mask:   " Pack "Select mask volume (optional)." 30
-    lappend Volume(mbMaskList) $f.mbMaskVol
-    lappend Volume(mMaskList) $f.mbMaskVol.m
+    DevAddSelectButton DTMRI $f TargetMaskVol "Target Mask:   " Pack "Select target mask volume (optional)." 30
+    lappend Volume(mbTargetMaskList) $f.mbTargetMaskVol
+    lappend Volume(mTargetMaskList) $f.mbTargetMaskVol.m
+
+    set f $FrameMain.fSourceMask
+    frame $f -bg $Gui(activeWorkspace) -width 30
+    pack $f -side top -padx $Gui(pad) -pady 0 -anchor w 
+    DevAddSelectButton DTMRI $f SourceMaskVol "Source Mask:   " Pack "Select source mask volume (optional)." 30
+    lappend Volume(mbSourceMaskList) $f.mbSourceMaskVol
+    lappend Volume(mSourceMaskList) $f.mbSourceMaskVol.m
+
     #-------------------------------------------
     # Regist->Main frame->Method Frame
     #-------------------------------------------
@@ -621,16 +630,16 @@ proc DTMRITensorRegistrationBuildGUI {} {
 
     # Warp channels
     eval {label $f.lChannels -text "Warp channels:"} $Gui(WLA)
-    set DTMRI(reg,Channels) "LinPlanSpherMeas"
+    set DTMRI(reg,Channels) "TraceModeFA"
     eval {menubutton $f.mbChannels -text "$DTMRI(reg,Channels)" -relief raised -bd 2 -width 15 \
         -menu $f.mbChannels.m} $Gui(WMBA)
     eval {menu $f.mbChannels.m} $Gui(WMA)
     set DTMRI(reg,mbChannels) $f.mbChannels
     set m $DTMRI(reg,mbChannels).m
-    foreach v "{FractionalAnisotropy} {LinPlanSpherMeas} {TensorComponents}" {
+    foreach v "{FractionalAnisotropy} {TraceModeFA} {TensorComponents}" {
        $m add command -label $v -command "DTMRIRegModifyOption Channels {$v}"
     }
-    TooltipAdd $f.mbChannels "Choose channels used in warping, FA (1 channel), Linear Planar Spherical measures (3 channels) or 6 tensor channels." 
+    TooltipAdd $f.mbChannels "Choose channels used in warping, FA (1 channel), Trace Mode FA measures (3 channels) or 6 tensor channels." 
     grid $f.lChannels $f.mbChannels   -pady 2 -padx $Gui(pad) -sticky w
 
 # warp and force
@@ -912,7 +921,7 @@ proc DTMRIRegCheckErrors {} {
     DevErrorWindow "Source is not correct or empty"
     Source Delete
     Target Delete
-    return 
+    return 1
     }
     set extent_arr [[Tensor($DTMRI(InputTensorTarget),data) GetOutput] GetExtent]
     set spacing [[Tensor($DTMRI(InputTensorTarget),data) GetOutput] GetSpacing]
@@ -920,10 +929,32 @@ proc DTMRIRegCheckErrors {} {
     DevErrorWindow "Target is not correct or empty"
     Target Delete
     Source Delete
-    return 
+    return 1
     }
 
+    # Check size of masks
+    if {$DTMRI(TargetMaskVol) != $Volume(idNone)} {
+      set maskdims  [[Volume($DTMRI(TargetMaskVol),vol) GetOutput] GetDimensions]
+      set dims [[Tensor($DTMRI(InputTensorTarget),data) GetOutput] GetDimensions]
 
+      for {set  f  0}  {$f < 3} {incr f} {
+    if {[lindex $maskdims $f]!=[lindex $dims $f]} {
+      DevErrorWindow "Target mask and target tensor volume are of different size"
+      return 1
+    }
+      }
+    }
+    if {$DTMRI(SourceMaskVol) != $Volume(idNone)} {
+      set maskdims  [[Volume($DTMRI(SourceMaskVol),vol) GetOutput] GetDimensions]
+      set dims [[Tensor($DTMRI(InputTensorSource),data) GetOutput] GetDimensions]
+
+      for {set  f  0}  {$f < 3} {incr f} {
+    if {[lindex $maskdims $f]!=[lindex $dims $f]} {
+      DevErrorWindow "Source mask and source tensor volume are of different size"
+      return 1
+    }
+      }
+    }
     
     return 0
 }
@@ -1346,10 +1377,6 @@ proc DTMRIRegRun {} {
 
   vtkImageData Target
   vtkImageData Source
-  #catch "Target2 Delete"
-  #catch "Source2 Delete"
-  #vtkImageData Target2
-  #vtkImageData Source2
 
   if {$DTMRI(reg,Scale) > 0 } {
        DTMRIRegTransformScale Source Target 
@@ -1487,7 +1514,6 @@ proc DTMRIRegRun {} {
   }
 
 
-
   if {$DTMRI(reg,Linear)} {
       puts "6. Linear registration"
       if { [info commands __dummy_transform] == ""} {
@@ -1501,6 +1527,10 @@ proc DTMRIRegRun {} {
       # Do linear registration based on given tensor derived scalar channel
       catch "math Delete"
       vtkTensorMathematics math
+      if {($DTMRI(TargetMaskVol)!=$Volume(idNone))} {
+        math SetScalarMask [Volume($DTMRI(TargetMaskVol),vol) GetOutput]
+    math MaskWithScalarsOn
+      }
       #math SetScaleFactor $DTMRI(reg,scalars,scaleFactor)
       math SetInput 0 [Tensor($DTMRI(InputTensorTarget),data) GetOutput]
       math SetInput 1 [Tensor($DTMRI(InputTensorTarget),data) GetOutput]
@@ -1510,6 +1540,10 @@ proc DTMRIRegRun {} {
 
       catch "math Delete"
       vtkTensorMathematics math
+      if {($DTMRI(SourceMaskVol)!=$Volume(idNone))} {
+        math SetScalarMask [Volume($DTMRI(SourceMaskVol),vol) GetOutput]
+    math MaskWithScalarsOn
+      }
       #math SetScaleFactor $DTMRI(reg,scalars,scaleFactor)
       math SetInput 0 [Tensor($DTMRI(InputTensorSource),data) GetOutput]
       math SetInput 1 [Tensor($DTMRI(InputTensorSource),data) GetOutput]
@@ -1517,6 +1551,7 @@ proc DTMRIRegRun {} {
       math Update
       Source DeepCopy [math GetOutput]
 
+      # Preprocessing resamples source to target frame and applies initial tfm
       puts "Preprocessing source and target..."
       DTMRIRegPreprocess Source Target $DTMRI(InputTensorSource)  $DTMRI(InputTensorTarget) 
       puts "done."
@@ -1529,15 +1564,17 @@ proc DTMRIRegRun {} {
 
       # It seems that the following line will result in error, the affine matrix used in the resampling and writing is only
       # identical matrix.
-      GCR SetInput  __dummy_transform  
-      [GCR GetGeneralTransform] SetInput TransformDTMRI
+      
+      # Initial transform is handled in preprocessing, so commented here
+      
+      #GCR SetInput  __dummy_transform  
+      #[GCR GetGeneralTransform] SetInput TransformDTMRI
       
       GCR SetCriterion $DTMRI(reg,Gcr_criterion)
       GCR SetTransformDomain $DTMRI(reg,Linear_group)
       GCR SetTwoD $DTMRI(reg,2D)
       GCR Update     
-   
-      TransformDTMRI Concatenate [[GCR GetGeneralTransform] GetConcatenatedTransform 1]
+      TransformDTMRI Concatenate [[GCR GetGeneralTransform] GetConcatenatedTransform 0]
   }
 
   if {$DTMRI(reg,Warp)} {
@@ -1548,6 +1585,10 @@ proc DTMRIRegRun {} {
           # Warp using FA as channel, no tensor reorientation needed
           catch "math Delete"
           vtkTensorMathematics math
+          if {($DTMRI(TargetMaskVol)!=$Volume(idNone))} {
+            mask SetScalarMask [Volume($DTMRI(TargetMaskVol),vol) GetOutput]
+            mask MaskWithScalarsOn
+          }
           #math SetScaleFactor $DTMRI(reg,scalars,scaleFactor)
           math SetInput 0 [Tensor($DTMRI(InputTensorTarget),data) GetOutput]
           math SetInput 1 [Tensor($DTMRI(InputTensorTarget),data) GetOutput]
@@ -1558,6 +1599,10 @@ proc DTMRIRegRun {} {
 
           catch "math Delete"
           vtkTensorMathematics math
+          if {($DTMRI(SourceMaskVol)!=$Volume(idNone))} {
+            math SetScalarMask [Volume($DTMRI(SourceMaskVol),vol) GetOutput]
+        math MaskWithScalarsOn
+          }
           math SetOperationToFractionalAnisotropy
           math SetInput 0 [Tensor($DTMRI(InputTensorSource),data) GetOutput]
           math SetInput 1 [Tensor($DTMRI(InputTensorSource),data) GetOutput]
@@ -1566,15 +1611,20 @@ proc DTMRIRegRun {} {
           math Delete
           #setT Delete
       }
-      "LinPlanSpherMeas" {
+      "TraceModeFA" {
           # Warp using Westin's measures Cl Cp Cs as channels
           # No tensor reorientation needed
           catch "appcomp Delete"
           vtkImageAppendComponents appcomp
           catch "math Delete"
           vtkTensorMathematics math
-          math SetOperationToLinearMeasure
-          math SetScaleFactor 1000
+          if {($DTMRI(TargetMaskVol)!=$Volume(idNone))} {
+            math SetScalarMask [Volume($DTMRI(TargetMaskVol),vol) GetOutput]
+            math MaskWithScalarsOn
+          }
+          #math SetOperationToLinearMeasure
+          math SetOperationToTrace
+      math SetScaleFactor 1000
           math SetInput 0 [Tensor($DTMRI(InputTensorTarget),data) GetOutput]
           math SetInput 1 [Tensor($DTMRI(InputTensorTarget),data) GetOutput]
           math Update
@@ -1582,8 +1632,13 @@ proc DTMRIRegRun {} {
           appcomp Update
           catch "math Delete"
           vtkTensorMathematics math
-          math SetOperationToPlanarMeasure
-          math SetScaleFactor 1000
+          if {($DTMRI(TargetMaskVol)!=$Volume(idNone))} {
+            math SetScalarMask [Volume($DTMRI(TargetMaskVol),vol) GetOutput]
+            math MaskWithScalarsOn
+          }
+          #math SetOperationToPlanarMeasure
+          math SetOperationToMode
+      math SetScaleFactor 1000
           math SetInput 0 [Tensor($DTMRI(InputTensorTarget),data) GetOutput]
           math SetInput 1 [Tensor($DTMRI(InputTensorTarget),data) GetOutput]
           math Update
@@ -1591,8 +1646,13 @@ proc DTMRIRegRun {} {
           appcomp Update
           catch "math Delete"
           vtkTensorMathematics math
-          math SetOperationToSphericalMeasure
-          math SetScaleFactor 1000
+          if {($DTMRI(TargetMaskVol)!=$Volume(idNone))} {
+            math SetScalarMask [Volume($DTMRI(TargetMaskVol),vol) GetOutput]
+            math MaskWithScalarsOn
+          }
+          #math SetOperationToSphericalMeasure
+          math SetOperationToFractionalAnisotropy
+      math SetScaleFactor 1000
           math SetInput 0 [Tensor($DTMRI(InputTensorTarget),data) GetOutput]
           math SetInput 1 [Tensor($DTMRI(InputTensorTarget),data) GetOutput]
           math Update
@@ -1604,7 +1664,12 @@ proc DTMRIRegRun {} {
           vtkImageAppendComponents appcomp
           catch "math Delete"
           vtkTensorMathematics math
-          math SetOperationToLinearMeasure
+          if {($DTMRI(SourceMaskVol)!=$Volume(idNone))} {
+            math SetScalarMask [Volume($DTMRI(SourceMaskVol),vol) GetOutput]
+        math MaskWithScalarsOn
+          }
+          #math SetOperationToLinearMeasure
+          math SetOperationToTrace
           math SetScaleFactor 1000
           math SetInput 0 [Tensor($DTMRI(InputTensorSource),data) GetOutput]
           math SetInput 1 [Tensor($DTMRI(InputTensorSource),data) GetOutput]
@@ -1613,7 +1678,12 @@ proc DTMRIRegRun {} {
           appcomp Update
           catch "math Delete"
           vtkTensorMathematics math
-          math SetOperationToPlanarMeasure
+          if {($DTMRI(SourceMaskVol)!=$Volume(idNone))} {
+            math SetScalarMask [Volume($DTMRI(SourceMaskVol),vol) GetOutput]
+        math MaskWithScalarsOn
+          }
+          #math SetOperationToPlanarMeasure
+          math SetOperationToMode
           math SetScaleFactor 1000
           math SetInput 0 [Tensor($DTMRI(InputTensorSource),data) GetOutput]
           math SetInput 1 [Tensor($DTMRI(InputTensorSource),data) GetOutput]
@@ -1622,7 +1692,12 @@ proc DTMRIRegRun {} {
           appcomp Update
           catch "math Delete"
           vtkTensorMathematics math
-          math SetOperationToSphericalMeasure
+          if {($DTMRI(SourceMaskVol)!=$Volume(idNone))} {
+            math SetScalarMask [Volume($DTMRI(SourceMaskVol),vol) GetOutput]
+        math MaskWithScalarsOn
+          }
+          #math SetOperationToSphericalMeasure
+          math SetOperationToFractionalAnisotropy
           math SetScaleFactor 1000
           math SetInput 0 [Tensor($DTMRI(InputTensorSource),data) GetOutput]
           math SetInput 1 [Tensor($DTMRI(InputTensorSource),data) GetOutput]
@@ -1673,16 +1748,16 @@ proc DTMRIRegRun {} {
         warp SetResliceTensors 0
       }
 
-      if { ($DTMRI(MaskVol)   != $Volume(idNone)) } {
-          catch "Mask Delete"
-          vtkImageData Mask
-          Mask DeepCopy  [ Volume($DTMRI(MaskVol),vol) GetOutput]
-          warp SetMask Mask
-      }
+      #if { ($DTMRI(MaskVol)   != $Volume(idNone)) } {
+      #    catch "Mask Delete"
+      #    vtkImageData Mask
+      #    Mask DeepCopy  [ Volume($DTMRI(MaskVol),vol) GetOutput]
+      #    warp SetMask Mask
+      #}
       
       # Set the options for the warp
       warp SetVerbose $DTMRI(reg,Verbose)
-      [warp GetGeneralTransform] SetInput TransformDTMRI
+      #[warp GetGeneralTransform] SetInput TransformDTMRI
       warp SetForceType $DTMRI(reg,Force)   
       warp SetMinimumIterations  $DTMRI(reg,Iteration_min) 
       warp SetMaximumIterations $DTMRI(reg,Iteration_max)  
@@ -1817,9 +1892,9 @@ proc DTMRIRegRun {} {
 
   Target Delete
   Source Delete
-  if { ($DTMRI(MaskVol) != $Volume(idNone)) } {
-      Mask Delete
-  }
+  #if { ($DTMRI(MaskVol) != $Volume(idNone)) } {
+  #    Mask Delete
+  #}
   #if {$DTMRI(reg,glyphsWereOn)} {
   #  set DTMRI(mode,visualizationType,glyphsOn) "On"
   #  DTMRIUpdate
@@ -2328,8 +2403,6 @@ proc DTMRIRegNormalize { SourceImage TargetImage NormalizedSource SourceScanOrde
 
     xform SetMatrix ijkmatrix
 
-    reslice SetResliceTransform xform 
-
     #reslice SetInformationInput $TargetImage
     set spacing [$SourceImage GetSpacing]
     set spa_0  [lindex $spacing 0]
@@ -2410,8 +2483,18 @@ proc DTMRIRegNormalize { SourceImage TargetImage NormalizedSource SourceScanOrde
     set outext_4 0    
     set outext_5 [expr abs($outdim_2)-1]  
 
+    catch "gentrans Delete"
+    vtkGeneralTransform gentrans
+    gentrans PostMultiply
+    gentrans Concatenate xform
+    
+    # Also apply initial transform, if requested.
+    if {$DTMRI(reg,Initial_tfm)} {
+      gentrans Concatenate TransformDTMRI
+    }
 
-
+    reslice SetResliceTransform gentrans
+    
     reslice SetOutputSpacing $outspa_0 $outspa_1 $outspa_2
     reslice SetOutputExtent $outext_0 $outext_1 $outext_2 $outext_3 $outext_4 $outext_5
 #    [reslice GetOutput] SetUpdateExtent $outext_0 $outext_1 $outext_2 $outext_3 $outext_4 $outext_5
@@ -2421,7 +2504,9 @@ proc DTMRIRegNormalize { SourceImage TargetImage NormalizedSource SourceScanOrde
     }
 
     reslice Update
-
+    
+    gentrans Delete
+    
     #Volume($DTMRI(reg,ResultVol),vol) SetImageData  [reslice GetOutput]
     #DTMRIWritevtkImageData [reslice GetOutput] "test.vtk"
 
