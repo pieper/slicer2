@@ -327,7 +327,6 @@ if { [string match *.tcl $argv0] } {
 # run in batch mode 
 #
 if { $::BATCH == "true" } {
-puts "running batch"
     if {$::env(BUILD) == $solaris || 
         $::env(BUILD) == $darwin ||
         $::env(BUILD) == $linux} {
