@@ -42,10 +42,7 @@ template  <class Tin> void EMLocalShape_AssignProbDataPtr(EMLocalShape *self, Ti
 
 // This function is needed so that we can access class functions from powells method 
 float EMLocalShape_ShapeCostFunction(void* self, float* parameters) {
-  ((EMLocalShape*) self)->ShapeCostFunctionMultiThreaded(parameters);
-
-  // Kilian - is this the correct return? -Steve
-  return 0.0;
+  return ((EMLocalShape*) self)->ShapeCostFunctionMultiThreaded(parameters);
 }
 
 

@@ -323,7 +323,7 @@ void EMLocalRegistration::MultiThreadDelete() {
 }
 
 void EMLocalRegistration::SpatialCostFunctionOn() { 
-    assert(this->Boundary_LengthXYZ < 0);
+    assert(this->Boundary_LengthXYZ > 0);
     if (this->SpatialCostFunction) delete[] this->SpatialCostFunction;
     SpatialCostFunction = new double[this->Boundary_LengthXYZ];
 }
@@ -383,10 +383,7 @@ void EMLocalRegistration::ScaleRotationValues(float *FinalParameters) {
 
 // Needed to interact with powells method
 float EMLocalRegistration_RegistrationCostFunction(void* self, float* parameters) {
-  ((EMLocalRegistration*) self)->RegistrationCostFunction(parameters);        
-
-  // Kilian - is this the correct return? -Steve
-  return 0.0;
+  return ((EMLocalRegistration*) self)->RegistrationCostFunction(parameters);        
 }
 
 //------------------------------------------------------
