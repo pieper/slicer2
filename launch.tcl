@@ -285,7 +285,7 @@ if { $argv0 == "-y" || $argv0 == "--agree_to_license" || $argv0 == "--batch" } {
     }
 }
 
-if { $argv == "--batch" } {
+if { $argv0 == "--batch" } {
     set ::BATCH "true"
     puts "Note: By specifying --batch on the command line, you have agreed to slicer's license terms."
 } else {
@@ -327,6 +327,7 @@ if { [string match *.tcl $argv0] } {
 # run in batch mode 
 #
 if { $::BATCH == "true" } {
+puts "running batch"
     if {$::env(BUILD) == $solaris || 
         $::env(BUILD) == $darwin ||
         $::env(BUILD) == $linux} {
