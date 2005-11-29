@@ -117,9 +117,9 @@ switch $::tcl_platform(os) {
         set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish8.4
         set ::ITCL_TEST_FILE $::TCL_LIB_DIR/libitclstub3.2.a
         set ::IWIDGETS_TEST_FILE $::TCL_LIB_DIR/iwidgets4.0.1/iwidgets.tcl
-        set ::BLT_TEST_FILE $::TCL_BIN_DIR/bltwish
+        set ::BLT_TEST_FILE $::TCL_BIN_DIR/bltwish24
         set ::GSL_TEST_FILE $::GSL_LIB_DIR/libgsl.$shared_lib_ext
-        set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/bin/unu
+        set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/unu
         set ::VTK_TEST_FILE $::VTK_DIR/bin/vtk
         set ::SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/libSlicerClustering.a
         set ::VTK_TCL_LIB $::TCL_LIB_DIR/libtcl8.4.$shared_lib_ext 
