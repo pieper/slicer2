@@ -439,8 +439,8 @@ if { ![file exists $::BLT_TEST_FILE] } {
     } else {
         cd $SLICER_LIB/tcl/blt
         runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
-        eval runcmd $::MAKE
-        eval runcmd $::MAKE install
+        eval runcmd $::SERIAL_MAKE
+        eval runcmd $::SERIAL_MAKE install
     }
 }
 
