@@ -372,10 +372,10 @@ void EMLocalRegistration::MultiThreadDefine(int DisableFlag) {
 void EMLocalRegistration::ScaleRotationValues(float *FinalParameters) {
   int ParaIndex        = (this->TwoDFlag ? 3 : 4);
   for (int j = 0; j < this->NumberOfParameterSets; j++) {      
-    FinalParameters[ParaIndex] = fmod(FinalParameters[ParaIndex],180.0);
+    FinalParameters[ParaIndex] = fmod(FinalParameters[ParaIndex],(float)180.0);
     if (!this->TwoDFlag) {
-      FinalParameters[ParaIndex + 1] = fmod(FinalParameters[ParaIndex + 1],180.0);
-      FinalParameters[ParaIndex + 2] = fmod(FinalParameters[ParaIndex + 2],180.0);
+      FinalParameters[ParaIndex + 1] = fmod(FinalParameters[ParaIndex + 1],(float)180.0);
+      FinalParameters[ParaIndex + 2] = fmod(FinalParameters[ParaIndex + 2],(float)180.0);
     }
     ParaIndex += this->NumberOfParameterPerSet;
   }
@@ -384,6 +384,9 @@ void EMLocalRegistration::ScaleRotationValues(float *FinalParameters) {
 // Needed to interact with powells method
 float EMLocalRegistration_RegistrationCostFunction(void* self, float* parameters) {
   ((EMLocalRegistration*) self)->RegistrationCostFunction(parameters);        
+
+  // Kilian - is this the correct return? -Steve
+  return 0.0;
 }
 
 //------------------------------------------------------

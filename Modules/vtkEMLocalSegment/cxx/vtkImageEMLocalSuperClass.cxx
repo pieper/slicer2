@@ -282,7 +282,7 @@ int vtkImageEMLocalSuperClass::GetPCANumberOfEigenModesList(int *NumberOfEigenMo
 }
 
 int vtkImageEMLocalSuperClass::GetPCANumberOfEigenModes(int *NumberOfEigenModesList) {
-  this->GetPCANumberOfEigenModesList(NumberOfEigenModesList,0);
+  return this->GetPCANumberOfEigenModesList(NumberOfEigenModesList,0);
 }
 
 

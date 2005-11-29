@@ -390,9 +390,9 @@ inline int EMLocalAlgorithm<T>::DefineGlobalAndStructureRegistrationMatrix() {
     // If it is not defined than we just use _APPLY and wont maximize
     if (this->RegistrationClassSpecificRegistrationFlag && this->RegistrationClassSpecificRegistrationFlag[i]) {
       // make sure parameters are set correctly - if there is an offset I do not believe that powell works correctly anymore bc it essentially ignorese these parameters
-      assert(translation[0] == translation[1] == translation[2] == 0.0);
-      assert(rotation[0] == rotation[1] == rotation[2] == 0.0);
-      assert(scale[0] == scale[1] == scale[2] == 1.0);
+      assert(translation[0] == 0.0 && translation[1] == 0.0 && translation[2] == 0.0);
+      assert(rotation[0] == 0.0 && rotation[1] == 0.0 && rotation[2] == 0.0);
+      assert(scale[0] == 1.0 && scale[1] == 1.0 && scale[2] == 1.0);
     }
 
     if (vtkSimonParameterReaderWriter::TurnParameteresIntoInverseRotationTranslation(translation, rotation, scale, 

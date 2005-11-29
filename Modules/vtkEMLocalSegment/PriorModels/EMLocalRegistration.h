@@ -153,7 +153,7 @@ public:
   void SetClassSpecificRegistrationFlag(int*init) {this->ClassSpecificRegistrationFlag = init;}
 
   int GetRegistrationType() {return RegistrationType;} 
-  int SetRegistrationType(int init) {this->RegistrationType = init;} 
+  int SetRegistrationType(int init) {return this->RegistrationType = init;} 
 
   void SetInterpolationType(int init) {this->InterpolationType = init;}
   void SetGenerateBackgroundProbability(int init) { this->GenerateBackgroundProbability = init;}
