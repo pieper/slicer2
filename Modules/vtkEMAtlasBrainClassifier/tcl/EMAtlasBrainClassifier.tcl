@@ -106,7 +106,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.22 $} {$Date: 2005/11/22 07:13:32 $}]
+        {$Revision: 1.23 $} {$Date: 2005/11/29 04:39:45 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -466,8 +466,10 @@ proc EMAtlasBrainClassifierDefineNodeAttributeList {MrmlNodeType} {
     }
     "RegSeg"   { 
                  set EMAtlasBrainClassifier(NonRigidRegistrationFlag)  0
-                 set EMAtlasBrainClassifier(SegmentationMode) "EMLocalSegment"
-                     set EMAtlasBrainClassifier(XMLTemplate)      "$env(SLICER_HOME)/Modules/vtkEMAtlasBrainClassifier/data/template5_c2-regseg.xml"
+              if { $EMAtlasBrainClassifier(SegmentationMode) == "EMAtlasBrainClassifier" } {
+                    set EMAtlasBrainClassifier(SegmentationMode)     "EMLocalSegment"
+         }
+                 set EMAtlasBrainClassifier(XMLTemplate)      "$env(SLICER_HOME)/Modules/vtkEMAtlasBrainClassifier/data/template5_c2-regseg.xml"
                }
     default {
         DevErrorWindow "Do not understand EMAtlasBrainClassifier(AlgorithmVersion) with value $EMAtlasBrainClassifier(AlgorithmVersion)" 
@@ -746,12 +748,14 @@ proc EMAtlasBrainClassifier_InitilizePipeline { } {
     }
 
     set EMAtlasBrainClassifier(WorkingDirectory) [file normalize $EMAtlasBrainClassifier(WorkingDirectory)]
+
     set Mrml(dir) $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation
+    catch {exec mkdir $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation} 
+    # Make sure the MRML directory cooresponds to the actual directory  
+    catch {eval cd $Mrml(dir)}
 
     EMAtlasBrainClassifierDeleteAllVolumeNodesButSPGRAndT2W
     EMAtlasBrainClassifierResetEMSegment 
-
-
 
     return 1
 }
@@ -1326,7 +1330,6 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource} {
     GCR Update     
     TransformEMAtlasBrainClassifier Concatenate [[GCR GetGeneralTransform] GetConcatenatedTransform 1]
 
-    # puts "For debigging only linear registration"     
     if {$EMAtlasBrainClassifier(NonRigidRegistrationFlag)} {
       ###### Warp #######
       catch "warp Delete"
@@ -1434,7 +1437,6 @@ proc EMAtlasBrainClassifier_InitilizeSegmentation {ValueFlag} {
     global EMAtlasBrainClassifier Volume EMSegment
 
     # Read XML File  
-    catch {exec mkdir $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation} 
     set tags [MainMrmlReadVersion2.x $EMAtlasBrainClassifier(XMLTemplate)]
     set tags [MainMrmlAddColors $tags]
     MainMrmlBuildTreesVersion2.0 $tags
@@ -1602,7 +1604,7 @@ proc EMAtlasBrainClassifierInitializeValues { } {
             set VolIndex [lsearch $VolumeNameList $FileName]
             if {($VolIndex > -1) && ($FileName != "") } {  
                 lappend EMAtlasBrainClassifier(SelVolList,VolumeList) [lindex $Volume(idList) $VolIndex] 
-        incr EMAtlasBrainClassifier(NumInputChannel)
+                incr EMAtlasBrainClassifier(NumInputChannel)
             }
        } elseif {$ClassName == "vtkMrmlSegmenterSuperClassNode" } {
          # puts "Start vtkMrmlSegmenterSuperClassNode"
@@ -2086,7 +2088,7 @@ proc EMAtlasBrainClassifier_SaveSegmentation { } {
 # .END
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierStartSegmentation { } {
-    global EMAtlasBrainClassifier EMSegment env
+    global EMAtlasBrainClassifier EMSegment env Mrml
 
     # ---------------------------------------------------------------
     # Setup Pipeline
@@ -2123,6 +2125,7 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     # Segment Image 
 
     puts "=========== Segment Image ============ "
+    puts "Version of Algorithm: $EMAtlasBrainClassifier(SegmentationMode)"
     # Start algorithm
     # If you want to run the segmentatition pipeline with other EM Segmentation versions just added it here 
     switch $EMAtlasBrainClassifier(SegmentationMode) {
@@ -2131,17 +2134,20 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
                                     set EMAtlasBrainClassifier(LatestLabelMap) $EMSegment(LatestLabelMap) 
                                     EMAtlasBrainClassifier_SaveSegmentation  
                                  }
-        "EMPrivateSegment"       {  EMAtlasBrainClassifier_InitilizeSegmentation  1
+        "EMPrivateSegment"       {  
+                                EMAtlasBrainClassifier_InitilizeSegmentation  1
                                     set XMLFile $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation/segmentation.xml
+                                set EMSegment(PrintDir) $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation
                                     MainMrmlWrite $XMLFile
                                     MainMrmlDeleteAll 
                                     MainVolumesUpdateMRML
                                     set EMSegment(VolNumber) 0
                                     set DoNotStart 1 
-                                if {[catch {source [file join $env(SLICER_HOME) Modules/vtkEMPrivateSegment/tcl/EMSegmentBatch.tcl]} ErrorMsg]} {
+                                    if {[catch {source [file join $env(SLICER_HOME) Modules/vtkEMPrivateSegment/tcl/EMSegmentBatch.tcl]} ErrorMsg]} {
                                        DevErrorWindow "Cannot source EMSegmentBatch. Error: $ErrorMsg"
                                        return
-                    }
+                                    }
+                                
                                     Segmentation $XMLFile 
                                  }
         "EMAtlasBrainClassifier" {  EMAtlasBrainClassifier_InitilizeSegmentation  1
@@ -2166,10 +2172,11 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
 # 
 # .END
 #-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_BatchMode {{SegmentationMode EMAtlasBrainClassifier} } {
+proc EMAtlasBrainClassifier_BatchMode {{SegmentationMode EMAtlasBrainClassifier} {AlgorithmVersion Standard} } {
     global Mrml EMAtlasBrainClassifier Volume
  
     set EMAtlasBrainClassifier(WorkingDirectory) $Mrml(dir)
+
     set EMAtlasBrainClassifier(Volume,SPGR) [Volume(1,node) GetID]
     set EMAtlasBrainClassifier(Volume,T2W)  [Volume(2,node) GetID]
 
@@ -2181,6 +2188,10 @@ proc EMAtlasBrainClassifier_BatchMode {{SegmentationMode EMAtlasBrainClassifier}
     set EMAtlasBrainClassifier(BatchMode) 1
 
     set EMAtlasBrainClassifier(SegmentationMode) $SegmentationMode
+    set EMAtlasBrainClassifier(AlgorithmVersion) $AlgorithmVersion
+    EMAtlasBrainClassifierChangeAlgorithm 
+
+
     SplashKill
  
     EMAtlasBrainClassifierStartSegmentation
