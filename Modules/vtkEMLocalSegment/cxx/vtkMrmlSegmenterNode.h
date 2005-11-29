@@ -87,6 +87,12 @@ public:
    vtkSetMacro(RegistrationInterpolationType, int);
    vtkGetMacro(RegistrationInterpolationType, int);
 
+  // Description:
+  // Multi Thread Functionality (Diabled = 1 / Enabled = 0) 
+  vtkSetMacro(DisableMultiThreading, int);
+  vtkGetMacro(DisableMultiThreading, int);
+
+
 protected:
   vtkMrmlSegmenterNode();
   ~vtkMrmlSegmenterNode(){};
@@ -95,6 +101,7 @@ protected:
 
   int    DisplayProb;  // Should the probability displayed in the graph - left it in bc it is more work to take it out - should not be defined here but in GraphNode 
   int    RegistrationInterpolationType;
+  int    DisableMultiThreading;
 
 };
 

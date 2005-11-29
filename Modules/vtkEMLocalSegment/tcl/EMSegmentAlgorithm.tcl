@@ -255,8 +255,7 @@ proc EMSegmentAlgorithmStart { } {
        vtkImageEMLocalSegmenter EMSegment(vtkEMSegment)
    }
    # How many input images do you have
-   puts "Kilian: Generalize it later"
-   EMSegment(vtkEMSegment) SetDisableMultiThreading 0
+   EMSegment(vtkEMSegment) SetDisableMultiThreading $EMSegment(DisableMultiThreading); 
 
    EMSegment(vtkEMSegment) SetNumInputImages $EMSegment(NumInputChannel) 
    EMSegment(vtkEMSegment) SetNumberOfTrainingSamples $EMSegment(NumberOfTrainingSamples)

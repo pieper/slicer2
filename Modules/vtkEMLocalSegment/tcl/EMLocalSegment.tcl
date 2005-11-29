@@ -288,7 +288,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.63 $} {$Date: 2005/11/22 07:14:31 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.64 $} {$Date: 2005/11/29 05:19:31 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -341,6 +341,8 @@ proc EMSegmentInit {} {
     set EMSegment(Alpha)          0.7 
     set EMSegment(SmWidth)        11
     set EMSegment(SmSigma)        5 
+    set EMSegment(DisableMultiThreading)  0 
+
 
     set EMSegment(SegmentationBoundaryMin,0) 1
     set EMSegment(SegmentationBoundaryMin,1) 1
@@ -1330,6 +1332,13 @@ Description of the tabs:
     eval {entry $f.fSect1.fCol2.eSmSigma -width 4 -textvariable EMSegment(SmSigma) } $Gui(WEA)
     TooltipAdd $f.fSect1.fCol2.eSmSigma "Smoothing Sigma defines the Sigma parameter for the Gausian smoothing curve."
 
+    DevAddLabel $f.fSect1.fCol1.lMultiThread "Multi Threading:"
+    frame  $f.fSect1.fCol2.fMultiThread -bg $Gui(activeWorkspace)
+    foreach value "0 1" text "On Off" width "4 4" {
+       eval {radiobutton $f.fSect1.fCol2.fMultiThread.r$value -width $width -indicatoron 0\
+               -text "$text" -value "$value" -variable EMSegment(DisableMultiThreading) } $Gui(WCA)
+    }
+
     DevAddLabel $f.fSect1.fCol1.lCreateFile "Create File:"
     frame  $f.fSect1.fCol2.fCreateFile -bg $Gui(activeWorkspace)
     foreach value "1 0" text "On Off" width "4 4" {
@@ -1460,6 +1469,10 @@ Description of the tabs:
     #Pack 4.Block
     pack $f.fSect1.fCol1.lSmWidth $f.fSect1.fCol1.lSmSigma -side top -padx $Gui(pad) -pady 2 -anchor w 
     pack $f.fSect1.fCol2.eSmWidth $f.fSect1.fCol2.eSmSigma -side top -anchor w
+
+    pack $f.fSect1.fCol1.lMultiThread  -side top -padx $Gui(pad) -pady 2 -anchor w 
+    pack $f.fSect1.fCol2.fMultiThread -side top -anchor w
+    pack $f.fSect1.fCol2.fMultiThread.r0  $f.fSect1.fCol2.fMultiThread.r1 -side left -fill x
     pack $f.fSect1.fCol1.lEmpty4 $f.fSect1.fCol2.lEmpty4 -side top -padx $Gui(pad) -pady 1 -anchor w 
 
     #Pack 5.Block

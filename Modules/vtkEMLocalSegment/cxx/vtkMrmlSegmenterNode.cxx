@@ -58,9 +58,10 @@ vtkMrmlSegmenterNode* vtkMrmlSegmenterNode::New()
 //----------------------------------------------------------------------------
 vtkMrmlSegmenterNode::vtkMrmlSegmenterNode()
 {
-  this->Indent             = 1;
-  this->DisplayProb     = 0;
+  this->Indent                        = 1;
+  this->DisplayProb                   = 0;
   this->RegistrationInterpolationType = 0;
+  this->DisableMultiThreading         = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -73,7 +74,8 @@ void vtkMrmlSegmenterNode::Write(ofstream& of, int nIndent)
   this->vtkMrmlSegmenterAtlasNode::Write(of);
   of << " DisplayProb  ='"               << this->DisplayProb  << "'";
   if (this->RegistrationInterpolationType) of << " RegistrationInterpolationType ='"<< this->RegistrationInterpolationType << "'";
-  of << ">\n";;
+  if (this->DisableMultiThreading)   of << " DisableMultiThreading ='" << this->DisableMultiThreading << "'";
+  of << ">\n";
 }
 
 //----------------------------------------------------------------------------
@@ -82,9 +84,10 @@ void vtkMrmlSegmenterNode::Write(ofstream& of, int nIndent)
 void vtkMrmlSegmenterNode::Copy(vtkMrmlNode *anode)
 {
   this->vtkMrmlSegmenterAtlasNode::Copy(anode);
-  vtkMrmlSegmenterNode *node = (vtkMrmlSegmenterNode *) anode;
-  this->DisplayProb                = node->DisplayProb;
+  vtkMrmlSegmenterNode *node          = (vtkMrmlSegmenterNode *) anode;
+  this->DisplayProb                   = node->DisplayProb;
   this->RegistrationInterpolationType = node->RegistrationInterpolationType;
+  this->DisableMultiThreading         = node->DisableMultiThreading; 
 }
 
 //----------------------------------------------------------------------------
@@ -92,6 +95,9 @@ void vtkMrmlSegmenterNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->vtkMrmlSegmenterNode::PrintSelf(os, indent);
   os << indent << "DisplayProb: "               << this->DisplayProb <<  "\n"; 
-  os << indent << "RegistrationInterpolationType: " << this->RegistrationInterpolationType << "\n";  
+  os << indent << "RegistrationInterpolationType: " << this->RegistrationInterpolationType << "\n"; 
+  os << indent << "DisableMultiThreading: "; 
+  if (this->DisableMultiThreading) cout << "Yes\n"; 
+  else cout << "No\n"; 
   os << "\n";
 }
