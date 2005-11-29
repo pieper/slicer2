@@ -64,7 +64,11 @@ update
 #-------------------------------------------------------------------------------
 rename exit tcl_exit
 proc exit { "code 0" } {
-    MainExitProgram $code
+    if { [info command MainExitProgram] != "" } {
+        MainExitProgram $code
+    } else {
+        tcl_exit $code
+    }
 }
 
 
@@ -931,7 +935,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.104 2005/11/27 21:28:03 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.105 2005/11/29 00:54:48 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
