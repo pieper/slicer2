@@ -61,7 +61,7 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSuperClass : public vtkImageEMLoc
 
   int           GetTotalNumberOfEigenModes();
   int           GetTotalNumberOfProbDataPtr();
-  int           GetPCANumberOfEigenModes(int *NumberOfEigenModesList);
+  void          GetPCANumberOfEigenModes(int *NumberOfEigenModesList);
 
   // Has any subclass ProbDataPtr defined or not 
   int           GetProbDataPtrFlag();
