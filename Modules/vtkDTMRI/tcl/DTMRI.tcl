@@ -501,17 +501,17 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.115 $} {$Date: 2005/11/28 20:23:40 $}]
+                  {$Revision: 1.116 $} {$Date: 2005/11/29 20:59:34 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
     #------------------------------------
-    set Module($m,row1List) "Help Input Conv Glyph Tract ROI"
-    set Module($m,row1Name) "{Help} {Input} {Conv} {Glyph} {Tract} {ROI}"
+    set Module($m,row1List) "Help Input Conv Glyph Tract Regist"
+    set Module($m,row1Name) "{Help} {Input} {Conv} {Glyph} {Tract} {Reg}"
     set Module($m,row1,tab) Input
     # Use these lines to add a second row of tabs
-    set Module($m,row2List) "Scalars Regist TC Save ODF Vox VTK"
-    set Module($m,row2Name) "{Scalars} {Reg} {TC} {Save} {ODF} {Vox} {VTK}"
+    set Module($m,row2List) "Scalars ROI TC Save ODF Vox VTK"
+    set Module($m,row2Name) "{Scalars} {ROI} {TC} {Save} {ODF} {Vox} {VTK}"
     set Module($m,row2,tab) Scalars
     
   
@@ -640,6 +640,8 @@ proc DTMRIUpdateMRML {} {
              DevUpdateNodeSelectButton Tensor DTMRI ResultTensor  ResultTensor  DevSelectNode  0 1 0
              DevSelectNode Tensor $DTMRI(ResultTensor) DTMRI ResultTensor ResultTensor
              DevUpdateNodeSelectButton Volume DTMRI InputCoregVol InputCoregVol DevSelectNode
+         DevUpdateNodeSelectButton Volume DTMRI TargetMaskVol TargetMaskVol DevSelectNode
+         DevUpdateNodeSelectButton Volume DTMRI SourceMaskVol SourceMaskVol DevSelectNode
          }
      }
 
