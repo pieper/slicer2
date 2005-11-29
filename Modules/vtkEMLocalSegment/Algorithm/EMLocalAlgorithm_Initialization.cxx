@@ -778,11 +778,22 @@ template <class T> int EMLocalAlgorithm<T>::InitializeRegistration(float initGlo
        this->RegistrationParameters->MultiThreadDefine(this->DisableMultiThreading);
        this->RegistrationParameters->DefineRegistrationParametersForThreadedCostFunction(SegmentationBoundaryMin[0] -1, SegmentationBoundaryMin[1] -1, SegmentationBoundaryMin[2] -1, SegmentationBoundaryMax[0] -1, SegmentationBoundaryMax[1] -1, SegmentationBoundaryMax[2] -1);
 
-       if (actSupCl->GetPrintRegistrationParameters() && actSupCl->GetPrintFrequency()) {
-     //cout << "Open Registratation ParameterFiles" << endl;
-     RegistrationParameterFile = new FILE*[NumParaSets];
-     if (!this->DefinePrintRegistrationParameters(NumParaSets)) SuccessFlag = 0; 
-     // cout << "End" << endl;
+       if (actSupCl->GetPrintFrequency() && 
+       (actSupCl->GetPrintRegistrationParameters() || actSupCl->GetPrintRegistrationSimularityMeasure())) {
+
+     // Make Directory if necessary
+     char makedirectory[1000];
+     sprintf(makedirectory,"%s/Registration/Blub",this->PrintDir);
+     
+     if (vtkFileOps::makeDirectoryIfNeeded(makedirectory) == -1) {
+       vtkEMAddErrorMessage("Could not create the follwoing directory :" << makedirectory);
+       SuccessFlag = 0 ;
+     } else if (actSupCl->GetPrintRegistrationParameters()) {
+       //cout << "Open Registratation ParameterFiles" << endl;
+       RegistrationParameterFile = new FILE*[NumParaSets];
+       if (!this->DefinePrintRegistrationParameters(NumParaSets))  SuccessFlag = 0;
+       // cout << "End" << endl;
+     }
        }
     } else { 
       // We only apply registration and wont optimize over it 

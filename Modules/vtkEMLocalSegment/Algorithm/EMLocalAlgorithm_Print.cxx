@@ -597,16 +597,6 @@ void EMLocalAlgorithm<T>::PrintRegistrationData(int SimularityFlag, double **Sim
 }
 
 template <class T> int EMLocalAlgorithm<T>::DefinePrintRegistrationParameters(int NumParaSets) {
-
-  // Make Directory if necessary
-  char makedirectory[1000];
-  sprintf(makedirectory,"%s/Registration/Blub",this->PrintDir);
-  
-  if (vtkFileOps::makeDirectoryIfNeeded(makedirectory) == -1) {
-    vtkEMAddErrorMessage("Could not create the follwoing directory :" << makedirectory);
-    return 0 ;
-  } 
-
   // Open Files         
   for (int c = 0; c < NumParaSets; c++) this->RegistrationParameterFile[c] = NULL; 
   int ParaSetIndex = 0; 

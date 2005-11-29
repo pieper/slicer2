@@ -610,8 +610,7 @@ template <class T> void EMLocalAlgorithm<T>::InfoOnPrintFlags() {
   cout << "Print Shape Parameters:                  " << (this->PCAFile ? "On" : "Off") << endl;
   cout << "Print Quality Parameters:                " << (this->QualityFile ? "On" : "Off") << endl;
   cout << "Print Registration Parameters:           " << (this->RegistrationParameterFile ? "On" : "Off") << endl;
-  cout << "Print Simularity Measure (Type: Double): " << (this->actSupCl->GetPrintRegistrationParameters() && this->actSupCl->GetPrintRegistrationSimularityMeasure() ? "On" : "Off") 
-       << endl;
+  cout << "Print Simularity Measure (Type: Double): " << (this->actSupCl->GetPrintRegistrationSimularityMeasure() ? "On" : "Off") << endl;
 }
 
 template  <class T> void EMLocalAlgorithm<T>::Expectation_Step(int iter) {
