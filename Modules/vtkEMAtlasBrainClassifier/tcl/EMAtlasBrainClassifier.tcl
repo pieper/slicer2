@@ -106,7 +106,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.23 $} {$Date: 2005/11/29 04:39:45 $}]
+        {$Revision: 1.24 $} {$Date: 2005/11/30 00:35:35 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -1029,6 +1029,25 @@ proc EMAtlasBrainClassifier_AtlasList { } {
     return "{$RegisterAtlasDirList} {$RegisterAtlasNameList}" 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifier_GetNumberOfTrainingSamples 
+# Returns the number of training samples as defined by the xml file 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifier_NumberOfTrainingSamples { } {
+    global  EMAtlasBrainClassifier   
+    set XMLTemplateText [EMAtlasBrainClassifierReadXMLFile $EMAtlasBrainClassifier(XMLTemplate)]
+    set LineIndex [EMAtlasBrainClassifierGrepLine "$XMLTemplateText" "<Segmenter "] 
+    if  {$LineIndex != "-1 -1"} {
+    set Line [string range "$XMLTemplateText" [lindex $LineIndex 0] [lindex $LineIndex 1]]
+    set Index [string first "NumberOfTrainingSamples"  "$Line"]
+    if {$Index  > -1 } {
+        return  [lindex [EMAtlasBrainClassifierReadNextKey  "[string range \"$Line\" $Index end]"] 1]
+    }
+    }
+    return 0
+}
 
 #-------------------------------------------------------------------------------
 # .PROC EMAtlasBrainClassifier_RegistrationInitialize 
@@ -1132,7 +1151,7 @@ proc EMAtlasBrainClassifier_AtlasRegistration {RegisterAtlasDirList RegisterAtla
    set VolIDOutput [DevCreateNewCopiedVolume $TemplateIDInput "" "RegisteredSPGR"]
 
    # Resample the Atlas SPGR
-   EMAtlasBrainClassifierResample  $VolIDTarget $VolIDSource $VolIDOutput
+   EMAtlasBrainClassifierResample  $VolIDTarget $VolIDSource $VolIDOutput 0 
   
    # Clean up 
    if {$EMAtlasBrainClassifier(Save,Atlas)} {
@@ -1149,6 +1168,19 @@ proc EMAtlasBrainClassifier_AtlasRegistration {RegisterAtlasDirList RegisterAtla
   
    # ---------------------------------------------------------------
    # Resample atlas files
+
+   # The first LocalPriorPrefix in the xml file has to define the spatial prior of the background. This is necessary as the resampling function assigns the value  
+   # NumberOfTrainingSamples( = 100% prior probability) to voxels outside the resampling space for the first spatial prior only. 
+   # The other spatial priors are characterized by
+   # 0  (= 0% prior probability) to voxels outside the resampling space. 
+   # 
+   # This rule ensures that the resampling does not causes voxels to assign 0 probability to each structure. When the EM algorithm encounters voxels with 
+   # zero prior probability then the segmentation without prior information. This can produce segmentation with almost random assignment patters especially 
+   # when segmenting structures with very similar intensity patterns
+
+   set BackgroundValue [EMAtlasBrainClassifier_NumberOfTrainingSamples]
+   puts "BackgroundValue $BackgroundValue"
+
    foreach Dir "$RegisterAtlasDirList" Name "$RegisterAtlasNameList" {
       puts "=========== Resample Atlas $Name  ============ "
       # Load In the New Atlases
@@ -1161,13 +1193,14 @@ proc EMAtlasBrainClassifier_AtlasRegistration {RegisterAtlasDirList RegisterAtla
       Volume($VolIDOutput,node) SetLittleEndian $EMAtlasBrainClassifier(LittleEndian)
   
       # Resample the Atlas
-      EMAtlasBrainClassifierResample  $VolIDTarget $VolIDInput $VolIDOutput  
-  
+      EMAtlasBrainClassifierResample  $VolIDTarget $VolIDInput $VolIDOutput $BackgroundValue
+
       # Clean up 
       if {$EMAtlasBrainClassifier(Save,Atlas)} {EMAtlasBrainClassifierVolumeWriter $VolIDOutput}
       MainMrmlDeleteNode Volume $VolIDInput 
       MainUpdateMRML
       RenderAll
+      set BackgroundValue 0
   }
 }
 
@@ -1376,7 +1409,7 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource} {
 # vtkImageData outResampled
 # .END
 #-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifierResample {inTarget inSource outResampled} {
+proc EMAtlasBrainClassifierResample {inTarget inSource outResampled bgValue} {
     global EMAtlasBrainClassifier Volume Gui
     
     catch "Source Delete"
@@ -1406,6 +1439,10 @@ proc EMAtlasBrainClassifierResample {inTarget inSource outResampled} {
     
     # Reslicer SetInformationInput Target
     Reslicer SetInformationInput Target
+
+    # Make sure the background is set correctly 
+    Reslicer SetBackgroundLevel $bgValue
+
     # Do it!
     Reslicer Update
 
