@@ -1,6 +1,6 @@
 /*=auto=========================================================================
 
-(c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+(c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 
 This software ("3D Slicer") is provided by The Brigham and Women's 
 Hospital, Inc. on behalf of the copyright holders and contributors.
@@ -35,24 +35,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 =========================================================================auto=*/
-/*==============================================================================
-(c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-==============================================================================*/
-
 
 #include "vtkGLMVolumeGenerator.h"
 #include "vtkObjectFactory.h"
@@ -60,9 +42,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "vtkPointData.h"
 #include "vtkCommand.h"
 
-#include <stdio.h>
-#include <gsl/gsl_blas.h>
-#include <gsl/gsl_linalg.h>
+#include "vnl/vnl_matrix.h" 
+#include "vnl/algo/vnl_matrix_inverse.h" 
 
 
 vtkStandardNewMacro(vtkGLMVolumeGenerator);
@@ -76,17 +57,8 @@ vtkGLMVolumeGenerator::vtkGLMVolumeGenerator()
     this->ContrastVector = NULL;
     this->DesignMatrix = NULL;
 
-    this->c = NULL;
     this->X = NULL;
-    this->A = NULL;
-    this->V = NULL; 
-    this->S = NULL;
-    this->Z = NULL;
-    this->Sv = NULL;
-    this->work = NULL;
-    this->c2 = NULL; 
-    this->result = NULL;
- 
+    this->C = NULL;
 }
 
 
@@ -99,44 +71,12 @@ vtkGLMVolumeGenerator::~vtkGLMVolumeGenerator()
 
     if (this->X != NULL)
     {
-        gsl_matrix_free(X);
-    }
-    if (this->A != NULL)
-    {
-        gsl_matrix_free(A);
-    }
-    if (this->V != NULL)
-    {
-        gsl_matrix_free(V);
-    }
-    if (this->S != NULL)
-    {
-        gsl_matrix_free(S);
-    }
-    if (this->Z != NULL)
-    {
-        gsl_matrix_free(Z);
-    }
-    if (this->c != NULL)
-    {
-        gsl_matrix_free(c);
-    }
-    if (this->c2 != NULL)
-    {
-        gsl_matrix_free(c2);
-    }
-    if (this->result != NULL)
-    {
-        gsl_matrix_free(result);
+        delete ((vnl_matrix<float> *)this->X);
     }
 
-    if (this->Sv != NULL)
+    if (this->C != NULL)
     {
-        gsl_vector_free(Sv);
-    }
-    if (this->work != NULL)
-    {
-        gsl_vector_free(work);
+        delete ((vnl_matrix<float> *)this->C);
     }
 }
 
@@ -149,145 +89,79 @@ void vtkGLMVolumeGenerator::SetContrastVector(vtkIntArray *vec)
     if (this->beta == NULL)
     {
         vtkErrorMacro( << "Memory allocation failed.");
+        return;
     }
-    if (this->c == NULL)
+
+    // instantiate C
+    if (this->C == NULL)
     {
-        this->c = gsl_matrix_alloc(1,this->SizeOfContrastVector);
+        this->C = new vnl_matrix<float>;
     }
+    ((vnl_matrix<float> *)this->C)->set_size(1, this->SizeOfContrastVector);
     for (int i = 0; i < this->SizeOfContrastVector; i++)
     {
-        gsl_matrix_set(c, 0, i, vec->GetComponent(i,0));
+        ((vnl_matrix<float> *)this->C)->put(0, i, vec->GetComponent(i,0));
     } 
-
-    if (this->c2 == NULL)
-    {
-        this->c2 = gsl_matrix_alloc(1,this->SizeOfContrastVector);
-    }
 }
 
 
 void vtkGLMVolumeGenerator::SetDesignMatrix(vtkFloatArray *designMat)
 {
     this->DesignMatrix = designMat;
-
     int rows = this->DesignMatrix->GetNumberOfTuples();
     int cols = this->DesignMatrix->GetNumberOfComponents();
 
+    // instantiate X 
     if (this->X == NULL)
     {
-        this->X = gsl_matrix_alloc(rows, cols);
+        this->X = new vnl_matrix<float>;
     }
+    ((vnl_matrix<float> *)this->X)->set_size(rows, cols);
     for (int i = 0; i < rows; i++)
     {
         for (int j = 0; j < cols; j++)
         {
-            gsl_matrix_set(X, i, j, designMat->GetComponent(i,j));
+            ((vnl_matrix<float> *)this->X)->put(i, j, designMat->GetComponent(i,j));
         }
     } 
-
-    if (this->A == NULL)
-    {
-        this->A = gsl_matrix_alloc(cols, cols);
-    }
-    if (this->V == NULL)
-    {
-        this->V = gsl_matrix_alloc(cols, cols);
-    }
-    if (this->S == NULL)
-    {
-        this->S = gsl_matrix_alloc(cols, cols);
-    }
-    if (this->Z == NULL)
-    {
-        this->Z = gsl_matrix_alloc(cols, cols);
-    }
-    if (this->result == NULL)
-    {
-        this->result = gsl_matrix_alloc(1, 1);
-    }
-
-    if (this->Sv == NULL)
-    {
-        this->Sv = gsl_vector_alloc(cols);
-    }
-    if (this->work == NULL)
-    {
-        this->work = gsl_vector_alloc(cols);
-    }
 }
-
 
 void vtkGLMVolumeGenerator::ComputeStandardError(float rss)
 {
-    // ------------------------------------------------------
-    // Step One: Calculates MRSS
+    // for each voxel, after a linear modeling (best fit)
+    // we'll have a list of beta (one for each regressor) and
+    // a chisq (or rss) - the sum of squares of the residuals from the best-fit
+    // the standard error se = sqrt(mrss*(C*pinv(X'*X)*C'));
+    // where C - contrast vector
+    //       X - design matrix
+    //       pinv - Moore-Penrose pseudoinverse 
+
+    // calculate mrss 
     // ------------------------------------------------------
     int rows = this->DesignMatrix->GetNumberOfTuples();
     int cols = this->DesignMatrix->GetNumberOfComponents();
-    int df = rows-cols;
+    int df = rows - cols;
     float mrss  = rss / df;
 
+    // calculate pinv(X'*X) 
     // ------------------------------------------------------
-    // Step Two: Computes A = X'*X; X - design matrx 
-    // ------------------------------------------------------
-    gsl_blas_dgemm (CblasTrans, CblasNoTrans, 1.0, this->X, this->X, 0.0, this->A);
+    vnl_matrix<float> A = *((vnl_matrix<float> *)this->X);
+    vnl_matrix<float> B;
+    vnl_matrix<float> Binv;
 
-    // ------------------------------------------------------
-    // Step Three: Singular value decompostion of A 
-    // ------------------------------------------------------
-    // after decomposition, A is replaced by U
-    // Sv - a vector holding all diagonal values
-    gsl_linalg_SV_decomp (this->A, this->V, this->Sv, this->work);
+    B = A.transpose() * A;
+    vnl_matrix_inverse<float> Pinv(B);
+    Binv = Pinv.pinverse(cols);
 
+    // calculate C*pinv(X'*X)*C' 
     // ------------------------------------------------------
-    // Step Four: Computes Moore-Penrose pseudoinverse of A
-    //            i.e. X'*X
-    //            pinv(A) = U*pinv(S)*V'
+    vnl_matrix<float> D = *((vnl_matrix<float> *)this->C);
+    vnl_matrix<float> E = D * Binv * D.transpose();
+    float v = E.get(0, 0);
+
+    // standard error: se = sqrt(mrss*(C*pinv(X'*X)*C'))
     // ------------------------------------------------------
-
-    // Inverses each no-zero element of Sv to get pinv(Sv)
-    for (int i = 0; i < cols; i++)
-    {
-        float v = gsl_vector_get(Sv,i);
-        if (v != 0) {
-            v = 1/v;
-        }
-        gsl_vector_set(Sv, i, v);
-    }
-
-    // Fills each element to get pinv(S) 
-    // Sv holds all diagonal values of pinv(S)
-    for (int i = 0; i < cols; i++)
-    {
-        float v = gsl_vector_get(Sv,i);
-        for (int j = 0; j < cols; j++)
-        {
-            if (i == j)
-            {
-                gsl_matrix_set(this->S, i, j, v);
-            }
-            else 
-            {
-                gsl_matrix_set(this->S, i, j, 0);
-            }
-        }
-    }
-
-    // U*pinv(S)
-    gsl_blas_dgemm (CblasNoTrans, CblasNoTrans, 1.0, this->A, this->S, 0.0, this->Z);
-    // U*pinv(S)*V'
-    gsl_blas_dgemm (CblasNoTrans, CblasTrans, 1.0, this->Z, this->V, 0.0, this->A);
-    // C*pinv(X'*X)
-    gsl_blas_dgemm (CblasNoTrans, CblasNoTrans, 1.0, this->c, this->A, 0.0, this->c2);
-    // C*pinv(X'*X)*C'
-    gsl_blas_dgemm (CblasNoTrans, CblasTrans, 1.0, this->c2, this->c, 0.0, this->result);
-
-    // ------------------------------------------------------
-    // Step Five: Computes SE for the voxel on the basis of 
-    //            the given contrast
-    // ------------------------------------------------------
-    float r = (float)gsl_matrix_get(this->result, 0, 0); 
-    this->StandardError = (float)sqrt(fabs(mrss*r));
+    this->StandardError = (float)sqrt(fabs(mrss * v));
 }
 
 
@@ -320,19 +194,6 @@ void vtkGLMVolumeGenerator::SimpleExecute(vtkImageData *input, vtkImageData* out
     vtkDataArray *scalarsOutput = output->GetPointData()->GetScalars();
     vtkDataArray *scalarsInput = this->GetInput()->GetPointData()->GetScalars();
 
-    // For each voxel, we have the following steps to compute t value: 
-    // RSS   = sum((Y - X*B).^2);
-    // MRSS  = RSS / df;
-    // SE    = sqrt(MRSS*(C*pinv(X'*X)*C'));
-    // t     = C*B./SE;
-    // where B    - beta matrix afer linear modeling
-    //       X    - the design matrix
-    //       Y    - observations
-    //       RSS  - the sum of squares of the residuals from the best-fit
-    //       pinv - Moore-Penrose pseudoinverse 
-    //       SE   - standard error
-    //       t    - t statistic
-    // 
     // Voxel iteration through the entire image volume
     for (int kk = 0; kk < imgDim[2]; kk++)
     {
@@ -345,15 +206,19 @@ void vtkGLMVolumeGenerator::SimpleExecute(vtkImageData *input, vtkImageData* out
                 float rss = 0.0; // = chisq
                 int yy = 0;
                 for (int d = 0; d < this->SizeOfContrastVector; d++) {
-                    beta[d] = scalarsInput->GetComponent(indx, yy++);
-                    beta[d] = beta[d] * ((int)this->ContrastVector->GetComponent(d, 0));
-                    newBeta = newBeta + beta[d];
+                    this->beta[d] = scalarsInput->GetComponent(indx, yy++);
+                    this->beta[d] = this->beta[d] * ((int)this->ContrastVector->GetComponent(d, 0));
+                    newBeta = newBeta + this->beta[d];
                 }
                 rss = scalarsInput->GetComponent(indx, yy);
 
                 ComputeStandardError(rss);
 
-                // t statistic 
+                // t = C*B/SE;
+                // where B - beta matrix afer linear modeling
+                //       C - contrast vector 
+                //       SE   - standard error
+                //       t statistic 
                 float t = 0.0; 
                 if (this->StandardError != 0.0)
                 {
@@ -371,9 +236,8 @@ void vtkGLMVolumeGenerator::SimpleExecute(vtkImageData *input, vtkImageData* out
         } 
     }
 
-    delete [] beta;
+    delete [] this->beta;
 
-    // Scales the scalar values in the activation volume between 0 - 100
     vtkFloatingPointType range[2];
     output->GetScalarRange(range);
     this->LowRange = range[0];

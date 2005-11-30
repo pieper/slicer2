@@ -1,6 +1,6 @@
 /*=auto=========================================================================
 
-(c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+(c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 
 This software ("3D Slicer") is provided by The Brigham and Women's 
 Hospital, Inc. on behalf of the copyright holders and contributors.
@@ -35,45 +35,20 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 =========================================================================auto=*/
-/*==============================================================================
-(c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-==============================================================================*/
-
 
 #include "GeneralLinearModel.h"
-#include <stdio.h>
-#include <math.h>
 
-gsl_matrix *GeneralLinearModel::X = NULL;
-gsl_matrix *GeneralLinearModel::cov = NULL;
-gsl_vector *GeneralLinearModel::y = NULL;
-gsl_vector *GeneralLinearModel::c = NULL;
-gsl_multifit_linear_workspace *GeneralLinearModel::work = NULL;
+#include "vnl/vnl_matrix.h" 
+#include "vnl/algo/vnl_matrix_inverse.h" 
+#include "vnl/vnl_vector.h" 
+
 
 int *GeneralLinearModel::Dimensions = NULL;
 float **GeneralLinearModel::DesignMatrix = NULL;
 
-
-int GeneralLinearModel::FitModel(float *timeCourse,
-                                 float *beta,
-                                 float *chisq)
+int GeneralLinearModel::FitModel(float *timeCourse, float *beta, float *chisq)
 {
     int i, j;
-    double xi, yi, ssr, t;
 
     if (DesignMatrix == NULL || Dimensions == NULL) 
     {
@@ -81,47 +56,79 @@ int GeneralLinearModel::FitModel(float *timeCourse,
         return 1;
     }
 
-    if (X == NULL)
-    {
-        X = gsl_matrix_alloc(Dimensions[0], Dimensions[1]);
-    }
-    if (y == NULL) 
-    {
-        y = gsl_vector_alloc(Dimensions[0]);
-    }
-    if (c == NULL)
-    {
-        c = gsl_vector_alloc(Dimensions[1]);
-    }
-    if (cov == NULL)
-    {
-        cov = gsl_matrix_alloc(Dimensions[1], Dimensions[1]);
-    }
+    // set y vector by the timeCourse array
+    vnl_vector<float> y;
+    y.set_size(Dimensions[0]);
+    y.copy_in(timeCourse);
 
+    // set X, which is a vnl_matrix object
+    // X holds design matrix
+    vnl_matrix<float> X;
+    X.set_size(Dimensions[0], Dimensions[1]);
     for (i = 0; i < Dimensions[0]; i++)
     {
-        gsl_vector_set(y, i, timeCourse[i]);
-
         for(j = 0; j < Dimensions[1]; j++)
         {
-            gsl_matrix_set(X, i, j, DesignMatrix[i][j]);
+            X.put(i, j, DesignMatrix[i][j]);
         }
     }
 
-    if (work == NULL)
-    {
-        work = gsl_multifit_linear_alloc(Dimensions[0], Dimensions[1]);
-    }
+    // beta = (X'X)^-1 X' y
+    // beta is an array of estimated coefficients from the linear best-fit
+    vnl_matrix<float> tmp = X.transpose() * X;
+    vnl_matrix_inverse<float> inv(tmp);
 
-    gsl_multifit_linear(X, y, c, cov, &ssr, work);
-    *chisq = (float) ssr;
+    tmp = inv * X.transpose();
+    vnl_vector<float> c = y;
+    c.pre_multiply(tmp);
     for(j = 0; j < Dimensions[1]; j++)
     {
-        beta[j] = gsl_vector_get(c,j);
+        beta[j] = c.get(j);
+
     }
+
+    // compute chisq
+    *chisq = ComputeResiduals(beta, timeCourse, Dimensions[0], Dimensions[1]);
 
     return 0;
 }
+
+
+float GeneralLinearModel::ComputeResiduals(float *beta, float *timeCourse, int numSamples, int numRegressors)
+{
+    // This method computes chisq when the parameter estimate
+    // beta is used to fit observed data Y to the linear model
+    // Y = Xbeta + e
+    // The residuals are found by subtracting the model from the data:
+    // e = Y-Xbeta.
+    // The observed data Y is given by a float array 
+    //
+    // ALSO: modify this routine to take a design matrix as parameter.
+    // THAT WAY, we can use with prewhitened design matrix too.
+
+    int i, j;
+    double zz;
+    float e, X, Y, chisq = 0.0;
+
+    // compute residuals: e = Y-X*beta.
+    for ( i = 0; i < numSamples; i++ ) 
+    {
+        // first compute X*beta:
+        for (zz = 0.0, j = 0; j < numRegressors; j++) 
+        {
+            X = DesignMatrix[i][j];
+            zz = zz + (double)(X * beta[j]);
+        }
+        // now compute Y-X*beta:
+        Y = timeCourse[i];
+        e = Y - (float)zz;
+
+        // and compute chisq 
+        chisq += (e * e);
+    }
+
+    return chisq;
+} 
 
 
 int GeneralLinearModel::SetDesignMatrix(vtkFloatArray *designMat)
@@ -168,18 +175,6 @@ int GeneralLinearModel::SetDesignMatrix(vtkFloatArray *designMat)
 
 void GeneralLinearModel::Free()
 {
-    gsl_matrix_free(X);
-    gsl_matrix_free(cov);
-    gsl_vector_free(y);
-    gsl_vector_free(c);
-    gsl_multifit_linear_free(work);
-
-    X = NULL;
-    cov = NULL;
-    y = NULL;
-    c = NULL;
-    work = NULL;
-
     if (DesignMatrix != NULL)
     {
         for (int i = 0; i < Dimensions[0]; i++)
@@ -196,5 +191,4 @@ void GeneralLinearModel::Free()
         Dimensions = NULL;
     }
 }
-
 
