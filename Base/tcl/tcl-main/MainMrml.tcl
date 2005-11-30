@@ -98,7 +98,7 @@ proc MainMrmlInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainMrml \
-    {$Revision: 1.107.6.2 $} {$Date: 2005/09/23 20:27:08 $}]
+    {$Revision: 1.107.6.3 $} {$Date: 2005/11/30 21:18:15 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -884,6 +884,27 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                                 $n SetScalarVisibility 0
                             }
                         }
+                        "scalarfiles" {
+                            if {$::Module(verbose)} {
+                                puts "MainMrmlBuildTreesVersion2.0: dealing with the list of scalar files:"
+                                puts $val
+                            }
+                            set filelist {}
+                            eval {lappend filelist} $val
+                            foreach file $filelist {
+                                # deal with relative paths...
+                                set fname $file
+                                if {$::Module(verbose)} { 
+                                    puts "checking $fname"
+                                }
+                                if {[file exists $fname] == 0} {
+                                    DevErrorWindow "Scalar file $fname does not exist"
+                                } else {
+                                    # add it
+                                    $n AddScalarFileName $fname
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -1575,6 +1596,7 @@ proc MainMrmlBuildTreesVersion1.0 {} {
             $n SetBackfaceCulling  [MRMLGetValue $node backfaceCulling]
             $n SetScalarVisibility [MRMLGetValue $node scalarVisibility]
             eval $n SetScalarRange [MRMLGetValue $node scalarRange]
+            # get any scalar file names
         }
         
         "Volume" {
