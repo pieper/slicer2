@@ -90,7 +90,7 @@ proc DTMRITensorRegistrationInit {} {
     #------------------------------------
     set m "TensorRegistration"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.18 $} {$Date: 2005/11/29 20:58:27 $}]
+                                 {$Revision: 1.19 $} {$Date: 2005/11/30 19:13:50 $}]
 
     # Does the AG module exist? If not the registration tab will not be displayed
     if {[catch "package require vtkAG"]} {
@@ -956,6 +956,15 @@ proc DTMRIRegCheckErrors {} {
       }
     }
     
+    # Let user confirm registration if pyramid level 0 is selected 
+    # with 256^2 data and non-linear registration
+    set dims [[Tensor($DTMRI(InputTensorTarget),data) GetOutput] GetDimensions]
+    
+    if {($DTMRI(reg,Level_min)<1) && ([lindex $dims 0]>128) && $DTMRI(reg,Warp)} {
+      switch [DevYesNo "You included level 0 of the Pyramid (see Prmd tab), which will take long computation time because of the in-plane resolution of [lindex $dims 0]. Do you want to continue?"] {
+        "no" { return 1 }}
+    }
+    
     return 0
 }
 
@@ -1353,16 +1362,10 @@ proc DTMRIRegRun {} {
   } else {
     set DTMRI(reg,Initial_tfm) 1
   }
-  if {!(($DTMRI(reg,Linear) || $DTMRI(reg,Warp)) || $DTMRI(reg,Initial_tfm))} {return}
-
-  # This cancels the VERY annoying glyph calculations during updates
-  #if {$DTMRI(mode,visualizationType,glyphsOn)=="On"} {
-  #  set DTMRI(mode,visualizationType,glyphsOn) "Off"
-  #  DTMRIReg2DUpdate
-  #  set DTMRI(reg,glyphsWereOn) 1
-  #} else {
-  #  set DTMRI(reg,glyphsWereOn) 0
-  #}
+  if {!(($DTMRI(reg,Linear) || $DTMRI(reg,Warp)) || $DTMRI(reg,Initial_tfm))} {
+    DevInfoWindow "all work and no play makes jack a dull boy"
+    return
+  }
 
   puts "DTMRIRegRun 1: Check Error"
   
@@ -1804,13 +1807,17 @@ proc DTMRIRegRun {} {
   #Source2 Delete
   
   puts "Moving Source-tensorfield to Target frame of reference..."
+  # Temporarily set initial_tfm off, because RegResample will also apply it
+  set previous_initial_tfm $DTMRI(reg,Initial_tfm)
+  set DTMRI(reg,Initial_tfm) 0
   DTMRIRegPreprocess Source Target $DTMRI(InputTensorSource)  $DTMRI(InputTensorTarget) 
+  set DTMRI(reg,Initial_tfm) $previous_initial_tfm
   puts "done."
   
   catch "Resampled Delete"
   vtkImageData Resampled
 
-  # Do not delete   DTMRI(Transform), otherwise, it will be wrong. ( delete the just allocated "TransformDTMRI")
+  # Do not delete   DTMRI(reg,Transform), otherwise, it will be wrong. ( delete the just allocated "TransformDTMRI")
   set DTMRI(reg,Transform) TransformDTMRI 
 
   set DTMRI(reg,Tensors)  "1"
@@ -1985,7 +1992,14 @@ proc DTMRIRegCoregister {SourceVolume TargetTensor} {
     set  SourceScanOrder [Volume($SourceVolume,node) GetScanOrder]
     set  TargetScanOrder [Tensor($TargetTensor,node) GetScanOrder]
     set DTMRI(reg,Labelmap) 1
+    
+    # Temporarily set initial_tfm off, such that it won't be applied twice
+    # (once in RegNormalize and once in RegResample)
+    set previous_initial_tfm $DTMRI(reg,Initial_tfm)
+    set DTMRI(reg,Initial_tfm) 0
     DTMRIRegNormalize Source Target NormalizedSource $SourceScanOrder $TargetScanOrder
+    set DTMRI(reg,Initial_tfm) $previous_initial_tfm
+    
     Source DeepCopy NormalizedSource
     NormalizedSource Delete
     set dims  [Source GetDimensions]
@@ -2490,7 +2504,7 @@ proc DTMRIRegNormalize { SourceImage TargetImage NormalizedSource SourceScanOrde
     
     # Also apply initial transform, if requested.
     if {$DTMRI(reg,Initial_tfm)} {
-      gentrans Concatenate TransformDTMRI
+      gentrans Concatenate [TransformDTMRI GetInverse]
     }
 
     reslice SetResliceTransform gentrans
