@@ -171,7 +171,7 @@ if {$::env(BUILD) == $solaris ||
         set ::env(Path) $::env(GSL_LIB_DIR)\;$::env(Path)
         set ::env(Path) $::env(SLICER_HOME)/Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
         set ::env(Path) $::env(TCL_BIN_DIR)\;$::env(Path)
-        set ::env(Path) $::env(TEEM_BIN_DIR)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
+        set ::env(Path) $::env(TEEM_BIN_DIR)\;$::env(Path)
     } else {
         puts stderr "Libraries: unknown build $::env(BUILD)"
     }
