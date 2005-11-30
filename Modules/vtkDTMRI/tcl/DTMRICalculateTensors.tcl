@@ -65,7 +65,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.31 $} {$Date: 2005/11/30 22:00:09 $}]
+                                 {$Revision: 1.32 $} {$Date: 2005/11/30 22:36:43 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -572,6 +572,8 @@ proc DTMRIConvertUpdate {} {
   set nexprefix "$keyprefix,DWMRI_NEX_"
 
   set idx 0
+  set findfirstbaseline 0
+  set findfirstgradient 0
   while {1} {
     set grad [format %04d $idx]
     set key "$gradprefix$grad"
@@ -582,38 +584,48 @@ proc DTMRIConvertUpdate {} {
     }
     
     #Check for baseline
+
     set val $Volume($key)
     if {[lindex $val 0] == 0 && \
         [lindex $val 1] == 0 && \
-    [lindex $val 2] == 0} {
-      #Check for NEX
-      set keynex "$nexprefix$grad"
-      if {[info exists Volume($keynex)]} {
-        set nex $Volume($keynex)
-      } else {
-        set nex 1
-      }
-      set DTMRI(convert,firstNoGradientImage) [expr $idx + 1]
-      set DTMRI(convert,lastNoGradientImage) [expr $idx + $nex]
-      set idx [expr $idx + $nex]
+        [lindex $val 2] == 0} {
+            #Check for NEX
+            set keynex "$nexprefix$grad"
+            if {[info exists Volume($keynex)]} {
+                set nex $Volume($keynex)
+            } else {
+                set nex 1
+            }
+      
+            if {$findfirstbaseline == 0} {
+                set DTMRI(convert,firstNoGradientImage) [expr $idx + 1]
+                set findfirstbaseline 1
+            }
+            set DTMRI(convert,lastNoGradientImage) [expr $idx + $nex]
+            set idx [expr $idx + $nex]
      } else {
-      set keynex "$nexprefix$grad"
-      if {[info exists Volume($keynex)]} {
-        set nex $Volume($keynex)
-      } else {
-        set nex 1
-      }
-      for {set nidx 0} {$nidx < $nex} {incr nidx} {
-        lappend DTMRI(convert,gradients) $Volume($key)
-        incr DTMRI(convert,numberOfGradients)
-      }
-      set idx [expr $idx + $nex]    
+            set keynex "$nexprefix$grad"
+            if {[info exists Volume($keynex)]} {
+                set nex $Volume($keynex)
+            } else {
+                set nex 1
+            }
+      
+            if {$findfirstgradient == 0} {
+                set DTMRI(convert,firstGradientImage) [expr $idx + 1]
+                set findfirstgradient 1 
+            }
+      
+            for {set nidx 0} {$nidx < $nex} {incr nidx} {
+                lappend DTMRI(convert,gradients) $Volume($key)
+                incr DTMRI(convert,numberOfGradients)
+            }
+            set idx [expr $idx + $nex]    
     }
     
   }
   
-  set DTMRI(convert,firstGradientImage) [expr $DTMRI(convert,lastNoGradientImage) + 1]
-  set DTMRI(convert,lastGradientImage) [expr $DTMRI(convert,numberOfGradients) + $DTMRI(convert,lastNoGradientImage)]   
+  set DTMRI(convert,lastGradientImage) [expr $DTMRI(convert,numberOfGradients) + $DTMRI(convert,firstGradientImage) - 1]   
   
          
   #Nrrd by default is VOLUME-Interslice
@@ -1595,11 +1607,15 @@ proc DTMRIComputeTensorMask {node} {
     #Free space
     _con Delete     
      
-     for {set i 0} {$i <2} {incr i} {
+     for {set i 0} {$i <3} {incr i} {
         _er SetInput _buffer
         _er SetForeground 0
         _er SetBackground 1
-        _er SetNeighborTo8
+        if {$i == 2} {
+            _er SetNeighborTo4
+        } else {
+           _er SetNeighborTo8
+        }           
         _er Update
         _buffer DeepCopy [_er GetOutput]
     }
