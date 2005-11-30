@@ -157,7 +157,7 @@ proc ModelHierarchyInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.15.10.1 $} {$Date: 2005/10/23 18:24:35 $}]
+        {$Revision: 1.15.10.2 $} {$Date: 2005/11/30 19:25:05 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -655,8 +655,23 @@ proc ModelHierarchyCreateGroupOk {{name ""}} {
     set ModelGroup($newID,visibility) [$node GetVisibility]
     set ModelGroup($newID,opacity) [format %#.1f [$node GetOpacity]]
     set ModelGroup($newID,expansion) [$node GetExpansion]
-    $node SetColor [Color(0,node) GetName]
-    set ModelGroup($newID,colorID) 0
+
+    # need to find the first existing colour node, that's not named black
+    set nodenum 0
+    while {[info command Color($nodenum,node)] == "" ||
+           [Color($nodenum,node) GetName] == "Black"} { 
+        incr nodenum 
+        if {$nodenum > 1000} {
+            DevErrorWindow "ModelHierarchyCreateGroupOk:\nCan't find a colour node after testing 1k nodes.\nLoad some colours via the Colors module."
+            return
+        }
+    }
+    if {$::Module(verbose)} {
+        puts "first valid colour node number = $nodenum, named [Color($nodenum,node) GetName]"
+    }
+    $node SetColor [Color($nodenum,node) GetName]
+    set ModelGroup($newID,colorID) $nodenum
+
     if {$name==""} {
         $node SetName [.askforname.e1 get]
     } else {
