@@ -338,7 +338,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27.6.21 $} {$Date: 2005/10/25 22:05:17 $}]
+        {$Revision: 1.27.6.22 $} {$Date: 2005/11/30 19:42:39 $}]
 
 }
 
@@ -1218,7 +1218,10 @@ proc vtkFreeSurferReadersCORApply {} {
         }
         set iCast [vtkFreeSurferReadersCast $i Short]
         if {$iCast != -1} {
-            DevInfoWindow "Cast input volume to Short, use ${Volume(name)}-Short for editing."
+            puts "Cast input volume to Short, use ${Volume(name)}-Short for editing."
+            if {$::Module(verbose)} {
+                DevInfoWindow "Cast input volume to Short, use ${Volume(name)}-Short for editing."
+            }
         }
     } 
 
@@ -3003,8 +3006,17 @@ proc vtkFreeSurferReadersReadAnnotation {a {_id -1} {annotFileName ""}} {
         } else {
             set scalars [[$Model($_id,polyData) GetPointData] GetScalars $scalaridx]
         }
+        # the look up table should be a label one
         set lut [Model($_id,mapper,viewRen) GetLookupTable]
-        $lut SetRampToLinear
+        # skip this bit, as the models use vtkFSLookupTables now, which don't support ramps
+        if {[$lut GetClassName] != "vtkFSLookupTable"} {
+            $lut SetRampToLinear
+        } else {
+            if {1} {
+                puts "vtkFreeSurferReadersReadAnnotation: look up table for model is $lut, a free surfer type, resetting to label"
+            }
+            set lut Lut(-1,lut)
+        }
                 
         set fssar fssar_$a
         catch "$fssar Delete"
@@ -3055,6 +3067,10 @@ proc vtkFreeSurferReadersReadAnnotation {a {_id -1} {annotFileName ""}} {
         }
         MainModelsSetScalarRange $_id [lindex $entries 0] [lindex $entries end]
         MainModelsSetScalarVisibility $_id 1
+
+        # might need to call ModelsPickScalarsCallback here to get everything right
+        ModelsPickScalarsCallback $_id [$Model($_id,polyData) GetPointData] "labels"
+
         Render3D
     } else {
         DevInfoWindow "Model $_id: $a file cannot be found: $annotFileName"
@@ -5881,7 +5897,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set timemsg [join [split $timemsg] "-"]
     # make up the message with single quotes between each one for easy parsing later, 
     # leave out ones on the end as will get empty strings there
-    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.21 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
+    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.22 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -6433,12 +6449,12 @@ proc vtkFreeSurferReadersQASummary {} {
                     # and split the first and third tokens by spaces
                     set dateuserver [split [string trim [lindex $newline 0]]]
 
-                    if {[regexp {^(\d\d)/(\d\d)/(\d\d)-.*} $dateuserver matchVar day mo yr] == 1} {
+                    if {[regexp {^(\d\d)/(\d\d)/(\d\d)-.*} $dateuserver matchVar mo day yr] == 1} {
                         if {($yr <= 5 && $mo <= 10)} {
                             # if the regexp was sucessful, check the year and mo to make sure we're earlier than oct 2005 so that
                             # we're using the old style string where not everything is in quotes
                             if {$::Module(verbose)} {
-                                puts "QA: have an old style string earlier than Oct 05: $dateuserver"
+                                puts "QA: have an old style string earlier than Oct 05 with yr = $yr, mo = $mo: $dateuserver"
                             }
                             
                             set filerev [lindex $newline 1]
@@ -7378,11 +7394,15 @@ proc vtkFreeSurferReadersReadScalars { m {fileName ""} } {
         }
     } else {
         # check to see how many scalars are there already
-        set numScalars [expr [[$Model($m,polyData) GetPointData] GetNumberOfArrays] + 1]
+        # set numScalars [expr [[$Model($m,polyData) GetPointData] GetNumberOfArrays] + 1]
         if {$::Module(verbose)} {
-            puts "Reading in one file, it will be scalar number $numScalars"
+            # puts "Reading in from file(s), starting with scalar number $numScalars"
         }
         set scalarFileList $fileName
+        set numScalars [llength $scalarFileList]
+        if {$::Module(verbose)} {
+            puts "Adding $numScalars for this model"
+        }
     }
 
     set numScalarsAdded 0
@@ -7442,6 +7462,9 @@ proc vtkFreeSurferReadersReadScalars { m {fileName ""} } {
             if {$numScalars == 1} {
                 [$Model($m,polyData) GetPointData] SetScalars Model($m,floatArray$s)
                 [$Model($m,polyData) GetPointData] SetActiveScalars $s
+                # increment it, as otherwise the number added will still be zero, 
+                # and this won't be visible
+                incr numScalarsAdded 
             } else {
                 if {$::Module(verbose)} {
                     puts "Adding scalar named $s to model id $m"
@@ -7485,6 +7508,12 @@ proc vtkFreeSurferReadersReadScalars { m {fileName ""} } {
                 ModelsSetScalarsLut $m $lutID
             }
 
+            # add the filename to the model node
+            if {$::Module(verbose)} {
+                puts "Adding scalar file name $scalarFileName to model node $m"
+            }
+            Model($m,node) AddScalarFileName $scalarFileName
+
             # may need to set reader output to "" and delete here
         } else {
             DevWarningWindow "Scalar file does not exist: $scalarFileName"
@@ -7502,7 +7531,7 @@ proc vtkFreeSurferReadersReadScalars { m {fileName ""} } {
         set Model(scalarLo) [lindex $range 0]
         set Model(scalarHi) [lindex $range 1]
         if {$::Module(verbose)} {
-            puts "Model $m scalar range = $range"
+            puts "Model $m has scalars, range = $range"
         }
     }
     
