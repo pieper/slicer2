@@ -1,6 +1,6 @@
 /*=auto=========================================================================
 
-(c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+(c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 
 This software ("3D Slicer") is provided by The Brigham and Women's 
 Hospital, Inc. on behalf of the copyright holders and contributors.
@@ -35,23 +35,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 =========================================================================auto=*/
-/*==============================================================================
-(c) Copyright 2004 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-==============================================================================*/
 
 // .NAME GeneralLinearModel - Computes voxel activation based on general linear model.
 // .SECTION Description
@@ -64,7 +47,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #include <vtkFMRIEngineConfigure.h>
-#include <gsl/gsl_multifit.h>
 #include "vtkFloatArray.h"
 
 class VTK_FMRIENGINE_EXPORT GeneralLinearModel
@@ -83,25 +65,20 @@ public:
     // beta - array of beta coefficients (output)
     // chisq - the sum of squares of the residuals from the best-fit (output)
     // It returns 0 if successful; 1 otherwise.
-    static int FitModel(float *timeCourse,
-                         float *beta,
-                         float *chisq);
+    static int FitModel(float *timeCourse, float *beta, float *chisq);
 
     // Description:
     // Frees the allocated momery 
     static void Free();
 
 private:
-    static gsl_matrix *X;
-    static gsl_matrix *cov;
-    static gsl_vector *y;
-    static gsl_vector *c;
-    static gsl_multifit_linear_workspace *work; 
+    // returns chisq for each voxel
+    // chisq: sum of squares of residuals from the best fit
+    static float ComputeResiduals(float *timeCourse, float *beta, int numSamples, int numRegressors);
 
     static int *Dimensions;
     static float **DesignMatrix;
 };
-
 
 #endif
 
