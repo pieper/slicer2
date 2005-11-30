@@ -76,6 +76,11 @@ vtkMrmlModelNode::vtkMrmlModelNode()
   this->ScalarRange[1] = 100;
 
   this->RasToWld = vtkMatrix4x4::New();
+
+  // Scalars
+  this->LUTName = "-1";
+  this->ScalarFileNamesVec.clear();
+  
 }
 
 //----------------------------------------------------------------------------
@@ -136,6 +141,11 @@ void vtkMrmlModelNode::Write(ofstream& of, int nIndent)
     of << " description='" << this->Description << "'";
   }
 
+  if (this->LUTName && strcmp(this->LUTName,""))
+  {
+      of << " lutName='" << this->LUTName << "'";
+  }
+  
   // Numbers
   if (this->Opacity != 1.0)
   {
@@ -165,6 +175,20 @@ void vtkMrmlModelNode::Write(ofstream& of, int nIndent)
        << this->ScalarRange[1] << "'";
   }
 
+  // Scalars
+  if (this->ScalarFileNamesVec.size() > 0)
+  {
+      of << " scalarFiles='";
+      for (int idx = 0; idx < this->ScalarFileNamesVec.size(); idx++)
+      {
+          of << this->GetScalarFileName(idx);
+          if (idx+1 < this->ScalarFileNamesVec.size())
+          {
+              of << " ";
+          }
+      }
+      of << "'";
+  }
   of << "></Model>\n";;
 }
 
@@ -193,6 +217,8 @@ void vtkMrmlModelNode::Copy(vtkMrmlNode *anode)
 
   // Matrices
   this->SetRasToWld(node->RasToWld);
+
+  // Scalars
 
 }
 
@@ -235,5 +261,63 @@ void vtkMrmlModelNode::PrintSelf(ostream& os, vtkIndent indent)
 
   // Matrices
   os << indent << "RasToWld:\n";
-    this->RasToWld->PrintSelf(os, indent.GetNextIndent());  
+    this->RasToWld->PrintSelf(os, indent.GetNextIndent());
+
+    os << indent << "Look up table ID: " << this->LUTName << endl;
+
+    // Scalars
+    os << indent << "Number of scalar file names: " << this->ScalarFileNamesVec.size() << endl;
+    if (this->ScalarFileNamesVec.size() > 0)
+    {
+        for (idx = 0; idx < this->ScalarFileNamesVec.size(); idx++)
+        {
+            os << indent << indent << "Scalar File " << idx << ": " << this->ScalarFileNamesVec[idx].c_str() << endl;
+        }
+    }
+}
+
+//----------------------------------------------------------------------------
+int vtkMrmlModelNode::GetNumberOfScalarFileNames ()
+{
+    return this->ScalarFileNamesVec.size();
+}
+
+//----------------------------------------------------------------------------
+void vtkMrmlModelNode::AddScalarFileName(char *newFileName)
+{
+    char tmpStr[1024];
+    int i;
+    int found = 0;
+    sscanf(newFileName, "%s", tmpStr);
+    std::string val = tmpStr;
+    // check that it's not there already
+    for (i=0; i<this->ScalarFileNamesVec.size(); i++)
+    {
+        if (this->ScalarFileNamesVec[i] == tmpStr)
+        {
+            found++;
+        }
+    }
+    if (found == 0)
+    {
+        this->ScalarFileNamesVec.push_back(val);
+        vtkDebugMacro(<<"Added scalar file " << newFileName);
+    }
+    else
+    {
+        vtkDebugMacro(<<"Didn't add scalar file name, found in list already: " << newFileName);
+    }
+                    
+}
+
+//----------------------------------------------------------------------------
+const char *vtkMrmlModelNode::GetScalarFileName(int idx)
+{
+    return this->ScalarFileNamesVec[idx].c_str();
+}
+
+//----------------------------------------------------------------------------
+void vtkMrmlModelNode::DeleteScalarFileNames()
+{
+    this->ScalarFileNamesVec.clear();
 }
