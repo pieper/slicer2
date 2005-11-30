@@ -161,7 +161,7 @@ proc VolumeMathInit {} {
     #   appropriate info when the module is checked in.
     #   
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.40 $} {$Date: 2005/01/28 21:45:01 $}]
+        {$Revision: 1.40.6.1 $} {$Date: 2005/11/30 19:22:27 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1183,7 +1183,7 @@ proc VolumeMathPrepareResultVolume {{logic "0"}}  {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC VolumeMathPrepareResult
+# .PROC VolumeMathCheckErrors
 #   Create the New Volume if necessary. Otherwise, ask to overwrite.
 #   returns 1 if there is are errors 0 otherwise
 # .END
