@@ -1,4 +1,12 @@
 #=auto==========================================================================
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+#===============================================================================
+# FILE:        fMRIEngineSaveAndLoadParadigm.tcl
+# PROCEDURES:  
+#   fMRIEngineSaveParadigm
+#   fMRIEngineLoadParadigm
+#==========================================================================auto=
+#=auto==========================================================================
 # (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
