@@ -338,7 +338,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27.6.22 $} {$Date: 2005/11/30 19:42:39 $}]
+        {$Revision: 1.27.6.23 $} {$Date: 2005/11/30 21:15:41 $}]
 
 }
 
@@ -3012,7 +3012,7 @@ proc vtkFreeSurferReadersReadAnnotation {a {_id -1} {annotFileName ""}} {
         if {[$lut GetClassName] != "vtkFSLookupTable"} {
             $lut SetRampToLinear
         } else {
-            if {1} {
+            if {$::Module(verbose)} {
                 puts "vtkFreeSurferReadersReadAnnotation: look up table for model is $lut, a free surfer type, resetting to label"
             }
             set lut Lut(-1,lut)
@@ -5897,7 +5897,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set timemsg [join [split $timemsg] "-"]
     # make up the message with single quotes between each one for easy parsing later, 
     # leave out ones on the end as will get empty strings there
-    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.22 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
+    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.27.6.23 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
