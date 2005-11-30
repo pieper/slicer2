@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,46 +32,53 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        MainModels.tcl
 # PROCEDURES:  
 #   MainModelsInit
 #   MainModelsUpdateMRML
-#   MainModelsShouldBeAVtkClass
-#   MainModelsCreate
-#   MainModelsRead
-#   MainModelsInitGUIVariables
+#   MainModelsShouldBeAVtkClass m
+#   MainModelsCreate m
+#   MainModelsRead m
+#   MainModelsInitGUIVariables m
 #   MainModelsDelete
 #   MainModelsBuildGUI
-#   MainModelsCreateGUI widget int int
-#   MainModelsRefreshGUI
+#   MainModelsCreateGUI f m hlevel
+#   MainModelsRefreshGUI m c
 #   MainModelsPopupCallback
-#   MainModelsDeleteGUI
+#   MainModelsDeleteGUI f m
 #   MainModelsDestroyGUI
-#   MainModelsPopup
-#   MainModelsSetActive
-#   MainModelsSetColor
-#   MainModelsSetVisibility
-#   MainModelsRefreshClipping when to
+#   MainModelsPopup X Y
+#   MainModelsSetActive m
+#   MainModelsSetColor m name
+#   MainModelsSetVisibility model value
+#   MainModelsRefreshClipping
 #   MainModelsSetClipping m value
-#   MainModelsSetOpacityInit
-#   MainModelsSetOpacity
-#   MainModelsSetCulling
-#   MainModelsSetScalarVisibility
-#   MainModelsRegisterModel
-#   MainModelsWrite
-#   MainModelsStorePresets
+#   MainModelsSetOpacityInit m widget value
+#   MainModelsSetOpacity m value
+#   MainModelsSetCulling m value
+#   MainModelsSetScalarVisibility m value
+#   MainModelsSetScalarRange m lo hi
+#   MainModelsSetVectorVisibility m value
+#   MainModelsSetVectorScaleFactor m value
+#   MainModelsSetTensorVisibility m value
+#   MainModelsSetTensorScaleFactor m value
+#   MainModelsSetTensorColor
+#   MainModelsRegisterModel m rasToWld
+#   MainModelsWrite m prefix
+#   MainModelsStorePresets p
+#   MainModelsRecallPresets p
 #   MainModelsRaiseScalarBar m
 #   MainModelsRemoveScalarBar m
 #   MainModelsToggleScalarBar m
-#   MainModelsChangeRenderer
+#   MainModelsChangeRenderer r
 #==========================================================================auto=
 
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsInit
-# 
+# Initialise global variables for this module, sets Model array vars.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -88,7 +95,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.68 $} {$Date: 2005/11/10 22:47:22 $}]
+        {$Revision: 1.69 $} {$Date: 2005/11/30 17:19:34 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -120,13 +127,13 @@ proc MainModelsInit {} {
 #-------------------------------------------------------------------------------
 # .PROC MainModelsUpdateMRML
 #
-# This proc is called whenever the MRML scene graph changes.
-# It updates everything except the GUI for all models.  
+# This proc is called whenever the MRML scene graph changes.<br>
+# It updates everything except the GUI for all models.  <br>
 # This means reading/deleting polydata, updating actors, and redoing
 # any existing menus of models in Model(mActiveList). (These are menus to
 # select the active model in the Models module and may be in other modules).
-#
-#
+#<br>
+#<br>
 # Updating GUIs for all models is done in tcl-modules/Models.tcl 
 # since if the module is not loaded, no GUIs should exist!
 # .ARGS
@@ -214,14 +221,15 @@ proc MainModelsUpdateMRML {} {
 # There should be a vtkMrmlModel class just like there is a vtkMrmlVolume
 # class.  However, developers are hacking new model code on the fly and
 # probably benefit more by only having to change tcl scripts rather than
-# recompiling C++ code, right Peter?  
+# recompiling C++ code, right Peter?  <br>
 #
-# This procedure performs what the vtkMrmlModel would do in its constructor.
+# This procedure performs what the vtkMrmlModel would do in its constructor.<br>
 #
 #  With this procedure, a same model will have as many actors and properties 
 #  as there are renderers. This is to be able to set different properties (ie
-#  opacity) on different renderers for the same model
-# 
+#  opacity) on different renderers for the same model.<br>
+# .ARGS
+# int m model id
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsShouldBeAVtkClass {m} {
@@ -229,6 +237,7 @@ proc MainModelsShouldBeAVtkClass {m} {
 
     foreach r $Module(Renderers) {
         # Mapper
+        catch "Model($m,mapper,$r) Delete"
         vtkPolyDataMapper Model($m,mapper,$r)
     }
     # Create a sphere as a default model
@@ -276,11 +285,13 @@ proc MainModelsShouldBeAVtkClass {m} {
 #-------------------------------------------------------------------------------
 # .PROC MainModelsCreate
 #
-# This procedure creates a model but does not read it.
+# This procedure creates a model but does not read it.<br>
 #
-# Returns:
-#  1 - success
-#  0 - model already exists
+# Returns:<br>
+#  1 - success<br>
+#  0 - model already exists<br>
+# .ARGS
+# int m model id
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsCreate {m} {
@@ -321,6 +332,7 @@ proc MainModelsCreate {m} {
 # Reads in a model from disk.  The other vtk objects, etc. associated
 # with the model must already have been created using MainModelsCreate.
 # .ARGS
+# int m model id
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsRead {m} {
@@ -413,8 +425,9 @@ proc MainModelsRead {m} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsInitGUIVariables
-# 
+# Initialize the GUI variables from the model node's values.
 # .ARGS
+# int m model id
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsInitGUIVariables {m} {
@@ -542,19 +555,24 @@ proc MainModelsBuildGUI {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsCreateGUI
-# Makes the GUI for each model on the Models->Display panel.
-# This is called for each new model.
+# Makes the GUI for each model on the Models->Display panel.<br>
+# This is called for each new model.<br>
 # Also makes the popup menu that comes up when you right-click a model.
 #
 # .ARGS
-# f widget the frame to create the GUI in
-# m int the id of the model
-# hlevel int the indentation to use when building the GUI
+# widget f the frame to create the GUI in
+# int m the id of the model
+# int hlevel the indentation to use when building the GUI, optional, defaults to 0
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsCreateGUI {f m {hlevel 0}} {
     global Gui Model Color
 
+    # sanity check
+    if {$m == "" || [info command Model($m,node)] == ""} {
+        puts "ERROR: MainModelsCreateGUI: model node $m does not exist, returning."
+        return
+    }
 
         # puts "Creating GUI for model $m"        
     # If the GUI already exists, then just change name.
@@ -569,10 +587,17 @@ proc MainModelsCreateGUI {f m {hlevel 0}} {
         -text [Model($m,node) GetName] -variable Model($m,visibility) \
         -width 17 -indicatoron 0 \
         -command "MainModelsSetVisibility $m; Render3D"} $Gui(WCA)
-    $f.c$m configure -bg [MakeColorNormalized \
-            [Color($Model($m,colorID),node) GetDiffuseColor]]
-    $f.c$m configure -selectcolor [MakeColorNormalized \
-            [Color($Model($m,colorID),node) GetDiffuseColor]]
+    if {$m != "" && [info exist Model($m,colorID)] != 0 &&
+        [info command Color($Model($m,colorID),node)] != ""} {
+        set rgb [Color($Model($m,colorID),node) GetDiffuseColor]
+    } else {
+        puts "WARNING: no color node for model $m, using white"
+        set rgb "1 1 1"
+    }
+    set colour [MakeColorNormalized $rgb]
+    $f.c$m configure -bg $colour
+    $f.c$m configure -selectcolor $colour
+
             
     # Add a tool tip if the string is too long for the button
     if {[string length [Model($m,node) GetName]] > [$f.c$m cget -width]} {
@@ -643,8 +668,11 @@ proc MainModelsCreateGUI {f m {hlevel 0}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsRefreshGUI
-# 
+# Find and refresh the gui components for this model, with reference to the model's
+# associated colour node to get the colour of various gui elements.
 # .ARGS
+# int m model id
+# int c id of the colour node to use
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsRefreshGUI {m c} {
@@ -660,10 +688,10 @@ proc MainModelsRefreshGUI {m c} {
     set button $f.c$m
 
     # Find the color for this model
-    if {$c != ""} {
-    set rgb [Color($c,node) GetDiffuseColor]
+    if {$c != "" && [info command Color($c,node)] != ""} {
+        set rgb [Color($c,node) GetDiffuseColor]
     } else {
-    set rgb "0 0 0"
+        set rgb "1 1 1"
     }
     set color [MakeColorNormalized $rgb]
 
@@ -676,10 +704,9 @@ proc MainModelsRefreshGUI {m c} {
 
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MainModelsPopupCallback
-# 
+# Get the active model id, set the colour from the label array, and update mrml.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -696,8 +723,11 @@ proc MainModelsPopupCallback {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsDeleteGUI
-# 
+# Delete the gui elements for this model. Returns 1 on success, 0 if the
+# gui is already deleted.
 # .ARGS
+# widget f the path to the model gui's parent frame
+# int m model id
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsDeleteGUI {f m} {
@@ -720,7 +750,7 @@ proc MainModelsDeleteGUI {f m} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsDestroyGUI
-# 
+# Delete all the models in the hierarchy tree 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -744,14 +774,15 @@ proc MainModelsDestroyGUI {} {
             MainModelGroupsDeleteGUI $f [$node GetID]
         }
         set node [Mrml(dataTree) GetNextItem]
-    }
-    
+    }    
 }
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsPopup
-# 
+# Build the gui if it doesn't exist and then call ShowPopup.
 # .ARGS
+# int X horizontal position for popup
+# int Y vertical position for popup
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsPopup {X Y} {
@@ -767,8 +798,9 @@ proc MainModelsPopup {X Y} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsSetActive
-# 
+# Set this model to be the active one, and configure gui elements from the model's node.
 # .ARGS
+# int m model id
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsSetActive {m} {
@@ -826,8 +858,10 @@ proc MainModelsSetActive {m} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsSetColor
-# 
+# Set the color for this model.
 # .ARGS
+# int m model id
+# str name optional colour name, get it from the model node's colour if empty string
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsSetColor {m {name ""}} {
@@ -861,63 +895,64 @@ proc MainModelsSetColor {m {name ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsSetVisibility
-# 
+# Set the visibility of the models in the active render window.
 # .ARGS
+# int model model id
+# int value optional flag value to pick which models to set visibility for, can be All, None, or model id to pick
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsSetVisibility {model {value ""}} {
     global Model ModelGroup Module
 
     if {[string compare $model "None"] == 0} {
-    foreach m $Model(idList) {
-        set Model($m,visibility) 0
-        Model($m,node)  SetVisibility 0
-        # set the visibility for the chosen screen
-        Model($m,actor,$Model(activeRenderer)) SetVisibility [Model($m,node) GetVisibility] 
-
-    }
-    foreach mg $ModelGroup(idList) {
-        set ModelGroup($mg,visibility) 0
-        ModelGroup($mg,node) SetVisibility 0
-    }
+        foreach m $Model(idList) {
+            set Model($m,visibility) 0
+            Model($m,node)  SetVisibility 0
+            # set the visibility for the chosen screen
+            Model($m,actor,$Model(activeRenderer)) SetVisibility [Model($m,node) GetVisibility] 
+        }
+        foreach mg $ModelGroup(idList) {
+            set ModelGroup($mg,visibility) 0
+            ModelGroup($mg,node) SetVisibility 0
+        }
     } elseif {[string compare $model "All"] == 0} {
-    foreach m $Model(idList) {
-        set Model($m,visibility) 1
-        Model($m,node)  SetVisibility 1
-        Model($m,actor,$Model(activeRenderer)) SetVisibility [Model($m,node) GetVisibility] 
-
-    }
-    foreach mg $ModelGroup(idList) {
-        set ModelGroup($mg,visibility) 1
-        ModelGroup($mg,node) SetVisibility 1
-    }
+        foreach m $Model(idList) {
+            set Model($m,visibility) 1
+            Model($m,node)  SetVisibility 1
+            Model($m,actor,$Model(activeRenderer)) SetVisibility [Model($m,node) GetVisibility] 
+            
+        }
+        foreach mg $ModelGroup(idList) {
+            set ModelGroup($mg,visibility) 1
+            ModelGroup($mg,node) SetVisibility 1
+        }
     } else {
-    if {$model == ""} {return}
-    set m $model
-    # Check if model exists
-    if {[lsearch $Model(idList) $m] == -1} {
-        return
-    }
-    if {$value != ""} {
-        set Model($m,visibility) $value
-    }
-    Model($m,node)  SetVisibility $Model($m,visibility)
-
+        if {$model == ""} {return}
+        set m $model
+        # Check if model exists
+        if {[lsearch $Model(idList) $m] == -1} {
+            return
+        }
+        if {$value != ""} {
+            set Model($m,visibility) $value
+        }
+        Model($m,node)  SetVisibility $Model($m,visibility)
+        
         Model($m,actor,$Model(activeRenderer)) SetVisibility [Model($m,node) GetVisibility] 
-    
-    # If this is the active model, update GUI
-    if {$m == $Model(activeID)} {
-        set Model(visibility) [Model($m,node) GetVisibility]
-    }
+        
+        # If this is the active model, update GUI
+        if {$m == $Model(activeID)} {
+            set Model(visibility) [Model($m,node) GetVisibility]
+        }
     }
 }
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsRefreshClipping
-# 
-# .ARGS
 #  Called when the Clipping of a model is Changed. It calls 
 #  MainModelsSetClipping to refresh the clipping of every model
+# 
+# .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsRefreshClipping {} {
@@ -931,7 +966,7 @@ proc MainModelsRefreshClipping {} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsSetClipping
-# 
+# Set the clipping mode for this model.
 # .ARGS
 #  int m the id number of the model.
 #  int value \"\" means refresh.  Otherwise Sets Model(m,clipping) to value.
@@ -992,8 +1027,11 @@ proc MainModelsSetClipping {m {value ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsSetOpacityInit
-# 
+# Add a command to a widget to set the opactiy for this model.
 # .ARGS
+# int m the model id
+# widget widget the tk widget to configure
+# str value optional, not used, defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsSetOpacityInit {m widget {value ""}} {
@@ -1003,8 +1041,10 @@ proc MainModelsSetOpacityInit {m widget {value ""}} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsSetOpacity
-# 
+# Set the opacity for this model
 # .ARGS
+# int m model id
+# float value optional opacity value, defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsSetOpacity {m {value ""}} {
@@ -1031,11 +1071,12 @@ proc MainModelsSetOpacity {m {value ""}} {
     }
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MainModelsSetCulling
-# 
+# Set the backface culling flag for this model.
 # .ARGS
+# int m model id
+# int value optional value for the back face culling flag, if default of empty string, get it from the Model array value for this model.
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsSetCulling {m {value ""}} {
@@ -1060,8 +1101,10 @@ proc MainModelsSetCulling {m {value ""}} {
     
 #-------------------------------------------------------------------------------
 # .PROC MainModelsSetScalarVisibility
-# 
+# Set if the scalars are visible for this model or not.
 # .ARGS
+# int m model id
+# int value optional value, if empty string get it from the Model array
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsSetScalarVisibility {m {value ""}} {
@@ -1080,13 +1123,22 @@ proc MainModelsSetScalarVisibility {m {value ""}} {
             set Model(scalarVisibility) [Model($m,node) GetScalarVisibility]
     }
 }
- 
+
+#-------------------------------------------------------------------------------
+# .PROC MainModelsSetScalarRange
+# Set the scalar range for the model node and it's mapper in each of the renderers.
+# .ARGS
+# int m model id
+# float lo lower value of the scalar range
+# float hi higher value of the scalar range
+# .END
+#-------------------------------------------------------------------------------
 proc MainModelsSetScalarRange {m lo hi} {
     global Model Module
         
     Model($m,node)   SetScalarRange $lo $hi
     foreach r $Module(Renderers) {
-    Model($m,mapper,$r) SetScalarRange $lo $hi
+        Model($m,mapper,$r) SetScalarRange $lo $hi
     }
     # If this is the active model, update GUI
     if {$m == $Model(activeID)} {
@@ -1095,6 +1147,14 @@ proc MainModelsSetScalarRange {m lo hi} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainModelsSetVectorVisibility
+# Set the vector visibility for this model.
+# .ARGS
+# int m model id
+# int value optional value for the visibility flag
+# .END
+#-------------------------------------------------------------------------------
 proc MainModelsSetVectorVisibility {m {value ""}} {
     global Model Module
         
@@ -1114,6 +1174,14 @@ proc MainModelsSetVectorVisibility {m {value ""}} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainModelsSetVectorScaleFactor
+# Vector scale factor currently not implemented.
+# .ARGS
+# int m model id
+# flaot value the scale factor
+# .END
+#-------------------------------------------------------------------------------
 proc MainModelsSetVectorScaleFactor {m {value ""}} {
     global Model Module
         
@@ -1125,12 +1193,20 @@ proc MainModelsSetVectorScaleFactor {m {value ""}} {
     
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainModelsSetTensorVisibility
+# Set the model's tensor visibility
+# .ARGS
+# int m model id
+# int value tensor visibility flag
+# .END
+#-------------------------------------------------------------------------------
 proc MainModelsSetTensorVisibility {m {value ""}} {
     global Model Module
         
     # if no change, return
     if {$Model($m,tensorVisibility) == $value} {
-    return
+        return
     }
 
     # set new value
@@ -1145,50 +1221,50 @@ proc MainModelsSetTensorVisibility {m {value ""}} {
     # The catch statements are to avoid trying to create the same
     # object again if this is called more than once.
     if {$Model($m,tensorVisibility) == 1} {
-    catch {vtkSphereSource Model($m,sphereSource)}
-    Model($m,sphereSource) SetThetaResolution 12
-    Model($m,sphereSource) SetPhiResolution 12
+        catch {vtkSphereSource Model($m,sphereSource)}
+        Model($m,sphereSource) SetThetaResolution 12
+        Model($m,sphereSource) SetPhiResolution 12
     
-    # use random sampling of the points to show
-    catch {vtkMaskPoints Model($m,maskPoints)}
-    Model($m,maskPoints) SetInput $Model($m,polyData)
-    Model($m,maskPoints) SetMaximumNumberOfPoints 1000
-    Model($m,maskPoints) RandomModeOn
-
-    # try to create the vtkTensorUtil module's glyph class
-    set err [catch {vtkInteractiveTensorGlyph Model($m,tensorGlyph)}]
-    if {$err != 0} {
-    # if we don't have that module create the standard vtk one
-    puts "vtkInteractiveTensorGlyph not found, creating vtkTensorGlyph."
-    catch {vtkTensorGlyph Model($m,tensorGlyph)}
-    }
-
-    Model($m,tensorGlyph) SetInput [Model($m,maskPoints) GetOutput]
-    #Model($m,tensorGlyph) SetSource [lineSource GetOutput]
-    Model($m,tensorGlyph) SetSource [Model($m,sphereSource) GetOutput]
-    Model($m,tensorGlyph) SetScaleFactor $Model(tensorScaleFactor)
-
-    catch {vtkLODActor Model($m,tensorGlyphActor)}
-    catch {vtkPolyDataMapper Model($m,tensorGlyphMapper)}
-    Model($m,tensorGlyphActor) SetMapper Model($m,tensorGlyphMapper)
-
-    # default lookup table colormap
-    [Model($m,tensorGlyphMapper) GetLookupTable] \
-    SetHueRange .6667 0.0
-    
-    # Set up coloring as chosen on the menu
-    MainModelsSetTensorColor
-
-    catch {vtkPolyDataNormals Model($m,tensorNormals)}
-    Model($m,tensorNormals) SetInput [Model($m,tensorGlyph) GetOutput]
-    
-    Model($m,tensorGlyphMapper) SetInput [Model($m,tensorNormals) GetOutput]
-    
-    MainAddActor Model($m,tensorGlyphActor)
-
+        # use random sampling of the points to show
+        catch {vtkMaskPoints Model($m,maskPoints)}
+        Model($m,maskPoints) SetInput $Model($m,polyData)
+        Model($m,maskPoints) SetMaximumNumberOfPoints 1000
+        Model($m,maskPoints) RandomModeOn
+        
+        # try to create the vtkTensorUtil module's glyph class
+        set err [catch {vtkInteractiveTensorGlyph Model($m,tensorGlyph)}]
+        if {$err != 0} {
+            # if we don't have that module create the standard vtk one
+            puts "vtkInteractiveTensorGlyph not found, creating vtkTensorGlyph."
+            catch {vtkTensorGlyph Model($m,tensorGlyph)}
+        }
+        
+        Model($m,tensorGlyph) SetInput [Model($m,maskPoints) GetOutput]
+        #Model($m,tensorGlyph) SetSource [lineSource GetOutput]
+        Model($m,tensorGlyph) SetSource [Model($m,sphereSource) GetOutput]
+        Model($m,tensorGlyph) SetScaleFactor $Model(tensorScaleFactor)
+        
+        catch {vtkLODActor Model($m,tensorGlyphActor)}
+        catch {vtkPolyDataMapper Model($m,tensorGlyphMapper)}
+        Model($m,tensorGlyphActor) SetMapper Model($m,tensorGlyphMapper)
+        
+        # default lookup table colormap
+        [Model($m,tensorGlyphMapper) GetLookupTable] \
+            SetHueRange .6667 0.0
+        
+        # Set up coloring as chosen on the menu
+        MainModelsSetTensorColor
+        
+        catch {vtkPolyDataNormals Model($m,tensorNormals)}
+        Model($m,tensorNormals) SetInput [Model($m,tensorGlyph) GetOutput]
+        
+        Model($m,tensorGlyphMapper) SetInput [Model($m,tensorNormals) GetOutput]
+        
+        MainAddActor Model($m,tensorGlyphActor)
+        
     } else {
-
-    # if we were displaying tensors, stop.
+        
+        # if we were displaying tensors, stop.
         MainRemoveActor Model($m,tensorGlyphActor)
         
         # Also delete the pipeline
@@ -1201,10 +1277,18 @@ proc MainModelsSetTensorVisibility {m {value ""}} {
 
     # If this is the active model, update GUI
     if {$m == $Model(activeID)} {
-            set Model(tensorVisibility) [Model($m,node) GetTensorVisibility]
+        set Model(tensorVisibility) [Model($m,node) GetTensorVisibility]
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainModelsSetTensorScaleFactor
+# Set the scale factor for this model's tensors.
+# .ARGS
+# int m model id
+# float value optional scale factor
+# .END
+#-------------------------------------------------------------------------------
 proc MainModelsSetTensorScaleFactor {m {value ""}} {
     global Model Module
         
@@ -1218,6 +1302,12 @@ proc MainModelsSetTensorScaleFactor {m {value ""}} {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainModelsSetTensorColor
+# Set the colour for the active model, if the tensors are visible
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MainModelsSetTensorColor {} {
     global Model 
     
@@ -1227,44 +1317,47 @@ proc MainModelsSetTensorColor {} {
     set m $Model(activeID)
     if {$Model($m,tensorVisibility) == 1} {
 
-    if {$Model(tensorGlyphColor) == "SolidColor"} {
-        Model($m,tensorGlyphMapper) ScalarVisibilityOff
+        if {$Model(tensorGlyphColor) == "SolidColor"} {
+            Model($m,tensorGlyphMapper) ScalarVisibilityOff
 
-        # Set color same as model color
-        set c $Model($m,colorID)
-        if {$c == ""} {
+            # Set color same as model color
+            set c $Model($m,colorID)
+            if {$c == ""} {
+            } else {
+                set prop [Model($m,tensorGlyphActor) GetProperty ]
+                $prop SetAmbient       [Color($c,node) GetAmbient]
+                $prop SetDiffuse       [Color($c,node) GetDiffuse]
+                $prop SetSpecular      [Color($c,node) GetSpecular]
+                $prop SetSpecularPower [Color($c,node) GetPower]
+                eval $prop SetColor    [Color($c,node) GetDiffuseColor]
+            }    
+            
         } else {
-        set prop [Model($m,tensorGlyphActor) GetProperty ]
-        $prop SetAmbient       [Color($c,node) GetAmbient]
-        $prop SetDiffuse       [Color($c,node) GetDiffuse]
-        $prop SetSpecular      [Color($c,node) GetSpecular]
-        $prop SetSpecularPower [Color($c,node) GetPower]
-        eval $prop SetColor    [Color($c,node) GetDiffuseColor]
-        }    
-
-    } else {
-        set err [catch {Model($m,tensorGlyph) \
-                ColorGlyphsWith$Model(tensorGlyphColor)}]
-        if {$err != 0} {
-        # if we don't have vtkInteractiveTensorGlyph
-        puts "Cannot color glyphs when using vtkTensorGlyph."
-        } else {
-        Model($m,tensorGlyphMapper) ScalarVisibilityOn
+            set err [catch {Model($m,tensorGlyph) \
+                                ColorGlyphsWith$Model(tensorGlyphColor)}]
+            if {$err != 0} {
+                # if we don't have vtkInteractiveTensorGlyph
+                puts "Cannot color glyphs when using vtkTensorGlyph."
+            } else {
+                Model($m,tensorGlyphMapper) ScalarVisibilityOn
+            }
+            
+            # Update for scalar range
+            Model($m,tensorGlyph) Update
+            scan [[Model($m,tensorGlyph) GetOutput] GetScalarRange] \
+                "%f %f" s1 s2
+            Model($m,tensorGlyphMapper) SetScalarRange $s1 $s2
         }
-
-        # Update for scalar range
-        Model($m,tensorGlyph) Update
-        scan [[Model($m,tensorGlyph) GetOutput] GetScalarRange] \
-        "%f %f" s1 s2
-        Model($m,tensorGlyphMapper) SetScalarRange $s1 $s2
-    }
     }
 }
- 
+
 #-------------------------------------------------------------------------------
 # .PROC MainModelsRegisterModel
 #
-# Register model m using the rasToWld
+# Register model m using the rasToWld.
+# .ARGS
+# int m model id
+# vtkMatrix4x4 rasToWld the source RAS to world matrix to copy into the model's RAS to world matrix
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsRegisterModel {m rasToWld} {
@@ -1275,8 +1368,10 @@ proc MainModelsRegisterModel {m rasToWld} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsWrite
-# 
+# Write out the vtk file for this model.
 # .ARGS
+# int m the id of the model to write out 
+# path prefix where to save the file
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsWrite {m prefix} {
@@ -1328,8 +1423,9 @@ since the last time it was saved.\n\nSave anyway?" -type okcancel]
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsStorePresets
-# 
+# Store the Models presets: visibility, opacity, clipping, backfaceCulling.
 # .ARGS
+# int p the view id
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsStorePresets {p} {
@@ -1342,7 +1438,14 @@ proc MainModelsStorePresets {p} {
         set Preset(Models,$p,$m,backfaceCulling)   $Model($m,backfaceCulling)
     }
 }
-        
+
+#-------------------------------------------------------------------------------
+# .PROC  MainModelsRecallPresets
+# Set the Model variables from the presets array.
+# .ARGS 
+# int p the view id
+# .END
+#-------------------------------------------------------------------------------
 proc MainModelsRecallPresets {p} {
     global Preset Model
 
@@ -1362,14 +1465,13 @@ proc MainModelsRecallPresets {p} {
     }    
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MainModelsRaiseScalarBar
-# Display a scalar bar: what colors the numbers are displayed as.
+# Display a scalar bar: what colors the numbers are displayed as.<br>
 # Should only be used if the model has scalars and they are
 # visible..
 # .ARGS
-# int m model id that should get the bar displayed.  Optional, defaults to idActive.
+# int m model id that should get the bar displayed.  Optional, defaults to activeID.
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsRaiseScalarBar { {m ""} } {
@@ -1377,39 +1479,39 @@ proc MainModelsRaiseScalarBar { {m ""} } {
     global viewWin Model Module
     
     if {$m == ""} {
-    set m $Model(activeID)
+        set m $Model(activeID)
     }
 
     # if another model has the scalar bar, kill it
     foreach sb $Model(idList) {
-    if {$sb != $m} {
-        MainModelsRemoveScalarBar $sb
-    }
+        if {$sb != $m} {
+            MainModelsRemoveScalarBar $sb
+        }
     }
 
     # if this model doesn't have scalars visible, 
     # don't show the bar
     if {$Model($m,scalarVisibility) == 0} {
-    tk_messageBox -message "Please turn Scalar Visibility on for this model before displaying the scalar bar."
-    # turn off the check box
-    set Model($m,displayScalarBar) 0
-    return
+        tk_messageBox -message "Please turn Scalar Visibility on for this model before displaying the scalar bar."
+        # turn off the check box
+        set Model($m,displayScalarBar) 0
+        return
     }
-
+    
     # make scalar bar
     vtkScalarBarActor bar$m 
     # save name in our array so can use info exists later
     set Model($m,scalarBar) bar$m
-
+    
     # get lookup table
     set lut [Model($m,mapper,viewRen) GetLookupTable]
-
+    
     # set up scalar bar 
     $Model($m,scalarBar) SetLookupTable $lut
     $Model($m,scalarBar) SetMaximumNumberOfColors [$lut GetNumberOfColors]
     set numlabels [expr [$lut GetNumberOfColors] + 1]
     if {$numlabels > 10} {
-    set numlabels 10
+        set numlabels 10
     }
     $Model($m,scalarBar) SetNumberOfLabels $numlabels
     
@@ -1417,12 +1519,11 @@ proc MainModelsRaiseScalarBar { {m ""} } {
     viewRen AddActor2D $Model($m,scalarBar)
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC MainModelsRemoveScalarBar
 # Kill scalar bar if it is displayed
 # .ARGS
-# int m model id that should get the bar displayed.  Optional, defaults to idActive.
+# int m model id that should get the bar displayed.  Optional, defaults to activeID.
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsRemoveScalarBar { {m ""} } {
@@ -1430,26 +1531,25 @@ proc MainModelsRemoveScalarBar { {m ""} } {
     global viewWin Model
 
     if {$m == ""} {
-    set m $Model(activeID)
+        set m $Model(activeID)
     }
 
     # if there's a scalar bar, kill it.
     if {[info exists Model($m,scalarBar)] == 1} {
 
-    # remove from vtk and tcl-lands!
-    viewRen RemoveActor $Model($m,scalarBar)
-    $Model($m,scalarBar) Delete
-    set Model($m,displayScalarBar) 0
-    unset Model($m,scalarBar)
+        # remove from vtk and tcl-lands!
+        viewRen RemoveActor $Model($m,scalarBar)
+        $Model($m,scalarBar) Delete
+        set Model($m,displayScalarBar) 0
+        unset Model($m,scalarBar)
     }
-
 }
 
 #-------------------------------------------------------------------------------
 # .PROC MainModelsToggleScalarBar
 # Turn scalar bar on/off depending on current state
 # .ARGS
-# int m model id that should get the bar displayed.  Optional, defaults to idActive.
+# int m model id that should get the bar displayed.  Optional, defaults to activeID.
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsToggleScalarBar {m} {
@@ -1457,9 +1557,9 @@ proc MainModelsToggleScalarBar {m} {
     global Model
 
     if {$Model($m,displayScalarBar) == 0} {
-    MainModelsRemoveScalarBar $m
+        MainModelsRemoveScalarBar $m
     } else {
-    MainModelsRaiseScalarBar $m
+        MainModelsRaiseScalarBar $m
     }    
 }
 
@@ -1467,7 +1567,7 @@ proc MainModelsToggleScalarBar {m} {
 # .PROC MainModelsChangeRenderer
 # This is called when the user chooses in which screen (renderer) s/he wants 
 # to change the attributes of the models
-# 
+# .ARGS
 # str r the name of the renderer
 # .END
 #-------------------------------------------------------------------------------
@@ -1488,5 +1588,3 @@ proc MainModelsSetRenderer {r} {
         MainModelsSetVisibility $m $visibility
     }
 }
-
-
