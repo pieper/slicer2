@@ -88,7 +88,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.61.10.2 $} {$Date: 2005/09/23 20:29:55 $}]
+        {$Revision: 1.61.10.3 $} {$Date: 2005/11/30 21:24:11 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -124,6 +124,7 @@ proc MainModelsInit {} {
 #
 # Updating GUIs for all models is done in tcl-modules/Models.tcl 
 # since if the module is not loaded, no GUIs should exist!
+# 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -239,6 +240,7 @@ proc MainModelsShouldBeAVtkClass {m} {
 
     foreach r $Module(Renderers) {
         # Mapper
+        catch "Model($m,mapper,$r) Delete"
         vtkPolyDataMapper Model($m,mapper,$r)
     }
     # Create a sphere as a default model
@@ -416,6 +418,23 @@ proc MainModelsRead {m} {
     reader SetOutput ""
     reader Delete
 
+
+    # check for any scalar overlay files and read them
+    if {[Model($m,node) GetNumberOfScalarFileNames] > 0} {
+        set flist {}
+        for {set i 0} {$i < [Model($m,node) GetNumberOfScalarFileNames]} {incr i} {
+            lappend flist [Model($m,node) GetScalarFileName $i]
+        }
+        if {$::Module(verbose)} {
+            puts "Have [Model($m,node) GetNumberOfScalarFileNames] scalar files to read:\n$flist"
+        }
+        if {[catch {package require vtkFreeSurferReaders} err]} {
+            DevErrorWindow "ERROR: no FreeSurfer readers found, can't read scalars for model $m"
+        } else {
+            vtkFreeSurferReadersReadScalars $m $flist
+        }
+    }
+
     # Mark this model as saved
     set Model($m,dirty) 0
 
@@ -576,6 +595,11 @@ proc MainModelsBuildGUI {} {
 proc MainModelsCreateGUI {f m {hlevel 0}} {
     global Gui Model Color
 
+    # sanity check
+    if {$m == "" || [info command Model($m,node)] == ""} {
+        puts "ERROR: MainModelsCreateGUI: model node $m does not exist, returning."
+        return
+    }
 
         # puts "Creating GUI for model $m"        
     # If the GUI already exists, then just change name.
@@ -584,16 +608,27 @@ proc MainModelsCreateGUI {f m {hlevel 0}} {
         return 0
     }
 
+    if {$::Module(verbose) && [Model($m,node) GetClassName] == "vtkMrmlHierarchyNode"} {
+        puts "MainModelsCreateGUI: f = $f, m = $m, hlevel = $hlevel"
+        puts "\tmodel colour id = $Model($m,colorID)"
+    }
+
     # Name / Visible
-    
+
     eval {checkbutton $f.c$m \
         -text [Model($m,node) GetName] -variable Model($m,visibility) \
         -width 17 -indicatoron 0 \
         -command "MainModelsSetVisibility $m; Render3D"} $Gui(WCA)
-    $f.c$m configure -bg [MakeColorNormalized \
-            [Color($Model($m,colorID),node) GetDiffuseColor]]
-    $f.c$m configure -selectcolor [MakeColorNormalized \
-            [Color($Model($m,colorID),node) GetDiffuseColor]]
+    if {$m != "" && [info exist Model($m,colorID)] != 0 &&
+        [info command Color($Model($m,colorID),node)] != ""} {
+        set rgb [Color($Model($m,colorID),node) GetDiffuseColor]
+    } else {
+        puts "WARNING: no color node for model $m, using white"
+        set rgb "1 1 1"
+    }
+    set colour [MakeColorNormalized $rgb]
+    $f.c$m configure -bg $colour
+    $f.c$m configure -selectcolor $colour
             
     # Add a tool tip if the string is too long for the button
     if {[string length [Model($m,node) GetName]] > [$f.c$m cget -width]} {
@@ -675,10 +710,10 @@ proc MainModelsRefreshGUI {m c} {
     set button $f.c$m
 
     # Find the color for this model
-    if {$c != ""} {
-    set rgb [Color($c,node) GetDiffuseColor]
+    if {$c != "" && [info command Color($c,node)] != ""} {
+        set rgb [Color($c,node) GetDiffuseColor]
     } else {
-    set rgb "0 0 0"
+        set rgb "1 1 1"
     }
     set color [MakeColorNormalized $rgb]
 
