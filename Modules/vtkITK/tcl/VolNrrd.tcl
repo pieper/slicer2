@@ -100,7 +100,7 @@ proc VolNrrdBuildGUI {parentFrame} {
 
     set f $parentFrame.fVolume
 
-    DevAddFileBrowse $f Volume "VolNrrd,FileName" "Nrrd File:" "VolNrrdSetFileName" "nhdr" "\$Volume(DefaultDir)" "Open" "Browse for a Nrrd file (.nhdr that has matching .img)" "Absolute"
+    DevAddFileBrowse $f Volume "VolNrrd,FileName" "Nrrd File:" "VolNrrdSetFileName" "nhdr nrrd" "\$Volume(DefaultDir)" "Open" "Browse for a Nrrd file (.nhdr that has matching .img)" "Absolute"
 
     frame $f.fLabelMap -bg $Gui(activeWorkspace)
 
