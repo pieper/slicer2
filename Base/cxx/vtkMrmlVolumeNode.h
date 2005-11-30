@@ -62,7 +62,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 // found this the hard way: this had been a 'magic number' that allowed
 // the user to run off the end of the array with no error checking -- tsk tsk.
-#define DICOM_FILE_LIMIT 1000
+#define DICOM_FILE_LIMIT 10000
 
 
 class VTK_SLICER_BASE_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
