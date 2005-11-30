@@ -65,7 +65,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.30 $} {$Date: 2005/11/28 16:29:22 $}]
+                                 {$Revision: 1.31 $} {$Date: 2005/11/30 22:00:09 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -1546,20 +1546,29 @@ proc DTMRIComputeTensorMask {node} {
     _cast SetInput _mask
     _cast SetOutputScalarTypeToUnsignedChar
     _cast Update
-    
+   
+   #Buffer image to erode/dilate looping
+   catch "_buffer Delete"
+   vtkImageData _buffer 
+   
     #Erode mask: try to disconnect from skull
     catch "_er Delete"
     vtkImageErode _er
-    _er SetInput [_cast GetOutput]
-    _er SetForeground 1
-    _er SetBackground 0
-    _er SetNeighborTo8
-    _er Update
+    _buffer DeepCopy [_cast GetOutput]
     
     #Free space
-    _cast Delete
     _mask Delete
+    _cast Delete
     
+    for {set i 0} {$i <2} {incr i} {
+        _er SetInput _buffer
+        _er SetForeground 1
+        _er SetBackground 0
+        _er SetNeighborTo8
+        _er Update
+        _buffer DeepCopy [_er GetOutput]
+     }   
+
     set dims [[_er GetOutput] GetDimensions]
     set px [expr round([lindex $dims 0]/2)]
     set py [expr round([lindex $dims 1]/2)]
@@ -1568,7 +1577,7 @@ proc DTMRIComputeTensorMask {node} {
     #Connected components
     catch "_con Delete"
     vtkImageSeedConnectivity _con
-    _con SetInput [_er GetOutput]
+    _con SetInput _buffer
     _con SetInputConnectValue 1
     _con SetOutputConnectedValue 1
     _con SetOutputUnconnectedValue 0
@@ -1581,22 +1590,30 @@ proc DTMRIComputeTensorMask {node} {
     #Dilate final mask: conservative approach
     catch "_er Delete"
     vtkImageErode _er
-    _er SetInput [_con GetOutput]
-    _er SetForeground 0
-    _er SetBackground 1
-    _er SetNeighborTo8
-    
+     _buffer DeepCopy [_con GetOutput]
+     
     #Free space
-    _con Delete
+    _con Delete     
+     
+     for {set i 0} {$i <2} {incr i} {
+        _er SetInput _buffer
+        _er SetForeground 0
+        _er SetBackground 1
+        _er SetNeighborTo8
+        _er Update
+        _buffer DeepCopy [_er GetOutput]
+    }
+    
     
     #Recast to short
    catch "_cast Delete"
    vtkImageCast _cast
-   _cast SetInput [_er GetOutput]
+   _cast SetInput _buffer
    _cast SetOutputScalarTypeToShort
    _cast Update
   
     #Free space
+    _buffer Delete
     _er Delete
                  
     set name "Tensor_mask"
