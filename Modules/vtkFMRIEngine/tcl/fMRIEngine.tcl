@@ -156,7 +156,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.23 $} {$Date: 2005/12/01 15:12:25 $}]
+        {$Revision: 1.24 $} {$Date: 2005/12/01 19:12:58 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -262,12 +262,16 @@ proc fMRIEngineBuildGUI {} {
     # Refer to the documentation for details on the syntax.
     set help "
 
-    The fMRIEngine module is intended to process/display fMRI data.
+    The fMRIEngine module is intended to process and display fMRI data.
     <BR><BR>
     <B>Sequence</B> allows you to load or select a sequence of fMRI \
     volumes to process.
     <BR>
-    <B>Set up</B> allows you to specify the model and contrasts.
+    <B>Set Up</B> allows you to specify paradigm design, signal modeling and \
+    contrasts, to estimate the linear modeling, and to save/load/view a design.
+    <BR>
+    <B>ROI</B> enables you to create a labelmap, to perform region of interest \
+    analysis, and to view the stat results out of the defined roi.
     <BR>
     <B>Compute</B> lets you to choose contrast(s) to compute \
     activation volume(s).
@@ -279,27 +283,6 @@ proc fMRIEngineBuildGUI {} {
     Check the file README.txt in the docs directory of this module \
     for details about how to build and use the module.
     <BR><BR>
-    ----------------------
-    <BR><BR>
-    (c) Copyright 2004 Massachusetts Institute of Technology (MIT) \
-    All Rights Reserved.
-    <P>
-    This program is free software; you can redistribute it and/or
-    modify it under the terms of the GNU General Public License
-    as published by the Free Software Foundation; either version 2
-    of the License, or (at your option) any later version.
-    <P>
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-    <P>
-
-    This library is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    Library General Public License for more details.
     "
     regsub -all "\n" $help {} help
     MainHelpApplyTags fMRIEngine $help
@@ -435,8 +418,8 @@ proc fMRIEngineViewGNULicense {} {
         $f.t insert 1.0 $data 
 
         set f $w.fButton
-        button $f.bDone -text "Done" -command "fMRIEngineCloseGPLWindow" -width 8 
-        pack $f.bDone -side top -pady $Gui(pad) 
+        button $f.bClose -text "Close" -command "fMRIEngineCloseGPLWindow" -width 8 
+        pack $f.bClose -side top -pady $Gui(pad) 
     }
 }
 
