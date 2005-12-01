@@ -44,6 +44,7 @@
 #   fMRIEngineBuildUIForPlot parent
 #   fMRIEngineToggleCutoff
 #   fMRIEngineBuildUIForThreshold parent
+#   fMRIEngineClickRadioButton which
 #   fMRIEngineCheckCutoff
 #   fMRIEngineComputeDefaultCutoff
 #   fMRIEngineStatHighPassFiltering
@@ -397,6 +398,7 @@ proc fMRIEngineBuildUIForThreshold {parent} {
             -selectcolor white} $Gui(WEA)
 
         pack $f.r$param -side top -pady 2 
+        bind $f.r$param <1> "fMRIEngineClickRadioButton $value"
     }
     set fMRIEngine(thresholdingOption) uncorrected 
 
@@ -436,6 +438,21 @@ proc fMRIEngineBuildUIForThreshold {parent} {
  
     grid $f.lPV $f.ePV $f.bPlus $f.bMinus -padx 1 -pady 2 -sticky e
     grid $f.lTS $f.eTS -padx 1 -pady 2 -sticky e
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineClickRadioButton
+# Handles the click event on radio buttons 
+# .ARGS
+# value which button is clicked
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineClickRadioButton {value} {
+    global fMRIEngine
+
+    set fMRIEngine(thresholdingOption) $value
+    fMRIEngineScaleActivation p
 }
 
 
