@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceWFileReader.h,v $
   Language:  C++
-  Date:      $Date: 2005/08/08 18:23:19 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2005/12/01 21:12:10 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================*/
 

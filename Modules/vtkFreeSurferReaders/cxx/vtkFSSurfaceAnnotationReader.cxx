@@ -40,8 +40,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 Program:   Visualization Toolkit
 Module:    $RCSfile: vtkFSSurfaceAnnotationReader.cxx,v $
 Language:  C++
-Date:      $Date: 2005/08/15 17:18:02 $
-Version:   $Revision: 1.7 $
+Date:      $Date: 2005/12/01 21:12:09 $
+Version:   $Revision: 1.8 $
 
 =========================================================================*/
 #include <stdio.h>
@@ -119,13 +119,16 @@ int vtkFSSurfaceAnnotationReader::ReadFSAnnotation()
   int** colorTableRGBs;
   char** colorTableNames;
   int colorTableEntryIndex;
-  int numColorTableEntries;
+  int numColorTableEntries = 0;
   int r;
   int g;
   int b;
   bool found;
   bool unassignedEntry;
   int stringLength;
+
+  int thisStep = 0;
+  int totalSteps = 1;
   
   vtkDebugMacro( << "starting ReadFSAnnotation\n");
   if (olabels == NULL)
@@ -199,6 +202,11 @@ int vtkFSSurfaceAnnotationReader::ReadFSAnnotation()
   
   // Read in all the label rgb values.
   vtkDebugMacro( << "ReadFSAnnotation:  About to read in all the label rgb values, up to " << numLabels << ".\n");
+
+  // this calc will be wrong, as it doesn't count the setting up of the colour
+  // table stuff.
+  totalSteps = numLabels*2;
+      
   for (labelIndex = 0; labelIndex < numLabels; labelIndex ++ )
   {    
       if (feof (annotFile) ) 
@@ -241,7 +249,13 @@ int vtkFSSurfaceAnnotationReader::ReadFSAnnotation()
       }
       
     rgbs[vertexIndex] = rgb;
+    thisStep++;
+    if (thisStep % 100 == 0)
+    {
+        this->UpdateProgress(1.0*thisStep/totalSteps);
+    }
   }
+  
   
   // Are we using an embedded or an external color table?
   vtkDebugMacro( << "ReadFSAnnotation: Are we using an external color table?\n\t" << this->UseExternalColorTableFile << endl);
@@ -283,7 +297,9 @@ int vtkFSSurfaceAnnotationReader::ReadFSAnnotation()
           return FS_NO_COLOR_TABLE;
       }
   }
+
   
+      
   // Now match up rgb values with table entries to find the label
   // indices for each vertex.
   vtkDebugMacro( << "ReadFSAnnotation: Now match up rgb values with table entries to find the label indices for each vertex, numLabels = " << numLabels << ", numColorTableEntries = " << numColorTableEntries << endl);
@@ -328,6 +344,12 @@ int vtkFSSurfaceAnnotationReader::ReadFSAnnotation()
                   //return FS_ERROR_PARSING_ANNOTATION;
               }
           }
+          
+      }
+      thisStep++;
+      if (thisStep % 100 == 0)
+      {
+          this->UpdateProgress(1.0*thisStep/totalSteps);
       }
       
       // Didn't find an entry so just set it to -1.
@@ -339,6 +361,8 @@ int vtkFSSurfaceAnnotationReader::ReadFSAnnotation()
       }
   }
   
+  // reset total steps, as have to do stuff for the colour table entries
+  totalSteps += 3*numColorTableEntries;
   
   // Copy the names as a list into a new string. First find the
   // length that the string should be.
@@ -356,6 +380,11 @@ int vtkFSSurfaceAnnotationReader::ReadFSAnnotation()
       }
       else
       { cerr << "WARNING: null colour table names entry at index " << colorTableEntryIndex << endl; }
+      thisStep++;
+      if (thisStep % 100 == 0)
+      {
+          this->UpdateProgress(1.0*thisStep/totalSteps);
+      }
   }
   // Allocate the string and copy all the names in, along with
   // their index. This makes it possible to use the string to
@@ -374,6 +403,11 @@ int vtkFSSurfaceAnnotationReader::ReadFSAnnotation()
           sprintf (this->NamesList, "%s%d {%s} ", this->NamesList,
                    colorTableEntryIndex, 
                    colorTableNames[colorTableEntryIndex]);
+      }
+      thisStep++;
+      if (thisStep % 100 == 0)
+      {
+          this->UpdateProgress(1.0*thisStep/totalSteps);
       }
   }
   this->NumColorTableEntries = numColorTableEntries;
@@ -405,12 +439,20 @@ int vtkFSSurfaceAnnotationReader::ReadFSAnnotation()
           cerr << "WARNING: colorTableRGBs null at entry index " <<  colorTableEntryIndex << ", using default value of 0 0 0" << endl;
           ocolors->SetTableValue(colorTableEntryIndex, 0, 0, 0, 1.0);
       }
+      thisStep++;
+      if (thisStep % 100 == 0)
+      {
+          this->UpdateProgress(1.0*thisStep/totalSteps);
+      }
   }
   
   if (unassignedEntry)
   {
       result = FS_WARNING_UNASSIGNED_LABELS;
   }
+
+  this->SetProgressText("");
+  this->UpdateProgress(0.0);
   
   // Close the file.
   fclose (annotFile);
