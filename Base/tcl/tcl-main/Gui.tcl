@@ -96,7 +96,7 @@ proc GuiInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo Gui \
-    {$Revision: 1.54 $} {$Date: 2005/11/14 18:28:24 $}]
+    {$Revision: 1.55 $} {$Date: 2005/12/01 18:05:40 $}]
 
 
     # enable tooltips by default.  This should check user preferences somehow.
@@ -758,6 +758,12 @@ proc MakeColorNormalized {str} {
 #-------------------------------------------------------------------------------
 proc ColorSlider {widget rgb} {
 
+    if {[winfo exists $widget] == 0} {
+        if {$::Module(verbose)} {
+            puts "Gui.tcl ColorSlider: widget $widget doesn't exist!"
+        }
+        return
+    }
     set color [MakeColorNormalized $rgb]
 
     # ask the widget what color it is now (returns a descriptive list)
