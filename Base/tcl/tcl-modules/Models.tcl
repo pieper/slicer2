@@ -90,7 +90,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.66 $} {$Date: 2005/11/13 16:54:31 $}]
+            {$Revision: 1.67 $} {$Date: 2005/12/01 22:14:15 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -901,6 +901,11 @@ proc ModelsConfigScrolledGUI {canvasScrolledGUI fScrolledGUI} {
         # Find the height of a single button
         # Must use $f.s$m since the scrollbar ("s") fields are tallest
         set lastButton $f.s$m
+        if {[winfo exists $lastButton] == 0} {
+            puts "ModelsConfigScrolledGUI: missing a button $lastButton, not building scrolled gui!"
+            return
+        }
+
         # Find how many modules (lines) in the frame
         set numLines 0
         foreach m $Model(idList) {
@@ -1228,11 +1233,12 @@ proc ModelsPickScalarsCallback { mid ptdata scalars } {
     $ptdata SetActiveScalars $scalars
 
     if { $scalars == "labels" } {
-        set lutid [MainLutsGetLutIDByName "Freesurfer"]
+        # "Freesurfer"
+        set lutid [MainLutsGetLutIDByName "Label"]
         if { $lutid != "" } {
             ModelsSetScalarsLut $mid $lutid "false"
         } else {
-            puts "WARNING: ModelsPickScalarsCallback failed to find lut id for Freesurfer"
+            puts "WARNING: ModelsPickScalarsCallback $mid : failed to find lut id for Label"
         }
     } else {
         ModelsSetScalarsLut $mid "" "false" ;# tells it to use the default
@@ -1287,16 +1293,14 @@ proc ModelsPickScalarsLut { parentButton } {
 
 #-------------------------------------------------------------------------------
 # .PROC ModelsSetScalarsLut
-# 
-# 1) set a default for this model if one hasn't been set yet <br>
-# 2) if no id specified, use default <br>
-# 3) if setDefault specified, save the value <br>
-# 4) set all lut for all the renderers <br>
-#
+# 1 set a default for this model if one hasn't been set yet<br>
+# 2 if no id specified, use default<br>
+# 3 if setDefault specified, save the value<br>
+# 4 set all luts for all the renderers<br>
 # .ARGS
 # int mid model id
-# int lutid id of the look up table
-# boolean setDefault defaults to true, if true set this lut to be the default
+# int lutid the id of the look up table
+# bool setDefault if true, use this lut as the default, defaults to true
 # .END
 #-------------------------------------------------------------------------------
 proc ModelsSetScalarsLut { mid lutid {setDefault "true"} } {
@@ -1317,6 +1321,9 @@ proc ModelsSetScalarsLut { mid lutid {setDefault "true"} } {
     foreach r $::Module(Renderers) {
         Model($mid,mapper,$r) SetLookupTable Lut($lutid,lut)
     }
+
+    # save the lut id in the node
+    Model($mid,node) SetLUTName $lutid
 }
 
 #-------------------------------------------------------------------------------
