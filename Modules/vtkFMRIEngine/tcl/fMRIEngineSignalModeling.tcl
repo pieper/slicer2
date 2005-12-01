@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,20 +32,32 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        fMRIEngineSignalModeling.tcl
 # PROCEDURES:  
 #   fMRIEngineBuildUIForSignalModeling  parent
+#   fMRIEngineBuildUIForModelEstimation
+#   fMRIEngineLoadBetaVolume
+#   fMRIEngineSaveBetaVolume
 #   fMRIEngineViewCoefficients
 #   fMRIEngineSelectRunForModelFitting run
 #   fMRIEngineUpdateRunsForModelFitting
-#   fMRIEngineUpdateConditionsForSignalModeling 
-#   fMRIEngineSelectConditionForSignalModeling condition
+#   fMRIEngineSelectAllConditionsForSignalModeling
+#   fMRIEngineSelectConditionForSignalModeling
+#   fMRIEngineUpdateConditionsForSignalModeling
+#   fMRIEngineGetRunForCurrentCondition
 #   fMRIEngineSelectWaveFormForSignalModeling form
 #   fMRIEngineSelectConvolutionForSignalModeling conv
+#   fMRIEngineSelectNumDerivativesForSignalModeling
+#   fMRIEngineShowTrendModelForSignalModeling
+#   fMRIEngineShowDefaultHighpassTemporalCutoff
+#   fMRIEngineShowCustomHighpassTemporalCutoff
 #   fMRIEngineSelectTrendModelForSignalModeling pass
-#   fMRIEngineSelectLowpassForSignalModeling pass
+#   fMRIEngineSelectDefaultHighpassTemporalCutoff
+#   fMRIEngineSelectCustomHighpassTemporalCutoff
+#   fMRIEngineComputeDefaultHighpassTemporalCutoff
+#   fMRIEngineSelectLowpassTemporalCutoff
 #   fMRIEngineAddOrEditEV
 #   fMRIEngineDeleteEV index
 #   fMRIEngineShowEVToEdit
@@ -53,6 +65,10 @@
 #   fMRIEngineCheckMultiRuns
 #   fMRIEngineAddRegressors run
 #   fMRIEngineCountEVs
+#   fMRIEngineAppendEVNamesToRun
+#   fMRIEngineIncrementEVCountForRun
+#   fMRIEngineAddDerivativeSignalsToRun
+#   fMRIEngineCombineRunDerivativeCheck
 #   fMRIEngineFitModel
 #==========================================================================auto=
 
@@ -399,6 +415,12 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineBuildUIForModelEstimation
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineBuildUIForModelEstimation {parent} {
     global Gui fMRIEngine
     
@@ -628,6 +650,12 @@ proc fMRIEngineUpdateRunsForModelFitting {} {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineSelectAllConditionsForSignalModeling
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineSelectAllConditionsForSignalModeling { } {
     global fMRIEngine
     
@@ -658,6 +686,12 @@ proc fMRIEngineSelectAllConditionsForSignalModeling { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineSelectConditionForSignalModeling
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineSelectConditionForSignalModeling { cond } {
     global fMRIEngine 
     #--- cancel the 'allconditions' button by selecting a condition from menu
@@ -741,6 +775,12 @@ proc fMRIEngineUpdateConditionsForSignalModeling { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineGetRunForCurrentCondition
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineGetRunForCurrentCondition { } {
 
     #--- this sets current run as 1 if all conditions are being
@@ -806,6 +846,12 @@ proc fMRIEngineSelectConvolutionForSignalModeling {conv} {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineSelectNumDerivativesForSignalModeling
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineSelectNumDerivativesForSignalModeling { option } {
 
 
@@ -825,6 +871,12 @@ proc fMRIEngineSelectNumDerivativesForSignalModeling { option } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineShowTrendModelForSignalModeling
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineShowTrendModelForSignalModeling { pass } {
 
     #--- configure menubutton; right now, the only trend model
@@ -836,6 +888,12 @@ proc fMRIEngineShowTrendModelForSignalModeling { pass } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineShowDefaultHighpassTemporalCutoff
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineShowDefaultHighpassTemporalCutoff { } {
 
     #--- configures entry widget to reflect use of default temporal
@@ -844,6 +902,12 @@ proc fMRIEngineShowDefaultHighpassTemporalCutoff { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineShowCustomHighpassTemporalCutoff
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineShowCustomHighpassTemporalCutoff { r } {
 
     #--- configures entry widget to reflect use of custom temporal
@@ -881,6 +945,12 @@ proc fMRIEngineSelectTrendModelForSignalModeling {pass} {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineSelectDefaultHighpassTemporalCutoff
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineSelectDefaultHighpassTemporalCutoff { } {
 
     #--- error checking...
@@ -916,6 +986,12 @@ proc fMRIEngineSelectDefaultHighpassTemporalCutoff { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineSelectCustomHighpassTemporalCutoff
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineSelectCustomHighpassTemporalCutoff { } {
 
     #--- error checking
@@ -963,6 +1039,12 @@ proc fMRIEngineSelectCustomHighpassTemporalCutoff { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineComputeDefaultHighpassTemporalCutoff
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineComputeDefaultHighpassTemporalCutoff { r } {
 
     #--- Here's how the default cutoff frequency is computed:
@@ -1008,6 +1090,12 @@ proc fMRIEngineSelectLowpassForSignalModeling {pass} {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineSelectLowpassTemporalCutoff
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineSelectLowpassTemporalCutoff { } {
     global fMRIEngine 
 
@@ -1685,11 +1773,13 @@ proc fMRIEngineCountEVs {} {
 }
 
 
-
-
-
-
-proc  fMRIEngineAppendEVNamesToRun { run namelist } {
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineAppendEVNamesToRun
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineAppendEVNamesToRun { run namelist } {
 
     # Append list of  names of EVs for each run.
     foreach n $namelist {
@@ -1698,10 +1788,13 @@ proc  fMRIEngineAppendEVNamesToRun { run namelist } {
 }
 
 
-
-
-
-proc  fMRIEngineIncrementEVCountForRun { run numToAdd } {
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineIncrementEVCountForRun
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineIncrementEVCountForRun { run numToAdd } {
 
     # Count number of EVs for each run
     if {! [info exists ::fMRIEngine($run,noOfEVs)]} {
@@ -1712,9 +1805,12 @@ proc  fMRIEngineIncrementEVCountForRun { run numToAdd } {
 }
 
 
-
-
-
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineAddDerivativeSignalsToRun
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineAddDerivativeSignalsToRun { run title base derivnum condition } {
 
     #--- Recording the signal type of each derivative signal and
@@ -1740,6 +1836,12 @@ proc fMRIEngineAddDerivativeSignalsToRun { run title base derivnum condition } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineCombineRunDerivativeCheck
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc fMRIEngineCombineRunDerivativeCheck { } {
     
 
