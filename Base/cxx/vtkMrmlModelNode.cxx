@@ -181,7 +181,7 @@ void vtkMrmlModelNode::Write(ofstream& of, int nIndent)
   if (this->ScalarFileNamesVec.size() > 0)
   {
       of << " scalarFiles='";
-      for (int idx = 0; idx < this->ScalarFileNamesVec.size(); idx++)
+      for (unsigned int idx = 0; idx < this->ScalarFileNamesVec.size(); idx++)
       {
           of << this->GetScalarFileName(idx);
           if (idx+1 < this->ScalarFileNamesVec.size())
@@ -263,6 +263,7 @@ void vtkMrmlModelNode::PrintSelf(ostream& os, vtkIndent indent)
 
   // Matrices
   os << indent << "RasToWld:\n";
+
     this->RasToWld->PrintSelf(os, indent.GetNextIndent());
 
     os << indent << "Look up table ID: " << this->LUTName << endl;
@@ -271,9 +272,9 @@ void vtkMrmlModelNode::PrintSelf(ostream& os, vtkIndent indent)
     os << indent << "Number of scalar file names: " << this->ScalarFileNamesVec.size() << endl;
     if (this->ScalarFileNamesVec.size() > 0)
     {
-        for (idx = 0; idx < this->ScalarFileNamesVec.size(); idx++)
+        for (unsigned int i = 0; i < this->ScalarFileNamesVec.size(); i++)
         {
-            os << indent << indent << "Scalar File " << idx << ": " << this->ScalarFileNamesVec[idx].c_str() << endl;
+            os << indent << indent << "Scalar File " << i << ": " << this->ScalarFileNamesVec[i].c_str() << endl;
         }
     }
 }
@@ -288,14 +289,14 @@ int vtkMrmlModelNode::GetNumberOfScalarFileNames ()
 void vtkMrmlModelNode::AddScalarFileName(char *newFileName)
 {
     char tmpStr[1024];
-    int i;
+    unsigned int i;
     int found = 0;
     sscanf(newFileName, "%s", tmpStr);
     std::string val = tmpStr;
     // check that it's not there already
     for (i=0; i<this->ScalarFileNamesVec.size(); i++)
     {
-        if (this->ScalarFileNamesVec[i] == tmpStr)
+        if (this->ScalarFileNamesVec[i].c_str() == tmpStr)
         {
             found++;
         }
