@@ -101,7 +101,7 @@ proc MainMrmlInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainMrml \
-    {$Revision: 1.109 $} {$Date: 2005/11/14 18:37:28 $}]
+    {$Revision: 1.110 $} {$Date: 2005/12/01 23:15:56 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -237,7 +237,7 @@ proc MainMrmlPrint {tags} {
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlClearList
 # 
-# Delete the Id list for each data type
+# Delete the entries in the list of Ids to delete for the data type in Mrml(nodeTypeList)
 #
 # .ARGS
 # .END
@@ -906,6 +906,27 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                                 $n SetScalarVisibility 1
                             } else {
                                 $n SetScalarVisibility 0
+                            }
+                        }
+                        "scalarfiles" {
+                            if {$::Module(verbose)} {
+                                puts "MainMrmlBuildTreesVersion2.0: dealing with the list of scalar files:"
+                                puts $val
+                            }
+                            set filelist {}
+                            eval {lappend filelist} $val
+                            foreach file $filelist {
+                                # deal with relative paths...
+                                set fname $file
+                                if {$::Module(verbose)} { 
+                                    puts "checking $fname"
+                                }
+                                if {[file exists $fname] == 0} {
+                                    DevErrorWindow "Scalar file $fname does not exist"
+                                } else {
+                                    # add it
+                                    $n AddScalarFileName $fname
+                                }
                             }
                         }
                     }
@@ -1600,6 +1621,7 @@ proc MainMrmlBuildTreesVersion1.0 {} {
             $n SetBackfaceCulling  [MRMLGetValue $node backfaceCulling]
             $n SetScalarVisibility [MRMLGetValue $node scalarVisibility]
             eval $n SetScalarRange [MRMLGetValue $node scalarRange]
+            # get any scalar file names
         }
         
         "Volume" {
@@ -1685,7 +1707,7 @@ proc MainMrmlDeleteColors {} {
 # Reads in colour information from a given xml file, adding to the mrml tree.
 # Returns -1 if it cannot read the file, 1 on success.
 # .ARGS
-# filepath fileName the name of the xml file to open and search for colours
+# string fileName the name of the xml file to open and search for colours
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlAddColorsFromFile {fileName} {

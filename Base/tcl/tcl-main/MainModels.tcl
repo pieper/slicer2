@@ -95,7 +95,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.69 $} {$Date: 2005/11/30 17:19:34 $}]
+        {$Revision: 1.70 $} {$Date: 2005/12/01 23:16:16 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -136,17 +136,24 @@ proc MainModelsInit {} {
 #<br>
 # Updating GUIs for all models is done in tcl-modules/Models.tcl 
 # since if the module is not loaded, no GUIs should exist!
+# 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainModelsUpdateMRML {} {
     global Model Gui Module Color ModelGroup
 
+    if {$::Module(verbose)} {
+        puts "MainModelsUpdateMRML"
+    }
     # Build any new models
     #--------------------------------------------------------
     foreach m $Model(idList) {
         if {[MainModelsCreate $m] > 0} {
             
+            if {$::Module(verbose)} {
+                puts "MainModelsUpdateMRML: MainModelsCreate $m returned > 0"
+            }
             # Mark it as not being created on the fly 
             # since it was added from the Data module or read in from MRML
             set Model($m,fly) 0
@@ -155,6 +162,9 @@ proc MainModelsUpdateMRML {} {
             if {[MainModelsRead $m] < 0} {
                 # failed
                 MainMrmlDeleteNodeDuringUpdate Model $m
+                if {$::Module(verbose)} {
+                    puts "MainModelsUpdateMRML: failed to read, deleted model $m"
+                }
             }
         }
     }
@@ -300,8 +310,14 @@ proc MainModelsCreate {m} {
     # See if it already exists
     foreach r $Module(Renderers) {
         if {[info command Model($m,actor,$r)] != ""} {
-        return 0
+            if {$::Module(verbose)} {
+                puts "MainModelsCreate: model $m already in renderer $r, returning 0"
+            }
+            return 0
         }
+    }
+    if {$::Module(verbose)} {
+        puts "MainModelsCreate: model $m actor does not exist, continuing to create"
     }
 
     MainModelsShouldBeAVtkClass    $m    
@@ -316,6 +332,7 @@ proc MainModelsCreate {m} {
     #MainModelsCreateGUI $Gui(wModels).fGrid $m
 
     MainAddModelActor $m
+    if {$::Module(verbose)} { puts "MainModelsCreate: added actor for $m"}
     
     # Mark it as unsaved and created on the fly.
     # If it actually isn't being created on the fly, I can't tell that from
@@ -417,6 +434,23 @@ proc MainModelsRead {m} {
     reader SetOutput ""
     reader Delete
 
+
+    # check for any scalar overlay files and read them
+    if {[Model($m,node) GetNumberOfScalarFileNames] > 0} {
+        set flist {}
+        for {set i 0} {$i < [Model($m,node) GetNumberOfScalarFileNames]} {incr i} {
+            lappend flist [Model($m,node) GetScalarFileName $i]
+        }
+        if {$::Module(verbose)} {
+            puts "Have [Model($m,node) GetNumberOfScalarFileNames] scalar files to read:\n$flist"
+        }
+        if {[catch {package require vtkFreeSurferReaders} err]} {
+            DevErrorWindow "ERROR: no FreeSurfer readers found, can't read scalars for model $m"
+        } else {
+            vtkFreeSurferReadersReadScalars $m $flist
+        }
+    }
+
     # Mark this model as saved
     set Model($m,dirty) 0
 
@@ -461,10 +495,16 @@ proc MainModelsDelete {m} {
     global Model View Gui Dag Module
 
     # If we've already deleted this one, then do nothing
-        foreach r $Module(Renderers) {
+    foreach r $Module(Renderers) {
         if {[info command Model($m,actor,$r)] == ""} {
-        return 0
+            if {$::Module(verbose)} {
+                puts "MainModelsDelete: model $m does not exist in renderer $r, returning 0 (assuming gone)"
+            }
+            return 0
         }
+    }
+    if {$::Module(verbose)} {
+        puts "MainModelsDelete: calling MainRemoveModelActor $m"
     }
 
     # Remove actors from renderers
@@ -474,8 +514,8 @@ proc MainModelsDelete {m} {
     # Delete VTK objects (and remove commands from TCL namespace)
     Model($m,clipper) Delete
         foreach r $Module(Renderers) {
-        Model($m,mapper,$r) Delete    
-        Model($m,actor,$r) Delete
+            Model($m,mapper,$r) Delete    
+            Model($m,actor,$r) Delete
     }
     Model($m,rasToWld) Delete
 
@@ -491,6 +531,12 @@ proc MainModelsDelete {m} {
 
     MainModelsDeleteGUI $Gui(wModels).fGrid $m
     
+    # delete the model node
+    if {$::Module(verbose)} {
+        puts "WARNING: MainModelsDelete trying something new, calling MainMrmlDeleteNode Model $m"
+    }
+    MainMrmlDeleteNode Model $m
+
     return 1
 }
 
@@ -581,8 +627,13 @@ proc MainModelsCreateGUI {f m {hlevel 0}} {
         return 0
     }
 
+    if {$::Module(verbose) && [Model($m,node) GetClassName] == "vtkMrmlHierarchyNode"} {
+        puts "MainModelsCreateGUI: f = $f, m = $m, hlevel = $hlevel"
+        puts "\tmodel colour id = $Model($m,colorID)"
+    }
+
     # Name / Visible
-    
+
     eval {checkbutton $f.c$m \
         -text [Model($m,node) GetName] -variable Model($m,visibility) \
         -width 17 -indicatoron 0 \
@@ -597,7 +648,6 @@ proc MainModelsCreateGUI {f m {hlevel 0}} {
     set colour [MakeColorNormalized $rgb]
     $f.c$m configure -bg $colour
     $f.c$m configure -selectcolor $colour
-
             
     # Add a tool tip if the string is too long for the button
     if {[string length [Model($m,node) GetName]] > [$f.c$m cget -width]} {
