@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,7 +32,7 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        VolumeMath.tcl
 # PROCEDURES:  
@@ -40,7 +40,7 @@
 #   VolumeMathUpdateGUI
 #   VolumeMathBuildGUI
 #   VolumeMathBuildResampParamPopup
-#   VolumeMathShowPopup
+#   VolumeMathShowPopup x y
 #   VolumeMathUpdateInterpParams
 #   VolumeMathCancelInterpParams
 #   VolumeMathGetInitParams
@@ -49,7 +49,7 @@
 #   VolumeMathSetMathType
 #   VolumeMathSetLogicType
 #   VolumeMathPrepareResultVolume logic
-#   VolumeMathPrepareResult
+#   VolumeMathCheckErrors num_ops check_types
 #   VolumeMathDoMath
 #   VolumeMathDoLogic
 #   VolumeMathDoSubtract
@@ -59,15 +59,18 @@
 #   VolumeMathDoDistMap
 #   VolumeMathDoAbs
 #   VolumeMathDoResample
-#   VolumeMathDoAnd
+#   VolumeMathDoResample_Hanifa
 #   VolumeMathDoMultiply
 #   VolumeMathDoMask
 #   VolumeMathDoMaskStat
 #   VolumeMathDoCast
+#   VolumeMathDoAnd
+#   VolumeMathSetMaskLabel
+#   VolumeMathSetFileName
 #==========================================================================auto=
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathInit
-# 
+# Initialise global variables for this module.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -161,7 +164,7 @@ proc VolumeMathInit {} {
     #   appropriate info when the module is checked in.
     #   
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.45 $} {$Date: 2005/11/13 20:54:10 $}]
+        {$Revision: 1.46 $} {$Date: 2005/12/01 22:13:24 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -211,7 +214,7 @@ proc VolumeMathInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathUpdateGUI
-# 
+# Update the node select buttons for this module.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -787,8 +790,6 @@ files. Sometimes it doesn't work.
 
 }   
 
-
-#Hanifa
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathBuildResampParamPopup
 #   Create the popup box that allows the user to change/view the resampling
@@ -899,13 +900,15 @@ proc VolumeMathBuildResampParamPopup {} {
     eval {button $f.bCancel -text "Cancel"  \
           -command "VolumeMathCancelInterpParams; wm withdraw $w"} $Gui(WBA) {-width 25}
     grid $f.bApply $f.bCancel -padx 10 -pady 2 
- }
+}
 
-#Hanifa
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathShowPopup
 #   Show the popup box that allows the user to change/view the resampling
 #   parameters
+# .ARGS
+# int x horizontal placement of the popup, defaults to 255
+# int y vertical placement of the popup, defaults to 0
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeMathShowPopup {{x 255} {y 0}} {
@@ -923,7 +926,6 @@ proc VolumeMathShowPopup {{x 255} {y 0}} {
     ShowPopup $Gui(wResamplingParams) $x $y
 }
 
-#Hanifa
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathUpdateInterpParams
 #  Update the resampling parameters. Tests are done to ensure that the values
@@ -972,7 +974,6 @@ proc VolumeMathUpdateInterpParams {} {
     wm withdraw $Gui(wResamplingParams)
 }
 
-#Hanifa
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathCancelInterpParams
 #   Reset the resampling parameters to what they were before the user started to
@@ -988,7 +989,6 @@ proc VolumeMathCancelInterpParams {} {
     set VolumeMath(spacingValTemp) $VolumeMath(spacingVal)
 }
 
-#Hanifa
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathGetInitParams
 #   Get and set initial resampling parameters for a volume when the user selects 
@@ -1011,7 +1011,7 @@ proc VolumeMathGetInitParams {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathEnter
-# 
+# Called when enter this module, updates the label widgets.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1023,20 +1023,18 @@ proc VolumeMathEnter {} {
 
     # color in the label selection widget in the Logic panel
     LabelsColorWidgets
-
 }
 
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathExit
 # 
-#  On Exit, get rid of the event manager.
+#  Called when leave the module, currently does nothing.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeMathExit {} {
     #popEventManager
 }
-
 
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathSetMathType
@@ -1156,8 +1154,8 @@ proc VolumeMathSetLogicType {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathPrepareResultVolume
-#   Check for Errors in the setup
-#   returns 1 if there are errors, 0 otherwise
+#   Check for Errors in the setup<br>
+#   Returns 1 if there are errors, 0 otherwise
 # 
 # .ARGS
 # boolean logic default is 0; if calling from the Logic tab, set this to 1
@@ -1214,7 +1212,11 @@ proc VolumeMathPrepareResultVolume {{logic "0"}}  {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathCheckErrors
-# checks that the operation is doable
+#   Create the New Volume if necessary. Otherwise, ask to overwrite.
+#   Returns 1 if there is are errors, 0 otherwise.
+# .ARGS
+# int num_ops defaults to 2, number of operands
+# str check_types defaults to yes, should we check that volume types are the same
 # .END
 #-------------------------------------------------------------------------------
 proc VolumeMathCheckErrors { {num_ops 2} {check_types "yes"} } {
@@ -1303,7 +1305,7 @@ proc VolumeMathDoMath {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathDoLogic
-# Calls the correct function
+# Calls the correct logic function
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1321,7 +1323,7 @@ proc VolumeMathDoLogic {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathDoSubtract
-#   Actually do the VolumeMath
+#   Actually do the VolumeMath Subtraction
 #
 # .END
 #-------------------------------------------------------------------------------
@@ -1615,7 +1617,7 @@ proc VolumeMathDoAbs {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathDoResample
-#   Actually do the Resampling
+#   Actually do the Resampling.<br>
 #
 # This is Samson's older version
 #
@@ -1682,7 +1684,7 @@ proc VolumeMathDoResample {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathDoResample_Hanifa
-#   Actually do the Resampling
+#   Actually do the Resampling<br>
 #
 # Hanifa's new version has trouble handling different spacings
 #
@@ -1856,8 +1858,8 @@ proc VolumeMathDoMultiply {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathDoMask
-#   Actually do the VolumeMath Mask
-#  - makes a new volume where everything is zero except the selected label value
+#   Actually do the VolumeMath Mask<br>
+#  Makes a new volume where everything is zero except the selected label value
 #
 # .END
 #-------------------------------------------------------------------------------
@@ -1906,10 +1908,12 @@ proc VolumeMathDoMask {} {
     mathThresh Delete
 }
 
-
-#########
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathDoMaskStat
+#   Actually do the VolumeMath Mask statistics
 #
-#########
+# .END
+#-------------------------------------------------------------------------------
 proc VolumeMathDoMaskStat {} {
     global VolumeMath Volume
 
@@ -2012,8 +2016,8 @@ proc VolumeMathDoMaskStat {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathDoCast
-#   Actually do the VolumeMath Cast
-#  - makes a new volume where the data type is set to new type
+#   Actually do the VolumeMath Cast.<br>
+#  Makes a new volume where the data type is set to new type
 #
 # .END
 #-------------------------------------------------------------------------------
@@ -2130,7 +2134,7 @@ proc VolumeMathDoAnd {} {
 
 #-------------------------------------------------------------------------------
 # .PROC VolumeMathSetMaskLabel
-# - callback to set the label for the Mask operator
+# Callback to set the label for the Mask operator
 # 
 # .ARGS
 # .END
@@ -2147,10 +2151,11 @@ proc VolumeMathSetMaskLabel {} {
     }
 }
 
-
-#---------
-#
-#---------
+#-------------------------------------------------------------------------------
+# .PROC VolumeMathSetFileName
+# Set the volume math file name from the second volume's node name
+# .END
+#-------------------------------------------------------------------------------
 proc VolumeMathSetFileName {} {
     global VolumeMath Volume
 
