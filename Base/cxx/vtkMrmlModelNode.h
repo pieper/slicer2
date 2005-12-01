@@ -52,6 +52,14 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkTransform.h"
 #include "vtkSlicer.h"
 
+#ifdef _WIN32
+#include <vector>
+#define strncasecmp strnicmp
+#else
+#include <vector.h>
+#endif
+using namespace std;
+
 class VTK_SLICER_BASE_EXPORT vtkMrmlModelNode : public vtkMrmlNode
 {
 public:
@@ -144,6 +152,21 @@ public:
   void SetRasToWld(vtkMatrix4x4 *reg);
   vtkGetObjectMacro(RasToWld, vtkMatrix4x4);
 
+    // Description:
+    // Numerical ID of the color lookup table to use for rendering the overlay
+    // for this model
+    vtkGetStringMacro(LUTName);
+    vtkSetStringMacro(LUTName);
+
+    // Scalar overlay file list
+
+    // Description:
+    // number of scalar file names
+    int GetNumberOfScalarFileNames();
+    void AddScalarFileName(char *);
+    const char *GetScalarFileName(int idx);
+    void DeleteScalarFileNames();
+    
 protected:
   vtkMrmlModelNode();
   ~vtkMrmlModelNode();
@@ -155,7 +178,8 @@ protected:
   char *FileName;
   char *FullFileName;
   char *Color;
-
+    char *LUTName;
+    
   // Numbers
   float Opacity;
 
@@ -171,6 +195,12 @@ protected:
   vtkFloatingPointType ScalarRange[2];
 
   vtkMatrix4x4 *RasToWld;
+
+    // Scalar overlay
+//BTX
+    // use a vector to hold the scalar file names
+    std::vector<std::string>ScalarFileNamesVec;
+//ETX
 };
 
 #endif

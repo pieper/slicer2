@@ -182,13 +182,12 @@ void vtkImageReformat::ExecuteInformation(vtkImageData *inData, vtkImageData *ou
         outData->SetOrigin(0, 0, 0);
      } else {
          // Set the origin explicitly so structured points tensors 
-        // will align with image data
-    int wExt[6];
-        // int ext[6];
-        outData->GetWholeExtent(wExt);
-        outData->SetOrigin(-wExt[1]*pix/2, -wExt[3]*pix/2, 0.0);
+         // will align with image data
+         int wExt[6];
+         // int ext[6];
+         outData->GetWholeExtent(wExt);
+         outData->SetOrigin(-wExt[1]*pix/2, -wExt[3]*pix/2, 0.0);
     }
-   
 }
 
 //----------------------------------------------------------------------------
@@ -1525,7 +1524,7 @@ void vtkImageReformat::ExecuteData(vtkDataObject *out)
             data->SetNumberOfTuples(dims[0]*dims[1]*dims[2]);
             output->GetPointData()->SetTensors(data);
             data->Delete();
-    }
+        }
     }
     
     //Set up common information: reformat, matrices, res, scale...
