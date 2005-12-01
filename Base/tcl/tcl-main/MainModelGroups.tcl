@@ -64,6 +64,12 @@ proc MainModelGroupsCreateGUI {f m {hlevel 0}} {
 
     set ModelGroup(frame) $f
     
+    # sanity check
+    if {[info command ModelGroup($m,node)] == ""} {
+        puts "ERROR: MainModelGroupsCreateGUI: model group node $m does not exist, returning."
+        return
+    }
+
     # If the GUI already exists, then just change name.
     if {[info command $f.cg$m] != ""} {
         $f.cg$m config -text "[ModelGroup($m,node) GetName]"
@@ -76,11 +82,16 @@ proc MainModelGroupsCreateGUI {f m {hlevel 0}} {
         -text [ModelGroup($m,node) GetName] -variable ModelGroup($m,visibility) \
         -width 17 -indicatoron 0 \
         -command "MainModelGroupsSetVisibility $m; Render3D"} $Gui(WCA)
-    $f.cg$m configure -bg [MakeColorNormalized \
-            [Color($ModelGroup($m,colorID),node) GetDiffuseColor]]
-    $f.cg$m configure -selectcolor [MakeColorNormalized \
-            [Color($ModelGroup($m,colorID),node) GetDiffuseColor]]
-    
+
+    if {[info exist ModelGroup($m,colorID)] != 0} {
+        $f.cg$m configure -bg [MakeColorNormalized \
+                                   [Color($ModelGroup($m,colorID),node) GetDiffuseColor]]
+        $f.cg$m configure -selectcolor [MakeColorNormalized \
+                                            [Color($ModelGroup($m,colorID),node) GetDiffuseColor]]
+    } else {
+        puts "WARNING: no colour id exists for model group $m"
+    }
+
     # Add a tool tip if the string is too long for the button
     if {[string length [ModelGroup($m,node) GetName]] > [$f.cg$m cget -width]} {
         TooltipAdd $f.cg$m "[ModelGroup($m,node) GetName]"
@@ -108,9 +119,12 @@ proc MainModelGroupsCreateGUI {f m {hlevel 0}} {
     eval {scale $f.sg${m} -from 0.0 -to 1.0 -length 40 \
         -variable ModelGroup($m,opacity) \
         -command "MainModelGroupsSetOpacityInit $m $f.sg$m 2" \
-        -resolution 0.1} $Gui(WSA) {-sliderlength 14 \
-        -troughcolor [MakeColorNormalized \
-            [Color($ModelGroup($m,colorID),node) GetDiffuseColor]]}
+              -resolution 0.1} $Gui(WSA) {-sliderlength 14}
+    if {[info exist ModelGroup($m,colorID)] != 0} {
+        $f.sg${m} configure \
+            -troughcolor [MakeColorNormalized \
+                              [Color($ModelGroup($m,colorID),node) GetDiffuseColor]]
+    }
 
     set l1_command $f.lg1_${m}
     set c_command $f.cg${m}
@@ -156,7 +170,7 @@ proc MainModelGroupsRefreshGUI {mg c} {
     set button $f.cg$mg
 
     # Find the color for this model group
-    if {$c != "" && [info var Color($c,node)] != ""} {
+    if {$c != "" && [info command Color($c,node)] != ""} {
         set rgb [Color($c,node) GetDiffuseColor]
     } else {
         set rgb "1 1 1"
