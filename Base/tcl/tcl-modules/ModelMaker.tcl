@@ -91,7 +91,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.59 $} {$Date: 2005/11/25 17:27:15 $}]
+        {$Revision: 1.60 $} {$Date: 2005/12/01 22:16:40 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -724,7 +724,7 @@ proc ModelMakerWriteAll {} {
                                 -title "Select Directory In Which To Save Model Files" \
                                 -parent .tMain ]
     if {$ModelMaker(prefix) == ""} {
-        if {$::Module(verbose)} { puts "ModelMakerWriteAll: empty prefix for model $m" }
+        if {$::Module(verbose)} { puts "ModelMakeWrite: empty prefix for model $m" }
         return
     }
 
@@ -750,14 +750,19 @@ proc ModelMakerWriteAll {} {
 proc ModelMakerRead {} {
     global ModelMaker Model Mrml
 
+    
     # Show user a File dialog box
     set m $Model(activeID)
     set ModelMaker(prefix) [MainFileOpenModel $m $ModelMaker(prefix)]
     if {$ModelMaker(prefix) == ""} {
-        if {::Module(verbose)} { puts "ModelMakerRead: empty prefix for model $m" }
+        if {$::Module(verbose)} { puts "ModelMakerRead: empty prefix for model $m" }
         return
     }
-    
+
+    if {$::Module(verbose)} {
+        puts "ModelMakerRead, active model = $m, prefix = $ModelMaker(prefix)"
+    }
+
     # Read
     Model($m,node) SetFileName $ModelMaker(prefix).vtk
     Model($m,node) SetFullFileName \
@@ -886,6 +891,9 @@ proc ModelMakerCreate {} {
 
     # Create the model
     set m [$n GetID]
+    if {$::Module(verbose)} {
+        puts "ModelMakerCreate m = $m"
+    }
     MainModelsCreate $m
 
     # Registration
@@ -901,6 +909,9 @@ proc ModelMakerCreate {} {
         MainModelsDelete $m
         set ModelMaker(jointSmooth) $jointSmooth
         $ModelMaker(bCreate) config -state normal
+        if {$::Module(verbose)} {
+            puts "ERROR: ModelMakerMarch failed, deleted model $m, model id list = $::Model(idList), Model(idListDelete) = $Model(idListDelete)"
+        }
         return
     }
 
@@ -1142,8 +1153,8 @@ proc ModelMakerCreateAll {} {
             Model($m,node) SetRasToWld [Volume($v,node) GetRasToWld]
 
             # Make the model!
-    eval $imdata SetSpacing $spacing
-    eval $imdata SetOrigin $origin
+            eval $imdata SetSpacing $spacing
+            eval $imdata SetOrigin $origin
             if {[ModelMakerMarch $m $v $ModelMaker(decimate) $ModelMaker(smooth)] != 0} {
                 MainModelsDelete $m
                 $ModelMaker(bCreateAll) config -state normal

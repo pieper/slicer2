@@ -92,7 +92,7 @@ proc ColorsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.33 $} {$Date: 2005/11/14 23:10:17 $}]
+        {$Revision: 1.34 $} {$Date: 2005/12/01 22:15:46 $}]
 
     # default color xml file
     set Color(defaultColorFileName) [ExpandPath Colors.xml]
@@ -373,14 +373,18 @@ The Load Colors tab will allow you to open up mrml files with color nodes and us
     DevAddFileBrowse $f Color fileName "MRML color file:" "ColorsSetFileName" "xml" "" "Open" "Open a Color MRML file"
     eval {button $f.bLoad -text "Load" -width 7 \
               -command "ColorsLoadApply"} $Gui(WBA)
-    pack $f.bLoad -side top -pady $Gui(pad) 
+    TooltipAdd $f.bLoad "Deletes old colors - models using them will have unexpected colors"
+    eval {button $f.bAppend -text "Append Colors" -width 14 \
+              -command "ColorsLoadApply 0"} $Gui(WBA)
+    TooltipAdd $f.bAppend "Appends to color list"
+    pack $f.bLoad $f.bAppend -side top -pady $Gui(pad) 
 
     #-------------------------------------------
     # Load->Bot
     #-------------------------------------------
 
     set f $fLoad.fBot
-    eval {label $f.lWarning -text "Warning: Still experimental,\nNOT fully functional"} $Gui(WLA)
+    eval {label $f.lWarning -text "Appending colors will show the first color name\nfor that label on mouse roll over of label maps."} $Gui(WLA)
     pack $f.lWarning -side top -pady $Gui(pad)
                                                                                             
 }
@@ -401,17 +405,25 @@ proc ColorsSetFileName {}  {
 # Load an xml file, Color(fileName), that contains colour node definitions.
 # Deletes old colour nodes first.
 # .ARGS
+# int deleteFlag if 1, delete the old colours, else, don't, add to them. Defaults to 1
 # .END
 #-------------------------------------------------------------------------------
-proc ColorsLoadApply {} {
+proc ColorsLoadApply { {deleteFlag 1}} {
     global Color
 
     if {$::Module(verbose)} {
-        puts "ColorsLoadApply: experimental load of a new xml file with colour nodes\n\t$Color(fileName)"
+        puts "ColorsLoadApply: load of a new xml file with colour nodes\n\t$Color(fileName)"
     }
 
-    MainMrmlDeleteColors
+    if {$deleteFlag == 1} {
+        MainMrmlDeleteColors
+    }
     MainMrmlAddColorsFromFile $Color(fileName)
+
+    if {$deleteFlag == 1} {
+        # check that all models have valid colour ids
+        ColorsVerifyModelColorIDs
+    }
 
     # update the gui's color list
     ColorsDisplayColors
@@ -646,8 +658,27 @@ proc ColorsDeleteLabel {} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC ColorsClose
+# Called when the File Close option is selected, to clean up the colors module.
+# Goes back to the default slicer colors.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ColorsClose {} {
+    global Color
+
+    if {$::Module(verbose)} {
+        puts "ColorsClose, reloading default colors from $Color(defaultColorFileName) "
+    }
+    set Color(fileName) $Color(defaultColorFileName)
+    ColorsLoadApply
+}
+
+#-------------------------------------------------------------------------------
 # .PROC ColorsPickLUT
-# Pick a look up table to work with. Sets Color(LUT,currentID).
+# Pick a look up table to work with. Sets Color(LUT,currentID). Will leave out luts
+# from the pick list that are missing functions to set NumberOfColors, HueRange, SaturationRange, 
+# ValueRange, AlphaRange.
 # .ARGS
 # button parrentButton button to hang the menu off of
 # .END
@@ -662,14 +693,23 @@ proc ColorsPickLUT {parentButton} {
 
     foreach l $::Lut(idList) {
         if {$l >= 0} {
-            if {$l == $currid} {
-                set labeltext "* $l $::Lut($l,name) *"
+            # only use LUTs that support the Range values that the interface allows access to
+            if {[catch "Lut($l,lut) GetHueRange" errMsg] == 0 &&
+                [catch "Lut($l,lut) GetSaturationRange" errMsg] == 0 &&
+                [catch "Lut($l,lut) GetValueRange" errMsg] == 0} {
+                if {$l == $currid} {
+                    set labeltext "* $l $::Lut($l,name) *"
+                } else {
+                    set labeltext "$l $::Lut($l,name)"
+                }
+                .mcolorspicklut insert end command -label $labeltext -command "ColorsSetLUT $l"
+                if {$::Module(verbose)} {
+                    puts "ColorsPickLUT: added command to set Color(LUT,currentID) to $l"
+                }
             } else {
-                set labeltext "$l $::Lut($l,name)"
-            }
-            .mcolorspicklut insert end command -label $labeltext -command "ColorsSetLUT $l"
-            if {$::Module(verbose)} {
-                puts "ColorsPickLUT: added command to set Color(LUT,currentID) to $l"
+                if {$::Module(verbose)} {
+                    puts "ColorsPickLUT: skipped lut $l, it doesn't support range commands"
+                }
             }
         }
     }
@@ -689,7 +729,7 @@ proc ColorsPickLUT {parentButton} {
 proc ColorsSetLUT { id } {
     global Color Lut
     
-    if {$id > 0 && [lsearch $Lut(idList) $id] != -1} {
+    if {$id >= 0 && [lsearch $Lut(idList) $id] != -1} {
         set ::Color(LUT,currentID) $id
         # modify the button text
         $::Module(Colors,fScale).fPick.bPickLUT configure -text $Lut($Color(LUT,currentID),name)
@@ -704,15 +744,14 @@ proc ColorsSetLUT { id } {
         set Color(LUT,upperRange) [lindex [Lut($id,lut) GetValueRange] 1]
         set Color(LUT,lowerAlpha) [lindex [Lut($id,lut) GetAlphaRange] 0]
         set Color(LUT,upperAlpha) [lindex [Lut($id,lut) GetAlphaRange] 1]
-        set Color(LUT,annoColor,r) [lindex $Lut($id,annoColor) 0]
-        set Color(LUT,annoColor,g) [lindex $Lut($id,annoColor) 1]
-        set Color(LUT,annoColor,b) [lindex $Lut($id,annoColor) 2]
-        
+        if {[info exist Lut($id,annoColor)]} {
+            set Color(LUT,annoColor,r) [lindex $Lut($id,annoColor) 0]
+            set Color(LUT,annoColor,g) [lindex $Lut($id,annoColor) 1]
+            set Color(LUT,annoColor,b) [lindex $Lut($id,annoColor) 2]
+        }
     } else {
         puts "ColorsSetLUT: lut id $id is out of range or invalid: $Lut(idList)"
     }
-    
-    
 }
 
 #-------------------------------------------------------------------------------
@@ -751,7 +790,6 @@ proc ColorsLUTSetNumberOfColors { val } {
         }
     }
 }
-
 
 #-------------------------------------------------------------------------------
 # .PROC ColorsLUTSetParam
@@ -861,15 +899,11 @@ proc ColorsLUTSetAnno { col } {
     } else {
         puts "Warning: current id not a valid look up table ($id not in \"$Lut(idList)\""
     }
-
-    
 }
 
 #-------------------------------------------------------------------------------
 # .PROC ColorsLUTSetRamp
-# Set the ramp value for the current colour table.
 # .ARGS
-# text ramp the ramp value, one of Linear, SCurve, SQRT
 # .END
 #-------------------------------------------------------------------------------
 proc ColorsLUTSetRamp { ramp } {
@@ -891,18 +925,48 @@ proc ColorsLUTSetRamp { ramp } {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC ColorsClose
-# Called when the File Close option is selected, to clean up the colors module.
-# Goes back to the default slicer colors.
+# .PROC ColorsVerifyModelColorIDs
+# Called after deleting the colours, to make sure that any models that were
+# assigned colour ids before they were deleted, now have a valid default colour id
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc ColorsClose {} {
-    global Color
+proc ColorsVerifyModelColorIDs {} {
+    global Color Model
 
-    if {$::Module(verbose)} {
-        puts "ColorsClose, reloading default colors from $Color(defaultColorFileName) "
+    set numChanges 0
+    set changeList ""
+
+    # find a default id
+    set defaultNodeID 0
+    while {[info command Color($defaultNodeID,node)] == "" ||
+           [Color($defaultNodeID,node) GetName] == "Black"} { 
+        incr defaultNodeID 
+        if {$defaultNodeID > 1000} {
+            puts "ColorsVerifyModelColorIDs: can't find a colour node!\nLoad some Colors!"
+            return
+        }
     }
-    set Color(fileName) $Color(defaultColorFileName)
-    ColorsLoadApply
+    if {$::Module(verbose)} {
+        puts "ColorsVerifyModelColorIDs: found a default node id $defaultNodeID, named [Color($defaultNodeID,node) GetName]"
+    }
+
+    # now check to see if I need to use it
+    foreach m $Model(idList) {
+        # get the colour id
+        if {$Model($m,colorID) == ""} {
+            set Model($m,colorID) $defaultNodeID
+            incr numChanges
+            lappend changeList [Model($m,node) GetName]
+            if {$::Module(verbose)} {
+                puts "ColorsVerifyModelColorIDs: reset model $m"
+            }
+        }
+    }
+    if {$numChanges > 0} {
+        if {$::Module(verbose)} {
+            puts "Loading colours left $numChanges models without a default colour id, reset their colours:\n$changeList"
+        }
+    }
 }
+
