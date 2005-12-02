@@ -501,7 +501,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.116 $} {$Date: 2005/11/29 20:59:34 $}]
+                  {$Revision: 1.117 $} {$Date: 2005/12/02 22:10:14 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -1176,6 +1176,7 @@ proc DTMRIBuildVTK {} {
     #------------------------------------
     set object picker
     DTMRIMakeVTKObject vtkCellPicker $object
+    #DTMRIMakeVTKObject vtkFastCellPicker $object
     DTMRIAddObjectProperty $object Tolerance 0.001 float {Pick Tolerance}
 
     # objects for creation of polydata glyphs
@@ -1580,9 +1581,9 @@ proc DTMRICalculateIJKtoRASRotationMatrix {transform t} {
 
     # Now this matrix JUST does the rotation needed for ijk->ras.
     # -------------------------------------
-    puts "-----------------------------------"
-    puts [$transform Print]
-    puts "-----------------------------------"
+    #puts "-----------------------------------"
+    #puts [$transform Print]
+    #puts "-----------------------------------"
 
 }
 
