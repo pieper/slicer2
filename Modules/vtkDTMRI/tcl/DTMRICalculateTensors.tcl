@@ -65,7 +65,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.32 $} {$Date: 2005/11/30 22:36:43 $}]
+                                 {$Revision: 1.33 $} {$Date: 2005/12/02 21:48:48 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -1471,14 +1471,15 @@ proc ConvertVolumeToTensors {} {
             
     puts "SPACING [$newvol GetSpacing] DIMS [$newvol GetDimensions] MAT [$newvol GetRasToIjkMatrix]"
     TensorCreateNew $n 
-         
+       
     # Set the slicer object's image data to what we created
     DTMRI Update
 
     Tensor($n,data) SetImageData [DTMRI GetOutput]
     
      #Set Tensor matrices
-     DTMRIComputeRasToIjkFromCorners Volume($v,node) Tensor($n,node) [[Tensor($n,data) GetOutput] GetExtent]  
+     set spacing [Tensor($n,node) GetSpacing]
+     DTMRIComputeRasToIjkFromCorners Volume($v,node) Tensor($n,node) [[Tensor($n,data) GetOutput] GetExtent] $spacing
     
     # Registration
     # put the new tensor volume inside the same transform as the Original volume
@@ -1495,9 +1496,9 @@ proc ConvertVolumeToTensors {} {
         MainUpdateMRML
     }
     
-    # This updates all the buttons to say that the
-    # Volume List has changed.
-    MainUpdateMRML
+    
+    
+
     # If failed, then it's no longer in the idList
     if {[lsearch $Tensor(idList) $n] == -1} {
         DevWarningWindow "Tensor node has not been created. Error in the conversion process."
@@ -1512,6 +1513,10 @@ proc ConvertVolumeToTensors {} {
     
     #DTMRI SetOutput ""
     DTMRI Delete
+
+    # This updates all the buttons to say that the
+    # Volume List has changed.
+    MainUpdateMRML
 
     # display volume so the user knows something happened
     MainSlicesSetVolumeAll Back $id
@@ -1673,13 +1678,14 @@ proc DTMRICreateNewNode {refnode voldata name description} {
 
      # fix the image range in the node (less slices than the original)
      set extent [[Volume($id,vol) GetOutput] GetExtent]
+     set spacing [Volume($id,node) GetSpacing]
      set range "[expr [lindex $extent 4] +1] [expr [lindex $extent 5] +1]"
      eval {Volume($id,node) SetImageRange} $range
 
      eval {Volume($id,node) SetSpacing} [Volume($id,node) GetSpacing]
 
      #Compute node matrices based on the refnode
-     DTMRIComputeRasToIjkFromCorners $refnode Volume($id,node) $extent
+     DTMRIComputeRasToIjkFromCorners $refnode Volume($id,node) $extent $spacing
  
      # update slicer internals
      MainVolumesUpdate $id
@@ -1761,24 +1767,56 @@ proc DTMRICreateNewVolume {volume name desc scanOrder} {
 # array extent: extent of the volume. Needed to compute center
 # .END
 #-------------------------------------------------------------------------------
-proc DTMRIComputeRasToIjkFromCorners {refnode node extent} {
+proc DTMRIComputeRasToIjkFromCorners {refnode node extent {spacing ""}} {
 
   #Get Ras to Ijk Matrix from reference volume
   catch "_Ras Delete"
   vtkMatrix4x4 _Ras
   eval "_Ras DeepCopy" [$refnode GetRasToIjkMatrix]
   
+  
+  catch "_norm Delete"
+  vtkMath _norm
+  
+  #Fix the spacing in case the refnode came with other spacing that 
+  # the one that we want
+  
+  
+  if {$spacing != ""} {
+  
+    #Invert to get IjkToRas
+    _Ras Invert
+  
+    foreach ax "0 1 2" {
+        set x ""
+        foreach c "0 1 2" {
+            lappend x [_Ras GetElement $c $ax]  
+        }
+        set norm [eval "_norm Norm" $x]
+        set scaling [expr (1.0/$norm) * [lindex $spacing $ax]]
+        foreach c "0 1 2" {
+          _Ras SetElement $c $ax  [expr [lindex $x $c] * $scaling]
+        }
+    }
+   
+     #Invert back to get RasToIjk with correct spacing
+    _Ras Invert       
+   
+    _norm Delete
+  }
+
+
   #Set Translation to center of the output volume.
   #This is a particular thing of the slicer: all volumes are centered in their centroid.
   _Ras SetElement 0 3 [expr ([lindex $extent 1] - [lindex $extent 0])/2.0]
   _Ras SetElement 1 3 [expr ([lindex $extent 3] - [lindex $extent 2])/2.0]
-  _Ras SetElement 2 3 [expr ([lindex $extent 5] - [lindex $extent 4])/2.0]  
+  _Ras SetElement 2 3 [expr ([lindex $extent 5] - [lindex $extent 4])/2.0]
       
   set dims "[expr [lindex $extent 1] - [lindex $extent 0] + 1] \
               [expr [lindex $extent 3] - [lindex $extent 2] + 1] \
               [expr [lindex $extent 5] - [lindex $extent 4] + 1]"           
-  
-  VolumesComputeNodeMatricesFromRasToIjkMatrix [$node GetID] _Ras $dims
+
+  VolumesComputeNodeMatricesFromRasToIjkMatrix $node _Ras $dims
 
   _Ras Delete
   MainUpdateMRML
