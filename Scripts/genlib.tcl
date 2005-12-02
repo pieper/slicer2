@@ -654,6 +654,7 @@ if { ![file exists $::SANDBOX_TEST_FILE] } {
         -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
         -DVTK_DIR:PATH=$VTK_DIR \
         -DITK_DIR:FILEPATH=$ITK_BINARY_PATH \
+        -DOPENGL_glu_LIBRARY:FILEPATH=\" \" \
         ../NAMICSandBox
 
     if {$isWindows} {
@@ -690,6 +691,8 @@ if { ![file exists $::SANDBOX_TEST_FILE] } {
         # At some point in the future, the classes in these libraries
         # will become part of ITK and this will no longer be needed.
         cd $SLICER_LIB/NAMICSandBox-build/SlicerTractClusteringImplementation   
+        eval runcmd $::MAKE -j 8
+        cd $SLICER_LIB/NAMICSandBox-build/Distributions
         eval runcmd $::MAKE -j 8
     }
 }
