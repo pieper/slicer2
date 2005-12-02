@@ -41,9 +41,9 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageData.h"
 #include "vtkFloatArray.h"
 #include "vtkPointData.h"
+#include "itkTDistribution.h"
 
 #include <vtkstd/algorithm>
-#include <gsl/gsl_cdf.h>
 
 vtkStandardNewMacro(vtkActivationFalseDiscoveryRate);
 
@@ -86,11 +86,11 @@ void vtkActivationFalseDiscoveryRate::SimpleExecute(vtkImageData *input, vtkImag
         float t = data[i];
         if (t != 0)
         {
-            double p = gsl_cdf_tdist_Q(t, this->DOF);
+            float p = (float)itk::Statistics::TDistribution::CDF(t, this->DOF);
             // double sided tail probability for t-distribution
             p *= 2;
 
-            data[count++] = (float) p;
+            data[count++] = p;
         }
     }
 
@@ -130,7 +130,7 @@ void vtkActivationFalseDiscoveryRate::SimpleExecute(vtkImageData *input, vtkImag
     }
 
     // t threshold
-    this->FDRThreshold = (float)gsl_cdf_tdist_Qinv((pc / 2), this->DOF);
+    this->FDRThreshold = (float)(fabs(itk::Statistics::TDistribution::InverseCDF((pc / 2), this->DOF)));
 
     tmp->Delete();
     delete [] ps;

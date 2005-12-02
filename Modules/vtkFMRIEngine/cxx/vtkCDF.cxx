@@ -38,22 +38,22 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "vtkObjectFactory.h"
 #include "vtkCDF.h"
-#include <gsl/gsl_cdf.h>
+#include "itkTDistribution.h"
 
 
 vtkStandardNewMacro(vtkCDF);
 
 
-double vtkCDF::p2t(double p, double dof)
+double vtkCDF::p2t(double p, long dof)
 {
     // p value passed in is double sided probability
-    return gsl_cdf_tdist_Qinv(p/2, dof);
+    return fabs(itk::Statistics::TDistribution::InverseCDF((p / 2), dof));
 }
 
 
-double vtkCDF::t2p(double t, double dof)
+double vtkCDF::t2p(double t, long dof)
 {
-    double p = gsl_cdf_tdist_Q(t, dof);
+    double p = itk::Statistics::TDistribution::CDF(t, dof);
 
     // double sided tail probability for t-distribution
     p *= 2;
