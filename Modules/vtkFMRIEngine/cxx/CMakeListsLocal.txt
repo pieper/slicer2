@@ -20,21 +20,20 @@ ENDIF(USE_ITK_FILE)
 
 # system dependent link and include dirs
 LINK_DIRECTORIES(
-	${GSL_LIB_DIR}
+        ${SANDBOX_BUILD_DIR}/Distributions/bin/${CMAKE_BUILD_TYPE}
 )
+
 INCLUDE_DIRECTORIES(
-	${GSL_INC_DIR}
-	${GSL_INC_DIR}/gsl
-	${GSL_SRC_DIR}
-        ${SLICER_HOME}/Base/cxx
+        ${VTKSLICERBASE_SOURCE_DIR}/cxx 
+        ${SANDBOX_SRC_DIR}/Distributions
 )
 
 SET(FMRIENGINE_LOCAL_LIBS
-        gsl
-        gslcblas
+        itkcommon
         itkvnl
         itkvcl
         itkvnl_algo
+        Distributions
 )
 
 # note: - SET replaced SOURCE_FILES for cmake 1.6
