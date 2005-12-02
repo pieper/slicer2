@@ -29,7 +29,7 @@ INCLUDE_DIRECTORIES(
 )
 
 SET(FMRIENGINE_LOCAL_LIBS
-        itkcommon
+        ITKCommon
         itkvnl
         itkvcl
         itkvnl_algo
