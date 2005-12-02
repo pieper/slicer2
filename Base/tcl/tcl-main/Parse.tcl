@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,12 +32,11 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        Parse.tcl
 # PROCEDURES:  
-#   MainMrmlReadVersion2.0 MainMrmlReadVersion2.x
-#   MainMrmlReadVersion2.0
+#   MainMrmlReadVersion2.0 fileName verbose
 #   MainMrmlReadVersion2.x filename verbose
 #==========================================================================auto=
 
@@ -49,21 +48,14 @@
 # MainMrmlReadVersion2.x
 #
 # .ARGS
-# See MainMrmlReadVersion2.x
-# .END
-#-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# .PROC MainMrmlReadVersion2.0
-# 
-# .ARGS
+# str fileName the name of the file to read
+# int verbose if 1, print out information. Defaults to 1.
 # .END
 #-------------------------------------------------------------------------------
 proc MainMrmlReadVersion2.0 {fileName {verbose 1}} {
     
     return [MainMrmlReadVersion2.x $fileName $verbose]
 }
-
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlReadVersion2.x
