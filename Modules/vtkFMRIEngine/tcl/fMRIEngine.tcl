@@ -39,8 +39,6 @@
 #   fMRIEngineInit
 #   fMRIEngineBuildGUI
 #   fMRIEngineUpdateHelpTab
-#   fMRIEngineViewGNULicense
-#   fMRIEngineCloseGPLWindow
 #   fMRIEngineEnter
 #   fMRIEngineExit
 #   fMRIEnginePushBindings 
@@ -156,7 +154,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.24 $} {$Date: 2005/12/01 19:12:58 $}]
+        {$Revision: 1.25 $} {$Date: 2005/12/02 20:32:54 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -279,10 +277,10 @@ proc fMRIEngineBuildGUI {} {
     <B>View</B> gives you the ability to view the activation \
     at different thresholds and dynamically plot any voxel \
     time course.
-    <BR>
+    <BR><BR>
     Check the file README.txt in the docs directory of this module \
     for details about how to build and use the module.
-    <BR><BR>
+    <BR>
     "
     regsub -all "\n" $help {} help
     MainHelpApplyTags fMRIEngine $help
@@ -290,15 +288,6 @@ proc fMRIEngineBuildGUI {} {
 
     set helpWidget $fMRIEngine(helpWidget) 
     $helpWidget configure -height 22
-
-    set fHelp $Module(fMRIEngine,fHelp)
-    set f $fHelp
-    frame $f.fGPL -bg $Gui(activeWorkspace) 
-    pack $f.fGPL -side top 
-
-    DevAddButton $f.fGPL.bView "View GNU License" \
-        "fMRIEngineViewGNULicense" 22
-    pack $f.fGPL.bView -side left -pady 5 
 
     #-------------------------------------------
     # Sequence tab 
@@ -376,65 +365,6 @@ proc fMRIEngineUpdateHelpTab {} {
     global fMRIEngine
 
     set fMRIEngine(currentTab) "Help"
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC fMRIEngineViewGNULicense
-# Displays GNU license information 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc fMRIEngineViewGNULicense {} {
-    global fMRIEngine Gui env
-
-    if {[info exists fMRIEngine(GPLToplevel)] == 0 } {
-        set w .tcren
-        toplevel $w
-        wm title $w "Gnu General Public License" 
-        wm minsize $w 570 500 
-        wm maxsize $w 570 500 
-        wm geometry $w "+285+100" 
-        wm protocol $w WM_DELETE_WINDOW "fMRIEngineCloseGPLWindow" 
-        set fMRIEngine(GPLToplevel) $w
-
-        frame $w.fWidget
-        frame $w.fButton
-        pack $w.fWidget $w.fButton -side top -padx 2 -fill both 
-
-        set f $w.fWidget
-        text $f.t -height 33 -wrap word \
-            -yscrollcommand "$f.sy set" -font {Times 10}
-        scrollbar $f.sy -orient vert -command "$f.t yview"
-        set bg [$f.t cget -bg]
-        pack $f.sy -side right -fill y
-        pack $f.t -side left -fill both -expand true
-
-        # Reads the data file
-        set gplText [file join $env(SLICER_HOME) Modules vtkFMRIEngine data gpl.txt]
-        set fp [open $gplText r]
-        set data [read $fp]
-        regsub -all "\f" $data {} data 
-        $f.t insert 1.0 $data 
-
-        set f $w.fButton
-        button $f.bClose -text "Close" -command "fMRIEngineCloseGPLWindow" -width 8 
-        pack $f.bClose -side top -pady $Gui(pad) 
-    }
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC fMRIEngineCloseGPLWindow
-# Closes GNU license information window 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc fMRIEngineCloseGPLWindow {} {
-    global fMRIEngine 
-
-    destroy $fMRIEngine(GPLToplevel)
-    unset -nocomplain fMRIEngine(GPLToplevel)
 }
 
 
