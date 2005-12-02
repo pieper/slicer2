@@ -43,7 +43,16 @@ SET (VTKSLICERBASE_BUILD_LIB CACHE PATH
     "name of the vtkSlicerBase lib file (.lib or .a)"
 )
 
+# This is the location of the NAMIC Sandbox (in-progress ITK code)
+# Used for clustering
+SET ( SANDBOX_SRC_DIR
+    ${SLICER_LIB}/NAMICSandBox
+) 
+SET ( SANDBOX_BUILD_DIR
+    ${SLICER_LIB}/NAMICSandBox-build
+) 
 
+MESSAGE ("Sandbox is: ${SANDBOX_SRC_DIR} and build ${SANDBOX_BUILD_DIR}")
 #
 # If everything is OK, then go into the sub directories and build.
 #
