@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,112 +32,144 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        Endoscopic.tcl
 # PROCEDURES:  
 #   EndoscopicEnter
 #   EndoscopicExit
 #   EndoscopicInit
-#   EndoscopicCreateRenderer
+#   EndoscopicCreateRenderer renName
 #   EndoscopicBuildVTK
 #   EndoscopicCreateCamera
-#   EndoscopicCameraParams
+#   EndoscopicCameraParams size
 #   EndoscopicCreateFocalPoint
-#   EndoscopicCreateVTKPath
-#   EndoscopicResetPathVariables
-#   EndoscopicCreatePath
-#   EndoscopicCreateVector
-#   EndoscopicVectorParams
-#   EndoscopicUpdateVisibility name (optional)
-#   EndoscopicSetPickable name 0
-#   EndoscopicUpdateSize name
+#   EndoscopicCreateVTKPath id
+#   EndoscopicResetPathVariables id
+#   EndoscopicCreatePath id
+#   EndoscopicCreateVector id
+#   EndoscopicVectorParams id axislen axisrad conelen
+#   EndoscopicUpdateVisibility a visibility
+#   EndoscopicSetPickable a pickability
+#   EndoscopicUpdateSize a
 #   EndoscopicPopBindings
 #   EndoscopicPushBindings
 #   EndoscopicCreateBindings
 #   EndoscopicBuildGUI
-#   EndoscopicShowFlyThroughPopUp
-#   EndoscopicExecutePathTab 
+#   EndoscopicShowFlyThroughPopUp x y
+#   EndoscopicExecutePathTab  command
 #   EndoscopicBuildFlyThroughGUI
-#   EndoscopicCreateLabelAndSlider
-#   EndoscopicCreateCheckButton
-#   EndoscopicSetVisibility
-#   EndoscopicCreateAdvancedGUI
-#   EndoscopicSetActive
+#   EndoscopicCreateLabelAndSlider f labelName labelHeight labelText sliderName orient from to length variable commandString entryWidth defaultSliderValue
+#   EndoscopicCreateCheckButton ButtonName VariableName Message Command Indicatoron Width
+#   EndoscopicSetVisibility a
+#   EndoscopicCreateAdvancedGUI f a vis col size
+#   EndoscopicSetActive a b
 #   EndoscopicPopupCallback
 #   EndoscopicUseGyro
-#   EndoscopicSelectActor
-#   EndoscopicVectorSelected
-#   EndoscopicLandmarkSelected
-#   EndoscopicGyroMotion
+#   EndoscopicGyroMotion actor angle dotprod unitX unitY unitZ
 #   EndoscopicSetGyroOrientation
-#   EndoscopicSetWorldPosition
-#   EndoscopicSetWorldOrientation
-#   EndoscopicSetCameraPosition
+#   EndoscopicSetWorldPosition x y z
+#   EndoscopicSetWorldOrientation rx ry rz
+#   EndoscopicSetCameraPosition value
 #   EndoscopicResetCameraPosition
-#   EndoscopicSetCameraDirection
+#   EndoscopicSetCameraDirection value
 #   EndoscopicResetCameraDirection
-#   EndoscopicUpdateActorFromVirtualEndoscope
-#   EndoscopicUpdateVirtualEndoscope $Endoscopic(activeCam)
-#   EndoscopicLightFollowEndoCamera
+#   EndoscopicUpdateActorFromVirtualEndoscope vcam
+#   EndoscopicUpdateVirtualEndoscope  vcam coordList
+#   EndoscopicLightFollowEndoCamera vcam
 #   EndoscopicSetCameraZoom
 #   EndoscopicSetCameraViewAngle
-#   EndoscopicSetCameraAxis
+#   EndoscopicSetCameraAxis axis
 #   EndoscopicCameraMotionFromUser
-#   EndoscopicSetCollision
-#   EndoscopicMoveGyroToLandmark
-#   EndoscopicUpdateVectors
-#   EndoscopicGetAvailableListName
-#   EndoscopicAddLandmarkNoDirectionSpecified
-#   EndoscopicAddLandmarkNoDirectionSpecified
-#   EndoscopicAddLandmarkDirectionSpecified
+#   EndoscopicSetCollision value
+#   EndoscopicMoveGyroToLandmark id
+#   EndoscopicUpdateVectors id
+#   EndoscopicGetAvailableListName model
+#   EndoscopicAddLandmarkNoDirectionSpecified x y z list
+#   EndoscopicInsertLandmarkNoDirectionSpecified afterPid x y z list
+#   EndoscopicAddLandmarkDirectionSpecified coords list
+#   EndoscopicInsertLandmarkDirectionSpecified coords list
 #   EndoscopicUpdateLandmark
-#   EndoscopicBuildInterpolatedPath
+#   EndoscopicBuildInterpolatedPath id
 #   EndoscopicDeletePath
 #   EndoscopicComputeRandomPath
 #   EndoscopicShowPath
-#   EndoscopicFlyThroughPath
-#   EndoscopicSetPathFrame
+#   EndoscopicFlyThroughPath listOfCams listOfPaths
+#   EndoscopicSetPathFrame listOfCams listOfPaths
 #   EndoscopicStopPath
 #   EndoscopicResetStopPath
-#   EndoscopicResetPath
-#   EndoscopicSetFlyDirection
+#   EndoscopicResetPath listOfCams listOfPaths
 #   EndoscopicSetSpeed
-#   EndoscopicCheckDriver
-#   EndoscopicReformatSlices
-#   EndoscopicSetSliceDriver
-#   EndoscopicFiducialsPointSelectedCallback
-#   EndoscopicFiducialsPointCreatedCallback
-#   lappe
-#   EndoscopicStartCallbackFiducialUpdateMRML
+#   EndoscopicCheckDriver vcam
+#   EndoscopicReformatSlices vcam x y z
+#   EndoscopicSetSliceDriver name
+#   EndoscopicFiducialsPointSelectedCallback fid pid
+#   EndoscopicFiducialsPointCreatedCallback type fid pid
+#   EndoscopicUpdateMRML
 #   EndoscopicStartCallbackFiducialsUpdateMRML
-#   EndoscopicEndCallbackFiducialUpdateMRML
 #   EndoscopicEndCallbackFiducialsUpdateMRML
-#   EndoscopicCallbackFiducialUpdateMRML
-#   EndoscopicCallbackFiducialsUpdateMRML
-#   EndoscopicCreateAndActivatePath
-#   EndoscopicSelectActivePath
-#   EndoscopicDistanceBetweenTwoPoints
-#   EndoscopicUpdateSelectionLandmarkList
+#   EndoscopicCallbackFiducialsUpdateMRML type id listOfPoints
+#   EndoscopicCreateAndActivatePath name
+#   EndoscopicFiducialsActivatedListCallback type name id
+#   EndoscopicSelectActivePath id
+#   EndoscopicDistanceBetweenTwoPoints p1x p1y p1z p2x p2y p2z
+#   EndoscopicUpdateSelectionLandmarkList id
 #   EndoscopicSetModelsVisibilityInside
 #   EndoscopicSetSlicesVisibility
 #   EndoscopicUpdateEndoscopicViewVisibility
 #   EndoscopicUpdateMainViewVisibility
 #   EndoscopicAddEndoscopicView
 #   EndoscopicAddMainView
-#   EndoscopicAddFlatView
 #   EndoscopicAddEndoscopicViewRemoveMainView
 #   EndoscopicRemoveEndoscopicView
 #   EndoscopicRemoveMainView
-#   EndoscopicRemoveFlatView
 #   EndoscopicAddMainViewRemoveEndoscopicView
+#   EndoscopicAutoSelectSourceSink list
+#   EndoscopicSetFlatFileName
+#   EndoscopicCancelFlatFile
+#   EndoscopicAddFlatView
+#   EndoscopicRemoveFlatView name
+#   EndoscopicCreateFlatBindings widget
+#   EndoscopicPopFlatBindings
+#   EndoscopicBuildFlatColonLookupTable name
+#   EndoscopicBuildFlatBoundary name
+#   EndoscopicMouseLocation widget xcoord ycoord
+#   EndoscopicStartPan widget xcoord ycoord
+#   EndoscopicEndPan widget xcoord ycoord
+#   EndoscopicStartZoom widget ycoord
+#   EndoscopicEndZoom widget ycoord
+#   EndoscopicPickFlatPoint widget xcoord ycoord
+#   EndoscopicAddTargetInFlatWindow widget x y z
+#   EndoscopicAddTargetFromFlatColon pointId
+#   EndoscopicAddTargetFromSlices x y z
+#   EndoscopicAddTargetFromWorldCoordinates sx sy sz
+#   EndoscopicLoadTargets
+#   EndoscopicMainFileCloseUpdated
+#   EndoscopicCreateTarget
+#   EndoscopicUpdateActiveTarget
+#   EndoscopicDeleteActiveTarget
+#   EndoscopicSelectTarget sT
+#   EndoscopicSelectNextTarget
+#   EndoscopicSelectPreviousTarget
+#   EndoscopicUpdateTargetsInFlatWindow widget
+#   EndoscopicFlatLightElevationAzimuth widget Endoscopic(flatColon,LightElev) Endoscopic(flatColon,LightAzi)
+#   EndoscopicMoveCameraX widget Endoscopic(flatColon,xCamDist)
+#   EndoscopicMoveCameraY widget Endoscopic(flatColon,yCamDist)
+#   EndoscopicMoveCameraZ widget Endoscopic(flatColon,zCamDist)
+#   EndoscopicResetFlatCameraDist widget
+#   EndoscopicScrollRightFlatColon widget
+#   EndoscopicScrollLeftFlatColon widget
+#   EndoscopicStopFlatColon
+#   EndoscopicResetFlatColon widget
+#   EndoscopicResetStop
+#   EndoscopicSetFlatColonScalarVisibility widget
+#   EndoscopicSetFlatColonScalarRange widget
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicEnter
-# Called when this module is entered by the user.  
-
-# effects: Pushes the event manager for this module and 
+# Called when this module is entered by the user.<br>
+# Effects: Pushes the event manager for this module and 
 #          calls EndoscopicAddEndoscopicView. 
 # .ARGS
 # .END
@@ -176,9 +208,10 @@ proc EndoscopicEnter {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicExit
-# Called when this module is exited by the user.  
+# Called when this module is exited by the user.<br>
 #
-# effects: Pops the event manager for this module.  
+# Removes the endo and/or the flat view if hide on exit flags are set.
+# Pops the event manager for this module.  
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -209,7 +242,7 @@ proc EndoscopicExit {} {
     }
     
     if {$Endoscopic(flatview,hideOnExit) == 1} {
-    EndoscopicRemoveFlatView
+        EndoscopicRemoveFlatView
     }
     EndoscopicPopBindings
 }
@@ -262,7 +295,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.100 $} {$Date: 2005/11/22 16:54:47 $}] 
+    {$Revision: 1.101 $} {$Date: 2005/12/02 18:48:08 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -531,8 +564,9 @@ proc EndoscopicInit {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicCreateRenderer
-# 
+# Creates the named renderer.
 # .ARGS
+# str renName the name to give this renderer.
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicCreateRenderer {renName} {
@@ -588,9 +622,9 @@ proc EndoscopicCreateRenderer {renName} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicBuildVTK
-#  Creates the vtk objects for this module
+#  Creates the vtk objects for this module.<br>
 #  
-#  effects: calls EndoscopicCreateFocalPoint, 
+#  Effects: calls EndoscopicCreateFocalPoint, 
 #           EndoscopicCreateCamera, EndoscopicCreateLandmarks and 
 #           EndoscopicCreatePath, EndoscopicCreateGyro, EndoscopicCreateVector   
 # 
@@ -644,7 +678,6 @@ proc EndoscopicBuildVTK {} {
     arrowXformFilter SetInput [arrow GetOutput]
     arrowXformFilter SetTransform arrowXform
 }
-
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicCreateCamera
@@ -746,12 +779,11 @@ proc EndoscopicCreateCamera {} {
     Endoscopic(fp,actor) SetUserMatrix [Endoscopic(gyro,actor) GetMatrix]
 }
 
-
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicCameraParams
 # effects: Set the size parameters for the camera and the focal point
-# .ARGS int size (optional), 30 by default
+# .ARGS 
+# int size (optional), 1 by default
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicCameraParams {{size -1}} {
@@ -810,7 +842,6 @@ proc EndoscopicCameraParams {{size -1}} {
     Endoscopic(fp,source) SetRadius $Endoscopic(fp,size)
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicCreateFocalPoint
 #  Create the vtk FocalPoint actor
@@ -832,11 +863,11 @@ proc EndoscopicCreateFocalPoint {} {
     Endoscopic(fp,actor) SetPosition 0 $Endoscopic(fp,distance) 0
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicCreateVTKPath
-# 
+# Calls EndoscopicCreatePath and adds the path to the view.
 # .ARGS
+# int id the id of the endoscopic path
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicCreateVTKPath {id} {
@@ -860,11 +891,11 @@ proc EndoscopicCreateVTKPath {id} {
     lappend Endoscopic(path,allIdsUsed) $id
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicResetPathVariables
-# 
+# Remove points, and reset vtk vars.
 # .ARGS
+# int id path id
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicResetPathVariables {id} {
@@ -883,11 +914,11 @@ proc EndoscopicResetPathVariables {id} {
     #Endoscopic($id,vector,polyData) Modified
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicCreatePath
 #  Create the vtk camera Path and focalPoint Path actors
 # .ARGS
+# int id path id
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicCreatePath {id} {
@@ -940,6 +971,7 @@ proc EndoscopicCreatePath {id} {
 # .PROC EndoscopicCreateVector
 #  Create the vtk vector actor
 # .ARGS
+# int id vector id
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicCreateVector {id} {
@@ -980,11 +1012,14 @@ proc EndoscopicCreateVector {id} {
 
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicVectorParams
-# 
+# Set parameters for the vector.
 # .ARGS
+# int id vector id
+# int axislen optional, defaults to 10
+# int axisrad optional, defaults to .05 times axislen
+# int conelen optional, defaults to .2 times axislen
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicVectorParams {id {axislen -1} {axisrad -1} {conelen -1} } {
@@ -1012,17 +1047,15 @@ proc EndoscopicVectorParams {id {axislen -1} {axisrad -1} {conelen -1} } {
     arrowXform Translate $axislen 0 0
 }
 
-
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicUpdateVisibility
 # 
 #  This procedure updates the current visibility of actor a (if specified)
-#  and then set that actor to its current visibility 
+#  and then set that actor to its current visibility
 # 
 # .ARGS
-#  a  name of the actor Endoscopic($a,actor)
-#  visibility (optional) 0 or 1 
+#  str a  name of the actor Endoscopic($a,actor)
+#  int visibility (optional) 0 or 1 
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicUpdateVisibility {a {visibility ""}} {
@@ -1052,16 +1085,14 @@ proc EndoscopicUpdateVisibility {a {visibility ""}} {
     EndoscopicSetPickable $a $visibility
 }
 
-
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetPickable
 # 
 #  This procedure sets the pickability of actor a to the value specified
 # 
 # .ARGS
-#  a  name of the actor Endoscopic($a,actor)
-#  pickability 0 or 1 
+#  str a  name of the actor Endoscopic($a,actor)
+#  int pickability 0 or 1 
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicSetPickable {a pickability} {
@@ -1081,15 +1112,13 @@ proc EndoscopicSetPickable {a pickability} {
     }
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicUpdateSize
 #
 # This procedure updates the size of actor a according to Endoscopic(a,size)
 #
 # .ARGS
-#  a  name of the actor Endoscopic($a,actor)
-# .ARGS
+#  int a  name of the actor Endoscopic($a,actor)
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicSetSize {a} {
@@ -1119,7 +1148,7 @@ proc EndoscopicSetSize {a} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicPopBindings
-# 
+# Use the Event bindings, deactiveate the slice 0-2 events.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1134,7 +1163,7 @@ proc EndoscopicPopBindings {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicPushBindings
-# 
+# Use the Event bindings, activate the slice 0-2 events.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1153,7 +1182,7 @@ proc EndoscopicPushBindings {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicCreateBindings
-# 
+# Create event handlers for keys m and t
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -1182,10 +1211,7 @@ proc EndoscopicCreateBindings {} {
     { eval EndoscopicAddTargetFromWorldCoordinates [lindex $Select(xyz) 0] [lindex $Select(xyz) 1] [lindex $Select(xyz) 2] $Select(cellId) }}
     
 #   EvAddWidgetToBindingSet 3DEvents $Gui(fViewWin) {EndoKeySelect3DEvents}
-   
-       
 }
-
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicBuildGUI
@@ -2074,12 +2100,12 @@ Rotate the axis by pressing the right mouse button and moving the mouse."
     #pack $f.bcreate $f.fly $f.reset
 }
 
-
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicShowFlyThroughPopUp
-# 
+# Build, if necessary, and display the flythrough popup.
 # .ARGS
+# int x horizontal position of popup, defaults to 100
+# int y vertical position of popup, defaults to 100
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicShowFlyThroughPopUp {{x 100} {y 100}} {
@@ -2096,6 +2122,7 @@ proc EndoscopicShowFlyThroughPopUp {{x 100} {y 100}} {
 # .PROC EndoscopicExecutePathTab 
 # Executes command that is selected in Path Menu Selection
 # .ARGS
+# str command the command to execute
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicExecutePathTab {command} {
@@ -2106,7 +2133,7 @@ proc EndoscopicExecutePathTab {command} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicBuildFlyThroughGUI
-# 
+# Build the fly through gui window, .wEndoFlyThrough
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -2315,12 +2342,24 @@ proc EndoscopicBuildFlyThroughGUI {} {
     
 }
 
-   
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicCreateLabelAndSlider
-# 
+# Create a label and slider on the given parent frame.
 # 
 # .ARGS
+# framepath f 
+# str labelName 
+# int labelHeight 
+# str labelText 
+# str sliderName 
+# str orient 
+# int from 
+# int to 
+# int length 
+# str variable 
+# str commandString 
+# int entryWidth 
+# int defaultSliderValue
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicCreateLabelAndSlider {f labelName labelHeight labelText sliderName orient from to length variable commandString entryWidth defaultSliderValue} {
@@ -2348,12 +2387,17 @@ proc EndoscopicCreateLabelAndSlider {f labelName labelHeight labelText sliderNam
     $f.s$sliderName set $defaultSliderValue
 }
 
-    
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicCreateCheckButton
-# 
+# Create a check button.
 # 
 # .ARGS
+# str ButtonName 
+# str VariableName 
+# str Message 
+# str Command 
+# int Indicatoron optional, defaults to 0
+# int Width optional, defaults to length of Message
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicCreateCheckButton {ButtonName VariableName Message Command {Indicatoron 0} {Width 0} } {
@@ -2365,11 +2409,11 @@ proc EndoscopicCreateCheckButton {ButtonName VariableName Message Command {Indic
     $Message -width $Width -indicatoron $Indicatoron -command $Command } $Gui(WCA)
 } 
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetVisibility
-# 
+# Set the visibility of endoscopic actors.
 # .ARGS
+# str a either gyro or the actor id
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicSetVisibility {a} {
@@ -2383,10 +2427,16 @@ proc EndoscopicSetVisibility {a} {
         Endoscopic($a,actor) SetVisibility $Endoscopic($a,visibility)
     }
 }
+
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicCreateAdvancedGUI
-# 
+# Create the advanced gui tab.
 # .ARGS
+# windowpath f where to create elements
+# int a endosopic id
+# str vis if visible add a visibility button, optional, defaults to empty string
+# str col color, optional, defaults to empty string
+# str size optional, defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicCreateAdvancedGUI {f a {vis ""} {col ""} {size ""}} {
@@ -2426,11 +2476,12 @@ proc EndoscopicCreateAdvancedGUI {f a {vis ""} {col ""} {size ""}} {
     }
 }
 
-    
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetActive
-# 
+# Set the active actor and button.
 # .ARGS
+# int a actor id
+# int b button id
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicSetActive {a b} {
@@ -2443,7 +2494,7 @@ proc EndoscopicSetActive {a b} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicPopupCallback
-# 
+# Get the active actor and set it's properties.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -2486,7 +2537,6 @@ proc EndoscopicPopupCallback {} {
     Render3D
 }
 
-
 ##############################################################################
 #
 #        PART 3: Selection of actors through key/mouse
@@ -2495,7 +2545,7 @@ proc EndoscopicPopupCallback {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicUseGyro
-# 
+# If using it, set opacity to 1, otherwise 0, and rerender
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -2517,89 +2567,6 @@ proc EndoscopicUseGyro {} {
 }
 
 
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicSelectActor
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-#proc EndoscopicSelectActor {actor} {
-#    
-#    global Endoscopic Ev Csys
-#    
-#    if { [$actor GetProperty] == [Endoscopic(vector,actor) GetProperty] } {
-#        set numCells [[Endoscopic(vector,source) GetOutput] GetNumberOfCells]
-#        
-#        set cid [Csys(picker) GetCellId]
-#        # see which vector we have selected
-#        set id [expr $cid/$numCells]
-#        EndoscopicVectorSelected $id
-#        return 1
-#    } else{ 
-#    foreach id $Endoscopic(path,activeIdList) {
-#    # go through our list of paths that we know are on the screen
-#    # and try to see which landmark was selected
-#
-#        if { [$actor GetProperty] == [Endoscopic($id,path,actor) GetProperty] } {
-#        set numCells [[Endoscopic($id,path,source) GetOutput] GetNumberOfCells]
-#        
-#        set cid [Csys(picker) GetCellId]
-#        # see which landmark we have selected
-#        set id [expr $cid/$numCells]
-#        EndoscopicLandmarkSelected $id
-#    return 1
-#    } else {
-#    return 0
-#    }
-#}
-
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicVectorSelected
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-#proc EndoscopicVectorSelected {id} {
-
-#    global Endoscopic
-
-#    Endoscopic(vector,scalars) SetScalar $Endoscopic(vector,selectedID) 0.5
-#    Endoscopic(vector,scalars) SetScalar $id 0
-#    Endoscopic(vector,polyData) Modified
-#    set Endoscopic(vector,selectedID) $id    
-  #  EndoscopicMoveGyroToVector $id
-#    EndoscopicMoveGyroToLandmark $id
-#    Render3D
-#}
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicLandmarkSelected
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-#proc EndoscopicLandmarkSelected {{id ""}} {
-#
-#    global Endoscopic
-#
-#    if {$id == ""} {
-#    # this was called when the user selected a landmark in the text box,
-#    # so find out the id
-#    set id [$Endoscopic(path,fLandmarkList) curselection]
-#    }
-#    
-#    Endoscopic(cLand,scalars) SetScalar $Endoscopic(cLand,selectedID) 0.2 
-#    Endoscopic(cLand,scalars) SetScalar $id 0 
-#    Endoscopic(cLand,polyData) Modified
-#    set Endoscopic(cLand,selectedID) $id    
-#    EndoscopicUpdateSelectionLandmarkList $id
-#    EndoscopicMoveGyroToLandmark  $id
-#    Render3D
-#}
-
-
 #############################################################################
 #
 #      PART 4 : Endoscope movement
@@ -2608,8 +2575,14 @@ proc EndoscopicUseGyro {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicGyroMotion
-# 
+# Get the locatin and orientatin of the gyro and set sliders
 # .ARGS
+# str actor name of actor
+# float angle 
+# float dotprod 
+# float unitX 
+# float unitY 
+# float unitZ
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicGyroMotion {actor angle dotprod unitX unitY unitZ} {
@@ -2641,7 +2614,7 @@ proc EndoscopicGyroMotion {actor angle dotprod unitX unitY unitZ} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetGyroOrientation
-# 
+# Set the gyro orientation
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -2662,13 +2635,15 @@ proc EndoscopicSetGyroOrientation {} {
     
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetWorldPosition
-# 
+# Set the position of the gyro actor, and sliders
 # .ARGS
+# float x new x position for the gyro actor
+# float y new y position for the gyro actor
+# float z new z position for the gyro actor
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicSetWorldPosition {x y z} {
     global Endoscopic
-
 
     # reset the sliders
     set Endoscopic(cam,xStr) $x
@@ -2680,11 +2655,13 @@ proc EndoscopicSetWorldPosition {x y z} {
     Endoscopic(gyro,actor) SetPosition $x $y $z
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetWorldOrientation
-# 
+# Set the orientation of the gyro actor
 # .ARGS
+# float rx
+# float ry
+# float rz
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicSetWorldOrientation {rx ry rz} {
@@ -2706,6 +2683,7 @@ proc EndoscopicSetWorldOrientation {rx ry rz} {
 #  This is called when the position sliders are updated. We use the values
 #  stored in the slider variables to update the position of the endoscope 
 # .ARGS
+# str value optional, defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicSetCameraPosition {{value ""}} {
@@ -2793,10 +2771,9 @@ proc EndoscopicSetCameraPosition {{value ""}} {
     Render3D
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicResetCameraPosition
-# 
+# Reset the endoscopic camera to the origin
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -2810,8 +2787,9 @@ proc EndoscopicResetCameraPosition {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetCameraDirection
-# 
+# Set the endoscopic camera direction.
 # .ARGS
+# str value one of rx, ry, rz, optional, defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicSetCameraDirection {{value ""}} {
@@ -2864,10 +2842,9 @@ proc EndoscopicSetCameraDirection {{value ""}} {
    
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicResetCameraDirection
-# 
+# Reset the endo camera to default rotation and view.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -2885,11 +2862,12 @@ proc EndoscopicResetCameraDirection {} {
     Endoscopic(cam,actor) SetOrientation 0 0 0
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicUpdateActorFromVirtualEndoscope
-# 
+#  First, set the gyro matrix's orientation based on the virtual camera's matrix.
+# Then if the user decided to have the camera drive the slice, do so.
 # .ARGS
+# str vcam virtual endoscope name
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicUpdateActorFromVirtualEndoscope {vcam} {
@@ -2983,10 +2961,12 @@ proc EndoscopicUpdateActorFromVirtualEndoscope {vcam} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC EndoscopicUpdateVirtualEndoscope $Endoscopic(activeCam)
-#       Updates the virtual camera's position, orientation and view angle
+# .PROC EndoscopicUpdateVirtualEndoscope 
+#       Updates the virtual camera's position, orientation and view angle.<br>
 #       Calls EndoscopicLightFollowsEndoCamera
 # .ARGS
+# str vcam name of the virtual endoscope
+# str coordList optional, defaults to empty list
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicUpdateVirtualEndoscope {vcam {coordList ""}} {
@@ -3045,12 +3025,11 @@ proc EndoscopicUpdateVirtualEndoscope {vcam {coordList ""}} {
     EndoscopicLightFollowEndoCamera $vcam
 }
 
-
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicLightFollowEndoCamera
-# 
+# Adjust the light to follow the camera.
 # .ARGS
+# str vcam virtual endoscope name
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicLightFollowEndoCamera {vcam} {
@@ -3070,11 +3049,10 @@ proc EndoscopicLightFollowEndoCamera {vcam} {
     eval $endoCurrentLight SetConeAngle 180    
     eval $endoCurrentLight SetPosition [$Endoscopic(activeCam) GetFocalPoint]
 }
-    
-    
+
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetCameraZoom
-# 
+# Set the endoscopic camera's zoom.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -3100,10 +3078,9 @@ proc EndoscopicSetCameraZoom {} {
     EndoscopicUpdateVirtualEndoscope $Endoscopic(activeCam)
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetCameraViewAngle
-# 
+# Set the Endoscopic camera's view angle.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -3115,11 +3092,11 @@ proc EndoscopicSetCameraViewAngle {} {
     
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetCameraAxis
-# 
+# Set the Endoscopic camera's axis.
 # .ARGS
+# str axis absolute or relative, optional, defaults to empty string to do nothing
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicSetCameraAxis {{axis ""}} {
@@ -3184,7 +3161,7 @@ proc EndoscopicSetCameraAxis {{axis ""}} {
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicCameraMotionFromUser
 #
-# called whenever the active camera is moved. This routine syncs the position of
+# Called whenever the active camera is moved. This routine syncs the position of
 # the graphical endoscopic camera with the virtual endoscopic camera
 # (i.e if the user changes the view of the endoscopic window with the mouse,
 #  we want to change the position of the graphical camera)
@@ -3204,8 +3181,9 @@ proc EndoscopicCameraMotionFromUser {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetCollision
-# 
+# Set Endoscopic array's collision entry and configure the collision gui element.
 # .ARGS
+# int value 0 for collision detection off, 1 for on
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicSetCollision {value} {
@@ -3226,20 +3204,11 @@ proc EndoscopicSetCollision {value} {
 #
 ###########################################################################
 
-#proc EndoscopicMoveGyroToVector {id} {
-#    
-#    global Endoscopic 
-#    set xyz [Endoscopic(cLand,graphicalInterpolatedPoints) GetPoint $id]
-#    set Endoscopic(cam,xStr) [lindex $xyz 0]
-#    set Endoscopic(cam,yStr) [lindex $xyz 1]
-#    set Endoscopic(cam,zStr) [lindex $xyz 2]
-#    EndoscopicSetCameraPosition
-#}
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicMoveGyroToLandmark
-# 
+# Get the point's location and orientatin and move the gyro there.
 # .ARGS
+# int id landmark point id
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicMoveGyroToLandmark {id} {
@@ -3252,49 +3221,11 @@ proc EndoscopicMoveGyroToLandmark {id} {
     EndoscopicUpdateActorFromVirtualEndoscope $Endoscopic(activeCam)
 }
 
-#proc EndoscopicRotateVector {} {
-#    global Endoscopic 
-    
-    # change the vector direction based on the current camera orientation
-
-#   set rxyz [Endoscopic(cam,actor) GetOrientation]
-#    Endoscopic(vector,vectors) SetVector $Endoscopic(vector,selectedID) [lindex $rxyz 0] [lindex $rxyz 1] [lindex $rxyz 2] 
-#    Endoscopic(vector,polyData) Modified
-#    Render3D
-#}
-
-#proc EndoscopicRotateVector {} {
-#
-#    global CurrentCamera 
-#    global LastX 
-#    global RendererFound
-#    global View Module Endoscopic
-#
-#    set axis $Endoscopic(cam,movementAxis)
-#    
-#    if { $axis != "" } {
-#    
-#    if { ! $RendererFound } { return }
-#    if {[info exists Module(Endoscopic,procEnter)] == 1} {
-#        
-#        set Endoscopic(cam,r${axis}Str) [expr $tmp + ($LastX - $x)]
-#        EndoscopicSetCameraDirection "r${axis}"
-#        set list [Endoscopic(cam,actor) GetOrientation]
-#        Endoscopic(gyro,actor) SetOrientation [lindex $list 0] [lindex $list 1] [lindex $list 2]
-#        Render3D
-#        set LastX $x
-#        }
-#    } else {
-#    tk_messageBox -message "No axis selected. Please select an axis with the mouse and press the key 's' "
-#    }
-#}
-
-
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicUpdateVectors
-# 
+# Update the vectors.
 # .ARGS
+# int id endoscopic id for path
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicUpdateVectors {id} {
@@ -3329,8 +3260,9 @@ proc EndoscopicUpdateVectors {id} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicGetAvailableListName
-# 
+# Returns the next available list name
 # .ARGS
+# string model name of the path
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicGetAvailableListName {model} {
@@ -3348,16 +3280,20 @@ proc EndoscopicGetAvailableListName {model} {
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicAddLandmarkNoDirectionSpecified
 #
-# this procedure is called when the user adds a landmark at position i 
+# This procedure is called when the user adds a landmark at position i 
 # on a slice or on a model and we don't know yet what direction of view we 
-# should save along with the landmark. There are 2 cases:
-#  i = 1 => the direction vector is [0 1 0]
-#  i > 1 => The direction vector is tangential to the curve 
-# [(position of landmark i - 1) - (position of last interpolated point on the path]
+# should save along with the landmark. There are 2 cases:<br>
+#  i = 1 => the direction vector is [0 1 0]<br>
+#  i > 1 => The direction vector is tangential to the curve <br>
+# [(position of landmark i - 1) - (position of last interpolated point on the path]<br>
 # 
 # The user can then change the direction vector interactively through the 
 # user interface.
 # .ARGS
+# float x
+# float y
+# float z
+# str list
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicAddLandmarkNoDirectionSpecified {x y z {list ""}} {
@@ -3410,19 +3346,23 @@ proc EndoscopicAddLandmarkNoDirectionSpecified {x y z {list ""}} {
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicInsertLandmarkNoDirectionSpecified
 #
-# this procedure is called when the user adds a landmark after the landmark with id "previousPid" 
+# This procedure is called when the user adds a landmark after the landmark with id "previousPid" 
 # on a slice or on a model and we don't know yet what direction of view we 
-# should save along with the landmark. There are 2 cases:
-#  i = 1 => the direction vector is [0 1 0]
-#  i > 1 => The direction vector is tangential to the curve 
-# [(position of landmark i - 1) - (position of last interpolated point on the path]
+# should save along with the landmark. There are 2 cases:<br>
+#  i = 1 => the direction vector is [0 1 0]<br>
+#  i > 1 => The direction vector is tangential to the curve <br>
+# [(position of landmark i - 1) - (position of last interpolated point on the path]<br>
 # 
 # The user can then change the direction vector interactively through the 
 # user interface.
 # .ARGS
+# int afterPid id of the point to add this one after
+# float x x position of new landmark
+# float y y position of new landmark
+# float z z position of new landmark
+# str list optional, if empty, add to active path
 # .END
 #-------------------------------------------------------------------------------
-
 proc EndoscopicInsertLandmarkNoDirectionSpecified {afterPid x y z {list ""}} {
     global Endoscopic Point Fiducials
     
@@ -3470,8 +3410,6 @@ proc EndoscopicInsertLandmarkNoDirectionSpecified {afterPid x y z {list ""}} {
     }
 }
 
-
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicAddLandmarkDirectionSpecified
 #
@@ -3480,6 +3418,8 @@ proc EndoscopicInsertLandmarkNoDirectionSpecified {afterPid x y z {list ""}} {
 # current view direction of the endoscope
 # 
 # .ARGS
+# str coords optional, if empty, get from the endo camera
+# str list optional, path name, if empty, use the active path
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicAddLandmarkDirectionSpecified {{coords ""} {list ""}} {
@@ -3493,17 +3433,17 @@ proc EndoscopicAddLandmarkDirectionSpecified {{coords ""} {list ""}} {
         if { $Endoscopic(path,activeId) == "None" } {
             set numList $Endoscopic(path,nextAvailableId)
             set list Path${numList}_
-        EndoscopicCreateAndActivatePath $list
-        incr Endoscopic(path,nextAvailableId)
+            EndoscopicCreateAndActivatePath $list
+            incr Endoscopic(path,nextAvailableId)
         } else {
-        set id $Endoscopic(path,activeId)
-        set list $Endoscopic($id,path,name)
-    }
+            set id $Endoscopic(path,activeId)
+            set list $Endoscopic($id,path,name)
+        }
     } else {
-    if {[info exists Fiducials($list,fid)] == 0} {    
-        # if the list doesn't exist, create it
-        EndoscopicCreateAndActivatePath $list
-    }
+        if {[info exists Fiducials($list,fid)] == 0} {    
+            # if the list doesn't exist, create it
+            EndoscopicCreateAndActivatePath $list
+        }
     }
     # make that list active
     FiducialsSetActiveList $list
@@ -3543,6 +3483,8 @@ proc EndoscopicAddLandmarkDirectionSpecified {{coords ""} {list ""}} {
 # current view direction of the endoscope
 # 
 # .ARGS
+# str coords optional, if empty string, get it from the endoscopic camera
+# str list optional, the list to insert into
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicInsertLandmarkDirectionSpecified {{coords ""} {list ""}} {
@@ -3555,15 +3497,15 @@ proc EndoscopicInsertLandmarkDirectionSpecified {{coords ""} {list ""}} {
     
 
     if { $afterPid == "" } {
-    EndoscopicAddLandmarkDirectionSpecified
-    tk_messageBox -message "No Landmark selected. Choosing the last landmark on the path by default "
+        EndoscopicAddLandmarkDirectionSpecified
+        tk_messageBox -message "No Landmark selected. Choosing the last landmark on the path by default "
     } elseif { $fid == "" } {
-    EndoscopicAddLandmarkDirectionSpecified
-    tk_messageBox -message "No Landmark selected. Choosing the last landmark on the path by default "
+        EndoscopicAddLandmarkDirectionSpecified
+        tk_messageBox -message "No Landmark selected. Choosing the last landmark on the path by default "
     } else {
-    set list $Fiducials($fid,name) 
-    # make that list active
-    FiducialsSetActiveList $list
+        set list $Fiducials($fid,name) 
+        # make that list active
+        FiducialsSetActiveList $list
     
     ########## GET THE COORDINATES ################
     if { $coords == "" } {
@@ -3591,11 +3533,11 @@ proc EndoscopicInsertLandmarkDirectionSpecified {{coords ""} {list ""}} {
   }
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicUpdateLandmark
 #
-# This procedure is called when we want to update the current selected  landmark to the current position and orientation of the camera actor
+# This procedure is called when we want to update the current selected  landmark to 
+# the current position and orientation of the camera actor
 # 
 # .ARGS
 # .END
@@ -3617,35 +3559,30 @@ proc EndoscopicUpdateLandmark {} {
     }
 }
 
-
-    
-
-
-
 #############################################################################
 #
 #    PART 7: Path Operation
 #
 ############################################################################
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicBuildInterpolatedPath
 #
-# This procedure creates a new path model by:
-# creating a path containing all landmarks 
-#    from i = 0 to i = # of points added with EndoscopicAddLandmark*
+# This procedure creates a new path model by:<br>
+# creating a path containing all landmarks <br>
+#    from i = 0 to i = # of points added with EndoscopicAddLandmark*<br>
 #
-# It is much faster to create a path by iteratively calling 
-# EndoscopicAddLandmark* for each new landmark -> EndoscopicBuildInterpolatedPath
+# It is much faster to create a path by iteratively calling <br>
+# EndoscopicAddLandmark* for each new landmark -> EndoscopicBuildInterpolatedPath<br>
 # 
-# then by iteratively calling
-# (EndoscopicAddLandmark* -> EndoscopicBuildInterpolatedPath) for each new landmark
+# Then by iteratively calling<br>
+# (EndoscopicAddLandmark* -> EndoscopicBuildInterpolatedPath) for each new landmark<br>
 #
-# but the advantage of the latter is that the user can see the path being
+# But the advantage of the latter is that the user can see the path being<br>
 # created iteratively (the former is used when loading mrml paths).
 #
 # .ARGS
+# int id endoscopic path id
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicBuildInterpolatedPath {id} {
@@ -3761,11 +3698,9 @@ proc EndoscopicBuildInterpolatedPath {id} {
     }
 }
 
-
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicDeletePath
-# 
+# Delete the active fiducials list.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -3775,10 +3710,9 @@ proc EndoscopicDeletePath {} {
     FiducialsDeleteList $Fiducials(activeList)
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicComputeRandomPath
-# 
+# Create 20 random points in a path.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -3796,11 +3730,9 @@ proc EndoscopicComputeRandomPath {} {
     Render3D
 }
 
-
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicShowPath
-# 
+# Add or remove actors from the endoscopicScreen, if showPath is 1 or not.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -3808,26 +3740,23 @@ proc EndoscopicShowPath {} {
     global Path Endoscopic
 
     if {$Endoscopic(path,exists) == 1} {
-#jeanette    
-    set id $Endoscopic(path,activeId)
-    
-        if {$Endoscopic(path,showPath) == 1} {
-            
-            endoscopicScreen AddActor Endoscopic($id,path,actor)
-    
-        } else {
-    
-        endoscopicScreen RemoveActor Endoscopic($id,path,actor)
+        #jeanette    
+        set id $Endoscopic(path,activeId)
         
+        if {$Endoscopic(path,showPath) == 1} {
+            endoscopicScreen AddActor Endoscopic($id,path,actor)
+        } else {
+            endoscopicScreen RemoveActor Endoscopic($id,path,actor)
+        }
     }
-    }
-
 }
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicFlyThroughPath
-# 
+# Move through the path.
 # .ARGS
+# str listOfCams
+# str listOfPaths
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicFlyThroughPath {listOfCams listOfPaths} {
@@ -3859,11 +3788,12 @@ proc EndoscopicFlyThroughPath {listOfCams listOfPaths} {
 
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetPathFrame
-# 
+# Update the actors from the virtual endoscope.
 # .ARGS
+# str listOfCams
+# str listOfPaths
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicSetPathFrame {listOfCams listOfPaths} {
@@ -3887,7 +3817,7 @@ proc EndoscopicSetPathFrame {listOfCams listOfPaths} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicStopPath
-# 
+# Stop fly through.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -3899,7 +3829,7 @@ proc EndoscopicStopPath {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicResetStopPath
-# 
+# Resume fly through.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -3911,8 +3841,10 @@ proc EndoscopicResetStopPath {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicResetPath
-# 
+# Stop the flythrough and reset the camera view.
 # .ARGS
+# str listOfCams
+# str listOfPaths
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicResetPath {listOfCams listOfPaths} {
@@ -3933,32 +3865,9 @@ proc EndoscopicResetPath {listOfCams listOfPaths} {
     EndoscopicResetStopPath
 }
 
-
-
-
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicSetFlyDirection
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-#proc EndoscopicSetFlyDirection {{dir ""}} {
-#    global Endoscopic Path
-#    
-#    if {$dir != ""} {
-#    if {$dir == "Forward" || $dir == "Backward"} {
-#        set Endoscopic(path,flyDirection) $dir
-#    } else {
-#        return
-#    }   
-#    }
-#}
-
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetSpeed
-# 
+# Set the speed of the fly through.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -3978,15 +3887,16 @@ proc EndoscopicSetSpeed {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicCheckDriver
-# This procedure is called once the position of the endoscope is updated. It checks to see if there is a driver \
-for the slices and calls EndoscopicReformatSlices with the right argument to update the position of the slices.
-
+# This procedure is called once the position of the endoscope is updated. <br>
+# It checks to see if there is a driver for the slices and calls EndoscopicReformatSlices 
+# with the right argument to update the position of the slices.
 # .ARGS
+# str vcam the name of the virtual endoscope
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicCheckDriver {vcam} {
 
-global Endoscopic View Slice MainAnno Anno Module
+    global Endoscopic View Slice MainAnno Anno Module
 
 
     if { $Endoscopic(fp,driver) == 1 } {
@@ -4020,11 +3930,15 @@ global Endoscopic View Slice MainAnno Anno Module
     }
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicReformatSlices
-# 
+# Get the endo camera's view up and plane normal then recomput the reformat matrix by 
+# calling Slicer's SetDirectNTP
 # .ARGS
+# str vcam the name of the endoscopic camera
+# float x in call to SetDirectNTP, this is P's x value
+# float y in call to SetDirectNTP, this is P's y value
+# float z in call to SetDirectNTP, this is P's z value
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicReformatSlices {vcam x y z} {
@@ -4042,8 +3956,9 @@ proc EndoscopicReformatSlices {vcam x y z} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetSliceDriver
-# 
+# Set who's driving which slices are being currently displayed
 # .ARGS
+# str name who's driving now? User, Camera, FocalPoint, Intersection
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicSetSliceDriver {name} {
@@ -4098,8 +4013,11 @@ proc EndoscopicSetSliceDriver {name} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicFiducialsPointSelectedCallback
-# 
+# Select this point in the endo module, reset the camera if necessary to look at it,
+# does not call Render3D, as that should be called by the proc firing off the callbacks.
 # .ARGS
+# int fid id of the fiducials list
+# int pid point id on the list
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicFiducialsPointSelectedCallback {fid pid} {
@@ -4172,25 +4090,34 @@ proc EndoscopicFiducialsPointSelectedCallback {fid pid} {
         DevErrorWindow "EndoscopicFiducialsPointSelectedCallback: Fiducials($fid,node) does not exist"
     }
     EndoscopicUpdateActorFromVirtualEndoscope $Endoscopic(activeCam)
-    Render3D
+    # Render will get called in the proc going through the callback functions
+#    Render3D
 }
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicFiducialsPointCreatedCallback
 # This procedures is a callback procedule called when a Fiducial Point is
-# created
+# created.<br>
 # If the Point is part of the "reformat" Fiducial list, then the procedure 
 # selects the right number of fiducials as they are created based on which 
 # step we are in
 # .ARGS 
+# str type counts if it's endoscopic
+# int fid fiducials list id
+# int pid point id 
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicFiducialsPointCreatedCallback {type fid pid} {
 
     global Endoscopic Fiducials Select Module Model
+    if {$::Module(verbose)} {
+        puts "EndoscopicFiducialsPointCreatedCallback - is it red?"
+        # after 2000
+    }
+
     # jump to that point only if it is not an endoscopic point
     if { $type != "endoscopic" } {
-    EndoscopicFiducialsPointSelectedCallback $fid $pid
+        EndoscopicFiducialsPointSelectedCallback $fid $pid
     }
 
     # if the point is added to the reformat list and the Volumes/Reformat Tab 
@@ -4231,16 +4158,20 @@ proc EndoscopicFiducialsPointCreatedCallback {type fid pid} {
     }
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicUpdateMRML
-# 
+# Called to update the Endo module's nodes in the mrml tree, turns off backface culling,
+# and calls Render3D (which won't do anything if we're in a MainUpdateMRML session).
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicUpdateMRML {} {
 
     global Models Model Endoscopic
+
+    if {$::Module(verbose)} {
+        puts "EndoscopicUpdateMRML"
+    }
 
     # turn off backface culling for models in endoscopicScreen
     foreach m $Model(idList) {
@@ -4250,22 +4181,19 @@ proc EndoscopicUpdateMRML {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC EndoscopicStartCallbackFiducialUpdateMRML
-#
-# Called at the beginning of FiducialsUpdateMRML
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
 # .PROC EndoscopicStartCallbackFiducialsUpdateMRML
-# 
+# Called at the beginning of FiducialsUpdateMRML, reset the path variables and
+# menu
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicStartCallbackFiducialsUpdateMRML {} {
 
     global Endoscopic
+
+    if {$::Module(verbose)} {
+        puts "EndoscopicStartCallbackFiducialsUpdateMRML"
+    }
 
     # reset the variables for all the paths we know about
     foreach id $Endoscopic(path,activeIdList) {
@@ -4286,16 +4214,8 @@ proc EndoscopicStartCallbackFiducialsUpdateMRML {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC EndoscopicEndCallbackFiducialUpdateMRML
-#
-# Called at the end
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
 # .PROC EndoscopicEndCallbackFiducialsUpdateMRML
-# 
+# Called at the end, does nothing. 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -4304,19 +4224,14 @@ proc EndoscopicEndCallbackFiducialsUpdateMRML {} {
     global Endoscopic
 }
 
-
 #-------------------------------------------------------------------------------
-# .PROC EndoscopicCallbackFiducialUpdateMRML
+# .PROC EndoscopicCallbackFiducialsUpdateMRML
 #
 # Called when Updated Fiducials are of type endoscopic
 # .ARGS
-# .END
-#-------------------------------------------------------------------------------
-
-#-------------------------------------------------------------------------------
-# .PROC EndoscopicCallbackFiducialsUpdateMRML
-# 
-# .ARGS
+# str type the type of the fiducial, if not endoscopic, return.
+# int id id of the path
+# list listOfPoints points in the path.
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicCallbackFiducialsUpdateMRML {type id listOfPoints} {
@@ -4324,6 +4239,10 @@ proc EndoscopicCallbackFiducialsUpdateMRML {type id listOfPoints} {
     
     if { $type != "endoscopic"} {
         return
+    }
+
+    if {$::Module(verbose)} {
+        puts "EndoscopicCallbackFiducialsUpdateMRML"
     }
 
     # if we never heard about this Id, then this is a new path
@@ -4381,8 +4300,9 @@ proc EndoscopicCallbackFiducialsUpdateMRML {type id listOfPoints} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicCreateAndActivatePath
-# 
+# Calls FiducialsCreateFiducialsList and makes it active.
 # .ARGS
+# str name the name of the fiducial list to create
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicCreateAndActivatePath {name} {
@@ -4392,8 +4312,8 @@ proc EndoscopicCreateAndActivatePath {name} {
     # check to see if that exists already
     set ext 1
     while {$id == -1} {
-    set id [FiducialsCreateFiducialsList "endoscopic" ${name}($ext)]
-    set ext [expr $ext + 1]
+        set id [FiducialsCreateFiducialsList "endoscopic" ${name}($ext)]
+        set ext [expr $ext + 1]
     }
     set name [Fiducials($id,node) GetName]
     set type [Fiducials($id,node) GetType]
@@ -4401,10 +4321,18 @@ proc EndoscopicCreateAndActivatePath {name} {
     EndoscopicFiducialsActivatedListCallback "endoscopic" $name $id
 }
 
-# this is a callback from the fiducials module telling us which list
-# is active
-# we update the path menus only if the active list is an endoscopic
-# one
+#-------------------------------------------------------------------------------
+# .PROC EndoscopicFiducialsActivatedListCallback
+# This is a callback from the fiducials module telling us which list
+# is active.<br>
+# We update the path menus only if the active list is an endoscopic
+# one.
+# .ARGS
+# str type the type of the fiducial, if not endoscopic, return.
+# str name name of the list
+# int id id of the path to be set active
+# .END
+#-------------------------------------------------------------------------------
 proc EndoscopicFiducialsActivatedListCallback {type name id} {
     global Endoscopic Fiducials
 
@@ -4414,7 +4342,7 @@ proc EndoscopicFiducialsActivatedListCallback {type name id} {
     
         set Endoscopic(path,activeId) $id
     
-     # change the text on menu buttons
+        # change the text on menu buttons
         foreach mb $Endoscopic(mbPathList) {
             $mb config -text $Endoscopic($id,path,name) 
         }
@@ -4426,20 +4354,21 @@ proc EndoscopicFiducialsActivatedListCallback {type name id} {
             $Endoscopic(path,stepScale) config -to [expr $numberOfOutputPoints - 1]
     
        } else {
-    set Endoscopic(path,activeId) "None"
-    # change the text on menu buttons
-        foreach mb $Endoscopic(mbPathList) {
-            $mb config -text "None"
-        }
-    $Endoscopic(mbPath4Fly) config -text "None"
-        }
+           set Endoscopic(path,activeId) "None"
+           # change the text on menu buttons
+           foreach mb $Endoscopic(mbPathList) {
+               $mb config -text "None"
+           }
+           $Endoscopic(mbPath4Fly) config -text "None"
+       }
     }
 }
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSelectActivePath
-# 
+# Set the active list, change the text on the menu buttons
 # .ARGS
+# int id path id
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicSelectActivePath {id} {
@@ -4472,8 +4401,14 @@ proc EndoscopicSelectActivePath {id} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicDistanceBetweenTwoPoints
-# 
+# Returns the distance between two points.
 # .ARGS
+# float p1x first point x
+# float p1y first point y
+# float p1z first point z
+# float p2x second point x
+# float p2y second point y
+# float p2z second point z
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicDistanceBetweenTwoPoints {p1x p1y p1z p2x p2y p2z} {
@@ -4483,8 +4418,9 @@ proc EndoscopicDistanceBetweenTwoPoints {p1x p1y p1z p2x p2y p2z} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicUpdateSelectionLandmarkList
-# 
+# Update the landmark list by selecting just this point.
 # .ARGS
+# int id path id
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicUpdateSelectionLandmarkList {id} {
@@ -4494,15 +4430,14 @@ proc EndoscopicUpdateSelectionLandmarkList {id} {
     if {$sel != ""} {
         $Endoscopic(path,fLandmarkList) selection clear $sel $sel
     }
-    $Endoscopic(path,fLandmarkList) selection set $id $id
+    $Endoscopic(path,fLandmarkList) selection set $id
     $Endoscopic(path,fLandmarkList) see $id
 }
 
-
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetModelsVisibilityInside
-# 
+# Check the value of Endoscopic(ModelsVisibilityInside) and call MainModelsSetCulling 
+# for each model.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -4520,10 +4455,10 @@ proc EndoscopicSetModelsVisibilityInside {} {
     }
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetSlicesVisibility
-# 
+# Add or remove slice actors from the endoscopic renderers depending on the value
+# of Endoscopic(SlicesVisibility).
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -4550,7 +4485,9 @@ proc EndoscopicSetSlicesVisibility {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicUpdateEndoscopicViewVisibility
-#  Makes the endoscopic view appear or disappear based on the variable Endoscopic(mainview,visibility) [note: there is a check to make sure that the endoscopic view cannot disappear if the main view is not visible)
+#  Makes the endoscopic view appear or disappear based on the variable 
+# Endoscopic(mainview,visibility) <br> Note: there is a check to make sure that the 
+# endoscopic view cannot disappear if the main view is not visible.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -4569,10 +4506,11 @@ proc EndoscopicUpdateEndoscopicViewVisibility {} {
     # for the rest do nothing
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicUpdateMainViewVisibility
-# Makes the main view appear or disappear based on the variable Endoscopic(mainview,visibility) [note: there is a check to make sure that the main view cannot disappear if the endoscopic view is not visible)
+# Makes the main view appear or disappear based on the variable 
+# Endoscopic(mainview,visibility) <br> Note: there is a check to make sure that the 
+# main view cannot disappear if the endoscopic view is not visible.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -4590,7 +4528,6 @@ proc EndoscopicUpdateMainViewVisibility {} {
     Render3D
     # for the rest do nothing
 }
-
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicAddEndoscopicView
@@ -4683,7 +4620,6 @@ proc EndoscopicRemoveEndoscopicView {} {
     }
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicRemoveMainView
 #  Remove the main view
@@ -4740,47 +4676,11 @@ proc EndoscopicAddMainViewRemoveEndoscopicView {} {
 ##########################################################################
 
 
-#proc EndoscopicAddSyncScreen {} {
-
-#    global Endoscopic viewWin
-#    
-#    $viewWin AddRenderer endoscopicScreen2
-#    viewRen SetViewport 0 0 0.5 0.5
-#    endoscopicScreen SetViewport 0 0.5 0.5 1
-#    endoscopicScreen2 SetViewport 0.5 0.5 1 1
-#    Render3D
-#}
-
-
-#proc EndoscopicUpdateSyncWindow {} {
-
-#global Endoscopic
-
-
-#if {$Endoscopic(syncOn)} {
-    
-#    lappend Module(endoscopicRenderers) endoscopicScreen2
-#    EndoscopicUpdateEndosopicViewVisibility
-    
-#} else {
-    
-#    set index [lsearch $Module(endoscopicRenderers) endoscopicScreen2]
-#    if { $index != -1 } {
-#    # remove the renderer from the list
-#    set Module(endoscopicRenderers) [lreplace $Module(endoscopicRenderers) $index $index]
-#    }
-#    
-#    EndoscopicUpdateEndosopicViewVisibility
-#}
-
-
-#}
-
 #-------------------------------------------------------------------------------
 #  .PROC EndoscopicAutoSelectSourceSink
 # Automatically set PathPlanningSetSource and PathPlanningSetSink
 # .ARGS
-# list list defaults to an empty list
+# str list name of the list, defaults to an empty string
 # .END 
 #-------------------------------------------------------------------------------
 proc EndoscopicAutoSelectSourceSink {{list ""}} {
@@ -4789,88 +4689,94 @@ proc EndoscopicAutoSelectSourceSink {{list ""}} {
    set model $Model(activeID)
    if {$model != ""} {
   
-# the reason to use Select(actor) is because the Fiducial call back below checks for it in the begining.\
-  the actor info is then passed on to orient the direction of the camera.
+       # the reason to use Select(actor) is because the Fiducial call back 
+       # below checks for it in the begining.
+       # the actor info is then passed on to orient the direction of the camera.
     
-    set Select(actor) Model($model,actor,viewRen)
+       set Select(actor) Model($model,actor,viewRen)
   
-    set polyData $Model($model,polyData)
+       set polyData $Model($model,polyData)
 
-    set cellNum [$polyData GetNumberOfCells]
-    set randId  [expr round( [expr [expr rand()]*1000])]
-    set minId $randId
-    set maxId [expr [expr $cellNum -1] - $randId] 
+       set cellNum [$polyData GetNumberOfCells]
+       set randId  [expr round( [expr [expr rand()]*1000])]
+       set minId $randId
+       set maxId [expr [expr $cellNum -1] - $randId] 
+       
+       set Select(cellId) $minId
+       
+       set cell [$polyData GetCell $minId]
+       set points [$cell GetPoints]
+       set point2 [$points GetPoint 1]
+       
+       set x [lindex $point2 0]
+       set y [lindex $point2 1]
+       set z [lindex $point2 2]
+       
+       set pid [FiducialsCreatePointFromWorldXYZ "default" $x $y $z $list]
+       if { $pid != "" } {
+           set fid $Fiducials($Fiducials(activeList),fid)
+           
+           Fiducials($fid,node) SetTextSize 0.0
+           Fiducials($fid,node) SetSymbolSize 1.0
+           
+           PathPlanningSetSource $fid $pid
+       }
+       
+       # MainUpdateMRML
+       # just update the models, don't care about anything else
+       MainModelsUpdateMRML
 
-    set Select(cellId) $minId
-
-    set cell [$polyData GetCell $minId]
-    set points [$cell GetPoints]
-    set point2 [$points GetPoint 1]
-
-    set x [lindex $point2 0]
-    set y [lindex $point2 1]
-    set z [lindex $point2 2]
-
-    set pid [FiducialsCreatePointFromWorldXYZ "default" $x $y $z $list]
-    if { $pid != "" } {
-    set fid $Fiducials($Fiducials(activeList),fid)
-
-    Fiducials($fid,node) SetTextSize 0.0
-    Fiducials($fid,node) SetSymbolSize 1.0
-
-    PathPlanningSetSource $fid $pid
-    }
-
-    MainUpdateMRML
-    Render3D
-
-    set Select(cellId) $maxId
-
-    set cell [$polyData GetCell $maxId]
-    set points [$cell GetPoints]
-    set point2 [$points GetPoint 1]
-
-    set x [lindex $point2 0]
-    set y [lindex $point2 1]
-    set z [lindex $point2 2]
-
-    set pid [FiducialsCreatePointFromWorldXYZ "default" $x $y $z $list]
-   if { $pid != "" } {
-    set fid $Fiducials($Fiducials(activeList),fid)
-    PathPlanningSetSink $fid $pid
-    }
-
-   MainUpdateMRML
-   Render3D
-
-}
+       # don't need to call this twice
+       if {$::Module(verbose)} {
+           puts "EndoscopicAutoSelectSourceSink: skipping first render call"
+       }
+       # Render3D
+       
+       set Select(cellId) $maxId
+       
+       set cell [$polyData GetCell $maxId]
+       set points [$cell GetPoints]
+       set point2 [$points GetPoint 1]
+       
+       set x [lindex $point2 0]
+       set y [lindex $point2 1]
+       set z [lindex $point2 2]
+       
+       set pid [FiducialsCreatePointFromWorldXYZ "default" $x $y $z $list]
+       if { $pid != "" } {
+           set fid $Fiducials($Fiducials(activeList),fid)
+           PathPlanningSetSink $fid $pid
+       }
+       
+       MainUpdateMRML
+       Render3D
+       
+   }
 }
 
 
 #=========================================================================
-
 #  Part 11  Procedures related to displaying the flattened colon
-
 #=========================================================================
 
 #-------------------------------------------------------------------------------
 # .PROC  EndoscopicSetFlatFileName
-# set file name
+# Set file name from Endoscopic(FlatSelect)
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicSetFlatFileName {} {
     global Endoscopic
 
-# do nothing if the user cancelled in the browser box
-   if {$Endoscopic(FlatSelect) == ""} {
-   set Endoscopic(flatColon,name) ""
-   set Endoscopic(FlatSelect) ""
+    # do nothing if the user cancelled in the browser box
+    if {$Endoscopic(FlatSelect) == ""} {
+        set Endoscopic(flatColon,name) ""
+        set Endoscopic(FlatSelect) ""
+        
+        return
+    }
 
-   return
-   }
-
-# name the flattened view based on the entered file name.
+    # name the flattened view based on the entered file name.
     set Endoscopic(flatColon,filePath) [file root $Endoscopic(FlatSelect)]
     #puts "file path is $root"
     set Endoscopic(flatColon,name) [file root [file tail $Endoscopic(FlatSelect)]]
@@ -4878,7 +4784,7 @@ proc EndoscopicSetFlatFileName {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicCancelFlatFile
-# remove file name and reset variables.
+# Remove file name and reset variables.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -4892,8 +4798,8 @@ proc EndoscopicCancelFlatFile {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicAddFlatView
-# Open a separate render window to display the flattened colon.
-# Simple Gui are also written here with parameters tailored to the size of the flatttened colon.
+# Open a separate render window to display the flattened colon.<br>
+# Simple Gui are also written here with parameters tailored to the size of the flatttened colon.<br>
 # Bindings are pushed here.
 # .ARGS
 # .END
@@ -4903,16 +4809,16 @@ proc EndoscopicAddFlatView {} {
 
     # deny if the user clicks 'Choose' when the selection box is empty
     if {$Endoscopic(FlatSelect) == ""} {
-    DevWarningWindow "Please select a file to display."
-    return
+        DevWarningWindow "Please select a file to display."
+        return
     }
 
     set name $Endoscopic(flatColon,name)
 
     # deny if user tries to display an already displayed file
     if {[lsearch -exact $Endoscopic(FlatWindows) $name] != -1} {
-    DevWarningWindow "Please select a file that is not already displayed."
-    return
+        DevWarningWindow "Please select a file that is not already displayed."
+        return
     }
     
     # add the new window to the list of open windows
@@ -5175,19 +5081,19 @@ proc EndoscopicAddFlatView {} {
     set Endoscopic(flatColon,zMin) [lindex $outline 4]
     set Endoscopic(flatColon,zMax) [lindex $outline 5]  
 
-# normalize the initial camera position   
+    # normalize the initial camera position   
     set y [expr $Endoscopic(flatColon,yMax) - $Endoscopic(flatColon,yMin)]
     set y [expr abs($y)]
     set Endoscopic(flatColon,zOpt) [expr [expr 5*$y]/8]
     
     set Endoscopic(flatColon,yMid) [expr [expr $Endoscopic(flatColon,yMin) + $Endoscopic(flatColon,yMax)]/2]
 
-# re-config the scale according to the size of the flat colon        
+    # re-config the scale according to the size of the flat colon        
     $Endoscopic(flatScale,progress) config -from [expr [expr floor($Endoscopic(flatColon,xMin))]-1] -to [expr ceil($Endoscopic(flatColon,xMax))]
     $Endoscopic(flatScale,panud) config -from [expr [expr ceil($Endoscopic(flatColon,yMin))]-2] -to [expr [expr ceil($Endoscopic(flatColon,yMax))]+2]
     $Endoscopic(flatScale,camZoom) config -from 0 -to [expr [expr ceil($Endoscopic(flatColon,zOpt))] + 300]
 
-# set initial camera position   
+    # set initial camera position   
     set Endoscopic(flatColon,xCamDist) [expr [expr floor($Endoscopic(flatColon,xMin))]-1]
     $Endoscopic(flatScale,progress) set $Endoscopic(flatColon,xCamDist)
     
@@ -5255,7 +5161,7 @@ proc EndoscopicAddFlatView {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicRemoveFlatView
-# Remove the flattened colon window and everything related to it.
+# Remove the flattened colon window and everything related to it.<br>
 # Pop Bindings here
 # .ARGS
 # string name defaults to empty string
@@ -5264,63 +5170,63 @@ proc EndoscopicAddFlatView {} {
 proc EndoscopicRemoveFlatView {{name ""}} {
     global Module Endoscopic View
 
-# if clicked 'Quit' button
+    # if clicked 'Quit' button
     if {$name != ""} {
     
-    set f .t$name.fView
+        set f .t$name.fView
     
-# destroy all parts of the flat view
-#puts "window close $name"    
-    Endoscopic($name,FlatColonActor) Delete
-    Endoscopic($name,FlatColonMapper) Delete
+        # destroy all parts of the flat view
+        #puts "window close $name"    
+        Endoscopic($name,FlatColonActor) Delete
+        Endoscopic($name,FlatColonMapper) Delete
+        
+        Endoscopic(flatColon,lookupTable,$name) Delete
+        
+        # actor for flattened image
+        Endoscopic($name,outlineActor) Delete
+        Endoscopic($name,lightKit) Delete
+        #    Endoscopic($name,light) Delete
+        
+        Endoscopic(flatColon,$name,Line1Actor) Delete
+        Endoscopic(flatColon,$name,Line2Actor) Delete
+        
     
-    Endoscopic(flatColon,lookupTable,$name) Delete
-    
-    # actor for flattened image
-    Endoscopic($name,outlineActor) Delete
-    Endoscopic($name,lightKit) Delete
-#    Endoscopic($name,light) Delete
-    
-    Endoscopic(flatColon,$name,Line1Actor) Delete
-    Endoscopic(flatColon,$name,Line2Actor) Delete
-    
-    
-    for {set linecount 0} {$linecount < $Endoscopic($name,lineCount)} {incr linecount} {
-       Endoscopic($name,aLineActor,$linecount) Delete
-    }
-    set $Endoscopic($name,lineCount) 0
-    
-    set index [lsearch -exact $Endoscopic(FlatWindows) $name]
-    set Endoscopic(FlatWindows) [lreplace $Endoscopic(FlatWindows) $index $index]
-    set Endoscopic(FlatRenderers) [lreplace $Endoscopic(FlatRenderers) $index $index]
-   
-    Endoscopic($name,renderer) Delete
-    Endoscopic(flatColon,renWin,$name) Delete
-   # Endoscopic(flatColon,renWidget,$name) Delete
-   
-    
-    destroy .t$name
-
-     } else {
-  
-#        if ending all
-
-        foreach frame $Endoscopic(FlatWindows) {
-        destroy .t$frame
-#puts "frame close $frame"      
-        Endoscopic($frame,renderer) Delete
-        Endoscopic($frame,FlatColonActor) Delete
-        Endoscopic($frame,outlineActor) Delete
-        Endoscopic($frame,lightKit) Delete
-        Endoscopic($frame,light) Delete
+        for {set linecount 0} {$linecount < $Endoscopic($name,lineCount)} {incr linecount} {
+            Endoscopic($name,aLineActor,$linecount) Delete
         }
+        set $Endoscopic($name,lineCount) 0
     
-     set index [lsearch -exact $Endoscopic(FlatWindows) $name]
-     set Endoscopic(FlatWindows) [lreplace $Endoscopic(FlatWindows) $index $index]
-     set Endoscopic(FlatRenderers) [lreplace $Endoscopic(FlatRenderers) $index $index]
-
+        set index [lsearch -exact $Endoscopic(FlatWindows) $name]
+        set Endoscopic(FlatWindows) [lreplace $Endoscopic(FlatWindows) $index $index]
+        set Endoscopic(FlatRenderers) [lreplace $Endoscopic(FlatRenderers) $index $index]
+        
+        Endoscopic($name,renderer) Delete
+        Endoscopic(flatColon,renWin,$name) Delete
+        # Endoscopic(flatColon,renWidget,$name) Delete
+        
+        
+        destroy .t$name
+        
+    } else {
+        
+        #        if ending all
+        
+        foreach frame $Endoscopic(FlatWindows) {
+            destroy .t$frame
+            #puts "frame close $frame"      
+            Endoscopic($frame,renderer) Delete
+            Endoscopic($frame,FlatColonActor) Delete
+            Endoscopic($frame,outlineActor) Delete
+            Endoscopic($frame,lightKit) Delete
+            Endoscopic($frame,light) Delete
+        }
+        
+        set index [lsearch -exact $Endoscopic(FlatWindows) $name]
+        set Endoscopic(FlatWindows) [lreplace $Endoscopic(FlatWindows) $index $index]
+        set Endoscopic(FlatRenderers) [lreplace $Endoscopic(FlatRenderers) $index $index]
+        
     }
-   
+    
    
     set Endoscopic(FlatSelect) ""
     set Endoscopic(flatColon,name) ""
@@ -5329,7 +5235,7 @@ proc EndoscopicRemoveFlatView {{name ""}} {
     set Endoscopic(flatColon,scalarLow) 0    
     set Endoscopic(flatColon,scalarHigh) 100
         
- # de-activate bindings for the flat window   
+    # de-activate bindings for the flat window   
     EndoscopicPopFlatBindings
 }
 
@@ -5338,7 +5244,7 @@ proc EndoscopicRemoveFlatView {{name ""}} {
 # Create and Activate binding sets that allow the user to double click at a location on the flattened colon,
 # move the endoscope to the corresponding location in 3D, and sychronize the 2D slices as well
 # .ARGS
-# windowelement widget 
+# windowelement widget the window to add the bindings to
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicCreateFlatBindings {widget} {
@@ -5363,7 +5269,7 @@ proc EndoscopicCreateFlatBindings {widget} {
 #test binding to track mouse position
 #    EvDeclareEventHandler FlatMotionEvents <Motion> {EndoscopicMouseLocation %W %x %y}
 
-#add various events to the binding set for the flat window
+    #add various events to the binding set for the flat window
     EvAddWidgetToBindingSet bindFlatWindowEvents $widget {{FlatWindowEvents} {FlatWindowExpose} \
     {FlatWindowStartPan} {FlatWindowB2Motion} {FlatWindowEndPan}}
     
@@ -5371,9 +5277,8 @@ proc EndoscopicCreateFlatBindings {widget} {
 # to activate: append the following 3 bindings to  EvAddWidgetToBindingSet  
 #     {FlatWindowStartZoom} {FlatWindowB3Motion} {FlatWindowEndZoom}
 
-#activate the binding set for the flat window
+    #activate the binding set for the flat window
     EvActivateBindingSet bindFlatWindowEvents
-
 }
 
 #-------------------------------------------------------------------------------
@@ -5390,57 +5295,57 @@ proc EndoscopicPopFlatBindings {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicBuildFlatColonLookupTable
+# Builds a colour look up talbe for the flat colon view
 # .ARGS
-# string name defaults to empty string
+# string name partial name for the colour table, defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicBuildFlatColonLookupTable {{name ""}} {
     global Endoscopic
      
+    vtkLookupTable Endoscopic(flatColon,lookupTable,$name)
+    #actual values are from 0 to 255
+    Endoscopic(flatColon,lookupTable,$name) SetNumberOfColors 256
+    Endoscopic(flatColon,lookupTable,$name) Build
      
-     vtkLookupTable Endoscopic(flatColon,lookupTable,$name)
-     #actual values are from 0 to 255
-     Endoscopic(flatColon,lookupTable,$name) SetNumberOfColors 256
-     Endoscopic(flatColon,lookupTable,$name) Build
-     
-     set colon 64
-     set polyp 64
-     set transL $colon
-     set transH [expr [expr 256 - $polyp] + 1]
-          
-     # for the first 64 slots in the table, set the color to be the same as the colon (skin rgb: 1.0 0.8 0.7)
-     for {set i 0} {$i < $colon} {incr i} {
+    set colon 64
+    set polyp 64
+    set transL $colon
+    set transH [expr [expr 256 - $polyp] + 1]
+    
+    # for the first 64 slots in the table, set the color to be the same as the colon (skin rgb: 1.0 0.8 0.7)
+    for {set i 0} {$i < $colon} {incr i} {
         eval Endoscopic(flatColon,lookupTable,$name) SetTableValue $i 1.0 0.8 0.7 1
-     }
-     
-     # for the next 128 slots in the table, set the color to be in transition from skin to green
-     # i.e., green value increases to 1, and both the red and the blue values decrease to 0
-     for {set i $transL} {$i < $transH} {incr i} {
-     
-     set numSteps [expr [expr $transH - $transL] + 1]
-     
-     set redDecr [expr 1.0 / $numSteps]
-     set greenIncr [expr [expr 1.0 - 0.8] / $numSteps]
-     set blueDecr [expr 0.7 / $numSteps]
-     
-     set red [expr 1.0 - [expr [expr $i - $transL] * $redDecr]]
-     set green [expr 0.8 + [expr [expr $i - $transL] * $greenIncr]]
-     set blue [expr 0.7 - [expr [expr $i - $transL] * $blueDecr]]
-     
-     eval Endoscopic(flatColon,lookupTable,$name) SetTableValue $i $red $green $blue 0.9
-     }
-      
-     # for the last 64 slots in the table, set the color to be green (rgb: 0 1 0)
-      for {set i $transH} {$i < 256} {incr i} {
+    }
+    
+    # for the next 128 slots in the table, set the color to be in transition from skin to green
+    # i.e., green value increases to 1, and both the red and the blue values decrease to 0
+    for {set i $transL} {$i < $transH} {incr i} {
+        
+        set numSteps [expr [expr $transH - $transL] + 1]
+        
+        set redDecr [expr 1.0 / $numSteps]
+        set greenIncr [expr [expr 1.0 - 0.8] / $numSteps]
+        set blueDecr [expr 0.7 / $numSteps]
+        
+        set red [expr 1.0 - [expr [expr $i - $transL] * $redDecr]]
+        set green [expr 0.8 + [expr [expr $i - $transL] * $greenIncr]]
+        set blue [expr 0.7 - [expr [expr $i - $transL] * $blueDecr]]
+        
+        eval Endoscopic(flatColon,lookupTable,$name) SetTableValue $i $red $green $blue 0.9
+    }
+    
+    # for the last 64 slots in the table, set the color to be green (rgb: 0 1 0)
+    for {set i $transH} {$i < 256} {incr i} {
         eval Endoscopic(flatColon,lookupTable,$name) SetTableValue $i 0.0 1.0 0.0 1
-      }
-
+    }   
 }
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicBuildFlatBoundary
+# Create the boundary line around the flat view.
 # .ARGS
-# string name defaults to empty string
+# string name name of the line actor, defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicBuildFlatBoundary {{name ""}} {
@@ -5451,7 +5356,7 @@ proc EndoscopicBuildFlatBoundary {{name ""}} {
      set line2name $Endoscopic(flatColon,filePath)
      append line1name _Line1.txt
      append line2name _Line2.txt
-# Create the 1st boundary line     
+     # Create the 1st boundary line     
      set fp1 [open $line1name r]
      set data1 [read $fp1]
      set line1s [split [string trim $data1] "\n"]
@@ -5462,100 +5367,98 @@ proc EndoscopicBuildFlatBoundary {{name ""}} {
      vtkPoints Line1Points
      Line1Points SetNumberOfPoints $line1numP
      for {set i 1} {$i <= $line1numP} {incr i} {
-       set point [lindex $line1s $i]
+         set point [lindex $line1s $i]
      
-       set x [lindex $point 0]
-       set y [lindex $point 1]
-       set z [lindex $point 2]
-     
-       Line1Points InsertPoint $i $x $y $z
-     }
+         set x [lindex $point 0]
+         set y [lindex $point 1]
+         set z [lindex $point 2]
          
+         Line1Points InsertPoint $i $x $y $z
+     }
+     
      vtkCellArray Line1Cells
      Line1Cells InsertNextCell $line1numP
      
      for {set i 1} {$i <= $line1numP} {incr i} {
-        Line1Cells InsertCellPoint $i
+         Line1Cells InsertCellPoint $i
      }
      
      vtkPolyData Line1
-       Line1 SetPoints Line1Points
-       Line1 SetLines Line1Cells
+     Line1 SetPoints Line1Points
+     Line1 SetLines Line1Cells
      
      
      vtkPolyDataMapper Line1Mapper
      Line1Mapper SetInput Line1
-
+     
      vtkActor Endoscopic(flatColon,$name,Line1Actor)
      Endoscopic(flatColon,$name,Line1Actor) SetMapper Line1Mapper
      
      [Endoscopic(flatColon,$name,Line1Actor) GetProperty] SetColor 0 0 0
      
-    Endoscopic($name,renderer) AddActor Endoscopic(flatColon,$name,Line1Actor)
-    
-    Line1Points Delete
-    Line1Cells Delete
-    Line1 Delete
-    Line1Mapper Delete
-    
-# Create the 2nd boundary line
-
+     Endoscopic($name,renderer) AddActor Endoscopic(flatColon,$name,Line1Actor)
+     
+     Line1Points Delete
+     Line1Cells Delete
+     Line1 Delete
+     Line1Mapper Delete
+     
+     # Create the 2nd boundary line
+     
      set fp2 [open $line2name r]
      set data2 [read $fp2]
      set line2s [split [string trim $data2] "\n"]
      
      set line2numP [lindex $line2s 0]
-#     puts "line2 number of points: $line2numP"
+     #     puts "line2 number of points: $line2numP"
      
      vtkPoints Line2Points
      Line2Points SetNumberOfPoints $line2numP
      for {set i 1} {$i <= $line2numP} {incr i} {
-       set point [lindex $line2s $i]
-     
-       set x [lindex $point 0]
-       set y [lindex $point 1]
-       set z [lindex $point 2]
-     
-       Line2Points InsertPoint $i $x $y $z
-     }
+         set point [lindex $line2s $i]
          
+         set x [lindex $point 0]
+         set y [lindex $point 1]
+         set z [lindex $point 2]
+         
+         Line2Points InsertPoint $i $x $y $z
+     }
+     
      vtkCellArray Line2Cells
      Line2Cells InsertNextCell $line2numP
      
      for {set i 1} {$i <= $line2numP} {incr i} {
-        Line2Cells InsertCellPoint $i
+         Line2Cells InsertCellPoint $i
      }
      
      vtkPolyData Line2
-       Line2 SetPoints Line2Points
-       Line2 SetLines Line2Cells
+     Line2 SetPoints Line2Points
+     Line2 SetLines Line2Cells
      
      
      vtkPolyDataMapper Line2Mapper
      Line2Mapper SetInput Line2
-
+     
      vtkActor Endoscopic(flatColon,$name,Line2Actor)
      Endoscopic(flatColon,$name,Line2Actor) SetMapper Line2Mapper
      
      [Endoscopic(flatColon,$name,Line2Actor) GetProperty] SetColor 0 0 0
      
-    Endoscopic($name,renderer) AddActor Endoscopic(flatColon,$name,Line2Actor)
-    
-    Line2Points Delete
-    Line2Cells Delete
-    Line2 Delete
-    Line2Mapper Delete
-
-    
+     Endoscopic($name,renderer) AddActor Endoscopic(flatColon,$name,Line2Actor)
+     
+     Line2Points Delete
+     Line2Cells Delete
+     Line2 Delete
+     Line2Mapper Delete     
 }
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicMouseLocation
-# test proc to track mouse location in the flat window
+# Test proc to track mouse location in the flat window
 # .ARGS
-# windowelement widget
-# int xcoord
-# int ycoord 
+# windowelement widget the flat window
+# int xcoord mouse location in x
+# int ycoord mouse location in y
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicMouseLocation {widget xcoord ycoord} {
@@ -5568,10 +5471,11 @@ proc EndoscopicMouseLocation {widget xcoord ycoord} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicStartPan
+# Set the x and y start points for panning.
 # .ARGS
-# windowelement widget
-# int xcoord
-# int ycoord
+# windowelement widget flat window
+# int xcoord start panning here in x
+# int ycoord start panning here in y
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicStartPan {widget xcoord ycoord} {
@@ -5581,16 +5485,15 @@ proc EndoscopicStartPan {widget xcoord ycoord} {
 
     set Endoscopic($name,pan,xstart) $xcoord
     set Endoscopic($name,pan,ystart) $ycoord     
-     
-     
 }
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicEndPan
+# End panning through the flat view
 # .ARGS
-# windowelement widget
-# int xcoord
-# int ycoord
+# windowelement widget flat window
+# int xcoord x point for panning
+# int ycoord y point for panning
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicEndPan {widget xcoord ycoord} {
@@ -5614,27 +5517,27 @@ proc EndoscopicEndPan {widget xcoord ycoord} {
     
     if {$x2 < [expr ceil($Endoscopic(flatColon,xMax))] } {
     
-    $Endoscopic($name,camera) SetFocalPoint $x2 $y2 0
-    $Endoscopic($name,camera) SetPosition $x2 $y2 $z1
+        $Endoscopic($name,camera) SetFocalPoint $x2 $y2 0
+        $Endoscopic($name,camera) SetPosition $x2 $y2 $z1
     
-    set Endoscopic(flatColon,xCamDist) $x2
-    set Endoscopic(flatColon,yCamDist) $y2
-
-    [$widget GetRenderWindow] Render
+        set Endoscopic(flatColon,xCamDist) $x2
+        set Endoscopic(flatColon,yCamDist) $y2
+        
+        [$widget GetRenderWindow] Render
     
     } elseif {$x2 < [expr [expr floor($Endoscopic(flatColon,xMin))]-0.5] } {
-    set Endoscopic(flatColon,xCamDist) [expr floor($Endoscopic(flatColon,xMin))]
+        set Endoscopic(flatColon,xCamDist) [expr floor($Endoscopic(flatColon,xMin))]
     } else {
-    set Endoscopic(flatColon,xCamDist) [expr ceil($Endoscopic(flatColon,xMax))]
+        set Endoscopic(flatColon,xCamDist) [expr ceil($Endoscopic(flatColon,xMax))]
     }
-     
 }
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicStartZoom
+# Set the zoom y start position.
 # .ARGS
-# windowelement widget 
-# int ycoord
+# windowelement widget flat window
+# int ycoord zoom's y start position
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicStartZoom {widget ycoord} {
@@ -5642,35 +5545,34 @@ proc EndoscopicStartZoom {widget ycoord} {
     
     set name $Endoscopic($widget,name)
     set Endoscopic($name,zoom,ystart) $ycoord     
-     
-     
 }
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicEndZoom
+# End zooming in flat window.
 # .ARGS
-# windowelement widget 
-# int ycoord
+# windowelement widget flat window
+# int ycoord zoom y start position
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicEndZoom {widget ycoord} {
-     global Endoscopic
+    global Endoscopic
 
     set name $Endoscopic($widget,name)
 
     set ystart $Endoscopic($name,zoom,ystart)
     set dy [expr $ycoord - $ystart]
     
-     # log base b of x = log(x) / log(b)
-     set b      1.02
-     set zPrev  1.5
-     set dyPrev [expr log($zPrev) / log($b)]
+    # log base b of x = log(x) / log(b)
+    set b      1.02
+    set zPrev  1.5
+    set dyPrev [expr log($zPrev) / log($b)]
 
-     set zoom [expr pow($b, ($dy + $dyPrev))]
-     if {$zoom < 0.01} {
-         set zoom 0.01
-     }
-     set z [format "%.2f" $zoom]
+    set zoom [expr pow($b, ($dy + $dyPrev))]
+    if {$zoom < 0.01} {
+        set zoom 0.01
+    }
+    set z [format "%.2f" $zoom]
 
     $Endoscopic($name,camera) Zoom $z
     
@@ -5678,17 +5580,15 @@ proc EndoscopicEndZoom {widget ycoord} {
     set Endoscopic(flatColon,zCamDist) [lindex $position 2]
     
     [$widget GetRenderWindow] Render     
-     
-     
 }
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicPickFlatPoint
-# use vtkCellPicker to identify the cell Id and location of interest.
+# Use vtkCellPicker to identify the cell Id and location of interest.
 # .ARGS
-# windowelement widget
-# int xcoord
-# int ycoord
+# windowelement widget flat window
+# int xcoord picked x location
+# int ycoord picked y location
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicPickFlatPoint {widget xcoord ycoord} {
@@ -5696,64 +5596,64 @@ proc EndoscopicPickFlatPoint {widget xcoord ycoord} {
     
      set model $Model(activeID)
      if {$model != ""} {
-     set polyData3D $Model($model,polyData)
+         set polyData3D $Model($model,polyData)
      }
      
-     set numP [$polyData3D GetNumberOfPoints]
+    set numP [$polyData3D GetNumberOfPoints]
     
-#puts "start pick: clock format [clock seconds]"
+    #puts "start pick: clock format [clock seconds]"
     set name $Endoscopic($widget,name)
     
     vtkCellPicker TempCellPicker
     TempCellPicker SetTolerance 0.001
     
     
-#get the target coordinates in the flat window to draw a crosshair
+    #get the target coordinates in the flat window to draw a crosshair
     if {[SelectPick TempCellPicker $widget $xcoord $ycoord] != 0} {
     
-    set fx [lindex $Select(xyz) 0]
-    set fy [lindex $Select(xyz) 1]
-    set fz [lindex $Select(xyz) 2]
-    
-#puts "end pick : clock format [clock seconds]"
-    
+        set fx [lindex $Select(xyz) 0]
+        set fy [lindex $Select(xyz) 1]
+        set fz [lindex $Select(xyz) 2]
         
-#get the picked pointId from the picker, and pass the pointId to the 3D model in slicer
-
-    set name $Endoscopic(flatColon,name)  
-    set polyData $Endoscopic($name,polyData)
-    
-#reduce point number by half
-#    set numP [$polyData GetNumberOfPoints]
-# puts "nump for the doubled model is: $numP"
-#    set numP  [expr $numP/2] 
-# puts "nump for the single model is: $numP"    
-#puts "start locate point: clock format [clock seconds]"     
-    vtkPointLocator tempPointLocator
-    tempPointLocator SetDataSet $polyData
-
-#    set x [lindex $Select(xyz) 0]
-#    set y [lindex $Select(xyz) 1]
-#    set z [lindex $Select(xyz) 2]
-    
-    set pointId [tempPointLocator FindClosestPoint $fx $fy $fz]
-# puts "picked pointId from the double model is $pointId"
-#puts "end locate point: clock format [clock seconds]"    
-# check if the pointId is larger than numP
-       if {$pointId > $numP} {
-       set pointId [expr $pointId - $numP]
-       }
-       
-# puts "picked pointId from the single model is $pointId"   
-
-       
-    EndoscopicAddTargetInFlatWindow $widget $fx $fy $fz
-
-    
-    EndoscopicAddTargetFromFlatColon $pointId
-            
+        #puts "end pick : clock format [clock seconds]"
+        
+        
+        #get the picked pointId from the picker, and pass the pointId to the 3D model in slicer
+        
+        set name $Endoscopic(flatColon,name)  
+        set polyData $Endoscopic($name,polyData)
+        
+        #reduce point number by half
+        #    set numP [$polyData GetNumberOfPoints]
+        # puts "nump for the doubled model is: $numP"
+        #    set numP  [expr $numP/2] 
+        # puts "nump for the single model is: $numP"    
+        #puts "start locate point: clock format [clock seconds]"     
+        vtkPointLocator tempPointLocator
+        tempPointLocator SetDataSet $polyData
+        
+        #    set x [lindex $Select(xyz) 0]
+        #    set y [lindex $Select(xyz) 1]
+        #    set z [lindex $Select(xyz) 2]
+        
+        set pointId [tempPointLocator FindClosestPoint $fx $fy $fz]
+        # puts "picked pointId from the double model is $pointId"
+        #puts "end locate point: clock format [clock seconds]"    
+        # check if the pointId is larger than numP
+        if {$pointId > $numP} {
+            set pointId [expr $pointId - $numP]
+        }
+        
+        # puts "picked pointId from the single model is $pointId"   
+        
+        
+        EndoscopicAddTargetInFlatWindow $widget $fx $fy $fz
+        
+        
+        EndoscopicAddTargetFromFlatColon $pointId
+        
     } else {
-    return
+        return
     }
    
     TempCellPicker Delete
@@ -5764,10 +5664,10 @@ proc EndoscopicPickFlatPoint {widget xcoord ycoord} {
 # .PROC EndoscopicAddTargetInFlatWindow
 # Draw a vertical red line behind the flattened colon at locations of interest selected by the user.
 # .ARGS
-# windowelement widget
-# int x
-# int y
-# int z
+# windowelement widget flat window
+# int x x of selected point
+# int y y of selected point
+# int z z of selected point
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicAddTargetInFlatWindow {widget x y z} {
@@ -5876,7 +5776,7 @@ proc EndoscopicAddTargetInFlatWindow {widget x y z} {
 # Find and sychronize the corresponing location in 3D colon and 2D slices that 
 # corresponds to the location selected on the flattened colon
 # .ARGS
-# int pointId
+# int pointId the id of the fiducial point
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicAddTargetFromFlatColon {pointId} {
@@ -5886,11 +5786,10 @@ proc EndoscopicAddTargetFromFlatColon {pointId} {
 #  If no path selected, do nothing.
 
     if {$Endoscopic(path,activeId) == "None"} {
-
-    return
+        return
     }    
     
-        set pointId $pointId
+    set pointId $pointId
 
 # puts "pointId from FlatColon is $pointId"
 
@@ -5898,11 +5797,11 @@ proc EndoscopicAddTargetFromFlatColon {pointId} {
        set model $Model(activeID)
        if {$model != ""} {
 
-       set polyData $Model($model,polyData)
+           set polyData $Model($model,polyData)
        
-       set point(xyz) [$polyData GetPoint $pointId]
+           set point(xyz) [$polyData GetPoint $pointId]
 
-       set actor Model($model,actor,viewRen)
+           set actor Model($model,actor,viewRen)
 
        }
 
@@ -5979,9 +5878,9 @@ proc EndoscopicAddTargetFromFlatColon {pointId} {
 # .PROC EndoscopicAddTargetFromSlices
 #  When a user selects a location on the 2D slices, the Endoscope in 3D jumps to the corresponding location
 # .ARGS
-# int x
-# int y
-# int z
+# int x User selected x
+# int y User selected y
+# int z User selected z
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicAddTargetFromSlices {x y z} {
@@ -5992,7 +5891,7 @@ proc EndoscopicAddTargetFromSlices {x y z} {
 
     if {$Endoscopic(path,activeId) == "None"} {
 
-    return
+        return
     }
 
 # get the pointId from the 3D model    
@@ -6104,9 +6003,9 @@ tempPointLocator Delete
 # .PROC EndoscopicAddTargetFromWorldCoordinates
 #  When a user selects a location on the 3D model, the 2D slices sychronises.
 # .ARGS
-# int sx
-# int sy
-# int sz
+# int sx world x
+# int sy world y
+# int sz world z
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicAddTargetFromWorldCoordinates {sx sy sz} {
@@ -6230,7 +6129,7 @@ proc EndoscopicAddTargetFromWorldCoordinates {sx sy sz} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicLoadTargets
-# given a particular path, this allows the user to reload reviously saved targets in the MRML tree.
+# Given a particular path, this allows the user to reload reviously saved targets in the MRML tree.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -6287,17 +6186,15 @@ proc EndoscopicMainFileCloseUpdated {}  {
      
      if {$Endoscopic(totalTargets) != 0} {
      
-     set Endoscopic(totalTargets) 0
-     set Endoscopic(selectedTarget) 0
-     
-     set Endoscopic(path,activeId) "None"
-    # change the text on menu buttons
-        foreach mb $Endoscopic(mbPathList) {
-            $mb config -text "None"
-        }
-     $Endoscopic(mbPath4Fly) config -text "None"
-
-     
+         set Endoscopic(totalTargets) 0
+         set Endoscopic(selectedTarget) 0
+         
+         set Endoscopic(path,activeId) "None"
+         # change the text on menu buttons
+         foreach mb $Endoscopic(mbPathList) {
+             $mb config -text "None"
+         }
+         $Endoscopic(mbPath4Fly) config -text "None"
      }
      
      set Endoscopic(flatColon,scalarVisibility) 0
@@ -6308,7 +6205,7 @@ proc EndoscopicMainFileCloseUpdated {}  {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicCreateTarget
-# create a target fiducial at the look at point, the look from point is located at the endoscopic camera
+# Create a target fiducial at the look at point, the look from point is located at the endoscopic camera
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -6390,7 +6287,7 @@ proc EndoscopicCreateTargets {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicUpdateActiveTarget
-# this is called when the user modify the endoscope's position and orientation to look at an existing fiducial point.
+# This is called when the user modifies the endoscope's position and orientation to look at an existing fiducial point.<br>
 # i.e., the user can adjust the ideal view point for a particular polyp, and then save that information.
 # .ARGS
 # .END
@@ -6400,8 +6297,7 @@ proc EndoscopicUpdateActiveTarget {} {
 
 # get the pid of the selected target
     if {$Endoscopic(path,activeId) == "None"} {
-
-    return
+        return
     }
 
     set index $Endoscopic(selectedTarget)
@@ -6436,7 +6332,7 @@ proc EndoscopicUpdateActiveTarget {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicDeleteActiveTarget
-# delete an existing target from the fiducial list
+# Delete an existing target from the fiducial list.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -6445,7 +6341,7 @@ proc EndoscopicDeleteActiveTarget {} {
     
     if {$Endoscopic(path,activeId) == "None"} {
 
-    return
+        return
     }
 
     set index $Endoscopic(selectedTarget)
@@ -6520,8 +6416,8 @@ proc EndoscopicDeleteActiveTarget {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSelectTarget
-# when a target is selected, the endoscope jumps to the optimum location 
-# (decided by the user) and aim itself at the target.
+# When a target is selected, the endoscope jumps to the optimum location 
+# (decided by the user) and aims itself at the target.
 # .ARGS
 # int sT selected target
 # .END
@@ -6532,8 +6428,7 @@ proc EndoscopicSelectTarget {sT} {
 
 # select target in 3D
     if {$Endoscopic(path,activeId) == "None"} {
-
-    return
+        return
     }
 
     set $Endoscopic(selectedTarget) $sT
@@ -6640,27 +6535,24 @@ proc EndoscopicSelectNextTarget {} {
     global Endoscopic
 
     if {$Endoscopic(path,activeId) == "None"} {
-
-    return
+        return
     }
-
 
     if {$Endoscopic(selectedTarget) < $Endoscopic(totalTargets)} {
 
-    set Endoscopic(selectedTarget) [expr $Endoscopic(selectedTarget) + 1]
+        set Endoscopic(selectedTarget) [expr $Endoscopic(selectedTarget) + 1]
 
-    EndoscopicSelectTarget $Endoscopic(selectedTarget)
-
+        EndoscopicSelectTarget $Endoscopic(selectedTarget)
+        
     } else {
-#   tk_messageBox -message "No More Targets"
-    return
+        #   tk_messageBox -message "No More Targets"
+        return
     }
-
 }  
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSelectPreviousTarget
-# select the previous target.
+# Select the previous target.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -6669,30 +6561,28 @@ proc EndoscopicSelectPreviousTarget {} {
     global Endoscopic
     
     if {$Endoscopic(path,activeId) == "None"} {
-
-    return
+        return
     }
-
 
     if {$Endoscopic(selectedTarget) > 1} {
 
-    set Endoscopic(selectedTarget) [expr $Endoscopic(selectedTarget) - 1]
+        set Endoscopic(selectedTarget) [expr $Endoscopic(selectedTarget) - 1]
 
-    EndoscopicSelectTarget $Endoscopic(selectedTarget)
+        EndoscopicSelectTarget $Endoscopic(selectedTarget)
     
     } else {
-    return
-#    tk_messageBox -message "No More Targets"
+        return
+        # tk_messageBox -message "No More Targets"
     }
 
 }  
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicUpdateTargetsInFlatWindow
-# this is called from the update button in the flat colon window to load 
+# This is called from the update button in the flat colon window to load 
 # the targets from the MRML tree into the flat colon window 
 # .ARGS
-# windowelement widget
+# windowelement widget the flat window
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicUpdateTargetsInFlatWindow {widget} {
@@ -6701,7 +6591,7 @@ proc EndoscopicUpdateTargetsInFlatWindow {widget} {
     
      set model $Model(activeID)
      if {$model != ""} {
-     set polyData3D $Model($model,polyData)
+         set polyData3D $Model($model,polyData)
      }
      
      set numP3D [$polyData3D GetNumberOfPoints]
@@ -6709,7 +6599,7 @@ proc EndoscopicUpdateTargetsInFlatWindow {widget} {
 
     set name $Endoscopic($widget,name)
 
-# delete all the lines that's already in the flat window
+    # delete all the lines that's already in the flat window
     for {set linecount 0} {$linecount < $Endoscopic($name,lineCount)} {incr linecount} {
         set renderer [[[$widget GetRenderWindow] GetRenderers] GetItemAsObject 0]
         $renderer RemoveActor Endoscopic($name,aLineActor,$linecount)
@@ -6720,81 +6610,80 @@ proc EndoscopicUpdateTargetsInFlatWindow {widget} {
     
     [$widget GetRenderWindow] Render
 
-#get the active path name, and find the corresponding target list
+    #get the active path name, and find the corresponding target list
     if {$Endoscopic(path,activeId) != "None"} {
     
            set fid $Fiducials($Fiducials(activeList),fid)
            set listname $Fiducials($fid,name)
            append listname -targets
     
-# if there is no list, then the user have not inserted any targets
-# else get the cellid from the target pid, and make the line in the flat window.
-# note to myself: the cellId is stored by Point($pid,node) SetDescription when the target was inserted
-
+           # if there is no list, then the user have not inserted any targets
+           # else get the cellid from the target pid, and make the line in the flat window.
+           # note to myself: the cellId is stored by Point($pid,node) SetDescription when the target was inserted
+           
          if {[lsearch $Fiducials(listOfNames) $listname] == -1} {
-        return
-          #  tk_messageBox -message "You have not inserted any target along this path"
+             return
+             #  tk_messageBox -message "You have not inserted any target along this path"
     
          } else {
 
-               set targetfid $Fiducials($listname,fid)
-               set list $Fiducials($targetfid,pointIdList)
-               set numP [llength $list]
-
-                    for {set i 0} {$i < $numP} {incr i} {
-                         set pid [lindex $list $i]
-                         set pointIdT1 [Point($pid,node) GetDescription]
-    # puts "p was $pointIdT1"     
-             set pointIdT2 [expr $pointIdT1 + $numP3D]
-    # puts "p is $pointIdT2"
-                         set polyData $Endoscopic($name,polyData)
-                         set pointT1(xyz) [$polyData GetPoint $pointIdT1]
-             set pointT2(xyz) [$polyData GetPoint $pointIdT2]
-
-    # find the position of the 2 points in both copies of the flat colon
+             set targetfid $Fiducials($listname,fid)
+             set list $Fiducials($targetfid,pointIdList)
+             set numP [llength $list]
              
-             set x1 [lindex $pointT1(xyz) 0]
-             set y1 [lindex $pointT1(xyz) 1]
-             set z1 [lindex $pointT1(xyz) 2]
-         
-             set x2 [lindex $pointT2(xyz) 0]
-             set y2 [lindex $pointT2(xyz) 1]
-             set z2 [lindex $pointT2(xyz) 2]
-         
-    # compare the y position of the 2 points with the center of the flat colon \
-      assume that the point is within the boundary when the diff is smaller for that point \
-      draw target hashes around that point
-      
-         set diff1 [expr abs([expr $y1 - $Endoscopic(flatColon,yMid)])]
-         set diff2 [expr abs([expr $y2 - $Endoscopic(flatColon,yMid)])]
-
-             if {$diff1 <= $diff2} {
-             EndoscopicAddTargetInFlatWindow $widget $x1 $y1 $z1
-         } else {
-             EndoscopicAddTargetInFlatWindow $widget $x2 $y2 $z2
+             for {set i 0} {$i < $numP} {incr i} {
+                 set pid [lindex $list $i]
+                 set pointIdT1 [Point($pid,node) GetDescription]
+                 # puts "p was $pointIdT1"     
+                 set pointIdT2 [expr $pointIdT1 + $numP3D]
+                 # puts "p is $pointIdT2"
+                 set polyData $Endoscopic($name,polyData)
+                 set pointT1(xyz) [$polyData GetPoint $pointIdT1]
+                 set pointT2(xyz) [$polyData GetPoint $pointIdT2]
+                 
+                 # find the position of the 2 points in both copies of the flat colon
+                 
+                 set x1 [lindex $pointT1(xyz) 0]
+                 set y1 [lindex $pointT1(xyz) 1]
+                 set z1 [lindex $pointT1(xyz) 2]
+                 
+                 set x2 [lindex $pointT2(xyz) 0]
+                 set y2 [lindex $pointT2(xyz) 1]
+                 set z2 [lindex $pointT2(xyz) 2]
+                 
+                 # compare the y position of the 2 points with the center of the flat colon \
+                     assume that the point is within the boundary when the diff is smaller for that point \
+                     draw target hashes around that point
+                 
+                 set diff1 [expr abs([expr $y1 - $Endoscopic(flatColon,yMid)])]
+                 set diff2 [expr abs([expr $y2 - $Endoscopic(flatColon,yMid)])]
+                 
+                 if {$diff1 <= $diff2} {
+                     EndoscopicAddTargetInFlatWindow $widget $x1 $y1 $z1
+                 } else {
+                     EndoscopicAddTargetInFlatWindow $widget $x2 $y2 $z2
+                 }
+                 
+             }
          }
-
-                    }
-         }
+           
+       } else {
+           
+           tk_messageBox -message "Please select a path first"
+       }
     
-         } else {
-    
-             tk_messageBox -message "Please select a path first"
-         }
-     
-     if {$Endoscopic(selectedTarget) == 0} {
-     EndoscopicLoadTargets
-     } else {
-     EndoscopicSelectTarget $Endoscopic(selectedTarget)
-     }
-     
+    if {$Endoscopic(selectedTarget) == 0} {
+        EndoscopicLoadTargets
+    } else {
+        EndoscopicSelectTarget $Endoscopic(selectedTarget)
+    }
 }
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicFlatLightElevationAzimuth
-# set the light key light eleveation and azimuth from the inputs
+# Set the light key light eleveation and azimuth from the inputs
 # .ARGS
-# windowelement widget
+# windowelement widget the flat window
 # string Endoscopic(flatColon,LightElev) light elevation, defaults to empty string
 # string Endoscopic(flatColon,LightAzi) light azimuth, defaults to empty string
 # .END
@@ -6813,7 +6702,7 @@ proc EndoscopicFlatLightElevationAzimuth {widget {Endoscopic(flatColon,LightElev
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicMoveCameraX
-# move the camera in the flat colon window along the x axis
+# Move the camera in the flat colon window along the x axis
 # .ARGS
 # windowelement widget 
 # string Endoscopic(flatColon,xCamDist) distance to move the camera, defaults to emtpy string
@@ -6822,142 +6711,138 @@ proc EndoscopicFlatLightElevationAzimuth {widget {Endoscopic(flatColon,LightElev
 proc EndoscopicMoveCameraX {widget {Endoscopic(flatColon,xCamDist)""}} {
     global Endoscopic
  
-  set name $Endoscopic($widget,name)
+    set name $Endoscopic($widget,name)
  
-  set position [$Endoscopic($name,camera) GetPosition]
+    set position [$Endoscopic($name,camera) GetPosition]
   
-  set Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,xCamDist)
-  set Endoscopic(flatColon,yCamDist) [lindex $position 1]
-  set Endoscopic(flatColon,zCamDist) [lindex $position 2]
+    set Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,xCamDist)
+    set Endoscopic(flatColon,yCamDist) [lindex $position 1]
+    set Endoscopic(flatColon,zCamDist) [lindex $position 2]
   
      $Endoscopic($name,camera) SetFocalPoint $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) 0
      $Endoscopic($name,camera) SetPosition $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zCamDist)
  
-   [$widget GetRenderWindow] Render
+    [$widget GetRenderWindow] Render
 }
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicMoveCameraY
-# move the camera in the flat colon window along the y axis
+# Move the camera in the flat colon window along the y axis
 # .ARGS
-# windowelement widget 
+# windowelement widget  the flat window
 # string Endoscopic(flatColon,yCamDist) distance to move the camera, defaults to emtpy string
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicMoveCameraY {widget {Endoscopic(flatColon,yCamDist)""}} {
-   global Endoscopic
+    global Endoscopic
  
-  set name $Endoscopic($widget,name)
+    set name $Endoscopic($widget,name)
 
-  set position [$Endoscopic($name,camera) GetPosition]
-  
-  set Endoscopic(flatColon,xCamDist) [lindex $position 0]
-  set Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,yCamDist)
-  set Endoscopic(flatColon,zCamDist) [lindex $position 2]
-  
-  $Endoscopic($name,camera) SetFocalPoint $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) 0
-  $Endoscopic($name,camera) SetPosition $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zCamDist)
-
-  [$widget GetRenderWindow] Render
+    set position [$Endoscopic($name,camera) GetPosition]
+    
+    set Endoscopic(flatColon,xCamDist) [lindex $position 0]
+    set Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,yCamDist)
+    set Endoscopic(flatColon,zCamDist) [lindex $position 2]
+    
+    $Endoscopic($name,camera) SetFocalPoint $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) 0
+    $Endoscopic($name,camera) SetPosition $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zCamDist)
+    
+    [$widget GetRenderWindow] Render
 }
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicMoveCameraZ
-# zoom the camera in the flat colon window along the z axis (in and out of the screen)
+# Zoom the camera in the flat colon window along the z axis (in and out of the screen)
 # .ARGS
-# windowelement widget
+# windowelement widget the flat window
 # string Endoscopic(flatColon,zCamDist) distance to move the camera, defaults to empty string
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicMoveCameraZ {widget {Endoscopic(flatColon,zCamDist)""}} {
     global Endoscopic
  
-  set name $Endoscopic($widget,name)
-  set position [$Endoscopic($name,camera) GetPosition]
-
-  set Endoscopic(flatColon,xCamDist) [lindex $position 0]
-  set Endoscopic(flatColon,yCamDist) [lindex $position 1]
-  set Endoscopic(flatColon,zCamDist) $Endoscopic(flatColon,zCamDist)
-
-  $Endoscopic($name,camera) SetFocalPoint $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) 0
-  $Endoscopic($name,camera) SetPosition $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zCamDist)
-
-  [$widget GetRenderWindow] Render
+    set name $Endoscopic($widget,name)
+    set position [$Endoscopic($name,camera) GetPosition]
+    
+    set Endoscopic(flatColon,xCamDist) [lindex $position 0]
+    set Endoscopic(flatColon,yCamDist) [lindex $position 1]
+    set Endoscopic(flatColon,zCamDist) $Endoscopic(flatColon,zCamDist)
+    
+    $Endoscopic($name,camera) SetFocalPoint $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) 0
+    $Endoscopic($name,camera) SetPosition $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zCamDist)
+    
+    [$widget GetRenderWindow] Render
 }
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicResetFlatCameraDist
-# reset the camera in the flat colon window to an optimum location along the z axis based on the size of the colon
+# Reset the camera in the flat colon window to an optimum location along the z axis based on the size of the colon
 # .ARGS
-# windowelement widget
+# windowelement widget the flat window
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicResetFlatCameraDist {widget} {
 
     global Endoscopic
-
-   set name $Endoscopic($widget,name)
-   set position [$Endoscopic($name,camera) GetPosition]
-  
-   set Endoscopic(flatColon,xCamDist) [lindex $position 0]
-   set Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,yMid)
-   set Endoscopic(flatColon,zCamDist) $Endoscopic(flatColon,zOpt)
-   
-  $Endoscopic($name,camera) SetFocalPoint $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) 0
-  $Endoscopic($name,camera) SetPosition $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zCamDist)
-  
-  $Endoscopic(flatScale,progress) set $Endoscopic(flatColon,xCamDist)
-  $Endoscopic(flatScale,panud) set $Endoscopic(flatColon,yCamDist)
-  $Endoscopic(flatScale,camZoom) set $Endoscopic(flatColon,zCamDist)
-          
-  [$widget GetRenderWindow] Render
-  
     
+    set name $Endoscopic($widget,name)
+    set position [$Endoscopic($name,camera) GetPosition]
+    
+    set Endoscopic(flatColon,xCamDist) [lindex $position 0]
+    set Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,yMid)
+    set Endoscopic(flatColon,zCamDist) $Endoscopic(flatColon,zOpt)
+    
+    $Endoscopic($name,camera) SetFocalPoint $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) 0
+    $Endoscopic($name,camera) SetPosition $Endoscopic(flatColon,xCamDist) $Endoscopic(flatColon,yCamDist) $Endoscopic(flatColon,zCamDist)
+    
+    $Endoscopic(flatScale,progress) set $Endoscopic(flatColon,xCamDist)
+    $Endoscopic(flatScale,panud) set $Endoscopic(flatColon,yCamDist)
+    $Endoscopic(flatScale,camZoom) set $Endoscopic(flatColon,zCamDist)
+    
+    [$widget GetRenderWindow] Render
 }
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicScrollRightFlatColon
-# 
+# Scroll the flat colon window to the right.
 # .ARGS
-# windowelement widget
+# windowelement widget the flat window
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicScrollRightFlatColon {widget} {
 
     global Endoscopic
 
-   
-   set name $Endoscopic($widget,name)
-   set position [$Endoscopic($name,camera) GetPosition]
-   
-   set Endoscopic(flatColon,xCamDist) [lindex $position 0]
-   
-   while {$Endoscopic(flatColon,xCamDist) < $Endoscopic(flatColon,xMax)} {
-     
-       if {$Endoscopic(flatColon,stop) == "0"} {
-   
-       set  Endoscopic(flatColon,xCamDist) [expr  $Endoscopic(flatColon,xCamDist) + $Endoscopic(flatColon,speed)]
-   
-       EndoscopicMoveCameraX  $widget $Endoscopic(flatColon,xCamDist)
-       
-       update
-       
-       } else {
-       
-       EndoscopicResetStop
-       
-       break
-       
-       }
-   }
-     
+    set name $Endoscopic($widget,name)
+    set position [$Endoscopic($name,camera) GetPosition]
+    
+    set Endoscopic(flatColon,xCamDist) [lindex $position 0]
+    
+    while {$Endoscopic(flatColon,xCamDist) < $Endoscopic(flatColon,xMax)} {
+        
+        if {$Endoscopic(flatColon,stop) == "0"} {
+            
+            set  Endoscopic(flatColon,xCamDist) [expr  $Endoscopic(flatColon,xCamDist) + $Endoscopic(flatColon,speed)]
+            
+            EndoscopicMoveCameraX  $widget $Endoscopic(flatColon,xCamDist)
+            
+            update
+            
+        } else {
+            
+            EndoscopicResetStop
+            
+            break
+            
+        }
+    }
 }
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicScrollLeftFlatColon
-# 
+# Scroll the flat window to the left
 # .ARGS
-# windowelement widget
+# windowelement widget the flat window
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicScrollLeftFlatColon {widget} {
@@ -6965,35 +6850,34 @@ proc EndoscopicScrollLeftFlatColon {widget} {
     global Endoscopic
 
    
-   set name $Endoscopic($widget,name)
-   set position [$Endoscopic($name,camera) GetPosition]
-   
-   set Endoscopic(flatColon,xCamDist) [lindex $position 0]
-   
-   while {$Endoscopic(flatColon,xCamDist) > $Endoscopic(flatColon,xMin)} {
-     
-       if {$Endoscopic(flatColon,stop) == "0"} {
-   
-       set  Endoscopic(flatColon,xCamDist) [expr  $Endoscopic(flatColon,xCamDist) - $Endoscopic(flatColon,speed)]
-   
-       EndoscopicMoveCameraX  $widget $Endoscopic(flatColon,xCamDist)
-       
-       update
-       
-       } else {
-       
-       EndoscopicResetStop
-       
-       break
-       
-       }
-   }
-     
+    set name $Endoscopic($widget,name)
+    set position [$Endoscopic($name,camera) GetPosition]
+    
+    set Endoscopic(flatColon,xCamDist) [lindex $position 0]
+    
+    while {$Endoscopic(flatColon,xCamDist) > $Endoscopic(flatColon,xMin)} {
+        
+        if {$Endoscopic(flatColon,stop) == "0"} {
+            
+            set  Endoscopic(flatColon,xCamDist) [expr  $Endoscopic(flatColon,xCamDist) - $Endoscopic(flatColon,speed)]
+            
+            EndoscopicMoveCameraX  $widget $Endoscopic(flatColon,xCamDist)
+            
+            update
+            
+        } else {
+            
+            EndoscopicResetStop
+            
+            break
+            
+        }
+    }
 }
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicStopFlatColon
-# sets Endoscopic(flatColon,stop) to one
+# Sets Endoscopic(flatColon,stop) to one
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -7009,7 +6893,7 @@ proc EndoscopicStopFlatColon {} {
 # .PROC EndoscopicResetFlatColon
 # Resets Endoscopic(flatColon,xCamDist) to minimum x value
 # .ARGS
-# windowelement widget
+# windowelement widget the flat window
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicResetFlatColon {widget} {
@@ -7024,7 +6908,7 @@ proc EndoscopicResetFlatColon {widget} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicResetStop
-# sets  Endoscopic(flatColon,stop) to zero
+# Sets  Endoscopic(flatColon,stop) to zero
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -7037,9 +6921,10 @@ proc EndoscopicResetStop {} {
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetFlatColonScalarVisibility
-# 
+# Sets the scalar visibility in the flat window according to the value of
+# Endoscopic(flatColon,scalarVisibility).
 # .ARGS
-# windowelement widget
+# windowelement widget the flat window
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicSetFlatColonScalarVisibility {widget} {
@@ -7050,40 +6935,38 @@ proc EndoscopicSetFlatColonScalarVisibility {widget} {
      
      if {$Endoscopic(flatColon,scalarVisibility) == 0} {
      
-     Endoscopic($name,FlatColonMapper) ScalarVisibilityOff
-     Endoscopic($name,lightKit) SetKeyLightIntensity 0.7
-    [Endoscopic($name,FlatColonActor) GetProperty] SetAmbient 0.55
-    [Endoscopic($name,FlatColonActor) GetProperty] SetDiffuse 0.4
-    [Endoscopic($name,FlatColonActor) GetProperty] SetSpecular 0.5
-    [Endoscopic($name,FlatColonActor) GetProperty] SetSpecularPower 100
-
+         Endoscopic($name,FlatColonMapper) ScalarVisibilityOff
+         Endoscopic($name,lightKit) SetKeyLightIntensity 0.7
+         [Endoscopic($name,FlatColonActor) GetProperty] SetAmbient 0.55
+         [Endoscopic($name,FlatColonActor) GetProperty] SetDiffuse 0.4
+         [Endoscopic($name,FlatColonActor) GetProperty] SetSpecular 0.5
+         [Endoscopic($name,FlatColonActor) GetProperty] SetSpecularPower 100
      
      } else {
      
-    [Endoscopic($name,FlatColonActor) GetProperty] SetAmbient 0.2
-    [Endoscopic($name,FlatColonActor) GetProperty] SetDiffuse 1.0
-    [Endoscopic($name,FlatColonActor) GetProperty] SetSpecular 0.5
-    [Endoscopic($name,FlatColonActor) GetProperty] SetSpecularPower 100
-     Endoscopic($name,lightKit) SetKeyLightIntensity 0.6
-     Endoscopic($name,FlatColonMapper) ScalarVisibilityOn
-     
-#     Endoscopic($name,FlatColonMapper) SetScalarMaterialModeToAmbientAndDiffuse
-     
-     Endoscopic($name,FlatColonMapper) SetLookupTable Endoscopic(flatColon,lookupTable,$name)
-     Endoscopic($name,FlatColonMapper) SetScalarRange $Endoscopic(flatColon,scalarLow) $Endoscopic(flatColon,scalarHigh)
+         [Endoscopic($name,FlatColonActor) GetProperty] SetAmbient 0.2
+         [Endoscopic($name,FlatColonActor) GetProperty] SetDiffuse 1.0
+         [Endoscopic($name,FlatColonActor) GetProperty] SetSpecular 0.5
+         [Endoscopic($name,FlatColonActor) GetProperty] SetSpecularPower 100
+         Endoscopic($name,lightKit) SetKeyLightIntensity 0.6
+         Endoscopic($name,FlatColonMapper) ScalarVisibilityOn
+         
+         #     Endoscopic($name,FlatColonMapper) SetScalarMaterialModeToAmbientAndDiffuse
+         
+         Endoscopic($name,FlatColonMapper) SetLookupTable Endoscopic(flatColon,lookupTable,$name)
+         Endoscopic($name,FlatColonMapper) SetScalarRange $Endoscopic(flatColon,scalarLow) $Endoscopic(flatColon,scalarHigh)
      }
      
      
     [$widget GetRenderWindow] Render
-
-
 }
 
 #-------------------------------------------------------------------------------
 # .PROC EndoscopicSetFlatColonScalarRange
-#
+# If scalars are visible, set the properties of the flat colon actor, lookup table and scalar range.
+# Otherwise make them visible.
 # .ARGS
-# windowelement widget
+# windowelement widget the flat window
 # .END
 #-------------------------------------------------------------------------------
 proc EndoscopicSetFlatColonScalarRange {widget} {
@@ -7094,29 +6977,26 @@ proc EndoscopicSetFlatColonScalarRange {widget} {
      
      if {$Endoscopic(flatColon,scalarVisibility) == 1} {
      
-     [Endoscopic($name,FlatColonActor) GetProperty] SetAmbient 0.2
-     [Endoscopic($name,FlatColonActor) GetProperty] SetDiffuse 1.0
-     [Endoscopic($name,FlatColonActor) GetProperty] SetSpecular 0.5
-     [Endoscopic($name,FlatColonActor) GetProperty] SetSpecularPower 100
-     Endoscopic($name,lightKit) SetKeyLightIntensity 0.6
+         [Endoscopic($name,FlatColonActor) GetProperty] SetAmbient 0.2
+         [Endoscopic($name,FlatColonActor) GetProperty] SetDiffuse 1.0
+         [Endoscopic($name,FlatColonActor) GetProperty] SetSpecular 0.5
+         [Endoscopic($name,FlatColonActor) GetProperty] SetSpecularPower 100
+         Endoscopic($name,lightKit) SetKeyLightIntensity 0.6
 
-     Endoscopic($name,FlatColonMapper) ScalarVisibilityOn
-     
-#     Endoscopic($name,FlatColonMapper) SetScalarMaterialModeToAmbientAndDiffuse
-     
-     Endoscopic($name,FlatColonMapper) SetLookupTable Endoscopic(flatColon,lookupTable,$name)
-     Endoscopic($name,FlatColonMapper) SetScalarRange $Endoscopic(flatColon,scalarLow) $Endoscopic(flatColon,scalarHigh)
-     
+         Endoscopic($name,FlatColonMapper) ScalarVisibilityOn
+         
+         #     Endoscopic($name,FlatColonMapper) SetScalarMaterialModeToAmbientAndDiffuse
+         
+         Endoscopic($name,FlatColonMapper) SetLookupTable Endoscopic(flatColon,lookupTable,$name)
+         Endoscopic($name,FlatColonMapper) SetScalarRange $Endoscopic(flatColon,scalarLow) $Endoscopic(flatColon,scalarHigh)
+         
      } else {
-     
-     set Endoscopic(flatColon,scalarVisibility) 1
-     EndoscopicSetFlatColonScalarVisibility $widget
-#     Endoscopic($name,FlatColonMapper) ScalarVisibilityOn
-#     Endoscopic($name,FlatColonMapper) SetScalarRange $Endoscopic(flatColon,scalarLow) $Endoscopic(flatColon,scalarHigh)
+         
+         set Endoscopic(flatColon,scalarVisibility) 1
+         EndoscopicSetFlatColonScalarVisibility $widget
+         #     Endoscopic($name,FlatColonMapper) ScalarVisibilityOn
+         #     Endoscopic($name,FlatColonMapper) SetScalarRange $Endoscopic(flatColon,scalarLow) $Endoscopic(flatColon,scalarHigh)
      }
      
-    [$widget GetRenderWindow] Render
-
-
-
+     [$widget GetRenderWindow] Render
 }
