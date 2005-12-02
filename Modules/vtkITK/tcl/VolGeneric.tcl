@@ -404,7 +404,7 @@ proc VolGenericApply {} {
     puts "Scan order: $Volume(scanOrder)"
     Volume($i,node) SetScanOrder $Volume(scanOrder)
 
-    VolumesComputeNodeMatricesFromRasToIjkMatrix $i [genreader GetRasToIjkMatrix] $dims
+    VolumesComputeNodeMatricesFromRasToIjkMatrix Volume($i,node) [genreader GetRasToIjkMatrix] $dims
 
     genreader Delete
 

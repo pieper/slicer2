@@ -372,7 +372,7 @@ proc VolNrrdApply {} {
     puts "Scan order: $Volume(scanOrder)"
     Volume($i,node) SetScanOrder $Volume(scanOrder)
 
-    VolumesComputeNodeMatricesFromRasToIjkMatrix $i [nrrdReader GetRasToIjkMatrix] $dims
+    VolumesComputeNodeMatricesFromRasToIjkMatrix Volume($i,node) [nrrdReader GetRasToIjkMatrix] $dims
 
     #
     # Filling headerKeys in the volume array. This key might eventually belong to the MrmlNode
