@@ -52,6 +52,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkTransform.h"
 #include "vtkSlicer.h"
 
+#include <string>
+
 #ifdef _WIN32
 #include <vector>
 #define strncasecmp strnicmp
