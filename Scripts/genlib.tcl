@@ -675,6 +675,9 @@ if { ![file exists $::SANDBOX_TEST_FILE] } {
             # However then it doesn't pick up this needed library
             cd $SLICER_LIB/NAMICSandBox-build/SpectralClustering
             runcmd $::MAKE SpectralClustering.SLN /build  $::VTK_BUILD_TYPE
+            # this one in independent
+            cd $SLICER_LIB/NAMICSandBox-build/Distributions
+            runcmd $::MAKE Distributions.SLN /build  $::VTK_BUILD_TYPE
         }
     } else {
 
