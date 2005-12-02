@@ -38,8 +38,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 // .NAME CDF - Cumulative distribution functions.
 // .SECTION Description
-// Wrapping for part of GSL cumulative distribution functions.  
-// Gnu Scientific Library (http://sources.redhat.com/gsl/).
+// Wrapping for part of itk::Statistics::TDistribution functions
 
 
 #ifndef __vtkCDF_h
@@ -59,14 +58,14 @@ public:
     // p - p value
     // dof - degrees of freedom 
     // The function returns t statistic.
-    double p2t(double p, double dof);
+    double p2t(double p, long dof);
 
     // Description:
     // Converts t statistic to p value
     // t - t statistic 
     // dof - degrees of freedom 
     // The function returns p value.
-    double t2p(double t, double dof);
+    double t2p(double t, long dof);
 };
 
 
