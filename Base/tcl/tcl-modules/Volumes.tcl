@@ -123,7 +123,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-             {$Revision: 1.125 $} {$Date: 2005/12/01 22:02:30 $}]
+             {$Revision: 1.126 $} {$Date: 2005/12/02 21:35:33 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -2592,7 +2592,7 @@ proc VolumesCreateNewLabelOutline { {v ""} } {
 # list dims contains the extents along the x, y, z axes. Only y is used.
 # .END
 #-------------------------------------------------------------------------------
-proc VolumesComputeNodeMatricesFromRasToIjkMatrix {volumeNode RasToIjkMatrix dims} {
+proc VolumesComputeNodeMatricesFromRasToIjkMatrix {mrmlNode RasToIjkMatrix dims} {
         
     catch "IjkToRasMatrix Delete"
     vtkMatrix4x4 IjkToRasMatrix
@@ -2616,9 +2616,9 @@ proc VolumesComputeNodeMatricesFromRasToIjkMatrix {volumeNode RasToIjkMatrix dim
     
     RasToVtkMatrix Invert
     
-    Volume($volumeNode,node) SetRasToIjkMatrix [Volume($volumeNode,node) GetMatrixToString $RasToIjkMatrix]
-    Volume($volumeNode,node) SetRasToVtkMatrix [Volume($volumeNode,node) GetMatrixToString RasToVtkMatrix]
-    Volume($volumeNode,node) ComputePositionMatrixFromRasToVtk RasToVtkMatrix
+    $mrmlNode SetRasToIjkMatrix [$mrmlNode GetMatrixToString $RasToIjkMatrix]
+    $mrmlNode SetRasToVtkMatrix [$mrmlNode GetMatrixToString RasToVtkMatrix]
+    $mrmlNode ComputePositionMatrixFromRasToVtk RasToVtkMatrix
     
     RasToVtkMatrix Delete
 
@@ -2660,7 +2660,7 @@ proc VolumesComputeNodeMatricesFromRasToIjkMatrix {volumeNode RasToIjkMatrix dim
         }
     }
     
-    Volume($volumeNode,node) SetScanOrder $scan_order
+    $mrmlNode SetScanOrder $scan_order
 
     IjkToRasMatrix Delete
 }
