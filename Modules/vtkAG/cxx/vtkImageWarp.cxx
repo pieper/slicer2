@@ -11,6 +11,8 @@
 #include "vtkImageWarpDMForce.h"
 #include "vtkImageWarpOFForce.h"
 #include "vtkObjectFactory.h"
+#include "vtkImageExtractComponents.h"
+#include "vtkImageAppendComponents.h"
 
 #ifdef WIN32
 #include <float.h>
@@ -170,6 +172,8 @@ void vtkImageWarp::CreatePyramid()
 
     if(this->GetMask())
       {
+      cout << "Masking" << endl;
+      cout.flush();
       this->Masks.push_back(vtkImageData::New());
       Shrink->SetInput(this->Masks[l-1]);
       Shrink->SetOutput(this->Masks[l]);
@@ -290,7 +294,7 @@ static void vtkImageWarpSSDExecute2(vtkImageData* t,T1* tptr,
         double v=0;
         for(int c=0;c<comp;++c)
           {
-          v += pow(double(*tptr) - double(*sptr), (double)2.);
+      v += pow(double(*tptr) - double(*sptr), (double)2.);
           ++tptr;
           ++sptr;
           }
@@ -306,19 +310,19 @@ static void vtkImageWarpSSDExecute2(vtkImageData* t,T1* tptr,
           }
         }
       }
-      cout << "z: " << z
-           << " ssd " << ssd
-           << "." << endl;
-      cout.flush();
+      //cout << "z: " << z
+      //     << " ssd " << ssd
+      //     << "." << endl;
+      //cout.flush();
     }
   int* dims=t->GetDimensions();
   int n=dims[0]*dims[1]*dims[2];
   res=sqrt(ssd)/n;
-      cout << "n: " << n
-           << " ssd " << ssd
-           << " res " << res
-           << "." << endl;
-      cout.flush();
+      //cout << "n: " << n
+      //     << " ssd " << ssd
+      //     << " res " << res
+      //     << "." << endl;
+      //cout.flush();
 }
 
 template <class T>
@@ -536,6 +540,8 @@ void vtkImageWarp::InternalUpdate()
                   }
               }
             vtkImageTransformIntensity* transint = vtkImageTransformIntensity::New();
+        vtkImageGaussianSmooth* tsmooth = vtkImageGaussianSmooth::New();
+        vtkImageGaussianSmooth* ssmooth = vtkImageGaussianSmooth::New();
 
             vtkImageWarpForce* force = 0;
 
@@ -553,8 +559,11 @@ void vtkImageWarp::InternalUpdate()
               }
             vtkImageMathematics* addvelo = vtkImageMathematics::New();
             vtkImageGaussianSmooth* smooth = vtkImageGaussianSmooth::New();
-
-            // reslice source
+            vtkImageExtractComponents* extracts = vtkImageExtractComponents::New();
+            vtkImageExtractComponents* extractt = vtkImageExtractComponents::New();
+        vtkImageAppendComponents* append = vtkImageAppendComponents::New();
+        vtkImageData* tmp=0;
+        // reslice source
             reslice->SetInput(this->Sources[l]);
             reslice->SetResliceTransform(this->GeneralTransform);
             reslice->SetInformationInput(this->Targets[l]);
@@ -562,23 +571,50 @@ void vtkImageWarp::InternalUpdate()
             reslice->MirrorOff();
             reslice->SetInterpolationMode(this->GetInterpolation());
             reslice->ReleaseDataFlagOn();
-
-            // find intensity correction
-            // initialize intensity transformation
-            if(this->IntensityTransform)
-              {
-              this->IntensityTransform->SetTarget(this->Targets[l]);
-              this->IntensityTransform->SetSource(reslice->GetOutput());
-              this->IntensityTransform->SetMask(mask);
-              }
-          
-            // correct source intensities
-            transint->SetInput(reslice->GetOutput());
-            transint->SetIntensityTransform(this->IntensityTransform);
+reslice->Update();
             
-            // compute force
-            force->SetTarget(this->Targets[l]);
-            force->SetSource(transint->GetOutput());
+        extractt->SetInput(this->Targets[l]);
+        extracts->SetInput(reslice->GetOutput());
+        
+        // Loop over channels, since intensity correction is done per channel
+        for(int comp=0;comp<(this->Targets[l]->GetNumberOfScalarComponents());comp++)
+        {
+        
+          extractt->SetComponents(comp);
+          extracts->SetComponents(comp);
+
+          // find intensity correction
+              // initialize intensity transformation
+              if(this->IntensityTransform)
+            {
+            this->IntensityTransform->SetTarget(extractt->GetOutput());
+            this->IntensityTransform->SetSource(extracts->GetOutput());
+            this->IntensityTransform->SetMask(mask);
+            }
+              // correct source intensities
+              transint->SetInput(extracts->GetOutput());
+              transint->SetIntensityTransform(this->IntensityTransform);
+          transint->Update();
+              tmp=vtkImageData::New();
+              tmp->DeepCopy(transint->GetOutput());
+          append->SetInput(comp,tmp);
+        }
+              append->Update();
+
+       // smooth target     
+        tsmooth->SetInput(this->Targets[l]);     
+        tsmooth->SetStandardDeviations(StdDev,StdDev,StdDev);     
+tsmooth->Update();
+        // smooth source     
+        ssmooth->SetInput(append->GetOutput());     
+        ssmooth->SetStandardDeviations(StdDev,StdDev,StdDev);     
+
+    ssmooth->Update();
+            // compute force    
+            force->SetTarget(tsmooth->GetOutput());                 
+            force->SetSource(ssmooth->GetOutput());
+            //force->SetTarget(this->Targets[l]);
+            //force->SetSource(transint->GetOutput());
             force->SetDisplacement(this->Displacements[l]);
             force->SetMask(mask);
           
@@ -590,11 +626,13 @@ void vtkImageWarp::InternalUpdate()
             // smooth deformation
             smooth->SetInput(addvelo->GetOutput());
             smooth->SetStandardDeviations(StdDev,StdDev,StdDev);
-
+smooth->Update();
             if(this->UseSSD)
               {
-              ssd=this->SSD(this->Targets[l],transint->GetOutput(),mask);
-              }
+              //ssd=this->SSD(this->Targets[l],transint->GetOutput(),mask);
+              ssd=this->SSD(tsmooth->GetOutput(),ssmooth->GetOutput(),mask);
+          
+          }
             if(this->Verbose)
               {
               cout << "\r  Iteration " << i << ":";
@@ -620,9 +658,12 @@ void vtkImageWarp::InternalUpdate()
             smooth->Update();
             this->Displacements[l]->DeepCopy(smooth->GetOutput());
 
-            reslice->Delete();
+            append->Delete();
+        reslice->Delete();
             transint->Delete();
             force->Delete();
+        tsmooth->Delete();
+        ssmooth->Delete();
             addvelo->Delete();
             smooth->Delete();
 
