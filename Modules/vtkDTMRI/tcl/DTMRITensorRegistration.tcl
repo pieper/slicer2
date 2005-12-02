@@ -91,7 +91,7 @@ proc DTMRITensorRegistrationInit {} {
     #------------------------------------
     set m "TensorRegistration"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.20 $} {$Date: 2005/12/02 14:03:45 $}]
+                                 {$Revision: 1.21 $} {$Date: 2005/12/02 22:59:42 $}]
 
     # Does the AG module exist? If not the registration tab will not be displayed
     if {[catch "package require vtkAG"]} {
@@ -274,7 +274,7 @@ proc DTMRITensorRegistrationBuildGUI {} {
     DevAddSelectButton DTMRI $f InputTensorTarget "Target: " Pack "Select target (fixed) tensor volume." 30 
     lappend Tensor(mbInputTensorTarget) $f.mbInputTensorTarget
     lappend Tensor(mInputTensorTarget) $f.mbInputTensorTarget.m
-
+    
     set f $FrameMain.fSource
     frame $f -bg $Gui(activeWorkspace) -width 30
     pack $f -side top -padx $Gui(pad) -pady 0  -anchor w 
@@ -530,20 +530,13 @@ proc DTMRITensorRegistrationBuildGUI {} {
     #-------------------------------------------
     # Regist->Prmd frame->Generate Frame
     #-------------------------------------------
-    set f $FramePrmd.fGenerate
-    frame $f -bg $Gui(activeWorkspace)
-    pack $f -side top -padx $Gui(pad) -pady 2 -fill x -anchor w
-
-    DevAddButton $f.bGenerate Generate DTMRIPrmdSetup
-    pack $f.bGenerate -side top -padx $Gui(pad) -pady 2 -anchor w
-    TooltipAdd $f.bGenerate "Generate Image pyramid based on currently selected Target volume."
 
     set f $FramePrmd.fLevels
     frame $f -bg $Gui(activeWorkspace)
     pack $f -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
     
 
-    DevAddLabel $f.lStuff "Press generate to display pyramid."
+    DevAddLabel $f.lStuff ""
     pack $f.lStuff -side top -padx $Gui(pad) -fill x -anchor w
     set DTMRI(reg,lStuff) $f.lStuff
 
@@ -758,6 +751,10 @@ proc DTMRITensorRegistrationBuildGUI {} {
     eval {label $f.lText -text $DTMRI(reg,InitialHelpText) -justify left} $Gui(WLA)
     set DTMRI(reg,HelpText) $f.lText
     pack $f.lText -side top -padx $Gui(pad) -pady 2 -anchor w
+
+    # This invokes updating of the prmd tab whenever a never targetvol is selected
+    trace variable DTMRI(InputTensorTarget) w DTMRIPrmdSetup
+
 }
 
 
@@ -959,12 +956,12 @@ proc DTMRIRegCheckErrors {} {
     
     # Let user confirm registration if pyramid level 0 is selected 
     # with 256^2 data and non-linear registration
-    set dims [[Tensor($DTMRI(InputTensorTarget),data) GetOutput] GetDimensions]
+    #set dims [[Tensor($DTMRI(InputTensorTarget),data) GetOutput] GetDimensions]
     
-    if {($DTMRI(reg,Level_min)<1) && ([lindex $dims 0]>128) && $DTMRI(reg,Warp)} {
-      switch [DevYesNo "You included level 0 of the Pyramid (see Prmd tab), which will take long computation time because of the in-plane resolution of [lindex $dims 0]. Do you want to continue?"] {
-        "no" { return 1 }}
-    }
+    #if {($DTMRI(reg,Level_min)<1) && ([lindex $dims 0]>128) && $DTMRI(reg,Warp)} {
+    #  switch [DevYesNo "You included level 0 of the Pyramid (see Prmd tab), which will take long computation time because of the in-plane resolution of [lindex $dims 0]. Do you want to continue?"] {
+    #    "no" { return 1 }}
+    #}
     
     return 0
 }
@@ -1736,23 +1733,50 @@ proc DTMRIRegRun {} {
       }
       "TensorComponents" {
           # Warp using 6 tensor channels, including tensor reorientation
-          #Target2 DeepCopy [Tensor($DTMRI(InputTensorTarget),data) GetOutput]
-          #Source2 DeepCopy [Tensor($DTMRI(InputTensorSource),data) GetOutput]
 
-          catch "extractT  Delete"
-          vtkImageGetTensorComponents extractT     
-          extractT SetInput [Tensor($DTMRI(InputTensorSource),data) GetOutput] 
-          extractT Update
+      catch "extractT  Delete"
+      vtkImageGetTensorComponents extractT     
+      extractT SetInput [Tensor($DTMRI(InputTensorSource),data) GetOutput] 
+      extractT Update
+      if {($DTMRI(SourceMaskVol)!=$Volume(idNone))} {
+            catch "mask Delete"
+        vtkImageMask mask
+        catch "shift Delete"
+        vtkImageShiftScale shift
+            mask SetImageInput [extractT GetOutput]
+        shift SetInput [Volume($DTMRI(SourceMaskVol),vol) GetOutput]
+        shift SetOutputScalarTypeToUnsignedChar
+        mask SetMaskInput [shift GetOutput]
+            mask Update
+        Source DeepCopy [mask GetOutput]
+        mask Delete
+        shift Delete
+      } else {
           Source DeepCopy [extractT GetOutput]
-          extractT Delete
+      }    
+      extractT Delete
 
-          vtkImageGetTensorComponents extractT     
-          extractT SetInput [Tensor($DTMRI(InputTensorTarget),data) GetOutput] 
-          extractT Update
+      vtkImageGetTensorComponents extractT     
+      extractT SetInput [Tensor($DTMRI(InputTensorTarget),data) GetOutput] 
+      extractT Update
+      if {($DTMRI(TargetMaskVol)!=$Volume(idNone))} {
+            catch "mask Delete"
+        vtkImageMask mask
+        catch "shift Delete"
+        vtkImageShiftScale shift
+            mask SetImageInput [extractT GetOutput]
+        shift SetInput [Volume($DTMRI(TargetMaskVol),vol) GetOutput]
+        shift SetOutputScalarTypeToUnsignedChar
+        mask SetMaskInput [shift GetOutput]
+            mask Update
+        Target DeepCopy [mask GetOutput]
+        mask Delete
+        shift Delete
+      } else {
           Target DeepCopy [extractT GetOutput]
-          extractT Delete
-          #Target2 Delete
-          #Source2 Delete
+      }    
+      extractT Delete
+
       }
       }
       puts "done."
@@ -1768,7 +1792,8 @@ proc DTMRIRegRun {} {
       warp SetTarget Target
       
       if {$DTMRI(reg,Channels)=="TensorComponents"} {
-        warp SetResliceTensors 1
+        # TODO set to 1
+    warp SetResliceTensors 1
       } else {
         warp SetResliceTensors 0
       }
@@ -1802,7 +1827,6 @@ proc DTMRIRegRun {} {
       }
       #DTMRIWritevtkImageData Source "source.vtk"
       #DTMRIWritevtkImageData Target "target.vtk"
-      #break
 
       warp Update
       TransformDTMRI Concatenate warp
@@ -2024,8 +2048,6 @@ proc DTMRIRegCoregister {SourceVolume TargetTensor} {
     DTMRIRegNormalize Source Target NormalizedSource $SourceScanOrder $TargetScanOrder
     set DTMRI(reg,Initial_tfm) $previous_initial_tfm
     Source DeepCopy NormalizedSource
- DTMRIWritevtkImageData Source "/tmp/source.vtk"
- DTMRIWritevtkImageData Target "/tmp/target.vtk"
 
     NormalizedSource Delete
     set dims  [Source GetDimensions]
@@ -2641,7 +2663,7 @@ proc DTMRIReadvtkImageData {image filename}  {
 #
 # .END
 #-------------------------------------------------------------------------------
-proc DTMRIPrmdSetup {} {
+proc DTMRIPrmdSetup {args} {
     global DTMRI Tensor
     
     if {($DTMRI(InputTensorTarget) != $Tensor(idNone))} {
