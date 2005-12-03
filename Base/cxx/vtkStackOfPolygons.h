@@ -20,7 +20,8 @@
 #include "point.h"
 #include "vtkSlicer.h"
 
-#define NUM_STACK_SLICES 200
+#include <vector>
+#define STACK_OF_POLYGONS_INITIAL_NUM_STACK_SLICES 200
 
 class VTK_SLICER_BASE_EXPORT vtkStackOfPolygons : public vtkObject {
 public:
@@ -33,6 +34,35 @@ public:
 
     // Adds polygon to slice s, first empty position
     void SetPolygon(vtkPoints *polygon, int s, int d);
+
+    // return the number of slots in the array
+    unsigned int GetStackSize()
+    {   return this->PointStack.size();
+    }
+
+    // make sure the array is big enough to handle a
+    // PolygonList at the given slot, and ensure that a Polygon List has
+    // been allocated for that slot.  
+    void PolygonListCreateIfNeeded(int s)
+    {
+        if ( (unsigned int) s >= this->PointStack.size() ) 
+        {   
+            unsigned int old_size = this->PointStack.size();
+            this->PointStack.reserve( (unsigned int) (2*s) ); // Make plenty of extra space 
+            this->IsNonEmpty.reserve( (unsigned int) (2*s) ); 
+
+            for (unsigned int ss = old_size+1; ss < (unsigned int) 2*s; ss++)
+            {
+                this->PointStack.push_back(NULL);
+                this->IsNonEmpty.push_back(0);
+            }
+        }
+
+        if ( this->PointStack[s] == NULL )
+        {
+            this->PointStack[s] = vtkPolygonList::New();
+        }
+    }
 
     // Returns pointer to polygon p of slice s
     vtkPoints* GetPoints(int s, int p);
@@ -94,11 +124,13 @@ protected:
     vtkStackOfPolygons(const vtkStackOfPolygons&) {};
     void operator=(const vtkStackOfPolygons&) {};
 
-    // Store polygon data for up to 200 slices
-    vtkPolygonList *PointStack[NUM_STACK_SLICES];
+//BTX
+    // Store polygon data for arbitrary number of slices
+    std::vector<vtkPolygonList *> PointStack;
 
     // IsNonEmpty[s] == false iff no polygon has ever been applied on it
-    int IsNonEmpty[NUM_STACK_SLICES];
+    std::vector<int> IsNonEmpty;
+//ETX
 };
 
 #endif

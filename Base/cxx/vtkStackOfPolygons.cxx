@@ -25,21 +25,30 @@ vtkStackOfPolygons* vtkStackOfPolygons::New()
 // Constructor sets default values
 vtkStackOfPolygons::vtkStackOfPolygons()
 {
-    for (int s = 0; s < NUM_STACK_SLICES; s++)
+    
+    this->PointStack.reserve( STACK_OF_POLYGONS_INITIAL_NUM_STACK_SLICES ); // Make plenty of extra space 
+    this->IsNonEmpty.reserve( STACK_OF_POLYGONS_INITIAL_NUM_STACK_SLICES );
+    for (unsigned int s = 0; s < this->PointStack.capacity(); s++)
     {
-        this->PointStack[s] = vtkPolygonList::New();
-        this->IsNonEmpty[s] = 0;
+        this->PointStack.push_back(NULL);
+        this->IsNonEmpty.push_back(0);
     }
 }
 
 vtkStackOfPolygons::~vtkStackOfPolygons()
 {
-    for (int s = 0; s < NUM_STACK_SLICES; s++)
-        this->PointStack[s]->Delete();
+    for (unsigned int s = 0; s < this->PointStack.capacity(); s++)
+    {
+        if ( this->PointStack[s] != NULL )
+        {
+            this->PointStack[s]->Delete();
+        }
+    }
 }
 
 void vtkStackOfPolygons::SetPolygon(vtkPoints *polygon, int s, int p, int d, int closed, int preshape, int label)
 {
+    this->PolygonListCreateIfNeeded(s);
     this->PointStack[s]->Reset(p);
     int n = polygon->GetNumberOfPoints();
     vtkFloatingPointType *rasPt;
@@ -58,6 +67,7 @@ void vtkStackOfPolygons::SetPolygon(vtkPoints *polygon, int s, int p, int d, int
 
 void vtkStackOfPolygons::SetPolygon(vtkPoints *polygon, int s, int d)
 {
+    this->PolygonListCreateIfNeeded(s);
     int p = this->PointStack[s]->GetInsertPosition();
     this->PointStack[s]->Reset(p); // Probably unnecessary
     int n = polygon->GetNumberOfPoints();
@@ -73,48 +83,57 @@ void vtkStackOfPolygons::SetPolygon(vtkPoints *polygon, int s, int d)
 
 vtkPoints* vtkStackOfPolygons::GetPoints(int s)
 {
+    this->PolygonListCreateIfNeeded(s);
     int p = this->PointStack[s]->GetRetrievePosition();
     return this->PointStack[s]->GetPolygon(p);
 }
 
 vtkPoints* vtkStackOfPolygons::GetPoints(int s, int p)
 {
+    this->PolygonListCreateIfNeeded(s);
     return this->PointStack[s]->GetPolygon(p);
 }
 
 vtkPoints* vtkStackOfPolygons::GetSampledPolygon(int s, int p)
 {
+    this->PolygonListCreateIfNeeded(s);
     return this->PointStack[s]->GetSampledPolygon(p);
 }
 
 int vtkStackOfPolygons::GetDensity(int s, int p)
 {
+    this->PolygonListCreateIfNeeded(s);
     return this->PointStack[s]->GetDensity(p);
 }
 
 int vtkStackOfPolygons::GetClosed(int s, int p)
 {
+    this->PolygonListCreateIfNeeded(s);
     return this->PointStack[s]->GetClosed(p);
 }
 
 int vtkStackOfPolygons::GetPreshape(int s, int p)
 {
+    this->PolygonListCreateIfNeeded(s);
     return this->PointStack[s]->GetPreshape(p);
 }
 
 int vtkStackOfPolygons::GetLabel(int s, int p)
 {
+    this->PolygonListCreateIfNeeded(s);
     return this->PointStack[s]->GetLabel(p);
 }
 
 void vtkStackOfPolygons::RemovePolygon(int s, int p)
 {
+    this->PolygonListCreateIfNeeded(s);
     this->PointStack[s]->Reset(p);
     this->PointStack[s]->RemoveApplyOrder(p);
 }
 
 int vtkStackOfPolygons::GetNumberOfPoints(int s)
 {
+    this->PolygonListCreateIfNeeded(s);
     int p = this->PointStack[s]->GetRetrievePosition();
     vtkPoints *ras = this->PointStack[s]->GetPolygon(p);
     int n = -1;
@@ -124,38 +143,49 @@ int vtkStackOfPolygons::GetNumberOfPoints(int s)
 
 int vtkStackOfPolygons::ListGetInsertPosition(int s)
 {
+    this->PolygonListCreateIfNeeded(s);
     return this->PointStack[s]->GetInsertPosition();
 }
 
 int vtkStackOfPolygons::ListGetNextInsertPosition(int s, int p)
 {
+    this->PolygonListCreateIfNeeded(s);
     return this->PointStack[s]->GetNextInsertPosition(p);
 }
 
 int vtkStackOfPolygons::ListGetRetrievePosition(int s)
 {
+    this->PolygonListCreateIfNeeded(s);
     return this->PointStack[s]->GetRetrievePosition();
 }
 
 int vtkStackOfPolygons::ListGetNextRetrievePosition(int s, int p)
 {
+    this->PolygonListCreateIfNeeded(s);
     return this->PointStack[s]->GetNextRetrievePosition(p);
 }
 
 int vtkStackOfPolygons::GetNumApplyable(int s)
 {
+    this->PolygonListCreateIfNeeded(s);
     return this->PointStack[s]->GetNumApplyable();
 }
 
 int vtkStackOfPolygons::GetApplyable(int s, int q)
 {
+    this->PolygonListCreateIfNeeded(s);
     return this->PointStack[s]->GetApplyable(q);
 }
 
 void vtkStackOfPolygons::Clear()
 {
-    for (int s = 0; s < NUM_STACK_SLICES; s++)
-        this->PointStack[s]->Clear();
+    for (unsigned int s = 0; s < this->GetStackSize(); s++)
+    {
+        if ( this->PointStack[s] != NULL )
+        {
+            this->PointStack[s]->Clear();
+        }
+    }
 }
 
 int vtkStackOfPolygons::Nonempty(int s)
@@ -165,6 +195,7 @@ int vtkStackOfPolygons::Nonempty(int s)
 
 int vtkStackOfPolygons::GetNumberOfPoints(int s, int p)
 {
+    this->PolygonListCreateIfNeeded(s);
     return this->PointStack[s]->GetNumberOfPoints(p);
 }
 
@@ -172,10 +203,13 @@ void vtkStackOfPolygons::PrintSelf(ostream& os, vtkIndent indent)
 {
     this->Superclass::PrintSelf(os,indent);
 
-    for (int s = 0; s < NUM_STACK_SLICES; s++)
+    for (unsigned int s = 0; s < this->GetStackSize(); s++)
     {
-        os << indent << "Slice " << s << ":" << endl;
-        this->PointStack[s]->PrintSelf(os, indent);
+        if ( this->PointStack[s] != NULL ) 
+        {
+            os << indent << "Slice " << s << ":" << endl;
+            this->PointStack[s]->PrintSelf(os, indent);
+        }
     }
 }
 

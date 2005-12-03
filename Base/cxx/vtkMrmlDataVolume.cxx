@@ -679,7 +679,7 @@ int vtkMrmlDataVolume::WritePTSFromStack(char *filename,
         return 1;
     }
 
-    for (int s = 0; s < NUM_STACK_SLICES; s++)
+    for (unsigned int s = 0; s < this->RasPolyStack->GetStackSize(); s++)
     {
         // Skip this slice of stack if no polygon ever been stored in it
         if (!(RasPolyStack->Nonempty(s))) continue;
