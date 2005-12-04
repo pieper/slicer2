@@ -80,6 +80,9 @@ public:
   vtkSetMacro(FileNameSliceCount,int);
   vtkGetMacro(FileNameSliceCount,int);
 
+  // Description: is the given file name a NRRD file?
+  virtual int CanReadFile(const char* filename);
+
   // Description:
   // Set the orientation of the output image
   void SetDesiredCoordinateOrientationToAxial ()

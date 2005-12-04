@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/11/25 17:58:15 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2005/12/04 17:26:07 $
+  Version:   $Revision: 1.7 $
 
   Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -56,7 +56,7 @@
 #include "itkGDCMImageIO.h"
 #include <itksys/SystemTools.hxx>
 
-vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.6 $");
+vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.7 $");
 vtkStandardNewMacro(vtkITKArchetypeImageSeriesReader);
 
 //----------------------------------------------------------------------------
@@ -136,6 +136,18 @@ void vtkITKArchetypeImageSeriesReader::PrintSelf(ostream& os, vtkIndent indent)
   
 }
 
+int vtkITKArchetypeImageSeriesReader::CanReadFile(const char* filename)
+{
+  std::string fileNameCollapsed = itksys::SystemTools::CollapseFullPath( this->Archetype);
+
+  // First see if the archetype exists
+  if (!itksys::SystemTools::FileExists (fileNameCollapsed.c_str()))
+    {
+    vtkDebugMacro(<<"The filename does not exist.");
+    return false;
+    }
+  return true;
+}
 
 //----------------------------------------------------------------------------
 // This method returns the largest data that can be generated.

@@ -299,6 +299,13 @@ proc VolGenericApply {} {
     catch "genreader Delete"
     vtkITKArchetypeImageSeriesReader genreader
     genreader SetArchetype $Volume(VolGeneric,FileName)
+
+    if {![genreader CanReadFile $Volume(VolGeneric,FileName)]} {
+        DevErrorWindow "Cannot read file $Volume(VolGeneric,FileName)"
+        MainMrmlDeleteNode Volume $i
+        return
+    }
+
     if {[catch "genreader UpdateInformation"]} {
         DevErrorWindow "Cannot read information for file $Volume(VolGeneric,FileName)"
         VolGenericMainFileCloseUpdate
