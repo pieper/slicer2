@@ -171,7 +171,7 @@ proc QueryAtlasInit {} {
    #   appropriate revision number and date when the module is checked in.
    #   
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.4 $} {$Date: 2005/10/15 19:56:56 $}]
+       {$Revision: 1.5 $} {$Date: 2005/12/04 20:00:50 $}]
 
    # Initialize module-level variables
    #------------------------------------
@@ -196,6 +196,13 @@ proc QueryAtlasInit {} {
    set dummy [dummyFontManager GetDefaultFreetypeDirectory]
    #puts "Default font dir for dummyFont = $dummy"
 
+
+    #
+    # start the slicer daemon by default on the default port 
+    # -- the user will be asked to approve any connection requests
+    #
+
+    slicerd_start
    
 }
 
