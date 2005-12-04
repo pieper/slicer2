@@ -156,9 +156,10 @@ proc MainInteractorBind {widget} {
     bind $widget <Right>             {MainInteractorKeyPress Right %W %x %y}
     bind $widget <Shift-Right>       {MainInteractorKeyPress Right %W %x %y; MainInteractorShiftMotion %W %x %y}
     bind $widget <Delete>            {MainInteractorKeyPress Delete %W %x %y}
-    bind $widget <KeyPress-0>        {MainInteractorKeyPress 0 %W %x %y}
     bind $widget <KeyPress-d>        {MainInteractorKeyPress d %W %x %y}
     bind $widget <KeyPress-c>        {MainInteractorKeyPress c %W %x %y}
+    bind $widget <KeyPress-=>        {MainInteractorKeyPress = %W %x %y}
+    bind $widget <KeyPress-->        {MainInteractorKeyPress - %W %x %y}
     bind $widget <Control-a>         {MainInteractorKeyPress Ctla %W %x %y}
     bind $widget <Control-x>         {MainInteractorKeyPress Ctlx %W %x %y}
     bind $widget <Control-c>         {MainInteractorKeyPress Ctlc %W %x %y}
@@ -166,6 +167,12 @@ proc MainInteractorBind {widget} {
     bind $widget <Control-d>         {MainInteractorKeyPress Ctld %W %x %y}
     # toggle between fore and background volumes
     bind $widget <KeyPress-g>        {MainInteractorKeyPress g %W %x %y}
+
+    # bind all the digits on the top row and the key pad
+    for {set i 0} {$i < 10} {incr i} {
+        bind $widget <KeyPress-$i>        [list MainInteractorKeyPress $i %W %x %y]
+        bind $widget <KeyPress-KP_$i>     [list MainInteractorKeyPress $i %W %x %y]
+    }
 
     # Added for Fiducials
     if {[IsModule Fiducials] == 1 || [IsModule Alignments] == 1} {
@@ -374,7 +381,7 @@ proc MainInteractorKeyPress {key widget x y} {
 
     MainInteractorMotion $widget $x $y
     
-    switch $key {
+    switch -glob -- $key {
         "Right" {
             MainSlicesSetOffset $s Next;
             MainSlicesRefreshClip $s
@@ -434,17 +441,20 @@ proc MainInteractorKeyPress {key widget x y} {
                }        
             }
          }
-         "0" {
+         "=" - 
+         "-" - 
+         "\[0-9\]" {
             switch $Module(activeID) {
                 "Editor" {
                     switch $Editor(activeID) {
                         "EdDraw" {
-                            EdDrawUpdate 0
+                            EdDrawUpdate $key
                         }
                     }
                 }
             }
         }
+
         "g" {
             # call the toggle between fore and background volumes
             set toggleCmd [.tMain.fDisplay.fRight.bToggle cget -command]
