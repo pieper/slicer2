@@ -357,8 +357,8 @@ proc EdDrawUpdate {type} {
     global Ed Volume Label Gui
 
     set e EdDraw
-    
-    switch $type {
+
+    switch -glob -- $type {
         NextMode {
             switch $Ed($e,mode) {
                 "Draw" {
@@ -382,10 +382,10 @@ proc EdDrawUpdate {type} {
             }
             MainInteractorRender
         }
-        "0" {
+        "\[0-9\]" {
             switch $Ed($e,mode) {
                 "Draw" {
-                    EditorIdleProc apply 0
+                    $Ed(EdDraw,frame).fGrid.eOutput insert end $type
                 }
                 "Select" {
                     # nothing
@@ -397,6 +397,12 @@ proc EdDrawUpdate {type} {
                     # nothing
                 }
             }
+        }
+        "=" {
+            EdDrawLabel
+        }
+        "-" {
+            $Ed(EdDraw,frame).fGrid.eOutput delete 0 end
         }
         SelectAll {
             Slicer DrawSelectAll
