@@ -76,7 +76,7 @@ isvolume - a widget for looking at Slicer volumes
 # - sets the default colors for the widget components
 #
 option add *isvolume.background #000000 widgetDefault
-option add *isvolume.orientation Axial widgetDefault
+option add *isvolume.orientation Axial(IS) widgetDefault
 option add *isvolume.volume "None" widgetDefault
 option add *isvolume.warpvolume "None" widgetDefault
 option add *isvolume.slice 128 widgetDefault
@@ -101,7 +101,7 @@ if { [itcl::find class isvolume] == "" } {
         # or become part of the option database
         #
         itk_option define -background background Background {}
-        itk_option define -orientation orientation Orientation {}
+        itk_option define -orientation orientation Orientation {Axial(IS)}
         itk_option define -volume volume Volume "None"
         itk_option define -warpvolume warpvolume Refvolume "None"
         itk_option define -slice slice Slice 0
@@ -382,7 +382,7 @@ itcl::configbody isvolume::volume {
             $_mapper SetColorLevel [expr ($max + $min) / 2.]
 
             $this configure -slice [expr $itk_option(-resolution) / 2]
-            $this configure -orientation Axial
+            $this configure -orientation Axial(IS)
             $this transform_update
         }
         $this expose
@@ -1073,6 +1073,7 @@ proc isvolume_demo {} {
     #wm geometry .isvolumedemo 400x700
 
     pack [isvolume .isvolumedemo.isv] -fill both -expand true
+    [.isvolumedemo.isv controls] toggle
 
     if { [lsearch $::Module(idList) iSlicer] == -1 } {
         lappend ::Module(idList) iSlicer
