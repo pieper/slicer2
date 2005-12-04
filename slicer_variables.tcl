@@ -60,7 +60,7 @@ set ::CMAKE_TAG "CMake-2-0-6"
 set ::TEEM_TAG "HEAD"
 set ::VTK_TAG "VTK-Slicer-2-5"
 # get the latest ITK from CVS
-set ::ITK_TAG "HEAD"
+set ::ITK_TAG "ITK-2-4"
 set ::TCL_TAG "core-8-4-6"
 set ::TK_TAG "core-8-4-6"
 set ::ITCL_TAG "itcl-3-2-1"
@@ -210,6 +210,7 @@ switch $::tcl_platform(os) {
         set ::VTKSLICERBASE_BUILD_TCL_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/$::VTK_BUILD_TYPE/vtkSlicerBaseTCL.lib
 
         set ::CMAKE $::CMAKE_PATH/bin/cmake.exe
+
         set MSVC6 0
         #
         ## match this to the version of the compiler you have:
