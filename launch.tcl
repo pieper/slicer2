@@ -325,22 +325,30 @@ if { [string match *.tcl $argv0] } {
 #
 if { $::BATCH == "true" } {
     if {$::env(BUILD) == $solaris || 
-        $::env(BUILD) == $darwin ||
-        $::env(BUILD) == $linux} {
-            # - need to run the specially modified tcl interp in the executable 'vtk' on unix
-            regsub -all "{|}" $argv "\\\"" argv
-            set ret [catch "exec $::env(VTK_DIR)/bin/vtk \"$mainscript\" $argv" res]
-        } elseif {$::env(BUILD) == $windows} {
-            regsub -all "{|}" $argv "" argv
-            puts "exec \"$::env(TCL_BIN_DIR)/wish84.exe\" \"$mainscript\" $argv" 
-            set ret [catch "exec \"$::env(TCL_BIN_DIR)/wish84.exe\" \"$mainscript\" $argv" res]
-        } else {
-            puts stderr "Run: Unknown build: $::env(BUILD)"
-            exit -1
-        }
-
+            $::env(BUILD) == $darwin ||
+            $::env(BUILD) == $linux} {
+        # - need to run the specially modified tcl interp in the executable 'vtk' on unix
+        regsub -all "{|}" $argv "\\\"" argv
+        set ret [catch "exec $::env(VTK_DIR)/bin/vtk \"$mainscript\" $argv" res]
+    } elseif {$::env(BUILD) == $windows} {
+        regsub -all "{|}" $argv "" argv
+        puts "exec \"$::env(TCL_BIN_DIR)/wish84.exe\" \"$mainscript\" $argv" 
+        set ret [catch "exec \"$::env(TCL_BIN_DIR)/wish84.exe\" \"$mainscript\" $argv" res]
+    } else {
+        puts stderr "Run: Unknown build: $::env(BUILD)"
+        exit -1
+    }
+    
+    # get the actual exit code of the child process
+    set code [lindex $::errorCode 2]
+    # print the stdout/stderr of the child
     puts stdout $res
-    exit $ret
+    # exit with the status
+    if { $ret } {
+        exit $code
+    } else {
+        exit 0
+    }
 }
 
 #
