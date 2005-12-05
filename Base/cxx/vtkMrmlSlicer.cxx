@@ -1934,13 +1934,13 @@ void vtkMrmlSlicer::SetReformatPoint(vtkMrmlDataVolume *vol,
 //----------------------------------------------------------------------------
 // DrawComputeIjkPoints
 //----------------------------------------------------------------------------
-void vtkMrmlSlicer::DrawComputeIjkPoints(int density)
+void vtkMrmlSlicer::DrawComputeIjkPoints()
 {
   vtkFloatingPointType *rasPt;
   int ijkPt[3], i, n, x=0, y=0;
   int s = this->GetActiveSlice();
   vtkPoints *ijk = this->DrawIjkPoints;
-  vtkPoints *ras = this->PolyDraw->GetPoints(density);
+  vtkPoints *ras = this->PolyDraw->GetPoints();
 
   ijk->Reset();
   n = ras->GetNumberOfPoints();
@@ -1961,9 +1961,38 @@ void vtkMrmlSlicer::DrawComputeIjkPoints(int density)
 }
 
 //----------------------------------------------------------------------------
-// DrawComputeIjkPoints
+// DrawComputeIjkPointsInterpolated
 //----------------------------------------------------------------------------
-void vtkMrmlSlicer::DrawComputeIjkPoints(int s, int p)
+void vtkMrmlSlicer::DrawComputeIjkPointsInterpolated(int density)
+{
+  vtkFloatingPointType *rasPt;
+  int ijkPt[3], i, n, x=0, y=0;
+  int s = this->GetActiveSlice();
+  vtkPoints *ijk = this->DrawIjkPoints;
+  vtkPoints *ras = this->PolyDraw->GetPointsInterpolated(density);
+
+  ijk->Reset();
+  n = ras->GetNumberOfPoints();
+  for (i=0; i<n; i++)
+  {
+    rasPt = ras->GetPoint(i);
+    this->SetReformatPoint(s, (int)(rasPt[0]), (int)(rasPt[1]));
+    this->GetSeed2D(ijkPt);
+
+    if (i == 0 || ijkPt[0] != x || ijkPt[1] != y)
+    {
+      ijk->InsertNextPoint((vtkFloatingPointType)(ijkPt[0]), (vtkFloatingPointType)(ijkPt[1]),
+        (vtkFloatingPointType)(ijkPt[2]));
+    } 
+    x = ijkPt[0];
+    y = ijkPt[1];
+  }
+}
+
+//----------------------------------------------------------------------------
+// DrawComputeIjkPointsInterpolated
+//----------------------------------------------------------------------------
+void vtkMrmlSlicer::DrawComputeIjkPointsInterpolated(int s, int p)
 {
   vtkFloatingPointType *rasPt;
   int ijkPt[3], i, n, x=0, y=0;

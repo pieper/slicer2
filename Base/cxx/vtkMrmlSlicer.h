@@ -496,12 +496,11 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
     this->PolyDraw->EndSelectBox(x, y);};
   vtkPoints* DrawGetPoints() {
     return this->PolyDraw->GetPoints();}
-  vtkPoints* DrawGetPoints(int density) {
-    return this->PolyDraw->GetPoints(density);}
-  void DrawComputeIjkPoints() {
-    this->DrawComputeIjkPoints(0);}
-  void DrawComputeIjkPoints(int density);
-  void DrawComputeIjkPoints(int s, int p);
+  vtkPoints* DrawGetPointsInterpolated(int density) {
+    return this->PolyDraw->GetPointsInterpolated(density);}
+  void DrawComputeIjkPoints();
+  void DrawComputeIjkPointsInterpolated(int density);
+  void DrawComputeIjkPointsInterpolated(int s, int p);
   vtkGetObjectMacro(DrawIjkPoints, vtkPoints);
   void DrawSetShapeToPolygon() {this->PolyDraw->SetShapeToPolygon();};
   void DrawSetShapeToLines() {this->PolyDraw->SetShapeToLines();};
@@ -521,6 +520,8 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   {return this->PolyDraw->IsNearSelected(x, y);}
   void DrawSetClosed(int closed)
   { this->PolyDraw->SetClosed(closed); }
+  void DrawSetHideSpline(int hide)
+  { this->PolyDraw->SetHideSpline(hide); }
 
   void DrawSetStartMethod(void (*f)(void *), void *arg)
     {
