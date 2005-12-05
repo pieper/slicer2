@@ -1,20 +1,19 @@
 proc testVolGeneric {} {
     global Volume Volumes
-    set Volume(firstFile) Testing/TestData/imagetest/nrrd/mrt.nhdr
+    set Volume(firstFile) Testing/TestData/imagetest/nrrd/fixed.nrrd
     VolGenericApply
     
     set Volume(activeID) 1
     VolumesGenericExportSetFileType nhdr
-    set Volumes(prefixGenericSave) mrt.nhdr
+    set Volumes(prefixGenericSave) fixed.nrrd
     VolumesGenericExport
 
-    if {[tdiff Testing/TestData/imagetest/nrrd/mrt.nhdr mrt.nhdr]} {
+    if {[tdiff Testing/TestData/imagetest/nrrd/fixed.nrrd fixed.nrrd]} {
         exit 1
     } else {
         exit 0
     }
-    file delete -force mrt.nhdr
-    file delete -force mrt.raw
+    file delete -force fixed.nrrd
 }
 
 proc tdiff {fn1 fn2} {
