@@ -60,6 +60,7 @@ vtkImageDrawROI* vtkImageDrawROI::New()
 vtkImageDrawROI::vtkImageDrawROI()
 {
     this->HideROIOff();
+    this->HideSplineOn();
     
     this->firstPoint = NULL;
     this->lastPoint = NULL;
@@ -133,7 +134,7 @@ static void Interpolate (Point *p, double t, double x0, double y0, double x1,
     p->y = (int)y03;
 }
 
-vtkPoints* vtkImageDrawROI::GetPoints(int density)
+vtkPoints* vtkImageDrawROI::GetPointsInterpolated(int density)
 {
     // Samples closed curves only right now
     // Can sample open curves by simply omitting lastPoint-firstPoint curve
@@ -1502,7 +1503,9 @@ void vtkImageDrawROI::ExecuteData(vtkDataObject *out)
     // Draw and connect points
     if (!(this->HideROI))
     {
-        this->DrawSpline(outData, outExt);
+        if (!this->HideSpline)
+        {   this->DrawSpline(outData, outExt);
+        }
         switch (this->GetShape())
         {
         case ROI_SHAPE_POLYGON:
@@ -1549,6 +1552,7 @@ void vtkImageDrawROI::PrintSelf(ostream& os, vtkIndent indent)
         os << indent << "NumSelectedPoints: " << this->NumSelectedPoints;
         os << indent << "pointRadius: " << this->PointRadius;
     os << indent << "HideROI: " << this->HideROI;
+    os << indent << "HideSpline: " << this->HideSpline;
         os << indent << "Shape: " << this->Shape;
         os << indent << "PointColor[0]: " << this->PointColor[0];
         os << indent << "PointColor[1]: " << this->PointColor[1];

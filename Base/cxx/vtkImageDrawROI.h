@@ -104,6 +104,10 @@ public:
     vtkSetMacro(HideROI, int);
     vtkBooleanMacro(HideROI, int);
 
+    vtkGetMacro(HideSpline, int);
+    vtkSetMacro(HideSpline, int);
+    vtkBooleanMacro(HideSpline, int);
+
     // Description:
     // Shape functions affect the way the contour is drawn
     // based on the input points
@@ -145,8 +149,8 @@ public:
     // Description:
     // Get the points from the contour drawn on the slice.
     // Used for Apply (to actually mark the points in the volume)
-    vtkPoints* GetPoints(void);
-    vtkPoints* GetPoints(int density);
+    vtkPoints* GetPoints();
+    vtkPoints* GetPointsInterpolated(int density);
     void LoadStackPolygon(vtkPoints* pts);
 
 protected:
@@ -170,6 +174,7 @@ protected:
     int NumSelectedPoints;
     int PointRadius;
     int HideROI;
+    int HideSpline;
     int Shape;
     int Closed;
 
