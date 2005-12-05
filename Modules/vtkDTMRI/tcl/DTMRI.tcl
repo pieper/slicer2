@@ -501,7 +501,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.117 $} {$Date: 2005/12/02 22:10:14 $}]
+                  {$Revision: 1.118 $} {$Date: 2005/12/05 15:24:07 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -780,7 +780,7 @@ especially Diffusion DTMRI MRI.
     <P>
 
     For <B>tractography</B>, point at the voxel of interest with the mouse and click\n the letter '<B>s</B>' (for start, or streamline). To <B>delete</B> a tract, point at it and click '<B>d</B>' (for delete).
-
+<P><B>Warning</B>: It may not be possible to run this process to completion on Windows, due to memory allocation constraints.
     <P>
     Description by tab:
     <BR>
@@ -801,7 +801,7 @@ especially Diffusion DTMRI MRI.
     <UL>
     <LI>This tab is for file reading/DTMRI conversion.
     </UL>
-    "
+"
     regsub -all "\n" $help {} help
     MainHelpApplyTags DTMRI $help
     MainHelpBuildGUI DTMRI

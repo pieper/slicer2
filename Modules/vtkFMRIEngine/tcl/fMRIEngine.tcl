@@ -154,7 +154,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.25 $} {$Date: 2005/12/02 20:32:54 $}]
+        {$Revision: 1.26 $} {$Date: 2005/12/05 15:27:07 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -280,7 +280,8 @@ proc fMRIEngineBuildGUI {} {
     <BR><BR>
     Check the file README.txt in the docs directory of this module \
     for details about how to build and use the module.
-    <BR>
+    <BR><BR><B>Warning</B>: It may not be possible to run this process \
+    to completion on Windows, due to memory allocation constraints.
     "
     regsub -all "\n" $help {} help
     MainHelpApplyTags fMRIEngine $help

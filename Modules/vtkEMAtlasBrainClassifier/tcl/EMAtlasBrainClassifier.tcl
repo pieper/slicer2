@@ -106,7 +106,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.24 $} {$Date: 2005/11/30 00:35:35 $}]
+        {$Revision: 1.25 $} {$Date: 2005/12/05 15:23:35 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -186,9 +186,8 @@ proc EMAtlasBrainClassifierInit {} {
 proc EMAtlasBrainClassifierBuildGUI {} {
     global Gui EMAtlasBrainClassifier Module Volume 
     
-    set help "The EMAtlasBrainClassifier module is an easy to use segmentation tool for Brain MRIs. Just define the Brain SPGR and T2W input images 
-              and the tool will automatically segment the image into white matter , gray matter, and cortical spinal fluid. 
-              Be warned, this process might take longer because we first have to non-rigidly register the atlas to the patient." 
+    set help "The EMAtlasBrainClassifier module is an easy to use segmentation tool for Brain MRIs. Just define the Brain SPGR and T2W input images and the tool will automatically segment the image into white matter , gray matter, and cortical spinal fluid. 
+              <P><B>Warning:</B>: this process might take longer because we first have to non-rigidly register the atlas to the patient. It may not be possible to run this process to completion on Windows, due to memory allocation constraints." 
 
     regsub -all "\n" $help {} help
     MainHelpApplyTags EMAtlasBrainClassifier $help
