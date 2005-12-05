@@ -14,7 +14,7 @@
 # - configure (or cmake) with needed options
 # - build for this platform
 #
-# Packages: cmake, tcl, itcl, ITK, VTK, blt, gsl
+# Packages: cmake, tcl, itcl, ITK, VTK, blt, teem, NA-MIC sandbox
 # 
 # Usage:
 #   genlib [options] [target]
@@ -226,7 +226,7 @@ if { ![file exists $CMAKE] } {
 
 
     if {$isWindows} {
-        puts stderr "-- genlib.tcl cannot generate the cmake, tcl, or gsl binaries for windows --"
+        puts stderr "-- genlib.tcl cannot generate the cmake or tcl binaries for windows --"
         puts stderr ""
         puts stderr "Follow the instructions at the following link"
         puts stderr "to download precompiled versions of parts of the windows Lib"
@@ -442,58 +442,6 @@ if { ![file exists $::BLT_TEST_FILE] } {
         eval runcmd $::SERIAL_MAKE
         eval runcmd $::SERIAL_MAKE install
     }
-}
-
-
-################################################################################
-# Get and build gsl
-#
-
-if { ![file exists $::GSL_TEST_FILE] } {
-    file mkdir $SLICER_LIB/gsl-build
-    file mkdir $SLICER_LIB/gsl
-
-    cd $SLICER_LIB/gsl-build/
-
-    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co -r $::GSL_TAG gsl
-
-    if { !$isWindows } {
-        # can't do Windows
-        cd $SLICER_LIB/gsl-build/gsl
-
-        if { $isDarwin } {
-            # equivalent of autogen.sh for Darwin (libtoolize => glibtoolize)    
-            runcmd glibtoolize --automake
-            runcmd aclocal
-            runcmd automake --add-missing --gnu
-            runcmd autoconf
-        } else {
-            if { $isSolaris } {
-                # patch configure.ac
-                runcmd /usr/bin/patch -i $SLICER_HOME/Scripts/gslConfigureAc.diff $SLICER_LIB/gsl-build/gsl/configure.ac
-            }
-            # equivalent of autogen.sh with hack to make autoconf run on Solaris and RH 7.3.  
-            runcmd libtoolize --automake
-            runcmd aclocal
-            runcmd automake --add-missing --gnu
-            # autoconf will fail the first time, then succeed on RH 7.3 and Solaris 
-            catch "runcmd autoconf -I ."
-            runcmd autoconf -I .
-        }   
-        runcmd ./configure --prefix=$SLICER_LIB/gsl
-        runcmd touch doc/version-ref.texi
-        eval runcmd $::MAKE
-        eval runcmd $::MAKE install
-    }
-
-    # check if gsl_multifit.h is in the right location
-    if { ![file exists $SLICER_LIB/gsl/include/gsl/gsl_multifit.h] } {
-        puts "GSL built in the wrong place; moving files to $SLICER_LIB/gsl/include/gsl/"
-        file copy $SLICER_LIB/gsl/include/gsl_multifit.h $SLICER_LIB/gsl/include/gsl/gsl_multifit.h
-        file copy $SLICER_LIB/gsl/include/gsl_sf.h $SLICER_LIB/gsl/include/gsl/gsl_sf.h
-    }
-
 }
 
 
