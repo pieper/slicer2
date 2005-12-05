@@ -630,7 +630,7 @@ proc MainInteractorShiftMotion {widget x y} {
                                     set dim [lindex $dims 2]
                                 }
                             }
-                            set off [expr $dim * ($sRas - [lindex $lpi_point 2]) / [lindex $ras_extent 2]]
+                            set off [expr round($dim * ($sRas - [lindex $lpi_point 2]) / [lindex $ras_extent 2])]
                             MainSlicesSetOffset $slice $off
                         }
                         "SagSlice" { 
@@ -645,7 +645,7 @@ proc MainInteractorShiftMotion {widget x y} {
                                     set dim [lindex $dims 1]
                                 }
                             }
-                            set off [expr $dim * ($rRas - [lindex $lpi_point 0]) / [lindex $ras_extent 0]]
+                            set off [expr round($dim * ($rRas - [lindex $lpi_point 0]) / [lindex $ras_extent 0])]
                             MainSlicesSetOffset $slice $off
                         }
                         "CorSlice" {
@@ -660,7 +660,7 @@ proc MainInteractorShiftMotion {widget x y} {
                                     set dim [lindex $dims 1]
                                 }
                             }
-                            set off [expr $dim * ($aRas - [lindex $lpi_point 1]) / [lindex $ras_extent 1]]
+                            set off [expr round($dim * ($aRas - [lindex $lpi_point 1]) / [lindex $ras_extent 1])]
                             MainSlicesSetOffset $slice $off
                         }
                     }
