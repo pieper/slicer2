@@ -122,7 +122,7 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
 
     ### Some simple error checking to see if the directories exist
 
-    foreach dirname "VTK_DIR VTK_SRC_DIR ITK_BINARY_PATH TCL_BIN_DIR GSL_LIB_DIR" {
+    foreach dirname "VTK_DIR VTK_SRC_DIR ITK_BINARY_PATH TCL_BIN_DIR" {
        set dir $::env($dirname)
        eval { \
              if {[file exist $dir] == 0} { \
@@ -218,10 +218,6 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
     file mkdir $destdir/Lib/$::env(BUILD)/tcl-build
     file copy -force $::env(TCL_LIB_DIR) $destdir/Lib/$::env(BUILD)/tcl-build/lib
     file copy -force $::env(TCL_BIN_DIR) $destdir/Lib/$::env(BUILD)/tcl-build/bin
-
-    puts " -- copying gsl files"
-    file mkdir $destdir/Lib/$::env(BUILD)/gsl
-    file copy -force $::env(GSL_LIB_DIR) $destdir/Lib/$::env(BUILD)/gsl/lib
 
     puts " -- copying teem files"
     file mkdir $destdir/Lib/$::env(BUILD)/teem-build

@@ -66,7 +66,6 @@ set ::TK_TAG "core-8-4-6"
 set ::ITCL_TAG "itcl-3-2-1"
 set ::IWIDGETS_TAG "iwidgets-4-0-1"
 set ::BLT_TAG "blt24z"
-set ::GSL_TAG "release-1-4"
 set ::SANDBOX_TAG "HEAD"
 
 # Set library, binary, etc. paths...
@@ -85,9 +84,6 @@ set ::TCL_BIN_DIR $::SLICER_LIB/tcl-build/bin
 set ::TCL_LIB_DIR $::SLICER_LIB/tcl-build/lib
 set ::TCL_INCLUDE_DIR $::SLICER_LIB/tcl-build/include
 set ::CMAKE_PATH $::SLICER_LIB/CMake-build
-set ::GSL_LIB_DIR $::SLICER_LIB/gsl/lib
-set ::GSL_INC_DIR $::SLICER_LIB/gsl/include
-set ::GSL_SRC_DIR $::SLICER_LIB/gsl-build/gsl-mirror/gsl
 set ::SOV_BINARY_DIR " "
 set ::XVNC_EXECUTABLE " "
 
@@ -118,7 +114,6 @@ switch $::tcl_platform(os) {
         set ::ITCL_TEST_FILE $::TCL_LIB_DIR/libitclstub3.2.a
         set ::IWIDGETS_TEST_FILE $::TCL_LIB_DIR/iwidgets4.0.1/iwidgets.tcl
         set ::BLT_TEST_FILE $::TCL_BIN_DIR/bltwish24
-        set ::GSL_TEST_FILE $::GSL_LIB_DIR/libgsl.$shared_lib_ext
         set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/unu
         set ::VTK_TEST_FILE $::VTK_DIR/bin/vtk
         set ::SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/libSlicerClustering.a
@@ -131,9 +126,6 @@ switch $::tcl_platform(os) {
     }
     "Windows NT" {
     # Windows NT currently covers WinNT, Win2000, XP Home, XP Pro
-
-        ## override GSL dir to match pre-compiled binaries
-        set ::GSL_SRC_DIR $::SLICER_LIB/gsl-build/gsl
 
         #
         ### Set your peferred build type: 
@@ -151,7 +143,6 @@ switch $::tcl_platform(os) {
         set ::ITCL_TEST_FILE $::TCL_LIB_DIR/itcl3.2/itcl32.dll
         set ::IWIDGETS_TEST_FILE $::TCL_LIB_DIR/iwidgets4.0.2/iwidgets.tcl
         set ::BLT_TEST_FILE $::TCL_BIN_DIR/BLT24.dll
-        set ::GSL_TEST_FILE $::GSL_LIB_DIR/gsl.lib
         set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/unu.exe
         set ::VTK_TEST_FILE $::VTK_DIR/bin/$::VTK_BUILD_TYPE/vtk.exe
         set ::SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/$::VTK_BUILD_TYPE/SlicerClustering.lib
