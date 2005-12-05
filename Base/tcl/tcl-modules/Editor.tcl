@@ -125,7 +125,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.80 $} {$Date: 2005/09/06 21:06:18 $}]
+        {$Revision: 1.81 $} {$Date: 2005/12/05 18:18:32 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -1175,25 +1175,28 @@ proc EditorMotion {x y} {
     global Ed Editor 
 
     switch $Editor(activeID) {
-        "EdDraw" {
-            switch $Ed(EdDraw,mode) {
+        "EdDraw2" {
+            switch $Ed(EdDraw2,mode) {
                 "Draw" {
                     # Do nothing
                 }
                 "Select" {
                     set inside [Slicer DrawIsNearSelected $x $y]
                     if {$inside == 1} {
-                        set Ed(EdDraw,mode) Move
+                        set Ed(EdDraw2,mode) Move
                     }
                 }
                 "Move" {
                     set inside [Slicer DrawIsNearSelected $x $y]
                     if {$inside == 0} {
-                        set Ed(EdDraw,mode) Select
+                        set Ed(EdDraw2,mode) Select
                     }
                 }
             }
             EditorIncrementAndLogEvent "motion"
+        }
+        "EdDraw" {
+            # do nothing
         }
         "EdLiveWire" {
             EdLiveWireMotion $x $y
@@ -1224,7 +1227,7 @@ proc EditorB1 {x y} {
     EditorIncrementAndLogEvent "b1click"
     
     switch $Editor(activeID) {
-        "EdDraw" {
+        "EdDraw2" {
             # Mark point for moving
             Slicer DrawMoveInit $x $y
             
@@ -1236,14 +1239,12 @@ proc EditorB1 {x y} {
             set coords [EditorClampToOriginalBounds $x $y]
             set x [lindex $coords 0]
             set y [lindex $coords 1]
-            switch $Ed(EdDraw,mode) {
+            switch $Ed(EdDraw2,mode) {
+                "Draw2" {
+                    Slicer DrawInsertPoint $x $y
+                }
                 "Draw" {
-                    if {1} {
-                        Slicer DrawInsertPoint $x $y
-                    } else {
-                        EditorInsertPoint $x $y
-                        #EditorIdleProc start
-                    }
+                    EditorInsertPoint $x $y
                 }
                 "Select" {
                     Slicer DrawDeselectAll
@@ -1251,6 +1252,23 @@ proc EditorB1 {x y} {
                 }
                 "Insert" {
                     Slicer DrawInsert $x $y
+                }
+            }
+        }
+        "EdDraw" {
+            # Mark point for moving
+            Slicer DrawMoveInit $x $y
+            
+            # Act depending on the draw mode:
+            #  - Draw:   Insert a point
+            #  - Select: Select/deselect a point
+            #
+            switch $Ed(EdDraw,mode) {
+                "Draw" {
+                    Slicer DrawInsertPoint $x $y
+                }
+                "Select" {
+                    Slicer DrawStartSelectBox $x $y
                 }
             }
         }
@@ -1406,13 +1424,13 @@ proc EditorB1Motion {x y} {
     set s $Slice(activeID)
 
     switch $Editor(activeID) {
-        "EdDraw" {
+        "EdDraw2" {
             # Act depending on the draw mode:
             #  - Move:   move points
             #  - Draw:   Insert a point
             #  - Select: draw the "select" box
             #
-            switch $Ed(EdDraw,mode) {
+            switch $Ed(EdDraw2,mode) {
                 "Draw" {
                     set coords [EditorClampToOriginalBounds $x $y]
                     set x [lindex $coords 0]
@@ -1447,6 +1465,40 @@ proc EditorB1Motion {x y} {
                 }
             }
         }
+        "EdDraw" {
+            # Act depending on the draw mode:
+            #  - Move:   move points
+            #  - Draw:   Insert a point
+            #  - Select: draw the "select" box
+            #
+            switch $Ed(EdDraw,mode) {
+                "Draw" {
+                    if {1} {
+                        # this way just inserts the point normally
+                        Slicer DrawInsertPoint $x $y
+                    } else {
+                        # this way applies to show the rasterized labelmap
+                        # and stores the points to support delete
+                        # (this way isn't fully debugged)
+                        EditorInsertPoint $x $y
+                    }
+
+
+                    # Lauren this would be better:
+                    
+                    # DAVE: allow drawing on non-native slices someday
+                    #            Slicer SetReformatPoint $s $x $y
+                    #            scan [Slicer GetIjkPoint] "%g %g %g" i j k
+                    #            puts "Slicer DrawInsertPoint $x $y ijk=$i $j $k s=$s"
+                }
+                "Select" {
+                    Slicer DrawDragSelectBox $x $y
+                }
+                "Move" {
+                    Slicer DrawMove $x $y
+                }
+            }
+        }
         "EdPaint" {
             EdPaintB1Motion $x $y
         }
@@ -1464,13 +1516,27 @@ proc EditorB1Release {x y} {
     global Ed Editor
     
     switch $Editor(activeID) {
-        "EdDraw" {
+        "EdDraw2" {
             # Act depending on the draw mode:
             #  - Select: stop drawing the "select" box
             #
             set coords [EditorClampToOriginalBounds $x $y]
             set x [lindex $coords 0]
             set y [lindex $coords 1]
+            switch $Ed(EdDraw2,mode) {
+                "Select" {
+                    Slicer DrawEndSelectBox $x $y
+                }
+                "Draw" {
+                    #EditorIdleProc cancel
+                    #EditorIdleProc start 0
+                }
+            }
+        }
+        "EdDraw" {
+            # Act depending on the draw mode:
+            #  - Select: stop drawing the "select" box
+            #
             switch $Ed(EdDraw,mode) {
                 "Select" {
                     Slicer DrawEndSelectBox $x $y
@@ -2798,7 +2864,7 @@ proc EditorControlB1 {x y} {
     EditorIncrementAndLogEvent "controlb1click"
     
     switch $Editor(activeID) {
-        "EdDraw" {
+        "EdDraw2" {
             # Mark point for moving
             Slicer DrawMoveInit $x $y
             
@@ -2810,7 +2876,7 @@ proc EditorControlB1 {x y} {
             set coords [EditorClampToOriginalBounds $x $y]
             set x [lindex $coords 0]
             set y [lindex $coords 1]
-            switch $Ed(EdDraw,mode) {
+            switch $Ed(EdDraw2,mode) {
                 "Draw" {
                     if {1} {
                         Slicer DrawInsertPoint $x $y
@@ -2823,7 +2889,7 @@ proc EditorControlB1 {x y} {
                     Slicer DrawStartSelectBox $x $y
                 }
                 "Move" {
-                    set Ed(EdDraw,mode) Select
+                    set Ed(EdDraw2,mode) Select
                     Slicer DrawStartSelectBox $x $y
                 }
                 "Insert" {
@@ -2848,7 +2914,7 @@ proc EditorControlB1Motion {x y} {
     set s $Slice(activeID)
 
     switch $Editor(activeID) {
-        "EdDraw" {
+        "EdDraw2" {
             # Act depending on the draw mode:
             #  - Draw:   Insert a point
             #  - Select: draw the "select" box
@@ -2856,7 +2922,7 @@ proc EditorControlB1Motion {x y} {
             set coords [EditorClampToOriginalBounds $x $y]
             set x [lindex $coords 0]
             set y [lindex $coords 1]
-            switch $Ed(EdDraw,mode) {
+            switch $Ed(EdDraw2,mode) {
                 "Draw" {
                     if {1} {
                         # this way just inserts the point normally
@@ -2887,14 +2953,14 @@ proc EditorControlB1Release {x y} {
     global Ed Editor
     
     switch $Editor(activeID) {
-        "EdDraw" {
+        "EdDraw2" {
             # Act depending on the draw mode:
             #  - Select: stop drawing the "select" box
             #
             set coords [EditorClampToOriginalBounds $x $y]
             set x [lindex $coords 0]
             set y [lindex $coords 1]
-            switch $Ed(EdDraw,mode) {
+            switch $Ed(EdDraw2,mode) {
                 "Select" {
                     Slicer DrawEndSelectBox $x $y
                 }
