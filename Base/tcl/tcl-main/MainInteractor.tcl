@@ -409,6 +409,9 @@ proc MainInteractorKeyPress {key widget x y} {
             switch $Module(activeID) {
                 "Editor" {
                     switch $Editor(activeID) {
+                        "EdDraw2" {
+                            EdDraw2Update NextMode
+                        }
                         "EdDraw" {
                             EdDrawUpdate NextMode
                         }
@@ -420,6 +423,9 @@ proc MainInteractorKeyPress {key widget x y} {
             switch $Module(activeID) {
                 "Editor" {
                     switch $Editor(activeID) {
+                        "EdDraw2" {
+                            EdDraw2Update Delete
+                        }
                         "EdDraw" {
                             EdDrawUpdate Delete
                         }
@@ -447,6 +453,9 @@ proc MainInteractorKeyPress {key widget x y} {
             switch $Module(activeID) {
                 "Editor" {
                     switch $Editor(activeID) {
+                        "EdDraw2" {
+                            EdDraw2Update $key
+                        }
                         "EdDraw" {
                             EdDrawUpdate $key
                         }
@@ -464,8 +473,8 @@ proc MainInteractorKeyPress {key widget x y} {
             switch $Module(activeID) {
                 "Editor" {
                     switch $Editor(activeID) {
-                        "EdDraw" {
-                            EdDrawUpdate SelectAll
+                        "EdDraw2" {
+                            EdDraw2Update SelectAll
                             RenderActive
                         }  
                     }  
@@ -476,8 +485,8 @@ proc MainInteractorKeyPress {key widget x y} {
             switch $Module(activeID) {  
                 "Editor" {  
                     switch $Editor(activeID) {  
-                        "EdDraw" {  
-                            EdDrawUpdate Cut  
+                        "EdDraw2" {  
+                            EdDraw2Update Cut  
                             RenderActive  
                         }  
                     }  
@@ -488,8 +497,8 @@ proc MainInteractorKeyPress {key widget x y} {
             switch $Module(activeID) {  
                 "Editor" {  
                     switch $Editor(activeID) {  
-                        "EdDraw" {  
-                            EdDrawUpdate Copy  
+                        "EdDraw2" {  
+                            EdDraw2Update Copy  
                             RenderActive  
                         }  
                     }  
@@ -500,8 +509,8 @@ proc MainInteractorKeyPress {key widget x y} {
             switch $Module(activeID) {  
                 "Editor" {  
                     switch $Editor(activeID) {  
-                        "EdDraw" {  
-                            EdDrawUpdate Paste  
+                        "EdDraw2" {  
+                            EdDraw2Update Paste  
                             RenderActive  
                         }  
                     }  
@@ -512,8 +521,8 @@ proc MainInteractorKeyPress {key widget x y} {
             switch $Module(activeID) {  
                 "Editor" {  
                     switch $Editor(activeID) {  
-                        "EdDraw" {  
-                            EdDrawUpdate DeleteAll  
+                        "EdDraw2" {  
+                            EdDraw2Update DeleteAll  
                             RenderActive  
                         }  
                     }  
