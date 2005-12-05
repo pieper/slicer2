@@ -134,6 +134,8 @@ proc Usage { {msg ""} } {
     set msg "$msg\n   --load-bxh <file.bxh> : read bxh file from <file.bxh>"
     set msg "$msg\n   --script <file.tcl> : script to execute after slicer loads"
     set msg "$msg\n   --exec <tcl code> : some code to execute after slicer loads"
+    set msg "$msg\n                       (note: cannot specify scene after --exec)"
+    set msg "$msg\n                       (note: use ,. instead of ; between tcl statements)"
     set msg "$msg\n   --all-info : print out all of the version info and continue"
     set msg "$msg\n   --enable-stereo : set the flag to allow use of frame sequential stereo"
     set msg "$msg\n   --old-voxel-shift : start slicer with voxel coords in corner not center of image pixel"
@@ -935,7 +937,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.105 2005/11/29 00:54:48 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.106 2005/12/05 20:50:00 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
