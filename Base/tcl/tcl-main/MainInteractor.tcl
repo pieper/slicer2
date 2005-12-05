@@ -158,8 +158,8 @@ proc MainInteractorBind {widget} {
     bind $widget <Delete>            {MainInteractorKeyPress Delete %W %x %y}
     bind $widget <KeyPress-d>        {MainInteractorKeyPress d %W %x %y}
     bind $widget <KeyPress-c>        {MainInteractorKeyPress c %W %x %y}
-    bind $widget <KeyPress-=>        {MainInteractorKeyPress = %W %x %y}
-    bind $widget <KeyPress-->        {MainInteractorKeyPress - %W %x %y}
+    bind $widget <KeyPress-equal>    {MainInteractorKeyPress = %W %x %y}
+    bind $widget <KeyPress-minus>    {MainInteractorKeyPress - %W %x %y}
     bind $widget <Control-a>         {MainInteractorKeyPress Ctla %W %x %y}
     bind $widget <Control-x>         {MainInteractorKeyPress Ctlx %W %x %y}
     bind $widget <Control-c>         {MainInteractorKeyPress Ctlc %W %x %y}
