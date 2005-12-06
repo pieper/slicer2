@@ -98,7 +98,7 @@ if {[catch {
         set ::env(LD_LIBRARY_PATH) " " 
     }} ex]} {
     puts "Setting LD_LIBRARY_PATH to \" \"."  
-    puts "You need to set your LD_LIBRARY_PATH environment variable to pick up system libraries such as libstdc++.so"
+    puts "Warning: You may need to set your LD_LIBRARY_PATH environment variable to pick up system libraries such as libstdc++.so"
     set ::env(LD_LIBRARY_PATH) " "
 }
 
