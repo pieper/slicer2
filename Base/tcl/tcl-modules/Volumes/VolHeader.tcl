@@ -35,15 +35,18 @@
 # .END
 #-------------------------------------------------------------------------------
 proc VolHeaderInit {} {
-    global Volume
+    global Volume Module
 
 
     # Define Procedures for communicating with Volumes.tcl
     #---------------------------------------------
     set m VolHeader
+
+    set Volume($m,copyFrom) $Volume(idNone)
        
     # procedure for building GUI in this module's frame
     set Volume(readerModules,$m,procGUI)  ${m}BuildGUI
+    set Module(readerModules,$m,procMRML)  ${m}UpdateGUI
 
     # Define Module Description to be used by Volumes.tcl
     #---------------------------------------------
@@ -79,6 +82,15 @@ proc VolHeaderBuildGUI {parentFrame} {
     # Props->Bot->Header->Entry frame
     #-------------------------------------------
 
+    #
+    ## popup volume selector to copy parameters from existing volume
+    #
+
+    DevAddSelectButton Volume $f VolHeader,copyFrom "Copy From:" Pack "Copy header fields from existing volume" 
+
+    #
+    # #
+    #
         # Entry fields (the loop makes a frame for each variable)
         foreach param "filePattern" name "{File Pattern}" {
 
@@ -246,4 +258,46 @@ proc VolHeaderBuildGUI {parentFrame} {
         DevAddButton $f.bCancel "Cancel" "VolumesPropsCancel" 8
     grid $f.bApply $f.bCancel -padx $Gui(pad)
 
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolHeaderUpdateGUI
+# Update the node select buttons for this module.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc VolHeaderUpdateGUI {} {
+    global VolHeader Volume
+
+    DevUpdateNodeSelectButton Volume Volume VolHeader,copyFrom VolHeader,copyFrom DevSelectNode 1 0 1 VolHeaderCopyParameters
+}
+
+#-------------------------------------------------------------------------------
+# .PROC VolHeaderCopyParameters
+#  Copy header values from selected volume into the fields
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc VolHeaderCopyParameters {} {
+    global VolHeader Volume
+
+    set fromID $Volume(VolHeader,copyFrom)
+
+    set dims [Volume($fromID,node) GetDimensions]
+    set Volume(width) [lindex $dims 0]
+    set Volume(height) [lindex $dims 1]
+
+    set spacing [Volume($fromID,node) GetSpacing]
+    set Volume(pixelWidth) [lindex $spacing 0]
+    set Volume(pixelHeight) [lindex $spacing 1]
+    set Volume(sliceThickness) [lindex $spacing 2]
+
+    VolumesSetScanOrder [Volume($fromID,node) GetScanOrder]
+    VolumesSetScalarType [Volume($fromID,node) GetScalarTypeAsString]
+
+    set Volume(gantryDetectorTilt) [Volume($fromID,node) GetTilt]
+    set Volume(numScalars) [Volume($fromID,node) GetNumScalars]
+    set Volume(littleEndian) [Volume($fromID,node) GetLittleEndian]
+    set Volume(tensors,pfSwap) [Volume($fromID,node) GetFrequencyPhaseSwap]
+    
 }
