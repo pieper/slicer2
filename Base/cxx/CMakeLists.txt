@@ -69,7 +69,7 @@ SET (Base_SRCS
 # Create the vtkSlicerBase C++ library
 #
 
-ADD_LIBRARY (vtkSlicerBase Base_SRCS)
+ADD_LIBRARY (vtkSlicerBase ${Base_SRCS})
 
 #
 # Create the vtkSlicerBase Tcl library
@@ -78,11 +78,11 @@ ADD_LIBRARY (vtkSlicerBase Base_SRCS)
 IF (VTK_WRAP_TCL AND VTKSLICER_WRAP_TCL)
 
 
-  VTK_WRAP_TCL (vtkSlicerBaseTCL BaseTCL_SRCS Base_SRCS)
+  VTK_WRAP_TCL (vtkSlicerBaseTCL BaseTCL_SRCS ${Base_SRCS})
   IF (APPLE)
-    ADD_LIBRARY (vtkSlicerBaseTCL SHARED vtkOSXSlicerBaseTclInit.c BaseTCL_SRCS)
+    ADD_LIBRARY (vtkSlicerBaseTCL SHARED vtkOSXSlicerBaseTclInit.c ${BaseTCL_SRCS})
   ELSE (APPLE)
-    ADD_LIBRARY (vtkSlicerBaseTCL SHARED BaseTCL_SRCS)
+    ADD_LIBRARY (vtkSlicerBaseTCL SHARED ${BaseTCL_SRCS})
   ENDIF(APPLE)
   TARGET_LINK_LIBRARIES (vtkSlicerBaseTCL 
                          vtkCommonTCL
@@ -120,12 +120,12 @@ ENDIF (VTK_WRAP_TCL AND VTKSLICER_WRAP_TCL)
 
 IF (VTK_WRAP_PYTHON AND VTKSLICER_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkSlicerBasePython BasePython_SRCS Base_SRCS)
+  VTK_WRAP_PYTHON (vtkSlicerBasePython BasePython_SRCS ${Base_SRCS})
 
   IF (APPLE)
-    ADD_LIBRARY (vtkSlicerBasePython MODULE BasePython_SRCS)
+    ADD_LIBRARY (vtkSlicerBasePython MODULE ${BasePython_SRCS})
   ELSE (APPLE)
-    ADD_LIBRARY (vtkSlicerBasePython SHARED BasePython_SRCS)
+    ADD_LIBRARY (vtkSlicerBasePython SHARED ${BasePython_SRCS})
   ENDIF (APPLE)
 
   IF (WIN32)
@@ -171,8 +171,8 @@ ENDIF (VTK_WRAP_PYTHON AND VTKSLICER_WRAP_PYTHON)
 
 IF (VTK_WRAP_JAVA AND VTKSLICER_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkSlicerBaseJava BaseJava_SRCS Base_SRCS)
-  ADD_LIBRARY (vtkSlicerBaseJava SHARED BaseJava_SRCS)
+  VTK_WRAP_JAVA (vtkSlicerBaseJava BaseJava_SRCS ${Base_SRCS})
+  ADD_LIBRARY (vtkSlicerBaseJava SHARED ${BaseJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkSlicerBaseJava
                          vtkCommonJava 
                          vtkIOJava
