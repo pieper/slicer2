@@ -32,7 +32,11 @@ package require vtkQueryAtlas
 #
 proc slicerd_start { {port 18943} } {
 
-    set ::SLICERD(serversock) [socket -server slicerd_sock_cb $port]
+    set ret [ catch {set ::SLICERD(serversock) [socket -server slicerd_sock_cb $port]} res]
+
+    if { $ret } {
+        puts "Warning: could not start slicer daemon at default port (probably another slicer daemon already running on this machine)."
+    }
 }
 
 #
