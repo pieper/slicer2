@@ -94,8 +94,11 @@ if { [file exists $localvarsfile] } {
 # if it is an empty string or doesn't exist, set the LD_LIBRARY_PATH 
 if {[catch {
     if {$::env(LD_LIBRARY_PATH) == ""} { 
+        puts stderr "LD_LIBRARY_PATH is an empty string."
         set ::env(LD_LIBRARY_PATH) " " 
     }} ex]} {
+    puts "Setting LD_LIBRARY_PATH to \" \"."  
+    puts "You need to set your LD_LIBRARY_PATH environment variable to pick up system libraries such as libstdc++.so"
     set ::env(LD_LIBRARY_PATH) " "
 }
 
@@ -107,7 +110,7 @@ if {[catch {
     set ::env(TCLLIBPATH) " " 
 }
 
-# if it is an empty string or doesn't exist, set the LD_LIBRARY_PATH 
+# if it is an empty string or doesn't exist, set the DYLD_LIBRARY_PATH 
 if { $::env(BUILD) == $darwin && [catch {
     if {$::env(DYLD_LIBRARY_PATH) == ""} { 
         set ::env(DYLD_LIBRARY_PATH) " " 
