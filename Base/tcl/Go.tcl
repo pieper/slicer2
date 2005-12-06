@@ -72,6 +72,21 @@ proc exit { "code 0" } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC bgerror
+#
+# override the built in bgerror routine to provide extra feedback on memory condidtions
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc bgerror {err} {slicer_bgerror $err}
+proc slicer_bgerror { err } {
+    set msg "Slicer has experienced an application error and may no longer be in a stable state (restart slicer if you observe unusual behavior).\n\nIt is possible you have run out of memory.\n\nThe following dialog box provides support information.  If this is a repeatable issue, please file a bug report at http://www.na-mic.org/Bug"
+    DevErrorWindow $msg
+    ::tk::dialog::error::bgerror $err
+    proc bgerror {err} {slicer_bgerror $err}
+}
+
 
 #######################
 # version number control for slicer
@@ -937,7 +952,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.106 2005/12/05 20:50:00 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.107 2005/12/06 23:48:22 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
