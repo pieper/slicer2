@@ -110,6 +110,7 @@ proc VolumesInit {} {
 
     # Define Procedures
     set Module($m,procGUI)  VolumesBuildGUI
+    set Module($m,procMRML)  VolumesUpdateMRML
 
     # For now, never display histograms to avoid bug in histWin Render
     # call in MainVolumesSetActive. (This happened when starting slicer,
@@ -123,7 +124,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-             {$Revision: 1.126 $} {$Date: 2005/12/02 21:35:33 $}]
+             {$Revision: 1.127 $} {$Date: 2005/12/06 16:18:57 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -2663,4 +2664,17 @@ proc VolumesComputeNodeMatricesFromRasToIjkMatrix {mrmlNode RasToIjkMatrix dims}
     $mrmlNode SetScanOrder $scan_order
 
     IjkToRasMatrix Delete
+}
+
+
+proc VolumesUpdateMRML {} {
+    global Volume Module
+
+    # Call each Module's "MRML" routine
+    #-------------------------------------------
+    foreach m $Volume(readerModules,idList) {
+        if {[info exists Module(readerModules,$m,procMRML)] == 1} {
+            eval $Module(readerModules,$m,procMRML)
+        }
+    }
 }
