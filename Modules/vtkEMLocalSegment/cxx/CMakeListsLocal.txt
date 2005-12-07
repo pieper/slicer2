@@ -10,6 +10,14 @@
 # and 'MYCLASS' to your module name (all CAPS)
 #
 
+# Find ITK
+INCLUDE (${CMAKE_ROOT}/Modules/FindITK.cmake)
+# Use ITK.  This sets up include/link directories for us.
+IF (USE_ITK_FILE)
+  INCLUDE(${USE_ITK_FILE})
+ENDIF(USE_ITK_FILE)
+
+
 SET (LOCAL_MODULE_SRCS
          vtkTimeDef.h
          vtkImageEMMarkov.cxx
@@ -35,13 +43,10 @@ SET (LOCAL_MODULE_SRCS
  )
 
 SET ( LOCAL_NO_WRAP_SRCS
-    ${VTKEMLOCALSEGMENT_SOURCE_DIR}/NumericalRecipes/nrutil.cxx
-    ${VTKEMLOCALSEGMENT_SOURCE_DIR}/NumericalRecipes/mnbrak.cxx
-    ${VTKEMLOCALSEGMENT_SOURCE_DIR}/NumericalRecipes/conjugateMethods.cxx 
-    ${VTKEMLOCALSEGMENT_SOURCE_DIR}/NumericalRecipes/simplex.cxx
     ${VTKEMLOCALSEGMENT_SOURCE_DIR}/PriorModels/EMLocalInterface.cxx
-    ${VTKEMLOCALSEGMENT_SOURCE_DIR}/PriorModels/EMLocalRegistration.cxx
-    ${VTKEMLOCALSEGMENT_SOURCE_DIR}/PriorModels/EMLocalShape.cxx
+    ${VTKEMLOCALSEGMENT_SOURCE_DIR}/PriorModels/EMLocalRegistrationCostFunction.cxx
+    ${VTKEMLOCALSEGMENT_SOURCE_DIR}/PriorModels/EMLocalShapeCostFunction.cxx
+    ${VTKEMLOCALSEGMENT_SOURCE_DIR}/PriorModels/itkEMLocalOptimization.h
 ) 
 
 # MESSAGE(STATUS  ${VTKEMLOCALSEGMENT_SOURCE_DIR}) 
@@ -62,7 +67,6 @@ INCLUDE_DIRECTORIES(
    ${VTKEMATLAS_SOURCE_DIR}/cxx 
    ${VTKEMATLAS_BUILD_DIR}
 
-   ${VTKEMLOCALSEGMENT_SOURCE_DIR}/NumericalRecipes
    ${VTKEMLOCALSEGMENT_SOURCE_DIR}/PriorModels
    ${VTKEMLOCALSEGMENT_SOURCE_DIR}/Algorithm
 
@@ -73,6 +77,8 @@ LINK_LIBRARIES (
 
    ${VTKEMATLAS_BUILD_LIB}
    ${VTKEMATLAS_BUILD_TCL_LIB}
+
+   ITKNumerics 
 )
 
 

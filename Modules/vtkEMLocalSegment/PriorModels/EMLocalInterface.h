@@ -37,6 +37,32 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define EMLOCALSEGMENTER_MAX_MULTI_THREAD -1
 
 //--------------------------------------------------------------------
+// Registration Parameters 
+//--------------------------------------------------------------------
+// Parameters needed to define cost function 
+#define EMSEGMENT_REGISTRATION_DISABLED     0
+#define EMSEGMENT_REGISTRATION_APPLY        1 
+#define EMSEGMENT_REGISTRATION_GLOBAL_ONLY  2
+#define EMSEGMENT_REGISTRATION_CLASS_ONLY   3
+#define EMSEGMENT_REGISTRATION_SIMULTANEOUS 4
+#define EMSEGMENT_REGISTRATION_SEQUENTIAL   5
+ 
+#define EMSEGMENT_REGISTRATION_INTERPOLATION_LINEAR 1
+#define EMSEGMENT_REGISTRATION_INTERPOLATION_NEIGHBOUR 2 
+
+#define EMSEGMENT_REGISTRATION_SIMPLEX 1 
+#define EMSEGMENT_REGISTRATION_POWELL 2 
+
+#define EMSEGMENT_STOP_FIXED    0 
+#define EMSEGMENT_STOP_LABELMAP 1 
+#define EMSEGMENT_STOP_WEIGHTS  2 
+
+#define EMSEGMENT_PCASHAPE_DEPENDENT 0
+#define EMSEGMENT_PCASHAPE_INDEPENDENT 1
+#define EMSEGMENT_PCASHAPE_APPLY 2
+
+
+//--------------------------------------------------------------------
 // Hierachy / SuperClass specific parameters 
 //--------------------------------------------------------------------
 //BTX  

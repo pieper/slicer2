@@ -23,9 +23,6 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 //Includes the functionality related to EM
 
-// Do you want to run optimization in ITK or NR
-#define EMLOCAL_OPTIMIZATION_ITK_FLAG 1
-
 /* Forward declaration */
 template <class T> void EMLocalAlgorithm_PrintVector(T* parameters, int Min,  int Max);
 VTK_THREAD_RETURN_TYPE EMLocalAlgorithm_E_Step_Threader_Function(void *arg);
@@ -37,11 +34,7 @@ VTK_THREAD_RETURN_TYPE EMLocalAlgorithm_E_Step_Threader_Function(void *arg);
 #include "EMLocalAlgorithm_Print.cxx"
 #include "vtkSimonParameterReaderWriter.h"
 
-#if(EMLOCAL_OPTIMIZATION_ITK_FLAG)
-  #include "itkEMLocalOptimization.h"
-#else 
-  #include "nrEMLocalOptimization.h"
-#endif
+#include "itkEMLocalOptimization.h"
 
 // Core Functions
 template <class T> EMLocalAlgorithm<T>::~EMLocalAlgorithm() {
@@ -351,11 +344,7 @@ void EMLocalAlgorithm<T>::RegistrationInterface(float &Cost) {
                                        this->RegistrationScale[i], &FinalParameters[NumParaPerSet*i],
                                        this->RegistrationParameters);
   // this->RegistrationParameters->StartRegistration(FinalParameters,Cost);
-#if(EMLOCAL_OPTIMIZATION_ITK_FLAG) 
   itkEMLocalOptimization_Registration_Start(this->RegistrationParameters,FinalParameters,Cost);
-#else 
-  nrEMLocalOptimization_Registration_Start(this->RegistrationParameters,FinalParameters,Cost);
-#endif
 
   for (int j = 0; j < this->RegistrationParameters->GetNumberOfParameterSets() ; j++) 
     EMLocalAlgorithm_TransfereRegistrationParameter_ToTranRotSca(&FinalParameters[j* NumParaPerSet],this->RegistrationTranslation[j], 
@@ -1451,19 +1440,12 @@ int EMLocalAlgorithm<T>::EstimateRegistrationParameters(int iter, float &Registr
 template <class T>
 float EMLocalAlgorithm<T>::EstimateShapeParameters(int iter) {
    float Cost;
-#if(EMLOCAL_OPTIMIZATION_ITK_FLAG) 
+
    itkEMLocalOptimization_Shape_Start(this->ShapeParameters, this->PCAShapeParameters, this->PCAMax[0], this->PCAMin[0], this->PCAMax[1], this->PCAMin[1], 
                     this->PCAMax[2], this->PCAMin[2], this->SegmentationBoundaryMin[0] -1, this->SegmentationBoundaryMin[1] - 1, 
                     this->SegmentationBoundaryMin[2] -1, this->BoundaryMaxX, this->BoundaryMaxY, this->w_mPtr, this->PCA_ROI_Start, 
                     ((void**) this->ProbDataPtrStart), this->PCAMeanShapePtrStart, this->PCAMeanShapeIncY, this->PCAMeanShapeIncZ, 
                     this->PCAEigenVectorsPtrStart, this->PCAEigenVectorsIncY, this->PCAEigenVectorsIncZ, Cost);
-#else 
-   nrEMLocalOptimization_Shape_Start(this->ShapeParameters, this->PCAShapeParameters, this->PCAMax[0], this->PCAMin[0], this->PCAMax[1], this->PCAMin[1], 
-                    this->PCAMax[2], this->PCAMin[2], this->SegmentationBoundaryMin[0] -1, this->SegmentationBoundaryMin[1] - 1, 
-                    this->SegmentationBoundaryMin[2] -1, this->BoundaryMaxX, this->BoundaryMaxY, this->w_mPtr, this->PCA_ROI_Start, 
-                    ((void**) this->ProbDataPtrStart), this->PCAMeanShapePtrStart, this->PCAMeanShapeIncY, this->PCAMeanShapeIncZ, 
-                    this->PCAEigenVectorsPtrStart, this->PCAEigenVectorsIncY, this->PCAEigenVectorsIncZ, Cost);
-#endif 
 
     // ---------------------------------------------------
     // Print out initializing cost  if needed

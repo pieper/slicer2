@@ -123,7 +123,6 @@ private:
 // Seperate from itk function bc it is only a wrapper around 
 void  itkEMLocalOptimization_Registration_Start(EMLocalRegistrationCostFunction* RegCostFunction, double* Parameters, float &Cost) {
   cout << "==================== Start Registration =========================== " << endl;
-  cout << "Implementation: ITK" << endl;
 
   RegCostFunction->InitializeCostFunction();
   int NumOfFunctionEvaluations;

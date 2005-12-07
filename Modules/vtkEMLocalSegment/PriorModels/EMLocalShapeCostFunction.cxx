@@ -22,9 +22,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
 // All the functions used with respect to introduce shape 
-#include "vtkImageKilianDistanceTransform.h"
 #include "EMLocalShapeCostFunction.h"
-#include "conjugateMethods.h"
 #include "assert.h"
 
 /* Foreward Defintion */
