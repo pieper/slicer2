@@ -1056,6 +1056,7 @@ proc fMRIEngineComputeDefaultHighpassTemporalCutoff { r } {
     #--- Matthews, Smith Eds. 2002, Oxford University Press.
 
     if { [ fMRIModelViewLongestEpochSpacing $r ] } {
+        #--- T is the number of seconds in the longest epoch
         set T $::fMRIModelView(Design,Run$r,longestEpoch)
         #--- set the model parameter, cutoff Period
         set ::fMRIEngine(Design,Run$r,HighpassCutoff)  [ expr 1.5 * $T ]
@@ -1223,6 +1224,7 @@ proc fMRIEngineAddOrEditEV {} {
 
         incr j 
     }
+    set ::fMRIEngine(SignalModelDirty) 1
 } 
 
 
@@ -1262,6 +1264,7 @@ proc fMRIEngineDeleteEV {{index -1}} {
     } else {
         DevErrorWindow "Select an EV to delete."
     }
+    set ::fMRIEngine(SignalModelDirty) 1
 }
 
 
@@ -1519,7 +1522,6 @@ proc fMRIEngineAddRegressors {run} {
             #--- insert the baseline and move to next data array:
             set ev [ expr $::fMRIEngine($r,noOfEVs) + 1 ]
             set newvals $::fMRIModelView(Data,Run$r,EV$ev,EVData)
-            #set newvals $::fMRIModelView(Data,Run$zz,EV$ev,EVData)
             set end [ expr $offset + $runlen ]
             lreplace $::fMRIEngine($col,combinedEVs) $offset $end $newvals
             incr col
@@ -1528,7 +1530,6 @@ proc fMRIEngineAddRegressors {run} {
             set num $::fMRIEngine(Design,Run$r,numCosines)
             for { set count 0 } { $count < $num } { incr count } {
                 set newvals $::fMRIModelView(Data,Run$r,EV$ev,EVData)
-                #set newvals $::fMRIModelView(Data,Run$zz,EV$ev,EVData)
                 set end [ expr $offset + $runlen ]
                 lreplace $::fMRIEngine($col,combinedEVs) $offset $end $newvals
                 incr col
@@ -1901,12 +1902,7 @@ proc fMRIEngineFitModel {} {
         }
     }
 
-    # generates data without popping up the model image 
-    set done [fMRIModelViewGenerateModel]
-    if {! $done} {
-        DevErrorWindow "Error in generating model for model fitting."
-        return 
-    }
+
 
     # always uses a new instance of vtkActivationEstimator 
     if {[info commands fMRIEngine(actEstimator)] != ""} {
@@ -1924,9 +1920,24 @@ proc fMRIEngineFitModel {} {
     if {$fMRIEngine(curRunForModelFitting) == "combined"} {
         set Gui(progressText) "Estimating all runs..."
     } else {
-        set Gui(progressText) "Estimating run$fMRIEngine(curRunForModelFitting)..."
+        set Gui(progressText) "Estimating run$fMRIEngine(curRunForModelFitting); may take awhile..."
     }
     puts $Gui(progressText)
+
+
+
+    # generates data without popping up the model image 
+    #--- for now just do it. (testing for ways to keep model.)
+    if { $::fMRIEngine(SignalModelDirty) } {
+        set done [fMRIModelViewGenerateModel]
+        if {! $done} {
+            DevErrorWindow "Error in generating model for model fitting."
+            return 
+        }
+    }
+
+
+    
  
     # always uses a new instance of vtkActivationDetector
     if {[info commands fMRIEngine(detector)] != ""} {
@@ -1949,7 +1960,6 @@ proc fMRIEngineFitModel {} {
     fMRIEngine(actEstimator) SetDetector fMRIEngine(detector)  
     fMRIEngine(actEstimator) Update
     set fMRIEngine(actBetaVolume) [fMRIEngine(actEstimator) GetOutput]
-
     fMRIEngine(actEstimator) RemoveObserver $obs1 
     fMRIEngine(actEstimator) RemoveObserver $obs2 
     fMRIEngine(actEstimator) RemoveObserver $obs3 

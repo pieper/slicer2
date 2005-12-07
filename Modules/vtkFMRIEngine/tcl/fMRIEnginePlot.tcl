@@ -657,10 +657,12 @@ proc fMRIEngineDrawPlotLong {} {
 
     set totalVolumes [$timeCourse GetNumberOfTuples]
 
-    if {! [fMRIModelViewGenerateModel ] } {
-        DevErrorWindow "Error in model specification. No model generated."
-        return 
-    }
+    if { $::fMRIEngine(SignalModelDirty) } {
+        if {! [fMRIModelViewGenerateModel ] } {
+            DevErrorWindow "Error in model specification. No model generated."
+            return 
+        }
+    }        
 
     # ev array
     set run $fMRIEngine(curRunForModelFitting)

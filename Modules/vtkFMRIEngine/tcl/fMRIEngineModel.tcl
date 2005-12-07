@@ -112,6 +112,7 @@ proc fMRIEngineBuildUIForSetupTab {parent} {
     DevAddButton $f.bSave "Save Design" "fMRIEngineSaveParadigm"   15 
     DevAddButton $f.bView "View Design" "fMRIEngineViewModel"   15 
     DevAddButton $f.bClear "Clear Design" "fMRIEngineClearModel" 15 
+    set ::fMRIEngine(SignalModelDirty) 1
     grid $f.bLoad $f.bSave -padx 1 -pady 1 -sticky e
     grid $f.bView $f.bClear -padx 1 -pady 1 -sticky e
 
@@ -240,7 +241,7 @@ proc fMRIEngineClearModel {} {
         }
     } 
     $fMRIEngine(contrastsListBox) delete 0 end 
-
+    set ::fMRIEngine(SignalModelDirty) 1
     # clear model view
     fMRIModelViewCloseAndCleanAndExit
 }

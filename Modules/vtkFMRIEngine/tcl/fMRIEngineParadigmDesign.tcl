@@ -734,6 +734,7 @@ proc fMRIEngineAddOrEditCondition {} {
     }
 
     fMRIEngineShowConditions 
+    set ::fMRIEngine(SignalModelDirty) 1
 }
 
 

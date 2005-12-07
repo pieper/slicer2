@@ -107,72 +107,11 @@
 #   fMRIModelViewFreeVisualLayout
 #   fMRIModelViewCleanCanvas
 #   fMRIModelViewCleanForRegeneration
+#   fMRIModelViewCleanNoRegeneration
 #   fMRIModelViewCloseAndClean
+#   fMRIModelViewCloseAndCleanNoRegeneration
 #   fMRIModelViewCloseAndCleanAndExit
 #==========================================================================auto=
-#---------------------------------------------------------------------------
-#--- fMRIEngine assumptions and notes:
-#---------------------------------------------------------------------------
-#--- 1. each condition, when entered, will cause an associated EV
-#--- to be created. Depending on the type of design specified
-#--- (blocked, event-related, mixed) the default signal type, in
-#---  $::fMRIModelView(Design,Run$r,EV$i,SignalType) = "boxcar"
-#--- should be set.
-#
-#--- 2. all data in fMRIModelViewFakeUserInput will be generated
-#--- in the fMRIEngine, thru GUI or processing of GUI input.
-#
-#--- 3. after user enters/updates a new condition, updates signal
-#--- modeling on that condition, or enters/updates a new contrast,
-#--- and appropriate global variables like the following are created:
-#---   fMRIModelView(Design,Run$r,Condition$i,Onsets)
-#---   fMRIModelView(Design,Run$r,Condition$i,Durations)
-#---   fMRIModelView(Design,Run$r,Condition$i,Intensities)
-#---   (for now you can fill Intensities with all 1's)
-#---   fMRIModelView(Design,Run$r,EV$i,SignalType) 
-#---   fMRIModelView(Design,TContrast$i,Vector)
-#----  fMRIModelView(Design,TContrast$i,Vector)
-#
-#--- 4. For a proper model to be generated, the number of
-#--- elements in each TContrast vector must be equal to
-#--- fMRIModelView(Design,totalEVs). An error check should
-#--- be performed to make sure TContrast vectors are of
-#--- the correct length or model viewer will fail.
-#
-#--- 5. fMRIEngine can compute signal modeling on those inputs
-#--- and generate the model data or a model view by calling *either*
-#--- fMRIModelViewGenerate or fMRIModelViewLaunchModelView.
-#--- When to use each:
-#--- When a user clicks "View Model" button, call fMRIModelViewLaunch;
-#--- this will BOTH generate the model and display it in a popup window too.
-#--- To generate the model independent of the popup model view,
-#--- call fMRIModelViewGenerate. If the model view window is open
-#--- already, fMRIModelViewGenerate will call fMRIModelViewLaunch
-#--- to *both* generate and display the model. Otherwise, it will just
-#--- generate the data you need for GLM computation.
-#
-#--- 6. Global variables are here collected in ::fMRIModelView array
-#--- here for testing, but probably want to contain these in fMRIEngine
-#--- array instead. In addition, proc names are begun with 'fMRIModelView'
-#--- and that too probably needs to be changed to fit with fMRIEngine's
-#--- convention.
-#
-#--- 7. When finally exiting, use the proc fMRIModelViewCloseAndCleanAndExit 
-#--- which gets rid of all user input and all other global variables.
-#
-#--- 8. please keep the product [$::fMRIModelView(Design,Run$r,TR) *
-#--- $::fMRIModelView(Design,Run$r,TimeIncrement)] an integer value.
-#--- otherwise the subsampling routine will break.
-#
-#--- 9. The X vector to use for each column in the design matrix is
-#--- contained in list fMRIModelView(Data,Run$r,EV$i,EVData) after the
-#--- signal modeling is performed; its values range between [-1.0 and 1.0].
-#
-#--- 10. Please check the new fMRIModelViewFakeUserInput proc
-#--- since it has at least one new global (called fMRIModelView(Layout,NoDisplay))
-#--- which should be set depending on whether the model view popup
-#--- window is open.
-#---------------------------------------------------------------------------
 
 
 #-------------------------------------------------------------------------------
@@ -191,7 +130,11 @@ proc fMRIModelViewLaunchModelView { {toplevelName .wfMRIModelView} } {
     #--- regenerate everything inside it fresh and new.
     #---
     #--- freeing everything but user input
-    fMRIModelViewCleanForRegeneration
+    if { $::fMRIEngine(SignalModelDirty) } {
+        fMRIModelViewCleanForRegeneration
+    } else {
+        fMRIModelViewCleanNoRegeneration
+    }
 
     if { [winfo exists $toplevelName] } {
         wm deiconify $toplevelName
@@ -208,7 +151,7 @@ proc fMRIModelViewLaunchModelView { {toplevelName .wfMRIModelView} } {
         wm title $root "design matrix and contrasts"
         wm geometry $root +$fMRIModelWinXpos+$fMRIModelWinYpos
         wm minsize $root $fMRIModelWinMinWid $fMRIModelWinMinHit
-        wm protocol $root WM_DELETE_WINDOW "fMRIModelViewCloseAndClean"
+        wm protocol $root WM_DELETE_WINDOW "fMRIModelViewCloseAndCleanNoRegeneration"
     }
     #--- hardcode a name for the window.
     set ::fMRIModelView(modelViewWin) ".wfMRIModelView"
@@ -249,8 +192,8 @@ proc fMRIModelViewLaunchModelView { {toplevelName .wfMRIModelView} } {
     pack $root.fDesignMatrix -fill both -expand true
 
     #--- put up little message
-    $::fMRIModelView(modelViewCanvas) create text  200 150 \
-        -text "....generating / updating model...." -anchor center \
+    $::fMRIModelView(modelViewCanvas) create text  200 20 \
+        -text "....generating model; may take awhile...." -anchor center \
         -font $::fMRIModelView(UI,Medfont) \
         -tag $::fMRIModelView(Layout,WaitTag)
     update 
@@ -291,7 +234,7 @@ proc fMRIModelViewCatchGenerateModel { } {
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIModelViewGenerateModel { {toplevelName .wfMRIModelView} } {
-
+global Gui
 
     #---
     #--- fMRIModelViewGenerateModel gets run each time someone
@@ -330,8 +273,13 @@ proc fMRIModelViewGenerateModel { {toplevelName .wfMRIModelView} } {
         #--- but we'll fix that later when we have more time.
         #---
         #--- free everything but user input.
-        fMRIModelViewCleanForRegeneration
-        #--- regenerate.
+        if { $::fMRIEngine(SignalModelDirty) } {
+            fMRIModelViewCleanForRegeneration
+        } else {
+            fMRIModelViewCleanNoRegeneration
+        }
+
+        #--- regenerate.        
         fMRIModelViewSetFonts
         fMRIModelViewSetColors
         fMRIModelViewSortUserInput
@@ -342,24 +290,60 @@ proc fMRIModelViewGenerateModel { {toplevelName .wfMRIModelView} } {
         fMRIModelViewSetupLayout
         set imgwid $::fMRIModelView(Layout,EVBufWid) 
 
-        for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
-            set imghit [ expr $::fMRIModelView(Design,Run$r,numTimePoints) * \
-                             $::fMRIModelView(Layout,pixelsPerTimePoint) ]
-            set cols [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + \
-                           $::fMRIModelView(Design,Run$r,numAdditionalEVs) ] 
-            for { set i 1 } { $i <= $cols } { incr i } {
-                set signalType $::fMRIModelView(Design,Run$r,EV$i,SignalType)
-                fMRIModelViewBuildModelSignals $r $i $imghit $imgwid $signalType 
-                set ok [ fMRIModelViewBuildEVData  $r $i ]
-                if {$ok == 0 } {
-                    DevErrorWindow "Error generating model signals. Please check your inputs."
-                    return 0
+        if { $::fMRIEngine(SignalModelDirty) } {
+            for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
+                set imghit [ expr $::fMRIModelView(Design,Run$r,numTimePoints) * \
+                                 $::fMRIModelView(Layout,pixelsPerTimePoint) ]
+                set cols [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + \
+                               $::fMRIModelView(Design,Run$r,numAdditionalEVs) ] 
+
+                #--- display message...
+                #set MsgID [ fMRIModelViewShowMessageText "Generating signals; may take awhile..."]
+                for { set i 1 } { $i <= $cols } { incr i } {
+                    set signalType $::fMRIModelView(Design,Run$r,EV$i,SignalType)
+                    fMRIModelViewBuildModelSignals $r $i $imghit $imgwid $signalType 
+                    set ok [ fMRIModelViewBuildEVData  $r $i ]
+                    if {$ok == 0 } {
+                        DevErrorWindow "Error generating model signals. Please check your inputs."
+                        return 0
+                    }
                 }
             }
+            #fMRIModelViewEraseMessageText $MsgID
+            set ::fMRIEngine(SignalModelDirty) 0
         }
     }
     return 1
 }
+
+
+proc fMRIModelViewShowMessageText { txt } {
+    global Gui
+
+    set ::Gui(progressText) $txt
+    set MsgHeight [winfo height $::Gui(fStatus)]
+    set MsgWidth [winfo width $::Gui(fStatus)]
+    set MsgID [ $::Gui(fStatus).canvas create text [ expr $MsgWidth/2] \
+                    [expr $MsgHeight/2] -anchor center -justify center \
+                    -text "$txt" ]
+    update idletasks
+    return $MsgID
+}
+
+
+
+
+proc fMRIModelViewEraseMessageText { id } {
+    global Gui
+
+    puts "erasing"
+    if { [info exists $id ] } {
+        $::Gui(fStatus).canvas delete $id
+    }
+    update idletasks
+}
+
+
 
 
 #-------------------------------------------------------------------------------
@@ -872,12 +856,12 @@ proc fMRIModelViewDisplayModelView { f } {
                    $::fMRIModelView(Layout,evLineBufHit) + \
                    $::fMRIModelView(Layout,EVBufHit) ]
     set dmatHit [ expr $::fMRIModelView(Layout,pixelsPerTimePoint) * \
-                            $::fMRIModelView(Design,totalTimePoints) ]
+                      $::fMRIModelView(Design,totalTimePoints) ]
     set dmatWid [ expr  ($::fMRIModelView(Design,totalEVs) * \
                              $::fMRIModelView(Layout,EVBufWid) ) ]
     set cmatHit [ expr $::fMRIModelView(Design,numTContrasts) * \
-                          ($::fMRIModelView(Layout,TContrastHit) + \
-                               $::fMRIModelView(Layout,VSpace)) ]
+                      ($::fMRIModelView(Layout,TContrastHit) + \
+                           $::fMRIModelView(Layout,VSpace)) ]
     set cmatWid $dmatWid
     set borderWid 1
 
@@ -931,8 +915,8 @@ proc fMRIModelViewBuildDesignMatrix { c refX refY dmatHit dmatWid borderWid } {
     #--- Fill all matrix columns with zerogrey (which represents
     #--- signal zero, and then blit in the images at the appropriate
     #--- height in the correct design matrix column.
-
     #--- draw zerogrey columns with no outline.
+
     set x1 $refX 
     set y1 $refY 
     set y2 [expr $refY + $dmatHit ]
@@ -941,8 +925,8 @@ proc fMRIModelViewBuildDesignMatrix { c refX refY dmatHit dmatWid borderWid } {
                        $::fMRIModelView(Design,Run$r,numAdditionalEVs) ]
         for { set i 1 } { $i <= $cols } { incr i } {
             set x2 [expr $x1 + $::fMRIModelView(Layout,EVBufWid) ]
-            $c create rect $x1 $y1 $x2 $y2 -width 0 -fill $::fMRIModelView(Colors,hexzeroGrey) \
-                -tag $::fMRIModelView(Layout,dmColumnTag,Run$r,$i)
+            $c create rect $x1 $y1 $x2 $y2 -width 0 -fill $::fMRIModelView(Colors,hexwhite) \
+                -tags "$::fMRIModelView(Layout,dmColumnTag,Run$r,$i) zeroGreyTag"
             #--- and bind.
             $c bind $::fMRIModelView(Layout,dmColumnTag,Run$r,$i) <Enter> \
                 "fMRIModelViewEVnameRollover $c $refY $i $r"
@@ -960,19 +944,28 @@ proc fMRIModelViewBuildDesignMatrix { c refX refY dmatHit dmatWid borderWid } {
     set y1 $refY
     set imghit [ expr $dmatHit / $::fMRIModelView(Design,numRuns) ]
     set imgwid $::fMRIModelView(Layout,EVBufWid) 
+
+    #--- display message
+    if { $::fMRIEngine(SignalModelDirty) } {
+        set msgtxt "Generating model signals; may take awhile..."
+        #set MsgID [ fMRIModelViewShowMessageText $msgtxt ]
+    }
+    
     for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
         set cols [ expr $::fMRIModelView(Design,Run$r,numConditionEVs) + \
                        $::fMRIModelView(Design,Run$r,numAdditionalEVs) ]
         for { set i 1 } { $i <= $cols } { incr i } {
-            set signalType $::fMRIModelView(Design,Run$r,EV$i,SignalType)
-            fMRIModelViewBuildModelSignals $r $i $imghit $imgwid $signalType
-            set ok [ fMRIModelViewBuildEVData  $r $i ]
-            if {$ok == 0 } {
-                DevErrorWindow "Error: no model generated. Please check your inputs."
-                return 0
-            }
-            if { $::fMRIModelView(Layout,NoDisplay) == 0 } {
-                fMRIModelViewBuildEVImages $r $i $imgwid
+            if  { $::fMRIEngine(SignalModelDirty) } {
+                set signalType $::fMRIModelView(Design,Run$r,EV$i,SignalType)
+                fMRIModelViewBuildModelSignals $r $i $imghit $imgwid $signalType
+                set ok [ fMRIModelViewBuildEVData  $r $i ]
+                if {$ok == 0 } {
+                    DevErrorWindow "Error: no model generated. Please check your inputs."
+                    return 0
+                }
+                if { $::fMRIModelView(Layout,NoDisplay) == 0 } {
+                    fMRIModelViewBuildEVImages $r $i $imgwid
+                }
             }
             $c create image $x1 $y1 \
                 -image $::fMRIModelView(Images,Run$r,EV$i,Image) \
@@ -988,6 +981,13 @@ proc fMRIModelViewBuildDesignMatrix { c refX refY dmatHit dmatWid borderWid } {
         }
         set y1 [ expr $y1 + $imghit ]
     }
+    if { $::fMRIEngine(SignalModelDirty) } {
+        #fMRIModelViewEraseMessageText $MsgID
+        set ::fMRIEngine(SignalModelDirty) 0
+    }
+    
+    #--- kept the signal columns white during computation' now let signal zero=grey
+    $c itemconfig "zeroGreyTag" -fill $::fMRIModelView(Colors,hexzeroGrey) 
 
     #--- delete little wait message.
     $::fMRIModelView(modelViewCanvas) delete $::fMRIModelView(Layout,WaitTag)
@@ -1788,12 +1788,18 @@ proc fMRIModelViewComputeGaussianFilter { r } {
     #--- have the same TR.
     #--- wjp 11/21/05
     #--- The signal we're filtering has sampling freq = fs = 1/1sec
+    #--- downsampling to a signal with sampling freq 1/TRsec.
     #--- update: not sure whether to use fmax = 1/(2*1sec) or
     #--- fmax = 1/(2*TRsec). Try former for now -- results
     #--- look better -- and check later.
     if { ! [ info exists ::fMRIModelView(Design,Run$r,GaussianFilter) ] } {
         set TR $::fMRIModelView(Design,Run$r,TR)
-        set TR 1
+        #--- GAUSSIAN KERNEL SIZE EXPERIMENTS...
+        #--- signals 'look' too blurry with proper TR,
+        #--- and more comparable visually to SPM with TR=1
+        #--- but this kernel size may introduce aliasing...
+        #--- for now, try TR=1.0, but if problems persist, use above.
+        set TR 1.0
         set PI 3.14159265
         #--- use 2 or 3 sigmas out for the kernel size now, 
         #--- where gaussian approaches zero...
@@ -1803,9 +1809,9 @@ proc fMRIModelViewComputeGaussianFilter { r } {
 
         #--- how many samples of the time-domain kernel do
         #--- we need? Choose t = numsigmas x 1/sigma as a guess.
-        set numsecs [ expr round ($numsigmas / $sigma ) ]
+        set numsamps [ expr round ($numsigmas / $sigma ) ]
         #--- now compute the gaussian to convolve with.
-        for {set t -$numsecs } { $t <= $numsecs } { set t [ expr $t + $inc] } {
+        for {set t -$numsamps } { $t <= $numsamps } { set t [ expr $t + $inc] } {
             set v  [ expr ( 1.0 / (sqrt (2.0 * $PI)) ) * \
                          exp ( - ($sigma*$sigma*$t*$t) / 2.0) ]
             lappend kernel $v
@@ -2262,7 +2268,7 @@ proc fMRIModelViewSetupButtonImages { c refX refY dmatHit dmatWid cmatHit cmatWi
     $c create rect $x1 $y1 $x2 $y2 -outline $::fMRIModelView(Colors,liteGrey) \
         -width 1 -fill $::fMRIModelView(Colors,hexwhite) \
         -tag $::fMRIModelView(Layout,UpdateRectTag)
-    $c create text  $xtext $ytext -text "update" -anchor center \
+    $c create text  $xtext $ytext -text "refresh" -anchor center \
         -font $::fMRIModelView(UI,Smallfont) \
         -tag $::fMRIModelView(Layout,UpdateTag)
     #--- and bind.
@@ -2318,13 +2324,13 @@ proc fMRIModelViewSetupButtonImages { c refX refY dmatHit dmatWid cmatHit cmatWi
         "%W itemconfig $::fMRIModelView(Layout,CloseRectTag) -outline $::fMRIModelView(Colors,hexblack) "
     $c bind $::fMRIModelView(Layout,CloseTag) <Leave> \
         "%W itemconfig $::fMRIModelView(Layout,CloseRectTag) -outline $::fMRIModelView(Colors,liteGrey) "
-    $c bind $::fMRIModelView(Layout,CloseTag) <Button-1> "fMRIModelViewCloseAndClean"
+    $c bind $::fMRIModelView(Layout,CloseTag) <Button-1> "fMRIModelViewCloseAndCleanNoRegeneration"
 
     $c bind $::fMRIModelView(Layout,CloseRectTag) <Enter> \
         "%W itemconfig $::fMRIModelView(Layout,CloseRectTag) -outline $::fMRIModelView(Colors,hexblack) "
     $c bind $::fMRIModelView(Layout,CloseRectTag) <Leave> \
         "%W itemconfig $::fMRIModelView(Layout,CloseRectTag) -outline $::fMRIModelView(Colors,liteGrey) "
-    $c bind $::fMRIModelView(Layout,CloseRectTag) <Button-1> "fMRIModelViewCloseAndClean"
+    $c bind $::fMRIModelView(Layout,CloseRectTag) <Button-1> "fMRIModelViewCloseAndCleanNoRegeneration"
 
 }
 
@@ -2726,7 +2732,9 @@ proc fMRIModelViewLabelEVnames { c refX refY dmatWid  } {
 #-------------------------------------------------------------------------------
 proc fMRIModelViewEVnameRollover { c refY evnum runNum } {
     #---
-    $c raise $::fMRIModelView(EVnameCover)
+    if { [info exists ::fMRIModelView(EVnameCover)] } {
+        $c raise $::fMRIModelView(EVnameCover)
+    }
     $c raise $::fMRIModelView(Layout,EVnameTag,Run$runNum,$evnum)
 
 }
@@ -2800,7 +2808,9 @@ proc fMRIModelViewFilenameRollover { c  refY dmatHit mousey} {
     set binnum [ expr round($binnum) ]
 
     #--- expose corresponding filename
-    $c raise $::fMRIModelView(filenameCover)
+    if { [info exists ::fMRIModelView(filenameCover) ] } {
+        $c raise $::fMRIModelView(filenameCover)
+    }
     if { $binnum < $numFiles && $binnum >= 0 } {
         $c raise $::fMRIModelView(Layout,FilenameTag$binnum)
     }
@@ -2817,8 +2827,12 @@ proc fMRIModelViewFilenameRollover { c  refY dmatHit mousey} {
 proc fMRIModelViewHideRolloverInfo { c } {
     #---
     #--- cover up filenames and EVnames
-    $c raise $::fMRIModelView(filenameCover)
-    $c raise $::fMRIModelView(EVnameCover)
+    if { [info exists ::fMRIModelView(filenameCover)] } {
+        $c raise $::fMRIModelView(filenameCover)
+    }
+    if { [info exists ::fMRIModelView(EVnameCover)] } {
+        $c raise $::fMRIModelView(EVnameCover)
+    }
 }
 
 
@@ -3067,6 +3081,48 @@ proc fMRIModelViewCleanForRegeneration { } {
     fMRIModelViewCleanCanvas
 
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewCleanNoRegeneration
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIModelViewCleanNoRegeneration { } {
+    #---
+    #--- freeing everything but user input and signals
+    #---
+    fMRIModelViewFreeCanvasTags
+    fMRIModelViewFreeFonts
+    fMRIModelViewFreeColors
+    fMRIModelViewFreeVisualLayout
+    fMRIModelViewCleanCanvas
+}
+
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIModelViewCloseAndCleanNoRegeneration
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIModelViewCloseAndCleanNoRegeneration { } {
+    #---
+    #--- freeing everything but user input
+    #--- deletes toplevel win
+    #---
+    set ::fMRIModelView(Layout,NoDisplay) 1
+    fMRIModelViewCleanNoRegeneration
+    if { [ info exists ::fMRIModelView(modelViewWin) ] } {
+        destroy $::fMRIModelView(modelViewWin)
+        unset -nocomplain ::fMRIModelView(modelViewWin)
+    }
+}
+
+
 
 
 #-------------------------------------------------------------------------------

@@ -78,11 +78,15 @@ proc fMRIModelViewSortUserInput { } {
         set ::fMRIModelView(Design,Run$r,TR) $fMRIEngine($r,tr) 
     }
     #--- fraction-of-second increment used in modeling
-    #--- please keep the product ($::fMRIModelView(Design,Run$r,TR) *
-    #--- $::fMRIModelView(Design,Run$r,TimeIncrement) an integer value.
-    #--- otherwise, the subsampling routine will break.
+    #--- please keep ($::fMRIModelView(Design,Run$r,TR) *
+    #--- 1.0/$::fMRIModelView(Design,Run$r,TimeIncrement) an integer value.
+    #--- like TR=2, TimeIncrement=0.1, 2/0.1 = 20: good.
+    #--- not TR=2, TimeIncrement=0.3, 2/0.3 = 6.666: bad.
+    #--- otherwise, the subsampling routine will try to sample between
+    #--- samples and will break or generated incorrect signals.
     for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
-        set ::fMRIModelView(Design,Run$r,TimeIncrement) 1.0
+        #set ::fMRIModelView(Design,Run$r,TimeIncrement) 1.0
+        set ::fMRIModelView(Design,Run$r,TimeIncrement) 0.1
     }
 
     #---
