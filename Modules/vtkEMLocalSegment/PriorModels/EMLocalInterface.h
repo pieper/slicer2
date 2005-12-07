@@ -27,32 +27,14 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define _EMLOCALINTERFACE_H_INCLUDED 1
 
 #include <vtkEMLocalSegmentConfigure.h>
-#include <math.h>
+#include "EMLocalInterface.h"
+#include "vtkMultiThreader.h"
 
-//--------------------------------------------------------------------
-// Registration Parameters 
-//--------------------------------------------------------------------
-// Parameters needed to define cost function 
-#define EMSEGMENT_REGISTRATION_DISABLED     0
-#define EMSEGMENT_REGISTRATION_APPLY        1 
-#define EMSEGMENT_REGISTRATION_GLOBAL_ONLY  2
-#define EMSEGMENT_REGISTRATION_CLASS_ONLY   3
-#define EMSEGMENT_REGISTRATION_SIMULTANEOUS 4
-#define EMSEGMENT_REGISTRATION_SEQUENTIAL   5
+// Defines the maximum number of threads used throughout this program.
+// This is very helpful when validating results from machines with different cpu number
+// EMLOCALSEGMENTER_MAX_MULTI_THREAD = -1 => no restriction
  
-#define EMSEGMENT_REGISTRATION_INTERPOLATION_LINEAR 1
-#define EMSEGMENT_REGISTRATION_INTERPOLATION_NEIGHBOUR 2 
-
-#define EMSEGMENT_REGISTRATION_SIMPLEX 1 
-#define EMSEGMENT_REGISTRATION_POWELL 2 
-
-#define EMSEGMENT_STOP_FIXED    0 
-#define EMSEGMENT_STOP_LABELMAP 1 
-#define EMSEGMENT_STOP_WEIGHTS  2 
-
-#define EMSEGMENT_PCASHAPE_DEPENDENT 0
-#define EMSEGMENT_PCASHAPE_INDEPENDENT 1
-#define EMSEGMENT_PCASHAPE_APPLY 2
+#define EMLOCALSEGMENTER_MAX_MULTI_THREAD -1
 
 //--------------------------------------------------------------------
 // Hierachy / SuperClass specific parameters 
@@ -224,7 +206,14 @@ inline void EMLocalInterface_findCoordInTargetOfMatchingSourceCentreTarget(
 // Shape Based Functions 
 // This is currnelty without scaling of the PCA parameters 
 // Voxel jump is needed so we can do registration easily
-inline float  EMLocalInterface_CalcDistanceMap(float *ShapeParameter, float **PCAEigenVectorsPtr, float *MeanShape, int DimEigenVector, int VoxelJump) {
+
+inline float  EMLocalInterface_CalcDistanceMap(const double *ShapeParameter, float **PCAEigenVectorsPtr, float *MeanShape, int DimEigenVector, int VoxelJump) {
+  float term = *(MeanShape + VoxelJump); 
+  for (int l = 0 ; l < DimEigenVector; l++) term += (*(PCAEigenVectorsPtr[l] + VoxelJump)) * ShapeParameter[l];
+  return  term;
+}
+
+inline float  EMLocalInterface_CalcDistanceMap(const float *ShapeParameter, float **PCAEigenVectorsPtr, float *MeanShape, int DimEigenVector, int VoxelJump) {
   float term = *(MeanShape + VoxelJump); 
   for (int l = 0 ; l < DimEigenVector; l++) term += (*(PCAEigenVectorsPtr[l] + VoxelJump)) * ShapeParameter[l];
   return  term;
@@ -236,5 +225,10 @@ inline int EMLocalInterface_DefineMultiThreadJump(int *Start, int BoundaryMaxX, 
   return Start[0] + Start[1] * LengthOfXDim + LengthOfYDim *Start[2];
 }
 
-
+inline int EMLocalInterface_GetDefaultNumberOfThreads(int DisableFlag) {
+  if (DisableFlag) return 1;
+  int result = vtkMultiThreader::GetGlobalDefaultNumberOfThreads();
+  if ((EMLOCALSEGMENTER_MAX_MULTI_THREAD > 0 ) && (result >  EMLOCALSEGMENTER_MAX_MULTI_THREAD)) return EMLOCALSEGMENTER_MAX_MULTI_THREAD;
+  return result;
+}
 #endif
