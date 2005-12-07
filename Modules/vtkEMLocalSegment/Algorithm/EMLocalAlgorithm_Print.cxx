@@ -34,8 +34,8 @@ extern "C" {
 // --------------------------------------------------------------------------------------------------------------------------
 //  Registration Functions 
 // --------------------------------------------------------------------------------------------------------------------------
-inline void EMLocalAlgorithm_TransfereTranRotSca_ToRegistrationParameter(double *Translation, double *Rotation, double *Scale, float *FinalParameters, 
-                                           EMLocalRegistration  *RegistrationParameters) {
+inline void EMLocalAlgorithm_TransfereTranRotSca_ToRegistrationParameter(double *Translation, double *Rotation, double *Scale, double *FinalParameters, 
+                                           EMLocalRegistrationCostFunction  *RegistrationParameters) {
   if (RegistrationParameters->GetTwoDFlag()) {
     FinalParameters[0] = float(Translation[0]); FinalParameters[1] = float(Translation[1]);
     FinalParameters[2] = float(Rotation[2]);
@@ -495,7 +495,7 @@ void EMLocalAlgorithm_PrintRegistrationParameters(FILE* ParameterFile, double *T
 
 //----------------------------------------------------------------------------
 void EMLocalAlgorithm_PrintRegistrationParameters(FILE** ParameterFile, double **Translation, double **Rotation, double **Scale, float cost, float costClassSpecific,
-                                                       EMLocalRegistration *RegistrationParameters ) {
+                                                       EMLocalRegistrationCostFunction *RegistrationParameters ) {
   if (!ParameterFile) return;
   for (int i = 0; i < RegistrationParameters->GetNumberOfParameterSets(); i++) {
     if ((RegistrationParameters->GetRegistrationType() == EMSEGMENT_REGISTRATION_SEQUENTIAL) && i) 
@@ -518,7 +518,7 @@ void EMLocalAlgorithm<T>::PrintRegistrationData(int SimularityFlag, double **Sim
 
   int NumParaSets   = this->RegistrationParameters->GetNumberOfParameterSets();
   int NumParaPerSet = this->RegistrationParameters->GetNumberOfParameterPerSet();
-  float*  FinalParameters = new float[NumParaPerSet*NumParaSets];
+  double*  FinalParameters = new double[NumParaPerSet*NumParaSets];
   
   for (int i = 0; i < NumParaSets; i++) EMLocalAlgorithm_TransfereTranRotSca_ToRegistrationParameter(SimplexTranslation[i], SimplexRotation[i], SimplexScale[i], 
                                                                   &FinalParameters[i*NumParaPerSet],RegistrationParameters);
@@ -533,13 +533,13 @@ void EMLocalAlgorithm<T>::PrintRegistrationData(int SimularityFlag, double **Sim
   if (this->RegistrationType < EMSEGMENT_REGISTRATION_SEQUENTIAL) {
     // cout << "Debug " << endl;
     // FinalParameters[0] = 1;
-    cost = this->RegistrationParameters->RegistrationCostFunction(FinalParameters);
+    cost = this->RegistrationParameters->ComputeCostFunction(FinalParameters);
     if (!iter) cout << "Initial Cost:       " << cost << endl;   
   } else {
     this->RegistrationParameters->SetRegistrationType(EMSEGMENT_REGISTRATION_GLOBAL_ONLY);
     int OrigNumberOfParaSets = this->RegistrationParameters->GetNumberOfParameterSets();
     this->RegistrationParameters->SetNumberOfParameterSets(1);
-    cost = this->RegistrationParameters->RegistrationCostFunction(FinalParameters);
+    cost = this->RegistrationParameters->ComputeCostFunction(FinalParameters);
     if (SimularityFlag) {
       char FileName[1000];
       if (iter) sprintf(FileName,"%s/Registration/SimularityMeasureGlobalL%sI%d",this->PrintDir, this->LevelName,iter);
@@ -561,7 +561,7 @@ void EMLocalAlgorithm<T>::PrintRegistrationData(int SimularityFlag, double **Sim
     this->RegistrationParameters->SetNumberOfParameterSets(OrigNumberOfParaSets -1);
 
     FinalParameters += this->RegistrationParameters->GetNumberOfParameterPerSet();
-    costClassSpecific = this->RegistrationParameters->RegistrationCostFunction(FinalParameters);
+    costClassSpecific = this->RegistrationParameters->ComputeCostFunction(FinalParameters);
 
 
     FinalParameters -= this->RegistrationParameters->GetNumberOfParameterPerSet();
@@ -641,12 +641,12 @@ template <class T>
 float EMLocalAlgorithm<T>::PrintShapeData(float **PCAShapeParameters, int iter , int PrintSimulatingFlag) {
   if (this->ShapeParameters->PCAShapeModelType == EMSEGMENT_PCASHAPE_APPLY) return 0.0;
   // cout << "Total " << this->PCATotalNumOfShapeParameters << endl;
-  float *parameters = new float[this->PCATotalNumOfShapeParameters];
+  double *parameters = new double[this->PCATotalNumOfShapeParameters];
   int ShapeIndex = 0;
   // cout << "Start Printing Shape Data " << endl;
   for (int i = 0 ; i < this->NumTotalTypeCLASS; i++) {
     for (int k = 0 ; k < this->PCANumberOfEigenModes[i]; k++) {
-      parameters[ShapeIndex] = PCAShapeParameters[i][k];
+      parameters[ShapeIndex] = double(PCAShapeParameters[i][k]);
       ShapeIndex ++;
     }
     if (this->PCAShapeModelType == EMSEGMENT_PCASHAPE_DEPENDENT) ShapeIndex = 0;
@@ -657,7 +657,7 @@ float EMLocalAlgorithm<T>::PrintShapeData(float **PCAShapeParameters, int iter ,
   //cout << "Super Debug " << endl;
   //parameters[0] = 2.0; 
   // cout << "Start Threading" << endl;
-  float cost = this->ShapeParameters->ShapeCostFunctionMultiThreaded(parameters);
+  float cost = this->ShapeParameters->ComputeCostFunction(parameters);
 
   if (PrintSimulatingFlag) {
     char FileName[1000];
@@ -675,7 +675,7 @@ float EMLocalAlgorithm<T>::PrintShapeData(float **PCAShapeParameters, int iter ,
   return cost;
 }
 
-void EMLocalAlgorithm_PrintPCAParameters(EMLocalShape *ShapeParameters, FILE **PCAFile, float **PCAShapeParameters, int*  LabelList, float PCACost) {
+void EMLocalAlgorithm_PrintPCAParameters(EMLocalShapeCostFunction *ShapeParameters, FILE **PCAFile, float **PCAShapeParameters, int*  LabelList, float PCACost) {
   if (ShapeParameters->PCAShapeModelType == EMSEGMENT_PCASHAPE_APPLY) return;
 
   int index = 0;

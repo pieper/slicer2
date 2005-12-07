@@ -27,8 +27,10 @@ template  <class T> int EMLocalAlgorithm<T>::Initialize(vtkImageEMLocalSegmenter
                               int initRegistrationType, int DataType)
 {
     int SuccessFlag = 1;
+   
     this->InitializeEM(vtk_filter, initLevelName, initRegistrationType, initInputVector, initROI, vtk_filter->GetActiveSuperClass()->GetLabel(), initw_mPtr); 
     if (!this->InitializeClass(vtk_filter->GetActiveSuperClass(), initProbDataPtrStart)) SuccessFlag = 0;
+    
     this->InitializeHierarchicalParameters();
     this->InitializeBias();
     this->InitializePrint();
@@ -531,7 +533,7 @@ template <class T> int EMLocalAlgorithm<T>::InitializeShape() {
 
   // -----------------------------------------------------------
   //    Transfere Shape Related Data from CLASS structure 
-  //    to EMLocalShape Environment
+  //    to EMLocalShapeCostFunction Environment
   // -----------------------------------------------------------
 
   this->actSupCl->GetPCAParameters(this->PCAShapeParameters,this->PCAMeanShapeIncY, this->PCAMeanShapeIncZ, this->PCAEigenVectorsIncY, this->PCAEigenVectorsIncZ, 
@@ -586,11 +588,11 @@ template <class T> int EMLocalAlgorithm<T>::InitializeShape() {
   }
 
   // -----------------------------------------------------------
-  //    Initialize EMLocalShape Environment
+  //    Initialize EMLocalShapeCostFunction Environment
   // -----------------------------------------------------------
 
   // Cannot define it before bc of PCANumberOfEigenModes
-  this->ShapeParameters = new EMLocalShape(&this->HierarchicalParameters,this->PCANumberOfEigenModes, this->DisableMultiThreading); 
+  this->ShapeParameters = new EMLocalShapeCostFunction(&this->HierarchicalParameters,this->PCANumberOfEigenModes, this->DisableMultiThreading); 
 
   if (PCATotalNumOfShapeParameters) {
     int PCAFlag    = 0; 
@@ -707,7 +709,7 @@ template <class T> int EMLocalAlgorithm<T>::InitializeRegistration(float initGlo
   this->RigidFlag = ((this->RegistrationType > EMSEGMENT_REGISTRATION_DISABLED) && this->PCATotalNumOfShapeParameters) ;
 
   
-  this->RegistrationParameters = new EMLocalRegistration;
+  this->RegistrationParameters = new EMLocalRegistrationCostFunction;
 
   if (this->RegistrationType > EMSEGMENT_REGISTRATION_DISABLED) {
     this->SuperClassToAtlasRotationMatrix    =  new float[9]; 
@@ -762,7 +764,7 @@ template <class T> int EMLocalAlgorithm<T>::InitializeRegistration(float initGlo
        cout << "Number Of Parametersets " << NumParaSets << endl;
        this->RegistrationParameters->SetDimensionOfParameter(NumParaSets,this->TwoDFlag, this->RigidFlag);
  
-       if (!this->DefineGlobalAndStructureRegistrationMatrix()) SuccessFlag =  0; 
+       if (!this->DefineGlobalAndStructureRegistrationMatrix()) SuccessFlag = 0; 
 
        this->RegistrationParameters->SetGlobalToAtlasTranslationVector(this->GlobalRegInvTranslation);
        this->RegistrationParameters->SetGlobalToAtlasRotationMatrix(this->GlobalRegInvRotation);
@@ -777,7 +779,6 @@ template <class T> int EMLocalAlgorithm<T>::InitializeRegistration(float initGlo
 
        this->RegistrationParameters->MultiThreadDefine(this->DisableMultiThreading);
        this->RegistrationParameters->DefineRegistrationParametersForThreadedCostFunction(SegmentationBoundaryMin[0] -1, SegmentationBoundaryMin[1] -1, SegmentationBoundaryMin[2] -1, SegmentationBoundaryMax[0] -1, SegmentationBoundaryMax[1] -1, SegmentationBoundaryMax[2] -1);
-
        if (actSupCl->GetPrintFrequency() && 
        (actSupCl->GetPrintRegistrationParameters() || actSupCl->GetPrintRegistrationSimularityMeasure())) {
 
@@ -797,7 +798,7 @@ template <class T> int EMLocalAlgorithm<T>::InitializeRegistration(float initGlo
        }
     } else { 
       // We only apply registration and wont optimize over it 
-      if (!this->DefineGlobalAndStructureRegistrationMatrix()) SuccessFlag =  0;
+      if (!this->DefineGlobalAndStructureRegistrationMatrix())  SuccessFlag = 0;
     }
     cout << "Registration Applied to Atlas Space:" << endl;
     cout << "Global Matrix: "; EMLocalAlgorithm_PrintVector(GlobalRegInvRotation,0,8); EMLocalAlgorithm_PrintVector(GlobalRegInvTranslation,0,2);
@@ -808,7 +809,7 @@ template <class T> int EMLocalAlgorithm<T>::InitializeRegistration(float initGlo
   }
  
   // -----------------------------------------------------------
-  //       Joint EMLocalShape and EMLocalRegistration 
+  //       Joint EMLocalShapeCostFunction and EMLocalRegistrationCostFunction 
   //       Environment  
   // -----------------------------------------------------------
 
@@ -852,12 +853,11 @@ template <class T> int EMLocalAlgorithm<T>::InitializeRegistration(float initGlo
 
     // Initialize it once than we can just later use it all the time 
     this->RegistrationParameters->SetROI_ProbData(&Registration_ROI_ProbData);
-    EMLocalRegistration_DefineROI_ProbDataValues(RegistrationParameters,this->ProbDataPtrStart); 
+    EMLocalRegistrationCostFunction_DefineROI_ProbDataValues(RegistrationParameters,this->ProbDataPtrStart); 
     //cout << "Min " << Registration_ROI_ProbData.MinCoord[0] << " " << Registration_ROI_ProbData.MinCoord[1] << " "<< Registration_ROI_ProbData.MinCoord[2] << endl;
     //cout << "Max " << Registration_ROI_ProbData.MaxCoord[0] << " " << Registration_ROI_ProbData.MaxCoord[1] << " "<< Registration_ROI_ProbData.MaxCoord[2] << endl;
   }
   return SuccessFlag;
-
 }
 
 
@@ -866,7 +866,8 @@ template <class T> void EMLocalAlgorithm<T>::InitializeEStepMultiThreader(int Da
   this->E_Step_Threader_SelfPointer.DataType = DataType;
 
   // Initialize Multithreading
-  this->E_Step_Threader_Number = (this->DisableMultiThreading ? 1 : vtkMultiThreader::GetGlobalDefaultNumberOfThreads()); 
+  this->E_Step_Threader_Number = EMLocalInterface_GetDefaultNumberOfThreads(this->DisableMultiThreading);
+
   // cout << "Threader Number: " << this->E_Step_Threader_Number << endl;
 
   this->E_Step_Threader = vtkMultiThreader::New();

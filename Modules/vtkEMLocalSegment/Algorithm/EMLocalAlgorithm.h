@@ -26,8 +26,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef _EMLOCALALGORITHM_H_INCLUDED
 #define _EMLOCALALGORITHM_H_INCLUDED 1
 
-#include "EMLocalShape.h"
-#include "EMLocalRegistration.h"
+#include "EMLocalShapeCostFunction.h"
+#include "EMLocalRegistrationCostFunction.h"
 
 // -----------------------------------------------------------
 // Structures needed for MultiThreading 
@@ -43,7 +43,7 @@ typedef struct {
   int   NumberOfVoxels;
   int   PCAMin[3];
   int   PCAMax[3];
-  EMLocalRegistration_ROI Registration_ROI_Weight;
+  EMLocalRegistrationCostFunction_ROI Registration_ROI_Weight;
   int   IncompleteModelVoxelCount;
   int   PCA_ROIExactVoxelCount;
 } EMLocalAlgorithm_E_Step_MultiThreaded_Parameters; 
@@ -147,7 +147,7 @@ private:
 
   void E_Step_Weight_Calculation_Threaded(int Thread_VoxelStart[3], int Thread_NumberOfVoxels, int Thread_DataJump, 
                       int *Thread_PCAMeanShapeJump, int** Thread_PCAEigenVectorsJump, int *Thread_ProbDataJump,
-                      int Thread_PCAMin[3], int Thread_PCAMax[3], EMLocalRegistration_ROI *Thread_Registration_ROI_Weight,
+                      int Thread_PCAMin[3], int Thread_PCAMax[3], EMLocalRegistrationCostFunction_ROI *Thread_Registration_ROI_Weight,
                       int &Thread_IncompleteModelVoxelCount,int &Thread_PCA_ROIExactVoxelCount);
   void E_Step_IncompleteModel(int indexX, int indexY, int indexZ, float **w_m_input, float **w_m_output, T **ProbDataPtrCopy, 
                   float &normRow, float *cY_M, float*** PCAEigenVectorsPtr, float **PCAMeanShapePtr, 
@@ -362,7 +362,7 @@ private:
   int PCAMax[3];
 
   int PCAShapeModelType;
-  EMLocalShape *ShapeParameters;
+  EMLocalShapeCostFunction *ShapeParameters;
   
   // -----------------------------------------------------------
   // Registration Variables 
@@ -403,9 +403,9 @@ private:
   int TwoDFlag; 
   int RigidFlag; 
   
-  EMLocalRegistration_ROI Registration_ROI_Weight;
-  EMLocalRegistration_ROI Registration_ROI_ProbData;
-  EMLocalRegistration* RegistrationParameters;
+  EMLocalRegistrationCostFunction_ROI Registration_ROI_Weight;
+  EMLocalRegistrationCostFunction_ROI Registration_ROI_ProbData;
+  EMLocalRegistrationCostFunction* RegistrationParameters;
 
 
 

@@ -23,6 +23,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 =========================================================================auto=*/
 //Includes the functionality related to EM
 
+// Do you want to run optimization in ITK or NR
+#define EMLOCAL_OPTIMIZATION_ITK_FLAG 1
+
 /* Forward declaration */
 template <class T> void EMLocalAlgorithm_PrintVector(T* parameters, int Min,  int Max);
 VTK_THREAD_RETURN_TYPE EMLocalAlgorithm_E_Step_Threader_Function(void *arg);
@@ -34,6 +37,11 @@ VTK_THREAD_RETURN_TYPE EMLocalAlgorithm_E_Step_Threader_Function(void *arg);
 #include "EMLocalAlgorithm_Print.cxx"
 #include "vtkSimonParameterReaderWriter.h"
 
+#if(EMLOCAL_OPTIMIZATION_ITK_FLAG)
+  #include "itkEMLocalOptimization.h"
+#else 
+  #include "nrEMLocalOptimization.h"
+#endif
 
 // Core Functions
 template <class T> EMLocalAlgorithm<T>::~EMLocalAlgorithm() {
@@ -272,20 +280,20 @@ inline int EMLocalAlgorithm_RegistrationMatrix(double Translation[3], double Rot
 }
 
 // Registration Function
-inline void EMLocalAlgorithm_TransfereRegistrationParameter_ToTranRotSca(float *FinalParameters,double *Translation, double *Rotation, double *Scale, 
-                                           EMLocalRegistration *RegistrationParameters) {
+inline void EMLocalAlgorithm_TransfereRegistrationParameter_ToTranRotSca(double *FinalParameters,double *Translation, double *Rotation, double *Scale, 
+                                           EMLocalRegistrationCostFunction *RegistrationParameters) {
   if (RegistrationParameters->GetTwoDFlag()) {
-    Translation[0] = double(FinalParameters[0]); Translation[1] = double(FinalParameters[1]); Translation[2] = 0.0;
-    Rotation[0] = Rotation[1] = 0.0; Rotation[2]    = double(FinalParameters[2]);
-    Scale[0]       = double(FinalParameters[3]); Scale[1]       = double(FinalParameters[4]); Scale[2] = 0.0;
+    Translation[0] = FinalParameters[0]; Translation[1] = FinalParameters[1]; Translation[2] = 0.0;
+    Rotation[0] = Rotation[1] = 0.0; Rotation[2]    = FinalParameters[2];
+    Scale[0]       = FinalParameters[3]; Scale[1]       = FinalParameters[4]; Scale[2] = 0.0;
 
   } else {
-    Translation[0] = double(FinalParameters[0]); Translation[1] = double(FinalParameters[1]); Translation[2] = double(FinalParameters[2]);         
-    Rotation[0]    = double(FinalParameters[3]); Rotation[1]    = double(FinalParameters[4]); Rotation[2]    = double(FinalParameters[5]); 
+    Translation[0] = FinalParameters[0]; Translation[1] = FinalParameters[1]; Translation[2] = FinalParameters[2];         
+    Rotation[0]    = FinalParameters[3]; Rotation[1]    = FinalParameters[4]; Rotation[2]    = FinalParameters[5]; 
     if (RegistrationParameters->GetRigidFlag()) {
       Scale[0] = Scale[1] = Scale[2] = 1.0;
     } else {
-      Scale[0]       = double(FinalParameters[6]); Scale[1]       = double(FinalParameters[7]); Scale[2]       = double(FinalParameters[8]);
+      Scale[0]       = FinalParameters[6]; Scale[1]       = FinalParameters[7]; Scale[2]       = FinalParameters[8];
     }
   }
 }
@@ -337,12 +345,18 @@ void EMLocalAlgorithm<T>::RegistrationInterface(float &Cost) {
   // Initialize Parameters
   int NumParaPerSet    =  this->RegistrationParameters->GetNumberOfParameterPerSet();
   int NumParaTotal     =  this->RegistrationParameters->GetNumberOfParameterSets()*NumParaPerSet; 
-  float* FinalParameters = new float[NumParaTotal]; 
+  double* FinalParameters = new double[NumParaTotal]; 
   for (int i = 0 ; i <  this->RegistrationParameters->GetNumberOfParameterSets()  ; i++) 
     EMLocalAlgorithm_TransfereTranRotSca_ToRegistrationParameter(this->RegistrationTranslation[i], this->RegistrationRotation[i], 
                                        this->RegistrationScale[i], &FinalParameters[NumParaPerSet*i],
                                        this->RegistrationParameters);
-  this->RegistrationParameters->StartRegistration(FinalParameters,Cost);
+  // this->RegistrationParameters->StartRegistration(FinalParameters,Cost);
+#if(EMLOCAL_OPTIMIZATION_ITK_FLAG) 
+  itkEMLocalOptimization_Registration_Start(this->RegistrationParameters,FinalParameters,Cost);
+#else 
+  nrEMLocalOptimization_Registration_Start(this->RegistrationParameters,FinalParameters,Cost);
+#endif
+
   for (int j = 0; j < this->RegistrationParameters->GetNumberOfParameterSets() ; j++) 
     EMLocalAlgorithm_TransfereRegistrationParameter_ToTranRotSca(&FinalParameters[j* NumParaPerSet],this->RegistrationTranslation[j], 
                                        this->RegistrationRotation[j], this->RegistrationScale[j], 
@@ -390,7 +404,7 @@ inline int EMLocalAlgorithm<T>::DefineGlobalAndStructureRegistrationMatrix() {
     // If it is not defined than we just use _APPLY and wont maximize
     if (this->RegistrationClassSpecificRegistrationFlag && this->RegistrationClassSpecificRegistrationFlag[i]) {
       // make sure parameters are set correctly - if there is an offset I do not believe that powell works correctly anymore bc it essentially ignorese these parameters
-      assert(translation[0] == 0.0 && translation[1] == 0.0 && translation[2] == 0.0);
+       assert(translation[0] == 0.0 && translation[1] == 0.0 && translation[2] == 0.0);
       assert(rotation[0] == 0.0 && rotation[1] == 0.0 && rotation[2] == 0.0);
       assert(scale[0] == 1.0 && scale[1] == 1.0 && scale[2] == 1.0);
     }
@@ -459,7 +473,7 @@ template <class T> void EMLocalAlgorithm<T>::UpdatePCASpecificParameters(int ite
     }
     // Update Prior frame
     if ((this->RegistrationType ==  EMSEGMENT_REGISTRATION_GLOBAL_ONLY) || (this->RegistrationType == EMSEGMENT_REGISTRATION_SEQUENTIAL)) {
-      EMLocalRegistration_DefineROI_ProbDataValues(this->RegistrationParameters, this->ProbDataPtrStart);
+      EMLocalRegistrationCostFunction_DefineROI_ProbDataValues(this->RegistrationParameters, this->ProbDataPtrStart);
     }
     cout << "Min " << this->Registration_ROI_ProbData.MinCoord[0] << " " << this->Registration_ROI_ProbData.MinCoord[1] << " "<< this->Registration_ROI_ProbData.MinCoord[2] 
      << endl;
@@ -610,7 +624,7 @@ template <class T> void EMLocalAlgorithm<T>::InfoOnPrintFlags() {
   cout << "Print Shape Parameters:                  " << (this->PCAFile ? "On" : "Off") << endl;
   cout << "Print Quality Parameters:                " << (this->QualityFile ? "On" : "Off") << endl;
   cout << "Print Registration Parameters:           " << (this->RegistrationParameterFile ? "On" : "Off") << endl;
-  cout << "Print Simularity Measure (Type: Double): " << (this->actSupCl->GetPrintRegistrationSimularityMeasure() ? "On" : "Off") << endl;
+  cout << "Print Simularity Measure (Type: Double): " << (this->actSupCl->GetPrintRegistrationSimularityMeasure() ? "On" : "Off")  << endl;
 }
 
 template  <class T> void EMLocalAlgorithm<T>::Expectation_Step(int iter) {
@@ -761,7 +775,7 @@ template <class T> inline void EMLocalAlgorithm<T>::E_Step_IncompleteModel(int i
 
 template <class T> void EMLocalAlgorithm<T>::E_Step_Weight_Calculation_Threaded(int Thread_VoxelStart[3], int Thread_NumberOfVoxels, int Thread_DataJump, 
                                           int *Thread_PCAMeanShapeJump, int** Thread_PCAEigenVectorsJump, int *Thread_ProbDataJump,
-                                          int Thread_PCAMin[3], int Thread_PCAMax[3], EMLocalRegistration_ROI *Thread_Registration_ROI_Weight,
+                                          int Thread_PCAMin[3], int Thread_PCAMax[3], EMLocalRegistrationCostFunction_ROI *Thread_Registration_ROI_Weight,
                                           int &Thread_IncompleteModelVoxelCount,int &Thread_PCA_ROIExactVoxelCount ) {
 
   // -----------------------------------------      
@@ -989,7 +1003,9 @@ template <class T> void EMLocalAlgorithm<T>::E_Step_Weight_Calculation_Threaded(
           if (Reg_ROI_FlagX) {
         if (*Reg_ROI_MAP > -2) {
           // If independent flag is set we also have to check subclasses - if Reg_ROI_FlagX > 1 than more than two supclasses belong to it so we have to consider it   
-          if (RegistrationIndependentSubClassFlag[i] && (Reg_ROI_FlagX  > 1)) *Reg_ROI_MAP = -2;
+          if (RegistrationIndependentSubClassFlag[i] && (Reg_ROI_FlagX  > 1)) {
+            *Reg_ROI_MAP = -2;
+          }
           else {
             // There are more than on class with weights greater 0 
             if (*Reg_ROI_MAP > -1) *Reg_ROI_MAP = -2;
@@ -1435,12 +1451,20 @@ int EMLocalAlgorithm<T>::EstimateRegistrationParameters(int iter, float &Registr
 template <class T>
 float EMLocalAlgorithm<T>::EstimateShapeParameters(int iter) {
    float Cost;
-   this->ShapeParameters->CalculateOptimalParameters(this->PCAShapeParameters, this->PCAMax[0], this->PCAMin[0], this->PCAMax[1], this->PCAMin[1], this->PCAMax[2], 
-                             this->PCAMin[2], 
-                             this->SegmentationBoundaryMin[0] -1, this->SegmentationBoundaryMin[1] - 1, this->SegmentationBoundaryMin[2] -1, 
-                             this->BoundaryMaxX, this->BoundaryMaxY, this->w_mPtr, this->PCA_ROI_Start, ((void**) this->ProbDataPtrStart), 
-                             this->PCAMeanShapePtrStart, this->PCAMeanShapeIncY, this->PCAMeanShapeIncZ, this->PCAEigenVectorsPtrStart, 
-                             this->PCAEigenVectorsIncY, this->PCAEigenVectorsIncZ, Cost);
+#if(EMLOCAL_OPTIMIZATION_ITK_FLAG) 
+   itkEMLocalOptimization_Shape_Start(this->ShapeParameters, this->PCAShapeParameters, this->PCAMax[0], this->PCAMin[0], this->PCAMax[1], this->PCAMin[1], 
+                    this->PCAMax[2], this->PCAMin[2], this->SegmentationBoundaryMin[0] -1, this->SegmentationBoundaryMin[1] - 1, 
+                    this->SegmentationBoundaryMin[2] -1, this->BoundaryMaxX, this->BoundaryMaxY, this->w_mPtr, this->PCA_ROI_Start, 
+                    ((void**) this->ProbDataPtrStart), this->PCAMeanShapePtrStart, this->PCAMeanShapeIncY, this->PCAMeanShapeIncZ, 
+                    this->PCAEigenVectorsPtrStart, this->PCAEigenVectorsIncY, this->PCAEigenVectorsIncZ, Cost);
+#else 
+   nrEMLocalOptimization_Shape_Start(this->ShapeParameters, this->PCAShapeParameters, this->PCAMax[0], this->PCAMin[0], this->PCAMax[1], this->PCAMin[1], 
+                    this->PCAMax[2], this->PCAMin[2], this->SegmentationBoundaryMin[0] -1, this->SegmentationBoundaryMin[1] - 1, 
+                    this->SegmentationBoundaryMin[2] -1, this->BoundaryMaxX, this->BoundaryMaxY, this->w_mPtr, this->PCA_ROI_Start, 
+                    ((void**) this->ProbDataPtrStart), this->PCAMeanShapePtrStart, this->PCAMeanShapeIncY, this->PCAMeanShapeIncZ, 
+                    this->PCAEigenVectorsPtrStart, this->PCAEigenVectorsIncY, this->PCAEigenVectorsIncZ, Cost);
+#endif 
+
     // ---------------------------------------------------
     // Print out initializing cost  if needed
     if ((iter == 1) && this->PrintFrequency && (this->PCAFile || this->actSupCl->GetPrintShapeSimularityMeasure())) {
