@@ -262,7 +262,7 @@ proc fMRIEngineHelpSelectHighpassCutoff { } {
     set txt "<H3>Nuissance signal frequency characteristics</H3>
 <P> The default cutoff period for nuissance signal modeling is set (as recommended in S.M. Smith, 'Preparing fMRI data for statistical analysis', in <I>Functional MRI, an introduction to methods</I>, P. Jezzard, P.M. Matthews, and S.M. Smith, Eds., 2002, Oxford University Press) at 1.5 times the maximum time interval between the most infrequently occuring event or epoch in the paradigm, multiplied by TR. (The reciprocal of this value represents the cutoff frequency in Hz.)
 <P> Use of this default cutoff period is selected by default in the interface, and also by clicking the 'use default' button 
-in  the GUI panel. The computed default period (as a multiple of TR) for a run is displayed in the entry widget once the full model is computed and any EV in that run is selected for editing; otherwise, the text 'default' will be shown in the widget.  The user may also specify a different (custom) cutoff period instead by typing that value (as a multiple of TR) directly into the entry widget and hitting 'enter'."
+in  the GUI panel. The computed default period (in seconds) for a run is displayed in the entry widget once the full model is computed and any EV in that run is selected for editing; otherwise, the text 'default' will be shown in the widget.  The user may also specify a different (custom) cutoff period instead by typing that value (in seconds) directly into the entry widget and hitting 'enter'."
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
 }
 
