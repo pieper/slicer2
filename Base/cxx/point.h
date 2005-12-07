@@ -63,10 +63,19 @@ public:
     void Deselect()  {this->selected = 0;}
     int IsSelected()   {return this->selected;}
     Point *GetNext() {return this->next;}
+    
+   //Karl - June 2005
+    void Set3DCoord(float x,float y,float z) {
+      this->x0=x;
+      this->y0=y;
+      this->z0=z;
+    }
 
 public:
     int x;
     int y;
+    //jc - 4.7.05 - add x,y,z for 3D point 
+    float x0, y0, z0;
     Point *next;
 
 private:

@@ -47,6 +47,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkPoints.h"
 #include "point.h"
 #include "vtkSlicer.h"
+#include "vtkImageReformat.h"
 
 #define ROI_SHAPE_POLYGON 1
 #define ROI_SHAPE_LINES   2
@@ -103,6 +104,9 @@ public:
     vtkGetMacro(HideROI, int);
     vtkSetMacro(HideROI, int);
     vtkBooleanMacro(HideROI, int);
+    void SetImageReformat( vtkImageReformat* ir) {
+      this->image_reformat = ir;
+    }
 
     vtkGetMacro(HideSpline, int);
     vtkSetMacro(HideSpline, int);
@@ -160,6 +164,7 @@ protected:
     void operator=(const vtkImageDrawROI&) {};
 
     vtkPoints *Points;
+    vtkImageReformat* image_reformat;
     vtkPoints *Samples;
     
     Point *firstPoint;

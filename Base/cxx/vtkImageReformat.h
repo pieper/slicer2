@@ -83,7 +83,14 @@ class VTK_SLICER_BASE_EXPORT vtkImageReformat : public vtkImageToImageFilter
     vtkGetMacro(FieldOfView, vtkFloatingPointType);
     vtkSetMacro(FieldOfView, vtkFloatingPointType);
     
+    // >>Karl Krissian - added following 4 functions for new draw ---------------
+    //void vtkImageReformat::CrossProduct(float* v1, float* v2, float* v3);
+    void CrossProduct(vtkFloatingPointType* v1, vtkFloatingPointType* v2, vtkFloatingPointType* v3);
     void SetPoint(int x, int y);
+    void Slice2IJK(int slice_x, int slice_y,float& x, float& y,float& z);
+    void IJK2Slice( float x, float y, float z, int& slice_x, int& slice_y);    
+    // << Karl --------------------------------------------------------------
+    
     vtkGetVector3Macro(WldPoint, vtkFloatingPointType);
     vtkGetVector3Macro(IjkPoint, vtkFloatingPointType);
 

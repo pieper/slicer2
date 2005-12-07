@@ -323,8 +323,20 @@ vtkMrmlSlicer::vtkMrmlSlicer()
   // Use the original approach by default.
   //this->DrawDoubleApproach = 0;
 
-  // Should be this one from now (11/07/01)
-    this->DrawDoubleApproach = 1;
+  // jc - 4.21.05
+  //this->DisplayMethod=2; // method 1 or 2
+  
+  if ((this->DisplayMethod==2)||(this->DisplayMethod==3)) {
+    // >> Bouix 4/23/03 use old approach for the Zoom.
+    // >> AT 3/26/01 11/07/01
+    // Use the original approach by default.
+    this->DrawDoubleApproach = 0;  //m2
+  }
+  else {
+    // Should be this one from now (11/07/01)
+    this->DrawDoubleApproach = 1;  //m1  
+  } 
+    
   // << AT 3/26/01 11/07/01
   // << Bouix
   // reformatting additions
@@ -591,8 +603,61 @@ void vtkMrmlSlicer::DeepCopy(vtkMrmlSlicer *src)
       this->SetActiveSlice(src->ActiveSlice);
     }
 }
-      
+// jc June 2005 - moved the definition from *.h to here
 //----------------------------------------------------------------------------
+void  vtkMrmlSlicer::SetDouble(int s, int yes) {
+  if(this->DrawDoubleApproach == 0)
+    {
+      this->DoubleSliceSize[s] = yes;
+      this->BackReformat[s]->SetResolution(256);
+      this->ForeReformat[s]->SetResolution(256);
+      this->LabelReformat[s]->SetResolution(256);
+    }
+  else
+    {
+      this->DoubleSliceSize[s] = 0;
+      vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) this->BackVolume[s]->GetMrmlNode();
+      int *dimension =node->GetDimensions();
+      int resolution;
+      if (dimension[0]>dimension[1]){
+        resolution = dimension[0];
+      }
+      else {
+        resolution= dimension[1];
+      }
+      if(yes == 1)
+    {
+
+          if (resolution>512){
+            this->BackReformat[s]->SetResolution( 1024);
+            this->ForeReformat[s]->SetResolution( 1024);
+            this->LabelReformat[s]->SetResolution(1024);
+          }
+      else
+      if (resolution>256){
+        this->BackReformat[s]->SetResolution( 512);
+        this->ForeReformat[s]->SetResolution( 512);
+        this->LabelReformat[s]->SetResolution(512);
+      }
+      else{
+        this->DoubleSliceSize[s] = yes;
+        this->BackReformat[s]->SetResolution(256);
+        this->ForeReformat[s]->SetResolution(256);
+        this->LabelReformat[s]->SetResolution(256);
+      }
+    }
+      else
+    {
+      this->BackReformat[s]->SetResolution(256);
+      this->ForeReformat[s]->SetResolution(256);
+      this->LabelReformat[s]->SetResolution(256);
+    }
+    }
+  
+  this->BuildLowerTime.Modified();
+}
+//----------------------------------------------------------------------------
+
 void vtkMrmlSlicer::SetNoneVolume(vtkMrmlDataVolume *vol)
 {
   int s;
@@ -996,13 +1061,20 @@ void vtkMrmlSlicer::BuildUpper(int s)
     // If data has more than one scalar component, then don't use the mapper,
     if (v->GetOutput()->GetNumberOfScalarComponents() > 1)
     {
+      // jc - 4.21.05 
       // Overlay
-      // >> Bouix 4/23/03 change input to 1 for the overlay was 0..
-      this->Overlay[s]->SetInput(1, this->ForeReformat[s]->GetOutput());
-      // >> AT 11/09/01
-      this->Overlay3DView[s]->SetInput(1, this->ForeReformat3DView[s]->GetOutput());
-      // << AT 11/09/01
-      // << Bouix
+      if (this->DisplayMethod==1) {
+        // >> Bouix 4/23/03 change input to 1 for the overlay was 0..
+        this->Overlay[s]      ->SetInput(1, this->ForeReformat[s]->GetOutput());
+        // >> AT 11/09/01
+        this->Overlay3DView[s]->SetInput(1, this->ForeReformat3DView[s]->GetOutput());
+        // << AT 11/09/01
+        // << Bouix
+      }
+      if ((this->DisplayMethod==2)||(this->DisplayMethod==3)) {
+        this->Overlay[s]      ->SetInput(0, this->ForeReformat[s]->GetOutput());
+        this->Overlay3DView[s]->SetInput(0, this->ForeReformat3DView[s]->GetOutput());
+      }
     }
     else 
     {
@@ -1169,24 +1241,37 @@ void vtkMrmlSlicer::BuildLower(int s)
 
   if (this->ActiveSlice == s)
   {
+  //Karl - 5.18.05
     switch (mode)
       {
     case 1:
       this->PolyDraw->SetInput(this->Overlay[s]->GetOutput());
+      if (this->DisplayMethod==2)
+        this->PolyDraw->SetImageReformat(this->BackReformat[s]);
+        
       this->Cursor[s]->SetInput(this->PolyDraw->GetOutput());
       break;
     case 2:
       this->PolyDraw->SetInput(this->Overlay[s]->GetOutput());
+       if (this->DisplayMethod==2)
+        this->PolyDraw->SetImageReformat(this->BackReformat[s]);
+        
       this->Zoom[s]->SetInput(this->PolyDraw->GetOutput());
       this->Cursor[s]->SetInput(this->Zoom[s]->GetOutput());
       break;
     case 3:
       this->PolyDraw->SetInput(this->Overlay[s]->GetOutput());
+       if (this->DisplayMethod==2)
+        this->PolyDraw->SetImageReformat(this->BackReformat[s]);
+        
       this->Double[s]->SetInput(this->PolyDraw->GetOutput());
       this->Cursor[s]->SetInput(this->Double[s]->GetOutput());
       break;
     case 4:
       this->PolyDraw->SetInput(this->Overlay[s]->GetOutput());
+       if (this->DisplayMethod==2)
+        this->PolyDraw->SetImageReformat(this->BackReformat[s]);
+        
       this->Zoom[s]->SetInput(this->PolyDraw->GetOutput());
       this->Double[s]->SetInput(this->Zoom[s]->GetOutput());
       this->Cursor[s]->SetInput(this->Double[s]->GetOutput());

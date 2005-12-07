@@ -198,12 +198,43 @@ void vtkImageReformat::ComputeInputUpdateExtent(int inExt[6], int outExt[6])
 }
 
 //----------------------------------------------------------------------------
+// >> jc - 5.9.05  for slicer 2.4
+//    from float* to vtkFloatingPointType*
+
+void vtkImageReformat::CrossProduct(vtkFloatingPointType* v1, vtkFloatingPointType* v2, vtkFloatingPointType* v3) {
+  v3[0]=v1[1]*v2[2]-v1[2]*v2[1];
+  v3[1]=v1[2]*v2[0]-v1[0]*v2[2];
+  v3[2]=v1[0]*v2[1]-v1[1]*v2[0];
+  v3[3]=0;
+}
+
+//----------------------------------------------------------------------------
+// Karl - for new draw
 void vtkImageReformat::SetPoint(int x, int y)
 {
-    vtkFloatingPointType ras[4], ijk[4];
+    vtkFloatingPointType point[4],zstep[4], ras[4];
+    vtkMatrix4x4* m1;
     int i;
 
+    point[0]=x;
+    point[1]=y;
+    point[2]=0;
+    point[3]=1;
+    m1= vtkMatrix4x4::New();
+    
+    this->CrossProduct(this->XStep,this->YStep,zstep);
+
     for (i=0; i<3; i++) 
+    {
+      m1->SetElement(i,0,this->XStep[i]);
+      m1->SetElement(i,1,this->YStep[i]);
+      m1->SetElement(i,2,zstep[i]);
+      m1->SetElement(i,3,this->Origin[i]);
+    }
+
+    m1->MultiplyPoint(point,ras);
+        
+   /* for (i=0; i<3; i++) 
     {
         this->WldPoint[i] = this->Origin[i] + this->XStep[i]*(vtkFloatingPointType)x + 
             this->YStep[i]*(vtkFloatingPointType)y;
@@ -213,16 +244,78 @@ void vtkImageReformat::SetPoint(int x, int y)
     {
         ras[i] = this->WldPoint[i];
     }
-    ras[3] = 1.0;
+    ras[3] = 1.0;*/
+    
+    this->WldToIjkMatrix->MultiplyPoint(ras, this->IjkPoint);
+   // << 
+}
+//----------------------------------------------------------------------------
+// Karl - 2D to 3D
+void vtkImageReformat::Slice2IJK(int slice_x, int slice_y, float& x, float& y, float& z)
+{
+    vtkFloatingPointType point[4],zstep[4], ras[4];
+    vtkMatrix4x4* m1;
+    int i;
+    point[0]=slice_x;
+    point[1]=slice_y;
+    point[2]=0;
+    point[3]=1;
+    m1= vtkMatrix4x4::New();
+    
+    //Karl - 5.16.05
+    m1->Identity();
+    this->CrossProduct(this->XStep,this->YStep,zstep);
+    for (i=0; i<3; i++) 
+    {
+      m1->SetElement(i,0,this->XStep[i]);
+      m1->SetElement(i,1,this->YStep[i]);
+      m1->SetElement(i,2,zstep[i]);
+      m1->SetElement(i,3,this->Origin[i]);
+    }
+    m1->MultiplyPoint(point,ras);
+    this->WldToIjkMatrix->MultiplyPoint(ras, point);
+    x=point[0];
+    y=point[1];
+    z=point[2];
+}
+//----------------------------------------------------------------------------
+//Karl - 3D to 2D
+void vtkImageReformat::IJK2Slice( float x, float y, float z, int& slice_x, int& slice_y)
+{
+    vtkFloatingPointType point[4],zstep[4],ras[4],slicepoint[4];
+    vtkMatrix4x4* m1;
+    vtkMatrix4x4* m2;
+    int i;
 
-    this->WldToIjkMatrix->MultiplyPoint(ras, ijk);
+    point[0]=x;
+    point[1]=y;
+    point[2]=z;
+    point[3]=1;
+    m1= vtkMatrix4x4::New();
+        
+    m1->Identity();
+    m2= vtkMatrix4x4::New();
+
+    this->CrossProduct(this->XStep,this->YStep,zstep);
 
     for (i=0; i<3; i++) 
     {
-        this->IjkPoint[i] = ijk[i];
+      m1->SetElement(i,0,this->XStep[i]);
+      m1->SetElement(i,1,this->YStep[i]);
+      m1->SetElement(i,2,zstep[i]);
+      m1->SetElement(i,3,this->Origin[i]);
     }
-}
 
+    m1->Invert();
+    m2->DeepCopy( this->WldToIjkMatrix);
+    m2->Invert();
+ 
+    m2->MultiplyPoint(point, ras);
+    m1->MultiplyPoint(ras,   slicepoint);
+
+    slice_x=(int)(slicepoint[0]+0.5);
+    slice_y=(int)(slicepoint[1]+0.5);
+}
 
 // FAST1 (for indices) uses more bits of precision to the right
 // of the decimal point than FAST2 (for data) because indices

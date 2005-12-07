@@ -91,8 +91,10 @@ vtkImageDrawROI::vtkImageDrawROI()
 
     this->Points = vtkPoints::New();
     this->Samples = vtkPoints::New();
-
     this->Shape = ROI_SHAPE_POLYGON;
+
+    // Karl - 4.15.05
+    this->image_reformat = NULL;
 }
 
 vtkImageDrawROI::~vtkImageDrawROI()
@@ -321,6 +323,11 @@ void vtkImageDrawROI::LoadStackPolygon(vtkPoints* pts)
 void vtkImageDrawROI::AppendPoint(int x, int y)
 {
     Point *p = new Point(x, y);
+    // Karl - 4.15.05
+    if (image_reformat!=NULL) {
+      image_reformat->Slice2IJK(x,y,p->x0, p->y0, p->z0); 
+    }
+    //<-
 
     if (this->firstPoint == NULL) {
         this->firstPoint = p;
@@ -612,6 +619,13 @@ void vtkImageDrawROI::InsertAfterSelectedPoint(int x, int y)
     if (p1 == NULL) {
         // Add and select new point
         Point *p = new Point(x, y);
+         
+        // Karl - 4.15.05
+        if (image_reformat!=NULL) {
+            image_reformat->Slice2IJK(x,y,p->x0, p->y0, p->z0); 
+        }
+        //<-
+
         this->firstPoint = p;
         this->lastPoint = p;
         this->NumPoints++;
@@ -641,6 +655,11 @@ void vtkImageDrawROI::InsertAfterSelectedPoint(int x, int y)
     p1 = sel;
     p2 = p1->GetNext(); 
     Point *p = new Point(x, y);
+    // Karl - 4.15.05
+    if (image_reformat!=NULL) {
+      image_reformat->Slice2IJK(x,y,p->x0, p->y0, p->z0); 
+    }
+    //<-
     p1->next = p;
     p->next = p2;
     // p2 = NULL if p1 is tail, that's ok
@@ -739,7 +758,10 @@ void vtkImageDrawROI::MoveSelectedPoints(int deltaX, int deltaY)
         if (p->IsSelected()) {
             p->x += deltaX;
             p->y += deltaY;
+           if (image_reformat!=NULL) {
+            image_reformat->Slice2IJK(p->x,p->y,p->x0, p->y0, p->z0); 
         }
+       }
         p = p->GetNext();
     }
     this->Modified();
@@ -1139,9 +1161,17 @@ void vtkImageDrawROI::DrawLines(vtkImageData *outData, int outExt[6])
 
     p1 = this->firstPoint;
     if (!p1) return;
+    if (image_reformat!=NULL) 
+      image_reformat->IJK2Slice(p1->x0,p1->y0,p1->z0,p1->x,p1->y);
+      
     p2 = p1->GetNext();    
     while (p2 != NULL)
     {
+    //  4.15.05
+        if (image_reformat!=NULL) 
+      image_reformat->IJK2Slice(p2->x0,p2->y0,p2->z0,p2->x,p2->y);
+    //<-
+
         if (this->GetShape() == ROI_SHAPE_POLYGON)
         {
             if (p1->x >= xMin && p1->x <= xMax &&
@@ -1193,8 +1223,11 @@ void vtkImageDrawROI::DrawPoints(vtkImageData *outData, int outExt[6])
             ConvertColor(this->SelectedPointColor, color);
         else
             ConvertColor(this->PointColor, color);
-
-        x1 = p->x - r;
+    // 4.15.05
+        if (image_reformat!=NULL) 
+      image_reformat->IJK2Slice(p->x0,p->y0,p->z0,p->x,p->y);
+    //<-
+       x1 = p->x - r;
         x2 = p->x + r;
         y1 = p->y - r;
         y2 = p->y + r;
@@ -1235,6 +1268,10 @@ void vtkImageDrawROI::DrawCrosses(vtkImageData *outData, int outExt[6])
             ConvertColor(this->SelectedPointColor, color);
         else
             ConvertColor(this->PointColor, color);
+        // Karl - 4.15.05
+        if (image_reformat!=NULL) 
+            image_reformat->IJK2Slice(p->x0,p->y0,p->z0,p->x,p->y);
+        //<-
 
         x1 = p->x - r;
         x2 = p->x + r;
@@ -1280,7 +1317,10 @@ void vtkImageDrawROI::DrawBoxes(vtkImageData *outData, int outExt[6])
             ConvertColor(this->SelectedPointColor, color);
         else
             ConvertColor(this->PointColor, color);
-
+        // Karl - 4.15.05
+        if (image_reformat!=NULL) 
+            image_reformat->IJK2Slice(p->x0,p->y0,p->z0,p->x,p->y);
+        //<-
         x1 = p->x - r;
         x2 = p->x + r;
         y1 = p->y - r;
