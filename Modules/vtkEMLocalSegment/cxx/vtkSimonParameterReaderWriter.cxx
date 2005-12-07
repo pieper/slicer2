@@ -30,7 +30,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <math.h>
 #include <assert.h>
 #include <ctype.h>
-vtkCxxRevisionMacro(vtkSimonParameterReaderWriter, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkSimonParameterReaderWriter, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkSimonParameterReaderWriter);
 
 
@@ -511,7 +511,7 @@ int vtkSimonParameterReaderWriter::TurnParameteresIntoInverseRotationTranslation
                                 invRotation, invTranslation,paraType);
 }
 
-int vtkSimonParameterReaderWriter::TurnParameteresIntoInverseRotationTranslation(float *parameters, float *invRotation, float *invTranslation, int paraType, int TwoDFlag, int RigidFlag) {
+int vtkSimonParameterReaderWriter::TurnParameteresIntoInverseRotationTranslation(const float *parameters, float *invRotation, float *invTranslation, int paraType, int TwoDFlag, int RigidFlag) {
   if (RigidFlag) {
     if (TwoDFlag) {
       return  TurnParameteresIntoInverseRotationTranslationTemplate((double) parameters[0], (double) parameters[1], 0.0, 0.0, 0.0, (double) parameters[2], 1.0,  
@@ -531,6 +531,29 @@ int vtkSimonParameterReaderWriter::TurnParameteresIntoInverseRotationTranslation
     }
   }
 }
+
+
+int vtkSimonParameterReaderWriter::TurnParameteresIntoInverseRotationTranslation(const double *parameters, float *invRotation, float *invTranslation, int paraType, 
+                                         int TwoDFlag, int RigidFlag) {
+  if (RigidFlag) {
+    if (TwoDFlag) {
+      return  TurnParameteresIntoInverseRotationTranslationTemplate(parameters[0], parameters[1], 0.0, 0.0, 0.0,parameters[2], 1.0,  1.0 , 1.0, invRotation, invTranslation, 
+                                    paraType);
+    } else {
+      return  TurnParameteresIntoInverseRotationTranslationTemplate(parameters[0], parameters[1], parameters[2], parameters[3], parameters[4], parameters[5], 1.0, 1.0, 1.0, 
+                                    invRotation, invTranslation,paraType);
+    }
+  } else {
+    if (TwoDFlag) {
+      return  TurnParameteresIntoInverseRotationTranslationTemplate(parameters[0], parameters[1], 0.0, 0.0, 0.0, parameters[2], parameters[3], parameters[4], 1.0, invRotation,
+                                    invTranslation,paraType);
+    } else {
+      return  TurnParameteresIntoInverseRotationTranslationTemplate(parameters[0], parameters[1], parameters[2], parameters[3], parameters[4], parameters[5], parameters[6], 
+                                    parameters[7], parameters[8], invRotation, invTranslation,paraType);
+    }
+  }
+}
+
 
 int vtkSimonParameterReaderWriter::TurnParameteresIntoInverseRotationTranslation(double *Translation, double *Rotation, double *Scale, float *invRotation, float *invTranslation, int paraType, int TwoDFlag, int RigidFlag) {
  

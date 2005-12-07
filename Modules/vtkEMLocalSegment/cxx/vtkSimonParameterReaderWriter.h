@@ -76,7 +76,9 @@ public:
   // paraType = 1 old Simon parameterisation 
   // paraType = 2 Kilian parameterisation 
   // 2DFlag   = 2D Registration  
-  static int TurnParameteresIntoInverseRotationTranslation(float *parameters, float *invRotation, float *invTranslation, int paraType, int TwoDFlag, int RigidFlag);
+  static int TurnParameteresIntoInverseRotationTranslation(const float *parameters, float *invRotation, float *invTranslation, int paraType, int TwoDFlag, int RigidFlag);
+  static int TurnParameteresIntoInverseRotationTranslation(const double *parameters, float *invRotation, float *invTranslation, int paraType, int TwoDFlag, int RigidFlag);
+
   static int TurnParameteresIntoInverseRotationTranslation(double *Translation, double *Rotation, double *Scale, float *invRotation, float *invTranslation, int paraType, int  TwoDFlag, int RigidFlag);
 
   // To use Guimonds program I spit out a parameter file in the needed form 
