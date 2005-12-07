@@ -90,7 +90,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.67 $} {$Date: 2005/12/01 22:14:15 $}]
+            {$Revision: 1.68 $} {$Date: 2005/12/07 23:06:57 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -957,6 +957,12 @@ proc ModelsSetFileName {} {
     # Do nothing if the user cancelled
     if {$Model(FileName) == ""} {return}
 
+    # check for special characters
+    set illegalCharacters {'`\u0100-\uffff}
+    if {[regexp "\[$illegalCharacters\]" $Model(FileName)] == 1} {
+        DevWarningWindow "Illegal character in model filename: $Model(FileName)\nRename the file and re-select it."
+    }
+
     # Update the Default Directory
     set Model(DefaultDir) [file dirname $Model(FileName)]
 
@@ -966,18 +972,27 @@ proc ModelsSetFileName {} {
     # Guess the color
     set name [string tolower $Model(name)]
     set guess ""
+    set activeID ""
     if { $Color(activeID) != "" } {
         set guess [Color($Color(activeID),node) GetName]
+        set activeID $Color(activeID)
     }
     foreach c $Color(idList) {
         set n [string tolower [Color($c,node) GetName]]
         if {[string first $name $n] != -1} {
             set guess [Color($c,node) GetName]
+            set activeID $c
         }
     }
 
     if { $guess != "" } {
         LabelsSetColor $guess
+        if {$activeID != ""} {
+            set ::Color(activeID) $activeID
+            if {$::Module(verbose)} {
+                puts "ModelsSetFileName: active colour id = $::Color(activeID), after setting guess to $guess $activeID"
+            }
+        }
     } 
 }
 
