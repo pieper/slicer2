@@ -420,7 +420,7 @@ proc fMRIEngineSortEVsForStat {} {
     set totalVolumes [$oriTimeCourse GetNumberOfTuples]
     set run $fMRIEngine(curRunForModelFitting)
 
-    if {$run != "combined"} {
+    if {$run != "concatenated"} {
         set first $run
         set last $run
 
@@ -573,7 +573,7 @@ proc fMRIEngineCreateCurvesFromTimeCourse {} {
     fMRIEngineSortEVsForStat
 
     set run $fMRIEngine(curRunForModelFitting)
-    if {$run == "combined"} {
+    if {$run == "concatenated"} {
         set run 1
     }
  
@@ -667,7 +667,7 @@ proc fMRIEngineDrawPlotLong {} {
     # ev array
     set run $fMRIEngine(curRunForModelFitting)
     set index $fMRIEngine(curEVIndexForPlotting)
-    if {$run != "combined"} {
+    if {$run != "concatenated"} {
         set ev $fMRIModelView(Data,Run$run,EV$index,EVData)
     } else {
         set ev ""
@@ -891,7 +891,7 @@ proc fMRIEngineGetVoxelFromSelection {x y} {
     set j [expr round ($j)]    
     set k [expr round ($k)]
     # puts "Rounded voxel coords: $i $j $k"
-    puts "Voxel indices: $i $j $k"
+    #puts "Voxel indices: $i $j $k"
     
     return "$i $j $k"
 }

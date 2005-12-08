@@ -596,7 +596,7 @@ proc fMRIEngineUpdateCondsForROIPlot {} {
         return
     }
 
-    if {$run == "combined"} {
+    if {$run == "concatenated"} {
         set run 1
     }
 

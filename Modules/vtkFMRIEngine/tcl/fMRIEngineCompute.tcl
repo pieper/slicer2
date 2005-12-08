@@ -141,12 +141,13 @@ proc fMRIEngineComputeContrasts {} {
                 set obs2 [fMRIEngine(actVolumeGenerator) AddObserver ProgressEvent \
                     "MainShowProgress fMRIEngine(actVolumeGenerator)"]
                 set obs3 [fMRIEngine(actVolumeGenerator) AddObserver EndEvent MainEndProgress]
+                
                 set fMRIEngine(actVolName) $name 
 
                 set Gui(progressText) "Computing $name..."
                 puts $Gui(progressText)
 
-                # Extract contrast info from the long contrast vector for all combined runs.
+                # Extract contrast info from the long contrast vector for all concatenated runs.
                 set vec $fMRIEngine($name,contrastVector) 
                 set originalContrastVector [split $vec " "]
 
@@ -161,14 +162,14 @@ proc fMRIEngineComputeContrasts {} {
                     set first [ expr int ($first) ]
                 }
                 #--- wjp 11/08/05
-                #--- The contrast string must be the same for each run being combined
-                #--- for matching conditions. Since we only combine condition-EVs in
-                #--- the combined run analysis (and don't combine baselines or
+                #--- The contrast string must be the same for each run being concatenated
+                #--- for matching conditions. Since we only concatenate condition-EVs in
+                #--- the concatenated run analysis (and don't concatenate baselines or
                 #--- columns containing low frequency nuissance filters), we only
                 #--- need to check that corresponding conditions have identical
                 #--- contrast specifications.
                 set run $fMRIEngine(curRunForModelFitting)
-                if {$run == "combined"} {
+                if {$run == "concatenated"} {
                     #--- wjp 11/08/05
                     #--- First find target contrast string for run1 (only need condition-related EVs):
                     #--- here, fMRIEngine(1,noOfEVs) counts up only condition-related EVs.
@@ -206,7 +207,7 @@ proc fMRIEngineComputeContrasts {} {
                         set snip [ string trim $snip ]
                         if {! [string equal -nocase $target $snip ] } {
                             #if {! [string equal -nocase $fMRIEngine(1,contrastString) $fMRIEngine($r,contrastString)]} 
-                            DevErrorWindow "Bad contrast vector for combined runs:\nName: $name\nVector: $vec"
+                            DevErrorWindow "Bad contrast vector for concatenated runs:\nName: $name\nVector: $vec"
                             return 
                         }
                         #--- and get contrast weights for other EVs (baseline and DC basis) in run
@@ -216,7 +217,7 @@ proc fMRIEngineComputeContrasts {} {
                     }
 
                     #--- Ok, now we know all runs contain combinable contrasts.
-                    #--- now assemble a new contrast vector for combined analysis.
+                    #--- now assemble a new contrast vector for concatenated analysis.
                     #--- This has to look like $target run1basis run1DCs run2basis, run2DCs etc.
                 } else {
                     set contrVector $fMRIEngine($run,contrastVector)
@@ -238,9 +239,9 @@ proc fMRIEngineComputeContrasts {} {
                     incr count
                 }
 
-                fMRIEngine(actVolumeGenerator) SetContrastVector fMRIEngine(contrast) 
+                fMRIEngine(actVolumeGenerator) SetContrastVector fMRIEngine(contrast)
                 fMRIEngine(actVolumeGenerator) SetDesignMatrix fMRIEngine(designMatrix)
-                fMRIEngine(actVolumeGenerator) SetInput $fMRIEngine(actBetaVolume) 
+                fMRIEngine(actVolumeGenerator) SetInput $fMRIEngine(actBetaVolume)
                 set act [fMRIEngine(actVolumeGenerator) GetOutput]
                 $act Update
                 set fMRIEngine(act) $act

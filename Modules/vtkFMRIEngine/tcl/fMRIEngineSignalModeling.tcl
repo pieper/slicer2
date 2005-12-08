@@ -452,7 +452,7 @@ proc fMRIEngineBuildUIForModelEstimation {parent} {
 #    bind $f.mbWhichRun <1> "fMRIEngineUpdateRunsForModelFitting" 
     eval {menu $f.mbWhichRun.m} $::Gui(WMA)
     TooltipAdd $f.mbWhichRun "Specify which run is going to be used for LM model fitting.\
-    \nSelect 'combined' if you have multiple runs and want to use them all."
+    \nSelect 'concatenated' if you have multiple runs and want to use them all."
     #--- Add menu items
     foreach m $runList  {
         $f.mbWhichRun.m add command -label $m \
@@ -599,7 +599,7 @@ proc fMRIEngineSelectRunForModelFitting {run} {
 
     # configure menubutton
     $fMRIEngine(gui,runListMenuButtonForModelFitting) config -text $run
-    if {$run == "combined" || $run == "none"} {
+    if {$run == "concatenated" || $run == "none"} {
         set fMRIEngine(curRunForModelFitting) $run 
     } else {
         set r [string range $run 3 end]
@@ -630,9 +630,9 @@ proc fMRIEngineUpdateRunsForModelFitting {} {
             -command "fMRIEngineSelectRunForModelFitting none"
     } else { 
         if {$runs > 1} {
-            fMRIEngineSelectRunForModelFitting combined 
-            $fMRIEngine(gui,runListMenuForModelFitting) add command -label combined \
-                -command "fMRIEngineSelectRunForModelFitting combined"
+            fMRIEngineSelectRunForModelFitting concatenated 
+            $fMRIEngine(gui,runListMenuForModelFitting) add command -label concatenated \
+                -command "fMRIEngineSelectRunForModelFitting concatenated"
         }
 
         set count 1
@@ -1322,7 +1322,7 @@ proc fMRIEngineAddInputVolumes {run} {
 
     set start $run
     set last $run
-    if {$run == "combined"} {
+    if {$run == "concatenated"} {
         set start 1
         set last [$fMRIEngine(seqListBox) size] 
     }
@@ -1409,7 +1409,7 @@ proc fMRIEngineAddRegressors {run} {
         }
     }
     #--- if runs are being analyzed separately...
-    if {$run != "combined"} {
+    if {$run != "concatenated"} {
         # single run
         set ::fMRIEngine($run,totalEVs) [ expr int ($::fMRIEngine($run,totalEVs)) ]
         fMRIEngine(designMatrix) SetNumberOfComponents $fMRIEngine($run,totalEVs)
@@ -1426,55 +1426,23 @@ proc fMRIEngineAddRegressors {run} {
             }
         }
     } else {
-        # runs are being combined together and analyzed together.
+        # runs are being concatenated together and analyzed together.
         if {[fMRIEngineCheckMultiRuns] == 1} {
             return 1
         }
 
-        set vols 0
-        for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} { 
-            set seqName $fMRIEngine($r,sequenceName)
-            set vols [expr $MultiVolumeReader($seqName,noOfVolumes) + $vols]
-        }
-        fMRIEngine(designMatrix) SetNumberOfTuples $vols
-        
         #--- How many columns are in the design matrix when we are combining
         #--- multiple runs into the same analysis?
-        #--- * We will combine matching conditions into one design matrix column.
-        #--- * We will combine the matching condition derivatives into one design matrix column.
-        #---    (Actually, we should take a new derivative of each combined condition.)
+        #--- * We will concatenate matching conditions into one design matrix column.
+        #--- * We will concatenate matching condition derivatives into one design matrix column.
+        #---    (Actually, we should take a new derivative of each concatenated condition.)
         #--- * We must keep the means for each run in an independent design matrix column.
         #--- * We must keep the basis functions modeling nuissance signals (i.e. Discrete Cosines)
         #---    for each run in an independent design matrix column.
-        #--- SO: total number of columns for combined analysis = number of condition EVs +
+        #--- SO: total number of columns for concatenated analysis = number of condition EVs +
         #--- number of runs (for the means) + number of DCbasis functions for each run.
 
-
-        #--- wjp 11/07/05 changing this:
-        if { 0 } {
-            fMRIEngine(designMatrix) SetNumberOfComponents $fMRIEngine(1,totalEVs) 
-            #--- make a set of long arrays that contain all combined ev data.
-            for {set i 1} {$i <= $fMRIEngine(1,totalEVs)} {incr i} { 
-                set data ""
-                for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} { 
-                    set data [concat $data $fMRIModelView(Data,Run$r,EV$i,EVData)]
-                }
-                set fMRIEngine($i,combinedEVs) $data 
-            }
-            #---insert the data into the design matrix.
-            for {set j 0} {$j < $vols} {incr j} { 
-                for {set i 0} {$i < $fMRIEngine(1,totalEVs)} {incr i} { 
-                    set index [expr $i+1]
-                    set data $fMRIEngine($index,combinedEVs)
-                    set e [lindex $data $j]
-                    fMRIEngine(designMatrix) InsertComponent $j $i $e 
-                }
-            }
-        }
-        #--- end wjp 11/07/05 commented out section
-
-        #--- to the following:
-        #--- count up number of columns the design matrix needs for combined runs
+        #--- count up number of columns the design matrix needs for concatenated runs
         set numcols [expr $fMRIEngine(1,noOfEVs)]
         for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
             #--- add a column for the mean for this run.
@@ -1488,18 +1456,26 @@ proc fMRIEngineAddRegressors {run} {
         }
         fMRIEngine(designMatrix) SetNumberOfComponents $numcols
         
-        #--- Now make a set of long data arrays for the combined condition-related data
+        set vols 0
+        for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} { 
+            set seqName $fMRIEngine($r,sequenceName)
+            set vols [expr $MultiVolumeReader($seqName,noOfVolumes) + $vols]
+        }
+        fMRIEngine(designMatrix) SetNumberOfTuples $vols
+        
+        #--- Now make a set of long data arrays for the concatenated condition-related data
         #--- and a set of long data arrays with the mean and basis functions inserted
         #--- at the right timepoint.
         #--- data arrays for conditions (with signal inserted):
         set startcol 1
         set stopcol $::fMRIEngine(1,noOfEVs)
+
         for { set i $startcol } { $i <= $stopcol } { incr i } {
             set data ""
             for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} { 
                 set data [concat $data $fMRIModelView(Data,Run$r,EV$i,EVData)]
             }
-            set fMRIEngine($i,combinedEVs) $data
+            set fMRIEngine($i,concatenatedEVs) $data
         }
 
         #--- Now make a set of data arrays for the means and basis functions.
@@ -1511,7 +1487,7 @@ proc fMRIEngineAddRegressors {run} {
             for { set t 0 } { $t < $vols } { incr t } {
                 lappend data 0.0
             }
-            set fMRIEngine($i,combinedEVs) $data                         
+            set fMRIEngine($i,concatenatedEVs) $data                         
         }
 
         #--- insert baseline and basis functions for each run into data arrays
@@ -1523,7 +1499,16 @@ proc fMRIEngineAddRegressors {run} {
             set ev [ expr $::fMRIEngine($r,noOfEVs) + 1 ]
             set newvals $::fMRIModelView(Data,Run$r,EV$ev,EVData)
             set end [ expr $offset + $runlen ]
-            lreplace $::fMRIEngine($col,combinedEVs) $offset $end $newvals
+            set j 0
+            set i $offset
+            while { $i < $end } {
+                set newval [ lindex $::fMRIModelView(Data,Run$r,EV$ev,EVData) $j ]
+                set ::fMRIEngine($col,concatenatedEVs) [lreplace \
+                                                            $::fMRIEngine($col,concatenatedEVs) \
+                                                            $i $i $newval]
+                incr i
+                incr j
+            }
             incr col
             incr ev
             #--- insert each basisfunction and move to next data array:
@@ -1531,22 +1516,32 @@ proc fMRIEngineAddRegressors {run} {
             for { set count 0 } { $count < $num } { incr count } {
                 set newvals $::fMRIModelView(Data,Run$r,EV$ev,EVData)
                 set end [ expr $offset + $runlen ]
-                lreplace $::fMRIEngine($col,combinedEVs) $offset $end $newvals
+                set j 0
+                set i $offset
+                while { $i < $end } {
+                    set newval [ lindex $::fMRIModelView(Data,Run$r,EV$ev,EVData) $j ]
+                    set ::fMRIEngine($col,concatenatedEVs) [lreplace \
+                                                                $::fMRIEngine($col,concatenatedEVs) \
+                                                                $i $i $newval]
+                    incr i
+                    incr j
+                }
                 incr col
                 incr ev
             }
             #--- compute the offset in the data array
             set offset [ expr $offset + $runlen ]
         }
-        
+
         #--- Now add all that data into the design matrix.
         #--- order of columns will be:
         #--- cond1-condN, baseline1, basis1-basisM, baseline2, basis 2-basisM, etc.
         #--- Will have to re-interpret contrast vector to match this.
-        for {set j 0} {$j < $vols} {incr j} { 
-            for { set i 0 } { $i < $numcols } { incr i } { 
+
+        for { set i 0 } { $i < $numcols } { incr i } {
+            for {set j 0} {$j < $vols} {incr j} {
                 set index [expr $i+1]
-                set data $fMRIEngine($index,combinedEVs)
+                set data $fMRIEngine($index,concatenatedEVs)
                 set e [lindex $data $j]
                 fMRIEngine(designMatrix) InsertComponent $j $i $e 
             }
@@ -1738,7 +1733,7 @@ proc fMRIEngineCountEVs {} {
     }
     #--- Re-order the name lists of all runs to match the order of EVs
     #--- in the first run. This organizes the design matrix so that
-    #--- appropriate EVs from each run are combined in analysis.
+    #--- appropriate EVs from each run are concatenated in analysis.
     for {set r 2} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} { 
         unset -nocomplain names
         foreach name $fMRIEngine(1,namesOfEVs) {
@@ -1751,7 +1746,7 @@ proc fMRIEngineCountEVs {} {
             }
         }
         if { ! [ info exists names] } {
-            DevErrorWindow "Runs can't be combined; EV names across runs may differ."
+            DevErrorWindow "Runs can't be concatenated; EV names across runs may differ."
             return 0
         } else {
             set fMRIEngine($r,namesOfEVs) [concat $names $fMRIEngine($r,namesOfEVs)]
@@ -1882,16 +1877,16 @@ proc fMRIEngineFitModel {} {
 
     set start $fMRIEngine(curRunForModelFitting)
     set last $start
-    if {$start == "combined"} {
+    if {$start == "concatenated"} {
         set start 1
         set last $fMRIEngine(noOfSpecifiedRuns)
         #--- check to see if all condition EVs have same
         #--- number of derivatives across runs:
         #--- if run1: ev1 has 2 derivatives, run2: ev2 should have 2
-        #--- so runs combine properly. If not, error and return.
+        #--- so runs concatenate properly. If not, error and return.
         set chk [ fMRIEngineCombineRunDerivativeCheck ]
         if { $chk == 0 } {
-            DevErrorWindow "To combine them, corresponding conditions should be modeled with same number of derivatives across runs."
+            DevErrorWindow "To concatenate them, corresponding conditions should be modeled with same number of derivatives across runs."
             return
         }
     }
@@ -1917,7 +1912,7 @@ proc fMRIEngineFitModel {} {
     set obs2 [fMRIEngine(actEstimator) AddObserver ProgressEvent \
               "MainShowProgress fMRIEngine(actEstimator)"]
     set obs3 [fMRIEngine(actEstimator) AddObserver EndEvent MainEndProgress]
-    if {$fMRIEngine(curRunForModelFitting) == "combined"} {
+    if {$fMRIEngine(curRunForModelFitting) == "concatenated"} {
         set Gui(progressText) "Estimating all runs..."
     } else {
         set Gui(progressText) "Estimating run$fMRIEngine(curRunForModelFitting); may take awhile..."
