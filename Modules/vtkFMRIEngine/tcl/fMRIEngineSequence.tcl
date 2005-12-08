@@ -417,6 +417,7 @@ proc fMRIEngineAddSeq-RunMatch {} {
     if {$found == -1} {
         $fMRIEngine(evsListBox) insert 0 "r$fMRIEngine(currentSelectedRun):baseline" 
     }
+    set ::fMRIEngine(SignalModelDirty) 1
 }
 
 
