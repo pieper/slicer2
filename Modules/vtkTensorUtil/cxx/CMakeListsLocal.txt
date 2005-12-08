@@ -35,6 +35,7 @@ vtkVectorToOuterProductDualBasis.cxx
 vtkHyperStreamlineDTMRI.cxx
 vtkSuperquadricTensorGlyph.cxx
 vtkSuperquadricSource2.cxx
+vtkTensorFlip.cxx
 #vtkHyperPointandArray.cxx
 )
 
