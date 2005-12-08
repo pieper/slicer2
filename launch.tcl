@@ -67,7 +67,7 @@ if {$::env(SLICER_CUSTOM_CONFIG) != "true"} {
 }
 # The environment variables that we need to have set for slicer 
 # to start up properly
-set envVars {VTK_DIR VTK_SRC_DIR KWWIDGETS_DIR ITK_BINARY_PATH TCL_BIN_DIR TCL_LIB_DIR SOV_BINARY_DIR TEEM_BIN_DIR}
+set envVars {VTK_DIR VTK_SRC_DIR KWWIDGETS_DIR ITK_BINARY_PATH SANDBOX_BIN_DIR TCL_BIN_DIR TCL_LIB_DIR SOV_BINARY_DIR TEEM_BIN_DIR}
 # Make up a list of the environment variables that haven't been set already,
 # that we need to set
 set envVarsToSet {}
@@ -150,6 +150,7 @@ if {$::env(BUILD) == $solaris ||
         set ::env(LD_LIBRARY_PATH) $::env(VTK_DIR)/bin:$::env(LD_LIBRARY_PATH)
         set ::env(LD_LIBRARY_PATH) $::env(KWWIDGETS_DIR)/bin:$::env(LD_LIBRARY_PATH)
         set ::env(LD_LIBRARY_PATH) $::env(ITK_BINARY_PATH)/bin:$::env(LD_LIBRARY_PATH)
+        set ::env(LD_LIBRARY_PATH) $::env(SANDBOX_BIN_DIR):$::env(LD_LIBRARY_PATH)
         set ::env(LD_LIBRARY_PATH) $::env(SOV_BINARY_DIR)/bin:$::env(LD_LIBRARY_PATH)
         set ::env(LD_LIBRARY_PATH) $::env(SLICER_HOME)/Base/builds/$::env(BUILD)/bin:$::env(LD_LIBRARY_PATH)
         set ::env(LD_LIBRARY_PATH) $::env(TCL_LIB_DIR):$::env(LD_LIBRARY_PATH)
@@ -160,6 +161,7 @@ if {$::env(BUILD) == $solaris ||
         set ::env(DYLD_LIBRARY_PATH) $::env(VTK_DIR)/bin:$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(KWWIDGETS_DIR)/bin:$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(ITK_BINARY_PATH)/bin:$::env(DYLD_LIBRARY_PATH)
+        set ::env(DYLD_LIBRARY_PATH) $::env(SANDBOX_BIN_PATH):$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(SOV_BINARY_DIR)/bin:$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(SLICER_HOME)/Base/builds/$::env(BUILD)/bin:$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(TCL_LIB_DIR):$::env(DYLD_LIBRARY_PATH)
@@ -170,6 +172,7 @@ if {$::env(BUILD) == $solaris ||
         set ::env(Path) $::env(VTK_DIR)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
         set ::env(Path) $::env(KWWIDGETS_DIR)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
         set ::env(Path) $::env(ITK_BINARY_PATH)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
+        set ::env(Path) $::env(SANDBOX_BIN_DIR)/$::env(VTK_BUILD_TYPE)\;$::env(Path)
         set ::env(Path) $::env(SOV_BINARY_DIR)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
         set ::env(Path) $::env(SLICER_HOME)/Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
         set ::env(Path) $::env(TCL_BIN_DIR)\;$::env(Path)
@@ -177,7 +180,6 @@ if {$::env(BUILD) == $solaris ||
     } else {
         puts stderr "Libraries: unknown build $::env(BUILD)"
     }
-
 
 # set the base tcl/tk library paths, using the previously defined TCL_LIB_DIR
 # TODO: try out the following so that we're not tied to a TCL version number:
