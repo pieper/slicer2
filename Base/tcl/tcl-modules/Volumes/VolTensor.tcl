@@ -62,8 +62,8 @@ proc VolTensorInit {} {
     set Volume(tensors,pfSwap) 0
     set Volume(tensors,DTIdata) 0  
     set Volume(VolTensor,FileType) Tensor9
-    set Volume(VolTensor,FileTypeList) {Tensor9 Scalar6 ODF}
-    set Volume(VolTensor,FileTypeList,tooltips) {"File contains TENSORS field with 9 components" "File contains SCALARS field with 6 components"}
+    set Volume(VolTensor,FileTypeList) {Tensor9 Scalar6 ODF tend}
+    set Volume(VolTensor,FileTypeList,tooltips) {"File contains TENSORS field with 9 components" "File contains SCALARS field with 6 components" "ODF" ".vtk files created with 'tend estim'" }
     set Volume(VolTensor,YAxis) vtk
     set Volume(VolTensor,YAxisList) {vtk non-vtk}
     set Volume(VolTensor,YAxisList,tooltips) {"VTK coordinate system used to create tensors (-y axis) " "Non-VTK coordinate system (+y axis)"}
@@ -354,8 +354,11 @@ proc VolTensorCreateTensors {v} {
         "Tensor9" {
             VolTensorMake9ComponentTensorVolIntoTensors $v
         }
-    "ODF" {
-        VolTensorMakeNComponentScalarVolIntoODF $v
+        "ODF" {
+            VolTensorMakeNComponentScalarVolIntoODF $v
+        }
+        "tend" {
+            VolTensorMakeTendVTKIntoTensors $v
         }
     }
 
@@ -542,3 +545,58 @@ proc VolTensorMakeNComponentScalarVolIntoODF {v} {
     # id list and do MRML thing
 
 }
+
+proc VolTensorMakeTendVTKIntoTensors {v} {
+    global Volume Tensor
+
+    # all we need to do here is put it on the tensor
+    # id list and do MRML things
+    # after flipping Y and negating the x cross terms in tensors
+
+    # put output into a tensor volume
+    # Create the node (vtkMrmlVolumeNode class)
+    set newvol [MainMrmlAddNode Volume Tensor]
+    $newvol Copy Volume($v,node)
+    $newvol SetDescription "tensor volume"
+    $newvol SetName "[Volume($v,node) GetName] - Tensor"
+    set n [$newvol GetID]
+    TensorCreateNew $n 
+
+    if { [info command vtkTensorFlip] == "" } {
+        DevErrorWindow "Tensor flipping not available in this version of slicer"
+
+        # put the image data into the object for slicer use
+        Tensor($n,data) SetImageData [Volume($v,vol) GetOutput]
+    } else {
+        catch "TendVTK_flip Delete"
+        vtkTensorFlip TendVTK_flip 
+        TendVTK_flip SetInput [Volume($v,vol) GetOutput]
+
+        # put the image data into the object for slicer use
+        puts "flipping tensor components"
+        [TendVTK_flip GetOutput] Update
+        Tensor($n,data) SetImageData [TendVTK_flip GetOutput]
+        TendVTK_flip Delete
+    }
+    
+    # test by printing to terminal
+    puts [[Tensor($n,data) GetOutput] Print]
+
+    # This updates all the buttons to say that the
+    # Tensor ID List has changed.
+    MainUpdateMRML
+    # If failed, then it's no longer in the idList
+    if {[lsearch $Tensor(idList) $n] == -1} {
+        puts "node doesn't exist, should unfreeze and fix volumes.tcl too"
+    } else {
+        # Activate the new data object
+        DTMRISetActive $n
+    }
+
+    # DAN if the volume read in does not have scalars, only
+    # tensors, it should be removed from the slicer
+    # (Volume(id,vol) and Volume(id,node) should go away
+    # however they are deleted like in Data.tcl )
+
+}
+
