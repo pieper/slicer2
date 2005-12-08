@@ -231,6 +231,8 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
     // Sets up properties for output vtkImageData
     int noOfRegressors = ((vtkGLMDetector *)this->Detector)->GetDesignMatrix()->GetNumberOfComponents();
     int imgDim[3];  
+    int vox;
+        
     this->GetInput(0)->GetDimensions(imgDim);
     output->SetScalarType(VTK_FLOAT);
     output->SetOrigin(this->GetInput(0)->GetOrigin());
@@ -238,7 +240,8 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
     // The scalar components hold the following:
     // for each regressor: beta value
     // plus chisq (the sum of squares of the residuals from the best-fit)
-    output->SetNumberOfScalarComponents(noOfRegressors+1);
+    // plus the correlation coefficient at lag 1 generated from error modeling.
+    output->SetNumberOfScalarComponents(noOfRegressors+2);
     output->SetDimensions(imgDim[0], imgDim[1], imgDim[2]);
     output->AllocateScalars();
    
@@ -247,7 +250,7 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
     tc->SetNumberOfTuples(this->NumberOfInputs);
     tc->SetNumberOfComponents(1);
 
-    target = (unsigned long)(imgDim[0]*imgDim[1]*imgDim[2] / 50.0);
+    target = (unsigned long)(imgDim[0]*imgDim[1]*imgDim[2] / 100.0);
     target++;
 
     // Use memory allocation for MS Windows VC++ compiler.
@@ -259,7 +262,7 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
         return;
     }
 
-    int indx = 0;
+    vox=0;
     vtkDataArray *scalarsInOutput = output->GetPointData()->GetScalars();
     // Voxel iteration through the entire image volume
     for (int kk = 0; kk < imgDim[2]; kk++)
@@ -278,30 +281,45 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
                     total += *value;
                 }   
 
-                float chisq;
+                float chisq, p;
                 if ((total/this->NumberOfInputs) > this->LowerThreshold)
                 {
-                    ((vtkGLMDetector *)this->Detector)->Detect(tc, beta, &chisq);
+                    // first pass parameter estimates without modeling autocorrelation structure.
+                    ((vtkGLMDetector *)this->Detector)->DisableAR1Modeling ( );
+                    ((vtkGLMDetector *)this->Detector)->FitModel( tc, beta, &chisq );
+                    // for testing
+                    p = 0.0;
+                    if ( 1 ) {
+                        ((vtkGLMDetector *)this->Detector)->ComputeResiduals ( tc, beta );
+                        // second pass parameter estimates, with whitened temporal autocorrelation.
+                        p = ((vtkGLMDetector *)this->Detector)->ComputeCorrelationCoefficient ( );
+                        ((vtkGLMDetector *)this->Detector)->PreWhitenDataAndResiduals ( tc, p );
+                        ((vtkGLMDetector *)this->Detector)->EnableAR1Modeling ( );
+                        ((vtkGLMDetector *)this->Detector)->FitModel( tc, beta, &chisq );
+                    }
+                     // now have all we need to compute inferences
                 }
                 else
                 {
                     for (int dd = 0; dd < noOfRegressors; dd++)
                     {
                         beta[dd] = 0.0;
+                        chisq = p = 0.0;
                     }
                 }
        
                 int yy = 0;
                 for (int dd = 0; dd < noOfRegressors; dd++)
                 {
-                    scalarsInOutput->SetComponent(indx, yy++, beta[dd]);
+                    scalarsInOutput->SetComponent(vox, yy++, beta[dd]);
                 }
-                scalarsInOutput->SetComponent(indx, yy++, chisq);
-                indx++;
+                scalarsInOutput->SetComponent(vox, yy++, chisq);
+                scalarsInOutput->SetComponent(vox, yy, p);
+                vox++;
 
                 if (!(count%target))
                 {
-                    UpdateProgress(count / (50.0*target));
+                    UpdateProgress(count / (100.0*target));
                 }
                 count++;
             }

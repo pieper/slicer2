@@ -51,11 +51,13 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 class VTK_FMRIENGINE_EXPORT GeneralLinearModel
 {
-public:
+    public:
     // Description:
     // Sets the design matrix 
     // It returns 0 if successful; 1 otherwise.
     static int SetDesignMatrix(vtkFloatArray *designMatrix);
+    static int SetAR1DesignMatrix(vtkFloatArray *AR1designMatrix);
+    static int SetWhitening (int status);
 
     // Description:
     // Fits the linear model, with the following inputs:
@@ -71,14 +73,17 @@ public:
     // Frees the allocated momery 
     static void Free();
 
-private:
-    // returns chisq for each voxel
-    // chisq: sum of squares of residuals from the best fit
-    static float ComputeResiduals(float *timeCourse, float *beta, int numSamples, int numRegressors);
 
+private:
+    // returns chisq (sum of squares of residuals from best fit of data to linear model) for each voxel
+    static float ComputeResiduals (float *timeCourse, float *beta, int numSamples, int numRegressors);
     static int *Dimensions;
+    static int *whitening;
     static float **DesignMatrix;
+    static float **AR1DesignMatrix;
+
 };
+
 
 #endif
 

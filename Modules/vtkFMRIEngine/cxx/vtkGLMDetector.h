@@ -49,10 +49,13 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <vtkFMRIEngineConfigure.h>
 #include "vtkActivationDetector.h"
 #include "vtkFloatArray.h"
+#include <iostream>
+#include <fstream>
+using namespace std;
 
 class VTK_FMRIENGINE_EXPORT vtkGLMDetector : public vtkActivationDetector 
 {
-public:
+    public:
     static vtkGLMDetector *New();
     vtkTypeMacro(vtkGLMDetector, vtkActivationDetector);
 
@@ -66,14 +69,47 @@ public:
     // Description:
     // Sets the design matrix 
     void SetDesignMatrix(vtkFloatArray *designMat);
-
+    void SetAR1DesignMatrix ( );
+    vtkFloatArray *GetAR1DesignMatrix ( );
+    vtkFloatArray *GetResiduals ( );
+    
     // Description:
     // Fits linear model (voxel by voxel) 
-    void Detect(vtkFloatArray *timeCourse, float *beta, float *chisq); 
+    void FitModel(vtkFloatArray *timeCourse, float *beta, float *chisq ); 
 
-private:
+    // This uses the first estimated beta to subtract
+    // the model from the data to compute errors like so:
+    // Y = XB + e --> e = Y-XB_hat
+    void ComputeResiduals ( vtkFloatArray *timeCourse, float *beta );
+    // Description::
+    // This uses the residuals to compute the correlation coefficient
+    // at lag 1 used in pre-whitening for data and residuals.
+    float ComputeCorrelationCoefficient ( );
+    // Description:
+    // This whitens the DesignMatrix and timeCourse.
+    // Saves the whitened design matrix in AR1DesignMatrix,
+    // and replaces the extracted timecourse by new values.
+    void PreWhitenDataAndResiduals (vtkFloatArray *timeCourse, float corrCoeff);
+    // Description:
+    // Sets the AR1DesignMatrix
+    // and turns on the whitening flag.
+    void EnableAR1Modeling ( );
+    // Description:
+    // This sets the AR1DesignMatrix to NULL,
+    // sets the WhiteningMatrix to NULL,
+    // and turns off the whitening flag.
+    void DisableAR1Modeling ( );
+
+
+    private:
+
+    ofstream logfile;
     int NoOfRegressors;
     vtkFloatArray *DesignMatrix;
+    // pre-whitened design matrix
+    vtkFloatArray *AR1DesignMatrix;
+    vtkFloatArray *residuals;
+    
 };
 
 

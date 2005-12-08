@@ -47,7 +47,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 class  VTK_FMRIENGINE_EXPORT vtkGLMVolumeGenerator : public vtkActivationVolumeGenerator
 {
-public:
+    public:
     static vtkGLMVolumeGenerator *New();
     vtkTypeMacro(vtkGLMVolumeGenerator, vtkActivationVolumeGenerator);
 
@@ -59,28 +59,31 @@ public:
     // Sets the design matrix 
     void SetDesignMatrix(vtkFloatArray *designMat);
 
-protected:
+    protected:
     vtkGLMVolumeGenerator();
     ~vtkGLMVolumeGenerator();
 
-    void ComputeStandardError(float rss);
+    void ComputeStandardError(float rss, float corrCoeff);
     void SimpleExecute(vtkImageData *input,vtkImageData *output);
 
     vtkIntArray *ContrastVector;
     vtkFloatArray *DesignMatrix;
-
+    
     float StandardError;
     int SizeOfContrastVector;
     float *beta;
 
     // X and C will be objects of vnl_matrix<float>
-    // Since vnl_matrix is a class template, which can only be 
+    // Since vnl_matrix is a class template, which can only be
     // declared in cxx file, we make X and C a void pointer here.
     // design matrix
-    void *X; 
+    void *X;
+    // pre-whitened design matrix;
+    void *WX;
     // contrast vector
-    void *C; 
-
+    void *C;
+    
 };
+
 
 #endif

@@ -36,20 +36,27 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 =========================================================================auto=*/
 
-#include "GeneralLinearModel.h"
 
+#include "GeneralLinearModel.h"
 #include "vnl/vnl_matrix.h" 
 #include "vnl/algo/vnl_matrix_inverse.h" 
 #include "vnl/vnl_vector.h" 
 
-
 int *GeneralLinearModel::Dimensions = NULL;
 float **GeneralLinearModel::DesignMatrix = NULL;
+float **GeneralLinearModel::AR1DesignMatrix = NULL;
+int *GeneralLinearModel::whitening = NULL;
 
 int GeneralLinearModel::FitModel(float *timeCourse, float *beta, float *chisq)
 {
     int i, j;
-
+    double ssr;
+    
+    if ( AR1DesignMatrix == NULL && *whitening == 1 ) {
+        cout << "AR(1) Design matrix has not been set.\n";
+        return 1;
+    }
+    
     if (DesignMatrix == NULL || Dimensions == NULL) 
     {
         cout << "Design matrix has not been set.\n";
@@ -65,11 +72,17 @@ int GeneralLinearModel::FitModel(float *timeCourse, float *beta, float *chisq)
     // X holds design matrix
     vnl_matrix<float> X;
     X.set_size(Dimensions[0], Dimensions[1]);
-    for (i = 0; i < Dimensions[0]; i++)
-    {
-        for(j = 0; j < Dimensions[1]; j++)
-        {
-            X.put(i, j, DesignMatrix[i][j]);
+    if ( *whitening  ) {
+        for (i = 0; i < Dimensions[0]; i++) {
+            for(j = 0; j < Dimensions[1]; j++) {
+                X.put(i, j, AR1DesignMatrix[i][j]);
+            }
+        }
+    } else {
+        for (i = 0; i < Dimensions[0]; i++) {
+            for(j = 0; j < Dimensions[1]; j++) {
+                X.put(i, j, DesignMatrix[i][j]);
+            }
         }
     }
 
@@ -84,7 +97,6 @@ int GeneralLinearModel::FitModel(float *timeCourse, float *beta, float *chisq)
     for(j = 0; j < Dimensions[1]; j++)
     {
         beta[j] = c.get(j);
-
     }
 
     // compute chisq
@@ -92,6 +104,7 @@ int GeneralLinearModel::FitModel(float *timeCourse, float *beta, float *chisq)
 
     return 0;
 }
+
 
 
 float GeneralLinearModel::ComputeResiduals(float *beta, float *timeCourse, int numSamples, int numRegressors)
@@ -108,27 +121,33 @@ float GeneralLinearModel::ComputeResiduals(float *beta, float *timeCourse, int n
 
     int i, j;
     double zz;
-    float e, X, Y, chisq = 0.0;
+    float e, chisq = 0.0;
 
     // compute residuals: e = Y-X*beta.
     for ( i = 0; i < numSamples; i++ ) 
     {
         // first compute X*beta:
-        for (zz = 0.0, j = 0; j < numRegressors; j++) 
-        {
-            X = DesignMatrix[i][j];
-            zz = zz + (double)(X * beta[j]);
+        
+        if ( *whitening ) {
+            for (zz = 0.0, j = 0; j < numRegressors; j++) {
+                zz = zz + (double)(AR1DesignMatrix[i][j] * beta[j]);
+            }
+        } else {
+        for (zz = 0.0, j = 0; j < numRegressors; j++) {
+                zz = zz + (double)(DesignMatrix[i][j] * beta[j]);
+            }
         }
-        // now compute Y-X*beta:
-        Y = timeCourse[i];
-        e = Y - (float)zz;
+        // now compute e= Y-X*beta:
+        e = timeCourse[i] - (float)zz;
 
         // and compute chisq 
         chisq += (e * e);
     }
 
     return chisq;
-} 
+}
+
+
 
 
 int GeneralLinearModel::SetDesignMatrix(vtkFloatArray *designMat)
@@ -173,22 +192,87 @@ int GeneralLinearModel::SetDesignMatrix(vtkFloatArray *designMat)
 }
 
 
+int GeneralLinearModel::SetAR1DesignMatrix(vtkFloatArray *designMat)
+{
+    // number of regressor columns
+    int noOfRegressors = designMat->GetNumberOfComponents();
+    // number of volumes: this is not getting set properly.
+    int noOfSamples = designMat->GetNumberOfTuples ( );
+    
+    // allocate once per model-fitting, but reuse for each voxel.
+    if (AR1DesignMatrix == NULL)
+    {
+        AR1DesignMatrix = new float *[noOfSamples];
+
+        if (AR1DesignMatrix == NULL) 
+        {
+            cout << "Memory allocation failed for AR1DesignMatrix in class GeneralLinearModel.\n";
+            return 1;
+        }
+        for (int i = 0; i < noOfSamples; i++)
+            {
+                AR1DesignMatrix[i] = new float [noOfRegressors];
+            }
+    }
+
+    for (int i = 0; i < noOfSamples; i++)
+        {
+            for (int j = 0; j < noOfRegressors; j++)
+            {
+                AR1DesignMatrix[i][j] = designMat->GetComponent(i,j);
+            }
+        } 
+    return 0;
+}
+
+
+
+
+int GeneralLinearModel::SetWhitening (int status)
+{
+    if (whitening == NULL)
+        whitening = new int;
+    
+    if ( status != 1 && status != 0 ) {
+        cout << "Improper value for pre-whitening flag.\n";
+        return 1;
+    } else {
+        *whitening = status;
+    }
+    return 0;
+}
+
+
+
 void GeneralLinearModel::Free()
 {
+
     if (DesignMatrix != NULL)
-    {
-        for (int i = 0; i < Dimensions[0]; i++)
         {
-            delete [] DesignMatrix[i];
-        } 
-        delete [] DesignMatrix;
-        DesignMatrix = NULL;
+            for (int i = 0; i < Dimensions[0]; i++)
+                {
+                    delete [] DesignMatrix[i];
+                } 
+            delete [] DesignMatrix;
+            DesignMatrix = NULL;
         
-    }
+        }
+
+    if (AR1DesignMatrix != NULL)
+        {
+            for (int i = 0; i < Dimensions[0]; i++)
+                {
+                    delete [] AR1DesignMatrix[i];
+                } 
+            delete [] AR1DesignMatrix;
+            AR1DesignMatrix = NULL;
+        }
+    
     if (Dimensions != NULL)
-    {
-        delete [] Dimensions;
-        Dimensions = NULL;
-    }
+        {
+            delete [] Dimensions;
+            Dimensions = NULL;
+        }
 }
+
 
