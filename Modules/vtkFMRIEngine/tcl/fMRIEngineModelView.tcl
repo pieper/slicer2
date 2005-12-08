@@ -193,7 +193,7 @@ proc fMRIModelViewLaunchModelView { {toplevelName .wfMRIModelView} } {
 
     #--- put up little message
     $::fMRIModelView(modelViewCanvas) create text  200 20 \
-        -text "....generating model; may take awhile...." -anchor center \
+        -text "....generating model and images; may take awhile...." -anchor center \
         -font $::fMRIModelView(UI,Medfont) \
         -tag $::fMRIModelView(Layout,WaitTag)
     update 
@@ -310,7 +310,6 @@ global Gui
                 }
             }
             #fMRIModelViewEraseMessageText $MsgID
-            set ::fMRIEngine(SignalModelDirty) 0
         }
     }
     return 1
