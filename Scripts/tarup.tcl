@@ -223,6 +223,10 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
     file mkdir $destdir/Lib/$::env(BUILD)/teem-build
     file copy -force $::env(TEEM_BIN_DIR) $destdir/Lib/$::env(BUILD)/teem-build
 
+    puts " -- copying sandbox files"
+    file mkdir $destdir/Lib/$::env(BUILD)/NAMICSandBox-build
+    file copy -force $::env(SANDBOX_BIN_DIR) $destdir/Lib/$::env(BUILD)/NAMICSandBox-build
+
     #
     # grab the vtk libraries and binaries
     # - bring in the tcl wrapping files and a specially modified
