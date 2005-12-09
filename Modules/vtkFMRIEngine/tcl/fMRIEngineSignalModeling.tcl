@@ -332,11 +332,20 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
         -relief flat -indicatoron 1 -text "remove global effects" -anchor w } $Gui(WEA) 
     DevAddButton $f.bEffectsHelp "?" "fMRIEngineHelpSetupGlobalFX" 2 
     $f.cEffects deselect 
-    $f.cEffects configure -state disabled 
+    $f.cEffects configure -state disabled
+
+    eval {checkbutton $f.cPrewhiten \
+        -variable fMRIEngine(checkbuttonPreWhiten) \
+        -relief flat -indicatoron 1 -text "pre-whiten data" -anchor w } $Gui(WEA) 
+    DevAddButton $f.bPrewhitenHelp "?" "fMRIEngineHelpPreWhitenData" 2 
+    $f.cPrewhiten deselect 
+    
     blt::table $f \
         0,0 $f.lIntensity -padx 2 -pady 1 -anchor e \
         0,1 $f.cEffects -fill x -padx 1 -pady 1 -anchor e \
-        0,2 $f.bEffectsHelp -padx 1 -pady 1 -anchor e
+        0,2 $f.bEffectsHelp -padx 1 -pady 1 -anchor e \
+        1,1 $f.cPrewhiten -fill x -padx 1 -pady 1 -anchor e \
+        1,2 $f.bPrewhitenHelp -padx 1 -pady 1 -anchor e
 
 
     #-----------------------
@@ -1905,6 +1914,7 @@ proc fMRIEngineFitModel {} {
         unset -nocomplain fMRIEngine(actEstimator)
     }
     vtk$fMRIEngine(detectionMethod)Estimator fMRIEngine(actEstimator)
+    fMRIEngine(actEstimator) SetPreWhitening $::fMRIEngine(checkbuttonPreWhiten)
     fMRIEngineAddInputVolumes $fMRIEngine(curRunForModelFitting)
  
     # adds progress bar
