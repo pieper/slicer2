@@ -156,7 +156,6 @@ proc MainInteractorBind {widget} {
     bind $widget <Right>             {MainInteractorKeyPress Right %W %x %y}
     bind $widget <Shift-Right>       {MainInteractorKeyPress Right %W %x %y; MainInteractorShiftMotion %W %x %y}
     bind $widget <Delete>            {MainInteractorKeyPress Delete %W %x %y}
-    bind $widget <KeyPress-0>        {MainInteractorKeyPress 0 %W %x %y}
     bind $widget <KeyPress-d>        {MainInteractorKeyPress d %W %x %y}
     bind $widget <KeyPress-c>        {MainInteractorKeyPress c %W %x %y}
     bind $widget <KeyPress-equal>    {MainInteractorKeyPress = %W %x %y}
@@ -985,45 +984,52 @@ proc MainInteractorB3Motion {widget x y} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorPan {s x y xLast yLast} {
-     #global View
-     global View Slicer Interactor
-     if { [Slicer GetDisplayMethod] == 1 || [Slicer GetDisplayMethod] == 3} {
-       set dx [expr $xLast - $x]
-       set dy [expr $yLast - $y]
-       Slicer GetZoomCenter
-       scan [Slicer GetZoomCenter$s] "%g %g" cx cy
-       
-       set z [Slicer GetZoom $s]
-       if {$View(mode) == "Quad512"} {
-           set z [expr $z * 2.0]
-       }
-       
-       if {[Slicer GetZoomAutoCenter $s] == 1} {
-           Slicer SetZoomAutoCenter $s 0
-           Slicer Update
-       }
-       set cx [expr $cx + $dx / $z]
-       set cy [expr $cy + $dy / $z]
-       Slicer SetZoomCenter $s $cx $cy
-   }
-   if { [Slicer GetDisplayMethod] == 2} {
-       # New version by Attila Tanacs 11/07/01
-       set dx [expr $xLast - $x]
-       set dy [expr $yLast - $y]
-       set os [[$Interactor(activeSlicer) GetBackReformat $s] GetOriginShift]
-       scan $os "%g %g" cx cy
-       
-       set z [[$Interactor(activeSlicer) GetBackReformat $s] GetZoom]
-       set ps [[$Interactor(activeSlicer) GetBackReformat $s] GetPanScale]
-       
-       set cx [expr $cx + $dx * $ps]
-       set cy [expr $cy + $dy * $ps]
-       
-       $Interactor(activeSlicer) SetOriginShift $s $cx $cy
-       $Interactor(activeSlicer) Update
-       RenderAll
-   }
-}       
+     global View
+
+     set dx [expr $xLast - $x]
+     set dy [expr $yLast - $y]
+     Slicer GetZoomCenter
+     scan [Slicer GetZoomCenter$s] "%g %g" cx cy
+
+     set z [Slicer GetZoom $s]
+     if {$View(mode) == "Quad512"} {
+         set z [expr $z * 2.0]
+     }
+
+     if {[Slicer GetZoomAutoCenter $s] == 1} {
+         Slicer SetZoomAutoCenter $s 0
+         Slicer Update
+     }
+     set cx [expr $cx + $dx / $z]
+     set cy [expr $cy + $dy / $z]    
+     Slicer SetZoomCenter $s $cx $cy
+ }
+
+# New version by Attila Tanacs 11/07/01
+# proc MainInteractorPan {s x y xLast yLast} {
+#     global View Interactor
+
+#     set dx [expr $xLast - $x]
+#     set dy [expr $yLast - $y]
+#     set os [[$Interactor(activeSlicer) GetBackReformat $s] GetOriginShift]
+#     scan $os "%g %g" cx cy
+    
+#     set z [[$Interactor(activeSlicer) GetBackReformat $s] GetZoom]
+#     set ps [[$Interactor(activeSlicer) GetBackReformat $s] GetPanScale]
+
+# #    if {[Slicer GetZoomAutoCenter $s] == 1} {
+# #        Slicer SetZoomAutoCenter $s 0
+# #        Slicer Update
+# #    }
+
+#     set cx [expr $cx + $dx * $ps]
+#     set cy [expr $cy + $dy * $ps]
+
+#     $Interactor(activeSlicer) SetOriginShift $s $cx $cy
+#     $Interactor(activeSlicer) Update
+#     RenderAll
+# }
+
 #-------------------------------------------------------------------------------
 # .PROC MainInteractorZoom
 # Bouix 4/23/03 Changed back to old zoom to account for the drawing problem
@@ -1036,46 +1042,23 @@ proc MainInteractorPan {s x y xLast yLast} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorZoom {s x y xLast yLast} {
-    global View Interactor
 
-    if { [Slicer GetDisplayMethod] == 1 || [Slicer GetDisplayMethod] == 3} {
-    set dy [expr $yLast - $y]
-    
-    # log base b of x = log(x) / log(b)
-    set b      1.02
-    set zPrev  [Slicer GetZoom $s]
-    set dyPrev [expr log($zPrev) / log($b)]
-    
-    set zoom [expr pow($b, ($dy + $dyPrev))]
-    if {$zoom < 0.01} {
-        set zoom 0.01
-    }
-    set z [format "%.2f" $zoom]
-    
-    Anno($s,msg,mapper)  SetInput "ZOOM: x $z"
-    
-    MainSlicesSetZoom $s $z
-    }
-     if { [Slicer GetDisplayMethod] == 2} {
-       set dy [expr $yLast - $y]
-       # log base b of x = log(x) / log(b)
-       set b      1.02
-       set zPrev [[$Interactor(activeSlicer) GetBackReformat $s] GetZoom]
-       set dyPrev [expr log($zPrev) / log($b)]
-       set zoom [expr pow($b, ($dy + $dyPrev))]
-       # set zoom [expr pow($b, ($dy))]
-       if {$zoom < 0.01} {
-       set zoom 0.01
-       }
-       set z [format "%.2f" $zoom]
-       
-       Anno($s,msg,mapper)  SetInput "ZOOM: x $z"
-       
-       # Use this instead of directly accessing the slicer
-       # object.  MainSlices.tcl uses Attila's "newzoom" method
-       # now too.
-       MainSlicesSetZoom $s $z
-   }
+     set dy [expr $yLast - $y]
+
+     # log base b of x = log(x) / log(b)
+     set b      1.02
+     set zPrev  [Slicer GetZoom $s]
+     set dyPrev [expr log($zPrev) / log($b)]
+
+     set zoom [expr pow($b, ($dy + $dyPrev))]
+     if {$zoom < 0.01} {
+         set zoom 0.01
+     }
+     set z [format "%.2f" $zoom]
+
+     Anno($s,msg,mapper)  SetInput "ZOOM: x $z"
+
+     MainSlicesSetZoom $s $z
 }
 
 # New version by Attila Tanacs 11/07/01
