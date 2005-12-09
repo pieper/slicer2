@@ -118,7 +118,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.59 $} {$Date: 2005/11/29 22:38:26 $}]
+        {$Revision: 1.60 $} {$Date: 2005/12/09 23:01:59 $}]
     
     # Initialize module-level variables
     set Fiducials(renList) "viewRen matRen"
@@ -226,10 +226,8 @@ proc FiducialsDescriptionActiveUpdated {} {
         Point($Fiducials(activePointID),node) SetName $Fiducials(activeName)
         Point($Fiducials(activePointID),node) SetDescription $Fiducials(activeDescription)
         if {$::Module(verbose)} {
-            puts "FiducialsDescriptionActiveUpdated: about to set Fiducials($Fiducials(activeListID),selectedPointIdList) to empty list... is it red now?"
-#            after 1000
+            puts "\n\nFiducialsDescriptionActiveUpdated: about to set Fiducials($Fiducials(activeListID),selectedPointIdList) to empty list...\n"
         }
-
         set Fiducials($Fiducials(activeListID),selectedPointIdList) ""
         FiducialsUpdateMRML
     }
@@ -336,8 +334,6 @@ proc FiducialsBuildGUI {} {
     
 
     set f $fDisplay.fscroll
-    
-
     
     DevCreateScrollList $Module(Fiducials,fDisplay).fscroll \
         FiducialsCreateGUI \
@@ -941,8 +937,10 @@ proc FiducialsVTKUpdatePoints {fid symbolSize textSize} {
                     eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textSelColor)
                 }
                 
-                # add it to the current list of selected items
-                lappend Fiducials($fid,selectedPointIdList) $pid
+                # add it to the current list of selected items if it's not there already
+                if {[lsearch $Fiducials($fid,selectedPointIdList) $pid] == -1} {
+                    lappend Fiducials($fid,selectedPointIdList) $pid
+                }
             }
         }
     }
@@ -1169,8 +1167,7 @@ proc FiducialsUpdateMRML {} {
     global Fiducials Mrml Module Models Model Landmark Path EndPath
 
     if {$::Module(verbose)} {
-        puts "FiducialsUpdateMRML - is it red?"
-        # after 2000
+        puts "FiducialsUpdateMRML: start."
     }
 
     # start callback in case any module wants to know that Fiducials are 
@@ -1230,7 +1227,8 @@ proc FiducialsUpdateMRML {} {
             foreach r $Fiducials(renList2D) {
                 set Fiducials($fid,pointIdList,$r) ""
             }
-            set Fiducials($fid,selectedPointIdList) ""
+            # puts "FidUpdateMrml: clearing out $fid selectedPointIdList"
+            # set Fiducials($fid,selectedPointIdList) ""
             if {[info exists Fiducials($fid,oldSelectedPointIdList)] == 0 } {
                 set Fiducials($fid,oldSelectedPointIdList) ""
             }
@@ -1326,7 +1324,8 @@ proc FiducialsUpdateMRML {} {
             eval Point($pid,node) SetXYZ [$item GetXYZ]
             eval Point($pid,node) SetFXYZ [$item GetFXYZ]
             Point($pid,node) SetIndex [$item GetPathPosition]
-            Point($pid,node) SetName [concat "savedPath" [$item GetPathPosition]]
+            # Point($pid,node) SetName [concat "savedPath" [$item GetPathPosition]]
+            Point($pid,node) SetName "savedPath[$item GetPathPosition]"
             MainMrmlDeleteNodeDuringUpdate Landmark [$item GetID]
         } elseif { [$item GetClassName] == "vtkMrmlEndPathNode" } {
             MainMrmlDeleteNodeDuringUpdate EndPath [$item GetID]
@@ -1404,46 +1403,85 @@ proc FiducialsUpdateMRML {} {
     set index 0
     foreach m $Fiducials(mActiveList) {
         # get the corresponding scroll
-        set scroll [lindex $Fiducials(scrollActiveList) $index]
+        set cb [lindex $Fiducials(scrollActiveList) $index]
         set mb [lindex $Fiducials(mbActiveList) $index]
         $m delete 0 end
         foreach v $Fiducials(idList) {
             $m add command -label [Fiducials($v,node) GetName] \
-                -command "FiducialsSetActiveList [Fiducials($v,node) GetName] $mb $scroll"
+                -command "FiducialsSetActiveList [Fiducials($v,node) GetName] $mb $cb"
         }
         foreach d $Fiducials(defaultNames) {
             # if this default name doesn't exist in the list of fiducials in the mrml tree
             if {[lsearch $Fiducials(listOfNames) $d] == -1} {
                 $m add command -label $d \
-                    -command "FiducialsSetActiveList $d $mb $scroll"
+                    -command "FiducialsSetActiveList $d $mb $cb"
             }
         }
         incr index
     }
+
     # re-write the scrolls
     set counter 0
-    foreach scroll $Fiducials(scrollActiveList) {
-        $scroll delete 0 end
+    foreach cb $Fiducials(scrollActiveList) {
+        if {0} {
+#skip deleting
+        if {[$cb getnumbuttons] == 0} { 
+            if {$::Module(verbose)} { 
+                puts "FiducialsUpdateMRML: no elements, not deleting anything"
+            }
+        } else {
+            # ischeckbox supports full delete
+            if {$::Module(verbose)} { 
+                puts "FiducialsUpdateMRML: deleting everything from $cb"
+            }
+            $cb delete
+        }
+    }
         # get the current name to use 
         set menu [lindex $Fiducials(mbActiveList) $counter]    
         set name [$menu cget -text]
         # if the name is valid
         if {[lsearch $Fiducials(listOfNames) $name] != -1} {
             # rewrite the list of points
+            if {$::Module(verbose)} {
+                puts "FidUpdateMRML, looking in selectedPointIdList to select stuff: $Fiducials($Fiducials($name,fid),selectedPointIdList)"
+            }
             foreach pid $Fiducials($Fiducials($name,fid),pointIdList) {
-
-                $scroll insert end "[Point($pid,node) GetName]"
-
+                if {[$cb index "[Point($pid,node) GetName]"] == -1} {
+                    # add it
+                    $cb add "[Point($pid,node) GetName]" -text "[Point($pid,node) GetName]" \
+                        -command "FiducialsSelectionFromCheckbox $menu $cb no $pid"
+                } else { 
+                }
                 # if it is selected, tell the scroll
-                if {[lsearch $Fiducials($Fiducials($name,fid),selectedPointIdList) $pid] != -1} {
-                    set index [lsearch $Fiducials($fid,pointIdList) $pid]
-                    if {$::Module(verbose)} { puts "FiducialsUpdateMRML: $scroll setting index $index" }
-                    $scroll selection set $index
+                set fid $Fiducials($name,fid)
+                set index [lsearch $Fiducials($fid,pointIdList) $pid]
+                if {[lsearch $Fiducials($fid,selectedPointIdList) $pid] != -1} {
+                    if {$::Module(verbose)} { puts "FiducialsUpdateMRML: $cb selecting index $index" }
+                    if {[lsearch [$cb getselind] $index] == -1} {
+                        if {$::Module(verbose)} { 
+                            puts "FiducialsUpdateMRML: really $cb selecting index $index"
+                        }
+                        # last arg determines if invoke 1 or select 0
+                        $cb select $index 0
+                    } else {
+                        if {$::Module(verbose)} { 
+                            puts "FiducialsUpdateMRML: it was already selected, not doing anything"
+                        }
+                    }
+                } else {
+                    # deselect it
+                    if {[lsearch [$cb getselind] $index] != -1} {
+                        $cb deselect $index
+                    } else { 
+                        if {$::Module(verbose)} {  
+                            puts "FiducialsUpdateMRML: pid $pid was already deselected." 
+                        }
+                    }
                 }
             }
             if {$::Module(verbose)} {
-                puts "Fids should be selected now? are they?"
-                # after 2000
+                puts "FidUpdateMRML: Fids should be selected now? are they?"
             }
 
         } else {
@@ -1522,7 +1560,11 @@ proc FiducialsResetVariables { {deleteFlag "0"} } {
             Fiducials($id,pointsPD) Delete 
             Point($id,textXform) Delete
             set Fiducials($id,pointIdList) ""
-            set Fiducials($id,oldSelectedPointIdList) $Fiducials($id,selectedPointIdList) 
+            if {[info exist Fiducials($id,selectedPointIdList)] != 0} {
+                set Fiducials($id,oldSelectedPointIdList) $Fiducials($id,selectedPointIdList) 
+            } else {
+                set Fiducials($id,oldSelectedPointIdList) ""
+            }
             set Fiducials($id,SelectedPointIdList) ""
             
             # delete the 2d glyph variables
@@ -1534,6 +1576,13 @@ proc FiducialsResetVariables { {deleteFlag "0"} } {
                 Fiducials($id,pointsPD2D,$r) Delete 
                 Fiducials($id,points2D,$r) Delete
             }
+            # delete the checkboxes
+            foreach cb $Fiducials(scrollActiveList) {
+                if {$::Module(verbose)} {
+                    puts "Deleting all from checkbox $cb"
+                }
+                $cb delete
+            }
         }
         set Fiducials(listOfIds) ""
         set Fiducials(listOfNames) ""
@@ -1542,7 +1591,14 @@ proc FiducialsResetVariables { {deleteFlag "0"} } {
         # these are operations that take place that don't involve deleting vtk variables
         foreach id $Fiducials(listOfIds) {
             set Fiducials($id,pointIdList) ""
-            set Fiducials($id,oldSelectedPointIdList) $Fiducials($id,selectedPointIdList) 
+            if {$::Module(verbose)} {
+                puts "ResetVars: clearing out selected point id list for $id, saving it in old: $Fiducials($id,selectedPointIdList)"
+            }
+            if {[info exist Fiducials($id,selectedPointIdList)] != 0} {
+                set Fiducials($id,oldSelectedPointIdList) $Fiducials($id,selectedPointIdList) 
+            } else {
+                set Fiducials($id,oldSelectedPointIdList) ""
+            }
             set Fiducials($id,SelectedPointIdList) ""
             foreach r $Fiducials(renList2D) {
                 set Fiducials($id,pointIdList,$r) ""
@@ -1723,7 +1779,8 @@ proc FiducialsCreatePointFromWorldXYZ { type x y z  {listName ""} {name ""} {sel
 
     Point($pid,node) SetXYZ $x $y $z
     Point($pid,node) SetIndex $index
-    Point($pid,node) SetName [concat $Fiducials($fid,name) $index]
+    # Point($pid,node) SetName [concat $Fiducials($fid,name) $index]
+    Point($pid,node) SetName "$Fiducials($fid,name)$index"
 
     # save actor and cell - TODO: this isn't saved in MRML
     set Point($pid,actor) $actor
@@ -1885,7 +1942,8 @@ proc FiducialsInsertPointFromWorldXYZ {type previousPid x y z  {listName ""} {na
 
     Point($pid,node) SetXYZ $x $y $z
     Point($pid,node) SetIndex $index
-    Point($pid,node) SetName [concat $Fiducials($fid,name) $index]
+    #Point($pid,node) SetName [concat $Fiducials($fid,name) $index]
+    Point($pid,node) SetName "$Fiducials($fid,name)${index}"
     
     # calculate FXYZ
     # if the actor and cell Id is not empty, get the normal of that cell
@@ -1963,6 +2021,20 @@ proc FiducialsDeletePoint {fid pid {noUpdate 0}} {
         # remove the id from the list
         set Fiducials($fid,selectedPointIdList) [lreplace $Fiducials($fid,selectedPointIdList) $index $index]
     }
+
+    # delete the checkbox if this is the active list (it won't get added if it's not there now)
+    # do this before losing it's place on the pointIdList
+    if {$fid == $Fiducials($Fiducials(activeList),fid)} {
+        set index [lsearch $Fiducials($fid,pointIdList) $pid]
+        if {$::Module(verbose)} {
+            puts "FiducialsDeletePoint: deleting checkbox for $fid $pid, index $index"
+        }
+        foreach cb $Fiducials(scrollActiveList) {
+            $cb delete "$index"
+        }
+    }
+
+
     # remove the id from the fiducials list it belongs to
     set index [lsearch $Fiducials($fid,pointIdList) $pid]
     if { $index != -1 } {
@@ -1970,6 +2042,7 @@ proc FiducialsDeletePoint {fid pid {noUpdate 0}} {
         set Fiducials($fid,pointIdList) [lreplace $Fiducials($fid,pointIdList) $index $index]
     }
 
+    
     # remove the id from the 2d fiducials list it belongs to
     foreach r $Fiducials(renList2D) {
         set index [lsearch $Fiducials($fid,pointIdList,$r) $pid]
@@ -2019,6 +2092,9 @@ proc FiducialsDeletePoint {fid pid {noUpdate 0}} {
     } else {
         MainMrmlDeleteNodeNoUpdate Point $pid
     }
+
+    
+    
 }
 
 #-------------------------------------------------------------------------------
@@ -2187,14 +2263,15 @@ proc FiducialsSetFiducialsVisibility {name {visibility ""} {rendererName ""}} {
 # .ARGS 
 #      str name name of the list that becomes active
 #      str menu (optional) the menu that needs to be updated to show the new name
-#      str scroll (optional) the scroll that needs to be updated to show the points of the new list
+#      str cb (optional) the checkbox that needs to be updated to show the points of the new list
 # .END
 #-------------------------------------------------------------------------------
-proc FiducialsSetActiveList {name {menu ""} {scroll ""}} {
+proc FiducialsSetActiveList {name {menu ""} {cb ""}} {
     
     global Fiducials Point Module
 
-    if { [FiducialsCheckListExistence $name] == 1 } {
+    if { [FiducialsCheckListExistence $name] == 1 && 
+         $Fiducials(activeList) != $name} {
         set Fiducials(activeList) $name
         if { $menu == "" } {
             foreach m $Fiducials(mbActiveList) {
@@ -2207,42 +2284,76 @@ proc FiducialsSetActiveList {name {menu ""} {scroll ""}} {
         # change the content of the selection box to display only the points
         # that belong to that list
 
-        # clear the scroll text
+        # clear the text text
 
-        if {$scroll == ""} {
-            foreach s $Fiducials(scrollActiveList) {
-                $s delete 0 end
-                foreach pid [FiducialsGetPointIdListFromName $name] {
-                    $s insert end "[Point($pid,node) GetName]"
-                    if {[info exists Fiducials($name,fid)] == 1} {
-                        set fid $Fiducials($name,fid)
-                        # if it is selected, tell the scroll
-                        if {[lsearch $Fiducials($fid,selectedPointIdList) $pid] != -1} {
-                            set index [lsearch $Fiducials($fid,pointIdList) $pid]
-                            if {$::Module(verbose)} { puts "FiducialsSetActiveList: $s setting index $index" }
-                            $s selection set $index
-                        }
-                    }    
-                }
-            }
+        if {$cb == ""} {
+            set cblist $Fiducials(scrollActiveList)
         } else {
-
-            $scroll delete 0 end
+            set cblist $cb
+        }
+        foreach s $cblist {
+            # clear out the checkboxes
+            if {[$s getnumbuttons] != 0} {
+                if {$::Module(verbose)} { puts "SetActiveList: there are some buttons on $s, deleting"}
+                $s delete
+            }
+            if {[info exists Fiducials($name,fid)] == 1} {
+                set fid $Fiducials($name,fid)
+            }
+            foreach pid [FiducialsGetPointIdListFromName $name] {
+                if {[$s index "[Point($pid,node) GetName]"] == -1} {
+                    # add it
+                    if {$::Module(verbose)} { puts "SetActiveList: Adding a fid $pid, selected id list = $Fiducials($fid,selectedPointIdList)"}
+                    $s add "[Point($pid,node) GetName]" -text "[Point($pid,node) GetName]" \
+                        -command "FiducialsSelectionFromCheckbox $menu $s no $pid"
+                }
+                if {[info exists Fiducials($name,fid)] == 1} {
+                    set fid $Fiducials($name,fid)
+                    set index [lsearch $Fiducials($fid,pointIdList) $pid]
+                    # if it is selected, tell the scroll
+                    if {[lsearch $Fiducials($fid,selectedPointIdList) $pid] != -1} {
+                        if {[lsearch [$s getselind] $index] == -1} {
+                            if {$::Module(verbose)} { puts "FiducialsSetActiveList: $s selecting index \"$index\"" }
+                                $s select "$index"
+                        } else {
+                            if {$::Module(verbose)} { puts "FiducialsSetActiveList $index already selected" }
+                        }
+                    } else { 
+                        # deselect it
+                        if {[lsearch [$s getselind] $index] != -1} {
+                            if {$::Module(verbose)} { puts "FiducialsSetActiveList: $s deselecting $index"}
+                            $s deselect "$index"
+                        }
+                    }
+                }    
+            }
+        }
+    
+        if {0} {
+            # moved up
+            
+            #            $scroll delete 0 end
+            if {[$cb getnumbuttons] != 0} {
+                if {$::Module(verbose)} { puts "SetActiveList: $cb has buttons, deleting them" }
+                $cb delete
+            }
             
             foreach pid [FiducialsGetPointIdListFromName $name] {
-                $scroll insert end "[Point($pid,node) GetName]"
+                if {$::Module(verbose)} { puts "FiducialsSetActiveList: adding $pid \"[Point($pid,node) GetName]\" to $cb, currently selected list = $Fiducials($fid,selectedPointIdList)"} 
+                $cb add "[Point($pid,node) GetName] -text [Point($pid,node) GetName]" \
+                    -command "FiducialsSelectionFromCheckbox $menu $cb no $pid"
                 if {[info exists Fiducials($name,fid)] == 1} {
                     set fid $Fiducials($name,fid)
                     # if it is selected, tell the scroll
                     if {[lsearch $Fiducials($fid,selectedPointIdList) $pid] != -1} {
                         set index [lsearch $Fiducials($fid,pointIdList) $pid]
-                         if {$::Module(verbose)} { puts "FiducialsSetActiveList: $scroll setting index $index" }
-                        $scroll selection set $index
+                        if {$::Module(verbose)} { puts "FiducialsSetActiveList: $scroll selecting index \"$index\" for pid $pid, and fid $fid" }
+                        $cb select "$index"
                     }
                 }    
             }
         }
-
+        
         # callback in case any module wants to know the name of the active list    
         if {$name == "None"} {
             foreach m $Module(idList) {
@@ -2263,6 +2374,10 @@ proc FiducialsSetActiveList {name {menu ""} {scroll ""}} {
                 }
             }
         }
+    } else {
+        if {$::Module(verbose)} {
+            puts "FidSetActiveList: didn't do anything because either the list $name doesn't exist, or it's already active ($Fiducials(activeList)"
+        }
     }
 }
 
@@ -2280,11 +2395,18 @@ proc FiducialsSelectionUpdate {fid pid on} {
     global Fiducials Module
 
     if {$::Module(verbose)} {
-        puts "\n\nFiducialsSelectionUpdate: fid = $fid, pid = $pid, on = $on"
+        puts "\n\nFiducialsSelectionUpdate: fid = $fid (active list = $Fiducials($Fiducials(activeList),fid)) pid = $pid, on = $on, selected point id list = $Fiducials($fid,selectedPointIdList)"
     }
+
+    # only do stuff with the checkbox list if it's the active list
+
     ### ON CASE #####
     if {$on } {
-        set index [lsearch $Fiducials($fid,selectedPointIdList) $pid]
+        if {[info exist Fiducials($fid,selectedPointIdList)] == 0} {
+            set index -1
+        } else {
+            set index [lsearch $Fiducials($fid,selectedPointIdList) $pid]
+        }
         if { $index == -1} {
             lappend Fiducials($fid,selectedPointIdList) $pid
             # tell procedure who want to know about it
@@ -2316,34 +2438,50 @@ proc FiducialsSelectionUpdate {fid pid on} {
             return 
         }
     }
-    # update all the scrollboxes
+    # update all the scrollboxes if this is the active list
+    if {$fid == $Fiducials($Fiducials(activeList),fid)} {
     
     set counter 0
     foreach menu $Fiducials(mbActiveList) {
         # get the corresponding scrollbox
-        set scroll [lindex $Fiducials(scrollActiveList) $counter]
-        if { $scroll == "" } { continue }
+        set cb [lindex $Fiducials(scrollActiveList) $counter]
+        if { $cb == "" } { continue }
         if {[$menu cget -text] == $Fiducials($fid,name)} {
             if {$::Module(verbose)} {
                 if {[string first "FiducialsEdit" $menu] != -1} { 
-                    puts "FiducialsSelectionUpdate:\n\tmenu = $menu\n\tscroll = $scroll\n\tmenu text = [$menu cget -text]\n\tfid = $fid\n\tfid name = $Fiducials($fid,name)"
+                    puts "FiducialsSelectionUpdate:\n\tmenu = $menu\n\tcb = $cb\n\tmenu text = [$menu cget -text]\n\tfid = $fid\n\tfid name = $Fiducials($fid,name)"
                 }
             }
             # clear everything
-            $scroll selection clear 0 end
-            #re-color the entries
-            foreach pid $Fiducials($fid,selectedPointIdList) {
-                set sid [lsearch $Fiducials($fid,pointIdList) $pid]
-                $scroll selection set $sid
+            # $scroll selection clear 0 end
+            if {[$cb getnumbuttons] == 0} {
+                if {$::Module(verbose)} { 
+                    puts "FiducialsSelectionUpdate: no elements, not deselecting"
+                }
+            } else {
                 if {$::Module(verbose)} {
-                    if {[string first "FiducialsEdit" $menu] != -1} {
-                        puts "FiducialsSelectionUpdate: pid = $pid, sid = $sid for scroll $scroll"
+                    puts "FiducialsSelectionUpdate: selected list = $Fiducials($fid,selectedPointIdList), deselecting everything and then reselected (right now cb sel = [$cb getselind])"
+                }
+                $cb deselect
+            
+                #re-color the entries
+                foreach pid $Fiducials($fid,selectedPointIdList) {
+                    set sid [lsearch $Fiducials($fid,pointIdList) $pid]
+                    # last arg determines if invoke 1 or select 0
+                    $cb select $sid 0
+                    if {$::Module(verbose)} {
+                        if {[string first "FiducialsEdit" $menu] != -1} {
+                            puts "FiducialsSelectionUpdate: pid = $pid, selected sid = $sid for cb $cb"
+                        }
                     }
                 }
             }
             incr counter
         }
     }
+} else {
+puts "$fid is not the active list $Fiducials($Fiducials(activeList),fid), leaving checkboxes alone"
+}
     FiducialsUpdateSelectionForActor $fid
 }
 
@@ -2383,59 +2521,161 @@ proc FiducialsSelectionFromPicker {actor cellId} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC FiducialsSelectionFromScroll
-# 
-# Given a scroll box and a menu with a selected Fiducials list, update the list 
-# of selected/unselected Points to match the selections of the user in the scrollbox. 
-# The scrollbox can have multiple selections.
-#
+# .PROC FiducialsSelectionFromCheckbox
+# Call back from the checkboxes, make sure the id is either in the selected list or not
+# and then call FiducialsSelectionFromScroll?
 # .ARGS 
 # widget menu the menu with the selected list name as the current text
-# widget scroll the scrollbox containing the fiducials list
+# widget cb the checkbox containing the fiducials list
 # int focusOnActiveFiducial if true, set the main view window's focus on the active fiducial
+# int pid  point id for the one fiducial to update
 # .END
 #-------------------------------------------------------------------------------
-proc FiducialsSelectionFromScroll {menu scroll focusOnActiveFiducial} {
+proc FiducialsSelectionFromCheckbox {menu cb focusOnActiveFiducial pid} {
     global Fiducials Module
 
     if {$::Module(verbose)} {
-        puts "FiducialsSelectionFromScroll for menu $menu, scroll $scroll."
+        puts "FiducialsSelectionFromCheckbox for menu $menu, cb $cb, pid = $pid."
+    }
+
+    # get the active list from the menu
+    set name [$menu cget -text]
+
+    if {$::Module(verbose)} {
+        puts "FiducialsSelectionFromCheckbox: name = $name"
+    }
+
+    if { $name != "None" } {
+        # get the id of the active list for that menu
+        set fid $Fiducials($name,fid)
+        # is point that changed sel or unsel?
+        set selind [$cb getselind]
+        if {$::Module(verbose)} {
+            puts "FiducialsUpdateSelectionFromCheckbox: selected = $selind, pid = $pid"
+        }
+        set selpind [lsearch $Fiducials($fid,selectedPointIdList) $pid]
+        set checkboxInd [lsearch $Fiducials($fid,pointIdList) $pid]
+        if {[lsearch $selind $checkboxInd] == -1} {
+            # it's not selected, make sure it's not on the selected fids list
+            if {$selpind != -1} {
+                # remove it from the list
+                if {$::Module(verbose)} {
+                    puts "Removing pid $pid from selected list at index $selpind"
+                }
+                set Fiducials($fid,selectedPointIdList) [lreplace $Fiducials($fid,selectedPointIdList) $selpind $selpind]
+                if {$::Module(verbose)} {
+                    puts "\t new list = $Fiducials($fid,selectedPointIdList)"
+                }
+            } else { 
+                if {$::Module(verbose)} {
+                    puts "it's not on the list" 
+                }
+            }
+        } else {
+            # make sure it's on the selected fids list
+            if {$selpind == -1} {
+                # add it
+                lappend Fiducials($fid,selectedPointIdList) $pid
+                if {$::Module(verbose)} {
+                    puts "Added pid $pid to the selected list: $Fiducials($fid,selectedPointIdList)"
+                }
+            } else { 
+                if {$::Module(verbose)} {
+                    puts "Pid $pid already on the list at $selpind: $Fiducials($fid,selectedPointIdList)"
+                }
+            }
+        }
+        # and now update the scroll selection
+        if {$::Module(verbose)} {
+            puts "\t\t**FiducialsUpdateSelectionFromCheckbox calling FiducialsSelectionFromScroll"
+        }
+        FiducialsSelectionFromScroll $menu $cb $focusOnActiveFiducial $pid
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC FiducialsSelectionFromScroll
+# 
+# Given a check box and a menu with a selected Fiducials list, update the list 
+# of selected/unselected Points to match the selected fiducials list.
+#
+# .ARGS 
+# widget menu the menu with the selected list name as the current text
+# widget cb the checkbox containing the fiducials list
+# int focusOnActiveFiducial if true, set the main view window's focus on the active fiducial
+# int pid optional point id, if just updating one fiducial
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsSelectionFromScroll {menu cb focusOnActiveFiducial {pid -1}} {
+    global Fiducials Module
+
+    if {$::Module(verbose)} {
+        puts "FiducialsSelectionFromScroll for menu $menu, cb $cb, pid = $pid."
     }
     
     # get the active list from the menu
     set name [$menu cget -text]
-    
+
+    if {$::Module(verbose)} {
+        puts "FiducialsSelectionFromScroll: name = $name"
+    }
+
     if { $name != "None" } {
         # get the id of the active list for that menu
         set fid $Fiducials($name,fid)
-        # get the list of all selections
-        set idList [$scroll curselection]
-        
-        if {$::Module(verbose)} { puts "FiducialsSelectionFromScroll cursel = $idList" }
-
-        # find the matching point id and
-        # update the selection lists
-
-        # there is a problem here when we switch to another panel and the selections have changed because tcl sucks
-
-        set Fiducials($fid,selectedPointIdList) ""
-        foreach id $idList {
-            set pid [lindex $Fiducials($fid,pointIdList) $id]
-            lappend Fiducials($fid,selectedPointIdList) $pid
-            if {$::Module(verbose)} { puts "FiducialsSelectionFromScroll: added $pid: $Fiducials($fid,selectedPointIdList)" ; after 2000}
-            # tell procedure who want to know about it
-            # callback 
-            foreach m $Module(idList) {
-                if {[info exists Module($m,fiducialsPointSelectedCallback)] == 1} {
-                    if {$Module(verbose) == 1} {puts "Fiducials Start Callback: $m"}
-                    $Module($m,fiducialsPointSelectedCallback) $fid $pid
-                }
+        if {0} {
+            # gonna bypass this for now, assume checkboxes are fine
+        if {$pid == -1} {
+            if {$::Module(verbose)} {
+                puts "FiducialsSelectionFromScroll: no point specified"
             }
-            if {$::Module(verbose)} { puts "FiducialsSelectionFromScroll: after call backs: $Fiducials($fid,selectedPointIdList)"}
+            # get the list of all selections
+            set idList [$cb getselind]
+        
+            if {$::Module(verbose)} {
+                puts "FiducialsSelectionFromScroll cursel = $idList, the selectedPointIdList is $Fiducials($fid,selectedPointIdList)" 
+            }
+
+            # find the matching point id and
+            # update the selection lists
+
+            set Fiducials($fid,selectedPointIdList) ""
+            foreach id $idList {
+                set pid [lindex $Fiducials($fid,pointIdList) $id]
+                lappend Fiducials($fid,selectedPointIdList) $pid
+                if {$::Module(verbose)} {
+                    puts "FiducialsSelectionFromScroll: added $pid: $Fiducials($fid,selectedPointIdList)"
+                }
+                
+            }
+        } else { 
+            if {$::Module(verbose)} {
+                puts "FiducialsSelectionFromScroll: just working on $pid"
+            }
+            # is it on the selected list already?
+            if {[lsearch Fiducials($fid,selectedPointIdList) $pid] == -1} {
+                 lappend Fiducials($fid,selectedPointIdList) $pid
+            }
+            if {$::Module(verbose)} {
+                puts "\tselected point id list = $Fiducials($fid,selectedPointIdList)"
+            }
         }
+    }
+        # tell procedure who want to know about it
+        # callback 
+        foreach m $Module(idList) {
+            if {[info exists Module($m,fiducialsPointSelectedCallback)] == 1} {
+                if {$Module(verbose) == 1} {puts "Fiducials Start Callback: $m"}
+                $Module($m,fiducialsPointSelectedCallback) $fid $pid
+            }
+        }
+        if {$::Module(verbose)} { puts "FiducialsSelectionFromScroll: after call backs: $Fiducials($fid,selectedPointIdList)"}
 
         # now update the actors
-        FiducialsUpdateSelectionForActor $fid
+        if {$::Module(verbose)} {
+            puts "FiducialsSelectionFromScroll: updating the actor from fid list $fid for $pid"
+        }
+        FiducialsUpdateSelectionForActor $fid $pid
         
         if { $focusOnActiveFiducial=="yes" } {
             foreach {x y z} [Point($Fiducials(activePointID),node) GetXYZ] { break }
@@ -2457,19 +2697,26 @@ proc FiducialsSelectionFromScroll {menu scroll focusOnActiveFiducial} {
 #
 # .ARGS 
 #       int fid Mrml id of the Fiducial list to be updated
+# int pid optional point id 
 # .END
 #-------------------------------------------------------------------------------
-proc FiducialsUpdateSelectionForActor {fid} {
+proc FiducialsUpdateSelectionForActor {fid {pid -1}} {
     global Fiducials Module
     
     if {$::Module(verbose)} {
-        puts "FiducialsUpdateSelectionForActor: fid = $fid"
+        puts "FiducialsUpdateSelectionForActor: fid = $fid, point id list = $Fiducials($fid,pointIdList), pid = $pid"
     }
 
-    foreach pid $Fiducials($fid,pointIdList) {
+    if {$pid == -1} {
+        set pidList $Fiducials($fid,pointIdList) 
+    } else {
+        set pidList $pid
+    }
+    foreach pid $pidList {
         # if the point is selected
+        if {$::Module(verbose)} { puts "\tis the pt $pid in $Fiducials($fid,selectedPointIdList)?" }
         if {[lsearch $Fiducials($fid,selectedPointIdList) $pid] != -1} { 
-        
+            if {$::Module(verbose)} { puts "\t\tyes" }
             set Fiducials(activeListID)  $fid
             set Fiducials(activePointID) $pid
 
@@ -2497,6 +2744,7 @@ proc FiducialsUpdateSelectionForActor {fid} {
             }
             # if it is not selected
         } else {
+            if {$::Module(verbose)} { puts "\t\tno" } 
             # color the point the default color
             Fiducials($fid,scalars) SetTuple1 [FiducialsScalarIdFromPointId $fid $pid] 0
             # uncolor the text
@@ -2517,6 +2765,7 @@ proc FiducialsUpdateSelectionForActor {fid} {
             }
         }
     }
+    
     
     FiducialsDisplayDescriptionActive
 
@@ -2694,7 +2943,7 @@ proc FiducialsAddActiveListFrame {frame scrollHeight scrollWidth {defaultNames "
     
     foreach subframe "how menu scroll" {
         frame $frame.f$subframe -bg $Gui(activeWorkspace)
-        pack $frame.f$subframe -side top -padx 0 -pady $Gui(pad) -fill x
+        pack $frame.f$subframe -side top -padx 0 -pady $Gui(pad) -fill x -expand true
     }
 
     #-------------------------------------------
@@ -2731,10 +2980,33 @@ proc FiducialsAddActiveListFrame {frame scrollHeight scrollWidth {defaultNames "
     set f $frame.fscroll
     
     # Create and Append widgets to list that gets refreshed during UpdateMRML
-    set scroll [ScrolledListbox $f.list 1 1 -height $scrollHeight -width $scrollWidth -selectforeground red -selectmode multiple]
-    
-    bind $scroll <Control-ButtonRelease-1> "FiducialsSelectionFromScroll $frame.fmenu.mbActive $scroll yes" 
-    bind $scroll <ButtonRelease-1> "FiducialsSelectionFromScroll $frame.fmenu.mbActive $scroll no" 
+    # set scroll [ScrolledListbox $f.list 1 1 -height $scrollHeight -width $scrollWidth -selectforeground red -selectmode multiple]
+    if {0} {
+    set scroll [iwidgets::scrolledframe $f.sf -height 6 -width 10 \
+                    -vscrollmode dynamic -hscrollmode dynamic -borderwidth 1]
+    pack $f.sf -expand yes -fill both
+
+    set cs [$f.sf childsite]
+    DevAddLabel $cs.lfids "Fiducials:"
+    pack $cs.lfids -side top 
+    } else {
+        set cs $f
+    }
+    # now put in a checkbox
+
+    if {[catch "package require iSlicer" errmsg] == 1} {
+        puts "Ooops, can't use the ischeckbox"
+        set cb [checkbox  $cs.cb]
+    } else {
+        set cb [iwidgets::ischeckbox $cs.cb -relief sunken -labeltext "Fiducials" -borderwidth 2 -labelmargin 10 -background $Gui(activeWorkspace) -labelfont {helvetica 8}]
+        if {$::Module(verbose)} {
+            puts "added checkbox $cb"
+        }
+    }
+
+
+    bind $cb <Control-ButtonRelease-1> "FiducialsSelectionFromScroll $frame.fmenu.mbActive $cb yes" 
+    bind $cb <ButtonRelease-1> "FiducialsSelectionFromScroll $frame.fmenu.mbActive $cb no" 
 
     eval {entry $f.nameEntry -width 25 -textvariable Fiducials(activeName) } $Gui(WEA)
     bind $f.nameEntry <Return> {FiducialsDescriptionActiveUpdated}
@@ -2748,13 +3020,19 @@ proc FiducialsAddActiveListFrame {frame scrollHeight scrollWidth {defaultNames "
     eval {entry $f.descriptionEntry -width 25 -textvariable Fiducials(activeDescription) } $Gui(WEA)
     bind $f.descriptionEntry <Return> {FiducialsDescriptionActiveUpdated}
 
-    lappend Fiducials(scrollActiveList) $scroll
-    pack $f.list $f.nameEntry $f.xyzLabel $f.xyLabel $f.xyzEditButton $f.xyzEditButtonSlices $f.descriptionEntry -side top
+    # lappend Fiducials(scrollActiveList) $scroll
+    lappend Fiducials(scrollActiveList) $cb
+
+#    pack $f.list $f.nameEntry $f.xyzLabel $f.xyLabel $f.xyzEditButton $f.xyzEditButtonSlices $f.descriptionEntry -side top
+    pack $cb  \
+        -side top -expand true -fill both
+    pack $f.nameEntry $f.xyzLabel $f.xyLabel $f.xyzEditButton $f.xyzEditButtonSlices $f.descriptionEntry \
+        -side top
 
     # if there any default names specified, add them to the list
     foreach d $defaultNames {
         $frame.fmenu.mbActive.m add command -label $d \
-            -command "FiducialsSetActiveList $d $frame.fmenu.mbActive $scroll"
+            -command "FiducialsSetActiveList $d $frame.fmenu.mbActive $cb"
         lappend Fiducials(defaultNames) $d
     }
 } 
