@@ -594,12 +594,14 @@ reslice->Update();
               // correct source intensities
               transint->SetInput(extracts->GetOutput());
               transint->SetIntensityTransform(this->IntensityTransform);
-          transint->Update();
+              transint->Update();
               tmp=vtkImageData::New();
               tmp->DeepCopy(transint->GetOutput());
-          append->SetInput(comp,tmp);
+              append->SetInput(comp,tmp);
         }
               append->Update();
+              tmp->Delete();
+
 
        // smooth target     
         tsmooth->SetInput(this->Targets[l]);     
@@ -657,7 +659,8 @@ smooth->Update();
             // This triggers the warping.
             smooth->Update();
             this->Displacements[l]->DeepCopy(smooth->GetOutput());
-
+            extractt->Delete();
+            extracts->Delete();
             append->Delete();
         reslice->Delete();
             transint->Delete();
