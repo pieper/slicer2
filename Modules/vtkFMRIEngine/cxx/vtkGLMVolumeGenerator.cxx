@@ -53,6 +53,7 @@ vtkGLMVolumeGenerator::vtkGLMVolumeGenerator()
 {
     this->StandardError = 0.0;
     this->SizeOfContrastVector = 0;
+    this->PreWhitening = 0;
     this->beta = NULL; 
     this->ContrastVector = NULL;
     this->DesignMatrix = NULL;
@@ -166,6 +167,7 @@ void vtkGLMVolumeGenerator::ComputeStandardError(float rss, float corrCoeff)
     // se= sqrt (  mrss * (C * pinv(WX)  * (pinv(WX))' * C' )  )
     // which seems different from sqrt (  mrss * ( C * pinv(WX'*WX) * C' ) )
     // Try both of these and see if they make a difference...
+    // Well golly, they seem to give the same result.
     // -----
 
     // calculate mrss
@@ -180,11 +182,10 @@ void vtkGLMVolumeGenerator::ComputeStandardError(float rss, float corrCoeff)
     // format the design matrix for vnl 
     float norm = (float) (sqrt ( (double) (1.0- (corrCoeff*corrCoeff))));
     for (j=0; j<cols; j++) {
-        if ( 0 ) {
+        if ( this->PreWhitening == 0 ) {
             ((vnl_matrix<float> *)this->X)->put(0, j, this->DesignMatrix->GetComponent(0,j));
-        }
+        } else {
         // format the design matrix and pre-whiten at this voxel
-        if ( 1 ) {
             ((vnl_matrix<float> *)this->WX)->put(0, j, this->DesignMatrix->GetComponent(0,j));
             for (i=1; i<rows; i++) {
                 v1 = this->DesignMatrix->GetComponent (i,j);
@@ -200,10 +201,9 @@ void vtkGLMVolumeGenerator::ComputeStandardError(float rss, float corrCoeff)
     // (commented out for testing)
     // ------------------------------------------------------
     vnl_matrix<float> A;
-    if ( 0 ) {
+    if ( this->PreWhitening == 0 ) {
         A = *((vnl_matrix<float> *)this->X);
-    }
-    if ( 1 ) {
+    } else {
         A = *((vnl_matrix<float> *)this->WX);
     }
     vnl_matrix<float> B;

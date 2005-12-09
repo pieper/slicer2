@@ -48,18 +48,21 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 class  VTK_FMRIENGINE_EXPORT vtkGLMEstimator : public vtkActivationEstimator
 {
-public:
+    public:
     static vtkGLMEstimator *New();
     vtkTypeMacro(vtkGLMEstimator, vtkActivationEstimator);
 
+    vtkGetMacro(PreWhitening, int);
+    vtkSetMacro(PreWhitening, int);
+    
     // Description:
     // Returns the time course of a specified voxel (i, j, k).
     vtkFloatArray *GetTimeCourse(int i, int j, int k);
-
+    
     // Description:
     // Returns the time course of the defined ROI. 
     vtkFloatArray *GetRegionTimeCourse();
-
+    
     // Description:
     // Sets the lower threshold.
     void SetLowerThreshold(float low) {this->LowerThreshold = low;}
@@ -81,13 +84,14 @@ public:
     // Gets HighPassFiltering.
     vtkGetMacro(HighPassFiltering, int);
 
-protected:
+    protected:
     vtkGLMEstimator();
     ~vtkGLMEstimator();
 
     void SimpleExecute(vtkImageData* input,vtkImageData* output);
     void PerformHighPassFiltering();
 
+    int PreWhitening;
     int HighPassFiltering;
     float LowerThreshold;
     float Cutoff;

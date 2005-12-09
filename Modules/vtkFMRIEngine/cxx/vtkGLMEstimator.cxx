@@ -60,11 +60,13 @@ vtkGLMEstimator::vtkGLMEstimator()
     this->Cutoff = 0.0;
     this->LowerThreshold = 0.0;
     this->HighPassFiltering = 0;
-
+    this->PreWhitening = 0;
+    
     this->Detector = NULL; 
     this->TimeCourse = NULL; 
     this->RegionTimeCourse = NULL;
     this->RegionVoxels = NULL;
+
 }
 
 
@@ -83,6 +85,7 @@ vtkGLMEstimator::~vtkGLMEstimator()
         this->RegionVoxels->Delete();
     }
 }
+
 
 
 vtkFloatArray *vtkGLMEstimator::GetRegionTimeCourse()
@@ -129,6 +132,8 @@ vtkFloatArray *vtkGLMEstimator::GetRegionTimeCourse()
 
     return this->RegionTimeCourse;
 }
+
+
 
 
 vtkFloatArray *vtkGLMEstimator::GetTimeCourse(int i, int j, int k)
@@ -277,8 +282,8 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
                 {
                     short *value 
                         = (short *)this->GetInput(i)->GetScalarPointer(ii, jj, kk);
-                    tc->SetComponent(i, 0, *value);
                     total += *value;
+                    tc->SetComponent(i, 0, *value);
                 }   
 
                 float chisq, p;
@@ -289,7 +294,7 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
                     ((vtkGLMDetector *)this->Detector)->FitModel( tc, beta, &chisq );
                     // for testing
                     p = 0.0;
-                    if ( 1 ) {
+                    if ( this->PreWhitening) {
                         ((vtkGLMDetector *)this->Detector)->ComputeResiduals ( tc, beta );
                         // second pass parameter estimates, with whitened temporal autocorrelation.
                         p = ((vtkGLMDetector *)this->Detector)->ComputeCorrelationCoefficient ( );

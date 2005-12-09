@@ -51,6 +51,9 @@ class  VTK_FMRIENGINE_EXPORT vtkGLMVolumeGenerator : public vtkActivationVolumeG
     static vtkGLMVolumeGenerator *New();
     vtkTypeMacro(vtkGLMVolumeGenerator, vtkActivationVolumeGenerator);
 
+    vtkGetMacro(PreWhitening, int);
+    vtkSetMacro(PreWhitening, int);
+    
     // Description:
     // Sets the contrast vector. 
     void SetContrastVector(vtkIntArray *vec);
@@ -69,6 +72,7 @@ class  VTK_FMRIENGINE_EXPORT vtkGLMVolumeGenerator : public vtkActivationVolumeG
     vtkIntArray *ContrastVector;
     vtkFloatArray *DesignMatrix;
     
+    int PreWhitening;
     float StandardError;
     int SizeOfContrastVector;
     float *beta;
