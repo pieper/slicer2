@@ -19,8 +19,7 @@ set __comment__ {
     - copies each of the modules libs and wrapping files
     - removes CVS dirs that have been copied by accident
     - makes a .tar.gz or a .zip of the resulting distribution
-    - if SLICER(state) is -dev, uploads to snapshots web site for testing
-       else uploads to birn rack for wider distribution
+    - if upload flag is not local, will upload to the na-mic.org server
 
     It does all this while taking into account platform differences in naming schemes
     and directory layouts.
@@ -38,9 +37,11 @@ set __comment__ {
         nothing known
 }
 
+#
 # returns a list of full paths to libraries that match the input list and that the vtk binary dynamically links to.
 # doesn't work with ++ in the toMatch string
 # on error, return an empty list
+#
 proc GetLinkedLibs { {toMatch {}} } {
     set liblist ""
     if {$toMatch == {}} {
@@ -104,17 +105,29 @@ proc GetLinkedLibs { {toMatch {}} } {
     return $liblist
 }
 
+#
+# print out usage information
+#
 proc tarup_usage {} {
     puts "Call 'tarup' to create a binary archive. Optional arguments:"
-    puts "\tdestdir\n\t\tauto, to upload to slicerl (default)\n\t\tbirn, to copy to /usr/local/birn/install/slicer2\n\t\tlocal, to make a local copy."
+    puts "\tuploadFlag"
+    puts "\t\tnightly, to upload to na-mic.org\\Slicer\\Downloads\\Nightly using curl, overwriting the last nightly file found there."
+    puts "\t\tsnapshot (default), to upload to the Snapshots subdir for this os"
+    puts "\t\trelease, to upload to the Release subdir for this os"
+    puts "\t\tlocal, to make a local copy, no upload"
     puts "\tincludeSource\n\t\t0, to make a binary release (default)\n\t\t1, to include the cxx directories"
     puts "Example: tarup local 0"
+    puts "Caveate: upload to na-mic.org is only allowed from trusted machines at BWH."
 }
 
-proc tarup { {destdir "auto"} {includeSource 0} } {
+#
+# copy files and create an archive, and upload
+#
+proc tarup { {uploadFlag "snapshot"} {includeSource 0} } {
 
     set cwd [pwd]
     cd $::env(SLICER_HOME)
+puts "uploadFlag = $uploadFlag"
 
     # need to figure out which version of windows visual studio was used to build
     # so we need the original variables
@@ -143,53 +156,50 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
     }
 
     set create_archive "true"
-    if {$destdir == "local"} {
+    if {$uploadFlag == "local"} {
         set do_upload "false"
     } else {
         set do_upload "true"
     }
+
     set suffix ""
-    switch $destdir {
-        "auto" -
-        "local" {
-            if { [info exists ::env(TMPDIR)] } {
-                set destdir [file normalize $::env(TMPDIR)]
-            } else {
-                if { [info exists ::env(TMP)] } {
-                    set destdir [file normalize $::env(TMP)]
-                } else {
-                    switch $::env(BUILD) {
-                        "solaris8" { set destdir /tmp }
-                        "Darwin" - "darwin-ppc" - "linux-x86" - "redhat7.3" { set destdir /var/tmp }
-                        "win32" { set destdir c:/Temp }
-                    }
-                }
+    if { [info exists ::env(TMPDIR)] } {
+        set archivedir [file normalize $::env(TMPDIR)]
+    } else {
+        if { [info exists ::env(TMP)] } {
+            set archivedir [file normalize $::env(TMP)]
+        } else {
+            switch $::env(BUILD) {
+                "solaris8" { set archivedir /tmp }
+                "Darwin" - "darwin-ppc" - "linux-x86" - "redhat7.3" { set archivedir /var/tmp }
+                "win32" { set archivedir c:/Temp }
             }
-            set date [clock format [clock seconds] -format %Y-%m-%d]
-            if { $::tcl_platform(machine) == "x86_64" } {
-                set suffix "_64"
-            } 
-            set destdir $destdir/slicer$::SLICER(version)-${target}${suffix}-$date
         }
-        "birn" {
-            set destdir /usr/local/birn/install/slicer2
-            set create_archive "false"
-            set do_upload "false"
-        }        
     }
+    set date [clock format [clock seconds] -format %Y-%m-%d]
+    if { $::tcl_platform(machine) == "x86_64" } {
+        set suffix "_64"
+    } 
+    set archivedir $archivedir/slicer$::SLICER(version)-${target}${suffix}-$date
 
-    puts "Creating distribution in $destdir..."
 
-    if { [file exists $destdir] } {
-        set resp [tk_messageBox -message "$destdir exists\nDelete it?" -type okcancel]
-        if { $resp == "cancel" } {return}
-        file delete -force $destdir
+    puts "Creating distribution in $archivedir..."
+    set skipMakingArchive 0
+    if { [file exists $archivedir] } {
+        set resp [tk_messageBox -message "$archivedir exists\nOkay: delete and regenerate it.\nCancel: tar/zip it up as is." -type okcancel]
+        if { $resp == "cancel" } {
+        #    return
+            set skipMakingArchive 1
+        } else {
+        file delete -force $archivedir
+        }
     }
+    if {$skipMakingArchive == 0} {
 
-    file mkdir $destdir
+    file mkdir $archivedir
 
-    if { ![file writable $destdir] } {
-        error "can't write to $destdir"
+    if { ![file writable $archivedir] } {
+        error "can't write to $archivedir"
     }
 
     #
@@ -197,15 +207,15 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
     # - add suffix, for example, _64 to name of launcher
     #
     puts " -- copying launcher files"
-    file copy slicer2-$target$exe $destdir/slicer2-$target$suffix$exe
-    file copy launch.tcl $destdir
-    file copy slicer_variables.tcl $destdir
+    file copy slicer2-$target$exe $archivedir/slicer2-$target$suffix$exe
+    file copy launch.tcl $archivedir
+    file copy slicer_variables.tcl $archivedir
 
     #
     # grab the copyright text file
     #
-    file mkdir $destdir/Doc
-    file copy -force Doc/copyright $destdir/Doc
+    file mkdir $archivedir/Doc
+    file copy -force Doc/copyright $archivedir/Doc
 
     #
     # grab the tcl libraries and binaries
@@ -215,17 +225,17 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
     #   (this will include xml, widgets, table, soap, and many other handy things)
     #
     puts " -- copying tcl files"
-    file mkdir $destdir/Lib/$::env(BUILD)/tcl-build
-    file copy -force $::env(TCL_LIB_DIR) $destdir/Lib/$::env(BUILD)/tcl-build/lib
-    file copy -force $::env(TCL_BIN_DIR) $destdir/Lib/$::env(BUILD)/tcl-build/bin
+    file mkdir $archivedir/Lib/$::env(BUILD)/tcl-build
+    file copy -force $::env(TCL_LIB_DIR) $archivedir/Lib/$::env(BUILD)/tcl-build/lib
+    file copy -force $::env(TCL_BIN_DIR) $archivedir/Lib/$::env(BUILD)/tcl-build/bin
 
     puts " -- copying teem files"
-    file mkdir $destdir/Lib/$::env(BUILD)/teem-build
-    file copy -force $::env(TEEM_BIN_DIR) $destdir/Lib/$::env(BUILD)/teem-build
+    file mkdir $archivedir/Lib/$::env(BUILD)/teem-build
+    file copy -force $::env(TEEM_BIN_DIR) $archivedir/Lib/$::env(BUILD)/teem-build
 
     puts " -- copying sandbox files"
-    file mkdir $destdir/Lib/$::env(BUILD)/NAMICSandBox-build
-    file copy -force $::env(SANDBOX_BIN_DIR) $destdir/Lib/$::env(BUILD)/NAMICSandBox-build
+    file mkdir $archivedir/Lib/$::env(BUILD)/NAMICSandBox-build
+    file copy -force $::env(SANDBOX_BIN_DIR) $archivedir/Lib/$::env(BUILD)/NAMICSandBox-build
 
     #
     # grab the vtk libraries and binaries
@@ -233,64 +243,64 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
     #   version of pkgIndex.tcl that allows for relocatable packages
     #
     puts " -- copying vtk files"
-    file mkdir $destdir/Lib/$::env(BUILD)/VTK/Wrapping/Tcl
+    file mkdir $archivedir/Lib/$::env(BUILD)/VTK/Wrapping/Tcl
     set vtkparts { vtk vtkbase vtkcommon vtkpatented vtkfiltering
             vtkrendering vtkgraphics vtkhybrid vtkimaging 
             vtkinteraction vtkio vtktesting }
     foreach vtkpart $vtkparts {
-        file copy -force $::env(VTK_SRC_DIR)/Wrapping/Tcl/$vtkpart $destdir/Lib/$::env(BUILD)/VTK/Wrapping/Tcl
+        file copy -force $::env(VTK_SRC_DIR)/Wrapping/Tcl/$vtkpart $archivedir/Lib/$::env(BUILD)/VTK/Wrapping/Tcl
     }
 
 
 
-    file mkdir $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl
+    file mkdir $archivedir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl
     switch $::tcl_platform(os) {
         "SunOS" -
         "Linux" - 
         "Darwin" {
-            file copy -force $::env(VTK_DIR)/Wrapping/Tcl/pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl
+            file copy -force $::env(VTK_DIR)/Wrapping/Tcl/pkgIndex.tcl $archivedir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl
         }
         default { 
-            file mkdir $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)
-            file copy -force $::env(VTK_DIR)/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)/pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)
+            file mkdir $archivedir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)
+            file copy -force $::env(VTK_DIR)/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)/pkgIndex.tcl $archivedir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)
         }
     }
 
-    file mkdir $destdir/Lib/$::env(BUILD)/VTK-build/bin
+    file mkdir $archivedir/Lib/$::env(BUILD)/VTK-build/bin
     switch $::tcl_platform(os) {
         "SunOS" -
         "Linux" { 
             set libs [glob $::env(VTK_DIR)/bin/*.so*]
             foreach lib $libs {
-                file copy $lib $destdir/Lib/$::env(BUILD)/VTK-build/bin
+                file copy $lib $archivedir/Lib/$::env(BUILD)/VTK-build/bin
                 set ll [file tail $lib]
-                exec strip $destdir/Lib/$::env(BUILD)/VTK-build/bin/$ll
+                exec strip $archivedir/Lib/$::env(BUILD)/VTK-build/bin/$ll
             }
-            file copy $::env(VTK_DIR)/bin/vtk $destdir/Lib/$::env(BUILD)/VTK-build/bin
-            file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/pkgIndex.tcl
+            file copy $::env(VTK_DIR)/bin/vtk $archivedir/Lib/$::env(BUILD)/VTK-build/bin
+            file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $archivedir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/pkgIndex.tcl
         }
         "Darwin" {
             set libs [glob $::env(VTK_DIR)/bin/*.dylib]
             foreach lib $libs {
-                file copy $lib $destdir/Lib/$::env(BUILD)/VTK-build/bin
+                file copy $lib $archivedir/Lib/$::env(BUILD)/VTK-build/bin
             }
-            file copy $::env(VTK_DIR)/bin/vtk $destdir/Lib/$::env(BUILD)/VTK-build/bin
-            file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/pkgIndex.tcl
+            file copy $::env(VTK_DIR)/bin/vtk $archivedir/Lib/$::env(BUILD)/VTK-build/bin
+            file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $archivedir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/pkgIndex.tcl
         }
         default { 
-            file mkdir $destdir/Lib/$::env(BUILD)/VTK-build/bin/$::env(VTK_BUILD_TYPE)
+            file mkdir $archivedir/Lib/$::env(BUILD)/VTK-build/bin/$::env(VTK_BUILD_TYPE)
             set libs [glob $::env(VTK_DIR)/bin/$::env(VTK_BUILD_TYPE)/*.dll]
             foreach lib $libs {
-                file copy $lib $destdir/Lib/$::env(BUILD)/VTK-build/bin/$::env(VTK_BUILD_TYPE)
+                file copy $lib $archivedir/Lib/$::env(BUILD)/VTK-build/bin/$::env(VTK_BUILD_TYPE)
             }
-            file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $destdir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)/pkgIndex.tcl
+            file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $archivedir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)/pkgIndex.tcl
         }
     }
     #
     # grab the shared libraries and put them in the vtk bin dir
     #
     puts " -- copying shared development libraries"
-    set sharedLibDir $destdir/Lib/$::env(BUILD)/VTK-build/bin
+    set sharedLibDir $archivedir/Lib/$::env(BUILD)/VTK-build/bin
     set checkForSymlinks 1
     switch $::tcl_platform(os) {
       "SunOS" {
@@ -331,14 +341,14 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
         
           }
           set sharedSearchPath [concat [split $::env(PATH) ";"] $::env(LD_LIBRARY_PATH)]
-          set sharedLibDir $destdir/Lib/$::env(BUILD)/VTK-build/bin/$::env(VTK_BUILD_TYPE)
+          set sharedLibDir $archivedir/Lib/$::env(BUILD)/VTK-build/bin/$::env(VTK_BUILD_TYPE)
           set checkForSymlinks 0
       }
     }
     set foundLibs ""
     foreach slib $sharedLibs { 
         if {$::Module(verbose)} { puts "LIB $slib"  }
-        # don't copy if it's already in the dest dir (take the tail of the full path to slib)
+        # don't copy if it's already in the archive dir (take the tail of the full path to slib)
         if {![file exists [file join $sharedLibDir [file tail $slib]]]} {
             set slibFound 0
             if {$sharedSearchPath == ""} {
@@ -393,29 +403,29 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
     # grab the itk libraries 
     #
     puts " -- copying itk files"
-    file mkdir $destdir/Lib/$::env(BUILD)/Insight-build/bin
+    file mkdir $archivedir/Lib/$::env(BUILD)/Insight-build/bin
 
     switch $::tcl_platform(os) {
         "SunOS" -
         "Linux" { 
             set libs [glob -nocomplain $::env(ITK_BINARY_PATH)/bin/*.so]
             foreach lib $libs {
-                file copy $lib $destdir/Lib/$::env(BUILD)/Insight-build/bin
+                file copy $lib $archivedir/Lib/$::env(BUILD)/Insight-build/bin
                 set ll [file tail $lib]
-                exec strip $destdir/Lib/$::env(BUILD)/Insight-build/bin/$ll
+                exec strip $archivedir/Lib/$::env(BUILD)/Insight-build/bin/$ll
             } 
         }
         "Darwin" {
             set libs [glob -nocomplain $::env(ITK_BINARY_PATH)/bin/*.dylib]
             foreach lib $libs {
-                file copy $lib $destdir/Lib/$::env(BUILD)/Insight-build/bin
+                file copy $lib $archivedir/Lib/$::env(BUILD)/Insight-build/bin
             }
         }
         default { 
-            file mkdir $destdir/Lib/$::env(BUILD)/Insight-build/bin/$::env(VTK_BUILD_TYPE)
+            file mkdir $archivedir/Lib/$::env(BUILD)/Insight-build/bin/$::env(VTK_BUILD_TYPE)
             set libs [glob -nocomplain $::env(ITK_BINARY_PATH)/bin/$::env(VTK_BUILD_TYPE)/*.dll]
             foreach lib $libs {
-                file copy $lib $destdir/Lib/$::env(BUILD)/Insight-build/bin/$::env(VTK_BUILD_TYPE)
+                file copy $lib $archivedir/Lib/$::env(BUILD)/Insight-build/bin/$::env(VTK_BUILD_TYPE)
             }
         }
     }
@@ -425,39 +435,39 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
     # grab the Base build and tcl
     #
     puts " -- copying SlicerBase files"
-    file mkdir $destdir/Base
-    file copy -force Base/tcl $destdir/Base
+    file mkdir $archivedir/Base
+    file copy -force Base/tcl $archivedir/Base
     if {$includeSource} {
-        file copy -force Base/cxx $destdir/Base
+        file copy -force Base/cxx $archivedir/Base
     }
     # get the servers directory
-    file copy -force servers $destdir
-    file mkdir $destdir/Base/Wrapping/Tcl/vtkSlicerBase
-    file copy Base/Wrapping/Tcl/vtkSlicerBase/pkgIndex.tcl $destdir/Base/Wrapping/Tcl/vtkSlicerBase
-    file copy Base/Wrapping/Tcl/vtkSlicerBase/vtkSlicerBase.tcl $destdir/Base/Wrapping/Tcl/vtkSlicerBase
+    file copy -force servers $archivedir
+    file mkdir $archivedir/Base/Wrapping/Tcl/vtkSlicerBase
+    file copy Base/Wrapping/Tcl/vtkSlicerBase/pkgIndex.tcl $archivedir/Base/Wrapping/Tcl/vtkSlicerBase
+    file copy Base/Wrapping/Tcl/vtkSlicerBase/vtkSlicerBase.tcl $archivedir/Base/Wrapping/Tcl/vtkSlicerBase
     switch $::tcl_platform(os) {
         "SunOS" -
         "Linux" { 
-            file mkdir $destdir/Base/builds/$::env(BUILD)/bin
+            file mkdir $archivedir/Base/builds/$::env(BUILD)/bin
             set libs [glob Base/builds/$::env(BUILD)/bin/*.so]
             foreach lib $libs {
-                file copy $lib $destdir/Base/builds/$::env(BUILD)/bin
+                file copy $lib $archivedir/Base/builds/$::env(BUILD)/bin
                 set ll [file tail $lib]
-                exec strip $destdir/Base/builds/$::env(BUILD)/bin/$ll
+                exec strip $archivedir/Base/builds/$::env(BUILD)/bin/$ll
             }
         }
         "Darwin" {
-            file mkdir $destdir/Base/builds/$::env(BUILD)/bin
+            file mkdir $archivedir/Base/builds/$::env(BUILD)/bin
             set libs [glob Base/builds/$::env(BUILD)/bin/*.dylib]
             foreach lib $libs {
-                file copy $lib $destdir/Base/builds/$::env(BUILD)/bin
+                file copy $lib $archivedir/Base/builds/$::env(BUILD)/bin
             }
         }
         default { 
-            file mkdir $destdir/Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)
+            file mkdir $archivedir/Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)
             set libs [glob Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)/*.dll]
             foreach lib $libs {
-                file copy $lib $destdir/Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)
+                file copy $lib $archivedir/Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)
             }
         }
     }
@@ -489,7 +499,7 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
 
         puts "    $mod"
 
-        set moddest $destdir/Modules/$mod
+        set moddest $archivedir/Modules/$mod
         file mkdir $moddest
         if { [file exists $moddir/tcl] } {
             file copy -force $moddir/tcl $moddest
@@ -550,20 +560,27 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
     #
     # remove any stray CVS dirs in target
     #
-    foreach cvsdir [rglob $destdir CVS] {
+    foreach cvsdir [rglob $archivedir CVS] {
         file delete -force $cvsdir
     }
+} 
+# end of skipping making the archive
 
     #
     # make an archive of the new directory at the same level
     # with the destination
     #
     if { $create_archive == "true" } {
-        cd $destdir/..
-        set archroot [file tail $destdir]
+        cd $archivedir/..
+
+        set archroot [file tail $archivedir]
+
+        # make and save the archive file name and extension for unix systems, reset for win32
+        set curlfile [file dirname $archivedir]/$archroot.tar.gz
+        set curldestext ".tar.gz"
         switch $::tcl_platform(os) {
             "SunOS" {
-                puts " -- making $archroot.tar.gz from $destdir"
+                puts " -- making $archroot.tar.gz from $archivedir"
                 #exec gtar cvfz $archroot.tar.gz $archroot
                 exec tar cfE $archroot.tar $archroot
                 exec gzip -f $archroot.tar
@@ -576,35 +593,45 @@ proc tarup { {destdir "auto"} {includeSource 0} } {
             default { 
                 puts " -- making $archroot.zip"
                 exec zip -r $archroot.zip $archroot
+                set curlfile $archroot.zip
+                set curldestext ".zip"
             }
         }
     }
 
     if { $do_upload == "true" } {
-    set scpdestination "$::env(USER)@slicerl.bwh.harvard.edu:/usr/local/apache2/htdocs/snapshots/slicer2.6"
-        puts " -- upload to $scpdestination"
+
+        set namic_url "http://www.na-mic.org/Slicer/Upload.cgi"
+        switch $uploadFlag {
+            "nightly" {
+                set curldest "${namic_url}/Nightly/slicer$::SLICER(version)-${target}${suffix}${curldestext}"
+            }
+            "snapshot" {
+                set curldest "${namic_url}/Snapshots/$::env(BUILD)/slicer$::SLICER(version)-${target}${suffix}-${date}${curldestext}"
+            }
+            "release" {
+                set curldest "${namic_url}/Release/$::env(BUILD)/slicer$::SLICER(version)-${target}${suffix}-${date}${curldestext}"
+            }
+            default {
+                puts "Invalid uploadFlag \"$uploadFlag\", setting curldest to snapshot value"
+                set curldest "${namic_url}/Snapshots/$::env(BUILD)/slicer$::SLICER(version)-${target}${suffix}-${date}${curldestext}"
+            }
+        }
+
+        puts " -- upload $curlfile to $curldest"
         switch $::tcl_platform(os) {
             "SunOS" -
             "Linux" - 
             "Darwin" {
-                exec xterm -e scp $archroot.tar.gz $scpdestination
+                exec xterm -e curl --connect-timeout 120 --silent --show-error --upload-file $curlfile $curldest
             }
             default { 
-                puts "rxvt -e scp $archroot.zip $scpdestination &"
-                exec rxvt -e scp $archroot.zip $scpdestination &
+                exec rxvt -e curl --connect-timeout 120 --silent --show-error --upload-file $curlfile $curldest
             }
         }
+        puts "See http://www.na-mic.org/Slicer/Download, in the $uploadFlag directory, for the uploaded file."
     } else {
-        switch $::tcl_platform(os) {
-            "SunOS" -
-            "Linux" - 
-            "Darwin" {
-                puts "Archive complete: [file dirname $destdir]/$archroot.tar.gz"
-            }
-            default { 
-                puts "Archive complete: [file dirname $destdir]/$archroot.zip"
-            }
-        }
+        puts "Archive complete: ${curlfile}"
     }
 
     cd $cwd
