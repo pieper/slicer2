@@ -19,11 +19,12 @@ INCLUDE_DIRECTORIES(
 
 LINK_DIRECTORIES( 
    ${SANDBOX_BUILD_DIR}
+   ${TEEM_BIN_DIR}
 )
 
 FOREACH(test testCluster)
   ADD_EXECUTABLE("${MODULE_NAME}.${test}" "${test}.cxx")
-  TARGET_LINK_LIBRARIES(${MODULE_NAME}.${test} vtkDTMRI ITKNumerics)
+  TARGET_LINK_LIBRARIES(${MODULE_NAME}.${test} vtkDTMRI ITKNumerics ten)
   ADD_TEST("${MODULE_NAME}.${test}"
     "${SLICER_EXECUTABLE}" --agree_to_license
     "${CTEST_SLICER_HOME}/Scripts/runCxxTest.tcl"
