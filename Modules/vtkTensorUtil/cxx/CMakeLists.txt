@@ -22,8 +22,8 @@ INCLUDE (${VTKTENSORUTIL_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 
 IF (VTK_WRAP_TCL AND VTKTENSORUTIL_WRAP_TCL)
 
-  VTK_WRAP_TCL (vtkTensorUtilTCL TensorUtilTCL_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkTensorUtilTCL TensorUtilTCL_SRCS)
+  VTK_WRAP_TCL (vtkTensorUtilTCL TensorUtilTCL_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkTensorUtilTCL ${TensorUtilTCL_SRCS})
   TARGET_LINK_LIBRARIES (vtkTensorUtilTCL 
                          vtkIOTCL 
                          vtkGraphicsTCL 
@@ -55,7 +55,7 @@ ENDIF (VTK_WRAP_TCL AND VTKTENSORUTIL_WRAP_TCL)
 
 IF (VTK_WRAP_PYTHON AND VTKTENSORUTIL_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkTensorUtilPython TensorUtilPython_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_PYTHON (vtkTensorUtilPython TensorUtilPython_SRCS ${LOCAL_MODULE_SRCS})
 
   IF (APPLE)
     ADD_LIBRARY (vtkTensorUtilPython MODULE TensorUtilPython_SRCS)
@@ -106,7 +106,7 @@ ENDIF (VTK_WRAP_PYTHON AND VTKTENSORUTIL_WRAP_PYTHON)
 
 IF (VTK_WRAP_JAVA AND VTKTENSORUTIL_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkTensorUtilJava TensorUtilJava_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_JAVA (vtkTensorUtilJava TensorUtilJava_SRCS ${LOCAL_MODULE_SRCS})
   ADD_LIBRARY (vtkTensorUtilJava SHARED TensorUtilJava_SRCS)
   TARGET_LINK_LIBRARIES (vtkTensorUtilJava 
                          vtkIOJava
