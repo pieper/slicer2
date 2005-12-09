@@ -473,3 +473,12 @@ proc fMRIEngineHelpSelectLabels { } {
 }
 
 
+proc fMRIEngineHelpPreWhitenData { } {
+    #--- ROI->Stats
+    #--- Select labels for region analysis 
+    set i [ fMRIEngineGetHelpWinID ]
+    set txt "<H3>Temporal Autocorrelation in the timecourse.</H3>
+<P> In order for the GLM to work properly, the residuals corresponding to any pair of data points within a voxel timecourse should be uncorrelated; however, serial samples within each voxel timecourse are likely to be correlated. To remove temporal correlations in the data, the GLM is fitted first without considering them. Residals are then computed in this first pass (by subtracting the model from the data) and their autocorrelation structure is analyzed by computing the one-lag autocorrelation AR(1). The data are then 'whitened' (see Worsely et al. 2002, A general statistical analysis for fMRI data. <I>NeuroImage</I>, 15(1):1-15) and the model is re-fit. These final parameter estimates are used in all subsequent statistical testing of the associated model."
+    DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
+}
+
