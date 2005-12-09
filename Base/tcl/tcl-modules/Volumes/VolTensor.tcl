@@ -553,6 +553,11 @@ proc VolTensorMakeTendVTKIntoTensors {v} {
     # id list and do MRML things
     # after flipping Y and negating the x cross terms in tensors
 
+    if { [Volume($v,node) GetScanOrder] != "IS" } {
+        DevWarningWindow "Warning: Tensor import from the tend program has only been tested for Axial IS volumes"
+    }
+
+
     # put output into a tensor volume
     # Create the node (vtkMrmlVolumeNode class)
     set newvol [MainMrmlAddNode Volume Tensor]
