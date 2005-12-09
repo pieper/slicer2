@@ -47,6 +47,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "vtkTensorUtilConfigure.h"
 #include "vtkImageToImageFilter.h"
+#include "vtkFloatArray.h"
 #include "vtkImageData.h"
 
 class VTK_TENSORUTIL_EXPORT vtkTensorFlip : public vtkImageToImageFilter
@@ -55,6 +56,9 @@ public:
   static vtkTensorFlip *New();
   vtkTypeMacro(vtkTensorFlip,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
+
+  vtkFloatArray *GetOutTensors() { return (this->OutTensors); }
+  
 
 protected:
   vtkTensorFlip();
@@ -71,6 +75,10 @@ protected:
   // before threading happens.  This replaces the superclass 
   // vtkImageMultipleInputFilter's Execute function.
   void ExecuteData(vtkDataObject *out);
+
+  // need to store our own copy of the tensors during the pipeline execution, because
+  // vtk will copy the input tensors over to the output by default
+  vtkFloatArray *OutTensors;
 };
 
 #endif

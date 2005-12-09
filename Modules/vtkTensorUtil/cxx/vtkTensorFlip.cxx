@@ -74,7 +74,6 @@ void vtkTensorFlip::ExecuteInformation(vtkImageData *inData,
   int ext[6];
 
   inData->GetWholeExtent(ext);
-  
   outData->SetWholeExtent(ext);
 }
 
@@ -88,7 +87,6 @@ static void vtkTensorFlipExecute(vtkTensorFlip *self, int ext[6],
 {
   int num0, num1, num2;
   int idx0, idx1, idx2;
-  int inInc0, inInc1, inInc2;
   int outInc0, outInc1, outInc2;
   unsigned long count = 0;
   unsigned long target;
@@ -100,10 +98,10 @@ static void vtkTensorFlipExecute(vtkTensorFlip *self, int ext[6],
 
   int ptId;
 
-  // input tensors
-  inTensors = self->GetInput()->GetPointData()->GetTensors();
-  // output tensors
-  outTensors = self->GetOutput()->GetPointData()->GetTensors();
+  // input tensors come from the inData
+  inTensors = inData->GetPointData()->GetTensors();
+  // output tensors are an ivar that gets put on the output later (avoids default overwrite by pipeline)
+  outTensors = (vtkDataArray *) self->GetOutTensors();
 
 
   //Raul: Bad ptId inizialization
@@ -117,14 +115,12 @@ static void vtkTensorFlipExecute(vtkTensorFlip *self, int ext[6],
   ptId = ((ext[0] - outFullUpdateExt[0]) * outInc[0]
          + (ext[2] - outFullUpdateExt[2]) * outInc[1]
          + (ext[4] - outFullUpdateExt[4]) * outInc[2]);
-  
-  // Get the full extent of the output so we can mirror the Y axis
-  int *outFullExt = outData->GetExtent();
+
+  // Get the full size of the output so we can mirror the Y axis
   int *outFullDims = outData->GetDimensions();
   int ptIdOut;
 
   // Get information to march through data 
-  inData->GetContinuousIncrements(ext, inInc0, inInc1, inInc2);
   outData->GetContinuousIncrements(ext, outInc0, outInc1, outInc2);
   num0 = ext[1] - ext[0] + 1;
   num1 = ext[3] - ext[2] + 1;
@@ -141,19 +137,25 @@ static void vtkTensorFlipExecute(vtkTensorFlip *self, int ext[6],
       if (!id) 
         {
         if (!(count%target))
-        {
+          {
           self->UpdateProgress(count/(50.0*target));
-        }
+          }
         count++;
         }
+
+      //
+      // cacluate the corresponding point index for the mirror relative to the full
+      // input image (in case the output extent is just a small window)
+      //
       int sliceSize = outFullDims[0] * outFullDims[1];
-      int ptIdSlice = (ptId - outFullExt[0]) / sliceSize;
-      int sliceStartId = outFullExt[0] + ptIdSlice * sliceSize;
+      int ptIdSlice = ptId / sliceSize;
+      int sliceStartId = ptIdSlice * sliceSize;
       int ptIdInSlice = (ptId - sliceStartId);
       int ptIdRow = ptIdInSlice / outFullDims[0];
       int rowStartId = sliceStartId + ptIdRow * outFullDims[0];
 
-      int outRowId = sliceStartId + (outFullDims[1] - ptIdRow -1);
+      int outRow = outFullDims[1] - ptIdRow -1;
+      int outRowId = sliceStartId + (outRow * outFullDims[0]);
       ptIdOut = outRowId + ext[0];
 
       for (idx0 = 0; idx0 < num0; ++idx0)
@@ -195,16 +197,20 @@ void vtkTensorFlip::ExecuteData(vtkDataObject *out)
   // set extent so we know how many tensors to allocate
   output->SetExtent(output->GetUpdateExtent());
 
-  // allocate output tensors
+  // allocate output tensors -- save them in the 
+  // instance variable for calculation by the threads
+  // otherwise the superclass will overwrite them
   vtkFloatArray* data = vtkFloatArray::New();
   int* dims = output->GetDimensions();
   data->SetNumberOfComponents(9);
   data->SetNumberOfTuples(dims[0]*dims[1]*dims[2]);
-  output->GetPointData()->SetTensors(data);
-  data->Delete();
+  this->OutTensors = data;
 
   // jump back into normal pipeline: call standard superclass method here
   this->vtkImageToImageFilter::ExecuteData(out);
+
+  output->GetPointData()->SetTensors(data);
+  data->Delete();
 }
 
 //----------------------------------------------------------------------------
