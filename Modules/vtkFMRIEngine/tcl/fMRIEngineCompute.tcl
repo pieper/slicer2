@@ -135,6 +135,7 @@ proc fMRIEngineComputeContrasts {} {
                         unset -nocomplain fMRIEngine(actVolumeGenerator)
                 }
                 vtk$fMRIEngine(detectionMethod)VolumeGenerator fMRIEngine(actVolumeGenerator)
+                fMRIEngine(actVolumeGenerator) SetPreWhitening $::fMRIEngine(checkbuttonPreWhiten)
 
                 # adds progress bar
                 set obs1 [fMRIEngine(actVolumeGenerator) AddObserver StartEvent MainStartProgress]
