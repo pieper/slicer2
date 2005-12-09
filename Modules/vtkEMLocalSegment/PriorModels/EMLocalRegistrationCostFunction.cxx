@@ -370,10 +370,10 @@ void EMLocalRegistrationCostFunction::MultiThreadDefine(int DisableFlag) {
 void EMLocalRegistrationCostFunction::ScaleRotationValues(double *FinalParameters) {
   int ParaIndex        = (this->TwoDFlag ? 3 : 4);
   for (int j = 0; j < this->NumberOfParameterSets; j++) {      
-    FinalParameters[ParaIndex] = fmod(FinalParameters[ParaIndex],(float)180.0);
+    FinalParameters[ParaIndex] = fmod(FinalParameters[ParaIndex],(double)180.0);
     if (!this->TwoDFlag) {
-      FinalParameters[ParaIndex + 1] = fmod(FinalParameters[ParaIndex + 1],(float)180.0);
-      FinalParameters[ParaIndex + 2] = fmod(FinalParameters[ParaIndex + 2],(float)180.0);
+      FinalParameters[ParaIndex + 1] = fmod(FinalParameters[ParaIndex + 1],(double)180.0);
+      FinalParameters[ParaIndex + 2] = fmod(FinalParameters[ParaIndex + 2],(double)180.0);
     }
     ParaIndex += this->NumberOfParameterPerSet;
   }
