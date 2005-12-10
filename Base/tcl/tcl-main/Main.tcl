@@ -465,7 +465,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.127 $} {$Date: 2005/12/10 19:51:40 $}]
+        {$Revision: 1.128 $} {$Date: 2005/12/10 19:58:38 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -1677,13 +1677,10 @@ proc MainMenu {menu cmd} {
                     {"MRML Files" {.mrml}}
                     {"All Files" {*}}
                 }
-                if {[catch {set file [tk_getOpenFile -title "Import File" -defaultextension ".xml" \
-                                              -filetypes $typelist -initialdir "$dir"} errMsg] == 1} {
-                    DevErrorWindow "MainFileOpen: error opening file $file:\n$errMsg"
-                } else {
-                    if { $file != "" } {
-                        MainMrmlImport $file    
-                    }
+                set file [tk_getOpenFile -title "Import File" -defaultextension ".xml" \
+                        -filetypes $typelist -initialdir $::Mrml(dir)]
+                if { $file != "" } {
+                    MainMrmlImport $file    
                 }
             }
             "Save" {
