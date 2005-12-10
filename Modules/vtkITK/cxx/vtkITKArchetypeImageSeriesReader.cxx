@@ -3,8 +3,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/12/04 17:26:07 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2005/12/10 17:17:43 $
+  Version:   $Revision: 1.8 $
 
   Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -27,6 +27,8 @@
 
 #include "itkExceptionObject.h"
 
+// Commented out redefinition of ExceptionMacro
+#ifdef REDEFINE_EXCEPTION_MACROS
 // turn itk exceptions into vtk errors
 #undef itkExceptionMacro  
 #define itkExceptionMacro(x) \
@@ -44,6 +46,7 @@
   message << "itk::ERROR: " x; \
   std::cerr << message.str().c_str() << std::endl; \
   }
+#endif
 
 #include "itkArchetypeSeriesFileNames.h"
 #include "itkImage.h"
@@ -56,7 +59,7 @@
 #include "itkGDCMImageIO.h"
 #include <itksys/SystemTools.hxx>
 
-vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.7 $");
+vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.8 $");
 vtkStandardNewMacro(vtkITKArchetypeImageSeriesReader);
 
 //----------------------------------------------------------------------------
@@ -255,7 +258,7 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
   typedef itk::ImageSource<ImageType> FilterType;
   FilterType::Pointer filter;
 
-  itk::ImageIOBase::Pointer imageIO;
+  itk::ImageIOBase::Pointer imageIO = NULL;
 
   // If there is only one file in the series, just use an image file reader
   if (this->FileNames.size() == 1)
@@ -302,6 +305,11 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
     extent[4] = region.GetIndex()[2];
     extent[5] = region.GetIndex()[2] + region.GetSize()[2] - 1;
     imageIO = imageReader->GetImageIO();
+    if (imageIO.GetPointer() == NULL) 
+      {
+        itkGenericExceptionMacro ( "vtkITKArchetypeImageSeriesReader::ExecuteInformation: ImageIO for file " << fileNameCollapsed.c_str() << " does not exist.");
+        return;
+      }
     }
   else
     {
@@ -312,9 +320,17 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
     seriesReader->SetFileNames(this->FileNames);
     if (isDicomFile)
       {
-      seriesReader->SetImageIO(dicomIO);
+        seriesReader->SetImageIO(dicomIO);
       }
-    
+    else 
+      {
+        imageIO = seriesReader->GetImageIO();
+        if (imageIO.GetPointer() == NULL) 
+          {
+            itkGenericExceptionMacro ( "vtkITKArchetypeImageSeriesReader::ExecuteInformation: ImageIO for file " << fileNameCollapsed.c_str() << " does not exist.");
+            return;
+          }
+      }
     if (this->UseNativeCoordinateOrientation)
       {
       seriesReader->UpdateOutputInformation();
@@ -348,7 +364,7 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
     extent[5] = region.GetIndex()[2] + region.GetSize()[2] - 1;
     imageIO = seriesReader->GetImageIO();
     }
-
+  
   // Transform from LPS to RAS
   vtkMatrix4x4* LpsToRasMatrix = vtkMatrix4x4::New();
   LpsToRasMatrix->Identity();
