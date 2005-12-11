@@ -106,7 +106,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.25 $} {$Date: 2005/12/05 15:23:35 $}]
+        {$Revision: 1.26 $} {$Date: 2005/12/11 03:27:46 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -593,7 +593,7 @@ proc EMAtlasBrainClassifierVolumeWriter {VolID} {
     
     MainVolumesWrite $VolID $prefix 
     # RM unnecssary xml file 
-    catch {file delete -force [file join [file dirname [Volume($VolID,node) GetFullPrefix]] [Volume($VolID,node) GetFilePrefix]].xml }
+    # catch {file delete -force [file join [file dirname [Volume($VolID,node) GetFullPrefix]] [Volume($VolID,node) GetFilePrefix]].xml }
 }
 
 
@@ -640,20 +640,26 @@ proc EMAtlasBrainClassifierResetEMSegment { } {
     set EMSegment(NumClassesNew) 0
     EMSegmentCreateDeleteClasses 1 1 0
     # now delete Nodes of Superclass 0
-    if {$EMSegment(Cattrib,0,Node) != ""} {    
-    MainMrmlDeleteNode SegmenterSuperClass [$EMSegment(Cattrib,0,Node) GetID]
-    set EMSegment(Cattrib,0,Node) ""
+    if {$EMSegment(Cattrib,0,Node) != ""} { 
+      if { [catch {set ID [$EMSegment(Cattrib,0,Node) GetID]}] == 0} {
+        MainMrmlDeleteNode SegmenterSuperClass $ID 
+      }
+      set EMSegment(Cattrib,0,Node) ""
     }
 
     foreach dir $EMSegment(CIMList) {
-    if {$EMSegment(Cattrib,0,CIMMatrix,$dir,Node) != ""}  {
-        MainMrmlDeleteNode SegmenterCIM [$EMSegment(Cattrib,0,CIMMatrix,$dir,Node) GetID]
-        set EMSegment(Cattrib,0,CIMMatrix,$dir,Node) ""
-    }
+       if {$EMSegment(Cattrib,0,CIMMatrix,$dir,Node) != ""}  {
+       if { [catch {set ID [$EMSegment(Cattrib,0,CIMMatrix,$dir,Node) GetID]}] == 0 } {
+              MainMrmlDeleteNode SegmenterCIM $ID 
+       }
+           set EMSegment(Cattrib,0,CIMMatrix,$dir,Node) ""
+       }
     } 
 
     if {$EMSegment(Cattrib,0,EndNode) != ""} {
-    lappend  MrmlNodeDeleteList "EndSegmenterSuperClass [$EMSegment(Cattrib,0,EndNode) GetID]" 
+        if { [catch {set ID [$EMSegment(Cattrib,0,EndNode) GetID]}] == 0 } {
+        lappend  MrmlNodeDeleteList "EndSegmenterSuperClass $ID"
+    } 
     set EMSegment(Cattrib,0,EndNode) ""
     }
 
@@ -1145,13 +1151,13 @@ proc EMAtlasBrainClassifier_AtlasRegistration {RegisterAtlasDirList RegisterAtla
    puts "============= Start registeration"  
   
    EMAtlasBrainClassifierRegistration $VolIDTarget $VolIDSource
-
+    
    # Define Registration output volume 
    set VolIDOutput [DevCreateNewCopiedVolume $TemplateIDInput "" "RegisteredSPGR"]
 
    # Resample the Atlas SPGR
    EMAtlasBrainClassifierResample  $VolIDTarget $VolIDSource $VolIDOutput 0 
-  
+
    # Clean up 
    if {$EMAtlasBrainClassifier(Save,Atlas)} {
       set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/spgr/I"
@@ -1309,7 +1315,7 @@ proc EMAtlasBrainClassifierDownloadAtlas { } {
 # int inSource
 # .END
 #-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifierRegistration {inTarget inSource} {
+proc EMAtlasBrainClassifierRegistration {inTarget inSource {LinearRegistrationType 2}} {
     global EMAtlasBrainClassifier Volume AG 
    
     
@@ -1354,7 +1360,8 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource} {
     ## Metric: 1=GCR-L1,2=GCR-L2,3=Correlation,4=MI
     GCR SetCriterion       4 
     ## Tfm type: -1=translation, 0=rigid, 1=similarity, 2=affine
-    GCR SetTransformDomain 2 
+    GCR SetTransformDomain $LinearRegistrationType
+ 
     ## 2D registration only?
     GCR SetTwoD 0
   
@@ -1445,9 +1452,20 @@ proc EMAtlasBrainClassifierResample {inTarget inSource outResampled bgValue} {
     # Do it!
     Reslicer Update
 
+    # Make sure that no values are negative 
+    catch "Threshold Delete"
+    vtkImageThreshold Threshold
+        Threshold SetInput [Reslicer GetOutput] 
+    Threshold ThresholdByLower 0
+        Threshold ReplaceOutOff
+     Threshold SetInValue 0 
+        Threshold SetOutputScalarType [Target GetScalarType]
+    Threshold Update
+    
     catch "Resampled Delete"
     vtkImageData Resampled
-    Resampled DeepCopy [Reslicer GetOutput]
+
+    Resampled DeepCopy [Threshold GetOutput]
 
     Volume($outResampled,vol) SetImageData  Resampled
     Resampled SetOrigin 0 0 0
@@ -1456,7 +1474,9 @@ proc EMAtlasBrainClassifierResample {inTarget inSource outResampled bgValue} {
     Cast Delete
     ITrans Delete
     Reslicer Delete
+    Threshold Delete
 }
+
 
 
 ##################
@@ -2208,13 +2228,13 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
 # 
 # .END
 #-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_BatchMode {{SegmentationMode EMAtlasBrainClassifier} {AlgorithmVersion Standard} } {
+proc EMAtlasBrainClassifier_BatchMode {{SegmentationMode EMAtlasBrainClassifier} {AlgorithmVersion Standard} {SPGRVolID 1} {T2VolID 2} {ExitFlag 1}} {
     global Mrml EMAtlasBrainClassifier Volume
  
     set EMAtlasBrainClassifier(WorkingDirectory) $Mrml(dir)
 
-    set EMAtlasBrainClassifier(Volume,SPGR) [Volume(1,node) GetID]
-    set EMAtlasBrainClassifier(Volume,T2W)  [Volume(2,node) GetID]
+    set EMAtlasBrainClassifier(Volume,SPGR) [Volume($SPGRVolID,node) GetID]
+    set EMAtlasBrainClassifier(Volume,T2W)  [Volume($T2VolID,node) GetID]
 
     # If you set EMAtlasBrainClassifier(BatchMode) to 1 also 
     # set EMAtlasBrainClassifier(Save,*) otherwise when saving xml file 
@@ -2231,6 +2251,7 @@ proc EMAtlasBrainClassifier_BatchMode {{SegmentationMode EMAtlasBrainClassifier}
     SplashKill
  
     EMAtlasBrainClassifierStartSegmentation
-    MainExitProgram
+    
+    if {$ExitFlag} {MainExitProgram}
 }
 
