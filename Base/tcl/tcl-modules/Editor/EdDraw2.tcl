@@ -568,8 +568,8 @@ proc EdDraw2Apply { {delete_pending true} } {
     set shape    $Ed($e,shape)
     set density  $Ed($e,density)
 
-    set inum $Interactor(s)
-    set snum $Slice($Interactor(s),offset)
+    set inum [Slicer GetActiveSlice]
+    set snum $Slice($inum,offset)
 
     #### How points selected by the user get here ###########
     # odonnell, 11-3-2000
@@ -642,7 +642,6 @@ proc EdDraw2Apply { {delete_pending true} } {
         set n [$poly GetNumberOfPoints]
         # If polygon empty, don't apply it.  It was already removed above
         if { $n > 0 } {
-            #Slicer DrawComputeIjkPointsInterpolated $Slice($Interactor(s),offset) $p
             Slicer DrawComputeIjkPointsInterpolated $inum $snum $p
             set points [Slicer GetDrawIjkPoints]
             set preshape [Slicer StackGetPreshape $inum $snum $p]
@@ -698,8 +697,8 @@ proc EdDraw2Unapply {} {
     global Ed Volume Label Gui Slice Interactor
 
     set e EdDraw2
-    set inum $Interactor(s)
-    set snum $Slice($Interactor(s),offset)
+    set inum [Slicer GetActiveSlice]
+    set snum $Slice($inum,offset)
 
     Slicer DrawDeleteAll
     if { [EdDraw2GetSlice $inum] != $snum } {
