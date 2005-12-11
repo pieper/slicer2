@@ -288,7 +288,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.64 $} {$Date: 2005/11/29 05:19:31 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.65 $} {$Date: 2005/12/11 03:36:21 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -4194,8 +4194,13 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses {HeadClass 1
             # Remove from Global list
             set EMSegment(GlobalSuperClassList) [lreplace $EMSegment(GlobalSuperClassList) $SCindex $SCindex]  
          
+        if {$EMSegment(Cattrib,$i,Node) != "" && [catch {$EMSegment(Cattrib,$i,Node) GetID}]} {
+        # Node was already deleted 
+        set EMSegment(Cattrib,$i,Node) "" 
+        }
             # Delete Node from Graph and unset 
-            if {$EMSegment(Cattrib,$i,Node) != "" && $DeleteNode} { 
+
+            if {$EMSegment(Cattrib,$i,Node) != "" && $DeleteNode } { 
               lappend  MrmlNodeDeleteList "SegmenterSuperClass [$EMSegment(Cattrib,$i,Node) GetID]"
               foreach dir $EMSegment(CIMList) {
                 if {$EMSegment(Cattrib,$i,CIMMatrix,$dir,Node) != ""}  {lappend  MrmlNodeDeleteList "SegmenterCIM [$EMSegment(Cattrib,$i,CIMMatrix,$dir,Node) GetID]"}
@@ -4224,18 +4229,32 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses {HeadClass 1
             set EMSegment(GlobalClassList) [lreplace $EMSegment(GlobalClassList) $Cindex $Cindex]  
 
             # Delete Node from Graph 
-            if {($EMSegment(Cattrib,$i,Node) != "") && $DeleteNode} { lappend  MrmlNodeDeleteList "SegmenterClass [$EMSegment(Cattrib,$i,Node) GetID]" }
-            if {($EMSegment(Cattrib,$i,EndNode) != "") && $DeleteNode} {lappend  MrmlNodeDeleteList "EndSegmenterClass [$EMSegment(Cattrib,$i,EndNode) GetID]" }
+            if {($EMSegment(Cattrib,$i,Node) != "") && $DeleteNode} {
+        if { [catch {set ID [$EMSegment(Cattrib,$i,Node) GetID]}]} {
+            set EMSegment(Cattrib,$i,Node) ""
+        } else {
+            lappend  MrmlNodeDeleteList "SegmenterClass $ID"
+        }
+        }
+            if {($EMSegment(Cattrib,$i,EndNode) != "") && $DeleteNode} {
+        if { [catch {set ID [$EMSegment(Cattrib,$i,EndNode) GetID]}]} {
+            set EMSegment(Cattrib,$i,EndNode) ""
+        } else {
+            lappend  MrmlNodeDeleteList "EndSegmenterClass $ID" 
+        }
+        }
     }
     # ===============================================
     # Applies to both SuperClass and Class
     # ===============================================
 
     # ===============================================
-        # Add to MrmlNodeDeleteList 
-        foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
-            if {[lindex $EigenList 3] != "" && $DeleteNode} {lappend  MrmlNodeDeleteList "MainMrmlDeleteNode SegmenterPCAEigen [[lindex $EigenList 3] GetID]" }
+    # Add to MrmlNodeDeleteList 
+    foreach EigenList $EMSegment(Cattrib,$i,PCAEigen) {
+            if {[lindex $EigenList 3] != "" && $DeleteNode} {
+        lappend  MrmlNodeDeleteList "MainMrmlDeleteNode SegmenterPCAEigen [[lindex $EigenList 3] GetID]" 
         }
+    }
         
     # ===============================================
         # Destory GUI
