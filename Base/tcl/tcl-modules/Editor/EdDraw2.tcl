@@ -44,6 +44,12 @@
 #   EdDraw2Update
 #   EdDraw2Apply
 #   EdDraw2Unapply
+#   EdDraw2GetSlice
+#   EdDraw2SetSlice
+#   EdDraw2GetPolynum
+#   EdDraw2SetPolynum
+#   EdDraw2GetUnapplynum
+#   EdDraw2SetUnapplynum
 #==========================================================================auto=
 
 
@@ -76,11 +82,18 @@ proc EdDraw2Init {} {
     set Ed($e,preshape) Polygon
     set Ed($e,render) Active
     set Ed($e,density) 3
-    set Ed($e,slice) -1
-    set Ed($e,polynum) -1
-    set Ed($e,unapplynum) -1
+    set Ed($e,slice0) -1
+    set Ed($e,slice1) -1
+    set Ed($e,slice2) -1
+    set Ed($e,polynum0) -1
+    set Ed($e,polynum1) -1
+    set Ed($e,polynum2) -1
+    set Ed($e,unapplynum0) -1
+    set Ed($e,unapplynum1) -1
+    set Ed($e,unapplynum2) -1
     set Ed($e,closed) Closed
     set Ed($e,clear) No
+    set Ed($e,spline) Yes
 
     set Ed($e,eventManager) {}
     
@@ -110,8 +123,9 @@ proc EdDraw2BuildGUI {} {
     frame $f.fShape   -bg $Gui(activeWorkspace)
     frame $f.fApply   -bg $Gui(activeWorkspace)
     frame $f.fToggle  -bg $Gui(activeWorkspace)
+    frame $f.fSpline  -bg $Gui(activeWorkspace)
     pack $f.fGrid $f.fBtns $f.fClosed $f.fMode $f.fClear $f.fDelete \
-        $f.fRender $f.fShape $f.fApply -side top -pady 2 -fill x
+        $f.fSpline $f.fRender $f.fShape $f.fApply -side top -pady 2 -fill x
     pack $f.fToggle -side bottom -pady 4 -fill x
     
     EdBuildRenderGUI $Ed(EdDraw2,frame).fRender Ed(EdDraw2,render)
@@ -234,6 +248,21 @@ proc EdDraw2BuildGUI {} {
         eval {radiobutton $f.r$s -width $width -indicatoron 0\
             -command "EdDraw2Update SetShape; RenderActive" \
             -text "$text" -value "$s" -variable Ed(EdDraw2,closed)} $Gui(WCA)
+        pack $f.r$s -side left -fill x -anchor e
+    }
+
+    #-------------------------------------------
+    # Draw->Spline frame
+    #-------------------------------------------
+    set f $Ed(EdDraw2,frame).fSpline
+
+    eval {label $f.l -text "Show Spline:"} $Gui(WLA)
+    pack $f.l -side left -pady $Gui(pad) -padx $Gui(pad) -fill x
+
+    foreach s "Yes No" text "Yes No" width "4 3" {
+        eval {radiobutton $f.r$s -width $width -indicatoron 0\
+            -command "EdDraw2Update SetShape; RenderActive" \
+            -text "$text" -value "$s" -variable Ed(EdDraw2,spline)} $Gui(WCA)
         pack $f.r$s -side left -fill x -anchor e
     }
 
@@ -442,6 +471,11 @@ proc EdDraw2Update {type} {
                     Slicer DrawSetClosed 0
                 }
             }
+            if { $Ed($e,spline) == "Yes" } {
+                Slicer DrawSetHideSpline 0
+            } else {
+                Slicer DrawSetHideSpline 1
+            }
             Slicer DrawSetShapeTo$Ed($e,shape)
             set Ed($e,shape) [Slicer GetShapeString]
         }
@@ -505,6 +539,25 @@ proc EdDraw2Apply { {delete_pending true} } {
         tk_messageBox -message "Point Radius is not an integer."
         return
     }
+    if {[ValidateInt $Ed($e,density)] == 0} {
+        tk_messageBox -message "Sampling Density is not an integer."
+        return
+    }
+
+    # (CTJ) Check that point radius and sampling density are nonnegative
+    if {$Ed($e,radius) < 0} {
+        tk_messageBox -message "Point Radius is negative."
+        return
+    }
+    if {$Ed($e,density) < 0} {
+        tk_messageBox -message "Sampling Density is negative."
+        return
+    }
+
+    # (CTJ) If spline mode off, don't sample points on the spline!
+    if { $Ed($e,spline) != "Yes" } {
+        set Ed($e,density) 0
+    }
 
     EdSetupBeforeApplyEffect $v $Ed($e,scope) Active
 
@@ -514,6 +567,9 @@ proc EdDraw2Apply { {delete_pending true} } {
     set radius   $Ed($e,radius)
     set shape    $Ed($e,shape)
     set density  $Ed($e,density)
+
+    set inum $Interactor(s)
+    set snum $Slice($Interactor(s),offset)
 
     #### How points selected by the user get here ###########
     # odonnell, 11-3-2000
@@ -535,20 +591,23 @@ proc EdDraw2Apply { {delete_pending true} } {
     #    other two slices.
     #########################################################
 
-    if { $Ed($e,slice) != $Slice($Interactor(s),offset) } {
-        set Ed($e,slice) $Slice($Interactor(s),offset)
-        set Ed($e,polynum) -1
-        set Ed($e,unapplynum) -1
+    if { [EdDraw2GetSlice $inum] != $snum } {
+        EdDraw2SetSlice $inum $snum
+        EdDraw2SetPolynum $inum -1
+        EdDraw2SetUnapplynum $inum -1
     }
-    if { $Ed($e,unapplynum) != -1 } {
+    if { [EdDraw2GetUnapplynum $inum] != -1 } {
         # Remove unapplied polygon so we can reapply in same slot
-        Slicer StackRemovePolygon $Slice($Interactor(s),offset) $Ed($e,unapplynum)
-        Volume($v,vol) StackRemovePolygon $Slice($Interactor(s),offset) $Ed($e,unapplynum)
-        Slicer RasStackRemovePolygon $Slice($Interactor(s),offset) $Ed($e,unapplynum)
-        Volume($v,vol) RasStackRemovePolygon $Slice($Interactor(s),offset) $Ed($e,unapplynum)
+        set unum [EdDraw2GetUnapplynum $inum]
+        Slicer StackRemovePolygon $inum $snum $unum
+        Volume($v,vol) StackRemovePolygon $inum $snum $unum
+        Slicer RasStackRemovePolygon $inum $snum $unum
+        Volume($v,vol) RasStackRemovePolygon $inum $snum $unum
     }
-    set Ed($e,polynum) [Slicer StackGetNextInsertPosition $Slice($Interactor(s),offset) $Ed($e,polynum)]
-    if { $Ed($e,polynum) == -1} { # Should only be true if polynum was -1 already
+    set pnum [EdDraw2GetPolynum $inum]
+    EdDraw2SetPolynum $inum [Slicer StackGetNextInsertPosition $inum $snum $pnum]
+    set pnum [EdDraw2GetPolynum $inum]
+    if { $pnum == -1 } { # Should only be true if polynum was -1 already
         return
     }
     if { $Ed($e,closed) == "Open" } {
@@ -563,30 +622,31 @@ proc EdDraw2Apply { {delete_pending true} } {
     }
 
     # set polygon and raspolygon in vtkMrmlSlicer and volume object
-    Slicer StackSetPolygon $Slice($Interactor(s),offset) $Ed($e,polynum) $density $closed $preshape $label
-    Volume($v,vol) StackSetPolygon [Slicer DrawGetPoints] $Slice($Interactor(s),offset) $Ed($e,polynum) $density $closed $preshape $label
-    set raspoly [Slicer RasStackSetPolygon $Slice($Interactor(s),offset) $Ed($e,polynum) $density $closed $preshape $label]
-    Volume($v,vol) RasStackSetPolygon $raspoly $Slice($Interactor(s),offset) $Ed($e,polynum) $density $closed $preshape $label
+    Slicer StackSetPolygon $inum $snum $pnum $density $closed $preshape $label
+    Volume($v,vol) StackSetPolygon $inum [Slicer DrawGetPoints] $snum $pnum $density $closed $preshape $label
+    set raspoly [Slicer RasStackSetPolygon $inum $snum $pnum $density $closed $preshape $label]
+    Volume($v,vol) RasStackSetPolygon $inum $raspoly $snum $pnum $density $closed $preshape $label
 
-    set Ed($e,unapplynum) -1
+    EdDraw2SetUnapplynum $inum -1
     # (CTJ) For users who want to clear the current slice's labelmap reapply
     # all manually drawn polygons, there is now a "Clear" option that can be
     # chosen before applying; represented by the toggle variable Ed($e,clear)
     if { $Ed($e,clear) == "Yes" } {
         Ed(editor)   Clear
     }
-    set numapply [Slicer StackGetNumApplyable $Slice($Interactor(s),offset)]
+    set numapply [Slicer StackGetNumApplyable $inum $snum]
     for {set q 0} {$q < $numapply} {incr q} {
         # Get index p of qth polygon to apply
-        set p [Slicer StackGetApplyable $Slice($Interactor(s),offset) $q]
-        set poly [Slicer StackGetPoints $Slice($Interactor(s),offset) $p]
+        set p [Slicer StackGetApplyable $inum $snum $q]
+        set poly [Slicer StackGetPoints $inum $snum $p]
         set n [$poly GetNumberOfPoints]
         # If polygon empty, don't apply it.  It was already removed above
         if { $n > 0 } {
-            Slicer DrawComputeIjkPointsInterpolated $Slice($Interactor(s),offset) $p
+            #Slicer DrawComputeIjkPointsInterpolated $Slice($Interactor(s),offset) $p
+            Slicer DrawComputeIjkPoints $inum $snum $p
             set points [Slicer GetDrawIjkPoints]
-            set preshape [Slicer StackGetPreshape $Slice($Interactor(s),offset) $p]
-            set label [Slicer StackGetLabel $Slice($Interactor(s),offset) $p]
+            set preshape [Slicer StackGetPreshape $inum $snum $p]
+            set label [Slicer StackGetLabel $inum $snum $p]
             if { $preshape == 0 } {
                 set shape "Points"
             } else {
@@ -638,29 +698,33 @@ proc EdDraw2Unapply {} {
     global Ed Volume Label Gui Slice Interactor
 
     set e EdDraw2
+    set inum $Interactor(s)
+    set snum $Slice($Interactor(s),offset)
 
     Slicer DrawDeleteAll
-    if { $Ed($e,slice) != $Slice($Interactor(s),offset) } {
-        set poly [Slicer StackGetPoints $Slice($Interactor(s),offset)]
-        set ind [Slicer StackGetRetrievePosition $Slice($Interactor(s),offset)]
-        set Label(label) [Slicer StackGetLabel $Slice($Interactor(s),offset) $ind]
+    if { [EdDraw2GetSlice $inum] != $snum } {
+        set poly [Slicer StackGetPoints $inum $snum]
+        set ind [Slicer StackGetRetrievePosition $inum $snum]
+        set Label(label) [Slicer StackGetLabel $inum $snum $ind]
         EdDraw2Label
         # n == -1 if poly is NULL
-        set n [Slicer StackGetNumberOfPoints $Slice($Interactor(s),offset)]
+        set n [Slicer StackGetNumberOfPoints $inum $snum]
         for {set i 0} {$i < $n} {incr i} {
             set p [$poly GetPoint $i]
             scan $p "%d %d %d" xx yy zz
             Slicer DrawInsertPoint $xx $yy
         }
-        set Ed($e,slice) $Slice($Interactor(s),offset)
-        set Ed($e,polynum) [Slicer StackGetRetrievePosition $Slice($Interactor(s),offset)]
-        set Ed($e,unapplynum) $Ed($e,polynum)
+        EdDraw2SetSlice $inum $snum
+        EdDraw2SetPolynum $inum [Slicer StackGetRetrievePosition $inum $snum]
+        EdDraw2SetUnapplynum $inum [EdDraw2GetPolynum $inum]
     } else {
-        set Ed($e,polynum) [Slicer StackGetNextRetrievePosition $Slice($Interactor(s),offset) $Ed($e,polynum)]
-        if { $Ed($e,polynum) != -1 } {
-            set Ed($e,unapplynum) $Ed($e,polynum)
-            set poly [Slicer StackGetPoints $Slice($Interactor(s),offset) $Ed($e,polynum)]
-            set Label(label) [Slicer StackGetLabel $Slice($Interactor(s),offset) $Ed($e,polynum)]
+        set pnum [EdDraw2GetPolynum $inum]
+        EdDraw2SetPolynum $inum [Slicer StackGetNextRetrievePosition $inum $snum $pnum]
+        set pnum [EdDraw2GetPolynum $inum]
+        if { $pnum != -1 } {
+            EdDraw2SetUnapplynum $inum $pnum
+            set poly [Slicer StackGetPoints $inum $snum $pnum]
+            set Label(label) [Slicer StackGetLabel $inum $snum $pnum]
             EdDraw2Label
             set n [$poly GetNumberOfPoints]
             for {set i 0} {$i < $n} {incr i} {
@@ -671,4 +735,149 @@ proc EdDraw2Unapply {} {
         }
     }
 }
+
+#-------------------------------------------------------------------------------
+# .PROC EdDraw2GetSlice
+#       
+# .ARGS 
+# .END      
+#-------------------------------------------------------------------------------
+proc EdDraw2GetSlice { windownum } {
+    global Ed
+            
+    set e EdDraw
+            
+    switch $windownum {
+        0 { 
+            return $Ed($e,slice0)
+        }       
+        1 {     
+            return $Ed($e,slice1)
+        }
+        2 {
+            return $Ed($e,slice2)
+        }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EdDraw2SetSlice
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EdDraw2SetSlice { windownum value } {
+    global Ed
+
+    set e EdDraw
+
+    switch $windownum {
+        0 {
+            set Ed($e,slice0) $value
+        }
+        1 {
+            set Ed($e,slice1) $value
+        }
+        2 {
+            set Ed($e,slice2) $value
+        }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EdDraw2GetPolynum
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EdDraw2GetPolynum { windownum } {
+    global Ed
+
+    set e EdDraw
+
+    switch $windownum {
+        0 {
+            return $Ed($e,polynum0)
+        }
+        1 {
+            return $Ed($e,polynum1)
+        }
+        2 {
+            return $Ed($e,polynum2)
+        }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EdDraw2SetPolynum
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EdDraw2SetPolynum { windownum value } {
+    global Ed
+
+    set e EdDraw
+
+    switch $windownum {
+        0 {
+            set Ed($e,polynum0) $value
+        }
+        1 {
+            set Ed($e,polynum1) $value
+        }
+        2 {
+            set Ed($e,polynum2) $value
+        }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EdDraw2GetUnapplynum
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EdDraw2GetUnapplynum { windownum } {
+    global Ed
+
+    set e EdDraw
+
+    switch $windownum {
+        0 {
+            return $Ed($e,unapplynum0)
+        }
+        1 {
+            return $Ed($e,unapplynum1)
+        }
+        2 {
+            return $Ed($e,unapplynum2)
+        }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EdDraw2SetUnapplynum
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EdDraw2SetUnapplynum { windownum value } {
+    global Ed
+
+    set e EdDraw
+
+    switch $windownum {
+        0 {
+            set Ed($e,unapplynum0) $value
+        }
+        1 {
+            set Ed($e,unapplynum1) $value
+        }
+        2 {
+            set Ed($e,unapplynum2) $value
+        }
+    }
+}
+
 
