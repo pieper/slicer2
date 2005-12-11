@@ -643,7 +643,7 @@ proc EdDraw2Apply { {delete_pending true} } {
         # If polygon empty, don't apply it.  It was already removed above
         if { $n > 0 } {
             #Slicer DrawComputeIjkPointsInterpolated $Slice($Interactor(s),offset) $p
-            Slicer DrawComputeIjkPoints $inum $snum $p
+            Slicer DrawComputeIjkPointsInterpolated $inum $snum $p
             set points [Slicer GetDrawIjkPoints]
             set preshape [Slicer StackGetPreshape $inum $snum $p]
             set label [Slicer StackGetLabel $inum $snum $p]
@@ -745,7 +745,7 @@ proc EdDraw2Unapply {} {
 proc EdDraw2GetSlice { windownum } {
     global Ed
             
-    set e EdDraw
+    set e EdDraw2
             
     switch $windownum {
         0 { 
@@ -769,7 +769,7 @@ proc EdDraw2GetSlice { windownum } {
 proc EdDraw2SetSlice { windownum value } {
     global Ed
 
-    set e EdDraw
+    set e EdDraw2
 
     switch $windownum {
         0 {
@@ -793,7 +793,7 @@ proc EdDraw2SetSlice { windownum value } {
 proc EdDraw2GetPolynum { windownum } {
     global Ed
 
-    set e EdDraw
+    set e EdDraw2
 
     switch $windownum {
         0 {
@@ -817,7 +817,7 @@ proc EdDraw2GetPolynum { windownum } {
 proc EdDraw2SetPolynum { windownum value } {
     global Ed
 
-    set e EdDraw
+    set e EdDraw2
 
     switch $windownum {
         0 {
@@ -841,7 +841,7 @@ proc EdDraw2SetPolynum { windownum value } {
 proc EdDraw2GetUnapplynum { windownum } {
     global Ed
 
-    set e EdDraw
+    set e EdDraw2
 
     switch $windownum {
         0 {
@@ -865,7 +865,7 @@ proc EdDraw2GetUnapplynum { windownum } {
 proc EdDraw2SetUnapplynum { windownum value } {
     global Ed
 
-    set e EdDraw
+    set e EdDraw2
 
     switch $windownum {
         0 {
