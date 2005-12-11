@@ -446,7 +446,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
     return this->PolyDraw->GetPointsInterpolated(density);}
   void DrawComputeIjkPoints();
   void DrawComputeIjkPointsInterpolated(int density);
-  void DrawComputeIjkPointsInterpolated(int s, int p);
+  void DrawComputeIjkPointsInterpolated(int window, int s, int p);
   vtkGetObjectMacro(DrawIjkPoints, vtkPoints);
   void DrawSetShapeToPolygon() {this->PolyDraw->SetShapeToPolygon();};
   void DrawSetShapeToLines() {this->PolyDraw->SetShapeToLines();};
@@ -502,27 +502,59 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   };
 
   // ---- Stack of polygons ---- //
-  void StackSetPolygon(int s, int d)
+  void StackSetPolygon(int window, int s, int d)
   {
-    PolyStack->SetPolygon(this->PolyDraw->GetPoints(), s, d);
+    switch (window)
+    {
+      case 0: AxiPolyStack->SetPolygon(this->PolyDraw->GetPoints(), s, d);
+              break;
+      case 1: SagPolyStack->SetPolygon(this->PolyDraw->GetPoints(), s, d);
+              break;
+      case 2: CorPolyStack->SetPolygon(this->PolyDraw->GetPoints(), s, d);
+              break;
+    }
   };
 
-  vtkPoints* StackGetPoints(int s)
+  vtkPoints* StackGetPoints(int window, int s)
   {
-    return this->PolyStack->GetPoints(s);
+    switch (window)
+    {
+      case 0: return this->AxiPolyStack->GetPoints(s);
+              break;
+      case 1: return this->SagPolyStack->GetPoints(s);
+              break;
+      case 2: return this->CorPolyStack->GetPoints(s);
+              break;
+    }
   };
 
-  vtkPoints* StackGetPoints(int s, int p)
+  vtkPoints* StackGetPoints(int window, int s, int p)
   {
-    return this->PolyStack->GetPoints(s, p);
+    switch (window)
+    {
+      case 0: return this->AxiPolyStack->GetPoints(s, p);
+              break;
+      case 1: return this->SagPolyStack->GetPoints(s, p);
+              break;
+      case 2: return this->CorPolyStack->GetPoints(s, p);
+              break;
+    }
   };
 
-  void StackSetPolygon(int s, int p, int d, int closed, int preshape, int label)
+  void StackSetPolygon(int window, int s, int p, int d, int closed, int preshape, int label)
   {
-      PolyStack->SetPolygon(this->PolyDraw->GetPoints(), s, p, d, closed, preshape, label);
+    switch (window)
+    {
+      case 0: AxiPolyStack->SetPolygon(this->PolyDraw->GetPoints(), s, p, d, closed, preshape, label);
+              break;
+      case 1: SagPolyStack->SetPolygon(this->PolyDraw->GetPoints(), s, p, d, closed, preshape, label);
+              break;
+      case 2: CorPolyStack->SetPolygon(this->PolyDraw->GetPoints(), s, p, d, closed, preshape, label);
+              break;
+    }
   };
 
-  vtkPoints* RasStackSetPolygon(int s, int p, int d, int closed, int preshape, int label)
+  vtkPoints* RasStackSetPolygon(int window, int s, int p, int d, int closed, int preshape, int label)
   {
       vtkPoints *polygon = this->PolyDraw->GetPoints();
       vtkFloatingPointType *screenPt;
@@ -540,68 +572,172 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
                                   (vtkFloatingPointType)(rasPt[1]),
                                   (vtkFloatingPointType)(rasPt[2]));
       }
-      RasPolyStack->SetPolygon(rasPts, s, p, d, closed, preshape, label);
+      switch (window)
+      {
+          case 0: AxiRasPolyStack->SetPolygon(rasPts, s, p, d, closed, preshape, label);
+                  break;
+          case 1: SagRasPolyStack->SetPolygon(rasPts, s, p, d, closed, preshape, label);
+                  break;
+          case 2: CorRasPolyStack->SetPolygon(rasPts, s, p, d, closed, preshape, label);
+                  break;
+      }
       return this->rasPts;
   };
 
-  void StackRemovePolygon(int s, int p)
+  void StackRemovePolygon(int window, int s, int p)
   {
-      this->PolyStack->RemovePolygon(s, p);
+      switch (window)
+      {
+          case 0: this->AxiPolyStack->RemovePolygon(s, p);
+                  break;
+          case 1: this->SagPolyStack->RemovePolygon(s, p);
+                  break;
+          case 2: this->CorPolyStack->RemovePolygon(s, p);
+                  break;
+      }
   };
 
-  void RasStackRemovePolygon(int s, int p)
+  void RasStackRemovePolygon(int window, int s, int p)
   {
-      this->RasPolyStack->RemovePolygon(s, p);
+      switch (window)
+      {
+          case 0: this->AxiRasPolyStack->RemovePolygon(s, p);
+                  break;
+          case 1: this->SagRasPolyStack->RemovePolygon(s, p);
+                  break;
+          case 2: this->CorRasPolyStack->RemovePolygon(s, p);
+                  break;
+      }
   };
 
-  int StackGetNumberOfPoints(int s)
+  int StackGetNumberOfPoints(int window, int s)
   {
-      return this->PolyStack->GetNumberOfPoints(s);
+      switch (window)
+      {
+          case 0: return this->AxiPolyStack->GetNumberOfPoints(s);
+                  break;
+          case 1: return this->SagPolyStack->GetNumberOfPoints(s);
+                  break;
+          case 2: return this->CorPolyStack->GetNumberOfPoints(s);
+                  break;
+      }
   };
 
-  int StackGetInsertPosition(int s)
+  int StackGetInsertPosition(int window, int s)
   {
-      return this->PolyStack->ListGetInsertPosition(s);
+      switch (window)
+      {
+          case 0: return this->AxiPolyStack->ListGetInsertPosition(s);
+                  break;
+          case 1: return this->SagPolyStack->ListGetInsertPosition(s);
+                  break;
+          case 2: return this->CorPolyStack->ListGetInsertPosition(s);
+                  break;
+      }
   };
 
-  int StackGetNextInsertPosition(int s, int p)
+  int StackGetNextInsertPosition(int window, int s, int p)
   {
-      return this->PolyStack->ListGetNextInsertPosition(s, p);
+      switch (window)
+      {
+          case 0: return this->AxiPolyStack->ListGetNextInsertPosition(s, p);
+                  break;
+          case 1: return this->SagPolyStack->ListGetNextInsertPosition(s, p);
+                  break;
+          case 2: return this->CorPolyStack->ListGetNextInsertPosition(s, p);
+                  break;
+      }
   };
 
-  int StackGetRetrievePosition(int s)
+  int StackGetRetrievePosition(int window, int s)
   {
-      return this->PolyStack->ListGetRetrievePosition(s);
+      switch (window)
+      {
+          case 0: return this->AxiPolyStack->ListGetRetrievePosition(s);
+                  break;
+          case 1: return this->SagPolyStack->ListGetRetrievePosition(s);
+                  break;
+          case 2: return this->CorPolyStack->ListGetRetrievePosition(s);
+                  break;
+      }
   };
 
-  int StackGetNextRetrievePosition(int s, int p)
+  int StackGetNextRetrievePosition(int window, int s, int p)
   {
-      return this->PolyStack->ListGetNextRetrievePosition(s, p);
+      switch (window)
+      {
+          case 0: return this->AxiPolyStack->ListGetNextRetrievePosition(s, p);
+                  break;
+          case 1: return this->SagPolyStack->ListGetNextRetrievePosition(s, p);
+                  break;
+          case 2: return this->CorPolyStack->ListGetNextRetrievePosition(s, p);
+                  break;
+      }
   };
 
-  int StackGetPreshape(int s, int p)
+  int StackGetPreshape(int window, int s, int p)
   {
-      return this->PolyStack->GetPreshape(s, p);
+      switch (window)
+      {
+          case 0: return this->AxiPolyStack->GetPreshape(s, p);
+                  break;
+          case 1: return this->SagPolyStack->GetPreshape(s, p);
+                  break;
+          case 2: return this->CorPolyStack->GetPreshape(s, p);
+                  break;
+      }
   };
 
-  int StackGetLabel(int s, int p)
+  int StackGetLabel(int window, int s, int p)
   {
-      return this->PolyStack->GetLabel(s, p);
+      switch (window)
+      {
+          case 0: return this->AxiPolyStack->GetLabel(s, p);
+                  break;
+          case 1: return this->SagPolyStack->GetLabel(s, p);
+                  break;
+          case 2: return this->CorPolyStack->GetLabel(s, p);
+                  break;
+      }
   };
 
-  int StackGetNumApplyable(int s)
+  int StackGetNumApplyable(int window, int s)
   {
-      return this->PolyStack->GetNumApplyable(s);
+      switch (window)
+      {
+          case 0: return this->AxiPolyStack->GetNumApplyable(s);
+                  break;
+          case 1: return this->SagPolyStack->GetNumApplyable(s);
+                  break;
+          case 2: return this->CorPolyStack->GetNumApplyable(s);
+                  break;
+      }
   };
 
-  int StackGetApplyable(int s, int q)
+  int StackGetApplyable(int window, int s, int q)
   {
-      return this->PolyStack->GetApplyable(s, q);
+      switch (window)
+      {
+          case 0: return this->AxiPolyStack->GetApplyable(s, q);
+                  break;
+          case 1: return this->SagPolyStack->GetApplyable(s, q);
+                  break;
+          case 2: return this->CorPolyStack->GetApplyable(s, q);
+                  break;
+      }
   };
 
-  void StackClear()
+  void StackClear(int window)
   {
-      this->PolyStack->Clear();
+      switch (window)
+      {
+          case 0: this->AxiPolyStack->Clear();
+                  break;
+          case 1: this->SagPolyStack->Clear();
+                  break;
+          case 2: this->CorPolyStack->Clear();
+                  break;
+      }
   };
 
   // Necessary for calculating the ROI windowsize
@@ -716,8 +852,12 @@ protected:
   vtkImageZoom2D       *Zoom[NUM_SLICES];
   vtkImageDouble2D     *Double[NUM_SLICES];
   vtkImageDrawROI      *PolyDraw;
-  vtkStackOfPolygons *PolyStack;
-  vtkStackOfPolygons *RasPolyStack;
+  vtkStackOfPolygons *AxiPolyStack;
+  vtkStackOfPolygons *AxiRasPolyStack;
+  vtkStackOfPolygons *SagPolyStack;
+  vtkStackOfPolygons *SagRasPolyStack;
+  vtkStackOfPolygons *CorPolyStack;
+  vtkStackOfPolygons *CorRasPolyStack;
   vtkPoints            *rasPts; // temporary RAS version of PolyDraw
   vtkPoints            *CopyPoly;
   vtkImageReformatIJK  *ReformatIJK;

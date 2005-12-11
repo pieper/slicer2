@@ -100,8 +100,12 @@ vtkMrmlSlicer::vtkMrmlSlicer()
   this->FieldOfView = 240.0;
   this->LabelIndirectLUT = NULL;
   this->PolyDraw = vtkImageDrawROI::New();
-  this->PolyStack = vtkStackOfPolygons::New();
-  this->RasPolyStack = vtkStackOfPolygons::New();
+  this->AxiPolyStack = vtkStackOfPolygons::New();
+  this->AxiRasPolyStack = vtkStackOfPolygons::New();
+  this->SagPolyStack = vtkStackOfPolygons::New();
+  this->SagRasPolyStack = vtkStackOfPolygons::New();
+  this->CorPolyStack = vtkStackOfPolygons::New();
+  this->CorRasPolyStack = vtkStackOfPolygons::New();
   this->rasPts = vtkPoints::New();
   this->CopyPoly = vtkPoints::New();
   this->ReformatIJK = vtkImageReformatIJK::New();
@@ -418,8 +422,12 @@ vtkMrmlSlicer::~vtkMrmlSlicer()
     }
   }
   this->PolyDraw->Delete();
-  this->PolyStack->Delete();
-  this->RasPolyStack->Delete();
+  this->AxiPolyStack->Delete();
+  this->AxiRasPolyStack->Delete();
+  this->SagPolyStack->Delete();
+  this->SagRasPolyStack->Delete();
+  this->CorPolyStack->Delete();
+  this->CorRasPolyStack->Delete();
   this->rasPts->Delete();
   this->CopyPoly->Delete();
   this->DrawIjkPoints->Delete();
@@ -2077,13 +2085,23 @@ void vtkMrmlSlicer::DrawComputeIjkPointsInterpolated(int density)
 //----------------------------------------------------------------------------
 // DrawComputeIjkPointsInterpolated
 //----------------------------------------------------------------------------
-void vtkMrmlSlicer::DrawComputeIjkPointsInterpolated(int s, int p)
+void vtkMrmlSlicer::DrawComputeIjkPointsInterpolated(int window, int s, int p)
 {
   vtkFloatingPointType *rasPt;
   int ijkPt[3], i, n, x=0, y=0;
   int as = this->GetActiveSlice();
   vtkPoints *ijk = this->DrawIjkPoints;
-  vtkPoints *ras = PolyStack->GetSampledPolygon(s, p);
+  vtkPoints *ras;
+
+  switch(window)
+  {
+    case 0: ras = AxiPolyStack->GetSampledPolygon(s, p);
+            break;
+    case 1: ras = SagPolyStack->GetSampledPolygon(s, p);
+            break;
+    case 2: ras = CorPolyStack->GetSampledPolygon(s, p);
+            break;
+  }
 
   ijk->Reset();
   n = ras->GetNumberOfPoints();

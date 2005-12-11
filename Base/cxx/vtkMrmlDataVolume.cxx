@@ -73,8 +73,12 @@ vtkMrmlDataVolume::vtkMrmlDataVolume()
   this->Resize = vtkImageResize::New();
   this->HistPlot = vtkImagePlot::New();
   this->ImageData = NULL;
-  this->PolyStack = vtkStackOfPolygons::New();
-  this->RasPolyStack = vtkStackOfPolygons::New();
+  this->AxiPolyStack = vtkStackOfPolygons::New();
+  this->AxiRasPolyStack = vtkStackOfPolygons::New();
+  this->SagPolyStack = vtkStackOfPolygons::New();
+  this->SagRasPolyStack = vtkStackOfPolygons::New();
+  this->CorPolyStack = vtkStackOfPolygons::New();
+  this->CorRasPolyStack = vtkStackOfPolygons::New();
   this->Samples = vtkPoints::New();
   this->ReadWrite = NULL;
 
@@ -113,8 +117,12 @@ vtkMrmlDataVolume::~vtkMrmlDataVolume()
   }
 
   // Delete objects we allocated
-  this->PolyStack->Delete();
-  this->RasPolyStack->Delete();
+  this->AxiPolyStack->Delete();
+  this->AxiRasPolyStack->Delete();
+  this->SagPolyStack->Delete();
+  this->SagRasPolyStack->Delete();
+  this->CorPolyStack->Delete();
+  this->CorRasPolyStack->Delete();
   this->Samples->Delete();
   this->Accumulate->Delete();
   this->Bimodal->Delete();
@@ -133,8 +141,12 @@ void vtkMrmlDataVolume::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Range Auto: " << this->RangeAuto << endl;
 
   os << indent << "ImageData: " << this->ImageData << "\n";
-  os << indent << "PolyStack: " << this->PolyStack << "\n";
-  os << indent << "RasPolyStack: " << this->RasPolyStack << "\n";
+  os << indent << "AxiPolyStack: " << this->AxiPolyStack << "\n";
+  os << indent << "AxiRasPolyStack: " << this->AxiRasPolyStack << "\n";
+  os << indent << "SagPolyStack: " << this->SagPolyStack << "\n";
+  os << indent << "SagRasPolyStack: " << this->SagRasPolyStack << "\n";
+  os << indent << "CorPolyStack: " << this->CorPolyStack << "\n";
+  os << indent << "CorRasPolyStack: " << this->CorRasPolyStack << "\n";
   if (this->ImageData)
   {
     this->ImageData->PrintSelf(os,indent.GetNextIndent());
@@ -661,7 +673,7 @@ int vtkMrmlDataVolume::WritePTS(char *filename)
   return 1;
 }
 
-int vtkMrmlDataVolume::WritePTSFromStack(char *filename,
+int vtkMrmlDataVolume::WritePTSFromStack(int window, char *filename,
                                          vtkMatrix4x4 *RasToIjkMatrix,
                                          char *order, int activeSlice)
 {
@@ -679,7 +691,15 @@ int vtkMrmlDataVolume::WritePTSFromStack(char *filename,
         return 1;
     }
 
-    for (unsigned int s = 0; s < this->RasPolyStack->GetStackSize(); s++)
+    vtkStackOfPolygons *RasPolyStack;
+    switch (window)
+    {
+        case 0: RasPolyStack = this->AxiRasPolyStack; break;
+        case 1: RasPolyStack = this->SagRasPolyStack; break;
+        case 2: RasPolyStack = this->CorRasPolyStack; break;
+    }
+
+    for (unsigned int s = 0; s < RasPolyStack->GetStackSize(); s++)
     {
         // Skip this slice of stack if no polygon ever been stored in it
         if (!(RasPolyStack->Nonempty(s))) continue;

@@ -98,7 +98,8 @@ public:
   int Read();
   int Write();
   int WritePTS(char *filename);
-  int WritePTSFromStack(char *filename, vtkMatrix4x4 *RasToIjkMatrix,
+  int WritePTSFromStack(int window, char *filename,
+                        vtkMatrix4x4 *RasToIjkMatrix,
                         char *order, int activeSlice);
 
   //--------------------------------------------------------------------------
@@ -141,17 +142,63 @@ public:
   vtkSetMacro(RangeAuto, int);
   vtkBooleanMacro(RangeAuto, int);
 
-  void StackSetPolygon(vtkPoints *poly, int s, int p, int d, int closed,
-                       int preshape, int label)
-  {this->PolyStack->SetPolygon(poly, s, p, d, closed, preshape, label);};
-  void StackRemovePolygon(int s, int p)
-  {this->PolyStack->RemovePolygon(s, p);};
+  void StackSetPolygon(int window, vtkPoints *poly, int s, int p, int d,
+                       int closed, int preshape, int label)
+  {
+    switch (window)
+    {
+      case 0: this->AxiPolyStack->SetPolygon(poly, s, p, d, closed, preshape,
+                                             label);
+              break;
+      case 1: this->SagPolyStack->SetPolygon(poly, s, p, d, closed, preshape,
+                                             label);
+              break;
+      case 2: this->CorPolyStack->SetPolygon(poly, s, p, d, closed, preshape,
+                                             label);
+              break;
+    }
+  };
+  void StackRemovePolygon(int window, int s, int p)
+  {
+    switch (window)
+    {
+      case 0: this->AxiPolyStack->RemovePolygon(s, p);
+              break;
+      case 1: this->SagPolyStack->RemovePolygon(s, p);
+              break;
+      case 2: this->CorPolyStack->RemovePolygon(s, p);
+              break;
+    }
+  };
 
-  void RasStackRemovePolygon(int s, int p)
-  {this->RasPolyStack->RemovePolygon(s, p);};
-  void RasStackSetPolygon(vtkPoints *rasPoly, int s, int p, int d, int closed,
-                          int preshape, int label)
-  {this->RasPolyStack->SetPolygon(rasPoly, s, p, d, closed, preshape, label);};
+  void RasStackRemovePolygon(int window, int s, int p)
+  {
+    switch (window)
+    {
+      case 0: this->AxiRasPolyStack->RemovePolygon(s, p);
+              break;
+      case 1: this->SagRasPolyStack->RemovePolygon(s, p);
+              break;
+      case 2: this->CorRasPolyStack->RemovePolygon(s, p);
+              break;
+    }
+  };
+  void RasStackSetPolygon(int window, vtkPoints *rasPoly, int s, int p, int d,
+                          int closed, int preshape, int label)
+  {
+    switch (window)
+    {
+      case 0: this->AxiRasPolyStack->SetPolygon(rasPoly, s, p, d, closed,
+                                                preshape, label);
+              break;
+      case 1: this->SagRasPolyStack->SetPolygon(rasPoly, s, p, d, closed,
+                                                preshape, label);
+              break;
+      case 2: this->CorRasPolyStack->SetPolygon(rasPoly, s, p, d, closed,
+                                                preshape, label);
+              break;
+    }
+  };
 
 protected:
   vtkMrmlDataVolume();
@@ -171,8 +218,12 @@ protected:
   vtkFloatingPointType HistogramColor[3];
 
   vtkImageData *ImageData;
-  vtkStackOfPolygons *PolyStack;
-  vtkStackOfPolygons *RasPolyStack;
+  vtkStackOfPolygons *AxiPolyStack;
+  vtkStackOfPolygons *AxiRasPolyStack;
+  vtkStackOfPolygons *SagPolyStack;
+  vtkStackOfPolygons *SagRasPolyStack;
+  vtkStackOfPolygons *CorPolyStack;
+  vtkStackOfPolygons *CorRasPolyStack;
   vtkPoints *Samples;
   vtkImageAccumulateDiscrete *Accumulate;
   vtkImageBimodalAnalysis *Bimodal;
