@@ -46,6 +46,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageRFFT.h"
 #include "vtkImageIdealHighPass.h"
 #include "vtkImageAppend.h"
+#include "vtkImageAccumulate.h"
 #include "vtkImageExtractComponents.h"
 #include "vtkExtractVOI.h"
 #include "vtkImageViewer.h"
@@ -60,13 +61,13 @@ vtkGLMEstimator::vtkGLMEstimator()
     this->Cutoff = 0.0;
     this->LowerThreshold = 0.0;
     this->HighPassFiltering = 0;
-    this->PreWhitening = 0;
-    
+    this->GrandMean = 0.0;
+
+    this->GlobalMeans = NULL;
     this->Detector = NULL; 
     this->TimeCourse = NULL; 
     this->RegionTimeCourse = NULL;
     this->RegionVoxels = NULL;
-
 }
 
 
@@ -85,7 +86,6 @@ vtkGLMEstimator::~vtkGLMEstimator()
         this->RegionVoxels->Delete();
     }
 }
-
 
 
 vtkFloatArray *vtkGLMEstimator::GetRegionTimeCourse()
@@ -132,8 +132,6 @@ vtkFloatArray *vtkGLMEstimator::GetRegionTimeCourse()
 
     return this->RegionTimeCourse;
 }
-
-
 
 
 vtkFloatArray *vtkGLMEstimator::GetTimeCourse(int i, int j, int k)
@@ -221,6 +219,61 @@ void vtkGLMEstimator::PerformHighPassFiltering()
 }
 
 
+void vtkGLMEstimator::ComputeMeans()
+{
+
+    if (this->GlobalMeans != NULL)
+    {
+        delete [] this->GlobalMeans;
+    }
+    this->GlobalMeans = new float [this->NumberOfInputs];
+
+    vtkImageAccumulate *ia = vtkImageAccumulate::New();
+    ia->SetComponentExtent(0, 0, 0, 0, 0, 0);
+    ia->SetComponentOrigin(0.0, 0.0, 0.0);
+    ia->SetComponentSpacing(1.0, 1.0, 1.0);
+ 
+    // get original mean for each volume
+    for (int i = 0; i < this->NumberOfInputs; i++)
+    {
+        ia->SetInput(this->GetInput(i));
+        ia->Update();
+        double *means = ia->GetMean();
+        // 4.0 is arbitray. I did experiment on 1, 2, 4, 6, 8 and 10.
+        // 4 seems the best with my 45-volume test data set.
+        this->GlobalMeans[i] = (float) (means[0] / 4.0);
+
+    }
+    ia->Delete();
+
+    int imgDim[3];  
+    this->GetInput(0)->GetDimensions(imgDim);
+    int dim = imgDim[0] * imgDim[1] * imgDim[2];
+    float gt = 0.0;
+
+    // get new mean for each volume
+    for (int i = 0; i < this->NumberOfInputs; i++)
+    {
+        double total = 0.0;
+        short *ptr = (short *) this->GetInput(i)->GetScalarPointer();
+        int count = 0;
+        for (int ii = 0; ii < dim; ii++)
+        {
+            if (ptr[ii] >= this->GlobalMeans[i])
+            {
+                total += ptr[ii];
+                count++;
+            }
+        }
+        this->GlobalMeans[i] = (float) (total / count);
+        gt += this->GlobalMeans[i];
+    }
+
+    // grand mean
+    this->GrandMean = gt / this->NumberOfInputs;
+}
+
+ 
 void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
 {
     if (this->NumberOfInputs == 0 || this->GetInput(0) == NULL)
@@ -228,6 +281,8 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
         vtkErrorMacro( << "No input image data in this filter.");
         return;
     }
+
+    ComputeMeans();
 
     // for progress update (bar)
     unsigned long count = 0;
@@ -282,8 +337,11 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
                 {
                     short *value 
                         = (short *)this->GetInput(i)->GetScalarPointer(ii, jj, kk);
+                    float v = (*value) * 100.0 / this->GlobalMeans[i];
+//                    float v = (*value) * 100.0 / this->GrandMean;
+
+                    tc->SetComponent(i, 0, v);
                     total += *value;
-                    tc->SetComponent(i, 0, *value);
                 }   
 
                 float chisq, p;
@@ -294,7 +352,7 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
                     ((vtkGLMDetector *)this->Detector)->FitModel( tc, beta, &chisq );
                     // for testing
                     p = 0.0;
-                    if ( this->PreWhitening) {
+                    if ( 0 ) {
                         ((vtkGLMDetector *)this->Detector)->ComputeResiduals ( tc, beta );
                         // second pass parameter estimates, with whitened temporal autocorrelation.
                         p = ((vtkGLMDetector *)this->Detector)->ComputeCorrelationCoefficient ( );

@@ -90,11 +90,18 @@ class  VTK_FMRIENGINE_EXPORT vtkGLMEstimator : public vtkActivationEstimator
 
     void SimpleExecute(vtkImageData* input,vtkImageData* output);
     void PerformHighPassFiltering();
+    // computes global mean for each volume and 
+    // the grand mean for the entire sequence.
+    void ComputeMeans();
 
     int PreWhitening;
     int HighPassFiltering;
     float LowerThreshold;
     float Cutoff;
+    // one mean from each volume
+    float *GlobalMeans;
+    // mean of all volumes
+    float GrandMean;
 
     vtkFloatArray *TimeCourse;
     vtkFloatArray *RegionTimeCourse;
