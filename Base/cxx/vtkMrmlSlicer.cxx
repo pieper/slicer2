@@ -329,6 +329,7 @@ vtkMrmlSlicer::vtkMrmlSlicer()
 
   // jc - 4.21.05
   //this->DisplayMethod=2; // method 1 or 2
+  this->DisplayMethod=1; // default method is 'old' slicer 
   
   if ((this->DisplayMethod==2)||(this->DisplayMethod==3)) {
     // >> Bouix 4/23/03 use old approach for the Zoom.
