@@ -84,6 +84,11 @@ class  VTK_FMRIENGINE_EXPORT vtkGLMEstimator : public vtkActivationEstimator
     // Gets HighPassFiltering.
     vtkGetMacro(HighPassFiltering, int);
 
+    // Description:
+    // Sets/Gets global effect.
+    vtkSetMacro(GlobalEffect, int);
+    vtkGetMacro(GlobalEffect, int);
+
     protected:
     vtkGLMEstimator();
     ~vtkGLMEstimator();
@@ -102,6 +107,11 @@ class  VTK_FMRIENGINE_EXPORT vtkGLMEstimator : public vtkActivationEstimator
     float *GlobalMeans;
     // mean of all volumes
     float GrandMean;
+    // mean scaling:
+    // 1 - grand mean 
+    // 2 - global mean
+    // 3 - both
+    int GlobalEffect;
 
     vtkFloatArray *TimeCourse;
     vtkFloatArray *RegionTimeCourse;

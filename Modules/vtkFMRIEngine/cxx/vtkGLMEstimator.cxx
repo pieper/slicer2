@@ -62,6 +62,7 @@ vtkGLMEstimator::vtkGLMEstimator()
     this->LowerThreshold = 0.0;
     this->HighPassFiltering = 0;
     this->GrandMean = 0.0;
+    this->GlobalEffect = 0;
 
     this->GlobalMeans = NULL;
     this->Detector = NULL; 
@@ -282,7 +283,10 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
         return;
     }
 
-    ComputeMeans();
+    if (this->GlobalEffect > 0)
+    {
+        ComputeMeans();
+    }
 
     // for progress update (bar)
     unsigned long count = 0;
@@ -322,7 +326,8 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
         return;
     }
 
-    vox=0;
+
+    vox = 0;
     vtkDataArray *scalarsInOutput = output->GetPointData()->GetScalars();
     // Voxel iteration through the entire image volume
     for (int kk = 0; kk < imgDim[2]; kk++)
@@ -337,10 +342,23 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
                 {
                     short *value 
                         = (short *)this->GetInput(i)->GetScalarPointer(ii, jj, kk);
-                    float v = (*value) * 100.0 / this->GlobalMeans[i];
-//                    float v = (*value) * 100.0 / this->GrandMean;
 
-                    tc->SetComponent(i, 0, v);
+                    // time course is scaled by user option
+                    float v = 1.0;
+                    if (this->GlobalEffect == 1)
+                    {
+                        v = 100.0 / this->GrandMean;
+                    }
+                    else if (this->GlobalEffect == 2)
+                    {
+                        v = 100.0 / this->GlobalMeans[i];
+                    }
+                    else if (this->GlobalEffect == 3)
+                    {
+                        v = (100.0 / this->GlobalMeans[i]) * (100.0 / this->GrandMean);
+                    }
+
+                    tc->SetComponent(i, 0, (v * (*value)));
                     total += *value;
                 }   
 
