@@ -196,7 +196,7 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
     #--- wjp changed 09/01/05
     set ::fMRIEngine(numDerivatives) 0
     set ::fMRIEngine(curDerivativesForSignal) $::fMRIEngine(numDerivatives)
-    set ::fMRIEngine(derivOptions) [ list {none} {1st} {1st+2nd} {1st+2nd+3rd} ]
+    set ::fMRIEngine(derivOptions) [ list {none} {1st} {1st+2nd} ]
     set df [lindex $::fMRIEngine(derivOptions) 0 ]
     eval { menubutton $f.mbDeriv -text $df \
                -relief raised -bd 2 -width 15 \
@@ -786,6 +786,7 @@ proc fMRIEngineUpdateConditionsForSignalModeling { } {
 
     set cond [$fMRIEngine(gui,conditionsMenuForSignal) entrycget 0 -label]
     fMRIEngineSelectConditionForSignalModeling $cond
+
 }
 
 
@@ -871,7 +872,7 @@ proc fMRIEngineSelectConvolutionForSignalModeling {conv} {
 #-------------------------------------------------------------------------------
 proc fMRIEngineSelectNumDerivativesForSignalModeling { option } {
 
-
+    #--- can select one or two temporal derivative options for signal modeling.
     if { ($option == "none")  || ($option == 0) } {
         set ::fMRIEngine(numDerivatives) 0
     } elseif { ($option == "1st") || ($option == 1) } {
@@ -879,7 +880,7 @@ proc fMRIEngineSelectNumDerivativesForSignalModeling { option } {
     } elseif { ($option == "1st+2nd") || ($option == 2) } {
         set ::fMRIEngine(numDerivatives) 2
     } else {
-        set ::fMRIEngine(numDerivatives) 3        
+        set ::fMRIEngine(numDerivatives) 0
     }
     $::fMRIEngine(gui,derivativeMenuButtonForSignal) config -text $option
     set ::fMRIEngine(curDerivativesForSignal) $::fMRIEngine(numDerivatives)
