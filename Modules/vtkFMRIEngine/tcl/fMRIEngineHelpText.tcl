@@ -290,16 +290,32 @@ proc fMRIEngineHelpSetupLowpassFilter { } {
 
 
 #-------------------------------------------------------------------------------
-# .PROC fMRIEngineHelpSetupGlobalFX
+# .PROC fMRIEngineHelpSetupGlobalMeanFX
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineHelpSetupGlobalFX { } {
+proc fMRIEngineHelpSetupGlobalMeanFX { } {
     #--- Setup->Signal
-    #--- What is remove global effects?
+    #--- What is global mean scaling?
     set i [ fMRIEngineGetHelpWinID ]
-    set txt "<H3>Removing global effects</H3>
+    set txt "<H3>Global mean scaling</H3>
+<P> Not yet available"
+    DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpSetupGrandMeanFX
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineHelpSetupGrandMeanFX { } {
+    #--- Setup->Signal
+    #--- What is grand mean scaling?
+    set i [ fMRIEngineGetHelpWinID ]
+    set txt "<H3>Grand mean scaling</H3>
 <P> Not yet available"
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
 }
