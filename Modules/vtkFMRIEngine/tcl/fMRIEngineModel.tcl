@@ -314,7 +314,7 @@ proc fMRIEngineBuildUIForTasks {parent} {
 
     frame $parent.fTop  -bg $Gui(backdrop)
     frame $parent.fHelp -bg $Gui(activeWorkspace)
-    frame $parent.fBot  -bg $Gui(activeWorkspace) -height 510
+    frame $parent.fBot  -bg $Gui(activeWorkspace) -height 560
     pack $parent.fTop $parent.fHelp $parent.fBot \
         -side top -fill x -pady 2 -padx 5 
 
