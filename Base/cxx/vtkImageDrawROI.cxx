@@ -1353,16 +1353,33 @@ static void DrawCurve(double x0, double y0, double x1, double y1,
     double x3_x0 = x3 - x0;
     double y3_y0 = y3 - y0;
     double d03 = x3_x0 * x3_x0 + y3_y0 * y3_y0;
-    if (d03 <= 4.0)
+    if (d03 <= 1.0)
     {
         // Curve can be approximated by a line segment
         unsigned char *outPtr = (unsigned char *) \
             outData->GetScalarPointerForExtent(outExt);
+        long xMin, xMax, yMin, yMax;
+        xMin = outExt[0];
+        xMax = outExt[1];
+        yMin = outExt[2];
+        yMax = outExt[3];
         int nx, nc, nxnc;
         nx = outExt[1] - outExt[0] + 1;
         nc = outData->GetNumberOfScalarComponents();
         nxnc = nx * nc;
-        DrawLine((int)x0, (int)y0, (int)x3, (int)y3, color, outPtr, nxnc, nc);
+        int xx0 = (int)x0;
+        int yy0 = (int)y0;
+        int xx3 = (int)x3;
+        int yy3 = (int)y3;
+        //if (image_reformat!=NULL) 
+        //  image_reformat->IJK2Slice(p->x0,p->y0,p->z0,p->x,p->y);
+        if (xMin <= xx0 && xx0 <= xMax &&
+            yMin <= yy0 && yy0 <= yMax &&
+            xMin <= xx3 && xx3 <= xMax &&
+            yMin <= yy3 && yy3 <= yMax)
+        {
+            DrawLine(xx0, yy0, xx3, yy3, color, outPtr, nxnc, nc);
+        }
     }
     else
     {
@@ -1387,6 +1404,11 @@ static void DrawCurve(double x0, double y0, double x1, double y1,
 void vtkImageDrawROI::DrawSpline(vtkImageData *outData, int outExt[6])
 {   
     if (NumPoints < 2) return; // No nondegenerate curve to draw for < 2 points
+    long xMin, xMax, yMin, yMax;
+    xMin = outExt[0];
+    xMax = outExt[1];
+    yMin = outExt[2];
+    yMax = outExt[3];
     if (NumPoints == 2)
     {
         // Connect the two points with a line segment
@@ -1402,7 +1424,18 @@ void vtkImageDrawROI::DrawSpline(vtkImageData *outData, int outExt[6])
         color[2] = 0;
         Point *p = this->firstPoint;
         Point *q = p->GetNext();
-        DrawLine(p->x, p->y, q->x, q->y, color, outPtr, nxnc, nc);
+        if (image_reformat!=NULL)
+        {
+          image_reformat->IJK2Slice(p->x0,p->y0,p->z0,p->x,p->y);
+          image_reformat->IJK2Slice(q->x0,q->y0,q->z0,q->x,q->y);
+        }
+        if (xMin <= p->x && p->x <= xMax &&
+            yMin <= p->y && p->y <= yMax &&
+            xMin <= q->x && q->x <= xMax &&
+            yMin <= q->y && q->y <= yMax)
+        {
+            DrawLine(p->x, p->y, q->x, q->y, color, outPtr, nxnc, nc);
+        }
         return;
     }
     double oneThird = 0.333333333333;
@@ -1431,8 +1464,10 @@ void vtkImageDrawROI::DrawSpline(vtkImageData *outData, int outExt[6])
     color[0] = 0;
     color[1] = 255;
     color[2] = 0;
-    DrawCurve(p0->x, p0->y, p0->x + oneThird * p0dx, p0->y + oneThird * p0dy,
-              p1->x - oneThird * p1dx, p1->y - oneThird * p1dy, p1->x, p1->y,
+    DrawCurve(p0->x, p0->y,
+              p0->x + oneThird * p0dx, p0->y + oneThird * p0dy,
+              p1->x - oneThird * p1dx, p1->y - oneThird * p1dy,
+              p1->x, p1->y,
               outData, outExt, color);
     while (p3 != NULL)
     {
