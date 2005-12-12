@@ -242,7 +242,7 @@ global Gui
     #--- condition, or enters a new contrast.
     #--- if window is already up, also update the visual display
     #---
-    if { [winfo exists $toplevelName] } {
+    if { ([winfo exists $toplevelName]) || ($::fMRIEngine(SignalModelDirty)) } {
 
         #--- wjp: added 09/19/05
         if { ! [ fMRIEngineCountEVs ] } {
@@ -599,32 +599,24 @@ proc fMRIModelViewGenerateEVName { evnum r } {
         lappend ::fMRIModelView(Design,evNames) "$basename.boxcar.dt1"
     } elseif { $type == "boxcar_dt2" } {
         lappend ::fMRIModelView(Design,evNames) "$basename.boxcar.dt2"        
-    } elseif { $type == "boxcar_dt3" } {
-        lappend ::fMRIModelView(Design,evNames) "$basename.boxcar.dt3"
     } elseif { $type == "boxcar_cHRF" } {
         lappend ::fMRIModelView(Design,evNames) "$basename.boxcar.HRF"
     } elseif { $type == "boxcar_cHRF_dt1" } {
         lappend ::fMRIModelView(Design,evNames) "$basename.boxcar.HRF.dt1"
     } elseif { $type == "boxcar_cHRF_dt2" } {
         lappend ::fMRIModelView(Design,evNames) "$basename.boxcar.HRF.dt2"
-    } elseif { $type == "boxcar_cHRF_dt3" } {
-        lappend ::fMRIModelView(Design,evNames) "$basename.boxcar.HRF.dt3"
     } elseif { $type == "halfsine" } {
         lappend ::fMRIModelView(Design,evNames) "$basename.halfsine"
     } elseif { $type == "halfsine_dt1" } {        
         lappend ::fMRIModelView(Design,evNames) "$basename.halfsine.dt1"
     } elseif { $type == "halfsine_dt2" } {        
         lappend ::fMRIModelView(Design,evNames) "$basename.halfsine.dt2"
-    } elseif { $type == "halfsine_dt3" } {        
-        lappend ::fMRIModelView(Design,evNames) "$basename.halfsine.dt3"
     } elseif { $type == "halfsine_cHRF" } {
         lappend ::fMRIModelView(Design,evNames) "$basename.halfsine.HRF"
     } elseif { $type == "halfsine_cHRF_dt1" } {
         lappend ::fMRIModelView(Design,evNames) "$basename.halfsine.HRF.dt1"
     } elseif { $type == "halfsine_cHRF_dt2" } {
         lappend ::fMRIModelView(Design,evNames) "$basename.halfsine.HRF.dt2"
-    } elseif { $type == "halfsine_cHRF_dt3" } {
-        lappend ::fMRIModelView(Design,evNames) "$basename.halfsine.HRF.dt3"
     } elseif { $type == "baseline" } {
         lappend ::fMRIModelView(Design,evNames) "baseline"
     } elseif { $type == "DCbasis0" } {
@@ -1283,12 +1275,7 @@ proc fMRIModelViewBuildModelSignals { r i imghit imgwid signalType } {
         }
         #--- add second derivative as an EV if requested.
         set useDeriv2 [ string first "dt2" $signalType ]
-        set useDeriv3 [ string first "dt3" $signalType ]
-        if { ($useDeriv2 >= 0) || ($useDeriv3 >= 0) } {
-            fMRIModelViewAddDerivatives $imgwid $imghit $r $i            
-        }
-        #--- add third derivative as an EV if requested.
-        if { $useDeriv3 >= 0 } {
+        if { ($useDeriv2 >= 0) } {
             fMRIModelViewAddDerivatives $imgwid $imghit $r $i            
         }
         
@@ -1780,12 +1767,15 @@ proc fMRIModelViewComputeGaussianFilter { r } {
     #---
     #--- Computes a gaussian kernel for convolution
     #--- Define the filter's cutoff frequency fmax = 1/2*TR,
-    #--- so wmax = 2pi * fmax = numsigmas*sigma.
+    #--- or to be more careful, 1/2.01*TR,
+    #--- and wmax = 2pi * fmax = numsigmas*sigma.
+    #--- where numsigmas = 2.0 or 3.0,
+    #--- and numsigmas * sigma defines the half-band
+    #--- in the frequency domain.
     #---
     #--- use g(t) = 1/(sqrt(2pi)sigma) * exp ( -t^2 / 2sigma^2)
     #--- sigma = 2pi * fmax / numsigmas.
-    #--- sigma = 2pi / (2*TR*numsigmas).
-    #--- sigma = pi/(TR*numsigmas).
+    #--- sigma = 2pi / (2.01*TR*numsigmas).
     #---
     #--- Assumes that all explanatory variables within a run
     #--- have the same TR.
@@ -1794,23 +1784,30 @@ proc fMRIModelViewComputeGaussianFilter { r } {
     #--- The signal we're filtering has sampling freq = fs = 1/0.1sec
     #--- downsampling to a signal with sampling freq 1/TRsec.
     #--- to signal with fmax = 1/2*TRsec
+
+    set nyquistbuffer 2.01
     if { ! [ info exists ::fMRIModelView(Design,Run$r,GaussianFilter) ] } {
         set TR $::fMRIModelView(Design,Run$r,TR)
         set PI 3.14159265
-        #--- use 2 or 3 sigmas out for the kernel size now, 
+        set fmax [ expr ( 1.0 / ($nyquistbuffer * $TR)) ]
+        #--- use 3 sigmas out for the kernel size (cutoff) now, 
         #--- where gaussian approaches zero...
         set numsigmas 3.0
-        set sigma [ expr 2.0 * $PI / ($numsigmas * $TR) ]
-        #set sigma [ expr 4.0 * $PI / ( $numsigmas *$TR ) ]
-        set inc $::fMRIModelView(Design,Run$r,TimeIncrement)
-
+        set sigma [ expr 2.0 * $PI * $fmax / $numsigmas ]
+        
         #--- how many samples of the time-domain kernel do
-        #--- we need? Choose t = numsigmas x 1/sigma as a guess.
-        set numsamps [ expr round ($numsigmas / $sigma ) ]
+        #--- we need? 
+        set numsamps [ expr (1.0 / $fmax) / 2.0 ]
+                
+        set inc $::fMRIModelView(Design,Run$r,TimeIncrement)
         #--- now compute the gaussian to convolve with.
+
+        set twoSigmaSq [ expr $sigma * $sigma * 2.0]
+        set twoPI [ expr $PI * $PI]
+        set sqrtTwoPI [ expr (sqrt ($twoPI) ) ]
+
         for {set t -$numsamps } { $t <= $numsamps } { set t [ expr $t + $inc] } {
-            set v  [ expr ( 1.0 / (sqrt (2.0 * $PI)) ) * \
-                         exp ( - ($sigma*$sigma*$t*$t) / 2.0) ]
+            set v [ expr ( (1.0 / ($sigma * $sqrtTwoPI)) * (exp (-($t*$t) / $twoSigmaSq))) ]
             lappend kernel $v
         }
 
