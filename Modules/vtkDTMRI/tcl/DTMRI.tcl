@@ -501,7 +501,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.119 $} {$Date: 2005/12/12 19:06:36 $}]
+                  {$Revision: 1.120 $} {$Date: 2005/12/12 20:03:33 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -1620,13 +1620,22 @@ proc DTMRISetActive {t} {
 
     #set up the mask if exists
     if {[info exists DTMRI(maskTable,$t)] == 1} {
-       #Set up mask pipeline
-       set DTMRI(MaskLabelmap) $DTMRI(maskTable,$t)
-       set DTMRI(MaskLabel) 1
-       set DTMRI(mode,mask) MaskWithLabelmap
-       #Set label of menu button to volume name.
-       $DTMRI(mbMaskLabelmap) configure -text [Volume($DTMRI(maskTable,$t),node) GetName]
-    }
+       
+       #Check mask node exists
+       set v $DTMRI(maskTable,$t)
+       if {[catch "Volume($v,node) GetClassName"] == 0} {
+           #Set up mask pipeline
+           set DTMRI(MaskLabelmap) $v
+           set DTMRI(MaskLabel) 1
+           set DTMRI(mode,mask) MaskWithLabelmap
+           #Set label of menu button to volume name.
+           $DTMRI(mbMaskLabelmap) configure -text [Volume($v,node) GetName]
+       } else {
+           set DTMRI(mode,mask) None
+       }   
+    } else {
+       set DTMRI(mode,mask) None
+    }   
 
     # Make sure this tensor is the input to the glyph pipeline
     DTMRIUpdate
