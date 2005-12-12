@@ -327,12 +327,18 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
     #--- why oh why does this checkbutton show up with sunken relief???
     set f $parent.fFiltering.fGlobalEffects
     DevAddLabel $f.lIntensity "Intensity:"
-    eval {checkbutton $f.cEffects \
-        -variable fMRIEngine(checkbuttonGlobalEffects) \
-        -relief flat -indicatoron 1 -text "remove global effects" -anchor w } $Gui(WEA) 
-    DevAddButton $f.bEffectsHelp "?" "fMRIEngineHelpSetupGlobalFX" 2 
-    $f.cEffects deselect 
-    $f.cEffects configure -state disabled
+
+    eval {checkbutton $f.cGrandMean \
+        -variable fMRIEngine(checkbuttonGrandMean) -width 18 \
+        -relief flat -indicatoron 1 -text "grand mean" -anchor w } $Gui(WEA) 
+    $f.cGrandMean select 
+    DevAddButton $f.bGrandMeanHelp "?" "fMRIEngineHelpSetupGrandMeanFX" 2 
+
+    eval {checkbutton $f.cGlobalMean \
+        -variable fMRIEngine(checkbuttonGlobalMean) \
+        -relief flat -indicatoron 1 -text "global mean" -anchor w } $Gui(WEA) 
+    $f.cGlobalMean deselect 
+    DevAddButton $f.bGlobalMeanHelp "?" "fMRIEngineHelpSetupGlobalMeanFX" 2 
 
     eval {checkbutton $f.cPrewhiten \
         -variable fMRIEngine(checkbuttonPreWhiten) \
@@ -342,10 +348,12 @@ proc fMRIEngineBuildUIForSignalModeling {parent} {
     
     blt::table $f \
         0,0 $f.lIntensity -padx 2 -pady 1 -anchor e \
-        0,1 $f.cEffects -fill x -padx 1 -pady 1 -anchor e \
-        0,2 $f.bEffectsHelp -padx 1 -pady 1 -anchor e \
-        1,1 $f.cPrewhiten -fill x -padx 1 -pady 1 -anchor e \
-        1,2 $f.bPrewhitenHelp -padx 1 -pady 1 -anchor e
+        0,1 $f.cGrandMean -fill x -padx 1 -pady 1 -anchor e \
+        0,2 $f.bGrandMeanHelp -padx 1 -pady 1 -anchor e \
+        1,1 $f.cGlobalMean -fill x -padx 1 -pady 1 -anchor e \
+        1,2 $f.bGlobalMeanHelp -padx 1 -pady 1 -anchor e \
+        2,1 $f.cPrewhiten -fill x -padx 1 -pady 1 -anchor e \
+        2,2 $f.bPrewhitenHelp -padx 1 -pady 1 -anchor e
 
 
     #-----------------------
@@ -1152,7 +1160,7 @@ proc fMRIEngineAddOrEditEV {} {
     #set deriv $fMRIEngine(checkbuttonTempDerivative) 
     set hpass $fMRIEngine(curHighpassForSignal)
     #set lpass $fMRIEngine(curLowpassForSignal) 
-    set effes $fMRIEngine(checkbuttonGlobalEffects) 
+    set effes 0
     #set ev "$con:$wform:$conv:$deriv:$hpass:$lpass:$effes"
     set ev "$con:$wform:$conv:$deriv:$hpass:$effes"
     
@@ -1914,9 +1922,21 @@ proc fMRIEngineFitModel {} {
         unset -nocomplain fMRIEngine(actEstimator)
     }
     vtk$fMRIEngine(detectionMethod)Estimator fMRIEngine(actEstimator)
-    fMRIEngine(actEstimator) SetPreWhitening $::fMRIEngine(checkbuttonPreWhiten)
+    fMRIEngine(actEstimator) SetPreWhitening $fMRIEngine(checkbuttonPreWhiten)
     fMRIEngineAddInputVolumes $fMRIEngine(curRunForModelFitting)
- 
+
+    # set option of global effect
+    if {$fMRIEngine(checkbuttonGrandMean) && $fMRIEngine(checkbuttonGlobalMean)} {
+       set op 3
+    } elseif {$fMRIEngine(checkbuttonGrandMean)} {
+        set op 1
+    } elseif {$fMRIEngine(checkbuttonGlobalMean)} {
+        set op 2
+    } else {
+        set op 0
+    }
+    fMRIEngine(actEstimator) SetGlobalEffect $op 
+
     # adds progress bar
     set obs1 [fMRIEngine(actEstimator) AddObserver StartEvent MainStartProgress]
     set obs2 [fMRIEngine(actEstimator) AddObserver ProgressEvent \
