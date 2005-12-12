@@ -189,6 +189,7 @@ proc fMRIEngineLoadParadigm {} {
         fMRIEngineSelectRunForConditionShow 1 
     }
 
+    set ::fMRIEngine(SignalModelDirty) 1
     # update the condition list in signal modeling tab
     fMRIEngineUpdateConditionsForSignalModeling
 }
