@@ -63,7 +63,7 @@ proc DTMRIGlyphsInit {} {
     #------------------------------------
     set m "Glyphs"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.15 $} {$Date: 2005/07/20 21:13:02 $}]
+                                 {$Revision: 1.16 $} {$Date: 2005/12/12 18:42:17 $}]
 
     # type of reformatting
     set DTMRI(mode,reformatType) 0
@@ -189,7 +189,6 @@ proc DTMRIGlyphsBuildGUI {} {
     # that get refreshed during UpdateMRML
     lappend Tensor(mbActiveList) $f.mbActive
     lappend Tensor(mActiveList) $f.mbActive.m
-
 
     #-------------------------------------------
     # Display->Notebook -> Glyph frame -> Reformat
@@ -686,19 +685,32 @@ proc DTMRIUpdate {} {
     # mask DTMRIs if required
     #------------------------------------
     set mode $DTMRI(mode,mask)
-    if {$mode != "None"} {
+    if {$mode != "None" && $DTMRI(MaskLabelmap) != ""} {
         
         puts "masking by $DTMRI(mode,mask)"
 
-        set thresh DTMRI(vtk,mask,threshold)    
+        #Create pipeline from scratch.
+        #There are problem when reusing the mask pipeline 
+        #for different tensor volumes (bug 139).
+        #Both vtkImageThreshold and vtkTensorMask seg fault.
+        set thresh DTMRI(vtk,mask,threshold)
+        catch "$thresh Delete"
+        vtkImageThreshold $thresh
+        $thresh SetInValue       1
+        $thresh SetOutValue      0
+        $thresh SetReplaceIn     1
+        $thresh SetReplaceOut    1
+        $thresh SetOutputScalarTypeToShort    
+    
         $thresh ThresholdBetween $DTMRI(MaskLabel) $DTMRI(MaskLabel)
         set v $DTMRI(MaskLabelmap)
         $thresh SetInput [Volume($v,vol) GetOutput]
 
-        # this line seems to be needed
-        $thresh Update
-        
+
         set mask DTMRI(vtk,mask,mask)
+        catch "$mask Delete"
+        vtkTensorMask $mask
+        $mask SetMaskInput [$thresh GetOutput]
         # use output from above thresholding pipeline as input
         $mask SetImageInput $dataSource
 
@@ -724,23 +736,7 @@ proc DTMRIUpdate {} {
       }
     }
       
-    #if {$DTMRI(mode,glyphType) == "Superquadric"} {
-   # 
-    #  if{ [DTMRI(vtk,glyphs0) GetClassName] != "vtkSuperquadricTensorGlyph"} {
-     #    foreach plane "0 1 2" {
-    #    DTMRI(vtk,glyphs$plane) Delete
-       #     vtkSuperquadricTensorGlyph DTMRI(vtk,glyphs$plane)
-#     }
- #      }
-             
-#     } else {
-#      if{ [DTMRI(vtk,glyphs0) GetClassName] != "vtkInteractiveTensorGlyph"} {
-#        foreach plane "0 1 2" {
-#        DTMRI(vtk,glyphs$plane) Delete
-#            vtkInteractiveTensorGlyph DTMRI(vtk,glyphs$plane)
-#     }
-#       }
-#     }     
+     
         
     switch $mode {
         "On" {
@@ -798,7 +794,6 @@ proc DTMRIUpdate {} {
                 # since this will rotate the DTMRIs, so this is wrong:
                 # DTMRI(vtk,glyphs,actor) SetUserMatrix $m
                 $DTMRI(mode,glyphsObject$plane) SetVolumePositionMatrix $m
-        
                 $DTMRI(mode,glyphsObject$plane) SetInput $visSource
           }    
 
