@@ -1779,31 +1779,29 @@ proc fMRIModelViewAddDerivatives { imgwid imghit r evnum } {
 proc fMRIModelViewComputeGaussianFilter { r } {
     #---
     #--- Computes a gaussian kernel for convolution
-    #--- Define the filter's cutoff frequency fmax = 1/(2*TR),
+    #--- Define the filter's cutoff frequency fmax = 1/2*TR,
     #--- so wmax = 2pi * fmax = numsigmas*sigma.
+    #---
     #--- use g(t) = 1/(sqrt(2pi)sigma) * exp ( -t^2 / 2sigma^2)
-    #--- and sigma = 1/ ((2pi * numsigmas) * 2TR)
+    #--- sigma = 2pi * fmax / numsigmas.
+    #--- sigma = 2pi / (2*TR*numsigmas).
+    #--- sigma = pi/(TR*numsigmas).
+    #---
     #--- Assumes that all explanatory variables within a run
     #--- have the same TR.
+    #---
     #--- wjp 11/21/05
-    #--- The signal we're filtering has sampling freq = fs = 1/1sec
+    #--- The signal we're filtering has sampling freq = fs = 1/0.1sec
     #--- downsampling to a signal with sampling freq 1/TRsec.
-    #--- update: not sure whether to use fmax = 1/(2*1sec) or
-    #--- fmax = 1/(2*TRsec). Try former for now -- results
-    #--- look better -- and check later.
+    #--- to signal with fmax = 1/2*TRsec
     if { ! [ info exists ::fMRIModelView(Design,Run$r,GaussianFilter) ] } {
         set TR $::fMRIModelView(Design,Run$r,TR)
-        #--- GAUSSIAN KERNEL SIZE EXPERIMENTS...
-        #--- signals 'look' too blurry with proper TR,
-        #--- and more comparable visually to SPM with TR=1
-        #--- but this kernel size may introduce aliasing...
-        #--- for now, try TR=1.0, but if problems persist, use above.
-        set TR 1.0
         set PI 3.14159265
         #--- use 2 or 3 sigmas out for the kernel size now, 
         #--- where gaussian approaches zero...
         set numsigmas 3.0
-        set sigma [ expr 2.0 * $PI / ( $numsigmas *2.0*$TR ) ]
+        set sigma [ expr 2.0 * $PI / ($numsigmas * $TR) ]
+        #set sigma [ expr 4.0 * $PI / ( $numsigmas *$TR ) ]
         set inc $::fMRIModelView(Design,Run$r,TimeIncrement)
 
         #--- how many samples of the time-domain kernel do
