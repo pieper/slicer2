@@ -222,21 +222,35 @@ void vtkGLMEstimator::PerformHighPassFiltering()
 
 void vtkGLMEstimator::ComputeMeans()
 {
-
     if (this->GlobalMeans != NULL)
     {
         delete [] this->GlobalMeans;
     }
     this->GlobalMeans = new float [this->NumberOfInputs];
 
+    // this class is for single volume stats; here we use
+    // it to get voxel intensity mean for the entire volume.
     vtkImageAccumulate *ia = vtkImageAccumulate::New();
+
+    // all voxels in the same bin
     ia->SetComponentExtent(0, 0, 0, 0, 0, 0);
+
     ia->SetComponentOrigin(0.0, 0.0, 0.0);
     ia->SetComponentSpacing(1.0, 1.0, 1.0);
- 
-    // get original mean for each volume
+
+    int imgDim[3];  
+    this->GetInput(0)->GetDimensions(imgDim);
+    int dim = imgDim[0] * imgDim[1] * imgDim[2];
+    float gt = 0.0;
+    
+    // for progress update (bar)
+    unsigned long count = 0;
+    unsigned long target = (unsigned long)(this->NumberOfInputs * dim / 100.0);
+    target++;
+
     for (int i = 0; i < this->NumberOfInputs; i++)
     {
+        // get original mean for each volume
         ia->SetInput(this->GetInput(i));
         ia->Update();
         double *means = ia->GetMean();
@@ -244,31 +258,29 @@ void vtkGLMEstimator::ComputeMeans()
         // 4 seems the best with my 45-volume test data set.
         this->GlobalMeans[i] = (float) (means[0] / 4.0);
 
-    }
-    ia->Delete();
-
-    int imgDim[3];  
-    this->GetInput(0)->GetDimensions(imgDim);
-    int dim = imgDim[0] * imgDim[1] * imgDim[2];
-    float gt = 0.0;
-
-    // get new mean for each volume
-    for (int i = 0; i < this->NumberOfInputs; i++)
-    {
+        // get new mean for each volume
         double total = 0.0;
         short *ptr = (short *) this->GetInput(i)->GetScalarPointer();
-        int count = 0;
+        int count2 = 0;
         for (int ii = 0; ii < dim; ii++)
         {
             if (ptr[ii] >= this->GlobalMeans[i])
             {
                 total += ptr[ii];
-                count++;
+                count2++;
             }
+
+            // status bar update
+            if (!(count%target))
+            {
+                UpdateProgress(count / (100.0*target));
+            }
+            count++;
         }
-        this->GlobalMeans[i] = (float) (total / count);
+        this->GlobalMeans[i] = (float) (total / count2);
         gt += this->GlobalMeans[i];
     }
+    ia->Delete();
 
     // grand mean
     this->GrandMean = gt / this->NumberOfInputs;
@@ -283,15 +295,12 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
         return;
     }
 
+    // compute global means and grand mean for the sequence
     if (this->GlobalEffect > 0)
     {
         ComputeMeans();
     }
 
-    // for progress update (bar)
-    unsigned long count = 0;
-    unsigned long target = 0;
-    
     // Sets up properties for output vtkImageData
     int noOfRegressors = ((vtkGLMDetector *)this->Detector)->GetDesignMatrix()->GetNumberOfComponents();
     int imgDim[3];  
@@ -314,7 +323,9 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
     tc->SetNumberOfTuples(this->NumberOfInputs);
     tc->SetNumberOfComponents(1);
 
-    target = (unsigned long)(imgDim[0]*imgDim[1]*imgDim[2] / 100.0);
+    // for progress update (bar)
+    unsigned long count = 0;
+    unsigned long target = (unsigned long)(imgDim[0]*imgDim[1]*imgDim[2] / 100.0);
     target++;
 
     // Use memory allocation for MS Windows VC++ compiler.
