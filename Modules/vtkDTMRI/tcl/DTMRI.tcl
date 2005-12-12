@@ -501,7 +501,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.118 $} {$Date: 2005/12/05 15:24:07 $}]
+                  {$Revision: 1.119 $} {$Date: 2005/12/12 19:06:36 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -598,6 +598,9 @@ proc DTMRIUpdateMRML {} {
         # transform from World coords to scaledIJK of the tensors
         catch "transform Delete"
         vtkTransform transform
+        # special trick to avoid warnings about legacy hack
+        # for vtkTransform
+        transform AddObserver WarningEvent ""
         DTMRICalculateActorMatrix transform $t    
         transform Inverse
         DTMRI(vtk,streamlineControl) SetWorldToTensorScaledIJK transform
@@ -605,6 +608,9 @@ proc DTMRIUpdateMRML {} {
 
         # Set the matrix for rotating tensors into world space
         vtkTransform transform
+        # special trick to avoid warnings about legacy hack
+        # for vtkTransform
+        transform AddObserver WarningEvent ""        
         DTMRICalculateIJKtoRASRotationMatrix transform $t
         DTMRI(vtk,streamlineControl) SetTensorRotationMatrix \
             [transform GetMatrix]
@@ -640,8 +646,8 @@ proc DTMRIUpdateMRML {} {
              DevUpdateNodeSelectButton Tensor DTMRI ResultTensor  ResultTensor  DevSelectNode  0 1 0
              DevSelectNode Tensor $DTMRI(ResultTensor) DTMRI ResultTensor ResultTensor
              DevUpdateNodeSelectButton Volume DTMRI InputCoregVol InputCoregVol DevSelectNode
-         DevUpdateNodeSelectButton Volume DTMRI TargetMaskVol TargetMaskVol DevSelectNode
-         DevUpdateNodeSelectButton Volume DTMRI SourceMaskVol SourceMaskVol DevSelectNode
+             DevUpdateNodeSelectButton Volume DTMRI TargetMaskVol TargetMaskVol DevSelectNode
+             DevUpdateNodeSelectButton Volume DTMRI SourceMaskVol SourceMaskVol DevSelectNode
          }
      }
 
@@ -662,8 +668,6 @@ proc DTMRIUpdateMRML {} {
     DTMRIUpdateLabelWidget ROI2Label
     DTMRIUpdateLabelWidget TractLabel
     DTMRIUpdateLabelWidget MaskLabel
-
-
 
 }
 
@@ -1153,20 +1157,21 @@ proc DTMRIBuildVTK {} {
     DTMRI(vtk,$object) SetOutValue      0
     DTMRI(vtk,$object) SetReplaceIn     1
     DTMRI(vtk,$object) SetReplaceOut    1
+    DTMRI(vtk,$object) SetOutputScalarTypeToShort
 
     # convert the mask to short
     # (use this most probable input type to try to avoid data copy)
-    set object mask,cast
-    DTMRIMakeVTKObject vtkImageCast $object
-    DTMRI(vtk,$object) SetOutputScalarTypeToShort    
-    DTMRI(vtk,$object) SetInput \
-        [DTMRI(vtk,mask,threshold) GetOutput]
+    #set object mask,cast
+    #DTMRIMakeVTKObject vtkImageCast $object
+    #DTMRI(vtk,$object) SetOutputScalarTypeToShort    
+    #DTMRI(vtk,$object) SetInput \
+    #    [DTMRI(vtk,mask,threshold) GetOutput]
 
     # mask the DTMRIs 
     set object mask,mask
     DTMRIMakeVTKObject vtkTensorMask $object
     DTMRI(vtk,$object) SetMaskInput \
-        [DTMRI(vtk,mask,cast) GetOutput]
+        [DTMRI(vtk,mask,threshold) GetOutput]
 
     #---------------------------------------------------------------
     # Pipeline for display of glyphs
@@ -1547,6 +1552,11 @@ proc DTMRICalculateIJKtoRASRotationMatrix {transform t} {
         return
     }
 
+
+    # special trick to avoid warnings about legacy hack
+    # for vtkTransform
+    $transform AddObserver WarningEvent ""
+
     # --------------------------------------------------------
     # Rotate DTMRIs to RAS  (actually to World space)
     # --------------------------------------------------------
@@ -1587,6 +1597,13 @@ proc DTMRICalculateIJKtoRASRotationMatrix {transform t} {
 
 }
 
+proc DTMRISetTensor {} {
+  global Tensor
+  
+  DTMRISetActive $Tensor(activeID)
+  
+}  
+
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRISetActive
@@ -1600,6 +1617,17 @@ proc DTMRISetActive {t} {
     global DTMRI
 
     set DTMRI(Active) $t
+
+    #set up the mask if exists
+    if {[info exists DTMRI(maskTable,$t)] == 1} {
+       #Set up mask pipeline
+       set DTMRI(MaskLabelmap) $DTMRI(maskTable,$t)
+       set DTMRI(MaskLabel) 1
+       set DTMRI(mode,mask) MaskWithLabelmap
+       #Set label of menu button to volume name.
+       $DTMRI(mbMaskLabelmap) configure -text [Volume($DTMRI(maskTable,$t),node) GetName]
+    }
+
     # Make sure this tensor is the input to the glyph pipeline
     DTMRIUpdate
 
@@ -1617,6 +1645,9 @@ proc DTMRISetActive {t} {
  
     # set correct transformation from World coords to scaledIJK of the tensors
     vtkTransform transform
+    # special trick to avoid warnings about legacy hack
+    # for vtkTransform
+    transform AddObserver WarningEvent ""
     DTMRICalculateActorMatrix transform $t    
     transform Inverse
     DTMRI(vtk,streamlineControl) SetWorldToTensorScaledIJK transform
@@ -1630,6 +1661,7 @@ proc DTMRISetActive {t} {
     # initial setup of the streamline control object for the
     # type of streamline to create.
     DTMRIUpdateStreamlineSettings
+    
 
 #     # set up the BSpline tractography pipeline
 #     set DTMRI(vtk,BSpline,data) 1
