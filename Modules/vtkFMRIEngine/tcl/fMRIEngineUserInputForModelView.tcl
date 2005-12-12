@@ -178,19 +178,15 @@ proc fMRIModelViewSortUserInput { } {
     #--- boxcar,
     #--- boxcar_dt1,
     #--- boxcar_dt2,
-    #--- boxcar_dt3,
     #--- boxcar_cHRF,
     #--- boxcar_cHRF_dt1,
     #--- boxcar_cHRF_dt2,
-    #--- boxcar_cHRF_dt3,
     #--- halfsine,
     #--- halfsine_dt1,
     #--- halfsine_dt2,
-    #--- halfsine_dt3,
     #--- halfsine_cHRF,
     #--- halfsine_cHRF_dt1,
     #--- halfsine_cHRF_dt2,
-    #--- halfsine_cHRF_dt3
     #--- These variables get generated during signal modeling
     #--- of conditions, and selection of additional EVs.
     #--- So here, ::fMRIModelView(Design,EV1,SignalType)
@@ -199,9 +195,9 @@ proc fMRIModelViewSortUserInput { } {
     #-------------------- IMPORTANT ---------------------------------------------------------
     #--- This proc formats the list of EVs in the following way,
     #--- which the rest of fMRIEngine conforms:
-    #--- condition1, deriv1...deriv3, baseline, trendbasis1...trendbasisN,
-    #--- condition2, deriv1...deriv3, baseline, trendbasis1...trendbasisN,...
-    #--- conditionM, deriv1...deriv3, baseline, trendbasis1...trendbasisN.
+    #--- condition1, deriv1, deriv2, baseline, trendbasis1...trendbasisN,
+    #--- condition2, deriv1, deriv2, baseline, trendbasis1...trendbasisN,...
+    #--- conditionM, deriv1, deriv2, baseline, trendbasis1...trendbasisN.
     #--- Only derivatives used are included, and only trendbases used are included.
     #--------------------------------------------------------------------------------------------
     for { set r 1 } { $r <= $::fMRIModelView(Design,numRuns) } { incr r } {
