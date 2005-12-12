@@ -65,7 +65,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.33 $} {$Date: 2005/12/02 21:48:48 $}]
+                                 {$Revision: 1.34 $} {$Date: 2005/12/12 19:07:37 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -1498,7 +1498,13 @@ proc ConvertVolumeToTensors {} {
     
     
     
-
+    #Compute Mask: Try to extract an rough mask for whitematter
+    set mid [DTMRIComputeTensorMask Volume($id,node)]
+    
+    #Save in a table the relation between mask and associated tensor
+    set DTMRI(maskTable,$n) $mid
+    
+    
     # If failed, then it's no longer in the idList
     if {[lsearch $Tensor(idList) $n] == -1} {
         DevWarningWindow "Tensor node has not been created. Error in the conversion process."
@@ -1506,12 +1512,8 @@ proc ConvertVolumeToTensors {} {
         # Activate the new data object
         DTMRISetActive $n
     }
-
     
-    #Compute Mask: Try to extract an rough mask for whitematter
-    DTMRIComputeTensorMask Volume($id,node)
-    
-    #DTMRI SetOutput ""
+    DTMRI SetOutput ""
     DTMRI Delete
 
     # This updates all the buttons to say that the
@@ -1636,7 +1638,7 @@ proc DTMRIComputeTensorMask {node} {
     #Free space
     _buffer Delete
     _er Delete
-                 
+               
     set name "Tensor_mask"
     set description "Mask for volume $name"            
     set mid [DTMRICreateNewNode $node [_cast GetOutput] $name $description]
@@ -1645,15 +1647,9 @@ proc DTMRIComputeTensorMask {node} {
     Volume($mid,node) LabelMapOn
     
     #Clean objects
+    _cast SetOutput ""
     _cast Delete
     
-    #Set up mask pipeline
-    set DTMRI(MaskLabelmap) $mid
-    set DTMRI(MaskLabel) 1
-    set DTMRI(mode,mask) MaskWithLabelmap
-    DTMRIUpdate
-    #Set label of menu button to volume name.
-    $DTMRI(mbMaskLabelmap) configure -text $name
     
     #Return mask id
     return $mid
