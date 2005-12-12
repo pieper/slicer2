@@ -590,7 +590,7 @@ if { ![file exists $::ITK_TEST_FILE] } {
 if { ![file exists $::SANDBOX_TEST_FILE] } {
     cd $SLICER_LIB
 
-    runcmd $::SVN checkout -r $::SANDBOX_TAG http://www.na-mic.org:8000/svn/NAMICSandBox 
+    runcmd $::SVN checkout $::SANDBOX_TAG NAMICSandBox 
 
     file mkdir $SLICER_LIB/NAMICSandBox-build
     cd $SLICER_LIB/NAMICSandBox-build
