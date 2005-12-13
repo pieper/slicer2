@@ -118,7 +118,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.61 $} {$Date: 2005/12/13 20:26:05 $}]
+        {$Revision: 1.62 $} {$Date: 2005/12/13 22:25:27 $}]
     
     # Initialize module-level variables
     set Fiducials(renList) "viewRen matRen"
@@ -1591,8 +1591,8 @@ proc FiducialsResetVariables { {deleteFlag "0"} } {
         # these are operations that take place that don't involve deleting vtk variables
         foreach id $Fiducials(listOfIds) {
             set Fiducials($id,pointIdList) ""
-            if {$::Module(verbose)} {
-                puts "ResetVars: clearing out selected point id list for $id, saving it in old: $Fiducials($id,selectedPointIdList)"
+            if {$::Module(verbose) && [info exist Fiducials($id,selectedPointIdList)] != 0} {
+                puts "ResetVars: clearing out selected point id list for $id, saving it in old if there was one: $Fiducials($id,selectedPointIdList)"
             }
             if {[info exist Fiducials($id,selectedPointIdList)] != 0} {
                 set Fiducials($id,oldSelectedPointIdList) $Fiducials($id,selectedPointIdList) 
@@ -1607,6 +1607,7 @@ proc FiducialsResetVariables { {deleteFlag "0"} } {
         set Fiducials(listOfIds) ""
         set Fiducials(listOfNames) ""
     }
+    set Fiducials(newListName) ""
 }
 
 
@@ -2084,7 +2085,8 @@ proc FiducialsDeletePoint {fid pid {noUpdate 0}} {
     # delete from Mrml
     if {!$noUpdate} {
         MainMrmlDeleteNode Point $pid
-        MainUpdateMRML
+        # don't need this call, it's called last in MainMrmlDeleteNode
+        # MainUpdateMRML
         if {$::Module(RenderFlagForMainUpdateMRML) == 0} {
             # render was not called yet
             Render3D
@@ -2270,8 +2272,7 @@ proc FiducialsSetActiveList {name {menu ""} {cb ""}} {
     
     global Fiducials Point Module
 
-    if { [FiducialsCheckListExistence $name] == 1 && 
-         $Fiducials(activeList) != $name} {
+    if { [FiducialsCheckListExistence $name] == 1} {
         set Fiducials(activeList) $name
         if { $menu == "" } {
             foreach m $Fiducials(mbActiveList) {
@@ -2376,7 +2377,7 @@ proc FiducialsSetActiveList {name {menu ""} {cb ""}} {
         }
     } else {
         if {$::Module(verbose)} {
-            puts "FidSetActiveList: didn't do anything because either the list $name doesn't exist, or it's already active ($Fiducials(activeList)"
+            puts "FidSetActiveList: didn't do anything because the list $name doesn't exist"
         }
     }
 }
@@ -2483,7 +2484,9 @@ proc FiducialsSelectionUpdate {fid pid on} {
         }
     }
 } else {
-puts "$fid is not the active list $Fiducials($Fiducials(activeList),fid), leaving checkboxes alone"
+    if {$::Module(verbose)} {
+        puts "$fid is not the active list $Fiducials($Fiducials(activeList),fid), leaving checkboxes alone"
+    }
 }
     FiducialsUpdateSelectionForActor $fid
 }
