@@ -125,7 +125,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.82 $} {$Date: 2005/12/12 09:32:52 $}]
+        {$Revision: 1.83 $} {$Date: 2005/12/13 22:29:02 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -1602,7 +1602,13 @@ proc EditorSetOriginal {v} {
     global Editor Volume
     
     if {$v == $Editor(idWorking)} {
-        tk_messageBox -message "The Original and Working volumes must differ."
+        DevErrorWindow "The Original and Working volumes must differ."
+        return
+    }
+
+    if { $v != $Volume(idNone)
+            && [[Volume($v,vol) GetOutput] GetNumberOfScalarComponents] != 1 } {
+        DevErrorWindow "Original (background) volume must have 1 scalar component.\n\nTry editing with a different volume and changing the background using the Bg button on the slice views."
         return
     }
     set Editor(idOriginal) $v
