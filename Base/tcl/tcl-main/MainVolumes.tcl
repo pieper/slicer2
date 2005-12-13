@@ -78,7 +78,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.90 $} {$Date: 2005/11/15 16:21:04 $}]
+    {$Revision: 1.91 $} {$Date: 2005/12/13 23:38:07 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -188,6 +188,11 @@ proc MainVolumesUpdateMRML {} {
     #--------------------------------------------------------
     foreach v $Volume(idList) {
         Volume($v,vol) SetLabelIndirectLUT Lut($Lut(idLabel),indirectLUT)
+        if { [Volume($v,node) GetLabelMap] } {
+            Volume($v,vol) UseLabelIndirectLUTOn
+        } else {
+            Volume($v,vol) UseLabelIndirectLUTOff
+        }
     }
 
     # Form the menus
