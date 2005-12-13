@@ -44,7 +44,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkPolyData.h"
 #include "vtkPointData.h"
 #include "vtkCellArray.h"
-#include "vtkSuperquadricSource.h"
+#include "vtkSuperquadricSource2.h"
 #include <time.h>
 #include "vtkTensorMathematics.h"
 #include "vtkInteractiveTensorGlyph.h"
@@ -210,7 +210,7 @@ void vtkSuperquadricTensorGlyph::Execute()
   // Allocate storage for output PolyData
   //
   //cout<<"Before instanciation of sq"<<endl;
-  vtkSuperquadricSource *sq = vtkSuperquadricSource::New();
+  vtkSuperquadricSource2 *sq = vtkSuperquadricSource2::New();
   sq->SetThetaResolution(this->ThetaResolution);
   sq->SetPhiResolution(this->PhiResolution);
   sq->Update();
@@ -394,9 +394,11 @@ void vtkSuperquadricTensorGlyph::Execute()
       if(cp<cl) {
         alpha = pow((1-cp),this->Gamma);
         beta = pow((1-cl),this->Gamma);
+        sq->SetAxisOfSymmetry(0);
        } else {
         alpha = pow((1-cl),this->Gamma);     
         beta= pow((1-cp),this->Gamma);
+        sq->SetAxisOfSymmetry(2);
        }      
       //cout<<"Alpha: "<<alpha<<"  Beta: "<<beta<<endl;
       sq->SetPhiRoundness(beta);
@@ -407,18 +409,7 @@ void vtkSuperquadricTensorGlyph::Execute()
       //cout<<"Update done"<<endl;
       
       sourcePts = sq->GetOutput()->GetPoints();
-      
-      //If cp<cl, transfrom points: qz to qx
-      // qx = [0 0 1; 0 -1 0; 1 0 0] qz
-      if(cp<cl) {
-        for( i=0; i<numSourcePts; i++) {
-          x=sourcePts->GetPoint(i);
-          x2[0] = x[2];
-      x2[1] = -x[1];
-      x2[2] = x[0];
-      sourcePts->SetPoint(i,x2);
-        }
-       }         
+             
       // copy topology
       //cout<<"Copy cell topology"<<endl;
       for (cellId=0; cellId < numSourceCells; cellId++)
