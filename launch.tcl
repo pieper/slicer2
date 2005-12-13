@@ -97,8 +97,10 @@ if {[catch {
         puts stderr "LD_LIBRARY_PATH is an empty string."
         set ::env(LD_LIBRARY_PATH) " " 
     }} ex]} {
-    puts "Setting LD_LIBRARY_PATH to \" \"."  
-    puts "Warning: You may need to set your LD_LIBRARY_PATH environment variable to pick up system libraries such as libstdc++.so"
+    if { $::env(BUILD) != $windows && $::env(BUILD) != $darwin } {
+        puts "Setting LD_LIBRARY_PATH to \" \"."  
+        puts "Warning: You may need to set your LD_LIBRARY_PATH environment variable to pick up system libraries such as libstdc++.so"
+    }
     set ::env(LD_LIBRARY_PATH) " "
 }
 
