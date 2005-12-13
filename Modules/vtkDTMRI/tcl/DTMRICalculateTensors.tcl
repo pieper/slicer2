@@ -65,7 +65,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.34 $} {$Date: 2005/12/12 19:07:37 $}]
+                                 {$Revision: 1.35 $} {$Date: 2005/12/13 23:36:11 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -1639,12 +1639,15 @@ proc DTMRIComputeTensorMask {node} {
     _buffer Delete
     _er Delete
                
-    set name "Tensor_mask"
+    set source_name [$node GetName]
+    set name "Tensor_mask-$source_name "
     set description "Mask for volume $name"            
     set mid [DTMRICreateNewNode $node [_cast GetOutput] $name $description]
     
     #Set labelmap
+    # -1 is id for Label lookup table
     Volume($mid,node) LabelMapOn
+    Volume($mid,node) SetLUTName -1
     
     #Clean objects
     _cast SetOutput ""
