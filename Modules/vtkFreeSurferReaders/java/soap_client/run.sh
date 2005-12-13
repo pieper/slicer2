@@ -1,5 +1,9 @@
 #!/bin/sh
 
+c:/pieper/bwh/slicer2/latest/slicer2/Modules/vtkFreeSurferReaders/java/soap_client
+
+java -cp lib/axis.jar:lib/commons-logging.jar:lib/saaj.jar:lib/commons-discovery.jar:lib/jaxrpc.jar:lib/xmlParserAPIs.jar:classes/StatsSOAPClient.class StatsSOAPClient -p8080 -h192.168.147.71 $* > $CP/results.txt
+
 unset CLASSPATH
 if [ "$CP" == "" ]
 then
