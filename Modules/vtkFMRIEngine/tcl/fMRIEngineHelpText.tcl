@@ -320,7 +320,7 @@ proc fMRIEngineHelpSetupGrandMeanFX { } {
     set i [ fMRIEngineGetHelpWinID ]
     set txt "<H3>Grand mean scaling</H3>
 <P> As part of what is commonly called 'global effects scaling', grand mean scaling normalizes the entire 4D dataset by a single scaling factor (the mean of the global means). In this normalization, all voxels in all scans are mulitiplied by N divided by the mean intensity value over all scans. (The fMRIEngine uses N=100.0).
-<P> Grand mean normalization is recommended in order to make higher-level analysis valid, though these analyses are not yet part of fMRIEngine's functionality."
+<P> Grand mean normalization will not effect statistical results for single subject analysis, but is recommended in order to make subsequent higher-level analysis valid (though these analyses are not yet part of fMRIEngine's functionality)."
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
 }
 
