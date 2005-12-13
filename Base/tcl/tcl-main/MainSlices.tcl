@@ -109,7 +109,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.60 $} {$Date: 2005/12/11 17:35:21 $}]
+        {$Revision: 1.61 $} {$Date: 2005/12/13 19:49:48 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"
@@ -977,7 +977,11 @@ proc MainSlicesSetOffsetInit {s widget {value ""}} {
 #-------------------------------------------------------------------------------
 proc MainSlicesSetOffset {s {value ""}} {
     global Slice Fiducials
-
+    
+    # are we already at the right offset?
+    if {$Slice($s,offset) == $value} {
+        return
+    }
    
     # figure out what offset to use
     if {$value == ""} {
@@ -986,8 +990,10 @@ proc MainSlicesSetOffset {s {value ""}} {
         set value $Slice($s,offset)
     } elseif {$value == "Prev"} {
         set value [expr $Slice($s,offset) - $Slice($s,offsetIncrement)]
+        set Slice($s,offset) $value
     } elseif {$value == "Next"} {
         set value [expr $Slice($s,offset) + $Slice($s,offsetIncrement)]
+        set Slice($s,offset) $value
     }
    
     if {$::Module(verbose)} {
@@ -1000,10 +1006,6 @@ proc MainSlicesSetOffset {s {value ""}} {
         # Set slider to the last used offset for this orient
         set value [Slicer GetOffset $s]
     }
- 
-    
-    
-    set Slice($s,offset) $value
 
     Slicer SetOffset $s $value
 
