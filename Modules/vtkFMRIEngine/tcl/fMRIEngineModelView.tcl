@@ -1793,6 +1793,8 @@ proc fMRIModelViewComputeGaussianFilter { r } {
         #--- use 3 sigmas out for the kernel size (cutoff) now, 
         #--- where gaussian approaches zero...
         set numsigmas 3.0
+        #--- spread the kernel's passband out a little more
+        set numsigmas 2.5
         set sigma [ expr 2.0 * $PI * $fmax / $numsigmas ]
         
         #--- how many samples of the time-domain kernel do
