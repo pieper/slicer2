@@ -1785,7 +1785,7 @@ proc fMRIModelViewComputeGaussianFilter { r } {
     #--- downsampling to a signal with sampling freq 1/TRsec.
     #--- to signal with fmax = 1/2*TRsec
 
-    set nyquistbuffer 2.01
+    set nyquistbuffer 2.001
     if { ! [ info exists ::fMRIModelView(Design,Run$r,GaussianFilter) ] } {
         set TR $::fMRIModelView(Design,Run$r,TR)
         set PI 3.14159265
@@ -1793,14 +1793,16 @@ proc fMRIModelViewComputeGaussianFilter { r } {
         #--- use 3 sigmas out for the kernel size (cutoff) now, 
         #--- where gaussian approaches zero...
         set numsigmas 3.0
-        #--- spread the kernel's passband out a little more
-        set numsigmas 2.5
+        #--- try setting 2PI fmax = FWHM of the gaussian.
+        #--- so sigma = FWHM/(2*sqrt(2ln(2)))
+        set numsigmas 2.3548
         set sigma [ expr 2.0 * $PI * $fmax / $numsigmas ]
         
         #--- how many samples of the time-domain kernel do
         #--- we need? 
         set numsamps [ expr (1.0 / $fmax) / 2.0 ]
-                
+        set numsamps  $TR
+        
         set inc $::fMRIModelView(Design,Run$r,TimeIncrement)
         #--- now compute the gaussian to convolve with.
 
