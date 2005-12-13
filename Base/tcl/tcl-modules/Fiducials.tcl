@@ -118,7 +118,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.60 $} {$Date: 2005/12/09 23:01:59 $}]
+        {$Revision: 1.61 $} {$Date: 2005/12/13 20:26:05 $}]
     
     # Initialize module-level variables
     set Fiducials(renList) "viewRen matRen"
@@ -1565,7 +1565,7 @@ proc FiducialsResetVariables { {deleteFlag "0"} } {
             } else {
                 set Fiducials($id,oldSelectedPointIdList) ""
             }
-            set Fiducials($id,SelectedPointIdList) ""
+            set Fiducials($id,selectedPointIdList) ""
             
             # delete the 2d glyph variables
             foreach r $Fiducials(renList2D) {
@@ -1599,7 +1599,7 @@ proc FiducialsResetVariables { {deleteFlag "0"} } {
             } else {
                 set Fiducials($id,oldSelectedPointIdList) ""
             }
-            set Fiducials($id,SelectedPointIdList) ""
+            set Fiducials($id,selectedPointIdList) ""
             foreach r $Fiducials(renList2D) {
                 set Fiducials($id,pointIdList,$r) ""
             }
@@ -1718,7 +1718,7 @@ proc FiducialsCreatePointFromWorldXYZ { type x y z  {listName ""} {name ""} {sel
     global Fiducials Point Module Select
 
     if {$::Module(verbose)} {
-        puts "FiducialsCreatePointFromWorldXYZ $x $y $z"
+        puts "FiducialsCreatePointFromWorldXYZ x $x, y $y, z $z"
     }
 
     # if the user specified a list, use that name
@@ -2395,7 +2395,10 @@ proc FiducialsSelectionUpdate {fid pid on} {
     global Fiducials Module
 
     if {$::Module(verbose)} {
-        puts "\n\nFiducialsSelectionUpdate: fid = $fid (active list = $Fiducials($Fiducials(activeList),fid)) pid = $pid, on = $on, selected point id list = $Fiducials($fid,selectedPointIdList)"
+        puts "\n\nFiducialsSelectionUpdate: fid = $fid (active list = $Fiducials($Fiducials(activeList),fid)) pid = $pid, on = $on."
+        if {[info exists Fiducials($fid,selectedPointIdList)]} {
+            puts "\tselected point id list = $Fiducials($fid,selectedPointIdList)"
+        }
     }
 
     # only do stuff with the checkbox list if it's the active list
