@@ -161,7 +161,7 @@ if {$::env(BUILD) == $solaris ||
         set ::env(DYLD_LIBRARY_PATH) $::env(VTK_DIR)/bin:$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(KWWIDGETS_DIR)/bin:$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(ITK_BINARY_PATH)/bin:$::env(DYLD_LIBRARY_PATH)
-        set ::env(DYLD_LIBRARY_PATH) $::env(SANDBOX_BIN_PATH):$::env(DYLD_LIBRARY_PATH)
+        set ::env(DYLD_LIBRARY_PATH) $::env(SANDBOX_BIN_DIR):$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(SOV_BINARY_DIR)/bin:$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(SLICER_HOME)/Base/builds/$::env(BUILD)/bin:$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(TCL_LIB_DIR):$::env(DYLD_LIBRARY_PATH)
