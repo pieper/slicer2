@@ -91,7 +91,7 @@ proc DTMRITensorRegistrationInit {} {
     #------------------------------------
     set m "TensorRegistration"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.21 $} {$Date: 2005/12/02 22:59:42 $}]
+                                 {$Revision: 1.22 $} {$Date: 2005/12/13 23:35:20 $}]
 
     # Does the AG module exist? If not the registration tab will not be displayed
     if {[catch "package require vtkAG"]} {
@@ -1793,7 +1793,7 @@ proc DTMRIRegRun {} {
       
       if {$DTMRI(reg,Channels)=="TensorComponents"} {
         # TODO set to 1
-    warp SetResliceTensors 1
+        warp SetResliceTensors 1
       } else {
         warp SetResliceTensors 0
       }
