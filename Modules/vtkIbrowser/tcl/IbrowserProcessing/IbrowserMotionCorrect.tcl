@@ -37,7 +37,7 @@
 # FILE:        IbrowserMotionCorrect.tcl
 # PROCEDURES:  
 #   IbrowserBuildMotionCorrectGUI
-#   IbrowserMotionCorrectStopGo
+#   IbrowserMotionCorrectGo
 #   IbrowserHardenTransforms
 #==========================================================================auto=
 
@@ -76,7 +76,6 @@ proc IbrowserBuildMotionCorrectGUI { f master } {
                -menu $ff.mbIntervals.m -indicatoron 1 } $::Gui(WMBA)
     eval { menu $ff.mbIntervals.m } $::Gui(WMA)
     foreach i $::Ibrowser(idList) {
-        puts "adding $::Ibrowser($i,name) to Motion correction menu"
         $ff.mbIntervals.m add command -label $::Ibrowser($i,name) 
     }
     set ::Ibrowser(Process,MotionCorrect,mbIntervals) $ff.mbIntervals
@@ -105,50 +104,48 @@ proc IbrowserBuildMotionCorrectGUI { f master } {
     eval { label $ff.lBlank -text "" } $Gui(WLA)
     eval { radiobutton $ff.rQualityCoarse -indicatoron 1\
                -text "coarse" -value 1 -variable ::Ibrowser(Process,MotionCorrectQuality) \
-               -command "puts $::Ibrowser(Process,MotionCorrectQuality)" \
+               -command "VersorMattesMIRegistrationCoarseParam" \
            } $Gui(WCA)
     grid $ff.lQuality $ff.rQualityCoarse -padx $Gui(pad) -sticky w
     
     eval { radiobutton $ff.rQualityFair -indicatoron 1\
                -text "fair" -value 2 -variable ::Ibrowser(Process,MotionCorrectQuality) \
-               -command "puts $::Ibrowser(Process,MotionCorrectQuality)" \
+               -command "VersorMattesMIRegistrationFineParam" \
            } $Gui(WCA)
     grid $ff.lBlank $ff.rQualityFair -padx $Gui(pad) -sticky w
     
     eval { radiobutton $ff.rQualityGood -indicatoron 1\
                -text "good" -value 3 -variable ::Ibrowser(Process,MotionCorrectQuality) \
-               -command "puts $::Ibrowser(Process,MotionCorrectQuality)" \
+               -command "VersorMattesMIRegistrationGSlowParam" \
            } $Gui(WCA)
     grid $ff.lBlank $ff.rQualityGood -padx $Gui(pad) -sticky w
     
     eval { radiobutton $ff.rQualityBest -indicatoron 1\
                -text "best" -value 4 -variable ::Ibrowser(Process,MotionCorrectQuality) \
-               -command "puts $::Ibrowser(Process,MotionCorrectQuality)" \
+               -command "VersorMattesMIRegistrationVerySlowParam" \
            } $Gui(WCA)
     grid $ff.lBlank $ff.rQualityBest -padx $Gui(pad) -sticky w
 
     eval { label $ff.lIterate -text "iterations:" } $Gui(WLA)    
     eval { radiobutton $ff.rIterateMany -indicatoron 1\
                -text "repeat" -value 1 -variable ::Ibrowser(Process,MotionCorrectIterate) \
-               -command "puts $::Ibrowser(Process,MotionCorrectQuality)" \
            } $Gui(WCA)
     grid $ff.lIterate $ff.rIterateMany -padx $Gui(pad) -sticky w
 
     eval { radiobutton $ff.rIterateOnce -indicatoron 1\
                -text "do once" -value 0 -variable ::Ibrowser(Process,MotionCorrectIterate) \
-               -command "puts $::Ibrowser(Process,MotionCorrectQuality)" \
            } $Gui(WCA)
     grid $ff.lBlank $ff.rIterateOnce -padx $Gui(pad) -sticky w
 
-    DevAddButton $ff.bGoStop "Go" "IbrowserMotionCorrectStopGo $ff.bGoStop" 8
-    grid $ff.lBlank $ff.bGoStop -padx $Gui(pad) -pady $Gui(pad) -sticky w
-    set ::Ibrowser(Process,MotionCorrect,GoStop) $ff.bGoStop
+    DevAddButton $ff.bGo "Go" "IbrowserMotionCorrectGo $ff.bGo" 8
+    grid $ff.lBlank $ff.bGo -padx $Gui(pad) -pady $Gui(pad) -sticky w
+    set ::Ibrowser(Process,MotionCorrect,Go) $ff.bGo
     
     #---------------------------------------------------------------------------
     #---HARDEN TRANSFORMS FRAME
     set ff $f.fResample
-    DevAddButton $ff.bCancel "Cancel (pre-harden only)" "IbrowserRemoveTransforms" 8
-    DevAddButton $ff.bApply "Harden transforms" "IbrowserHardenTransforms" 8
+    DevAddButton $ff.bCancel "Cancel (pre-commit only)" "IbrowserRemoveNonReferenceTransforms" 8
+    DevAddButton $ff.bApply "Commit transforms" "IbrowserHardenTransforms" 8
     pack $ff.bCancel $ff.bApply -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
         
 
@@ -164,23 +161,15 @@ proc IbrowserBuildMotionCorrectGUI { f master } {
 
 
 #-------------------------------------------------------------------------------
-# .PROC IbrowserMotionCorrectStopGo
+# .PROC IbrowserMotionCorrectGo
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc IbrowserMotionCorrectStopGo { stopbutton } {
+proc IbrowserMotionCorrectGo { stopbutton } {
 
-    #--- check for stopping
-    set state [ $stopbutton cget -text ]
-    if { $state == "Stop" } {
-        $stopbutton configure -text "Go"
-        #--- stop the loop.
-        IbrowserSayThis "stopping motion correction." 0
-        return
-    }
     
-    #--- otherwise, it's go
+    #--- it's go
     if { [lsearch $::Ibrowser(idList) $::Ibrowser(activeInterval) ] == -1 } {
         DevErrorWindow "First select a valid sequence to motion correct."
         return
@@ -198,10 +187,48 @@ proc IbrowserMotionCorrectStopGo { stopbutton } {
     }    
 
     #--- Adds a transform around each volume in the sequence.
-    IbrowserAddSequenceTransforms
+    IbrowserAddNonReferenceSequenceTransforms
     set ::Ibrowser(Process,MotionCorrect,Hardened) 0
-    $stopbutton configure -text "Stop"
+
+    #--- now for each volume in the selected interval
+    set iid $::Ibrowser(activeInterval)
+    set start $::Ibrowser($iid,firstMRMLid)
+    set stop $::Ibrowser($iid,lastMRMLid)
+    set drop 0
+    set numdrops $::Ibrowser($iid,numDrops)
+    set tvid $::Ibrowser(Process,InternalReference)
+    IbrowserRaiseProgressBar
+    set progcount 0
+    set ::RigidIntensityRegistration(Repeat) $::Ibrowser(Process,MotionCorrectIterate)
+
+    for { set vid $start } { $vid <= $stop } { incr vid } {
+        #--- get matrix:
+        if { $numdrops != 0} {
+            set progress [ expr double ($progcount) / double ($numdrops) ]
+            IbrowserUpdateProgressBar $progress "::"
+            IbrowserPrintProgressFeedback
+        }
+        if { $vid != $tvid } {
+            #--- set targets and sources
+            set mid $::Ibrowser($iid,$drop,matrixID)
+            set ::RigidIntensityRegistration(sourceID) $vid
+            set ::RigidIntensityRegistration(targetID) $tvid
+            set ::RigidIntensityRegistration(matrixID) $mid
+            set ::Matrix(activeID) $mid
+            set ::Matrix(volume) $vid
+            set ::Matrix(refVolume) $tvid
+            #--- register and increment to next volume
+            IbrowserSayThis "starting motion correction." 0
+            VersorMattesMIRegistrationAutoRun
+        }
+        incr drop
+        incr progcount
+    }
+    IbrowserSayThis "motion correction complete." 0
+    IbrowserLowerProgressBar
 }
+
+
 
 #-------------------------------------------------------------------------------
 # .PROC IbrowserHardenTransforms
@@ -210,7 +237,8 @@ proc IbrowserMotionCorrectStopGo { stopbutton } {
 # .END
 #-------------------------------------------------------------------------------
 proc IbrowserHardenTransforms { } {
-    puts "transform hardened."
+
+    IbrowserSayThis "transforms committed." 0
     set ::Ibrowser(Process,MotionCorrect,Hardened) 1
 }
 
