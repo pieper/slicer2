@@ -98,7 +98,7 @@ proc IbrowserInit {} {
     #---Set category and version info
     set Module($m,category) "Alpha"
        lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.13 $} {$Date: 2005/09/28 15:20:14 $}]
+        {$Revision: 1.14 $} {$Date: 2005/12/13 15:49:44 $}]
 
     #---Initialize module-level variables
     #---Global array with the same name as the module. Ibrowser()
@@ -190,7 +190,7 @@ proc IbrowserInit {} {
     #--- IO / processing / visualization
     #source ${modulePath}IbrowserProcessing/IbrowserProcessingUtils.tcl
     source ${modulePath}IbrowserProcessing/IbrowserReorient.tcl
-    #source ${modulePath}IbrowserProcessing/IbrowserMotionCorrect.tcl
+    source ${modulePath}IbrowserProcessing/IbrowserMotionCorrect.tcl
     #source ${modulePath}IbrowserProcessing/IbrowserSmooth.tcl
     source ${modulePath}IbrowserProcessing/IbrowserKeyframeRegister.tcl
     source ${modulePath}IbrowserProcessing/IbrowserReassemble.tcl
@@ -545,7 +545,7 @@ proc IbrowserUpdateMRML { } {
                 #---build selections; all volumes in an interval
                 set vname "none"
                 $m add command -label $vname \
-                    -command "IbrowserProcessinGSelecdtInternalReference $vname $::Volume(idNone)"
+                    -command "IbrowserProcessingSelectInternalReference $vname $::Volume(idNone)"
                 for { set i $start } { $i <= $stop } { incr i } {
                     set vname [ ::Volume($i,node) GetName ]
                     $m add command -label $vname \

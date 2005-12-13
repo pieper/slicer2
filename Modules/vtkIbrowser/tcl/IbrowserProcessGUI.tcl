@@ -99,8 +99,8 @@ proc IbrowserBuildProcessFrame { } {
     IbrowserBuildReorientGUI $ff.fReorient $f.fProcessInfo
 
     #--- WJP comment out during development
-    #frame $ff.fMotionCorrect -bg $::Gui(activeWorkspace) 
-    #IbrowserBuildMotionCorrectGUI $ff.fMotionCorrect $f.fProcessInfo
+    frame $ff.fMotionCorrect -bg $::Gui(activeWorkspace) 
+    IbrowserBuildMotionCorrectGUI $ff.fMotionCorrect $f.fProcessInfo
     #frame $ff.fSmooth -bg $::Gui(activeWorkspace)
     #IbrowserBuildSmoothGUI $ff.fSmooth $f.fProcessInfo    
 
@@ -138,7 +138,7 @@ proc IbrowserBuildProcessFrame { } {
     #--- do not expose until code is complete
     #--- WJP comment out during development
     #foreach r "Reassemble Reorient Smooth MotionCorrect KeyframeRegister" 
-    foreach r "Reassemble Reorient KeyframeRegister" {
+    foreach r "Reassemble Reorient MotionCorrect KeyframeRegister" {
         $ff.mbProcessType.m add command -label $r \
             -command "IbrowserRaiseProcessingFrame $::Ibrowser(Process,Text,${r}) $::Ibrowser(fProcess${r})"
     }
