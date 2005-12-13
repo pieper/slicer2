@@ -60,7 +60,7 @@ proc DTMRICalculateScalarsInit {} {
     #------------------------------------
     set m "CalculateScalars"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.15 $} {$Date: 2005/12/02 21:51:55 $}]
+                                 {$Revision: 1.16 $} {$Date: 2005/12/13 22:15:08 $}]
 
     #------------------------------------
     # Variables for producing scalar volumes
@@ -77,7 +77,7 @@ proc DTMRICalculateScalarsInit {} {
     set DTMRI(scalars,operationList,tooltip) "Produce a scalar volume from DTMRI data.\nTrace, Determinant, Anisotropy, and Eigenvalues produce grayscale volumes,\nwhile Orientation produces a 3-component (Color) volume that is best viewed in the 3D window."
 
     # how much to scale the output floats by
-    set DTMRI(scalars,scaleFactor) 10000
+    set DTMRI(scalars,scaleFactor) 1000
     set DTMRI(scalars,scaleFactor,tooltip) \
     "Multiplicative factor applied to output images for better viewing."
     
@@ -363,12 +363,15 @@ proc DTMRIDoMath {{operation ""}} {
     puts "Running oper: $operation"
     puts "Max Trace: $maxTrace"
     
-    switch -regexp -- $operation {
-        {^(Trace|Determinant|D11|D22|D33|MaxEigenvalue|MiddleEigenvalue|MinEigenvalue)$} {
-            set DTMRI(scalars,scaleFactor) 1000
-        }
-        {^(RelativeAnisotropy|FractionalAnisotropy|Mode|LinearMeasure|PlanarMeasure|SphericalMeasure|ColorByOrientation|ColorByMode)$} {
-            set DTMRI(scalars,scaleFactor) 1000
+    # removed this hard-coded reset of the user's selected scale value after reviewing with LMI folks (sp - for slicer 2.6
+    if { 0 } { 
+        switch -regexp -- $operation {
+            {^(Trace|Determinant|D11|D22|D33|MaxEigenvalue|MiddleEigenvalue|MinEigenvalue)$} {
+                set DTMRI(scalars,scaleFactor) 1000
+            }
+            {^(RelativeAnisotropy|FractionalAnisotropy|Mode|LinearMeasure|PlanarMeasure|SphericalMeasure|ColorByOrientation|ColorByMode)$} {
+                set DTMRI(scalars,scaleFactor) 1000
+            }
         }
     }
     
