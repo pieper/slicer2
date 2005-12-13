@@ -22,7 +22,7 @@ SET (LOCAL_MODULE_SRCS
          vtkTimeDef.h
          vtkImageEMMarkov.cxx
 
-	 vtkImageEMLocalGenericClass.cxx
+	     vtkImageEMLocalGenericClass.cxx
          vtkImageEMLocalSuperClass.cxx
          vtkImageEMLocalClass.cxx
          vtkImageEMLocalSegmenter.cxx
