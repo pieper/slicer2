@@ -223,7 +223,7 @@ void vtkImageReformat::SetPoint(int x, int y)
     m1= vtkMatrix4x4::New();
     
     this->CrossProduct(this->XStep,this->YStep,zstep);
-
+    
     for (i=0; i<3; i++) 
     {
       m1->SetElement(i,0,this->XStep[i]);
@@ -233,8 +233,8 @@ void vtkImageReformat::SetPoint(int x, int y)
     }
 
     m1->MultiplyPoint(point,ras);
-        
-   /* for (i=0; i<3; i++) 
+     
+    /* for (i=0; i<3; i++) 
     {
         this->WldPoint[i] = this->Origin[i] + this->XStep[i]*(vtkFloatingPointType)x + 
             this->YStep[i]*(vtkFloatingPointType)y;
@@ -247,6 +247,12 @@ void vtkImageReformat::SetPoint(int x, int y)
     ras[3] = 1.0;*/
     
     this->WldToIjkMatrix->MultiplyPoint(ras, this->IjkPoint);
+
+    // set the world point
+    for (i=0; i<3; i++) 
+    {
+        this->WldPoint[i] = ras[i];
+    }
    // << 
 }
 //----------------------------------------------------------------------------
