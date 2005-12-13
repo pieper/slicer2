@@ -60,7 +60,7 @@ proc DTMRICalculateScalarsInit {} {
     #------------------------------------
     set m "CalculateScalars"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.16 $} {$Date: 2005/12/13 22:15:08 $}]
+                                 {$Revision: 1.17 $} {$Date: 2005/12/13 23:37:23 $}]
 
     #------------------------------------
     # Variables for producing scalar volumes
@@ -314,7 +314,7 @@ proc DTMRIDoMath {{operation ""}} {
 
     # validate user input
     if {[ValidateFloat $DTMRI(scalars,scaleFactor)] != "1"} {
-        tk_messageBox -message \
+        DevErrorWindow \
             "Please enter a number for the scale factor."
         # reset default
         set DTMRI(scalars,scaleFactor) 1000
@@ -325,8 +325,8 @@ proc DTMRIDoMath {{operation ""}} {
     # to copy...
     set t $Tensor(activeID) 
     if {$t == "" || $t == $Tensor(idNone)} {
-    tk_messageBox -message \
-        "Please select an input DTMRI volume (Active DTMRI)"
+        DevErrorWindow \
+            "Please select an input DTMRI volume (Active DTMRI)"
         return
     }
     set name [Tensor($t,node) GetName]
