@@ -96,8 +96,8 @@ proc fMRIEngineInit {} {
     #   row2Name = like row1
     #   row2,tab = like row1 
     #
-    set Module($m,row1List) "Help Sequence Setup ROI Compute View"
-    set Module($m,row1Name) "{Help} {Sequence} {Set Up} {ROI} {Compute} {View}"
+    set Module($m,row1List) "Help Sequence Setup Detect ROI View"
+    set Module($m,row1Name) "{Help} {Sequence} {Set Up} {Detect} {ROI} {View}"
     set Module($m,row1,tab) Sequence 
 
     # Define Procedures
@@ -154,7 +154,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.26 $} {$Date: 2005/12/05 15:27:07 $}]
+        {$Revision: 1.27 $} {$Date: 2005/12/13 22:26:52 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -268,11 +268,11 @@ proc fMRIEngineBuildGUI {} {
     <B>Set Up</B> allows you to specify paradigm design, signal modeling and \
     contrasts, to estimate the linear modeling, and to save/load/view a design.
     <BR>
+    <B>Detect</B> lets you to choose contrast(s) to compute \
+    activation volume(s).
+    <BR>
     <B>ROI</B> enables you to create a labelmap, to perform region of interest \
     analysis, and to view the stat results out of the defined roi.
-    <BR>
-    <B>Compute</B> lets you to choose contrast(s) to compute \
-    activation volume(s).
     <BR>
     <B>View</B> gives you the ability to view the activation \
     at different thresholds and dynamically plot any voxel \
@@ -339,11 +339,11 @@ proc fMRIEngineBuildGUI {} {
         fMRIEngineUpdateCondsForROIPlot"
  
     #-------------------------------------------
-    # Compute tab 
+    # Detect tab 
     #-------------------------------------------
-    set fCompute $Module(fMRIEngine,fCompute)
-    fMRIEngineBuildUIForComputeTab $fCompute
-    set b $Module(fMRIEngine,bCompute)
+    set fDetect $Module(fMRIEngine,fDetect)
+    fMRIEngineBuildUIForComputeTab $fDetect
+    set b $Module(fMRIEngine,bDetect)
     bind $b <1> "fMRIEngineUpdateContrastList" 
 
     #-------------------------------------------
