@@ -89,7 +89,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.66 $} {$Date: 2005/12/01 23:17:52 $}]
+        {$Revision: 1.67 $} {$Date: 2005/12/13 21:55:25 $}]
 
     set File(filePrefix) data
 }
@@ -554,6 +554,9 @@ proc MainFileOpenApply {} {
     } else {
         set filename [file join $Mrml(dir) $File(filePrefix)]
     }
+
+    # close the file first (MainMrmlDeleteAll doesn't call registered callbacks)
+    MainFileClose
 
     MainMrmlRead $filename
     MainUpdateMRML
