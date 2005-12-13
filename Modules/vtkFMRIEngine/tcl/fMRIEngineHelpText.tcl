@@ -47,7 +47,9 @@
 #   fMRIEngineHelpSetupHighpassFilter
 #   fMRIEngineHelpSelectHighpassCutoff
 #   fMRIEngineHelpSetupLowpassFilter
-#   fMRIEngineHelpSetupGlobalFX
+#   fMRIEngineHelpPreWhitenData
+#   fMRIEngineHelpSetupGlobalMeanFX
+#   fMRIEngineHelpSetupGrandMeanFX
 #   fMRIEngineHelpSetupCustomFX
 #   fMRIENgineHelpEstimateWhichRun
 #   fMRIEngineHelpSetupEstimate
@@ -226,7 +228,7 @@ proc fMRIEngineHelpSetupTempDerivative { } {
     #--- What is adding temporal derivatives?
     set i [ fMRIEngineGetHelpWinID ]
     set txt "<H3>Temporal derivatives</H3>
-<P> Adding temporal derivatives to a stimulus function, or a stimulus function convolved with the HRF is a way to account for a small onset delay in the response to each stimulus presentation, in effort to better fit the observed voxel timecourse data. In this interface, you can choose to add the first, first and second, or first, second and third temporal derivatives of the stimulus waveform to the model.
+<P> Adding temporal derivatives to a stimulus function, or a stimulus function convolved with the HRF is a way to account for a small onset delay in the response to each stimulus presentation, in effort to better fit the observed voxel timecourse data. In this interface, you can choose to add the first, or the first and second derivatives of the stimulus waveform to the model.
 <P> Once all signal modeling for an EV has been completed, clicking the <I>add to model</I> button will add the resulting EV to a list displayed at the bottom of the GUI panel. Any EV in this list may be selected and either edited or deleted using the associated <I>edit</I> and <I>delete</I> buttons. When all conditions have been modeled and any EVs for noise modeling have been specified, the model can be estimated by proceeding to the <I>estimate</I> step."
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
 }
@@ -300,7 +302,8 @@ proc fMRIEngineHelpSetupGlobalMeanFX { } {
     #--- What is global mean scaling?
     set i [ fMRIEngineGetHelpWinID ]
     set txt "<H3>Global mean scaling</H3>
-<P> Not yet available"
+<P> Part of what is commonly called 'global effects scaling', global mean scaling multiplies all voxels within a scan by N divided by the mean intensity value for that particular scan. (The fMRIEngine uses N=100.0).
+<P> A particular problem with global scaling is that a true global mean is not often known; if a large signal increase or decrease is present over many voxels in a given scan, the computed global mean will be increased or decreased respectively and the scaling operation may consequently produce artificial deactivations or activations in other brain regions. Thus, using grand mean scaling in combination with a trend model to capture low frequency temporal variations may yield better results."
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
 }
 
@@ -316,7 +319,26 @@ proc fMRIEngineHelpSetupGrandMeanFX { } {
     #--- What is grand mean scaling?
     set i [ fMRIEngineGetHelpWinID ]
     set txt "<H3>Grand mean scaling</H3>
-<P> Not yet available"
+<P> As part of what is commonly called 'global effects scaling', grand mean scaling normalizes the entire 4D dataset by a single scaling factor (the mean of the global means). In this normalization, all voxels in all scans are mulitiplied by N divided by the mean intensity value over all scans. (The fMRIEngine uses N=100.0).
+<P> Grand mean normalization is recommended in order to make higher-level analysis valid, though these analyses are not yet part of fMRIEngine's functionality."
+    DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpPreWhitenData
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineHelpPreWhitenData { } {
+    #--- ROI->Stats
+    #--- Select labels for region analysis 
+    set i [ fMRIEngineGetHelpWinID ]
+    set txt "<H3>Temporal correlation in the timecourse.</H3>
+<P> In order for the linear modeling to work properly, the residuals corresponding to any pair of data points within a voxel timecourse should be uncorrelated; however, since the serial samples within each voxel timecourse are themselves likely to be correlated, the errors will probably not be independent in time either. Correlation between scans three seconds apart can be quite high.
+<P> Using least squares during model fitting to estimate regression weights without accounting for this temporal correlation can lead to biases in the residuals. To model the temporal correlation structure, we use the first order autoregressive model as described in Worsely et al. 2002, 'A general statistical analysis for fMRI data.' <I>NeuroImage</I>, 15(1):1-15. Using this method, the GLM is fitted first and residals are computed from this first estimate of the regression weights (by subtracting the model from the data). Their temporal correlation structure of the residuals is analyzed by computing the one-lag autocorrelation AR(1). The data are then 'pre-whitened'  and the model is re-fit. The final parameter estimates are used in all subsequent statistical testing of the associated model.
+<P> Because the model fitting step is performed twice in this process, the estimation step requires more time to execute when pre-whitening is selected."
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
 }
 
@@ -488,13 +510,4 @@ proc fMRIEngineHelpSelectLabels { } {
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
 }
 
-
-proc fMRIEngineHelpPreWhitenData { } {
-    #--- ROI->Stats
-    #--- Select labels for region analysis 
-    set i [ fMRIEngineGetHelpWinID ]
-    set txt "<H3>Temporal Autocorrelation in the timecourse.</H3>
-<P> In order for the GLM to work properly, the residuals corresponding to any pair of data points within a voxel timecourse should be uncorrelated; however, serial samples within each voxel timecourse are likely to be correlated. To remove temporal correlations in the data, the GLM is fitted first without considering them. Residals are then computed in this first pass (by subtracting the model from the data) and their autocorrelation structure is analyzed by computing the one-lag autocorrelation AR(1). The data are then 'whitened' (see Worsely et al. 2002, A general statistical analysis for fMRI data. <I>NeuroImage</I>, 15(1):1-15) and the model is re-fit. These final parameter estimates are used in all subsequent statistical testing of the associated model."
-    DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
-}
 
