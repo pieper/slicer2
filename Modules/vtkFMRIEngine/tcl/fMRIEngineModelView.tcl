@@ -1800,10 +1800,9 @@ proc fMRIModelViewComputeGaussianFilter { r } {
         
         #--- how many samples of the time-domain kernel do
         #--- we need? 
-        set numsamps [ expr (1.0 / $fmax) / 2.0 ]
-        set numsamps  $TR
-        
         set inc $::fMRIModelView(Design,Run$r,TimeIncrement)
+        set numsamps  [ expr $TR + $inc ]
+
         #--- now compute the gaussian to convolve with.
 
         set twoSigmaSq [ expr $sigma * $sigma * 2.0]
