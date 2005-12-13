@@ -115,14 +115,14 @@ void vtkTensorMathematics::ExecuteInformation(vtkImageData **inDatas,
 
   if (this->Operation == VTK_TENS_COLOR_ORIENTATION)
     {
-      // output color (RGB)
-      outData->SetNumberOfScalarComponents(3);
+      // output color (RGBA)
+      outData->SetNumberOfScalarComponents(4);
       outData->SetScalarType(VTK_UNSIGNED_CHAR);
     }
   if (this->Operation == VTK_TENS_COLOR_MODE) 
     {
-      // output color (RGB)
-      outData->SetNumberOfScalarComponents(3);
+      // output color (RGBA)
+      outData->SetNumberOfScalarComponents(4);
       outData->SetScalarType(VTK_UNSIGNED_CHAR);
     }
 
@@ -284,8 +284,8 @@ static void vtkTensorMathematicsExecute1(vtkTensorMathematics *self,
         outPtr += outIncY;
         inPtId += inIncY;
     }
-     outPtr += outIncZ;
-     inPtId += outIncZ;
+    outPtr += outIncZ;
+    inPtId += outIncZ;
   }
 
   //cout << "tensor math time: " << clock() - tStart << endl;
@@ -390,10 +390,10 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
   if (self->GetMaskWithScalars())
     {
       if (inMask) {
-      doMasking = 1;
+        doMasking = 1;
       }
       else {
-      doMasking = 0;
+        doMasking = 0;
       //vtkWarningMacro("User has not set input mask, but has requested MaskWithScalars.\n Avoiding masking");
       }
     }
@@ -410,9 +410,9 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
       if (!id) 
         {
           if (!(count%target))
-        {
-          self->UpdateProgress(count/(50.0*target));
-        }
+          {
+            self->UpdateProgress(count/(50.0*target));
+          }
           count++;
         }
 
@@ -428,6 +428,8 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
                 *outPtr = 0;
                 outPtr++;
                 *outPtr = 0;
+                outPtr++;
+                *outPtr = 0;
              }
           }
           else {   
@@ -437,130 +439,136 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
 
           // get eigenvalues and eigenvectors appropriately
           if (extractEigenvalues) 
-        {
-          for (j=0; j<3; j++)
+          {
+            for (j=0; j<3; j++)
             {
               for (i=0; i<3; i++)
-            {
-              // transpose
-              m[i][j] = tensor[j][i];
-            }
+              {
+                // transpose
+                m[i][j] = tensor[j][i];
+              }
             }
           // compute eigensystem
           //vtkMath::Jacobi(m, w, v);
            vtkTensorMathematics::TeemEigenSolver(m,w,v);
-        }
+          }
           else
-        {
-          // tensor columns are evectors scaled by evals
-          for (i=0; i<3; i++)
+          {
+            // tensor columns are evectors scaled by evals
+            for (i=0; i<3; i++)
             {
               v0[i] = tensor[i][0];
               v1[i] = tensor[i][1];
               v2[i] = tensor[i][2];
             }
-          w[0] = vtkMath::Normalize(v0);
-          w[1] = vtkMath::Normalize(v1);
-          w[2] = vtkMath::Normalize(v2);
-        }
+            w[0] = vtkMath::Normalize(v0);
+            w[1] = vtkMath::Normalize(v1);
+            w[2] = vtkMath::Normalize(v2);
+          }
 
-        //Correct for negative eigenvalues. Three possible options:
-        //  1. Round to zero
-        //  2. Take absolute value
-        //  3. Increase eigenvalues by negative part
-        // The two first options have been problematic. Try 3 
-        vtkTensorMathematics::FixNegativeEigenvalues(w);
+          //Correct for negative eigenvalues. Three possible options:
+          //  1. Round to zero
+          //  2. Take absolute value
+          //  3. Increase eigenvalues by negative part
+          // The two first options have been problematic. Try 3 
+          vtkTensorMathematics::FixNegativeEigenvalues(w);
 
           // pixel operation
           switch (op)
-        {
-        case VTK_TENS_RELATIVE_ANISOTROPY:
-           *outPtr = static_cast<T> (vtkTensorMathematics::RelativeAnisotropy(w));
+          {
+          case VTK_TENS_RELATIVE_ANISOTROPY:
+             *outPtr = static_cast<T> (vtkTensorMathematics::RelativeAnisotropy(w));
           break;
-        case VTK_TENS_FRACTIONAL_ANISOTROPY:
-           *outPtr = static_cast<T> (vtkTensorMathematics::FractionalAnisotropy(w));
-          break;
-
-        case VTK_TENS_LINEAR_MEASURE:
-          *outPtr = static_cast<T> (vtkTensorMathematics::LinearMeasure(w));
-      break;
-
-        case VTK_TENS_PLANAR_MEASURE:
-          *outPtr = static_cast<T> (vtkTensorMathematics::PlanarMeasure(w));
+          case VTK_TENS_FRACTIONAL_ANISOTROPY:
+             *outPtr = static_cast<T> (vtkTensorMathematics::FractionalAnisotropy(w));
           break;
 
-        case VTK_TENS_SPHERICAL_MEASURE:
-          *outPtr = static_cast<T> (vtkTensorMathematics::SphericalMeasure(w));
-      break;
-
-        case VTK_TENS_MAX_EIGENVALUE:
-          *outPtr = (T)w[0];
+          case VTK_TENS_LINEAR_MEASURE:
+            *outPtr = static_cast<T> (vtkTensorMathematics::LinearMeasure(w));
           break;
 
-        case VTK_TENS_MID_EIGENVALUE:
-          *outPtr = (T)w[1];
+          case VTK_TENS_PLANAR_MEASURE:
+            *outPtr = static_cast<T> (vtkTensorMathematics::PlanarMeasure(w));
           break;
 
-        case VTK_TENS_MIN_EIGENVALUE:
-          *outPtr = (T)w[2];
+          case VTK_TENS_SPHERICAL_MEASURE:
+            *outPtr = static_cast<T> (vtkTensorMathematics::SphericalMeasure(w));
           break;
 
-        case VTK_TENS_MODE:
-          *outPtr = static_cast<T> (vtkTensorMathematics::Mode(w));
+          case VTK_TENS_MAX_EIGENVALUE:
+            *outPtr = (T)w[0];
           break;
 
-        case VTK_TENS_COLOR_MODE:
+          case VTK_TENS_MID_EIGENVALUE:
+            *outPtr = (T)w[1];
+          break;
 
-          vtkTensorMathematics::ColorByMode(w,r,g,b);
-          // scale maps 0..1 values into the range a char takes on
-          *outPtr = (T)(scale*r);
-          outPtr++;
-          *outPtr = (T)(scale*g);
-          outPtr++;
-          *outPtr = (T)(scale*b);
+          case VTK_TENS_MIN_EIGENVALUE:
+            *outPtr = (T)w[2];
+          break;
+
+          case VTK_TENS_MODE:
+            *outPtr = static_cast<T> (vtkTensorMathematics::Mode(w));
+          break;
+
+          case VTK_TENS_COLOR_MODE:
+
+            vtkTensorMathematics::ColorByMode(w,r,g,b);
+            // scale maps 0..1 values into the range a char takes on
+            *outPtr = (T)(scale*r);
+            outPtr++;
+            *outPtr = (T)(scale*g);
+            outPtr++;
+            *outPtr = (T)(scale*b);
+            outPtr++;
+            *outPtr = 255;
 
           break;
 
-        case VTK_TENS_COLOR_ORIENTATION:
-          // If the user has set the rotation matrix
-          // then transform the eigensystem first
-          // This is used to rotate the vector into RAS space
-          // for consistent anatomical coloring.
-          double v_maj[3];
-          v_maj[0]=v[0][0];
-          v_maj[1]=v[1][0];
-          v_maj[2]=v[2][0];
-          if (useTransform)
+          case VTK_TENS_COLOR_ORIENTATION:
+            // If the user has set the rotation matrix
+            // then transform the eigensystem first
+            // This is used to rotate the vector into RAS space
+            // for consistent anatomical coloring.
+            double v_maj[3];
+            v_maj[0]=v[0][0];
+            v_maj[1]=v[1][0];
+            v_maj[2]=v[2][0];
+            if (useTransform)
             {
               trans->TransformPoint(v_maj,v_maj);
             }
-          // Color R, G, B depending on max eigenvector
-          // scale maps 0..1 values into the range a char takes on
-          cl = vtkTensorMathematics::LinearMeasure(w);
-          *outPtr = (T)(scale*fabs(v_maj[0])*cl);
-          outPtr++;
-          *outPtr = (T)(scale*fabs(v_maj[1])*cl);
-          outPtr++;
-          *outPtr = (T)(scale*fabs(v_maj[2])*cl);
+            // Color R, G, B depending on max eigenvector
+            // scale maps 0..1 values into the range a char takes on
+            cl = vtkTensorMathematics::LinearMeasure(w);
+            *outPtr = (T)(scale*fabs(v_maj[0])*cl);
+            outPtr++;
+            *outPtr = (T)(scale*fabs(v_maj[1])*cl);
+            outPtr++;
+            *outPtr = (T)(scale*fabs(v_maj[2])*cl);
+            outPtr++;
+            *outPtr = 255;
 
           break;
 
-        }
+          }
 
           // scale vtkFloatingPointType if the user requested this
           if (scaleFactor != 1 && op != VTK_TENS_COLOR_ORIENTATION 
               && op != VTK_TENS_COLOR_MODE)
-        *outPtr = (T) ((*outPtr) * scaleFactor);
+          {
+            *outPtr = (T) ((*outPtr) * scaleFactor);
+          }
         }
         
-          outPtr++;
-          inPtId++;
+        outPtr++;
+        inPtId++;
         }
       outPtr += outIncY;
       inPtId += inIncY;
-    }
-      outPtr += outIncZ;
-      inPtId += outIncZ;
+      }
+    outPtr += outIncZ;
+    inPtId += outIncZ;
     }
 
   //cout << "tensor math time: " << clock() - tStart << endl;
@@ -603,7 +611,7 @@ void vtkTensorMathematics::ThreadedExecute(vtkImageData **inData,
     case VTK_TENS_TRACE:
     case VTK_TENS_DETERMINANT:
       switch (outData->GetScalarType())
-    {
+      {
       // we set the output data scalar type depending on the op
       // already.  And we only access the input tensors
       // which are float.  So this switch statement on output
@@ -611,13 +619,13 @@ void vtkTensorMathematics::ThreadedExecute(vtkImageData **inData,
       vtkTemplateMacro6(vtkTensorMathematicsExecute1,
                 this,inData[0], outData, 
                 (VTK_TT *)(outPtr), outExt, id);
-    default:
-      vtkErrorMacro(<< "Execute: Unknown ScalarType");
-      return;
-    }
+      default:
+        vtkErrorMacro(<< "Execute: Unknown ScalarType");
+        return;
+      }
       break;
 
-      // Operations where eigenvalues are computed      
+    // Operations where eigenvalues are computed      
     case VTK_TENS_RELATIVE_ANISOTROPY:
     case VTK_TENS_FRACTIONAL_ANISOTROPY:
     case VTK_TENS_LINEAR_MEASURE:
@@ -630,16 +638,16 @@ void vtkTensorMathematics::ThreadedExecute(vtkImageData **inData,
     case VTK_TENS_MODE:
     case VTK_TENS_COLOR_MODE:
       switch (outData->GetScalarType())
-    {
-      vtkTemplateMacro6(vtkTensorMathematicsExecute1Eigen,
+      {
+        vtkTemplateMacro6(vtkTensorMathematicsExecute1Eigen,
                 this,inData[0], outData, 
                 (VTK_TT *)(outPtr), outExt, id);
-    default:
-      vtkErrorMacro(<< "Execute: Unknown ScalarType");
-      return;
-    }
-      break;
-    }
+        default:
+        vtkErrorMacro(<< "Execute: Unknown ScalarType");
+        return;
+      }
+    break;
+  }
 
 }
 
