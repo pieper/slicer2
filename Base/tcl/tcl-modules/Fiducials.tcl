@@ -118,7 +118,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.62 $} {$Date: 2005/12/13 22:25:27 $}]
+        {$Revision: 1.63 $} {$Date: 2005/12/13 23:22:39 $}]
     
     # Initialize module-level variables
     set Fiducials(renList) "viewRen matRen"
@@ -898,7 +898,10 @@ proc FiducialsVTKCreatePoint { fid pid visibility} {
 #-------------------------------------------------------------------------------
 proc FiducialsVTKUpdatePoints {fid symbolSize textSize} {
     global Fiducials Point Mrml Module
-
+    
+    if {$::Module(verbose)} {
+        puts "FiducialsVTKUpdatePoints: fid $fid. Point id list = $Fiducials($fid,pointIdList)"
+    }
     Mrml(dataTree) ComputeNodeTransform Fiducials($fid,node) \
         Fiducials($fid,xform)
     Fiducials(tmpXform) SetMatrix Fiducials($fid,xform)
@@ -1523,6 +1526,25 @@ proc FiducialsResetVariables { {deleteFlag "0"} } {
 
     global Fiducials Module
 
+    if {!$deleteFlag} {
+        # check to see if a point node was deleted, if so, we need to delete our vars
+        set nodeDeleted 0
+        foreach id $Fiducials(listOfIds) {
+            if {$::Module(verbose)} { puts "FiducialsResetVariables: checking list $id for deleted nodes, deleteFlag == $deleteFlag, point id list = $Fiducials($id,pointIdList)" }
+            if {$deleteFlag == 0} {
+                foreach pid $Fiducials($id,pointIdList) {
+                    if {$::Module(verbose)} { puts "FiducialsResetVariables: checking Point $pid: [info command Point($pid,node)]"}
+                    if {[info command Point($pid,node)] == ""} {
+                        if {$::Module(verbose)} {
+                            puts "****FiducialsResetVariables: didn't find Point($pid,node), setting deleteFlag to 1"
+                        }
+                        set deleteFlag 1
+                    }
+                }
+            }
+        }
+    }
+
     if {$deleteFlag} {
         if {$::Module(verbose)} {
             puts "FiducialsResetVariables: deleting everything from lists $Fiducials(listOfIds)"
@@ -2082,6 +2104,9 @@ proc FiducialsDeletePoint {fid pid {noUpdate 0}} {
     unset Point($pid,actor)
     unset Point($pid,cellId)
 
+    if {$::Module(verbose)} {
+        puts "FiducialsDeletePoint: noUpdate = $noUpdate"
+    }
     # delete from Mrml
     if {!$noUpdate} {
         MainMrmlDeleteNode Point $pid
@@ -2094,8 +2119,9 @@ proc FiducialsDeletePoint {fid pid {noUpdate 0}} {
     } else {
         MainMrmlDeleteNodeNoUpdate Point $pid
     }
-
-    
+    if {$::Module(verbose)} {
+        puts "FiducialsDeletePoint: Point $pid node = [info command Point($pid,node)]"
+    }
     
 }
 
