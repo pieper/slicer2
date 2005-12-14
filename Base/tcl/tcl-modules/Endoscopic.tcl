@@ -295,7 +295,7 @@ proc EndoscopicInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.101 $} {$Date: 2005/12/02 18:48:08 $}] 
+    {$Revision: 1.102 $} {$Date: 2005/12/14 17:52:36 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -307,7 +307,7 @@ proc EndoscopicInit {} {
     set Module($m,procEnter) EndoscopicEnter
     set Module($m,procExit) EndoscopicExit
     set Module($m,procMRML) EndoscopicUpdateMRML
-    
+
     # jeanette: reset endoscopic global variables
     set Module($m,procMainFileCloseUpdateEntered) EndoscopicMainFileCloseUpdated
     
@@ -1586,10 +1586,10 @@ Rotate the axis by pressing the right mouse button and moving the mouse."
 
     frame $fPath.fTop   -bg $Gui(activeWorkspace) -relief groove -bd 2
     frame $fPath.fBot   -bg $Gui(activeWorkspace) -relief groove -bd 2
-    pack $fPath.fTop $fPath.fBot -side top -pady 2 
+    pack $fPath.fTop $fPath.fBot -side top -pady 2 -expand yes -fill both
 
     set f $fPath.fBot
-    FiducialsAddActiveListFrame $f 15 25  
+    FiducialsAddActiveListFrame $f 10 10  
     
     set f $fPath.fTop
     set PathMenu {Manual Automatic Advanced}
