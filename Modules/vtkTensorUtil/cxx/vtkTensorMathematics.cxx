@@ -291,6 +291,13 @@ static void vtkTensorMathematicsExecute1(vtkTensorMathematics *self,
   //cout << "tensor math time: " << clock() - tStart << endl;
 }
 
+// copied from 
+// vtkInteractorStyleUnicam.cxx
+template <class Type>
+inline Type tensor_math_clamp(const Type a,
+                  const Type b,
+                  const Type c) { return (a) > (b) ? ((a) < (c) ? (a) : (c)) : (b) ; }
+
 //----------------------------------------------------------------------------
 // This templated function executes the filter for any type of data.
 // Handles the one input operations.
@@ -336,8 +343,11 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
   // transformation of tensor orientations for coloring
   vtkTransform *trans = vtkTransform::New();
   int useTransform = 0;
+
   // map 0..1 values into the range a char takes on
-  const vtkFloatingPointType scale = 255;
+  // but use scaleFactor so user can bump up the brightness
+  const vtkFloatingPointType rgb_scale = (vtkFloatingPointType)VTK_UNSIGNED_CHAR_MAX * scaleFactor / 1000.;
+  vtkFloatingPointType rgb_temp = 0.;
 
   // find the input region to loop over
   pd = in1Data->GetPointData();
@@ -429,7 +439,7 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
                 outPtr++;
                 *outPtr = 0; // blue
                 outPtr++;
-                *outPtr = 255; // alpha
+                *outPtr = VTK_UNSIGNED_CHAR_MAX ; // alpha
              }
           }
           else {   
@@ -515,13 +525,16 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
 
             vtkTensorMathematics::ColorByMode(w,r,g,b);
             // scale maps 0..1 values into the range a char takes on
-            *outPtr = (T)(scale*r);
+            rgb_temp = (rgb_scale*r);
+            *outPtr = (T)tensor_math_clamp(rgb_temp, (vtkFloatingPointType)VTK_UNSIGNED_CHAR_MIN, (vtkFloatingPointType)VTK_UNSIGNED_CHAR_MAX);
             outPtr++;
-            *outPtr = (T)(scale*g);
+            rgb_temp = (rgb_scale*g);
+            *outPtr = (T)tensor_math_clamp(rgb_temp, (vtkFloatingPointType)VTK_UNSIGNED_CHAR_MIN, (vtkFloatingPointType)VTK_UNSIGNED_CHAR_MAX);
             outPtr++;
-            *outPtr = (T)(scale*b);
+            rgb_temp = (rgb_scale*b);
+            *outPtr = (T)tensor_math_clamp(rgb_temp, (vtkFloatingPointType)VTK_UNSIGNED_CHAR_MIN, (vtkFloatingPointType)VTK_UNSIGNED_CHAR_MAX);
             outPtr++;
-            *outPtr = 255;
+            *outPtr = (T)VTK_UNSIGNED_CHAR_MAX; //alpha
 
           break;
 
@@ -541,13 +554,16 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
             // Color R, G, B depending on max eigenvector
             // scale maps 0..1 values into the range a char takes on
             cl = vtkTensorMathematics::LinearMeasure(w);
-            *outPtr = (T)(scale*fabs(v_maj[0])*cl);
+            rgb_temp = (rgb_scale*fabs(v_maj[0])*cl);
+            *outPtr = (T)tensor_math_clamp(rgb_temp, (vtkFloatingPointType)VTK_UNSIGNED_CHAR_MIN, (vtkFloatingPointType)VTK_UNSIGNED_CHAR_MAX);
             outPtr++;
-            *outPtr = (T)(scale*fabs(v_maj[1])*cl);
+            rgb_temp = (rgb_scale*fabs(v_maj[1])*cl);
+            *outPtr = (T)tensor_math_clamp(rgb_temp, (vtkFloatingPointType)VTK_UNSIGNED_CHAR_MIN, (vtkFloatingPointType)VTK_UNSIGNED_CHAR_MAX);
             outPtr++;
-            *outPtr = (T)(scale*fabs(v_maj[2])*cl);
+            rgb_temp = (rgb_scale*fabs(v_maj[2])*cl);
+            *outPtr = (T)tensor_math_clamp(rgb_temp, (vtkFloatingPointType)VTK_UNSIGNED_CHAR_MIN, (vtkFloatingPointType)VTK_UNSIGNED_CHAR_MAX);
             outPtr++;
-            *outPtr = 255;
+            *outPtr = (T)VTK_UNSIGNED_CHAR_MAX; //alpha
 
           break;
 
