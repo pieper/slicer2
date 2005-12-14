@@ -12,7 +12,6 @@ if {[info commands vtkITK] != "" ||
     source  [file join $PACKAGE_DIR_VTKITK/../../../tcl/EdConfidenceConnected.tcl]
     source  [file join $PACKAGE_DIR_VTKITK/../../../tcl/ITKFilters.tcl]
     source  [file join $PACKAGE_DIR_VTKITK/../../../tcl/VolGeneric.tcl]
-    source  [file join $PACKAGE_DIR_VTKITK/../../../tcl/VolNrrd.tcl]
     global Module
     lappend Module(customModules) ITKFilters
     package provide vtkITK 1.0

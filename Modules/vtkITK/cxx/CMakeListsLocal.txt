@@ -21,7 +21,6 @@ vtkITKRegistrationFilter.cxx
 vtkITKDemonsRegistrationFilter.cxx
 vtkITKDemonsTransformRegistrationFilter.cxx
 vtkITKDeformableRegistrationFilter.cxx
-vtkNRRDReader.cxx
 vtkITKAntiAliasBinaryImageFilter.h
 vtkITKArchetypeImageSeriesReader.cxx
 vtkITKBilateralImageFilter.h
