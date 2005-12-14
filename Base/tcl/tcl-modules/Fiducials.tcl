@@ -118,7 +118,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.63 $} {$Date: 2005/12/13 23:22:39 $}]
+        {$Revision: 1.64 $} {$Date: 2005/12/14 17:14:15 $}]
     
     # Initialize module-level variables
     set Fiducials(renList) "viewRen matRen"
@@ -154,6 +154,9 @@ proc FiducialsInit {} {
 
     set Fiducials(glyphTypes) {None Vertex Dash Cross ThickCross Triangle Square Circle Diamond Arrow ThickArrow HookedArrow}
     set Fiducials(defaultGlyphType) "None"
+
+    # set this to one when delete a point so that the vtk vars will get reset properly
+    set Fiducials(deleteFlag) 0
 
     # use this as a flag to try and avoid looping too often when called from slices update
     set Fiducials(updating2D) 0
@@ -1192,7 +1195,10 @@ proc FiducialsUpdateMRML {} {
     set item [Mrml(dataTree) GetNextItem]
  
     #reset all data
-    FiducialsResetVariables
+    if {$::Module(verbose)} {
+        puts "FidUpdateMrml: delete flag = $Fiducials(deleteFlag)"
+    }
+    FiducialsResetVariables $Fiducials(deleteFlag)
     set readOldNodesForCompatibility 0
     set gui 0
 
@@ -1547,7 +1553,7 @@ proc FiducialsResetVariables { {deleteFlag "0"} } {
 
     if {$deleteFlag} {
         if {$::Module(verbose)} {
-            puts "FiducialsResetVariables: deleting everything from lists $Fiducials(listOfIds)"
+            puts "FiducialsResetVariables: delete Flag is one, deleting everything from lists $Fiducials(listOfIds)"
         }
         # go through the list of existing fiducial list and clear them
         foreach id $Fiducials(listOfIds) {
@@ -1556,31 +1562,38 @@ proc FiducialsResetVariables { {deleteFlag "0"} } {
             }
             foreach pid $Fiducials($id,pointIdList) {
                 foreach r $Fiducials(renList) {
-                    $r RemoveActor Point($pid,follower,$r)
-                    Point($pid,follower,$r) Delete
+                    if {[info command Point($pid,follower,$r)] != ""} {
+                        $r RemoveActor Point($pid,follower,$r)
+                        Point($pid,follower,$r) Delete
+                    }
                 }
-                if { [info command vtkTextureText] == "" } {
+                if { [info command vtkTextureText] == "" &&
+                     [info command Point($pid,mapper)] != ""} {
                     Point($pid,mapper) Delete
                 }
-                Point($pid,text) Delete
+                catch "Point($pid,text) Delete"
             }
             
             foreach r $Fiducials(renList) {
-                $r RemoveActor Fiducials($id,actor,$r)
-                Fiducials($id,actor,$r) Delete 
+                if {[info command Fiducials($id,actor,$r)] != ""} {
+                    $r RemoveActor Fiducials($id,actor,$r)
+                    Fiducials($id,actor,$r) Delete 
+                }
             }
             foreach r $Fiducials(renList2D) {
-                Fiducials($id,actor2D,$r) Delete
+                if {[info command Fiducials($id,actor2D,$r)] != ""} {
+                    Fiducials($id,actor2D,$r) Delete
+                }
             }
-            Fiducials($id,mapper) Delete 
-            Fiducials($id,glyphs) Delete
-            Fiducials($id,symbolXform) Delete
-            Fiducials($id,XformFilter) Delete
-            Fiducials($id,points) Delete 
-            Fiducials($id,scalars) Delete 
-            Fiducials($id,xform) Delete 
-            Fiducials($id,pointsPD) Delete 
-            Point($id,textXform) Delete
+            catch "Fiducials($id,mapper) Delete"
+            catch "Fiducials($id,glyphs) Delete"
+            catch "Fiducials($id,symbolXform) Delete"
+            catch "Fiducials($id,XformFilter) Delete"
+            catch "Fiducials($id,points) Delete"
+            catch "Fiducials($id,scalars) Delete" 
+            catch "Fiducials($id,xform) Delete" 
+            catch "Fiducials($id,pointsPD) Delete" 
+            catch "Point($id,textXform) Delete"
             set Fiducials($id,pointIdList) ""
             if {[info exist Fiducials($id,selectedPointIdList)] != 0} {
                 set Fiducials($id,oldSelectedPointIdList) $Fiducials($id,selectedPointIdList) 
@@ -1592,11 +1605,11 @@ proc FiducialsResetVariables { {deleteFlag "0"} } {
             # delete the 2d glyph variables
             foreach r $Fiducials(renList2D) {
                 set Fiducials($id,pointIdList,$r) ""
-                Fiducials($id,glyphs2D,$r) Delete
-                Fiducials($id,mapper2D,$r) Delete
-                Fiducials($id,scalars2D,$r) Delete
-                Fiducials($id,pointsPD2D,$r) Delete 
-                Fiducials($id,points2D,$r) Delete
+                catch "Fiducials($id,glyphs2D,$r) Delete"
+                catch "Fiducials($id,mapper2D,$r) Delete"
+                catch "Fiducials($id,scalars2D,$r) Delete"
+                catch "Fiducials($id,pointsPD2D,$r) Delete" 
+                catch "Fiducials($id,points2D,$r) Delete"
             }
             # delete the checkboxes
             foreach cb $Fiducials(scrollActiveList) {
@@ -2034,7 +2047,7 @@ proc FiducialsDeletePoint {fid pid {noUpdate 0}} {
      
     global Fiducials Point
     if {$::Module(verbose)} {
-        puts "FiducialsDeletePoint: fid = $fid, pid = $pid"
+        puts "FiducialsDeletePoint: fid = $fid, pid = $pid, noUpdate = $noUpdate"
     }
 
     # first check if the ID of the Point to be deleted is in the selected 
@@ -2047,7 +2060,8 @@ proc FiducialsDeletePoint {fid pid {noUpdate 0}} {
 
     # delete the checkbox if this is the active list (it won't get added if it's not there now)
     # do this before losing it's place on the pointIdList
-    if {$fid == $Fiducials($Fiducials(activeList),fid)} {
+    if {$Fiducials(activeList) != "None" &&
+        $fid == $Fiducials($Fiducials(activeList),fid)} {
         set index [lsearch $Fiducials($fid,pointIdList) $pid]
         if {$::Module(verbose)} {
             puts "FiducialsDeletePoint: deleting checkbox for $fid $pid, index $index"
@@ -2104,9 +2118,14 @@ proc FiducialsDeletePoint {fid pid {noUpdate 0}} {
     unset Point($pid,actor)
     unset Point($pid,cellId)
 
-    if {$::Module(verbose)} {
-        puts "FiducialsDeletePoint: noUpdate = $noUpdate"
+    # check to see if this was the last point on the list
+    if {[llength $Fiducials($fid,pointIdList)] == 0} {
+        if {$::Module(verbose)} {
+            puts "FiducialsDeletePoint: last point on list:"
+        }
+        set Fiducials(deleteFlag) 1
     }
+
     # delete from Mrml
     if {!$noUpdate} {
         MainMrmlDeleteNode Point $pid
@@ -2122,7 +2141,9 @@ proc FiducialsDeletePoint {fid pid {noUpdate 0}} {
     if {$::Module(verbose)} {
         puts "FiducialsDeletePoint: Point $pid node = [info command Point($pid,node)]"
     }
-    
+    # reset the delete flag, it triggered deleting the vtk vars in FiducialsResetVariables
+    # from the call in FiducialsUpdateMrml if this was the last point on the list 
+    set Fiducials(deleteFlag) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -2356,31 +2377,6 @@ proc FiducialsSetActiveList {name {menu ""} {cb ""}} {
             }
         }
     
-        if {0} {
-            # moved up
-            
-            #            $scroll delete 0 end
-            if {[$cb getnumbuttons] != 0} {
-                if {$::Module(verbose)} { puts "SetActiveList: $cb has buttons, deleting them" }
-                $cb delete
-            }
-            
-            foreach pid [FiducialsGetPointIdListFromName $name] {
-                if {$::Module(verbose)} { puts "FiducialsSetActiveList: adding $pid \"[Point($pid,node) GetName]\" to $cb, currently selected list = $Fiducials($fid,selectedPointIdList)"} 
-                $cb add "[Point($pid,node) GetName] -text [Point($pid,node) GetName]" \
-                    -command "FiducialsSelectionFromCheckbox $menu $cb no $pid"
-                if {[info exists Fiducials($name,fid)] == 1} {
-                    set fid $Fiducials($name,fid)
-                    # if it is selected, tell the scroll
-                    if {[lsearch $Fiducials($fid,selectedPointIdList) $pid] != -1} {
-                        set index [lsearch $Fiducials($fid,pointIdList) $pid]
-                        if {$::Module(verbose)} { puts "FiducialsSetActiveList: $scroll selecting index \"$index\" for pid $pid, and fid $fid" }
-                        $cb select "$index"
-                    }
-                }    
-            }
-        }
-        
         # callback in case any module wants to know the name of the active list    
         if {$name == "None"} {
             foreach m $Module(idList) {
@@ -2655,45 +2651,8 @@ proc FiducialsSelectionFromScroll {menu cb focusOnActiveFiducial {pid -1}} {
     if { $name != "None" } {
         # get the id of the active list for that menu
         set fid $Fiducials($name,fid)
-        if {0} {
-            # gonna bypass this for now, assume checkboxes are fine
-        if {$pid == -1} {
-            if {$::Module(verbose)} {
-                puts "FiducialsSelectionFromScroll: no point specified"
-            }
-            # get the list of all selections
-            set idList [$cb getselind]
         
-            if {$::Module(verbose)} {
-                puts "FiducialsSelectionFromScroll cursel = $idList, the selectedPointIdList is $Fiducials($fid,selectedPointIdList)" 
-            }
-
-            # find the matching point id and
-            # update the selection lists
-
-            set Fiducials($fid,selectedPointIdList) ""
-            foreach id $idList {
-                set pid [lindex $Fiducials($fid,pointIdList) $id]
-                lappend Fiducials($fid,selectedPointIdList) $pid
-                if {$::Module(verbose)} {
-                    puts "FiducialsSelectionFromScroll: added $pid: $Fiducials($fid,selectedPointIdList)"
-                }
-                
-            }
-        } else { 
-            if {$::Module(verbose)} {
-                puts "FiducialsSelectionFromScroll: just working on $pid"
-            }
-            # is it on the selected list already?
-            if {[lsearch Fiducials($fid,selectedPointIdList) $pid] == -1} {
-                 lappend Fiducials($fid,selectedPointIdList) $pid
-            }
-            if {$::Module(verbose)} {
-                puts "\tselected point id list = $Fiducials($fid,selectedPointIdList)"
-            }
-        }
-    }
-        # tell procedure who want to know about it
+        # tell procedures who want to know about it
         # callback 
         foreach m $Module(idList) {
             if {[info exists Module($m,fiducialsPointSelectedCallback)] == 1} {
@@ -3014,13 +2973,13 @@ proc FiducialsAddActiveListFrame {frame scrollHeight scrollWidth {defaultNames "
     # Create and Append widgets to list that gets refreshed during UpdateMRML
     # set scroll [ScrolledListbox $f.list 1 1 -height $scrollHeight -width $scrollWidth -selectforeground red -selectmode multiple]
     if {0} {
-    set scroll [iwidgets::scrolledframe $f.sf -height 6 -width 10 \
-                    -vscrollmode dynamic -hscrollmode dynamic -borderwidth 1]
-    pack $f.sf -expand yes -fill both
-
-    set cs [$f.sf childsite]
-    DevAddLabel $cs.lfids "Fiducials:"
-    pack $cs.lfids -side top 
+        set scroll [iwidgets::scrolledframe $f.sf -height 6 -width 10 \
+                        -vscrollmode dynamic -hscrollmode dynamic -borderwidth 1]
+        pack $f.sf -expand yes -fill both
+        
+        set cs [$f.sf childsite]
+        DevAddLabel $cs.lfids "Fiducials:"
+        pack $cs.lfids -side top 
     } else {
         set cs $f
     }
