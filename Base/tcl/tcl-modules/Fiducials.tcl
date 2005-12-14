@@ -118,7 +118,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.64 $} {$Date: 2005/12/14 17:14:15 $}]
+        {$Revision: 1.65 $} {$Date: 2005/12/14 17:53:12 $}]
     
     # Initialize module-level variables
     set Fiducials(renList) "viewRen matRen"
@@ -2932,6 +2932,13 @@ proc FiducialsGetAllNodesFromList {name} {
 proc FiducialsAddActiveListFrame {frame scrollHeight scrollWidth {defaultNames ""}} {
     global Fiducials Gui
     
+    # put a scrolled frame around it all
+    set sf [iwidgets::scrolledframe $frame.sf -height 275 -width 20  -sbwidth $scrollWidth \
+                -vscrollmode dynamic -hscrollmode dynamic -borderwidth 1 \
+               -troughcolor $Gui(activeWorkspace) -background $Gui(activeWorkspace)]
+    pack $frame.sf -expand yes -fill both
+    set frame [$sf childsite]
+
     foreach subframe "how menu scroll" {
         frame $frame.f$subframe -bg $Gui(activeWorkspace)
         pack $frame.f$subframe -side top -padx 0 -pady $Gui(pad) -fill x -expand true
@@ -2972,17 +2979,9 @@ proc FiducialsAddActiveListFrame {frame scrollHeight scrollWidth {defaultNames "
     
     # Create and Append widgets to list that gets refreshed during UpdateMRML
     # set scroll [ScrolledListbox $f.list 1 1 -height $scrollHeight -width $scrollWidth -selectforeground red -selectmode multiple]
-    if {0} {
-        set scroll [iwidgets::scrolledframe $f.sf -height 6 -width 10 \
-                        -vscrollmode dynamic -hscrollmode dynamic -borderwidth 1]
-        pack $f.sf -expand yes -fill both
-        
-        set cs [$f.sf childsite]
-        DevAddLabel $cs.lfids "Fiducials:"
-        pack $cs.lfids -side top 
-    } else {
-        set cs $f
-    }
+    
+    set cs $f
+    
     # now put in a checkbox
 
     if {[catch "package require iSlicer" errmsg] == 1} {
