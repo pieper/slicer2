@@ -60,7 +60,7 @@ proc DTMRICalculateScalarsInit {} {
     #------------------------------------
     set m "CalculateScalars"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.17 $} {$Date: 2005/12/13 23:37:23 $}]
+                                 {$Revision: 1.18 $} {$Date: 2005/12/14 14:58:44 $}]
 
     #------------------------------------
     # Variables for producing scalar volumes
@@ -79,7 +79,7 @@ proc DTMRICalculateScalarsInit {} {
     # how much to scale the output floats by
     set DTMRI(scalars,scaleFactor) 1000
     set DTMRI(scalars,scaleFactor,tooltip) \
-    "Multiplicative factor applied to output images for better viewing."
+    "Multiplicative factor applied to output images for better viewing.\nColor image scale is divided by 1000 before being applied."
     
     # whether to compute vol from ROI or whole DTMRI volume
     set DTMRI(scalars,ROI) None
