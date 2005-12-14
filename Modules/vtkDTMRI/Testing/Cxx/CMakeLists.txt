@@ -24,7 +24,18 @@ LINK_DIRECTORIES(
 
 FOREACH(test testCluster)
   ADD_EXECUTABLE("${MODULE_NAME}.${test}" "${test}.cxx")
-  TARGET_LINK_LIBRARIES(${MODULE_NAME}.${test} vtkDTMRI ITKNumerics ten)
+  TARGET_LINK_LIBRARIES(${MODULE_NAME}.${test} 
+                        vtkDTMRI 
+                        ITKNumerics 
+                        ten
+                        vtkDTMRITCL 
+                        vtkIOTCL 
+                        vtkGraphicsTCL 
+                        vtkImagingTCL 
+                        vtkFilteringTCL 
+                        vtkCommonTCL
+                        ${TCL_LIBRARY}
+    )
   ADD_TEST("${MODULE_NAME}.${test}"
     "${SLICER_EXECUTABLE}" --agree_to_license
     "${CTEST_SLICER_HOME}/Scripts/runCxxTest.tcl"
