@@ -260,7 +260,7 @@ static void vtkTensorMathematicsExecute1(vtkTensorMathematics *self,
                     break;
 
                 case VTK_TENS_TRACE:
-                    //*outPtr = (T)(scaleFactor*(tensor[0][0]
+                    /////////////////////*outPtr = (T)(scaleFactor*(tensor[0][0]
                     //               +tensor[1][1]
                     //               +tensor[2][2]));
                     *outPtr = static_cast<T> (scaleFactor*vtkTensorMathematics::Trace(tensor));
@@ -425,11 +425,11 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
             if (op ==  VTK_TENS_COLOR_MODE || 
                  op == VTK_TENS_COLOR_ORIENTATION) {
                 outPtr++;
-                *outPtr = 0;
+                *outPtr = 0; // green
                 outPtr++;
-                *outPtr = 0;
+                *outPtr = 0; // blue
                 outPtr++;
-                *outPtr = 0;
+                *outPtr = 255; // alpha
              }
           }
           else {   
