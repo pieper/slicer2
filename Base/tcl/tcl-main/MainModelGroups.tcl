@@ -555,3 +555,47 @@ proc MainModelGroupsUpdateMRML { { mg "-1" } } {
         }
     }
 }
+
+#-------------------------------------------------------------------------------
+# .PROC MainModelGroupsRestoreOldColors
+# Goes through the list of models and makes sure that each one has its colour set
+# to the OldColor($modelID) value, where it was saved when any model groups were 
+# collapsed.<br>
+# Called when saving a scene in MainMrmlWriteProceed, so that the model nodes 
+# have the correct colours before they are written out. <br>
+# Restore the colours via a call to MainModelGroupsSetExpansion if necessary.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainModelGroupsRestoreOldColors {} {
+    global ModelGroup Model OldColors
+
+    if {[llength $ModelGroup(idList)] > 0} {
+        if {$::Module(verbose)} {
+            puts "MainModelGroupsRestoreOldColors: Warning: some models may go back to original colours."
+        }
+    }
+    foreach mg $ModelGroup(idList) {
+        if {$ModelGroup($mg,expansion) == 0} {
+            if {$::Module(verbose)} {
+                puts "MainModelGroupsRestoreOldColors: found a collapsed model group $mg"
+            }
+            SharedGetModelsInGroup $mg modelList
+            if {$::Module(verbose)} {
+                puts "MainModelGroupsRestoreOldColors: models in group $mg = $modelList"
+            }
+            foreach m $modelList {
+                if {[info exist OldColors($m)]} {
+                    if {$::Module(verbose)} {
+                        puts "MainModelGroupsRestoreOldColors: restoring colour for model mode $m: $OldColors($m)"
+                    }
+                    Model($m,node) SetColor $OldColors($m)
+                } else {
+                    if {$::Module(verbose)} {
+                        puts "MainModelGroupsRestoreOldColors: WARNING: no saved old colour for model $m in group $mg"
+                    }
+                }
+            }
+        }
+    }
+}

@@ -101,7 +101,7 @@ proc MainMrmlInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainMrml \
-    {$Revision: 1.111 $} {$Date: 2005/12/12 20:01:22 $}]
+    {$Revision: 1.111.2.1 $} {$Date: 2005/12/15 22:37:02 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -1985,6 +1985,10 @@ proc MainMrmlWrite {filename} {
 #-------------------------------------------------------------------------------
 proc MainMrmlWriteProceed {filename} {
     global Mrml
+
+    # set the model hierarchy model node colours back to normal if they're collapsed
+    MainModelGroupsRestoreOldColors
+
     # See if colors are different than the defaults
     MainMrmlCheckColors
 
@@ -2030,6 +2034,12 @@ proc MainMrmlWriteProceed {filename} {
     }
     # Colors don't need saving now
     set Mrml(colorsUnsaved) 0
+
+    # restore the model hierarchy model node colours for collapsed model groups?
+    # doesn't seem necessary, as ModelHierarchyEnter and expanding the groups will reset
+    # the colours automatically
+    
+    
 }
 
 #-------------------------------------------------------------------------------
