@@ -99,7 +99,7 @@ set ::SLICER(major_version) 2
 
 # bump minor when features accumulate to a stable state for release
 
-set ::SLICER(minor_version) 6
+set ::SLICER(minor_version) 7
 
 # bump revision for something that has been given out to non-developers
 # (e.g. bump revsion before packaging, then again after packaging
@@ -398,7 +398,7 @@ set Path(program) $prog
 proc SplashRaise {} { 
     if {[winfo exists .splash]} {
         raise .splash
-
+    
         # and keep the focus on it so that it captures key presses
         focus .splash
 
@@ -952,7 +952,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.107 2005/12/06 23:48:22 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.108 2005/12/15 16:03:03 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
