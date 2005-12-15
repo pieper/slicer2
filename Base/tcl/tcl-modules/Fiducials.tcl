@@ -64,11 +64,12 @@
 #   FiducialsActiveDeleteList
 #   FiducialsDeleteList name
 #   FiducialsSetFiducialsVisibility name visibility rendererName
-#   FiducialsSetActiveList name menu scroll
+#   FiducialsSetActiveList name menu cb
 #   FiducialsSelectionUpdate fid pid on
 #   FiducialsSelectionFromPicker actor cellId
-#   FiducialsSelectionFromScroll menu scroll focusOnActiveFiducial
-#   FiducialsUpdateSelectionForActor fid
+#   FiducialsSelectionFromCheckbox menu cb focusOnActiveFiducial pid
+#   FiducialsSelectionFromScroll menu cb focusOnActiveFiducial pid
+#   FiducialsUpdateSelectionForActor fid pid
 #   FiducialsPointIdFromGlyphCellId fid cid
 #   FiducialsScalarIdFromPointId fid pid
 #   FiducialsScalarIdFromPointId2D fid pid r
@@ -118,7 +119,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.65 $} {$Date: 2005/12/14 17:53:12 $}]
+        {$Revision: 1.65.2.1 $} {$Date: 2005/12/15 21:29:05 $}]
     
     # Initialize module-level variables
     set Fiducials(renList) "viewRen matRen"
@@ -392,7 +393,7 @@ proc FiducialsBuildGUI {} {
     #-------------------------------------------
     set f $fEdit.fMiddle
 
-    FiducialsAddActiveListFrame $f 10 25 
+    FiducialsAddActiveListFrame $f 275 10 
 }
 
 #-------------------------------------------------------------------------------
@@ -2920,20 +2921,30 @@ proc FiducialsGetAllNodesFromList {name} {
 #-------------------------------------------------------------------------------
 # .PROC FiducialsAddActiveListFrame
 #  Given a frame, this procedure packs into it an fiducials list drop down menu
-#  and a scrollbox that contains all the fiducial points of the active list. 
+#  and a checkbox list that contains all the fiducial points of the active list. 
 #  These are updated automatically when a new list/point are created/selected.
 # .ARGS
 #      str frame tk frame in which to pack the Fiducials panel
-#      int scrollHeight height of the scrollbar, a good range is 5<->15
-#      int scrollWidth width if the scrollbar, a good range is 5<->15
+#      int scrollHeight height of the scrollbar, a good range is 200<->300, if not in that range 275 is used.
+#      int scrollWidth width if the scrollbar, a good range is 5<->15, if not in that range, 10 is used
 #      list defaultNames (optional) the name of the Fiducial lists you would like to add to the drop down menu 
 # .END
 #-------------------------------------------------------------------------------
 proc FiducialsAddActiveListFrame {frame scrollHeight scrollWidth {defaultNames ""}} {
     global Fiducials Gui
     
-    # put a scrolled frame around it all
-    set sf [iwidgets::scrolledframe $frame.sf -height 275 -width 20  -sbwidth $scrollWidth \
+    # put a scrolled frame around it all, with a good height
+    if {$scrollHeight < 200 || $scrollHeight > 300} {
+        set height 275
+    } else {
+        set height $scrollHeight
+    }
+    if {$scrollWidth < 5 || $scrollWidth > 15} {
+        set sbWidth 10
+    } else {
+        set sbWidth $scrollWidth
+    }
+    set sf [iwidgets::scrolledframe $frame.sf -height $height -width 20  -sbwidth $sbWidth \
                 -vscrollmode dynamic -hscrollmode dynamic -borderwidth 1 \
                -troughcolor $Gui(activeWorkspace) -background $Gui(activeWorkspace)]
     pack $frame.sf -expand yes -fill both
