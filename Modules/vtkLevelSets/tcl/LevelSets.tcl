@@ -173,7 +173,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.35 $} {$Date: 2005/12/14 17:53:40 $}]
+        {$Revision: 1.35.2.1 $} {$Date: 2005/12/15 21:24:06 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -540,7 +540,7 @@ proc LevelSetsBuildInitFrame {} {
 
     # Parameters->FidPoints Frame
     frame $fch0.fFidPoints      -bg $Gui(activeWorkspace) -relief groove -bd 1
-    FiducialsAddActiveListFrame $fch0.fFidPoints 7 10 "LevelSets-seed"
+    FiducialsAddActiveListFrame $fch0.fFidPoints 275 10 "LevelSets-seed"
 
     pack $fch0.fRadius $fch0.fFidPoints      -side top -padx 0 -pady 1 -fill x -expand true
 
