@@ -39,7 +39,7 @@ extern "C" {
 #include "teem/ten.h"
 }
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.1.2.1 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.1.2.2 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -726,9 +726,9 @@ void vtkNRRDReader::AllocatePointData(vtkImageData *out) {
 }
 
 int
-tenSpaceDirectionReduce(Nrrd *nout, const Nrrd *nin, double SDINV[9]) {
+tenSpaceDirectionReduce(Nrrd *nout, const Nrrd *nin, double SD[9]) {
   char me[]="tenSpaceDirectionReduce", err[BIFF_STRLEN];
-  double SD[9], SDT[9], tenMeasr[9], tenSlice[9];
+  double SDT[9], tenMeasr[9], tenSlice[9];
   float *tdata;
   size_t ii, nn;
   unsigned int si, sj;
@@ -747,12 +747,12 @@ tenSpaceDirectionReduce(Nrrd *nout, const Nrrd *nin, double SDINV[9]) {
             me, nin->spaceDim);
     biffAdd(TEN, err); return 1;
   }
-  if (!ELL_3M_EXISTS(SDINV)) {
+  if (!ELL_3M_EXISTS(SD)) {
     sprintf(err, "%s: 3x3 space direction doesn't exist", me);
     biffAdd(TEN, err); return 1;
   }
 
-  ELL_3M_INV(SD, SDINV, det);
+  //ELL_3M_INV(SD, SDINV, det);
   ELL_3M_TRANSPOSE(SDT, SD);
 
   if (nout != nin) {
@@ -915,25 +915,21 @@ void vtkNRRDReader::ExecuteData(vtkDataObject *output)
        if (!E && AIR_EXISTS(ntmp->measurementFrame[0][0])) {
          // scan order-specific logic to tweak measurement frame goes here
          
-         double RasToIjk[9];
+         double RasToVTK[9];
          int iii, jjj;
          for (iii = 0; iii < 3; iii++) {
             for (jjj = 0; jjj < 3; jjj++) {
-                RasToIjk[iii*3+jjj] = this->RasToIjkMatrix->GetElement(iii,jjj);
+                RasToVTK[iii*3+jjj] = this->RasToIjkMatrix->GetElement(iii,jjj);
             }
-            vtkMath::Normalize(RasToIjk+iii*3);
-            //ntmp->measurementFrame[iii][1] *= -1.0;
-            //ntmp->axis[1].spaceDirection[iii] *= -1.0;
+            vtkMath::Normalize(RasToVTK+iii*3);
          }
-         for (iii = 0; iii < 9; iii++) {
-            cerr << RasToIjk[iii] << " ";
+         for (iii = 0; iii < 3; iii++) {
+            // famous Y flip -- to get RasToVtk
+            RasToVTK[3+iii] *= -1.;
          }
-         cerr << endl;
 
          E |= tenMeasurementFrameReduce(ntmp, ntmp);
-         E |= tenSpaceDirectionReduce(ntmp, ntmp, RasToIjk);
-
-
+         E |= tenSpaceDirectionReduce(ntmp, ntmp, RasToVTK);
        }
        if (!E) E |= tenExpand(this->nrrd, ntmp, 1, -1);
        if (E) {
@@ -954,8 +950,6 @@ void vtkNRRDReader::ExecuteData(vtkDataObject *output)
 
      // release the memory while keeping the struct
      nrrdEmpty(nrrd);     
-     
-     cout<<"Reader done"<<endl;
 }
 
 
