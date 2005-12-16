@@ -155,7 +155,7 @@ proc VersorMattesMIRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.9.2.1 $} {$Date: 2005/12/16 17:31:29 $}]
+        {$Revision: 1.9.2.2 $} {$Date: 2005/12/16 22:34:12 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -656,7 +656,6 @@ proc VersorMattesMIRegistrationAutoRun {} {
     global Path env Gui Matrix Volume VersorMattesMIRegistration
 
     #--- used by Ibrowser to stop registration for sequence of volumes
-    set ::VersorMattesMIRegistration(userStopped) 0
 
     # TODO make islicer a package
     source $env(SLICER_HOME)/Modules/iSlicer/tcl/isregistration.tcl
@@ -723,7 +722,6 @@ proc VersorMattesMIRegistrationStop {} {
     $VersorMattesMIRegistration(b1Run) configure -text "Start"
     $VersorMattesMIRegistration(b2Run) configure -text "Start"
     #--- used by Ibrowser to stop registration for sequence of volumes
-    set ::VersorMattesMIRegistration(userStopped) 1
 }
 
 
