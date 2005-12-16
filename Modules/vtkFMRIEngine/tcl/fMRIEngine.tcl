@@ -62,8 +62,24 @@
 proc fMRIEngineInit {} {
     global fMRIEngine Module Volume Model env
 
+    # module dependency on BLT 
+    if { [catch "package require BLT"] } {
+        DevErrorWindow "Must have the BLT package to load module fMRIEngine." 
+        return
+    }
+    # module dependency on MultiVolumeReader 
+    if {[catch "package require MultiVolumeReader"]} {
+        DevErrorWindow "Must have module MultiVolumeReader to load module fMRIEngine." 
+        return
+    }
+    # module dependency on vtkMIRIASegment 
+    if {[catch "package require vtkMIRIADSegment"]} {
+        DevErrorWindow "Must have module MIRIADSegment to load module fMRIEngine." 
+        return
+    } 
+
     set m fMRIEngine
-    
+
     # Module Summary Info
     #------------------------------------
     # Description:
@@ -154,7 +170,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27 $} {$Date: 2005/12/13 22:26:52 $}]
+        {$Revision: 1.27.2.1 $} {$Date: 2005/12/16 16:36:15 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -177,13 +193,6 @@ proc fMRIEngineInit {} {
     # Creates bindings
     fMRIEngineCreateBindings 
 
-    # error if no private segment
-    if { [catch "package require BLT"] } {
-        DevErrorWindow "Must have the BLT package for building fMRIEngine UI \
-        and plotting time course."
-        return
-    }
-
     # Source all appropriate tcl files here. 
     source "$fMRIEngine(modulePath)/tcl/notebook.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEnginePlot.tcl"
@@ -199,6 +208,8 @@ proc fMRIEngineInit {} {
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineRegionAnalysis.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineUserInputForModelView.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineSaveAndLoadParadigm.tcl"
+
+  
 }
 
 
