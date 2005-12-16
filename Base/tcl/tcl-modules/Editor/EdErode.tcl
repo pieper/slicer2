@@ -179,16 +179,20 @@ proc EdErodeApply {effect} {
 
     # Validate input
     if {[ValidateInt $Ed($e,fill)] == 0} {
-        tk_messageBox -message "Fill value is not an integer."
+        DevErrorWindow "Fill value is not an integer."
         return
     }
     if {[ValidateInt $Ed($e,iterations)] == 0} {
-        tk_messageBox -message "Iterations is not an integer."
+        DevErrorWindow "Iterations is not an integer."
         return
     }
     if {[ValidateInt $Label(label)] == 0} {
-        tk_messageBox -message "Value To Erode is not an integer."
+        DevErrorWindow "Value To Erode is not an integer."
         return
+    }
+    if { $Ed($e,iterations) > 1 && $Ed($e,scope) == "3D" } {
+        DevErrorWindow "Multiple iterations in 3D scope not supported"
+        set Ed($e,iterations) 1
     }
 
     EdSetupBeforeApplyEffect $v $Ed($e,scope) $Ed($e,multi)
