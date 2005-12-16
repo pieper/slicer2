@@ -71,16 +71,6 @@ proc fMRIEngineBuildUIForLoad {parent} {
     pack $parent.fTop $parent.fBot -side top 
  
     set f $parent.fTop
-    # error if no private segment
-    if {[catch "package require MultiVolumeReader"]} {
-        DevAddLabel $f.lError \
-            "Loading function is disabled\n\
-            due to the unavailability\n\
-            of module MultiVolumeReader." 
-        pack $f.lError -side top -pady 30
-        return
-    }
-
     MultiVolumeReaderBuildGUI $f 1
 
     set f $parent.fBot
