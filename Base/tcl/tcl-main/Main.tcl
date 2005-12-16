@@ -465,7 +465,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.128.2.1 $} {$Date: 2005/12/16 14:11:36 $}]
+        {$Revision: 1.128.2.2 $} {$Date: 2005/12/16 17:22:07 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -1829,6 +1829,8 @@ http://www.slicer.org"
 proc MainExitQuery { } {
     global Gui Volume Model TetraMesh
 
+    set msg ""
+
     # See if any models or volumes are unsaved
     set volumes ""
     foreach v $Volume(idList) {
@@ -1842,6 +1844,18 @@ proc MainExitQuery { } {
             }
         }
     }
+    if {$volumes != ""} {
+         set msg "\
+The image data for the following volumes are unsaved:\n\
+$volumes\n\nDo you wish to save them before exiting?\n"
+        set retval [DevYesNo $msg]
+        if {$retval == "yes"} {
+            Tab Editor row1 Volumes
+            TabbedFrameInvoke $::Module(Editor,fVolumes) File
+            return
+        }
+    }
+
     set models ""
     foreach v $Model(idList) {
         if {[info exists Model($v,dirty)] == 1} {
@@ -1854,6 +1868,18 @@ proc MainExitQuery { } {
             }
         }
     }
+    if {$models != ""} {
+         set msg "\
+The polygon data for the following surface models are unsaved:\n\
+$models\n\nDo you wish to save them before exiting?"
+        set retval [DevYesNo $msg]
+        if {$retval == "yes"} {
+            Tab ModelMaker row1 Save
+            return
+        }
+    }
+
+
     set tetmesh ""
     foreach v $TetraMesh(idList) {
         if {[info exists TetraMesh($v,dirty)] == 1} {
@@ -1866,7 +1892,19 @@ proc MainExitQuery { } {
             }
         }
     }
+    if {$tetmesh != ""} {
+       set msg "\
+The Volume Meshes for the following tetrahedral mesh are unsaved:\n\
+$tetmesh\n\nDo you wish to save them before exiting?" 
+        set retval [DevYesNo $msg]
+        if {$retval == "yes"} {
+            Tab TetraMesh row1 Read
+            return
+        }
+    }
 
+    MainExitProgram
+    if {0} {
     if {[llength "$tetmesh $models $volumes"] == 0} {
         MainExitProgram
     }
@@ -1895,6 +1933,7 @@ $tetmesh\n\n"
     set x 20
     set y 50
     YesNoPopup Exit $x $y $msg MainExitProgram 
+    }
 }
 
 #-------------------------------------------------------------------------------
