@@ -101,7 +101,7 @@ proc MainMrmlInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainMrml \
-    {$Revision: 1.111.2.2 $} {$Date: 2005/12/16 16:29:49 $}]
+    {$Revision: 1.111.2.3 $} {$Date: 2005/12/16 23:09:19 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -1895,10 +1895,12 @@ proc MainMrmlRelativity {oldRoot} {
             if {$Module(verbose) == 1} {
                 puts "MainMrmlRelativity: volume node has file prefix [$node GetFilePrefix], oldroot = $oldRoot, full prefix [$node GetFullPrefix], Mrml(dir) = $Mrml(dir)"
             }
-            # this proc will calculate the relative path between the file passed in and Mrml(dir) which was set before this proc was called, to the new mrml file save location, and return a true relative prefix
+            # this proc will calculate the relative path between the file passed in and 
+            # Mrml(dir) which was set before this proc was called, to the new mrml file 
+            # save location, and return a true relative prefix
             $node SetFilePrefix [MainFileGetRelativePrefixNew [$node GetFullPrefix]]
             # Do I need to set the Full Prefix as well???? No.
-#            $node SetFilePrefix [MainFileGetRelativePrefix [file join $oldRoot [$node GetFilePrefix]]]
+
             if {$Module(verbose) == 1} {
                 puts "MainMrml.tcl MainMrmlRelativity: set file prefix to [$node GetFilePrefix] (full prefix is now [$node GetFullPrefix])"
             }
@@ -1918,14 +1920,15 @@ proc MainMrmlRelativity {oldRoot} {
             set num [$node GetNumberOfDICOMFiles]
             for {set i 0} {$i < $num} {incr i} {
                 set filename [$node GetDICOMFileName $i]
-                if {$::Module(verbose)} {
-                    puts "MainMrmlRelativity: got dicom filename $filename"
-                }
+                
                 #set dir [file dirname $filename]
                 #set name [file tail $filename]
                 #set reldir [MainFileGetRelativePrefix $dir]
                 # set relname [lindex [MainFileGetRelativeDirPrefix $filename] 1]
                 set relname [MainFileGetRelativePrefixNew $filename]
+                if {$::Module(verbose)} {
+                    puts "MainMrmlRelativity: got dicom filename $filename, with new relative name $relname"
+                }
                 $node SetDICOMFileName $i $relname
             }
 
@@ -2075,7 +2078,7 @@ proc MainMrmlCheckVolumes {filename} {
                if {$::Module(verbose)} {
                    puts "MainMrmlCheckVolumes: dicom file, first name is $fname"
                }
-               # if it's a relative file name, prepend the mrml dir
+               # if it's a relative file name, convert to abs to test it
                if {[file pathtype $fname] == "relative"} {
                    set fname2 [file join ${Mrml(dir)} ${fname}]
                    if {$::Module(verbose)} {
@@ -2091,20 +2094,19 @@ proc MainMrmlCheckVolumes {filename} {
        set node [Mrml(dataTree) GetNextItem]
   }
   if {[string length $volumelist]} {
-      YesNoPopup MrmlCheckVolumes 20 50 "The following volumes will not be saved in the XML-file,\n because the first volume file does not exist:\n $volumelist\nWrite XML-file anyway?\n(press No to save volumes)" "MainMrmlWriteProceed \{$filename\}"  "Tab Editor row1 Volumes ; TabbedFrameInvoke $::Module(Editor,fVolumes) File"
+      YesNoPopup MrmlCheckVolumes 20 50 "The following volumes will not be saved in the XML-file,\n because the first volume file does not exist:\n $volumelist\nWrite XML-file anyway?\n(press No to save volumes)" "MainMrmlWriteProceed \{$filename\} ; MainMrmlAbsolutivity"  "Tab Editor row1 Volumes ; TabbedFrameInvoke $::Module(Editor,fVolumes) File"
   } else {
       MainMrmlWriteProceed $filename
       
+      # then reset the mrml tree to have absolute filenames
+      MainMrmlAbsolutivity 
   }
-  # then reset the mrml tree to have absolute filenames
-  MainMrmlAbsolutivity 
-    
 } 
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlAbsolutivity
 # Traverses the mrml tree and sets the file prefix or full prefix for
-# volume and model nodes to an abosolute path, starting any relative paths from Mrml(dir).
+# volume and model nodes to an absolute path, starting any relative paths from Mrml(dir).
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -2149,7 +2151,7 @@ proc MainMrmlAbsolutivity {} {
                     if {$::Module(verbose)} {
                         puts "MainMrmlAbsolutivity: dicom file \n\trelative old filename $filename\n\tnew one wrt mrml dir $absname\n\tnormalized = [file normalize $absname]"
                     }
-                    $node SetDICOMFileName $i $absname
+                    $node SetDICOMFileName $i [file normalize $absname]
                 }
             }
               
