@@ -173,6 +173,11 @@ proc fMRIEngineLoadParadigm {} {
     # read data from file
     set fileType {{"Text" *.txt}}
     set fileName [tk_getOpenFile -filetypes $fileType -parent .]
+
+    # if user just wanted to cancel
+    if {[string length $fileName] <= 0} {
+        return
+    }
     
     set fHandle [open $fileName r]
     set data [read $fHandle]
