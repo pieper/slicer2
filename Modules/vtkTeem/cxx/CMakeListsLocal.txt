@@ -51,7 +51,7 @@ ${TEEM_BIN_DIR}
 )
 
 
-LINK_LIBRARIES (${LOCAL_LIBRARY_BASENAME} air biff nrrd ten)
+LINK_LIBRARIES (${LOCAL_LIBRARY_BASENAME} air biff nrrd ten ell)
 
 
 # Add additional directories to look in for libraries
