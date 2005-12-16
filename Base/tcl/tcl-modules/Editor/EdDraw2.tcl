@@ -338,8 +338,6 @@ proc EdDraw2Enter {} {
         Slicer DrawSetClosed 0
     }
     Slicer DrawSetHideSpline 0
-    Slicer SetDisplayMethod 2
-    Slicer SetDrawDoubleApproach 0
 
     # use the bindings stack for adding new bindings.
     pushEventManager $Ed($e,eventManager)
@@ -357,8 +355,6 @@ proc EdDraw2Exit {} {
     EdDraw2Update DeleteAll
     RenderActive
     Slicer DrawSetHideSpline 1
-    Slicer SetDisplayMethod 1
-    Slicer SetDrawDoubleApproach 1
 
     popEventManager
 }
