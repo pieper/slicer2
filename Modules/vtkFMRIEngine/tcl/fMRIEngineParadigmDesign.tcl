@@ -733,6 +733,11 @@ proc fMRIEngineAddOrEditCondition {} {
         fMRIEngineAddCondition
     }
 
+    # clean fields for next condition
+    set fMRIEngine(entry,title)      ""
+    set fMRIEngine(entry,onsets)     ""
+    set fMRIEngine(entry,durations)  ""
+
     fMRIEngineShowConditions 
     set ::fMRIEngine(SignalModelDirty) 1
 }
