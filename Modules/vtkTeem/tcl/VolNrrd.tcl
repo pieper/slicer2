@@ -473,32 +473,32 @@ proc VolNrrdReaderProc {v} {
         DevErrorWindow "No Nrrd Reader available."
         return -1
     }
-    catch "nrrdReader1 Delete"
-    vtkNRRDReader nrrdReader1
+    catch "readerProc_nrrdReader1 Delete"
+    vtkNRRDReader readerProc_nrrdReader1
 
-    if {![nrrdReader1 CanReadFile [Volume($v,node) GetFullPrefix]]} {
+    if {![readerProc_nrrdReader1 CanReadFile [Volume($v,node) GetFullPrefix]]} {
         DevErrorWindow "Cannot read file [Volume($v,node) GetFullPrefix]"
         return
     }
 
   
-    nrrdReader1 SetFileName [Volume($v,node) GetFullPrefix]
+    readerProc_nrrdReader1 SetFileName [Volume($v,node) GetFullPrefix]
 
-    nrrdReader1 Update
-    puts "[[nrrdReader1 GetOutput] Print]"
+    readerProc_nrrdReader1 Update
+    puts "[[readerProc_nrrdReader1 GetOutput] Print]"
     
     #Check if we need to create Volume node or Tensor node
     
-    if {[[[nrrdReader1 GetOutput] GetPointData] GetScalars] != ""} {
+    if {[[[readerProc_nrrdReader1 GetOutput] GetPointData] GetScalars] != ""} {
         #Create Volume node
-        VolNrrdFillVolumeMrmlNode $v [nrrdReader1 GetOutput]
+        VolNrrdFillVolumeMrmlNode $v [readerProc_nrrdReader1 GetOutput]
     }
-    if { [[[nrrdReader1 GetOutput] GetPointData] GetTensors] != ""} {
+    if { [[[readerProc_nrrdReader1 GetOutput] GetPointData] GetTensors] != ""} {
         #Create Tensor node
-        VolNrrdFillTensorMrmlNode $v [nrrdReader1 GetOutput]
+        VolNrrdFillTensorMrmlNode $v [readerProc_nrrdReader1 GetOutput]
     }       
 
-   nrrdReader1 Delete
+   catch "readerProc_nrrdReader1 Delete"
    
 }
 
