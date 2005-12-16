@@ -62,7 +62,7 @@ proc MainViewerInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainViewer \
-    {$Revision: 1.35 $} {$Date: 2005/03/11 01:23:45 $}]
+    {$Revision: 1.35.8.1 $} {$Date: 2005/12/16 14:12:02 $}]
 
     # Props
     set Gui(midHeight) 1
@@ -396,6 +396,28 @@ proc MainViewerSetSecondViewOff {} {
     global View
     set View(SecondViewOn) 0
 }
+
+#-------------------------------------------------------------------------------
+# .PROC MainViewerSetLargeImageOn
+# Turns on the 'large image mode', meaning that zooms use the resampler to give
+# better detail than the normal pixel replication
+# - there is no Off yet
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainViewerSetLargeImageOn {} {
+    
+    set ret [DevOKCancel "Click Ok to enter Large Image viewing mode to see more detail on image greater than 256x256 resolution.\n\nYou will need to restart slicer to get back to normal viewing mode."]
+    if { $ret == "ok" } {
+        Slicer SetDisplayMethod 2
+        Slicer SetDrawDoubleApproach 0
+    }
+    
+    ### here's what you would to to revert to regular mode (if it worked)
+    #Slicer SetDisplayMethod 1
+    #Slicer SetDrawDoubleApproach 1
+}
+                
 
 #-------------------------------------------------------------------------------
 # .PROC MainViewerSetMode

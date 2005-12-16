@@ -465,7 +465,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.128 $} {$Date: 2005/12/10 19:58:38 $}]
+        {$Revision: 1.128.2.1 $} {$Date: 2005/12/16 14:11:36 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -631,6 +631,9 @@ proc MainBuildGUI {} {
         "MainMenu View Single512"
     $Gui(mView) add command -label "4x256" -command \
         "MainMenu View Quad256"
+    $Gui(mView) add separator
+    $Gui(mView) add command -label "Large Image..." -command \
+        "MainMenu View LargeImage"
     $Gui(mView) add separator
     $Gui(mView) add command -label "Black" -command \
         "MainViewSetBackgroundColor Black; Render3D"
@@ -1805,8 +1808,15 @@ http://www.slicer.org"
         }
     }
     "View" {
-            MainViewerSetMode $cmd
+        switch $cmd {
+            "LargeImage" {
+                MainViewerSetLargeImageOn
+            }
+            default {
+                MainViewerSetMode $cmd
+            }
         }  
+    }
     }
 }
 
