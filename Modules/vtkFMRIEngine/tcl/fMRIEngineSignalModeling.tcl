@@ -1869,6 +1869,30 @@ proc fMRIEngineCombineRunDerivativeCheck { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineUpdateProgressText
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineUpdateProgressText {} {
+    global fMRIEngine Gui 
+
+    incr fMRIEngine(progressCount)
+    MainShowProgress fMRIEngine(actEstimator)
+
+    # The progress event of vtkGLMEstimator (new fMRIEngine(actEstimator)) is 
+    # composed of two parts: first part is for computing means and the second
+    # part is for glm. Each part has 100 steps. When the count reachs 100, it 
+    # means computing means is done and then we update the progress text for 
+    # glm computing.
+    if {$fMRIEngine(progressCount) == 100} {
+        puts "...done"
+        set Gui(progressText) $fMRIEngine(glmProgressText) 
+        puts $Gui(progressText)
+    }
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC fMRIEngineFitModel
@@ -1916,6 +1940,16 @@ proc fMRIEngineFitModel {} {
     }
 
 
+    # generates data without popping up the model image 
+    #--- for now just do it. (testing for ways to keep model.)
+    if { $::fMRIEngine(SignalModelDirty) } {
+        set done [fMRIModelViewGenerateModel]
+        if {! $done} {
+            DevErrorWindow "Error in generating model for model fitting."
+            return 
+        }
+    }
+
 
     # always uses a new instance of vtkActivationEstimator 
     if {[info commands fMRIEngine(actEstimator)] != ""} {
@@ -1939,32 +1973,22 @@ proc fMRIEngineFitModel {} {
     fMRIEngine(actEstimator) SetGlobalEffect $op 
 
     # adds progress bar
-    set obs1 [fMRIEngine(actEstimator) AddObserver StartEvent MainStartProgress]
-    set obs2 [fMRIEngine(actEstimator) AddObserver ProgressEvent \
-              "MainShowProgress fMRIEngine(actEstimator)"]
-    set obs3 [fMRIEngine(actEstimator) AddObserver EndEvent MainEndProgress]
-    if {$fMRIEngine(curRunForModelFitting) == "concatenated"} {
-        set Gui(progressText) "Estimating all runs..."
-    } else {
-        set Gui(progressText) "Estimating run$fMRIEngine(curRunForModelFitting); may take awhile..."
-    }
+    set Gui(progressText) "Performing intensity normalization..."
     puts $Gui(progressText)
 
-
-
-    # generates data without popping up the model image 
-    #--- for now just do it. (testing for ways to keep model.)
-    if { $::fMRIEngine(SignalModelDirty) } {
-        set done [fMRIModelViewGenerateModel]
-        if {! $done} {
-            DevErrorWindow "Error in generating model for model fitting."
-            return 
-        }
+    if {$fMRIEngine(curRunForModelFitting) == "concatenated"} {
+        set fMRIEngine(glmProgressText) "Estimating all runs..."
+    } else {
+        set fMRIEngine(glmProgressText) "Estimating run$fMRIEngine(curRunForModelFitting); may take awhile..."
     }
 
+    # set up observers for progress event 
+    set obs1 [fMRIEngine(actEstimator) AddObserver StartEvent MainStartProgress]
+    set obs2 [fMRIEngine(actEstimator) AddObserver ProgressEvent fMRIEngineUpdateProgressText]
+    set obs3 [fMRIEngine(actEstimator) AddObserver EndEvent MainEndProgress]
+    set fMRIEngine(progressCount) 0 
 
-    
- 
+
     # always uses a new instance of vtkActivationDetector
     if {[info commands fMRIEngine(detector)] != ""} {
         fMRIEngine(detector) Delete
@@ -1986,6 +2010,8 @@ proc fMRIEngineFitModel {} {
     fMRIEngine(actEstimator) SetDetector fMRIEngine(detector)  
     fMRIEngine(actEstimator) Update
     set fMRIEngine(actBetaVolume) [fMRIEngine(actEstimator) GetOutput]
+
+    # remove observers for progress event 
     fMRIEngine(actEstimator) RemoveObserver $obs1 
     fMRIEngine(actEstimator) RemoveObserver $obs2 
     fMRIEngine(actEstimator) RemoveObserver $obs3 
