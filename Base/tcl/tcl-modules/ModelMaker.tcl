@@ -91,7 +91,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.60 $} {$Date: 2005/12/01 22:16:40 $}]
+        {$Revision: 1.60.2.1 $} {$Date: 2005/12/16 17:15:35 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -594,6 +594,7 @@ if {0} {
         -command "ModelMakerWrite; Render3D"} $Gui(WBA)
     eval {button $f.f.bSaveAll -text "Save All" -width 8 \
         -command "ModelMakerWriteAll; Render3D"} $Gui(WBA)
+    TooltipAdd $f.f.bSaveAll "Save all unsaved models with automatic filename generation, in the directory you choose"
     eval {button $f.f.bRead -text "Read" -width 5 \
         -command "ModelMakerRead; Render3D"} $Gui(WBA)
     pack $f.f.bSave $f.f.bSaveAll $f.f.bRead -side left -padx $Gui(pad)
