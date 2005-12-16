@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,13 +32,14 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        Widgets.tcl
 # PROCEDURES:  
-#   ScrolledText
+#   ScrolledText f args
 #   TabbedFrame arrayName buttonsFrame tabsFrame buttonsLabel tabs titles tooltips extraTopFrame firstTab
-#   TabbedFrameTab
+#   TabbedFrameTab frame
+#   TabbedFrameInvoke containerFrame buttonName
 #==========================================================================auto=
 
 # This file contains widgets that may be useful to developers
@@ -53,6 +54,8 @@
 # .PROC ScrolledText
 # Makes a simple scrolled text box.
 # .ARGS
+# windowpath f the container frame
+# list args not used
 # .END
 #-------------------------------------------------------------------------------
 proc ScrolledText { f args } {
@@ -73,13 +76,12 @@ proc ScrolledText { f args } {
     return $f.text
 }
 
-
 #-------------------------------------------------------------------------------
 # .PROC TabbedFrame
 # This creates a menu of buttons and the frames they tab to.  
 # It saves the path to each frame and creates an indicator
 # variable to tell which is the current frame, and it puts
-# these things into your global array, in case they are needed.
+# these things into your global array, in case they are needed.<br>
 # Before calling this, you need
 # to make a frame for the buttons to go into and also a frame
 # for all the frames to go into, and pass these as parameters.  It is
@@ -209,8 +211,9 @@ proc TabbedFrame {arrayName containerFrame buttonsLabel tabs titles \
 
 #-------------------------------------------------------------------------------
 # .PROC TabbedFrameTab
-# 
+# Raise and focus on the passed frame.
 # .ARGS
+# widget frame the frame to raise
 # .END
 #-------------------------------------------------------------------------------
 proc TabbedFrameTab {frame} {
@@ -219,3 +222,18 @@ proc TabbedFrameTab {frame} {
     focus $frame
 
 }
+
+#-------------------------------------------------------------------------------
+# .PROC TabbedFrameInvoke
+# Invoke the radio button that changes the tabbed pane that's raised. Call after using
+# the Tab proc to change the the tabbed frame, ie Tab Editor row1 Volumes, otherwise
+# the tabbed pane can't be seen.
+# .ARGS
+# windowpath containerFrame the frame as passed into TabbedFrame
+# string buttonName the name of the button to invoke, as passed as a tab to TabbedFrame
+# .END
+#-------------------------------------------------------------------------------
+proc TabbedFrameInvoke {containerFrame buttonName} {
+    ${containerFrame}.fTop.fTabbedFrameButtons.f.r${buttonName} invoke
+}
+
