@@ -89,7 +89,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.67 $} {$Date: 2005/12/13 21:55:25 $}]
+        {$Revision: 1.67.2.1 $} {$Date: 2005/12/16 16:21:32 $}]
 
     set File(filePrefix) data
 }
@@ -356,11 +356,9 @@ proc MainFileSaveAsApply {} {
         }
     }
     if {[llength $unsavedModels] != 0} {
-        set msg "The polygon data for the following surface models are unsaved:\n$unsavedModels\nDo you wish to save the scene without the model(s)?"
+        set msg "The polygon data for the following surface models are unsaved:\n$unsavedModels\nDo you wish to save the scene without the model(s)?\n(press No to be taken to the save models interface)"
         if {[tk_messageBox -message $msg -type yesno] == no} {
-            if {!$::Module(verbose)} {
-                DevInfoWindow "You can save your models in the ModelMaker module, in the Save tab"
-            }
+            Tab ModelMaker row1 Save
             return
         }
     }
