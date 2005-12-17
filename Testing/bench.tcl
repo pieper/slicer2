@@ -43,6 +43,10 @@ proc bench_run {} {
                 }
 
             }
+            set percent [expr 100. * $::BENCH($bench,$::BENCH(numThreads),$memMultiple) / (1. * $::BENCH($bench,1,$memMultiple))]
+            puts "--> $::BENCH(numThreads) threads is $percent % of the speed of 1 thread"
+            puts ""
+
             incr memMultiple
             update
         }
