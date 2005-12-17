@@ -635,6 +635,9 @@ proc  IbrowserDeleteIntervalArray { ivalName } {
     unset -nocomplain ::Ibrowser($id,type)
     unset -nocomplain ::Ibrowser($id,opacity)
     unset -nocomplain ::Ibrowser($id,order)
+    unset -nocomplain ::Ibrowser($id,transformID)
+    unset -nocomplain ::Ibrowser($id,matrixID)
+    
     for {set v 0 } { $v < $::Ibrowser($id,numDrops) } { incr v } {
         unset -nocomplain ::Ibrowser($id,v,pos)
         unset -nocomplain ::Ibrowser($id,v,dropTAG)
@@ -787,6 +790,8 @@ proc IbrowserDeleteInterval { ivalName } {
     if { $::IbrowserController(Info,Ival,ivalCount) == 1 } {
         IbrowserSynchronizeAllSliders "disabled"
     }
+
+    IbrowserCleanUpEmptyTransformNodes
     MainUpdateMRML
 }
 

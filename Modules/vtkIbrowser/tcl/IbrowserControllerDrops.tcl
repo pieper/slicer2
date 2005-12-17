@@ -210,6 +210,8 @@ proc IbrowserDeleteIntervalDrops { ivalName } {
     for { set i 0} {$i < $::Ibrowser($id,numDrops) } { incr i } {
         if { [info exists ::Ibrowser($id,$i,data) ] } {
             #--- delete the ImageData and the MrmlNodes...
+            unset -nocomplain ::Ibrowser($id,$i,matrixID)
+            unset -nocomplain ::Ibrowser($id,$i,transformID)
             unset ::Ibrowser($id,$i,data)
         }
      }
