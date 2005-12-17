@@ -49,6 +49,7 @@
 #   IbrowserGetIntervalIDFromName
 #   IbrowserBuildVTK
 #   IbrowserUpdateMRML
+#   IbrowserGetHelpWinID
 #==========================================================================auto=
 #-------------------------------------------------------------------------------
 # .PROC IbrowserInit
@@ -98,7 +99,7 @@ proc IbrowserInit {} {
     #---Set category and version info
     set Module($m,category) "Alpha"
        lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.14 $} {$Date: 2005/12/13 15:49:44 $}]
+        {$Revision: 1.14.2.1 $} {$Date: 2005/12/17 16:56:51 $}]
 
     #---Initialize module-level variables
     #---Global array with the same name as the module. Ibrowser()
@@ -191,7 +192,7 @@ proc IbrowserInit {} {
     #source ${modulePath}IbrowserProcessing/IbrowserProcessingUtils.tcl
     source ${modulePath}IbrowserProcessing/IbrowserReorient.tcl
     source ${modulePath}IbrowserProcessing/IbrowserMotionCorrect.tcl
-    #source ${modulePath}IbrowserProcessing/IbrowserSmooth.tcl
+    source ${modulePath}IbrowserProcessing/IbrowserSmooth.tcl
     source ${modulePath}IbrowserProcessing/IbrowserKeyframeRegister.tcl
     source ${modulePath}IbrowserProcessing/IbrowserReassemble.tcl
     
@@ -538,7 +539,7 @@ proc IbrowserUpdateMRML { } {
                 #set volID $::Ibrowser($id,$volnum,MRMLid)
                 #set vname [ ::Volume($volID,node) GetName ]
                 #$mb configure -text $vname
-                $mb configure -text "none"
+                #$mb configure -text "none"
                 set start $::Ibrowser($::Ibrowser(activeInterval),firstMRMLid)
                 set stop $::Ibrowser($::Ibrowser(activeInterval),lastMRMLid)
                 set count 0
@@ -603,3 +604,19 @@ proc IbrowserUpdateMRML { } {
 }
 
 
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserGetHelpWinID
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserGetHelpWinID { } {
+
+    if { ![info exists ::Ibrowser(winID) ] } {
+        set ::Ibrowser(winID) 0
+    }
+    incr ::Ibrowser(winID)
+    return $::Ibrowser(winID)
+
+}

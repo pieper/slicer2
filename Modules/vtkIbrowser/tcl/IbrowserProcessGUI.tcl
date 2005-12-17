@@ -42,8 +42,14 @@
 #   IbrowserProcessingSelectExternalReference
 #   IbrowserResetSelectSequence
 #   IbrowserResetInternalReference
-#   IbrowserAddSequenceTransforms
+#   IbrowserAddTransforms
+#   IbrowserAddNonReferenceTransforms
+#   IbrowserAddWholeIntervalTransform
+#   IbrowserRemoveSingleTransform
 #   IbrowserRemoveTransforms
+#   IbrowserRemoveNonReferenceTransforms
+#   IbrowserRemoveWholeIntervalTransform
+#   IbrowserCleanUpEmptyTransformNodes
 #   IbrowserGetRasToVtkAxis
 #==========================================================================auto=
 
@@ -101,8 +107,8 @@ proc IbrowserBuildProcessFrame { } {
     #--- WJP comment out during development
     frame $ff.fMotionCorrect -bg $::Gui(activeWorkspace) 
     IbrowserBuildMotionCorrectGUI $ff.fMotionCorrect $f.fProcessInfo
-    #frame $ff.fSmooth -bg $::Gui(activeWorkspace)
-    #IbrowserBuildSmoothGUI $ff.fSmooth $f.fProcessInfo    
+    frame $ff.fSmooth -bg $::Gui(activeWorkspace)
+    IbrowserBuildSmoothGUI $ff.fSmooth $f.fProcessInfo    
 
     frame $ff.fReassemble -bg $::Gui(activeWorkspace)
     IbrowserBuildReassembleGUI $ff.fReassemble $f.fProcessInfo
@@ -138,7 +144,7 @@ proc IbrowserBuildProcessFrame { } {
     #--- do not expose until code is complete
     #--- WJP comment out during development
     #foreach r "Reassemble Reorient Smooth MotionCorrect KeyframeRegister" 
-    foreach r "Reassemble Reorient MotionCorrect KeyframeRegister" {
+    foreach r "Reorient MotionCorrect Smooth Reassemble KeyframeRegister" {
         $ff.mbProcessType.m add command -label $r \
             -command "IbrowserRaiseProcessingFrame $::Ibrowser(Process,Text,${r}) $::Ibrowser(fProcess${r})"
     }
@@ -199,7 +205,7 @@ proc IbrowserProcessingSelectExternalReference { name id } {
     #---
     #---specifies a reference sequence outside the sequence being processed.
     set ::Ibrowser(Process,ExternalReference) $id
-    foreach process "MotionCorrect KeyframeRegister" {
+    foreach process "KeyframeRegister MotionCorrect" {
         if { [info exists ::Ibrowser(Process,$process,mbReference)] } {
             $::Ibrowser(Process,$process,mbReference) config -text $name
         }
@@ -218,7 +224,7 @@ proc IbrowserProcessingSelectExternalReference { name id } {
 proc IbrowserResetSelectSequence { } {
     #---
     #--- sets the selected sequence to be "none" in all menus.
-    set ::Ibrowser(activeInterval) $::Ibrowser(idNone)
+    IbrowserSetActiveInterval $::Ibrowser(idNone)
     #set ::Ibrowser(Process,SelectSequence) $::Ibrowser(idNone)
     IbrowserUpdateMRML
 }
@@ -246,50 +252,13 @@ proc IbrowserResetInternalReference { } {
 
 
 
-proc IbrowserAddNonReferenceSequenceTransforms { } {
-
-    #--- Add Transform, Matrix, and EndTransform
-    #--- Transform will enclose each volume node in the active interval.
-
-    #--- ID of selected sequence
-    set refvol $::Ibrowser(Process,InternalReference)
-    set id $::Ibrowser(activeInterval)
-    IbrowserRaiseProgressBar
-    set pcount 0
-    IbrowserSayThis "Adding transforms for $::Ibrowser($id,name)..." 0
-    
-    #--- for each volume within the sequence:
-    #--- add a new transform node for each volume
-    for { set i 0 } { $i < $::Ibrowser($id,numDrops) } { incr i } {
-        if { $::Ibrowser($id,numDrops)  != 0 } {
-            set progress [ expr double ($pcount) / double ($::Ibrowser($id,numDrops)) ]
-            IbrowserUpdateProgressBar $progress "::"
-            IbrowserPrintProgressFeedback
-        }
-        set vid $::Ibrowser($id,$i,MRMLid)
-        #--- exclude the reference volume, which should not have a transform.
-        if { $vid != $refvol } {
-            set node Volume($vid,node)
-            set mid [ DataAddTransform 0 Volume($vid,node) Volume($vid,node) ]
-            #--- save a way to find this matrix later.
-            set ::Ibrowser($id,$i,matrixID) $mid
-            incr pcount
-        }
-    }
-    IbrowserEndProgressFeedback
-    IbrowserSayThis "Transforms for $::Ibrowser($id,name) added." 0
-    MainUpdateMRML
-    IbrowserLowerProgressBar
-}
-
-
 #-------------------------------------------------------------------------------
-# .PROC IbrowserAddSequenceTransforms
+# .PROC IbrowserAddTransforms
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc IbrowserAddSequenceTransforms { } {
+proc IbrowserAddTransforms { } {
     global Data Mrml Volume
 
     #--- Add Transform, Matrix, and EndTransform
@@ -311,10 +280,10 @@ proc IbrowserAddSequenceTransforms { } {
         }
         
         set vid $::Ibrowser($id,$i,MRMLid)
-        set node Volume($vid,node)
         set mid [ DataAddTransform 0 Volume($vid,node) Volume($vid,node) ]
         #--- save a way to find this matrix later.
         set ::Ibrowser($id,$i,matrixID) $mid
+        set ::Ibrowser($id,$i,transformID) [ expr $::Transform(nextID) - 1 ]
         incr pcount
     }
     IbrowserEndProgressFeedback
@@ -325,90 +294,224 @@ proc IbrowserAddSequenceTransforms { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserAddNonReferenceTransforms
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserAddNonReferenceTransforms { } {
 
-proc IbrowserRemoveNonReferenceTransforms { } {
+    #--- Add Transform, Matrix, and EndTransform
+    #--- Transform will enclose each volume node in the active interval
+    #--- except for the reference volume, if that's included in the interval.
 
-    set refvol $::Ibrowser(Process,InternalReference)
     #--- ID of selected sequence
+    set refvol $::Ibrowser(Process,InternalReference)
     set id $::Ibrowser(activeInterval)
-
-    #--- For each volume within the interval, delete it's
-    #--- innermost transform and matrix.
-    #--- We know the node before each volume is a matrix node
-    #--- and before that node is the target transform node
-    #--- and after the volume is the target end-transform node. 
-    #--- So, find each volume node in the sequence:
-    IbrowserSayThis "Removing transforms for $::Ibrowser($id,name)..." 0
     IbrowserRaiseProgressBar
     set pcount 0
+    IbrowserSayThis "Adding transforms for $::Ibrowser($id,name)..." 0
     
+    #--- for each volume within the sequence:
+    #--- add a new transform node for each volume
     for { set i 0 } { $i < $::Ibrowser($id,numDrops) } { incr i } {
-        if { $::Ibrowser($id,numDrops) != 0 } {
+        if { $::Ibrowser($id,numDrops)  != 0 } {
             set progress [ expr double ($pcount) / double ($::Ibrowser($id,numDrops)) ]
             IbrowserUpdateProgressBar $progress "::"
             IbrowserPrintProgressFeedback
         }
-        
         set vid $::Ibrowser($id,$i,MRMLid)
-        #--- exclude the reference volume which had no transform added.
-        if {$vid != $refvol } {
-            set node Volume($vid,node)
-            #---traverse the mrml tree to find each volume node in sequence.
-            ::Mrml(dataTree) InitTraversal
-            set tstnode [ Mrml(dataTree) GetNextItem ]
-            #--- what element is it in the Mrml tree?
-            set whereisVolume 1
-            while { $tstnode != "" } {
-                if { [string compare -length 6 $tstnode "Volume"] == 0 } {
-                    if { [$tstnode GetID ] == $vid } {
-                        #--- looks like we found the volume node
-                        set gotnode 1
-                        break
-                    }
-                }
-                set tstnode [ Mrml(dataTree) GetNextItem ]                
-                incr whereisVolume
-            }
-            #--- remove transform, matrix and end-transform nodes
-            if { $gotnode == 1 } {
-                ::Mrml(dataTree) InitTraversal
-                set counter 0
-                set whereisTransform [ expr $whereisVolume - 2 ]
-                #--- the three nodes start 2 nodes before the volume node
-                while { $counter < $whereisTransform } {
-                    set tstnode [ Mrml(dataTree) GetNextItem ]
-                    incr counter
-                }
-                #--- transform node
-                set tnode $tstnode
-                #--- matrix node
-                set mnode [ Mrml(dataTree) GetNextItem ]
-                #--- volume node again.
-                set tstnode [ Mrml(dataTree) GetNextItem ]
-                #--- end transform node
-                set endtnode [ Mrml(dataTree) GetNextItem ]
-                #--- get the IDs of the three nodes.
-                set tid [ $tnode GetID ]
-                set mid [ $mnode GetID ]
-                set etid [ $endtnode GetID ]
-                #--- delete the three nodes.
-                MainMrmlDeleteNode Matrix $mid
-                MainMrmlDeleteNode Transform $tid
-                MainMrmlDeleteNode EndTransform $etid
-                MainUpdateMRML
-            } else {
-                DevErrorWindow "Notice: all transforms were not deleted."
-            }
+        #--- exclude the reference volume, which should not have a transform.
+        if { $vid != $refvol } {
+            set mid [ DataAddTransform 0 Volume($vid,node) Volume($vid,node) ]
+            #--- save a way to find this matrix and transform later.
+            set ::Ibrowser($id,$i,matrixID) $mid
+            set ::Ibrowser($id,$i,transformID) [ expr $::Transform(nextID) - 1 ]
             incr pcount
         }
     }
     IbrowserEndProgressFeedback
-    IbrowserResetSelectSequence
-    IbrowserResetInternalReference
-    IbrowserSayThis "Transforms for $::Ibrowser($id,name) deleted." 0
+    IbrowserSayThis "Transforms for $::Ibrowser($id,name) added." 0
+    MainUpdateMRML
     IbrowserLowerProgressBar
+}
+
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserAddWholeIntervalTransform
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserAddWholeIntervalTransform { iid } {
+    global Data Mrml Volume
+
+    #--- Add Transform, Matrix, and EndTransform
+    #--- Transform will enclose all volumes in the active interval.
+    
+    IbrowserSayThis "Adding transform node around interval $::Ibrowser($iid,name)..." 0
+    set firstvol $::Ibrowser($iid,firstMRMLid)
+    set lastvol $::Ibrowser($iid,lastMRMLid)
+    
+    set mid [ DataAddTransform 0 Volume($firstvol,node) Volume($lastvol,node) ]
+    set ::Ibrowser($iid,matrixID) $mid
+    set ::Ibrowser($iid,transformID) [ expr $::Transform(nextID) - 1 ]
+    
+    IbrowserSayThis "Transform for $::Ibrowser($iid,name) added." 0
+    MainUpdateMRML
+}
+
+
+
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserRemoveSingleTransform
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserRemoveSingleTransform { iid drop } {
+
+    set deleteFailed 0
+    if { [ info exists ::Ibrowser($iid,$drop,transformID) ] } {
+        set tID $::Ibrowser($iid,$drop,transformID)
+        #---traverse the mrml tree to search for it
+        set gotnode 0
+        ::Mrml(dataTree) InitTraversal
+        #--- what element is it in the Mrml tree?
+        set whichNode 0
+        set tstnode [ Mrml(dataTree) GetNextItem ]
+
+        while { $tstnode != "" } {
+            if { [string compare -length 9 $tstnode "Transform"] == 0 } {
+                if { [$tstnode GetID ] == $tID } {
+                    #--- found target transform node
+                    set gotnode 1
+                    break
+                }
+            }
+            set tstnode [ Mrml(dataTree) GetNextItem ]                
+            incr whichNode
+        }
+
+        #--- if we got the node, remove the node, end node
+        #--- and the matrix node too using the Data module's procs.
+        #--- if we've not found the transform node, but it's
+        #--- supposed to be there, then report an error. 
+        if { $gotnode } {
+            $::Data(fNodeList) selection set $whichNode $whichNode
+            DataDeleteNode
+            unset -nocomplain ::Ibrowser($iid,$drop,transformID)
+            unset -nocomplain ::Ibrowser($iid,$drop,matrixID)
+        } else {
+            set deleteFailed 1
+        }
+        $::Data(fNodeList) selection clear $whichNode $whichNode
+    }
+    if { $deleteFailed } {
+        return 1
+    } else {
+        return 0
+    }
+}
+
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserCleanUpEmptyTransformNodes
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserCleanUpEmptyTransformNodes { } {
+
+    set clean 0
+
+    while { $clean == 0 } {
+        set del 0
+        set N 0
+        ::Mrml(dataTree) InitTraversal
+        set tstnode [ ::Mrml(dataTree) GetNthItem $N ]
+
+        while { $tstnode != "" } {
+            #puts "tstnode = $tstnode"
+            if { [string compare -length 9 $tstnode "Transform" ] == 0 } {
+                #--- Found a transform node.
+                #--- Check to see if next node is matrix node AND
+                #--- next-next node is endTransform node. If so,
+                #--- we've found an empty one, and we delete it.
+                set testM [ ::Mrml(dataTree) GetNthItem [expr $N+1] ]
+                if { $testM != "" } {
+                    #puts "testM = $testM"
+                    set testE [ ::Mrml(dataTree) GetNthItem [expr $N+2] ]
+                    if { $testE != "" } {
+                        #puts "testE = $testE"
+                        if { ([string compare -length 6 $testM "Matrix"] == 0) &&
+                             ([string compare -length 12 $testE "EndTransform"] == 0) } {
+                            #--- Found an empty transform node. Delete it.
+                            $::Data(fNodeList) selection set $N $N
+                            DataDeleteNode
+                            $::Data(fNodeList) selection clear $N $N
+                            #puts "N=$N Deleting Transform node $tstnode"
+                            set del 1
+                            break
+                        }
+                    } else {
+                        #--- Found Transform with no closed EndTransform. Delete.
+                        $::Data(fNodeList) selection set $N $N
+                        DataDeleteNode
+                        $::Data(fNodeList) selection clear $N $N
+                        #puts "N=$N Deleting Unclosed Transform node $tstnode"
+                        set del 1
+                        break
+                    }
+                } else {
+                    #--- Found Transform with no closed EndTransform. Delete.
+                    $::Data(fNodeList) selection set $N $N
+                    DataDeleteNode
+                    $::Data(fNodeList) selection clear $N $N
+                    #puts "N=$N Deleting Unclosed Transform node $tstnode"
+                    set del 1
+                    break
+                }
+            }
+            incr N
+            set tstnode [ ::Mrml(dataTree) GetNthItem $N ]            
+        }
+        #while
+       #--- if we have arrived here, then we know tree is clean
+        if { $del == 0 } {
+            set clean 1
+            #puts "Mrml tree clean."
+        }
+    }
+    #while
+}
+
+
+
+
+
+proc IbrowserCallOutNodes { } {
+
+    ::Mrml(dataTree) InitTraversal
+    set N 0
+    set tstnode [ ::Mrml(dataTree) GetNthItem $N ]
+    while { $tstnode != "" } {
+        puts "N=$N $tstnode"
+        incr N
+        set tstnode [ ::Mrml(dataTree) GetNthItem $N ]
+    }
+    
 
 }
+
 
 
 #-------------------------------------------------------------------------------
@@ -422,16 +525,66 @@ proc IbrowserRemoveTransforms { } {
     #--- ID of selected sequence
     set id $::Ibrowser(activeInterval)
 
-    #--- For each volume within the interval, delete it's
-    #--- innermost transform and matrix.
-    #--- We know the node before each volume is a matrix node
-    #--- and before that node is the target transform node
-    #--- and after the volume is the target end-transform node. 
-    #--- So, find each volume node in the sequence:
+    #--- For each volume within the interval, delete the last
+    #--- transform applied to it.
     IbrowserSayThis "Removing transforms for $::Ibrowser($id,name)..." 0
     IbrowserRaiseProgressBar
     set pcount 0
-    
+    set deleteFailed 0
+
+    #--- look at each volume in the interval
+    for { set i 0 } { $i < $::Ibrowser($id,numDrops) } { incr i } {
+        if { $::Ibrowser($id,numDrops) != 0 } {
+            set progress [ expr double ($pcount) / double ($::Ibrowser($id,numDrops)) ]
+            IbrowserUpdateProgressBar $progress "::"
+            IbrowserPrintProgressFeedback
+        }
+        #--- if a volume has a saved transform id,
+        #--- Find the transform in the mrml tree,
+        #--- determine which element in the tree it is,
+        #--- and use procs in data.tcl to remove it and matrix nodes inside.
+        set deleteFailed [ IbrowserRemoveSingleTransform $id $i ]
+        incr pcount
+    }
+    if { $deleteFailed } {
+        DevErrorWindow "Some transforms may not have been properly deleted."
+        IbrowserSayThis "Problem deleting transforms for $::Ibrowser($id,name)." 0
+    } else {
+        IbrowserSayThis "Transforms for $::Ibrowser($id,name) deleted." 0
+    }
+    MainUpdateMRML
+    IbrowserEndProgressFeedback
+    #IbrowserResetSelectSequence
+    IbrowserResetInternalReference
+    IbrowserLowerProgressBar
+}
+
+
+
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserRemoveNonReferenceTransforms
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserRemoveNonReferenceTransforms { } {
+
+    set refvol $::Ibrowser(Process,InternalReference)
+    #--- ID of selected sequence
+    set id $::Ibrowser(activeInterval)
+
+    #--- For each volume within the interval (except for the
+    #--- reference volume, if it is inside the interval), delete 
+    #--- the last transform applied to it.
+    IbrowserSayThis "Removing transforms for $::Ibrowser($id,name)..." 0
+    IbrowserRaiseProgressBar
+    set pcount 0
+    set deleteFailed 0
+
+    #--- Look at each volume node in the sequence:
     for { set i 0 } { $i < $::Ibrowser($id,numDrops) } { incr i } {
         if { $::Ibrowser($id,numDrops) != 0 } {
             set progress [ expr double ($pcount) / double ($::Ibrowser($id,numDrops)) ]
@@ -440,62 +593,94 @@ proc IbrowserRemoveTransforms { } {
         }
         
         set vid $::Ibrowser($id,$i,MRMLid)
-        set node Volume($vid,node)
-        #---traverse the mrml tree to find each volume node in sequence.
+        #--- exclude the reference volume 
+        if {$vid != $refvol } {
+            #--- if a volume has a saved transform id,
+            #--- Find the transform in the mrml tree,
+            #--- determine which element in the tree it is,
+            #--- and use procs in data.tcl to remove it and matrix nodes inside.
+            set deleteFailed [ IbrowserRemoveSingleTransform $id $i ]
+            incr pcount
+        }
+    }
+    if { $deleteFailed } {
+        DevErrorWindow "Some transforms may not have been properly deleted."
+        IbrowserSayThis "Problem deleting transforms for $::Ibrowser($id,name)." 0
+    } else {
+        IbrowserSayThis "Transforms for $::Ibrowser($id,name) deleted." 0
+    }
+    IbrowserEndProgressFeedback
+    #IbrowserResetSelectSequence
+    IbrowserResetInternalReference
+    IbrowserLowerProgressBar
+    MainUpdateMRML
+}
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserRemoveWholeIntervalTransform
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserRemoveWholeIntervalTransform { iid } {
+    global Data Mrml Volume
+
+
+    set deleteFailed 0
+    #--- find the transform node and the matrix mode.
+    #--- see if the node has a transform node wrapped around it.
+
+    if { [ info exists ::Ibrowser($iid,transformID) ] } {
+        set tID $::Ibrowser($iid,transformID)
+        #---traverse the mrml tree to search for it
+        set gotnode 0
         ::Mrml(dataTree) InitTraversal
-        set tstnode [ Mrml(dataTree) GetNextItem ]
         #--- what element is it in the Mrml tree?
-        set whereisVolume 1
+        set whichNode 0
+        set tstnode [ Mrml(dataTree) GetNextItem ]
+
         while { $tstnode != "" } {
-            if { [string compare -length 6 $tstnode "Volume"] == 0 } {
-                if { [$tstnode GetID ] == $vid } {
-                    #--- looks like we found the volume node
+            if { [string compare -length 9 $tstnode "Transform"] == 0 } {
+                if { [$tstnode GetID ] == $tID } {
+                    #--- found target transform node
                     set gotnode 1
                     break
                 }
             }
             set tstnode [ Mrml(dataTree) GetNextItem ]                
-            incr whereisVolume
+            incr whichNode
         }
-        #--- remove transform, matrix and end-transform nodes
-        if { $gotnode == 1 } {
-            ::Mrml(dataTree) InitTraversal
-            set counter 0
-            set whereisTransform [ expr $whereisVolume - 2 ]
-            #--- the three nodes start 2 nodes before the volume node
-            while { $counter < $whereisTransform } {
-                set tstnode [ Mrml(dataTree) GetNextItem ]
-                incr counter
-            }
-            #--- transform node
-            set tnode $tstnode
-            #--- matrix node
-            set mnode [ Mrml(dataTree) GetNextItem ]
-            #--- volume node again.
-            set tstnode [ Mrml(dataTree) GetNextItem ]
-            #--- end transform node
-            set endtnode [ Mrml(dataTree) GetNextItem ]
-            #--- get the IDs of the three nodes.
-            set tid [ $tnode GetID ]
-            set mid [ $mnode GetID ]
-            set etid [ $endtnode GetID ]
-            #--- delete the three nodes.
-            MainMrmlDeleteNode Matrix $mid
-            MainMrmlDeleteNode Transform $tid
-            MainMrmlDeleteNode EndTransform $etid
-            MainUpdateMRML
+
+        #--- if we got the node, remove the node, end node
+        #--- and the matrix node too using the Data module's procs.
+        #--- if we've not found the transform node, but it's
+        #--- supposed to be there, then report an error. 
+        if { $gotnode } {
+            $::Data(fNodeList) selection set $whichNode $whichNode
+            DataDeleteNode
+            unset -nocomplain ::Ibrowser($iid,transformID)
+            unset -nocomplain ::Ibrowser($iid,matrixID)
         } else {
-            DevErrorWindow "Notice: all transforms were not deleted."
+            set deleteFailed 1
         }
-        incr pcount
+        $::Data(fNodeList) selection clear $whichNode $whichNode
     }
-    IbrowserEndProgressFeedback
-    IbrowserResetSelectSequence
+
+    if { $deleteFailed } {
+        DevErrorWindow "Interval transform may not have been properly deleted."
+        IbrowserSayThis "Problem deleting transform for $::Ibrowser($iid,name)." 0
+    } else {
+        IbrowserSayThis "Transform for $::Ibrowser($iid,name) deleted." 0
+    }
+    MainUpdateMRML
+    #IbrowserResetSelectSequence
     IbrowserResetInternalReference
-    IbrowserSayThis "Transforms for $::Ibrowser($id,name) deleted." 0
-    IbrowserLowerProgressBar
+    IbrowserSayThis "Transform for $::Ibrowser($iid,name) deleted." 0
 
 }
+
 
 
 
