@@ -448,8 +448,6 @@ proc TensorSetActive {t} {
         return
     }
     
-    #Call SetActive in DTMRI module
-    DTMRISetActive $t
 }    
 
 
@@ -501,7 +499,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.120 $} {$Date: 2005/12/12 20:03:33 $}]
+                  {$Revision: 1.120.2.1 $} {$Date: 2005/12/17 03:39:27 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -558,8 +556,13 @@ proc DTMRIInit {} {
     # 3 is brain in the default colormap for labels in the slicer
     set DTMRI(defaultLabel) 3
 
-    # Id of active Tensor volume
+    # Id of active Tensor volume (one active per tab)
     set DTMRI(Active) ""
+    set DTMRI(ActiveGlyph) ""
+    set DTMRI(ActiveTract) ""
+    set DTMRI(ActiveMask) ""
+    set DTMRI(ActiveScalars) ""
+    set DTMRI(ActiveSave) ""
 
     #------------------------------------
     # Source and Init all submodules
@@ -622,7 +625,13 @@ proc DTMRIUpdateMRML {} {
     
      # Do MRML update of Tensor nodes.
      TensorUpdateMRML Tensor
-    
+
+     DevUpdateNodeSelectButton Tensor DTMRI ActiveGlyph ActiveGlyph DevSelectNode 0 0 0 DTMRISetTensor
+     DevUpdateNodeSelectButton Tensor DTMRI ActiveTract ActiveTract DevSelectNode 0 0 0 DTMRISetTensor
+     DevUpdateNodeSelectButton Tensor DTMRI ActiveMask ActiveMask DevSelectNode 0 0 0 DTMRISetTensor
+     DevUpdateNodeSelectButton Tensor DTMRI ActiveScalars ActiveScalars DevSelectNode 0 0 0 DTMRISetTensor
+     DevUpdateNodeSelectButton Tensor DTMRI ActiveSave ActiveSave DevSelectNode 0 0 0 DTMRISetTensor
+     
      # Do MRML update for Tensor Registration tab. Necessary because
      # multiple lists are used.
      # If the tensor reg module file exists it has set this variable

@@ -55,7 +55,7 @@ proc DTMRISaveInit {} {
     #------------------------------------
     set m "Save"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.10 $} {$Date: 2005/11/08 22:48:42 $}]
+                                 {$Revision: 1.10.2.1 $} {$Date: 2005/12/17 03:40:24 $}]
 
     set DTMRI(Save,type) visualization
     set DTMRI(Save,coords) World
@@ -101,13 +101,13 @@ proc DTMRISaveBuildGUI {} {
     set f $fSave.fActive
 
     # menu to select active DTMRI
-    DevAddSelectButton  DTMRI $f Active "Active DTMRI:" Pack \
+    DevAddSelectButton  DTMRI $f ActiveSave "Active DTMRI:" Pack \
     "Active DTMRI" 20 BLA 
     
     # Append these menus and buttons to lists 
     # that get refreshed during UpdateMRML
-    lappend Tensor(mbActiveList) $f.mbActive
-    lappend Tensor(mActiveList) $f.mbActive.m
+    lappend Tensor(mbActiveList) $f.mbActiveSave
+    lappend Tensor(mActiveList) $f.mbActiveSave.m
 
 
     #-------------------------------------------

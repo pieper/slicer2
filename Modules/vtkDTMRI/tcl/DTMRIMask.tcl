@@ -57,7 +57,7 @@ proc DTMRIMaskInit {} {
     #------------------------------------
     set m "Mask"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.13 $} {$Date: 2005/07/20 21:13:16 $}]
+                                 {$Revision: 1.13.2.1 $} {$Date: 2005/12/17 03:40:18 $}]
 
     # type of masking to use to reduce volume of DTMRIs
     set DTMRI(mode,mask) None
@@ -123,13 +123,13 @@ proc DTMRIMaskBuildGUI {} {
     set f $fROI.fActive
 
     # menu to select active DTMRI
-    DevAddSelectButton  DTMRI $f Active "Active DTMRI:" Pack \
+    DevAddSelectButton  DTMRI $f ActiveMask "Active DTMRI:" Pack \
     "Active DTMRI" 20 BLA 
     
     # Append these menus and buttons to lists 
     # that get refreshed during UpdateMRML
-    lappend Tensor(mbActiveList) $f.mbActive
-    lappend Tensor(mActiveList) $f.mbActive.m
+    lappend Tensor(mbActiveList) $f.mbActiveMask
+    lappend Tensor(mActiveList) $f.mbActiveMask.m
 
     #-------------------------------------------
     # ROI->Mask frame

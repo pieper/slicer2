@@ -80,7 +80,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.42 $} {$Date: 2005/11/22 22:32:45 $}]
+                                 {$Revision: 1.42.2.1 $} {$Date: 2005/12/17 03:40:31 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -353,13 +353,13 @@ proc DTMRITractographyBuildGUI {} {
     set f $fTract.fActive
 
     # menu to select active DTMRI
-    DevAddSelectButton  DTMRI $f Active "Active DTMRI:" Pack \
+    DevAddSelectButton  DTMRI $f ActiveTract "Active DTMRI:" Pack \
         "Active DTMRI" 20 BLA 
     
     # Append these menus and buttons to lists 
     # that get refreshed during UpdateMRML
-    lappend Tensor(mbActiveList) $f.mbActive
-    lappend Tensor(mActiveList) $f.mbActive.m
+    lappend Tensor(mbActiveList) $f.mbActiveTract
+    lappend Tensor(mActiveList) $f.mbActiveTract.m
 
 
     #-------------------------------------------
