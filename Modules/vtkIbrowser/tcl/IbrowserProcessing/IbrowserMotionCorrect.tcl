@@ -83,7 +83,8 @@ proc IbrowserBuildMotionCorrectGUI { f master } {
                -menu $ff.mbIntervals.m -indicatoron 1 } $::Gui(WMBA)
     eval { menu $ff.mbIntervals.m } $::Gui(WMA)
     foreach i $::Ibrowser(idList) {
-        $ff.mbIntervals.m add command -label $::Ibrowser($i,name) 
+        $ff.mbIntervals.m add command -label $::Ibrowser($i,name) \
+        -command "IbrowserSetActiveInterval $i"
     }
     set ::Ibrowser(Process,MotionCorrect,mbIntervals) $ff.mbIntervals
     set ::Ibrowser(Process,MotionCorrect,mIntervals) $ff.mbIntervals.m
@@ -122,13 +123,13 @@ proc IbrowserBuildMotionCorrectGUI { f master } {
     grid $ff.lBlank $ff.rQualityFair -padx $Gui(pad) -sticky w
     
     eval { radiobutton $ff.rQualityGood -indicatoron 1\
-               -text "good" -value 3 -variable ::Ibrowser(Process,MotionCorrectQuality) \
+               -text "good (slow)" -value 3 -variable ::Ibrowser(Process,MotionCorrectQuality) \
                -command "VersorMattesMIRegistrationGSlowParam" \
            } $Gui(WCA)
     grid $ff.lBlank $ff.rQualityGood -padx $Gui(pad) -sticky w
     
     eval { radiobutton $ff.rQualityBest -indicatoron 1\
-               -text "best" -value 4 -variable ::Ibrowser(Process,MotionCorrectQuality) \
+               -text "best (very slow)" -value 4 -variable ::Ibrowser(Process,MotionCorrectQuality) \
                -command "VersorMattesMIRegistrationVerySlowParam" \
            } $Gui(WCA)
     grid $ff.lBlank $ff.rQualityBest -padx $Gui(pad) -sticky w
@@ -244,7 +245,7 @@ proc IbrowserMotionCorrectGo { stopbutton } {
                     break
                 }
             }
-            puts "Registered $j of $numdrops volumes to reference..."
+            puts "Registered $j of [expr $numdrops - 1] volumes to reference..."
             #--- try to catch a user's click of the "stop" button
             update idletasks
             if { $::Ibrowser(AbortMotionCorrection) } {
@@ -285,7 +286,8 @@ proc IbrowserHelpMotionCorrection { } {
 
     set i [ IbrowserGetHelpWinID ]
     set txt "<H3>Motion correction</H3>
- <P> This tool lets you select an interval to motion correct (a source interval), to select a reference (target) volume from within the source interval, and register all of the other volumes in the source interval to the reference. Motion correction adds a transform to each non-reference volume in the interval, and may not work properly if the reference or target volume nodes already have transforms applied to them in a complicated hierarchy. It is currently recommended that an interval be motion corrected first, using any of its volumes as the reference, and if subsequent transforms are necessary (for co-registration, i.e.,) that those operations be carried out in a second step."
+ <P> This tool lets you select an interval to motion correct (a source interval), to select a reference (target) volume from within the source interval, and register all of the other volumes in the source interval to the reference. Motion correction adds a transform to each non-reference volume in the interval, and may not work properly if the reference or target volume nodes already have transforms applied to them. It is recommended that an interval be motion corrected first, using any of its volumes as the reference, and if subsequent transforms are necessary (i.e. for co-registration) that those operations be carried out in a second step.
+<P> To abort motion correction, first stop the registration of an individual volume by clicking the <I>Stop</I> button on the popup window, and then stop the registration of subsequent volumes in the source interval by clicking the <I>Stop</I> button on the gui panel. (You may have to press <I>Stop</I> one more time in the popup window.) Then, wait a short time for the registration to stop and any registration transforms that were added to the scene to be deleted."
     DevCreateTextPopup infowin$i "Ibrowser information" 100 100 18 $txt
 }
 
