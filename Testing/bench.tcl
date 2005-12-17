@@ -19,11 +19,20 @@ proc bench_init {} {
 
 proc bench_run {} {
 
-    foreach benchmark $::BENCH(benchmarks) {
+    bench_init
+
+    foreach benchmark [lsort -dictionary $::BENCH(benchmarks)] {
         set bench [file root [file tail $benchmark]]
         
-        set memMultiple 1
-        while (1) {
+        for {set memMultiple 1} {$memMultiple < 3} {incr memMultiple} {
+
+            catch "iss Delete"
+            vtkImageSinusoidSource iss
+            set dim [expr $memMultiple * 200]
+            iss SetWholeExtent 0 200 0 200 0 $dim
+            [iss GetOutput] Update 
+            set id [iss GetOutput]
+
             for {set nthreads 1} {$nthreads <= $::BENCH(numThreads)} {incr nthreads} {
 
                 bench_mt SetGlobalMaximumNumberOfThreads $nthreads
@@ -31,15 +40,15 @@ proc bench_run {} {
                 puts "running $bench on $nthreads at memory multiple $memMultiple"; update
 
                 source $benchmark
-                set ret [catch {time "${bench}_run $memMultiple"} res]
+                set ret [catch {time "${bench}_run $id"} res]
 
                 if { $ret } {
-                    puts "failed"; update
+                    puts "failed: $res"; update
                     set ::BENCH($bench,$nthreads,$memMultiple) "failed"
                     break
                 } else {
                     puts $res; update
-                    set ::BENCH($bench,$nthreads,$memMultiple) [lindex $res 0]
+                    set ::BENCH($bench,$nthreads,$memMultiple) [expr [lindex $res 0] / 1000000.]
                 }
 
             }
@@ -47,10 +56,11 @@ proc bench_run {} {
             puts "--> $::BENCH(numThreads) threads is $percent % of the speed of 1 thread"
             puts ""
 
-            incr memMultiple
             update
         }
     }
 
     parray ::BENCH
 }
+
+bench_run
