@@ -58,6 +58,16 @@ proc IbrowserBuildReorientGUI { f master } {
     #--- set a global variable for frame so we can raise it.
     set ::Ibrowser(fProcessReorient) $f
     
+    #--- create menu buttons and associated menus...
+    frame $f.fOverview -bg $Gui(activeWorkspace) -bd 2 
+    pack $f.fOverview -side top
+
+    set ff $f.fOverview
+    DevAddButton $ff.bHelp "?" "IbrowserHelpReorient" 2 
+    eval { label $ff.lOverview -text \
+               "Flip selected volume along major axis." } $Gui(WLA)
+    grid $ff.bHelp $ff.lOverview -pady 1 -padx 1 -sticky w
+
     frame $f.fSpace -bg $::Gui(activeWorkspace) -bd 2 
     eval { label $f.fSpace.lSpace -text "       " } $Gui(WLA)
     pack $f.fSpace -side top 
@@ -354,5 +364,13 @@ global Volume
 
 }
 
+
+proc IbrowserHelpReorient { } {
+
+    set i [ IbrowserGetHelpWinID ]
+    set txt "<H3>Reorient</H3>
+ <P> This tool lets you ..."
+    DevCreateTextPopup infowin$i "Ibrowser information" 100 100 18 $txt
+}
 
 

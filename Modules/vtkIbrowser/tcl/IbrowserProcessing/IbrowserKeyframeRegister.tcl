@@ -68,6 +68,7 @@ proc IbrowserBuildKeyframeRegisterGUI { f master } {
     #--- set global variables for frame so we can raise it.
     set ::Ibrowser(fProcessKeyframeRegister) $f
 
+
     #---
     #--- set some globals for this process.
     set ::Ibrowser(Process,KeyframeRegister,volumeMatrix) None
@@ -91,6 +92,15 @@ proc IbrowserBuildKeyframeRegisterGUI { f master } {
     set ::Ibrowser(Process,Matrix,rows) {0 1 2 3}
     set ::Ibrowser(Process,Matrix,cols) {0 1 2 3}
     set ::Ibrowser(Process,KeyframeRegister,eventManager) ""
+
+    frame $f.fOverview -bg $Gui(activeWorkspace) -bd 2 
+    pack $f.fOverview -side top
+
+    set ff $f.fOverview
+    DevAddButton $ff.bHelp "?" "IbrowserHelpKeyframeRegister" 2 
+    eval { label $ff.lOverview -text \
+               "Specify keyframed registration." } $Gui(WLA)
+    grid $ff.bHelp $ff.lOverview -pady 1 -padx 1 -sticky w
 
     #---
     #--- create notebook frames for stages of keyframe interpolation
@@ -149,7 +159,7 @@ proc IbrowserBuildKeyframeRegisterKeyframesGUI { nf } {
     grid $ff.mbIntervals -row 0 -column 1 -pady 1 -padx $::Gui(pad) -sticky e
 
     DevAddButton $ff.bAddTransforms "add transforms" \
-        "IbrowserAddSequenceTransforms" 18
+        "IbrowserAddTransforms" 18
     TooltipAdd $ff.bAddTransforms \
         "Creates a transform for each volume in the selected interval."
     grid $ff.bAddTransforms -row 1 -column 1 -pady 1 -padx $::Gui(pad) -sticky w
@@ -840,5 +850,13 @@ proc IbrowserKeyframeDeleteAllTransforms { } {
     } else {
         DevErrorWindow "No transforms in interval $::Ibrowser($id,name)."
     }
+}
+
+proc IbrowserHelpKeyframeRegister { } {
+
+    set i [ IbrowserGetHelpWinID ]
+    set txt "<H3>Keyframed Registration</H3>
+ <P> This tool lets you ..."
+    DevCreateTextPopup infowin$i "Ibrowser information" 100 100 18 $txt
 }
 

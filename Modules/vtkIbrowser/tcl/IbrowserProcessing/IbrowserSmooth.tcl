@@ -52,6 +52,16 @@ proc IbrowserBuildSmoothGUI { f master } {
     set ::Ibrowser(Process,Smooth,is_FWHM) 4.0
     set ::Ibrowser(Process,Smooth,ap_FWHM) 4.0
     
+    #--- create menu buttons and associated menus...
+    frame $f.fOverview -bg $Gui(activeWorkspace) -bd 2
+    pack $f.fOverview -side top
+    
+    set ff $f.fOverview
+    DevAddButton $ff.bHelp "?" "IbrowserHelpSmooth" 2 
+    eval { label $ff.lOverview -text \
+               "Spatially smooths selected volume." } $Gui(WLA)
+    grid $ff.bHelp $ff.lOverview -pady 1 -padx 1 -sticky w
+
     frame $f.fSpace -bg $::Gui(activeWorkspace) -bd 2 
     eval { label $f.fSpace.lSpace -text "       " } $Gui(WLA)
     pack $f.fSpace -side top 
@@ -280,3 +290,11 @@ proc IbrowserSmoothSequence { } {
 }
 
 
+
+proc IbrowserHelpSmooth { } {
+
+    set i [ IbrowserGetHelpWinID ]
+    set txt "<H3>Spatial smoothing</H3>
+ <P> This tool lets you use a Gaussian filter to..."
+    DevCreateTextPopup infowin$i "Ibrowser information" 100 100 18 $txt
+}

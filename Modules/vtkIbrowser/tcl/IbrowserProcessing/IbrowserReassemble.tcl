@@ -59,6 +59,15 @@ global Gui
     #--- Set a global variable for frame so we can raise it.
     set ::Ibrowser(fProcessReassemble) $f
     
+    frame $f.fOverview -bg $Gui(activeWorkspace) -bd 2 
+    pack $f.fOverview -side top
+
+    set ff $f.fOverview
+    DevAddButton $ff.bHelp "?" "IbrowserHelpReassemble" 2 
+    eval { label $ff.lOverview -text \
+               "Reassemble slices along major axis." } $Gui(WLA)
+    grid $ff.bHelp $ff.lOverview -pady 1 -padx 1 -sticky w
+
     frame $f.fSpace -bg $::Gui(activeWorkspace) -bd 2 
     eval { label $f.fSpace.lSpace -text "       " } $Gui(WLA)
     pack $f.fSpace -side top 
@@ -384,4 +393,12 @@ global Volume
     }
 }
 
+
+proc IbrowserHelpReassemble { } {
+
+    set i [ IbrowserGetHelpWinID ]
+    set txt "<H3>Reassemble volumes</H3>
+ <P> This tool lets you ..."
+    DevCreateTextPopup infowin$i "Ibrowser information" 100 100 18 $txt
+}
 
