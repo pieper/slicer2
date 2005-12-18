@@ -60,7 +60,7 @@ proc DTMRICalculateScalarsInit {} {
     #------------------------------------
     set m "CalculateScalars"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.18.2.1 $} {$Date: 2005/12/17 03:39:54 $}]
+                                 {$Revision: 1.18.2.2 $} {$Date: 2005/12/18 00:11:17 $}]
 
     #------------------------------------
     # Variables for producing scalar volumes
@@ -395,17 +395,6 @@ proc DTMRIDoMath {{operation ""}} {
     math AddObserver ProgressEvent "MainShowProgress math"
     math AddObserver EndEvent MainEndProgress
     set Gui(progressText) "Creating Volume $operation"
-
-    # mask DTMRIs if required
-    #------------------------------------
-    set mode $DTMRI(mode,mask)
-    if {$mode != "None"} {
-        set m $DTMRI(MaskLabelmap)
-        math SetScalarMask [Volume($m,vol) GetOutput]
-        math MaskWithScalarsOn
-    } else {
-        math MaskWithScalarsOff
-    }   
 
     # put the filter output into a slicer volume
     math Update
