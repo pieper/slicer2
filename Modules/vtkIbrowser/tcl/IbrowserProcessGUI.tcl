@@ -576,6 +576,10 @@ proc IbrowserRemoveNonReferenceTransforms { } {
     #--- ID of selected sequence
     set id $::Ibrowser(activeInterval)
 
+    if { $id == $::Ibrowser(none,intervalID) } {
+        return
+    }
+    
     #--- For each volume within the interval (except for the
     #--- reference volume, if it is inside the interval), delete 
     #--- the last transform applied to it.
