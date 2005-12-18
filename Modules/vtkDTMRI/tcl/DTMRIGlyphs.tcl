@@ -63,7 +63,7 @@ proc DTMRIGlyphsInit {} {
     #------------------------------------
     set m "Glyphs"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.16.2.1 $} {$Date: 2005/12/17 03:40:12 $}]
+                                 {$Revision: 1.16.2.2 $} {$Date: 2005/12/18 00:23:17 $}]
 
     # type of reformatting
     set DTMRI(mode,reformatType) 0
@@ -717,8 +717,15 @@ proc DTMRIUpdate {} {
         # set the dataSource to point to our output 
         # for the following pipelines
         set preprocessedSource [$mask GetOutput]
+    
+    # active mask mode in Scalar computation
+    set DTMRI(scalars,ROI) "Mask"
+    
     } else {
         set preprocessedSource $dataSource
+    
+    #deactive mask mode in Scalar computation
+    set DTMRI(scalars,ROI) "None"
     }
 
     #------------------------------------
