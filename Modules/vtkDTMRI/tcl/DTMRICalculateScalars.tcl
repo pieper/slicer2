@@ -60,7 +60,8 @@ proc DTMRICalculateScalarsInit {} {
     #------------------------------------
     set m "CalculateScalars"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.20 $} {$Date: 2005/12/18 00:13:40 $}]
+                         {$Revision: 1.21 $} {$Date: 2005/12/18 00:14:48 $}]
+
 
     #------------------------------------
     # Variables for producing scalar volumes
