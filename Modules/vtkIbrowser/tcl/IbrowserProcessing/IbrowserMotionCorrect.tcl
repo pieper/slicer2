@@ -38,7 +38,6 @@
 # PROCEDURES:  
 #   IbrowserBuildMotionCorrectGUI
 #   IbrowserMotionCorrectGo
-#   IbrowserHardenTransforms
 #==========================================================================auto=
 
 
@@ -57,7 +56,6 @@ proc IbrowserBuildMotionCorrectGUI { f master } {
     set ::Ibrowser(fProcessMotionCorrect) $f
     set ::Ibrowser(Process,MotionCorrectQuality) 1
     set ::Ibrowser(Process,MotionCorrectIterate) 0
-    set ::Ibrowser(Process,MotionCorrect,Hardened) 0
     set ::Ibrowser(Process,InternalReference) $::Volume(idNone)
     set ::Ibrowser(Process,ExternalReference) $::Volume(idNone)
 
@@ -152,9 +150,8 @@ proc IbrowserBuildMotionCorrectGUI { f master } {
     #---------------------------------------------------------------------------
     #---HARDEN TRANSFORMS FRAME
     set ff $f.fResample
-    DevAddButton $ff.bCancel "Cancel (pre-commit only)" "IbrowserRemoveNonReferenceTransforms" 8
-    DevAddButton $ff.bApply "Commit transforms" "IbrowserHardenTransforms" 8
-    pack $ff.bCancel $ff.bApply -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+    DevAddButton $ff.bCancel "Cancel" "IbrowserRemoveNonReferenceTransforms" 8
+    pack $ff.bCancel -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
         
 
     pack $f.fOverview $f.fInput $f.fModel $f.fResample -side top -pady $Gui(pad) -padx $Gui(pad) -fill both
@@ -209,7 +206,6 @@ proc IbrowserMotionCorrectGo { stopbutton } {
     set iid $::Ibrowser(activeInterval)
     set start $::Ibrowser($iid,firstMRMLid)
     set stop $::Ibrowser($iid,lastMRMLid)
-    set ::Ibrowser(Process,MotionCorrect,Hardened) 0
     set ::RigidIntensityRegistration(Repeat) $::Ibrowser(Process,MotionCorrectIterate)
     
     #--- now register each volume in the selected interval to reference...
@@ -267,19 +263,6 @@ proc IbrowserMotionCorrectGo { stopbutton } {
 }
 
 
-
-
-#-------------------------------------------------------------------------------
-# .PROC IbrowserHardenTransforms
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc IbrowserHardenTransforms { } {
-
-    IbrowserSayThis "transforms committed." 0
-    set ::Ibrowser(Process,MotionCorrect,Hardened) 1
-}
 
 
 proc IbrowserHelpMotionCorrection { } {

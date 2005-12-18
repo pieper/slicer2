@@ -369,7 +369,10 @@ proc IbrowserHelpReorient { } {
 
     set i [ IbrowserGetHelpWinID ]
     set txt "<H3>Reorient</H3>
- <P> This tool lets you ..."
+ <P> This tool reorients all volumes in a selected interval by flipping them along a specified axis:
+<P>   Right -> Left (R/L),
+<P>   Anterior -> Posterior (A/P), or
+<P>   Superior->Inferior (S/I)."
     DevCreateTextPopup infowin$i "Ibrowser information" 100 100 18 $txt
 }
 

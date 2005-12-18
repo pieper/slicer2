@@ -350,13 +350,14 @@ global Volume
             } else {
                 $dstnode SetInterpolate [ ::Volume($firstVolID,node) GetInterpolate ]
             }
+
             ::Volume($dstnodeID,vol) SetImageData  $imdata
-            #puts "New MrmlVolumeNode $dstnodeID:"
-            #puts "----------------------------------------"
-            #puts "new image data dimensions: $dim"
-            #puts "new image data spacing: $zSpacing"
-            #puts "new image data extent: $ext"
-            #puts ""
+            puts "New MrmlVolumeNode $dstnodeID:"
+            puts "----------------------------------------"
+            puts "new image data dimensions: $dim"
+            puts "new image data spacing: $zSpacing"
+            puts "new image data extent: $ext"
+            puts ""
 
             set ::Ibrowser($dstID,$n,MRMLid) $dstnodeID
 
@@ -398,7 +399,9 @@ proc IbrowserHelpReassemble { } {
 
     set i [ IbrowserGetHelpWinID ]
     set txt "<H3>Reassemble volumes</H3>
- <P> This tool lets you ..."
+ <P> This tool lets you generate a new interval whose volumes are reassembled versions of those in a selected interval. In the reassembly, an axis (either Right -> Left, Anterior -> Posterior, or Superior -> Inferior) is arrayed along the interval axis. If the selected interval contains a set of volumes that represent a timeseries, then each volume in the reassembled interval will contain the same slice for all timepoints.
+<P> As an example, assume the selected axis is S->I. Then the first volume in the reassembled interval will be comprised of the S-most slice from each volume in the selected interval; the last volume in the reassembled interval will be comprised of the I-most slice from each volume in the selected interval.
+<P> Or, if a selected interval contains a single volume containing the same slice sampled over time, then a reassembled interval can be created which arrays individual timepoints along the Ibrowser's interval axis."
     DevCreateTextPopup infowin$i "Ibrowser information" 100 100 18 $txt
 }
 

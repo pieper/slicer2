@@ -221,7 +221,7 @@ proc IbrowserBuildKeyframeRegisterKeyframesGUI { nf } {
     pack $ff.lSelectToDel -anchor nw -pady 2 -padx $Gui(pad)
     eval { scrollbar $ff.sVolumes -command "$ff.lbVolumes yview" }
     eval { listbox $ff.lbVolumes -bg $Gui(normalButton) -font {helvetica 8 } \
-               -fg $Gui(textDark) -width 18 -height 6 -yscrollcommand "$ff.sVolumes set"}
+               -fg $Gui(textDark) -width 18 -height 5 -yscrollcommand "$ff.sVolumes set"}
     set ::Ibrowser(Process,KeyframeRegister,lbKeyframe1) $ff.lbVolumes
     pack $ff.lbVolumes -padx 2 -pady 1 -side left
     pack $ff.sVolumes -padx 0 -side left -pady 1 -fill y 
@@ -285,7 +285,7 @@ proc IbrowserBuildKeyframeRegisterInterpolateGUI { nf } {
     set ff $nf.fSelect.fListbox
     eval { scrollbar $ff.sVolumes -command "$ff.lbVolumes yview" }
     eval { listbox $ff.lbVolumes -bg $Gui(normalButton) -font {helvetica 8 } \
-               -fg $Gui(textDark) -width 26 -height 5 -yscrollcommand "$ff.sVolumes set"}
+               -fg $Gui(textDark) -width 26 -height 3 -yscrollcommand "$ff.sVolumes set"}
     set ::Ibrowser(Process,KeyframeRegister,lbKeyframe2) $ff.lbVolumes
     pack $ff.lbVolumes -padx 2 -side left -pady 2
     pack $ff.sVolumes -padx 0 -pady 0 -side left -fill y -pady 2
@@ -856,7 +856,20 @@ proc IbrowserHelpKeyframeRegister { } {
 
     set i [ IbrowserGetHelpWinID ]
     set txt "<H3>Keyframed Registration</H3>
- <P> This tool lets you ..."
+ <P> This tool is an option for volumes of image data which may be difficult to register with automated intensity registration tools. The process uses a combination of manually specified and linearly interpolated transforms to register the volumes in a selected interval. Results will vary depending on the keyframes chosen and the quality of the manual registrations specified at each. The workflow is as follows:
+<P>1. In the Keyframes tab, select an interval to be registered using one of its volumes as the reference;
+<P>2. Add transform nodes to each volume in the interval;
+<P>3. Choose a reference volume from the sequence;
+<P>4. Select keyframes, to which manual transforms will be specified;
+<P>5. In the Interpolate tab, select a keyframe;
+<P>6. Load the keyframe in the viewer, (keyframe is loaded into the FG, with reference in the BG);
+<P>7. (the keyframe's matrix is loaded and the user is moved to the alignments module for manual transforming);
+<P>8. when the transform is acceptable, move back to the Ibrowser module to repeat for the next keyframe.
+<P>9. When all keyframes are specified, interpolate all transforms between the keyframes.
+<P>10. Undo the interpolation if the results indicate that keyframes need to be edited;
+<P>11. Reset all transforms if you want to start fresh.
+<P>12. Delete all transforms if you want to abort and clean up.
+<P> Undoing the interpolation removes the transforms that have been generated, but not those which have been manually specified; resetting all transforms sets all volume's transforms back to the identity matrix. Deleting all transforms removes the transform nodes that affect the selected interval's volumes."
     DevCreateTextPopup infowin$i "Ibrowser information" 100 100 18 $txt
 }
 
