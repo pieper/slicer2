@@ -601,6 +601,10 @@ proc IbrowserCopyInterval { sourceName copyName } {
     #--- create interval to contain the volumes.
     IbrowserMakeNewInterval $copyName $::IbrowserController(Info,Ival,imageIvalType) 0.0 $spanmax $m
     
+    #--- update multivolumereader to reflect this multi-volume sequence
+    set id $::Ibrowser($copyName,intervalID)
+    IbrowserUpdateMultiVolumeReader $copyName $id
+    
     #--- report in Ibrowser's message panel"
     set tt "Copied $sourceName to $copyName."
     IbrowserSayThis $tt 0
@@ -781,6 +785,19 @@ proc IbrowserDeleteInterval { ivalName } {
     IbrowserUpdateIndexAndSliderBox
     IbrowserUpdateIndexAndSliderMarker 
 
+    #--- adjust the multivolume reader
+    set cnt 0
+    set del -1
+    foreach name $::MultiVolumeReader(sequenceNames) {
+        if { $ivalName == $name } {
+            set del $cnt
+        }
+        incr cnt
+    }
+    if { $del >= 0 } {
+        set ::MultiVolumeReader(sequenceNames) [ lreplace $::MultiVolumeReader(sequenceNames) $del $del ]
+    }
+    
     #--- report in Ibrowser's message panel"
     set tt "Deleted interval $ivalName."
     IbrowserSayThis $tt 0
@@ -1501,6 +1518,21 @@ proc IbrowserRenameInterval { old new } {
         ::Volume($vid,node) SetName ${old}_${new}
         incr i
     }
+
+    #--- adjust the multivolume reader
+    set cnt 0
+    set change -1
+    foreach name $::MultiVolumeReader(sequenceNames) {
+        if { $old == $name } {
+            set change $cnt
+        }
+        incr cnt
+    }
+    if { $change >= 0 } {
+        set ::MultiVolumeReader(sequenceNames) [ lreplace $::MultiVolumeReader(sequenceNames) \
+                                                     $change $change $new ]
+    }
+
     MainUpdateMRML
 }
 

@@ -1269,12 +1269,21 @@ proc IbrowserCopyIntervalPopUp { win id x y } {
         set f $w.fMsg
         eval {label $f.l -text "Name a copy of $::Ibrowser($id,name)." \
                 -font $::IbrowserController(UI,Medfont) -background #FFFFFF \
-                -foreground #000000 }
+                -foreground #000000 \
+              }
         pack $f.l -padx 5 -pady 5
 
         set f $w.fName
         set ::Ibrowser(thisName) $::Ibrowser($id,name)
-        set ::Ibrowser(afterName) $::Ibrowser($id,name)-copy
+        #set ::Ibrowser(afterName) $::Ibrowser($id,name)-copy
+        if { [ info exists ::MultiVolumeReader(defaultSequenceName)] } {
+            incr ::MultiVolumeReader(defaultSequenceName)
+        } else {
+            set ::MultiVolumeReader(defaultSequenceName) 1
+        }
+        set mmID $::MultiVolumeReader(defaultSequenceName)
+        set ::Ibrowser(afterName) [format "multiVol%d" $mmID]
+
         eval { label $f.l -text "new interval: " -background #FFFFFF \
                 -font $::IbrowserController(UI,Medfont) -foreground #000000 }
         eval { entry $f.e -width 20 -relief sunken -textvariable ::Ibrowser(afterName) }

@@ -51,6 +51,7 @@
 #   IbrowserUpdateSequences
 #   IbrowserImportSequenceFromOtherModule
 #   IbrowserMultiVolumeReaderLoad
+#   IbrowserUpdateMultiVolumeReader
 #==========================================================================auto=
 #-------------------------------------------------------------------------------
 proc IbrowserBuildLoadFrame { } {
@@ -396,6 +397,33 @@ proc IbrowserAssembleSequenceFromFiles { } {
 proc IbrowserAssembleSequenceFromSequences { } {
 }
 
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateMultiVolumeReader
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserUpdateMultiVolumeReader { iname iid } {
+
+    #--- register the sequence with the MultiVolumeReader so fMRIEngine can see the sequence
+    lappend ::MultiVolumeReader(sequenceNames) $iname
+    set ::MultiVolumeReader($iname,noOfVolumes) $::Ibrowser($iid,numDrops)
+    set ::MultiVolumeReader($iname,firstMRMLid) $::Ibrowser($iid,firstMRMLid)
+    set ::MultiVolumeReader($iname,lastMRMLid) $::Ibrowser($iid,lastMRMLid)
+    set id $::Ibrowser($iid,firstMRMLid)
+    #--- assuming that all volumes in the interval contain the same extent.
+    set ::MultiVolumeReader($iname,volumeExtent) [ [ ::Volume($id,vol) GetOutput ] GetExtent ]
+    set ::MultiVolumeReader(sequenceName) ""
+    set ::MultiVolumeReader(filter) ""
+    set ::Volume(name) ""
+    
+}
+
+
+
+
 #-------------------------------------------------------------------------------
 # .PROC IbrowserAssembleSequenceFromVolumes
 # 
@@ -409,11 +437,19 @@ proc IbrowserAssembleSequenceFromVolumes { } {
         DevErrorWindow "No volumes have been selected."
         return
     }
-    #--- get the interval started
+
+    #--- register this with the multiVolumeReader so fMRIEngine can see sequence
     set ivalID $::Ibrowser(uniqueNum)
-    set ::Ibrowser(loadVol,name) [format "assembleVol%d" $ivalID]
+    if { [info exists ::MultiVolumeReader(defaultSequenceName)] } {
+        incr ::MultiVolumeReader(defaultSequenceName)
+    } else {
+        set ::MultiVolumeReader(defaultSequenceName) 1
+    }
+
+    #--- get the interval started
+    set mmID $::MultiVolumeReader(defaultSequenceName)
+    set ::Ibrowser(loadVol,name) [format "multiVol%d" $mmID]
     set iname $::Ibrowser(loadVol,name)
-    #lappend $::MultiVolumeReader(sequenceNames) $iname
     set ::Ibrowser($ivalID,name) $iname
     set ::Ibrowser($iname,intervalID) $ivalID
 
@@ -452,6 +488,9 @@ proc IbrowserAssembleSequenceFromVolumes { } {
         set spanmax [ expr $numVols - 1 ]
         IbrowserMakeNewInterval $iname $::IbrowserController(Info,Ival,imageIvalType) \
             0.0 $spanmax $numVols
+
+        #--- update multivolumereader to reflect this multi-volume sequence
+        IbrowserUpdateMultiVolumeReader $iname $ivalID
     }
 
     #--- empty assembleList
@@ -789,11 +828,9 @@ proc IbrowserMultiVolumeReaderLoad { status } {
     set first $::MultiVolumeReader(firstMRMLid)
     set last $::MultiVolumeReader(lastMRMLid)
 
-    set k [llength $::MultiVolumeReader(sequenceNames)]
-    set indx [expr $k-1]
-    set iname [lindex $::MultiVolumeReader(sequenceNames) $indx ]
-    set ::Ibrowser(loadVol,name) $iname
-    set ::Ibrowser(loadVol,name) [format "%s-%d" $::Ibrowser(loadVol,name) $id]
+    set mmID $::MultiVolumeReader(defaultSequenceName)
+    set ::Ibrowser(loadVol,name) [format "multiVol%d" $mmID]
+    set iname $::Ibrowser(loadVol,name)
     
     set vcount 0
     #--- give ibrowser a way to refer to each vol
