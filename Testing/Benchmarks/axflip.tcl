@@ -8,7 +8,9 @@ proc axflip_run { id } {
     catch "ir Delete"
 
     vtkImageReslice ir
-    ir SetResliceAxesDirectionCosines .707 .707 0  0 .707 .707  .707 0 .707
+    # 45 degree rotate in Z, followed by 45 degree around X
+    ir SetResliceAxesDirectionCosines .707 -0.5 0.5  .707 0.5 -0.5  0 .707 .707 
+    ir SetInterpolationModeToCubic
     ir SetInput $id
     [ir GetOutput] SetUpdateExtentToWholeExtent
 

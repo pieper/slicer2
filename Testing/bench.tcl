@@ -10,10 +10,10 @@ proc bench_init {} {
     catch "bench_mt Delete"
     vtkMultiThreader bench_mt
 
-    set ::BENCH(numThreads) [bench_mt GetNumberOfThreads]
+    set ::BENCH($::env(HOST),numThreads) [bench_mt GetNumberOfThreads]
     set ::BENCH(benchmarks) [glob -nocomplain $::env(SLICER_HOME)/Testing/Benchmarks/*.tcl]
 
-    puts "will use up to $::BENCH(numThreads) threads"
+    puts "will use up to $::BENCH($::env(HOST),numThreads) threads"
 }
 
 
@@ -33,7 +33,7 @@ proc bench_run {} {
             [iss GetOutput] Update 
             set id [iss GetOutput]
 
-            for {set nthreads 1} {$nthreads <= $::BENCH(numThreads)} {incr nthreads} {
+            for {set nthreads 1} {$nthreads <= $::BENCH($::env(HOST),numThreads)} {incr nthreads} {
 
                 bench_mt SetGlobalMaximumNumberOfThreads $nthreads
 
@@ -44,16 +44,23 @@ proc bench_run {} {
 
                 if { $ret } {
                     puts "failed: $res"; update
-                    set ::BENCH($bench,$nthreads,$memMultiple) "failed"
+                    set ::BENCH($::env(HOST),$bench,$nthreads,$memMultiple) "failed"
                     break
                 } else {
                     puts $res; update
-                    set ::BENCH($bench,$nthreads,$memMultiple) [expr [lindex $res 0] / 1000000.]
+                    set ::BENCH($::env(HOST),$bench,$nthreads,$memMultiple) [expr [lindex $res 0] / 1000000.]
                 }
 
             }
-            set percent [expr 100. * $::BENCH($bench,$::BENCH(numThreads),$memMultiple) / (1. * $::BENCH($bench,1,$memMultiple))]
-            puts "--> $::BENCH(numThreads) threads is $percent % of the speed of 1 thread"
+            set percent [expr 100. * $::BENCH($::env(HOST),$bench,$::BENCH($::env(HOST),numThreads),$memMultiple) / (1. * $::BENCH($::env(HOST),$bench,1,$memMultiple))]
+            if { $::BENCH($::env(HOST),numThreads) > 1 } {
+                set percent2 [expr 100. * $::BENCH($::env(HOST),$bench,2,$memMultiple) / (1. * $::BENCH($::env(HOST),$bench,1,$memMultiple))]
+            } else {
+                set percent2 100
+            }
+
+            puts "--> $::BENCH($::env(HOST),numThreads) threads is $percent % of the speed of 1 thread"
+            puts "--> 2 threads is $percent2 % of the speed of 1 thread"
             puts ""
 
             update
@@ -61,6 +68,11 @@ proc bench_run {} {
     }
 
     parray ::BENCH
+
+    set fp [open "bench-$::env(HOST)" "w"]
+    puts $fp [array get ::BENCH]
+    close $fp
+
 }
 
 bench_run
