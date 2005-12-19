@@ -275,21 +275,42 @@ proc fMRIEngineViewModel {} {
         }
     }
 
-    #--- brittle test to see if all evs are defined yet for each run.
+    #--- test to see if all evs are defined yet for each run.
     #--- If not, don't view
-    set count 0
-    set size [$::fMRIEngine(evsListBox) size]
-    for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} { 
-        #--- count number of conditions in each run.
-        set conds [ llength $::fMRIEngine($r,conditionList)  ]
-        set count [ expr $count + $conds ]
-    }
-    #--- add in baseline per run
-    set count2 [ expr $count + $::fMRIEngine(noOfSpecifiedRuns) ]
-    #--- are all conditions modeled?
-    if { ($size != $count) && ($size != $count2) } {
-        DevErrorWindow "Please model all conditions first"
-        return 
+    set j 0
+    set end [$fMRIEngine(gui,conditionsMenuForSignal) index end] 
+    while {$j <= $end} {  
+        set v [$fMRIEngine(gui,conditionsMenuForSignal) entrycget $j -label] 
+        if { ($v != "") && ($v != "all") && ($v != "none") } {
+            set v $v:
+
+            # for each condition, search it over the specified evs
+            # if found, it has been modeled.
+            set size [$fMRIEngine(evsListBox) size]
+            set i 0
+            while {$i < $size} {  
+                set ev [$fMRIEngine(evsListBox) get $i] 
+                if {$ev != ""} {
+                    set found [string first $v $ev 0] 
+                    puts $v
+                    puts $ev
+                    puts $found
+                    if {$found >= 0} {
+                        break
+                    }
+                }
+
+                incr i
+            }
+
+            # not found, the condition is not modeled.
+            if {$found == -1} {
+                DevErrorWindow "Please model all conditions first"
+                return 
+            }
+        }
+
+        incr j
     }
 
     #--- looks reasonable. Count evs and launch view.
