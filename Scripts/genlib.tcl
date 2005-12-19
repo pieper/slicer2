@@ -595,19 +595,37 @@ if { ![file exists $::SANDBOX_TEST_FILE] } {
     file mkdir $SLICER_LIB/NAMICSandBox-build
     cd $SLICER_LIB/NAMICSandBox-build
 
-    runcmd $CMAKE \
-        -G$GENERATOR \
-        -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
-        -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
-        -DBUILD_SHARED_LIBS:BOOL=OFF \
-        -DCMAKE_SKIP_RPATH:BOOL=ON \
-        -DBUILD_EXAMPLES:BOOL=OFF \
-        -DBUILD_TESTING:BOOL=OFF \
-        -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
-        -DVTK_DIR:PATH=$VTK_DIR \
-        -DITK_DIR:FILEPATH=$ITK_BINARY_PATH \
-        -DOPENGL_glu_LIBRARY:FILEPATH=\" \" \
-        ../NAMICSandBox
+    if { $isLinux && $::tcl_platform(machine) == "x86_64" } {
+        # to build correctly, 64 bit linux requires shared libs for the sandbox
+        runcmd $CMAKE \
+            -G$GENERATOR \
+            -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
+            -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
+            -DBUILD_SHARED_LIBS:BOOL=ON \
+            -DCMAKE_SKIP_RPATH:BOOL=ON \
+            -DBUILD_EXAMPLES:BOOL=OFF \
+            -DBUILD_TESTING:BOOL=OFF \
+            -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
+            -DVTK_DIR:PATH=$VTK_DIR \
+            -DITK_DIR:FILEPATH=$ITK_BINARY_PATH \
+            -DOPENGL_glu_LIBRARY:FILEPATH=\" \" \
+            ../NAMICSandBox
+    } else {
+        # windows and mac require static libs for the sandbox
+        runcmd $CMAKE \
+            -G$GENERATOR \
+            -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
+            -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
+            -DBUILD_SHARED_LIBS:BOOL=OFF \
+            -DCMAKE_SKIP_RPATH:BOOL=ON \
+            -DBUILD_EXAMPLES:BOOL=OFF \
+            -DBUILD_TESTING:BOOL=OFF \
+            -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
+            -DVTK_DIR:PATH=$VTK_DIR \
+            -DITK_DIR:FILEPATH=$ITK_BINARY_PATH \
+            -DOPENGL_glu_LIBRARY:FILEPATH=\" \" \
+            ../NAMICSandBox
+    }
 
     if {$isWindows} {
         if { $MSVC6 } {
