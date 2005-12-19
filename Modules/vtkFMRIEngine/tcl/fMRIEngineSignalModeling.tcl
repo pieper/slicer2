@@ -1749,6 +1749,17 @@ proc fMRIEngineCountEVs {} {
         #-- end if ev != ""
         incr i
     }
+
+    # if signal modeling has not been done yet but the user wants 
+    # to view the design, warn him/her.
+    for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
+        if {! [info exists fMRIEngine($r,namesOfEVs)]} {
+            DevErrorWindow "Complete signal modeling first for run$r."
+            return 0
+        }
+    }
+
+
     #--- Re-order the name lists of all runs to match the order of EVs
     #--- in the first run. This organizes the design matrix so that
     #--- appropriate EVs from each run are concatenated in analysis.
