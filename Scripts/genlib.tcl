@@ -201,11 +201,6 @@ if { $GENLIB(clean) } {
         if { [file exists $SLICER_HOME/isPatched] } {
             runcmd rm $SLICER_HOME/isPatched
         }
-    } elseif { $isWindows }  {
-        file delete -force $SLICER_LIB/VTK
-        file delete -force $SLICER_LIB/VTK-build
-        file delete -force $SLICER_LIB/Insight
-        file delete -force $SLICER_LIB/Insight-build
     } else {
         file delete -force $SLICER_LIB
     }
@@ -214,6 +209,18 @@ if { $GENLIB(clean) } {
 if { ![file exists $SLICER_LIB] } {
     file mkdir $SLICER_LIB
 }
+
+################################################################################
+# Get and unzip Slicer Lib file if Windows
+#
+
+if {$isWindows} {
+    cd $SLICER_HOME
+    runcmd curl -k -O http://www.na-mic.org/Slicer/Download/External/Slicer2.6-Lib-win32.zip
+    runcmd unzip ./Slicer2.6-Lib-win32.zip
+}
+
+
 
 ################################################################################
 # Get and build CMake
@@ -226,14 +233,7 @@ if { ![file exists $CMAKE] } {
 
 
     if {$isWindows} {
-        puts stderr "-- genlib.tcl cannot generate the cmake or tcl binaries for windows --"
-        puts stderr ""
-        puts stderr "Follow the instructions at the following link"
-        puts stderr "to download precompiled versions of parts of the windows Lib"
-        puts stderr "http://www.na-mic.org/Wiki/index.php/Slicer:Slicer_2.6_Building"
-        puts stderr ""
-        puts stderr "Then re-run genlib.tcl to build VTK and ITK"
-        puts stderr ""
+        puts stderr "Slicer2.6-Lib-win32.zip did not download and unzip correctly."
         exit
     } else {
         runcmd $::CVS -d :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login
@@ -299,14 +299,7 @@ if { ![file exists $::TEEM_TEST_FILE] } {
 if { ![file exists $::TCL_TEST_FILE] } {
 
     if {$isWindows} {
-        puts stderr "-- genlib.tcl cannot generate the tcl binaries for windows --"
-        puts stderr "1) Get a copy of Tcl 8.4 from tcl.activestate.com."
-        puts stderr "2) Set the TCL_BIN_DIR, TCL_LIB_DIR and TCL_INCLUDE_DIR in slicer_variables.tcl."
-        puts stderr "3) Get BLT from http://prdownloads.sourceforge.net/blt/blt24z-for-tcl84.exe?download"
-        puts stderr "4) Install BLT to a *different* directory than where you installed activetcl"
-        puts stderr "5) copy BLT24.dll and BLT24lite24.dll to TCL_BIN_DIR"
-        puts stderr "6) copy blt2.4 to TCL_LIB_DIR"
-        puts stderr "With these pieces in place, genlib can build VTK and ITK"
+        puts stderr "Slicer2.6-Lib-win32.zip did not download and unzip correctly."
         exit
     }
 
