@@ -640,12 +640,8 @@ proc fMRIEngineSelectEVForPlotting {ev count} {
 
     if {[info exists fMRIEngine(timeCourseToplevel)] &&
         $fMRIEngine(tcPlottingOption) == "Long"} {
-            set x $fMRIEngine(x,voxelIndex)
-            set y $fMRIEngine(y,voxelIndex)
-            set z $fMRIEngine(z,voxelIndex)
-
             # re-plot due to ev switch
-            fMRIEngineDrawPlotLong $x $y $z
+            fMRIEngineDrawPlotLong
     }
 }
 
