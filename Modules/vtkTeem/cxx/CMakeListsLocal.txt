@@ -51,7 +51,7 @@ ${TEEM_BIN_DIR}
 )
 
 
-LINK_LIBRARIES ()
+LINK_LIBRARIES (${LOCAL_LIBRARY_BASENAME} ${TEEM_BUILD_LIB})
 
 
 # Add additional directories to look in for libraries
