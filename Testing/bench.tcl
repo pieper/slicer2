@@ -28,10 +28,12 @@ proc bench_run {} {
 
             catch "iss Delete"
             vtkImageSinusoidSource iss
-            set dim [expr $memMultiple * 200]
+            set dim [expr $memMultiple * 400]
             iss SetWholeExtent 0 200 0 200 0 $dim
             [iss GetOutput] Update 
             set id [iss GetOutput]
+
+            set ::BENCH($::env(HOST),$bench,imageSizeInKBytes,$memMultiple) [$id GetActualMemorySize]
 
             for {set nthreads 1} {$nthreads <= $::BENCH($::env(HOST),numThreads)} {incr nthreads} {
 
@@ -58,6 +60,8 @@ proc bench_run {} {
             } else {
                 set percent2 100
             }
+            set ::BENCH($::env(HOST),$bench,percent) $percent
+            set ::BENCH($::env(HOST),$bench,percent2) $percent2
 
             puts "--> $::BENCH($::env(HOST),numThreads) threads is $percent % of the speed of 1 thread"
             puts "--> 2 threads is $percent2 % of the speed of 1 thread"
