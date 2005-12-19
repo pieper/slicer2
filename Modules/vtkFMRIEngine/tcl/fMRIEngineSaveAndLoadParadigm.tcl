@@ -118,9 +118,19 @@ proc fMRIEngineSaveParadigm {} {
             set str "set fMRIEngine($r,designType) $fMRIEngine($r,designType) \n"
             puts $fHandle $str
 
+            set comment "# blocked, event-related, or mixed?"
+            puts $fHandle $comment
+            set str "set fMRIEngine(paradigmDesignType) $fMRIEngine(paradigmDesignType) \n"
+            puts $fHandle $str
+
             set comment "# tr of run $r"
             puts $fHandle $comment
             set str "set fMRIEngine($r,tr) $fMRIEngine($r,tr) \n"
+            puts $fHandle $str
+
+            set comment "# start volume number of of run $r"
+            puts $fHandle $comment
+            set str "set fMRIEngine($r,startVol) $fMRIEngine($r,startVol) \n"  
             puts $fHandle $str
 
             set comment "# condition list of run $r"
@@ -139,11 +149,6 @@ proc fMRIEngineSaveParadigm {} {
                 set str "fMRIModelViewAddConditionName $r $title \n"  
                 puts $fHandle $str
 
-                set comment "# start volume number of condition \'$title\' in run $r"
-                puts $fHandle $comment
-                set str "set fMRIEngine($r,$title,startVol) $fMRIEngine($r,$title,startVol) \n"  
-                puts $fHandle $str
-
                 set comment "# onsets of condition \'$title\' in run $r"
                 puts $fHandle $comment
                 set str "set fMRIEngine($r,$title,onsets) \"$fMRIEngine($r,$title,onsets)\" \n"  
@@ -155,6 +160,16 @@ proc fMRIEngineSaveParadigm {} {
                 puts $fHandle $str
             }
         }
+
+        set comment "# fill tr for the current run"
+        puts $fHandle $comment
+        set str "set fMRIEngine(entry,tr) \$fMRIEngine(\$fMRIEngine(curRunForConditionConfig),tr) \n"
+        puts $fHandle $str
+
+        set comment "# fill start volume number for the current run"
+        puts $fHandle $comment
+        set str "set fMRIEngine(entry,startVol) \$fMRIEngine(\$fMRIEngine(curRunForConditionConfig),startVol) \n"
+        puts $fHandle $str
 
         close $fHandle
     }
