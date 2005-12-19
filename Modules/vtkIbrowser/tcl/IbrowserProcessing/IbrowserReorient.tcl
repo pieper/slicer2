@@ -198,6 +198,8 @@ global Volume
     #--- from left to right, around center.
     #--- Flipped vtkImageData replaces its source
 
+
+    
     set iid $::Ibrowser(activeInterval)
     set firstID $::Ibrowser($iid,firstMRMLid)
     set lastID $::Ibrowser($iid,lastMRMLid)
@@ -221,7 +223,21 @@ global Volume
 
         vtkImageFlip flipLR
         flipLR SetInput [ ::Volume($v,vol) GetOutput ]
-        flipLR SetFilteredAxis 0
+
+        #--- translate the flipaxis to VTK space
+        set newvec [ IbrowserGetRasToVtkAxis RL ::Volume($vid,node) ]
+        #--- unpack the vector into x, y and z
+        foreach { x y z } $newvec { }
+        #--- set the appropriate parameters
+        if { ($x == 1) || ($x == -1) } {
+            flipLR SetFilteredAxis 0
+        } elseif { ($y == 1) || ( $y == -1) } {
+            flipLR SetFilteredAxis 1
+        } elseif { ($z == 1) || ($z == -1) } {
+            flipLR SetFilteredAxis 2
+        }
+
+        #flipLR SetFilteredAxis 0
         ::Volume($v,vol) SetImageData [ flipLR GetOutput ]
         
         MainVolumesUpdate $v
@@ -279,7 +295,21 @@ global Volume
 
         vtkImageFlip flipAP
         flipAP SetInput [ ::Volume($v,vol) GetOutput ]
-        flipAP SetFilteredAxis 1
+
+        #--- translate the flipaxis to VTK space
+        set newvec [ IbrowserGetRasToVtkAxis RL ::Volume($vid,node) ]
+        #--- unpack the vector into x, y and z
+        foreach { x y z } $newvec { }
+        #--- set the appropriate parameters
+        if { ($x == 1) || ($x == -1) } {
+            flipAP SetFilteredAxis 0
+        } elseif { ($y == 1) || ( $y == -1) } {
+            flipAP SetFilteredAxis 1
+        } elseif { ($z == 1) || ($z == -1) } {
+            flipAP SetFilteredAxis 2
+        }
+
+        #flipAP SetFilteredAxis 1
         ::Volume($v,vol) SetImageData [ flipAP GetOutput ]
         
         MainVolumesUpdate $v
@@ -341,7 +371,21 @@ global Volume
         
         vtkImageFlip flipIS
         flipIS SetInput [ ::Volume($v,vol) GetOutput ]
-        flipIS SetFilteredAxis 2
+
+        #--- translate the flipaxis to VTK space
+        set newvec [ IbrowserGetRasToVtkAxis RL ::Volume($vid,node) ]
+        #--- unpack the vector into x, y and z
+        foreach { x y z } $newvec { }
+        #--- set the appropriate parameters
+        if { ($x == 1) || ($x == -1) } {
+            flipIS SetFilteredAxis 0
+        } elseif { ($y == 1) || ( $y == -1) } {
+            flipIS SetFilteredAxis 1
+        } elseif { ($z == 1) || ($z == -1) } {
+            flipIS SetFilteredAxis 2
+        }
+
+        #flipIS SetFilteredAxis 2
         ::Volume($v,vol) SetImageData [ flipIS GetOutput ]
         
         MainVolumesUpdate $v
