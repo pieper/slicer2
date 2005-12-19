@@ -263,7 +263,7 @@ proc fMRIEngineShowConditionToEdit {} {
 
             set fMRIEngine(entry,title) $fMRIEngine($run,$title,title)
             set fMRIEngine(entry,tr) $fMRIEngine($run,tr)
-            set fMRIEngine(entry,startVol) $fMRIEngine($run,$title,startVol)
+            set fMRIEngine(entry,startVol) $fMRIEngine($run,startVol)
             set fMRIEngine(entry,onsets) $fMRIEngine($run,$title,onsets)
             set fMRIEngine(entry,durations) $fMRIEngine($run,$title,durations)
         }
@@ -307,7 +307,6 @@ proc fMRIEngineDeleteCondition {} {
                 #--- wjp added.
                 fMRIModelViewDeleteConditionName $run $title
                 unset -nocomplain fMRIEngine($run,$title,title)
-                unset -nocomplain fMRIEngine($run,$title,startVol)
                 unset -nocomplain fMRIEngine($run,$title,onsets)
                 unset -nocomplain fMRIEngine($run,$title,durations)
             } else {
@@ -317,7 +316,6 @@ proc fMRIEngineDeleteCondition {} {
                     #--- wjp added.
                     fMRIModelViewDeleteConditionName $r $title
                     unset -nocomplain fMRIEngine($r,$title,title)
-                    unset -nocomplain fMRIEngine($r,$title,startVol)
                     unset -nocomplain fMRIEngine($r,$title,onsets)
                     unset -nocomplain fMRIEngine($r,$title,durations)
                 }
@@ -474,7 +472,6 @@ proc fMRIEngineIdenticalizeConditions {} {
             set count 2 
             while {$count <= $runs} {
                 set fMRIEngine($count,$title,title) $fMRIEngine(1,$title,title)  
-                set fMRIEngine($count,$title,startVol) $fMRIEngine(1,$title,startVol) 
                 set fMRIEngine($count,$title,onsets) $fMRIEngine(1,$title,onsets) 
                 set fMRIEngine($count,$title,durations) $fMRIEngine(1,$title,durations) 
 
@@ -515,9 +512,9 @@ proc fMRIEngineEditCondition {} {
         set run [string trim $run]
         set t [string trim $title]
         if {$fMRIEngine($run,tr) == $tr                 &&
+            $fMRIEngine($run,startVol) == $startVol  &&
             [info exists fMRIEngine($run,$t,title)]     &&
             $fMRIEngine($run,$t,title) == $title        &&
-            $fMRIEngine($run,$t,startVol) == $startVol  &&
             $fMRIEngine($run,$t,onsets) == $onsets      &&
             $fMRIEngine($run,$t,durations) == $durations} {
             DevErrorWindow "This condition already exists."
@@ -558,8 +555,8 @@ proc fMRIEngineAddCondition {} {
             fMRIModelViewAddConditionName $currRun $title
         } else {
             if {$fMRIEngine($currRun,tr) == $tr                     &&
+                $fMRIEngine($currRun,startVol) == $startVol         &&
                 $fMRIEngine($currRun,$title,title) == $title        &&
-                $fMRIEngine($currRun,$title,startVol) == $startVol  &&
                 $fMRIEngine($currRun,$title,onsets) == $onsets      &&
                 $fMRIEngine($currRun,$title,durations) == $durations} {
                 DevErrorWindow "This condition already exists."
@@ -569,9 +566,9 @@ proc fMRIEngineAddCondition {} {
 
         set fMRIEngine($currRun,designType) $fMRIEngine(paradigmDesignType)
         set fMRIEngine($currRun,tr) $tr
+        set fMRIEngine($currRun,startVol) $startVol
 
         set fMRIEngine($currRun,$title,title) $title
-        set fMRIEngine($currRun,$title,startVol) $startVol
         set fMRIEngine($currRun,$title,onsets) $onsets
         set fMRIEngine($currRun,$title,durations) $durations
     } else {
@@ -582,8 +579,8 @@ proc fMRIEngineAddCondition {} {
                 fMRIModelViewAddConditionName $r $title
             } else {
                 if {$fMRIEngine($r,tr) == $tr                     &&
+                    $fMRIEngine($r,startVol) == $startVol         &&
                     $fMRIEngine($r,$title,title) == $title        &&
-                    $fMRIEngine($r,$title,startVol) == $startVol  &&
                     $fMRIEngine($r,$title,onsets) == $onsets      &&
                     $fMRIEngine($r,$title,durations) == $durations} {
                     DevErrorWindow "This condition already exists."
@@ -593,9 +590,9 @@ proc fMRIEngineAddCondition {} {
 
             set fMRIEngine($r,designType) $fMRIEngine(paradigmDesignType)
             set fMRIEngine($r,tr) $tr
+            set fMRIEngine($r,startVol) $startVol
 
             set fMRIEngine($r,$title,title) $title
-            set fMRIEngine($r,$title,startVol) $startVol
             set fMRIEngine($r,$title,onsets) $onsets
             set fMRIEngine($r,$title,durations) $durations
         }
