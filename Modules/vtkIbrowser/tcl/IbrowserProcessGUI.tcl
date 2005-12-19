@@ -51,7 +51,21 @@
 #   IbrowserRemoveWholeIntervalTransform
 #   IbrowserCleanUpEmptyTransformNodes
 #   IbrowserGetRasToVtkAxis
+#   IbrowserUpdateProcessTab
 #==========================================================================auto=
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateProcessTab
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserUpdateProcessTab { } {
+
+    set ::Ibrowser(currentTab) "Process"
+}
 
 
 
@@ -68,6 +82,7 @@ proc IbrowserBuildProcessFrame { } {
     #--- general processing frame
     #-------------------------------------------
     set fProcess $::Module(Ibrowser,fProcess)
+    bind $::Module(Ibrowser,bProcess) <ButtonPress-1> "IbrowserUpdateProcessTab"
     set f $fProcess
 
     frame $f.fProcessMaster -relief groove -bg $::Gui(backdrop) -bd 3

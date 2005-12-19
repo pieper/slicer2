@@ -37,7 +37,20 @@
 # FILE:        IbrowserHelpGUI.tcl
 # PROCEDURES:  
 #   IbrowserBuildHelpFrame
+#   IbrowserUpdateHelpTab
 #==========================================================================auto=
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateHelpTab
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserUpdateHelpTab { } {
+
+    set ::Ibrowser(currentTab) "Help"
+}
 
 
 
@@ -51,6 +64,8 @@ proc IbrowserBuildHelpFrame { } {
     #-------------------------------------------
     #--- Help frame
     #-------------------------------------------
+    bind $::Module(Ibrowser,bHelp) <ButtonPress-1> "IbrowserUpdateHelpTab"
+    
     set help " The <B> Interval Browser</B> or <B>Ibrowser </B> is a developing module for loading, organizing 
 and processing mutl-volume sequences. Bug fixes, new viewing and recording functions, processing options, more 
 flexible load and populate options, and the ability to load models, label maps and other 

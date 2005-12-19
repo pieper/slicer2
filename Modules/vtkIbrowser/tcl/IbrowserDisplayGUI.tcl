@@ -40,7 +40,20 @@
 #   IbrowserUpdateMainViewer
 #   IbrowserSlicesSetVolumeAll
 #   IbrowserSetIntervalParam
+#   IbrowserUpdateDisplayTab
 #==========================================================================auto=
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateDisplayTab
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserUpdateDisplayTab { } {
+
+    set ::Ibrowser(currentTab) "Display"
+}
 
 
 #-------------------------------------------------------------------------------
@@ -53,6 +66,7 @@ proc IbrowserBuildDisplayFrame { } {
     global Gui Module Volume
 
     set fDisplay $::Module(Ibrowser,fDisplay)
+    bind $::Module(Ibrowser,bDisplay) <ButtonPress-1> "IbrowserUpdateDisplayTab"
     #--- initialize to save values that Volumes module starts with.
     
     set w $fDisplay

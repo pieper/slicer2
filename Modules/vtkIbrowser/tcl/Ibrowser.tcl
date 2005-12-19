@@ -99,7 +99,7 @@ proc IbrowserInit {} {
     #---Set category and version info
     set Module($m,category) "Alpha"
        lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.14.2.1 $} {$Date: 2005/12/17 16:56:51 $}]
+        {$Revision: 1.14.2.2 $} {$Date: 2005/12/19 22:13:41 $}]
 
     #---Initialize module-level variables
     #---Global array with the same name as the module. Ibrowser()
@@ -108,6 +108,7 @@ proc IbrowserInit {} {
     #---intervals, both as a group and individually, respectively.
 
     #--- Just some default values to start.
+    set Ibrowser(currentTab) "New"
     set Ibrowser(idList) ""
     set Ibrowser(dir) ""
     set Ibrowser(numSequences) 0
@@ -386,7 +387,7 @@ proc IbrowserCreateBindings { } {
     global Gui Ev
 
     EvDeclareEventHandler IbrowserSlicesEvents <1> \
-        { IbrowserPopUpPlot %x %y }
+        { set xc %x; set yc %y; IbrowserProcessMouseEvent $xc $yc }
            
     EvAddWidgetToBindingSet IbrowserSlice0Events $Gui(fSl0Win) {IbrowserSlicesEvents}
     EvAddWidgetToBindingSet IbrowserSlice1Events $Gui(fSl1Win) {IbrowserSlicesEvents}
@@ -395,6 +396,19 @@ proc IbrowserCreateBindings { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserProcessMouseEvent
+# Creates Ibrowser event bindings for the three slice windows 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserProcessMouseEvent { x y } {
+
+    if { $::Ibrowser(currentTab) == "Inspect" } {
+        IbrowserPopUpPlot $x $y
+    } 
+
+}
 
 
 #-------------------------------------------------------------------------------

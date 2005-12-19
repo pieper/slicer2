@@ -52,6 +52,7 @@
 #   IbrowserImportSequenceFromOtherModule
 #   IbrowserMultiVolumeReaderLoad
 #   IbrowserUpdateMultiVolumeReader
+#   IbrowserUpdateNewTab
 #==========================================================================auto=
 #-------------------------------------------------------------------------------
 proc IbrowserBuildLoadFrame { } {
@@ -59,6 +60,7 @@ proc IbrowserBuildLoadFrame { } {
     
 
     set fNew $::Module(Ibrowser,fNew)
+    bind $::Module(Ibrowser,bNew) <ButtonPress-1> "IbrowserUpdateNewTab"
     set f $fNew
     #---------------------------------------------------------------
     #--- fNew (packer)
@@ -105,8 +107,19 @@ proc IbrowserBuildLoadFrame { } {
     eval {label $f.lLogoImages -width 200 -height 45 \
               -image $uselogo -justify center} $Gui(BLA)
     pack $f.lLogoImages -side bottom -padx 2 -pady 1 -expand 0
-
 }
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateNewTab
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserUpdateNewTab { } {
+
+    set ::Ibrowser(currentTab) "New"
+}
+
 
 
 

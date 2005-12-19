@@ -1,3 +1,18 @@
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateInspectTab
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserUpdateInspectTab { } {
+
+    set ::Ibrowser(currentTab) "Inspect"
+}
+
+
+
 #-------------------------------------------------------------------------------
 # .PROC IbrowserBuildInspectFrame
 # 
@@ -17,6 +32,7 @@ proc IbrowserBuildInspectFrame { } {
     #--- Inspect frame: add buttons and pack
     #-------------------------------------------
     set fInspect $::Module(Ibrowser,fInspect)
+    bind $::Module(Ibrowser,bInspect) <ButtonPress-1> "IbrowserUpdateInspectTab"
     set f $fInspect
 
     #--- Frames: use packer to put them in place
@@ -51,26 +67,28 @@ proc IbrowserBuildInspectFrame { } {
     set ::Ibrowser(plot,Plotmb) $f.mbSig
 
    #--- make the menu
-    foreach l "{$::Ibrowser(plot,TypeVvvn)} {$::Ibrowser(plot,TypeHistogram)} {$::Ibrowser(plot,TypeROIAvg)}" {
+    foreach l "{$::Ibrowser(plot,TypeVvvn)}" {
         $f.mbSig.menu add command -label $l \
             -command "IbrowserPlotConfigPlotType {$l}"
     }
     pack $f.mbSig -pady $Gui(pad) -padx $::Gui(pad) -side top
 
     #--- turn detrending on or off...
-    DevAddLabel $f.lFiltering "Detrending:"
-    set ::Ibrowser(plot,Detrending) 0
-    pack $f.lFiltering -side left -pady $::Gui(pad) -padx 5
-    eval { radiobutton $f.rDetrendON \
-               -text "on" -value 1 -variable ::Ibrowser(plot,Detrending) \
-               -indicatoron 0 } $::Gui(WCA)
-    pack $f.rDetrendON -side left -padx 0 -pady 0
-    TooltipAdd $f.rDetrendON "Highpass filters the samples to remove slow-varying trends."
-    eval { radiobutton $f.rDetrendOFF \
-               -text "off" -value 0 -variable ::Ibrowser(plot,Detrending) \
-               -indicatoron 0 } $::Gui(WCA)
-    pack $f.rDetrendOFF -side left -padx 0 -pady 0
-    TooltipAdd $f.rDetrendOFF "Turns off highpass filtering."
+    if { 0 } {
+        DevAddLabel $f.lFiltering "Detrending:"
+        set ::Ibrowser(plot,Detrending) 0
+        pack $f.lFiltering -side left -pady $::Gui(pad) -padx 5
+        eval { radiobutton $f.rDetrendON \
+                   -text "on" -value 1 -variable ::Ibrowser(plot,Detrending) \
+                   -indicatoron 0 } $::Gui(WCA)
+        pack $f.rDetrendON -side left -padx 0 -pady 0
+        TooltipAdd $f.rDetrendON "Highpass filters the samples to remove slow-varying trends."
+        eval { radiobutton $f.rDetrendOFF \
+                   -text "off" -value 0 -variable ::Ibrowser(plot,Detrending) \
+                   -indicatoron 0 } $::Gui(WCA)
+        pack $f.rDetrendOFF -side left -padx 0 -pady 0
+        TooltipAdd $f.rDetrendOFF "Turns off highpass filtering."
+    }
 
     #---
     #--- fInspect-->fAddRef
