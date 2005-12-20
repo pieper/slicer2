@@ -83,98 +83,106 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,row1Name) "{Help} {Segmentation} {Advanced}"
     set Module($m,row1,tab) Segmentation
 
-    #   procStorePresets  = Called when the user holds down one of the Presets
-    #               buttons.
-    #               
-    #   Note: if you use presets, make sure to give a preset defaults
-    #   string in your init function, of the form: 
-    #   set Module($m,presets) "key1='val1' key2='val2' ..."
-    #   
-    set Module($m,procGUI)   EMAtlasBrainClassifierBuildGUI
-    set Module($m,procVTK)   EMAtlasBrainClassifierBuildVTK
-    set Module($m,procEnter) EMAtlasBrainClassifierEnter
-    set Module($m,procExit)  EMAtlasBrainClassifierExit
-    set Module($m,procMRML)  EMAtlasBrainClassifierUpdateMRML
+   #   procStorePresets  = Called when the user holds down one of the Presets
+   #               buttons.
+   #               
+   #   Note: if you use presets, make sure to give a preset defaults
+   #   string in your init function, of the form: 
+   #   set Module($m,presets) "key1='val1' key2='val2' ..."
+   #   
+   set Module($m,procGUI)   EMAtlasBrainClassifierBuildGUI
+   set Module($m,procVTK)   EMAtlasBrainClassifierBuildVTK
+   set Module($m,procEnter) EMAtlasBrainClassifierEnter
+   set Module($m,procExit)  EMAtlasBrainClassifierExit
+   set Module($m,procMRML)  EMAtlasBrainClassifierUpdateMRML
 
-    # Define Dependencies
-    #------------------------------------
-    # Description:
-    #   Record any other modules that this one depends on.  This is used 
-    #   to check that all necessary modules are loaded when Slicer runs.
-    #   
-    # Kilian: I  currently deactivated it so I wont get nestay error messages 
-    set Module($m,depend) ""
+   # Define Dependencies
+   #------------------------------------
+   # Description:
+   #   Record any other modules that this one depends on.  This is used 
+   #   to check that all necessary modules are loaded when Slicer runs.
+   #   
+   # Kilian: I  currently deactivated it so I wont get nestay error messages 
+   set Module($m,depend) ""
 
-    lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.26 $} {$Date: 2005/12/11 03:27:46 $}]
+   lappend Module(versions) [ParseCVSInfo $m \
+       {$Revision: 1.27 $} {$Date: 2005/12/20 09:32:54 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
     set EMAtlasBrainClassifier(Volume,T2W)  $Volume(idNone)
+    set EMAtlasBrainClassifier(Save,AlignedT2) 1 
     set EMAtlasBrainClassifier(Save,SPGR)    0
     set EMAtlasBrainClassifier(Save,T2W)     0
     set EMAtlasBrainClassifier(Save,Atlas)   1
     set EMAtlasBrainClassifier(Save,Segmentation) 1
     set EMAtlasBrainClassifier(Save,XMLFile) 1
-    set EMAtlasBrainClassifier(SegmentIndex) 0
-    set EMAtlasBrainClassifier(MaxInputChannelDef) 0
-    set EMAtlasBrainClassifier(CIMList) {West North Up East South Down}
-
-    # Debug 
-    set EMAtlasBrainClassifier(WorkingDirectory) "$Mrml(dir)/EMSeg"    
-    set EMAtlasBrainClassifier(DefaultAtlasDir)  "$env(SLICER_HOME)/Modules/vtkEMAtlasBrainClassifier/atlas"   
-    set EMAtlasBrainClassifier(AtlasDir)         $EMAtlasBrainClassifier(DefaultAtlasDir)  
-    set EMAtlasBrainClassifier(XMLTemplate)      "$env(SLICER_HOME)/Modules/vtkEMAtlasBrainClassifier/data/template5_c2.xml"     
-
-    set EMAtlasBrainClassifier(Normalize,SPGR) "90"
-    set EMAtlasBrainClassifier(Normalize,T2W)  "310"
-
-    set EMAtlasBrainClassifier(AlgorithmVersion) "Standard" 
-    set EMAtlasBrainClassifier(NonRigidRegistrationFlag) 1
+    set EMAtlasBrainClassifier(Save,Models) 1
 
 
-    if {$tcl_platform(byteOrder) == "littleEndian"} {
-        set EMAtlasBrainClassifier(LittleEndian) 1
-    } else {
-    set EMAtlasBrainClassifier(LittleEndian) 0 
-    }
-
-    # Initialize values 
-    set EMAtlasBrainClassifier(MrmlNode,TypeList) "Segmenter SegmenterInput SegmenterSuperClass SegmenterClass SegmenterCIM"
-
-    foreach NodeType "$EMAtlasBrainClassifier(MrmlNode,TypeList) SegmenterGenericClass" {
-        set blubList [EMAtlasBrainClassifierDefineNodeAttributeList $NodeType]
-        set EMAtlasBrainClassifier(MrmlNode,$NodeType,SetList)       [lindex $blubList 0]
-        set EMAtlasBrainClassifier(MrmlNode,$NodeType,SetListLower)  [lindex $blubList 1]
-        set EMAtlasBrainClassifier(MrmlNode,$NodeType,AttributeList) [lindex $blubList 2]
-        set EMAtlasBrainClassifier(MrmlNode,$NodeType,InitValueList) [lindex $blubList 3]
-    }
-
-    set EMAtlasBrainClassifier(MrmlNode,JointSegmenterSuperClassAndClass,AttributeList) "$EMAtlasBrainClassifier(MrmlNode,SegmenterGenericClass,AttributeList) $EMAtlasBrainClassifier(MrmlNode,SegmenterSuperClass,AttributeList) $EMAtlasBrainClassifier(MrmlNode,SegmenterClass,AttributeList)"
-    set EMAtlasBrainClassifier(MrmlNode,JointSegmenterSuperClassAndClass,InitValueList) "$EMAtlasBrainClassifier(MrmlNode,SegmenterGenericClass,InitValueList) $EMAtlasBrainClassifier(MrmlNode,SegmenterSuperClass,InitValueList) $EMAtlasBrainClassifier(MrmlNode,SegmenterClass,InitValueList)"
-
-    foreach ListType "SetList SetListLower AttributeList InitValueList" {
-        set EMAtlasBrainClassifier(MrmlNode,SegmenterSuperClass,$ListType) "$EMAtlasBrainClassifier(MrmlNode,SegmenterGenericClass,$ListType) $EMAtlasBrainClassifier(MrmlNode,SegmenterSuperClass,$ListType)"
-        set EMAtlasBrainClassifier(MrmlNode,SegmenterClass,$ListType) "$EMAtlasBrainClassifier(MrmlNode,SegmenterGenericClass,$ListType) $EMAtlasBrainClassifier(MrmlNode,SegmenterClass,$ListType)"
-    }
-
-
-
-    # The second time around it is not deleted              
-    set EMAtlasBrainClassifier(Cattrib,-1,ClassList) ""
-    set EMAtlasBrainClassifier(SuperClass) -1
-    set EMAtlasBrainClassifier(ClassIndex) 0
-    set EMAtlasBrainClassifier(SelVolList,VolumeList) ""        
-    EMAtlasBrainClassifierCreateClasses -1 1 
-
-    set EMAtlasBrainClassifier(SuperClass) 0 
-    set EMAtlasBrainClassifier(Cattrib,0,IsSuperClass) 1
-    set EMAtlasBrainClassifier(Cattrib,0,Name) "Head"
-    set EMAtlasBrainClassifier(Cattrib,0,Label) $EMAtlasBrainClassifier(Cattrib,0,Name)
-    set EMAtlasBrainClassifier(BatchMode) 0
-    set EMAtlasBrainClassifier(SegmentationMode) EMAtlasBrainClassifier
-
-    set EMAtlasBrainClassifier(eventManager) {}
+     set EMAtlasBrainClassifier(GenerateModels) 1
+     set EMAtlasBrainClassifier(SegmentIndex) 0
+     set EMAtlasBrainClassifier(MaxInputChannelDef) 0
+     set EMAtlasBrainClassifier(CIMList) {West North Up East South Down}
+ 
+     set EMAtlasBrainClassifier(AlignInput) 0
+ 
+     # Debug 
+     set EMAtlasBrainClassifier(WorkingDirectory) "$Mrml(dir)/EMSeg"    
+     set EMAtlasBrainClassifier(DefaultAtlasDir)  "$env(SLICER_HOME)/Modules/vtkEMAtlasBrainClassifier/atlas"   
+     set EMAtlasBrainClassifier(AtlasDir)         $EMAtlasBrainClassifier(DefaultAtlasDir)  
+     set EMAtlasBrainClassifier(XMLTemplate)      "$env(SLICER_HOME)/Modules/vtkEMAtlasBrainClassifier/data/template5_c2.xml"     
+ 
+     set EMAtlasBrainClassifier(Normalize,SPGR) "90"
+     set EMAtlasBrainClassifier(Normalize,T2W)  "310"
+ 
+     set EMAtlasBrainClassifier(AlgorithmVersion) "Standard" 
+     set EMAtlasBrainClassifier(NonRigidRegistrationFlag) 1
+ 
+     set EMAtlasBrainClassifier(LatestLabelMap) $Volume(idNone)
+ 
+     if {$tcl_platform(byteOrder) == "littleEndian"} {
+         set EMAtlasBrainClassifier(LittleEndian) 1
+     } else {
+     set EMAtlasBrainClassifier(LittleEndian) 0 
+     }
+ 
+     # Initialize values 
+     set EMAtlasBrainClassifier(MrmlNode,TypeList) "Segmenter SegmenterInput SegmenterSuperClass SegmenterClass SegmenterCIM"
+ 
+     foreach NodeType "$EMAtlasBrainClassifier(MrmlNode,TypeList) SegmenterGenericClass" {
+         set blubList [EMAtlasBrainClassifierDefineNodeAttributeList $NodeType]
+         set EMAtlasBrainClassifier(MrmlNode,$NodeType,SetList)       [lindex $blubList 0]
+         set EMAtlasBrainClassifier(MrmlNode,$NodeType,SetListLower)  [lindex $blubList 1]
+         set EMAtlasBrainClassifier(MrmlNode,$NodeType,AttributeList) [lindex $blubList 2]
+         set EMAtlasBrainClassifier(MrmlNode,$NodeType,InitValueList) [lindex $blubList 3]
+     }
+ 
+     set EMAtlasBrainClassifier(MrmlNode,JointSegmenterSuperClassAndClass,AttributeList) "$EMAtlasBrainClassifier(MrmlNode,SegmenterGenericClass,AttributeList) $EMAtlasBrainClassifier(MrmlNode,SegmenterSuperClass,AttributeList) $EMAtlasBrainClassifier(MrmlNode,SegmenterClass,AttributeList)"
+     set EMAtlasBrainClassifier(MrmlNode,JointSegmenterSuperClassAndClass,InitValueList) "$EMAtlasBrainClassifier(MrmlNode,SegmenterGenericClass,InitValueList) $EMAtlasBrainClassifier(MrmlNode,SegmenterSuperClass,InitValueList) $EMAtlasBrainClassifier(MrmlNode,SegmenterClass,InitValueList)"
+ 
+     foreach ListType "SetList SetListLower AttributeList InitValueList" {
+         set EMAtlasBrainClassifier(MrmlNode,SegmenterSuperClass,$ListType) "$EMAtlasBrainClassifier(MrmlNode,SegmenterGenericClass,$ListType) $EMAtlasBrainClassifier(MrmlNode,SegmenterSuperClass,$ListType)"
+         set EMAtlasBrainClassifier(MrmlNode,SegmenterClass,$ListType) "$EMAtlasBrainClassifier(MrmlNode,SegmenterGenericClass,$ListType) $EMAtlasBrainClassifier(MrmlNode,SegmenterClass,$ListType)"
+     }
+ 
+ 
+ 
+     # The second time around it is not deleted              
+     set EMAtlasBrainClassifier(Cattrib,-1,ClassList) ""
+     set EMAtlasBrainClassifier(SuperClass) -1
+     set EMAtlasBrainClassifier(ClassIndex) 0
+     set EMAtlasBrainClassifier(SelVolList,VolumeList) ""        
+     EMAtlasBrainClassifierCreateClasses -1 1 
+ 
+     set EMAtlasBrainClassifier(SuperClass) 0 
+     set EMAtlasBrainClassifier(Cattrib,0,IsSuperClass) 1
+     set EMAtlasBrainClassifier(Cattrib,0,Name) "Head"
+     set EMAtlasBrainClassifier(Cattrib,0,Label) $EMAtlasBrainClassifier(Cattrib,0,Name)
+     set EMAtlasBrainClassifier(BatchMode) 0
+     set EMAtlasBrainClassifier(SegmentationMode) EMAtlasBrainClassifier
+ 
+     set EMAtlasBrainClassifier(eventManager) {}
 }
 
 #-------------------------------------------------------------------------------
@@ -184,63 +192,94 @@ proc EMAtlasBrainClassifierInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierBuildGUI {} {
-    global Gui EMAtlasBrainClassifier Module Volume 
-    
-    set help "The EMAtlasBrainClassifier module is an easy to use segmentation tool for Brain MRIs. Just define the Brain SPGR and T2W input images and the tool will automatically segment the image into white matter , gray matter, and cortical spinal fluid. 
-              <P><B>Warning:</B>: this process might take longer because we first have to non-rigidly register the atlas to the patient. It may not be possible to run this process to completion on Windows, due to memory allocation constraints." 
+     global Gui EMAtlasBrainClassifier Module Volume 
+     
+     set help "The module automatically segments brain MRIs into the tissue classes (white matter, gray matter, and cortical spinal fluid). In order to run the module the following steps have to be completed :"
+     set help "$help<BR><B>1. Step: Select Input channels</B>"
+     set help "$help<BR>- Select the volumes (T1 with corresponding T2), which the module should segment."
+     set help "$help<BR>- Select the \"on\" button if the T2 volume is not aligned with the T1 volume." 
+     set help "$help<BR><B>2. Step: Define Parameter</B>"
+     set help "$help<BR>- Select the \"on\" button if the segmentation results should be saved to a file" 
+     set help "$help<BR>- Select the \"on\" button if 3D models of the segmentations should be generated"
+     set help "$help<BR>- Define the (working) directory, in which the results of this module should be saved to" 
+     set help "$help<BR><B>Press the \"Start Segmentation\" to generate the automatic segmentations</B>"
+     set help "$help<BR><P><B>Warning:</B>: this process might take longer because we first have to non-rigidly register the atlas to the patient. It may not be possible to run this process to completion on Windows, due to memory allocation constraints." 
+    set help "$help<BR><P><B>Note:</B>: The approach was originally defined for a protocol generating SPGR (Dim: 0.9375x0.9375x1.5 Scan Order: PA) and T2 (Dim: 0.9375x0.9375x3 Scan Order: PA). For further information please read:
+ K.M. Pohl, S. Bouix, M.E. Shenton, W.E.L. Grimson, R. Kikinis,\" Automatic Segmentation Using Non-Rigid Registration\" In short communications of MICCAI 2005: Eigth International Conference on Medical Image Computing and Computer Assisted Intervention, Palm Springs, CA, USA, 2005 "
 
-    regsub -all "\n" $help {} help
-    MainHelpApplyTags EMAtlasBrainClassifier $help
-    MainHelpBuildGUI EMAtlasBrainClassifier
+     regsub -all "\n" $help {} help
+     MainHelpApplyTags EMAtlasBrainClassifier $help
+     MainHelpBuildGUI EMAtlasBrainClassifier
+ 
+     #-------------------------------------------
+     # Segementation frame
+     #-------------------------------------------
+     set fSeg $Module(EMAtlasBrainClassifier,fSegmentation)
+     set f $fSeg
+     
+     foreach frame "Step1 Step2" {
+       frame $f.f$frame -bg $Gui(activeWorkspace)
+       pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+     }
+     
+     #-------------------------------------------
+     # 1. Step 
+     #-------------------------------------------
+     set f $fSeg.fStep1
+ 
+     DevAddLabel $f.lTitle "1. Select Input Channels: " WTA
+     pack $f.lTitle -side top -padx $Gui(pad) -pady 1 -anchor w
+ 
+     
+     frame $f.fInput -bg $Gui(activeWorkspace)
+     pack $f.fInput -side top -padx 0 -pady 0  -anchor w
+ 
+     foreach frame "Left Right" {
+       frame $f.fInput.f$frame -bg $Gui(activeWorkspace)
+       pack $f.fInput.f$frame -side left -padx 0 -pady $Gui(pad)
+     }
+ 
 
-    #-------------------------------------------
-    # Segementation frame
-    #-------------------------------------------
-    set fSeg $Module(EMAtlasBrainClassifier,fSegmentation)
-    set f $fSeg
-    
-    foreach frame "Step1 Step2" {
-      frame $f.f$frame -bg $Gui(activeWorkspace)
-      pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+     foreach LABEL "T1 T2" Input "SPGR T2W" {
+       DevAddLabel $f.fInput.fLeft.l$Input "  ${LABEL}:"
+       pack $f.fInput.fLeft.l$Input -side top -padx $Gui(pad) -pady 1 -anchor w
+
+       
+       set menubutton   $f.fInput.fRight.m${Input}Select 
+       set menu        $f.fInput.fRight.m${Input}Select.m
+       
+       eval {menubutton $menubutton -text [Volume($EMAtlasBrainClassifier(Volume,${Input}),node) GetName] -relief raised -bd 2 -width 9 -menu $menu} $Gui(WMBA)
+       eval {menu $menu} $Gui(WMA)
+       TooltipAdd $menubutton "Select Volume defining ${Input}" 
+       set EMAtlasBrainClassifier(mbSeg-${Input}Select) $menubutton
+       set EMAtlasBrainClassifier(mSeg-${Input}Select) $menu
+           # Have to update at UpdateMRML too 
+       DevUpdateNodeSelectButton Volume EMAtlasBrainClassifier Seg-${Input}Select Volume,$Input
+       
+       pack $menubutton -side top  -padx $Gui(pad) -pady 1 -anchor w
     }
-    
-    #-------------------------------------------
-    # 1. Step 
-    #-------------------------------------------
-    set f $fSeg.fStep1
 
-    DevAddLabel $f.lTitle "1. Define Input Channels: "
-    pack $f.lTitle -side top -padx $Gui(pad) -pady 1 -anchor w
 
-    foreach frame "Left Right" {
-      frame $f.f$frame -bg $Gui(activeWorkspace)
-      pack $f.f$frame -side left -padx 0 -pady $Gui(pad)
-    }
-
-    foreach Input "SPGR T2W" {
-      DevAddLabel $f.fLeft.l$Input "  ${Input}:"
-      pack $f.fLeft.l$Input -side top -padx $Gui(pad) -pady 1 -anchor w
-      
-      set menubutton   $f.fRight.m${Input}Select 
-      set menu        $f.fRight.m${Input}Select.m
-      
-      eval {menubutton $menubutton -text [Volume($EMAtlasBrainClassifier(Volume,${Input}),node) GetName] -relief raised -bd 2 -width 9 -menu $menu} $Gui(WMBA)
-      eval {menu $menu} $Gui(WMA)
-      TooltipAdd $menubutton "Select Volume defining ${Input}" 
-      set EMAtlasBrainClassifier(mbSeg-${Input}Select) $menubutton
-      set EMAtlasBrainClassifier(mSeg-${Input}Select) $menu
-          # Have to update at UpdateMRML too 
-      DevUpdateNodeSelectButton Volume EMAtlasBrainClassifier Seg-${Input}Select Volume,$Input
-      
-      pack $menubutton -side top  -padx $Gui(pad) -pady 1 -anchor w
-   }
-
+     frame $f.fAlign -bg $Gui(activeWorkspace)
+     TooltipAdd  $f.fAlign "If the input T1 and T2 are not aligned with each other set flag here" 
+     pack $f.fAlign -side top -padx 0 -pady 2  -padx $Gui(pad) -anchor w
+ 
+   
+     DevAddLabel $f.fAlign.lAlign "Align T2 to T1? "
+     pack $f.fAlign.lAlign -side left -padx $Gui(pad) -pady 1 -anchor w
+ 
+     foreach value "1 0" text "On Off" width "4 4" {
+     eval {radiobutton $f.fAlign.r$value -width $width -indicatoron 0\
+           -text "$text" -value "$value" -variable EMAtlasBrainClassifier(AlignInput) } $Gui(WCA)
+         pack $f.fAlign.r$value -side left -padx 0 -pady 0 
+     }
+ 
     #-------------------------------------------
     # 2. Step 
     #-------------------------------------------
     set f $fSeg.fStep2
 
-    DevAddLabel $f.lTitle "2. Save Results: "
+    DevAddLabel $f.lTitle "2. Define Parameter Settings: " WTA
     pack $f.lTitle -side top -padx $Gui(pad) -pady 0 -anchor w
 
     foreach frame "Left Right" {
@@ -262,6 +301,21 @@ proc EMAtlasBrainClassifierBuildGUI {} {
     pack $f.fRight.fOutput.r$value -side left -padx 0 -pady 0 
     }
 
+    DevAddLabel $f.fLeft.lModels "  Gernerate 3D Models:" 
+    pack $f.fLeft.lModels -side top -padx $Gui(pad) -pady 2  -anchor w
+
+    frame $f.fRight.fModels -bg $Gui(activeWorkspace)
+    TooltipAdd  $f.fRight.fModels "Automatically gnerate 3D Models of the segmentations" 
+
+    pack $f.fRight.fModels -side top -padx 0 -pady 2  -anchor w
+
+    foreach value "1 0" text "On Off" width "4 4" {
+    eval {radiobutton $f.fRight.fModels.r$value -width $width -indicatoron 0\
+          -text "$text" -value "$value" -variable EMAtlasBrainClassifier(GenerateModels) } $Gui(WCA)
+    pack $f.fRight.fModels.r$value -side left -padx 0 -pady 0 
+    }
+
+
     # Now define working directory
     DevAddLabel $f.fLeft.lWorking "  Working Directory:" 
     pack $f.fLeft.lWorking -side top -padx $Gui(pad) -pady 2  -anchor w
@@ -274,10 +328,12 @@ proc EMAtlasBrainClassifierBuildGUI {} {
     eval {button $f.fRight.fWorking.bSelect -text "..." -width 2 -command "EMAtlasBrainClassifierDefineWorkingDirectory"} $Gui(WBA)     
     pack $f.fRight.fWorking.eDir  $f.fRight.fWorking.bSelect -side left -padx 0 -pady 0  
 
+
     #-------------------------------------------
     # Run Algorithm
     #------------------------------------------
-    eval {button $fSeg.bRun -text "Segment" -width 10 -command "EMAtlasBrainClassifierStartSegmentation"} $Gui(WBA)     
+    eval {button $fSeg.bRun -text "Start Segmentation" -width 20 -command "EMAtlasBrainClassifierStartSegmentation"} $Gui(WBA) 
+    $fSeg.bRun configure -font {helvetica 8 bold}  
     pack $fSeg.bRun -side top -padx 2 -pady 2  
 
     #-------------------------------------------
@@ -293,17 +349,22 @@ proc EMAtlasBrainClassifierBuildGUI {} {
 
     DevAddLabel $f.fSave.lTitle "Save"  
     pack $f.fSave.lTitle -side top -padx $Gui(pad) -pady 2 
-    foreach Att "SPGR T2W Atlas XMLFile"  Text "{Normalized SPGR} {Normalized T2W} {Aligned Atlas} {XML-File}" {
+
+    foreach Att "AlignedT2 SPGR T2W Atlas XMLFile Models"  Text "{Aligned T2} {Normalized T1} {Normalized T2} {Aligned Atlas} {XML-File} {3D Models}" {
        eval {checkbutton  $f.fSave.c$Att -text "$Text" -variable EMAtlasBrainClassifier(Save,$Att) -indicatoron 1} $Gui(WCA)
        pack $f.fSave.c$Att  -side top -padx $Gui(pad) -pady 0 -anchor w 
     }
 
     DevAddLabel $f.fAlgo.lTitle "Segmentation Algorithm"  
     pack $f.fAlgo.lTitle -side top -padx $Gui(pad) -pady 2 
-    foreach Value "Standard Rigid RegSeg"  Text "{Standard (Validated)} {Standard with Affine Registration only} {Joint Registration and Segmentation}" {
-    frame $f.fAlgo.f$Value -bg $Gui(activeWorkspace) 
-        pack $f.fAlgo.f$Value  -side top -padx $Gui(pad) -pady 0 -fill x
+    set Tip(Standard) "Validated version using non-rigid registration for the atlas alignment.\nThis method is computationally expensive."  
+    set Tip(Rigid) "Like Standard but uses an affine registration for the atlas alignment.\nThis method is generally more robust then Standard but often achieves a lower\nquality when Standard converges."
+    set Tip(RegSeg) "Performs registration and segmentation jointly. This method generally achieves very good results but is very slow." 
 
+    foreach Value "Standard Rigid RegSeg"  Text "{Standard} {Standard with Affine Registration} {Joint Registration and Segmentation}" {
+        frame $f.fAlgo.f$Value -bg $Gui(activeWorkspace) 
+        pack $f.fAlgo.f$Value  -side top -padx $Gui(pad) -pady 0 -fill x
+        TooltipAdd $f.fAlgo.f$Value "$Tip($Value)"
     eval {radiobutton $f.fAlgo.f$Value.rbutton -variable EMAtlasBrainClassifier(AlgorithmVersion) -command EMAtlasBrainClassifierChangeAlgorithm -value $Value -indicatoron 1} $Gui(WCA)
     DevAddLabel $f.fAlgo.f$Value.lText "$Text"
 
@@ -889,18 +950,22 @@ proc EMAtlasBrainClassifier_NormalizeVolume { Vol OutVol Mode } {
     global Volume Matrix EMAtlasBrainClassifier
     puts "Number Of Scalar: [$Vol GetNumberOfScalarComponents]" 
     vtkImageData hist
-    # Generate Histogram with 1000 bins 
+
+
     vtkImageAccumulate ia
     ia SetInput $Vol
     ia SetComponentSpacing 1 1 1
     ia SetComponentOrigin 0 0 0
-    ia SetComponentExtent 0 1000 0 0 0 0
     ia Update
-    hist DeepCopy [ia GetOutput]
-  
+
     # Get maximum image value 
     set max [lindex [ia GetMax] 0]
     puts "Absolute Max: $max"
+
+    ia SetComponentExtent 0 $max 0 0 0 0
+    ia Update
+    hist DeepCopy [ia GetOutput]
+  
     set count 0
     set i 0
 
@@ -1150,7 +1215,8 @@ proc EMAtlasBrainClassifier_AtlasRegistration {RegisterAtlasDirList RegisterAtla
    # Register Atlas SPGR to Normalized SPGR 
    puts "============= Start registeration"  
   
-   EMAtlasBrainClassifierRegistration $VolIDTarget $VolIDSource
+   EMAtlasBrainClassifierRegistration $VolIDTarget $VolIDSource $EMAtlasBrainClassifier(NonRigidRegistrationFlag)
+
     
    # Define Registration output volume 
    set VolIDOutput [DevCreateNewCopiedVolume $TemplateIDInput "" "RegisteredSPGR"]
@@ -1166,6 +1232,9 @@ proc EMAtlasBrainClassifier_AtlasRegistration {RegisterAtlasDirList RegisterAtla
       Volume($VolIDOutput,node) SetLittleEndian $EMAtlasBrainClassifier(LittleEndian)
   
       EMAtlasBrainClassifierVolumeWriter $VolIDOutput
+      # Write Transformation To File
+      EMAtlasBrainClassifierWriteTransformation
+
    }
    MainMrmlDeleteNode Volume $VolIDSource 
    MainUpdateMRML
@@ -1240,16 +1309,17 @@ proc EMAtlasBrainClassifier_LoadAtlas {RegisterAtlasDirList RegisterAtlasNameLis
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierDownloadAtlas { } {
     global EMAtlasBrainClassifier tcl_platform
-    set text "The first time this module is used the Atlas data has to be dowloaded"
-    set text "$text\nThis might take a while, so if you do not want to continue at "
-    set text "$text\nthis point just press 'cancel'. \n"
+    set text "The module did not detect an atlas at the default location. An atlas can be"
+    set text "$text\ndownloaded by pressing the \"\OK\" button. This might take a while! "
     set text "$text\nIf you want to continue and you have PROBLEMS downloading the data please do the following:"
     set text "$text\nDowload the data from http://na-mic.org/Wiki/index.php/Slicer:Data_EMAtlas"
     set text "$text\nto [file dirname $EMAtlasBrainClassifier(AtlasDir)]"
-    set text "$text\nand uncompress the file."       
-         
-    if {$EMAtlasBrainClassifier(BatchMode)} {
-    puts "$text"
+    set text "$text\nand uncompress the file.\n"      
+    set text "$text\nBy pressing the \"OK\" button I agree with the copyright restriction explained in further "
+    set text "${text}detail at http://na-mic.org/Wiki/index.php/Slicer:Data_EMAtlas."
+
+     if {$EMAtlasBrainClassifier(BatchMode)} {
+      puts "$text"
     } else {
     if {[DevOKCancel "$text" ] != "ok"} { return 0}
     }
@@ -1315,7 +1385,7 @@ proc EMAtlasBrainClassifierDownloadAtlas { } {
 # int inSource
 # .END
 #-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifierRegistration {inTarget inSource {LinearRegistrationType 2}} {
+proc EMAtlasBrainClassifierRegistration {inTarget inSource NonRigidRegistrationFlag {LinearRegistrationType 2} } {
     global EMAtlasBrainClassifier Volume AG 
    
     
@@ -1343,11 +1413,20 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource {LinearRegistrationTy
             vtkTransform __dummy_transform
     }
 
-    puts "Start the linear registration"
+    puts -nonewline "Start the linear registration with MI criterion and type "
+    switch  $LinearRegistrationType {
+    -1 { puts "translation." }
+    0 { puts "rigid." }
+        1 { puts "similarity." }
+        2 { puts "affine." }
+    default {puts "Do not know type   $LinearRegistrationType" ; return}
+
+    }
+
     ###### Linear Tfm ######
     catch "GCR Delete"
     vtkImageGCR GCR
-    GCR SetVerbose 1
+    GCR SetVerbose 0
 
     # Set i/o
     GCR SetTarget Target
@@ -1369,7 +1448,7 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource {LinearRegistrationTy
     GCR Update     
     TransformEMAtlasBrainClassifier Concatenate [[GCR GetGeneralTransform] GetConcatenatedTransform 1]
 
-    if {$EMAtlasBrainClassifier(NonRigidRegistrationFlag)} {
+    if {$NonRigidRegistrationFlag} {
       ###### Warp #######
       catch "warp Delete"
       vtkImageWarp warp
@@ -1379,7 +1458,7 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource {LinearRegistrationTy
       warp SetTarget Target 
       
       # Set the parameters
-      warp SetVerbose 2
+      warp SetVerbose 0
       [warp GetGeneralTransform] SetInput TransformEMAtlasBrainClassifier
       ## do tensor registration?
       warp SetResliceTensors 0 
@@ -1403,6 +1482,51 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource {LinearRegistrationTy
     }
   # save the transform
   set EMAtlasBrainClassifier(Transform) TransformEMAtlasBrainClassifier
+}
+
+proc EMAtlasBrainClassifierWriteTransformation { } { 
+    global AG  EMAtlasBrainClassifier
+
+    if {![info exist EMAtlasBrainClassifier(Transform)]} {
+        DevErrorWindow "No transformation available, grid-file not saved."
+        return
+    }
+ 
+    set gt  $EMAtlasBrainClassifier(Transform)
+    if { ($gt == 0 ) } {return}
+    
+    set n [$gt GetNumberOfConcatenatedTransforms]
+    puts " There are $n concatenated transforms"
+     
+    set linearDone 0
+    set nonliearDOne 0
+    for {set  i  0}  {$i < $n} {incr i } {
+    set t [$gt GetConcatenatedTransform $i]
+    set int_H [$t IsA vtkHomogeneousTransform]
+    set int_G [$t IsA vtkGridTransform]
+    if { ($int_H != 0)&& ($linearDone == 0) } {
+        set fname $EMAtlasBrainClassifier(WorkingDirectory)/atlas/LinearAtlasToSubject.txt
+        set fileid [ open $fname w ]
+        puts "Writing transformation to $EMAtlasBrainClassifier(WorkingDirectory)/atlas/LinearAtlasToSubject.txt"
+
+         AGWriteHomogeneousOriginal $t $i  $fileid
+        set linearDone 1
+
+        
+    } 
+    if { ($int_G != 0) && ($nonliearDOne == 0) } {  
+
+        set g [$t GetDisplacementGrid]        
+        if { $g == 0}  return
+
+        puts "Writing warping grid to $EMAtlasBrainClassifier(WorkingDirectory)/atlas/WarpAtlasToSubject.vtk"
+ 
+        set fname $EMAtlasBrainClassifier(WorkingDirectory)/atlas/WarpAtlasToSubject.vtk
+        AGWritevtkImageData $g  $fname
+
+            set nonliearDOne 1
+       }
+    }
 }
 
 
@@ -1431,13 +1555,9 @@ proc EMAtlasBrainClassifierResample {inTarget inSource outResampled bgValue} {
     Cast SetInput Source
     Cast SetOutputScalarType [Target GetScalarType] 
 
-    catch "ITrans Delete"
-    vtkImageTransformIntensity ITrans
-    ITrans SetInput [Cast GetOutput]
-
     catch "Reslicer Delete"
     vtkImageReslice Reslicer
-    Reslicer SetInput [ITrans GetOutput]
+    Reslicer SetInput [Cast  GetOutput]
     Reslicer SetInterpolationMode 1
     
     # We have to invers the transform before we reslice the grid.     
@@ -1452,30 +1572,70 @@ proc EMAtlasBrainClassifierResample {inTarget inSource outResampled bgValue} {
     # Do it!
     Reslicer Update
 
-    # Make sure that no values are negative 
-    catch "Threshold Delete"
-    vtkImageThreshold Threshold
-        Threshold SetInput [Reslicer GetOutput] 
-    Threshold ThresholdByLower 0
-        Threshold ReplaceOutOff
-     Threshold SetInValue 0 
-        Threshold SetOutputScalarType [Target GetScalarType]
-    Threshold Update
+    # Make sure that no values are negative - should only happen with cubic interpolation
+    # catch "Threshold Delete"
+    # vtkImageThreshold Threshold
+    #     Threshold SetInput [Reslicer GetOutput] 
+    # Threshold ThresholdByLower 0
+    #     Threshold ReplaceOutOff
+    #  Threshold SetInValue 0 
+    #    Threshold SetOutputScalarType [Target GetScalarType]
+    # Threshold Update
     
     catch "Resampled Delete"
     vtkImageData Resampled
 
-    Resampled DeepCopy [Threshold GetOutput]
+    Resampled DeepCopy [Reslicer GetOutput]  
 
     Volume($outResampled,vol) SetImageData  Resampled
     Resampled SetOrigin 0 0 0
     Source Delete
     Target Delete
     Cast Delete
-    ITrans Delete
     Reslicer Delete
-    Threshold Delete
+    # Threshold Delete
 }
+
+proc EMAtlasBrainClassifier_GenerateModels { } {  
+   global EMAtlasBrainClassifier ModelMaker Volume 
+
+   if {$EMAtlasBrainClassifier(LatestLabelMap) == $Volume(idNone)} {
+     return
+   }
+
+   # Initiliaze method 
+   set ModelMaker(smooth) 20 
+   set ModelMaker(decimate) 0
+   set ModelMaker(jointSmooth) 1
+   set ModelMaker(SplitNormals) Off
+   set ModelMaker(PointNormals) Off
+   set ModelMaker(idVolume) $EMAtlasBrainClassifier(LatestLabelMap) 
+
+    # Figure out all labels 
+   vtkImageAccumulate histo
+   histo  SetInput [Volume($EMAtlasBrainClassifier(LatestLabelMap),vol) GetOutput]
+   histo Update
+   set min [lindex [histo GetMin] 0]
+   set max [lindex [histo GetMax] 0]
+    if {$min < 1} {
+    set ModelMaker(startLabel) 1
+    } else {
+    set ModelMaker(startLabel) $min
+    }
+
+    set ModelMaker(endLabel) $max
+    histo Delete
+
+    # Create modeles
+    ModelMakerCreateAll 0 
+
+    if {$EMAtlasBrainClassifier(Save,Models)} { 
+    set dir $EMAtlasBrainClassifier(WorkingDirectory)/Models 
+    catch {exec mkdir $dir}
+    ModelMakerWriteAll $dir
+    }
+}
+
 
 
 
@@ -2151,6 +2311,26 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     if {[EMAtlasBrainClassifier_InitilizePipeline] == 0} { return }  
 
     # ---------------------------------------------------------------
+    # Align T2 to T1 
+    if {$EMAtlasBrainClassifier(AlignInput) } {
+    # Just perform rigid registration
+    EMAtlasBrainClassifierRegistration $EMAtlasBrainClassifier(Volume,SPGR) $EMAtlasBrainClassifier(Volume,T2W) 0 0 
+    set VolIDOutput [DevCreateNewCopiedVolume $EMAtlasBrainClassifier(Volume,SPGR) "" "AlignedT2W"]
+
+    # Resample the Atlas SPGR
+    EMAtlasBrainClassifierResample   $EMAtlasBrainClassifier(Volume,SPGR) $EMAtlasBrainClassifier(Volume,T2W) $VolIDOutput 0 
+    
+    set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/t2w-aligned/I"
+    Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
+    Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
+    Volume($VolIDOutput,node) SetLittleEndian $EMAtlasBrainClassifier(LittleEndian)
+    if {$EMAtlasBrainClassifier(Save,AlignedT2)} {
+        EMAtlasBrainClassifierVolumeWriter $VolIDOutput
+    }
+        set EMAtlasBrainClassifier(Volume,T2W) $VolIDOutput
+    }
+    
+    # ---------------------------------------------------------------
     # Normalize images
     foreach input "SPGR T2W" {
       EMAtlasBrainClassifier_Normalize $input
@@ -2191,9 +2371,9 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
                                     EMAtlasBrainClassifier_SaveSegmentation  
                                  }
         "EMPrivateSegment"       {  
-                                EMAtlasBrainClassifier_InitilizeSegmentation  1
+                                    EMAtlasBrainClassifier_InitilizeSegmentation  1
                                     set XMLFile $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation/segmentation.xml
-                                set EMSegment(PrintDir) $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation
+                                    set EMSegment(PrintDir) $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation
                                     MainMrmlWrite $XMLFile
                                     MainMrmlDeleteAll 
                                     MainVolumesUpdateMRML
@@ -2212,6 +2392,13 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
                                  }
          default   {DevErrorWindow "Error: Segmentation mode $EMAtlasBrainClassifier(SegmentationMode) is unknown"; return }
     }
+
+    # ---------------------------------------------------------------------- 
+    # Generate 3D Models 
+    if {$EMAtlasBrainClassifier(GenerateModels) } {
+      EMAtlasBrainClassifier_GenerateModels
+    }
+
     puts "=========== Finished  ============ "
 }
 
