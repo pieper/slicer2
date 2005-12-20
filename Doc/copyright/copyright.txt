@@ -1,4 +1,5 @@
-3D Slicer Contribution and Software License Agreement ("Agreement") Version 1.0
+3D Slicer Contribution and Software License Agreement ("Agreement")
+Version 1.0 (December 20, 2005)
 
 This Agreement covers contributions to and downloads from the 3D
 Slicer project ("Slicer") maintained by The Brigham and Women's
