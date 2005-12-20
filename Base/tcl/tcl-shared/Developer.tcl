@@ -690,8 +690,11 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
     
     if { $DefaultExt != ""} {
         set typelist \
-            " \{\"$DefaultExt Files\" \{\*.$DefaultExt\}\} \{\"All Files\" \{\*\}\}"
-        #            set typelist [ eval $typelist ]
+            ""
+        foreach de $DefaultExt {
+            append typelist " \{\"$de Files\" \{\*.$de\}\}"
+        } 
+        append typelist " \{\"All Files\" \{\*\}\}"
     } else {
         set typelist {{"All Files" {*}}}
     }
