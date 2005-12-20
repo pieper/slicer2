@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: CompareMosaik.tcl,v $
-#   Date:      $Date: 2005/12/20 22:55:00 $
-#   Version:   $Revision: 1.1.2.2 $
+#   Date:      $Date: 2005/12/20 23:29:10 $
+#   Version:   $Revision: 1.1.2.3 $
 # 
 #===============================================================================
 # FILE:        CompareMosaik.tcl
@@ -200,7 +200,7 @@ proc CompareMosaikSetOffset {{value ""}} {
     }
 
     if {$::Module(verbose)} {
-        puts "Compare Mosaik Set Offset s = $s, value = $value"
+        puts "Compare Mosaik Set Offset value = $value"
     }
 
     # validate value
