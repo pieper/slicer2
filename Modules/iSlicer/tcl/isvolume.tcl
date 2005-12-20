@@ -1010,6 +1010,8 @@ itcl::body isvolume::slicer_volume { {name ""} {label_map "false"} } {
     MainSlicesSetVolumeAll Back $i
     RenderAll
 
+    return $i
+
 
 }
 
