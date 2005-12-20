@@ -78,7 +78,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.91 $} {$Date: 2005/12/13 23:38:07 $}]
+    {$Revision: 1.91.2.1 $} {$Date: 2005/12/20 15:31:04 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -370,12 +370,6 @@ proc MainVolumesRead {v} {
                 }
             }
         }
-        "Analyze*" {
-            if { ! [ file exists [Volume($v,node) GetFullPrefix] ] } {
-                DevErrorWindow "Analyze volume does not exist: [Volume($v,node) GetFullPrefix]"
-                return -1
-            }
-        }
         "StructuredPoints" {
             if { ! [ file exists [Volume($v,node) GetFullPrefix] ] } {
                 DevErrorWindow "StructuredPoints volume does not exist: [Volume($v,node) GetFullPrefix]"
@@ -409,41 +403,6 @@ proc MainVolumesRead {v} {
     puts "Reading volume: [Volume($v,node) GetName]..."
     
     switch -glob $volumeFileType {
-        "Analyze*" {
-            if { [info commands vtkCISGAnalyzeReader] == "" } {
-                DevErrorWindow "No Analyze Reader available."
-                return -1
-            }
-            catch "anreader Delete"
-            vtkCISGAnalyzeReader anreader
-
-            switch -glob $volumeFileType {
-                "*Radiological" {
-                    anreader SetFlippingSequence "0"
-                }
-                "*EPIReconPA" {
-                    anreader SetFlippingSequence "1"
-                }
-                "Analyze\[0-9\]*" {
-                    scan $volumeFileType "Analyze%s" flipseq
-                    anreader SetFlippingSequence $flipseq
-                }
-                default {
-                    puts "unknown analye file type $volumeFileType - assuming AnalyzeNeurological"
-                }
-            }
-
-
-            set compressed [VolAnalyzeHandleCompressed [Volume($v,node) GetFullPrefix] retfilename]
-
-            anreader SetFileName [file root $retfilename].hdr
-            anreader Update
-            Volume($v,vol) SetImageData [anreader GetOutput]
-            anreader Delete
-            if { $compressed } {
-                VolAnalyzeCleanupCompressed [Volume($v,node) GetFullPrefix] 
-            }
-        }
         "StructuredPoints" {
             catch "spreader Delete"
             vtkStructuredPointsReader spreader
