@@ -1,3 +1,16 @@
+/*=auto=========================================================================
+
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkImageIsoContourDist.h,v $
+  Date:      $Date: 2005/12/20 22:56:05 $
+  Version:   $Revision: 1.1.16.1 $
+
+=========================================================================auto=*/
 /*  ==================================================
     Module : vtkLevelSets
     Authors: Karl Krissian
@@ -35,8 +48,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkImageIsoContourDist.h,v $
   Language:  C++
-  Date:      $Date: 2003/04/28 18:13:23 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2005/12/20 22:56:05 $
+  Version:   $Revision: 1.1.16.1 $
   Author:    Karl Krissian
 
 =========================================================================*/

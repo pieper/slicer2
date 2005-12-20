@@ -1,3 +1,16 @@
+/*=auto=========================================================================
+
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkLevelSetFastMarching.cxx,v $
+  Date:      $Date: 2005/12/20 22:56:06 $
+  Version:   $Revision: 1.7.8.1 $
+
+=========================================================================auto=*/
 /*  ==================================================
     Module : vtkLevelSets
     Authors: Karl Krissian
@@ -35,8 +48,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkLevelSetFastMarching.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/03/30 19:34:33 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2005/12/20 22:56:06 $
+  Version:   $Revision: 1.7.8.1 $
 
 =========================================================================*/
 #include "vtkLevelSetFastMarching.h"

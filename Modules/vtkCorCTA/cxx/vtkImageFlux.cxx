@@ -1,3 +1,16 @@
+/*=auto=========================================================================
+
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkImageFlux.cxx,v $
+  Date:      $Date: 2005/12/20 22:55:01 $
+  Version:   $Revision: 1.1.2.1 $
+
+=========================================================================auto=*/
 /*=========================================================================
 
   Program:   Visualization Toolkit
@@ -19,7 +32,7 @@
 
 #include <math.h>
 
-vtkCxxRevisionMacro(vtkImageFlux, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkImageFlux, "$Revision: 1.1.2.1 $");
 vtkStandardNewMacro(vtkImageFlux);
 
 //----------------------------------------------------------------------------

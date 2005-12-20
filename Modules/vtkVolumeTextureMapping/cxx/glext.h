@@ -1,3 +1,16 @@
+/*=auto=========================================================================
+
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: glext.h,v $
+  Date:      $Date: 2005/12/20 22:56:27 $
+  Version:   $Revision: 1.1.10.1 $
+
+=========================================================================auto=*/
 #ifndef __glext_h_
 #define __glext_h_
 

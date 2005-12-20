@@ -1,3 +1,16 @@
+/*=auto=========================================================================
+
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkFontParameters.cxx,v $
+  Date:      $Date: 2005/12/20 22:56:14 $
+  Version:   $Revision: 1.1.8.1 $
+
+=========================================================================auto=*/
 /*===========================================================
 
 3D Slicer Software Licence Agreement(c)
@@ -56,7 +69,7 @@ Authors: Michael McKenna, David Small, Steve Pieper.
 #include "vtkTextureText.h"
 
 
-vtkCxxRevisionMacro(vtkFontParameters, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkFontParameters, "$Revision: 1.1.8.1 $");
 vtkStandardNewMacro(vtkFontParameters);
 
 

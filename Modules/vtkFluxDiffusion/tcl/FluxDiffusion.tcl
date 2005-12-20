@@ -1,3 +1,32 @@
+#=auto==========================================================================
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
+# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: FluxDiffusion.tcl,v $
+#   Date:      $Date: 2005/12/20 22:55:35 $
+#   Version:   $Revision: 1.13.8.1 $
+# 
+#===============================================================================
+# FILE:        FluxDiffusion.tcl
+# PROCEDURES:  
+#   FluxDiffusionInit
+#   FluxDiffusionUpdateGUI
+#   FluxDiffusionBuildGUI
+#   FluxDiffusionBuildHelpFrame
+#   FluxDiffusionBuildMainFrame
+#   FluxDiffusionBuildExpertFrame
+#   FluxDiffusionEnter
+#   FluxDiffusionExit
+#   FluxDiffusionCount
+#   FluxDiffusionShowFile
+#   FluxDiffusionBindingCallback event W X Y x y t
+#   FluxDiffusionPrepareResult
+#   FluxDiffusionPrepareResultVolume
+#   RunFluxDiffusion
+#==========================================================================auto=
 # FILE:        FluxDiffusion.tcl
 # PROCEDURES:  
 #   FluxDiffusionInit
@@ -158,7 +187,7 @@ proc FluxDiffusionInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.13 $} {$Date: 2005/04/19 16:55:16 $}]
+        {$Revision: 1.13.8.1 $} {$Date: 2005/12/20 22:55:35 $}]
 
     # Initialize module-level variables
     #------------------------------------

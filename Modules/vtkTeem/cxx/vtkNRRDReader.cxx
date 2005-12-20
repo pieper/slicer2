@@ -1,3 +1,16 @@
+/*=auto=========================================================================
+
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkNRRDReader.cxx,v $
+  Date:      $Date: 2005/12/20 22:56:23 $
+  Version:   $Revision: 1.1.2.3 $
+
+=========================================================================auto=*/
 /*=========================================================================
 
   Program:   Visualization Toolkit
@@ -39,7 +52,7 @@ extern "C" {
 #include "teem/ten.h"
 }
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.1.2.2 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.1.2.3 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 

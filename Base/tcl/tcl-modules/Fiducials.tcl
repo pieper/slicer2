@@ -1,37 +1,13 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 # 
-# This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors.
-# Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for  
-# research purposes only, provided that (1) the above copyright notice and 
-# the following four paragraphs appear on all copies of this software, and 
-# (2) that source code to any modifications to this software be made 
-# publicly available under terms no more restrictive than those in this 
-# License Agreement. Use of this software constitutes acceptance of these 
-# terms and conditions.
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
 # 
-# 3D Slicer Software has not been reviewed or approved by the Food and 
-# Drug Administration, and is for non-clinical, IRB-approved Research Use 
-# Only.  In no event shall data or images generated through the use of 3D 
-# Slicer Software be used in the provision of patient care.
-# 
-# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-# POSSIBILITY OF SUCH DAMAGE.
-# 
-# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-# NON-INFRINGEMENT.
-# 
-# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: Fiducials.tcl,v $
+#   Date:      $Date: 2005/12/20 22:54:35 $
+#   Version:   $Revision: 1.65.2.2 $
 # 
 #===============================================================================
 # FILE:        Fiducials.tcl
@@ -88,6 +64,7 @@
 #   FiducialsPrint2DPoints id
 #   FiducialsSliceNumberToRendererName s
 #   FiducialsMainFileClose
+#   FiducialsUpdateZoom2D s zoom
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -119,7 +96,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.65.2.1 $} {$Date: 2005/12/15 21:29:05 $}]
+        {$Revision: 1.65.2.2 $} {$Date: 2005/12/20 22:54:35 $}]
     
     # Initialize module-level variables
     set Fiducials(renList) "viewRen matRen"
@@ -161,6 +138,7 @@ proc FiducialsInit {} {
 
     # use this as a flag to try and avoid looping too often when called from slices update
     set Fiducials(updating2D) 0
+    set Fiducials(updating2DZoom) 0
 
     set Fiducials(howto) "
 You can add Fiducial points in the volume using the 2D slice windows or on any models in the 3D View.
@@ -3355,4 +3333,76 @@ proc FiducialsMainFileClose {} {
 
     # set the delete flag to be 1 and clear out everything
     FiducialsResetVariables 1
+}
+
+#-------------------------------------------------------------------------------
+# .PROC FiducialsUpdateZoom2D
+# Adjust the location of the 2d fids to match the zoom for this slice.
+# Adjust all of them, so that if the slices are scrolled, they're all correct w/o another call
+# .ARGS
+# int s the slice number
+# float zoom the zoom value
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsUpdateZoom2D { s zoom } {
+    global Fiducials 
+# global Module
+
+    # not quite right yet
+    return
+
+    set Module(verbose) 1
+
+    if {$Fiducials(updating2DZoom) == 1} {
+        if {$Module(verbose)} {
+            puts "FiducialsUpdateZoom2D: already updating, returning"
+        }
+        return
+    } 
+    set Fiducials(updating2DZoom) 1
+
+    if {$Module(verbose)} {
+        puts "FiducialsUpdateZoom2D s= $s, zoom = $zoom, updating flag = $Fiducials(updating2DZoom)"
+    }
+
+    # try and find fids on this slice
+    # foreach fiducials list
+    set updateNeeded 0
+    foreach fid $Fiducials(listOfIds) {
+        foreach pid $Fiducials($fid,pointIdList) {
+            foreach {x y pointSlice pointOffset} [Point($pid,node) GetXYSO] { break }
+            if {$pointSlice == $s} {
+                if {$Module(verbose)} {
+                    puts "List $fid: Point $pid is on slice ${s}: x $x, y $y, o $pointOffset (slice offset = $::Slice($s,offset))"
+                    puts "\txyz = [Point($pid,node) GetXYZ]"
+                }
+                $::Interactor(activeSlicer) SetScreenPoint $s $x $y
+                set refPoint [$::Interactor(activeSlicer) GetReformatPoint]
+                scan $refPoint "%d %d" zx zy
+                if {$Module(verbose)} {
+                    puts "\treformatpoint = $zx $zy (raw = $refPoint)"
+                }
+                # reset the point's xyso and flag to call FiducialsVTKUpdatePoints2D
+                if {[info command Point($pid,node)] != ""} {
+                    Point($pid,node) SetXYSO $zx $zy $pointSlice $pointOffset
+                    set updateNeeded 1
+                } else {
+                    puts "FiducialsUpdateZoom2D: No point node for $pid!"
+                }
+            } else {
+                if {$Module(verbose)} {
+                    puts "List $fid: Point $pid is on slice $pointSlice, not the currently changing slice $s"
+                }
+            }
+        }
+
+        if {$updateNeeded} {
+            if {$Module(verbose)} {
+                puts "Need to update 2d fid locations for list $fid"
+            }
+            FiducialsVTKUpdatePoints2D $fid
+            set updateNeeded 0
+        }
+    }
+    set Fiducials(updating2DZoom) 0
 }

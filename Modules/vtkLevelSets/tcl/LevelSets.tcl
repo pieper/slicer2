@@ -1,4 +1,15 @@
 #=auto==========================================================================
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
+# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: LevelSets.tcl,v $
+#   Date:      $Date: 2005/12/20 22:56:07 $
+#   Version:   $Revision: 1.35.2.2 $
+# 
+#===============================================================================
 # FILE:        LevelSets.tcl
 # PROCEDURES:  
 #   LevelSetsInit
@@ -173,7 +184,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.35.2.1 $} {$Date: 2005/12/15 21:24:06 $}]
+        {$Revision: 1.35.2.2 $} {$Date: 2005/12/20 22:56:07 $}]
 
     # Initialize module-level variables
     #------------------------------------

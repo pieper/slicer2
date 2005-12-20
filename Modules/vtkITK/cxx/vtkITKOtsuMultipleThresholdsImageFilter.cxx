@@ -1,10 +1,23 @@
+/*=auto=========================================================================
+
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkITKOtsuMultipleThresholdsImageFilter.cxx,v $
+  Date:      $Date: 2005/12/20 22:55:51 $
+  Version:   $Revision: 1.1.2.1 $
+
+=========================================================================auto=*/
 /*=========================================================================
 
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: vtkITKOtsuMultipleThresholdsImageFilter.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/05/02 22:59:33 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2005/12/20 22:55:51 $
+  Version:   $Revision: 1.1.2.1 $
 
   Copyright (c) 2002 Insight Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.

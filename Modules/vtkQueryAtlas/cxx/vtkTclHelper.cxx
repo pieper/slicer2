@@ -1,3 +1,16 @@
+/*=auto=========================================================================
+
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkTclHelper.cxx,v $
+  Date:      $Date: 2005/12/20 22:56:16 $
+  Version:   $Revision: 1.3.2.1 $
+
+=========================================================================auto=*/
 
 /* 
  * vtkTclHelper allows access to Tcl and vtk routines in the same class
@@ -13,7 +26,7 @@
 #include "vtkImageData.h"
 #include "vtkTclUtil.h"
 
-vtkCxxRevisionMacro(vtkTclHelper, "$Revision: 1.3 $");
+vtkCxxRevisionMacro(vtkTclHelper, "$Revision: 1.3.2.1 $");
 vtkStandardNewMacro(vtkTclHelper);
 
 

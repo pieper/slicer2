@@ -1,3 +1,28 @@
+#=auto==========================================================================
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
+# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: notebook.tcl,v $
+#   Date:      $Date: 2005/12/20 22:55:33 $
+#   Version:   $Revision: 1.5.2.1 $
+# 
+#===============================================================================
+# FILE:        notebook.tcl
+# PROCEDURES:  
+#   Notebook-create w args
+#   Notebook-create w args
+#   Notebook-setCallback  w callback
+#   Notebook-click w x y
+#   Notebook-raise.page
+#   Notebook-pageconfi w name args
+#   Notebook-raise  w name
+#   Notebook-frame w name
+#   Try to resize the notebook to the next time we become idle. w
+#   Resize the notebook to fit inside its containing widget. w
+#==========================================================================auto=
 #===============================================================================
 # FILE:        notebook.tcl
 # PROCEDURES:  
@@ -8,7 +33,7 @@
 #  Author    : D. Richard Hipp <drh@acm.org>
 #  Web       : http://www.hwaci.com/drh/
 #  Copyright : (C) 1996,1997,1998 D. Richard Hipp
-#  Version   : $Revision: 1.5 $
+#  Version   : $Revision: 1.5.2.1 $
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License

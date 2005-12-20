@@ -1,3 +1,66 @@
+#=auto==========================================================================
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
+# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: AG.tcl,v $
+#   Date:      $Date: 2005/12/20 22:54:55 $
+#   Version:   $Revision: 1.16.2.2 $
+# 
+#===============================================================================
+# FILE:        AG.tcl
+# PROCEDURES:  
+#   AGInit
+#   AGBindingCallback
+#   AGUpdateMRML
+#   AGBuildGUI
+#   AGStartCNIWebPage 
+#   AGBuildHelpFrame
+#   AGBuildMainFrame
+#   AGBuildTransformFrame
+#   AGBuildExpertFrame
+#   Test
+#   ModifyOptions
+#   AGEnter
+#   AGExit
+#   AGPrepareResult
+#   AGPrepareResultVolume
+#   AGWritevtkImageData image filename
+#   AGIntensityTransform Source
+#   AGTransformScale Source Target
+#   AGWriteHomogeneousOriginal
+#   AGWriteHomogeneousOriginal
+#   AGReadHomogeneousOriginal
+#   AGReadHomogeneousOriginal
+#   AGWriteHomogeneous
+#   AGReadGrid
+#   AGWriteGrid
+#   WritePWConstant it fid
+#   WritePolynomial it fileid
+#   WriteIntensityTransform it fileid
+#   AGReadLinearNonLinearTransform gt
+#   AGWriteLinearNonLinearTransform gt flag it FileName
+#   AGWriteTransform gt flag it FileName
+#   AGThresholdedResampledData Source Target Output
+#   RunAG
+#   AGBatchProcessResampling
+#   AGCoregister
+#   AGTransformOneVolume SouceVolume TargetVolume
+#   AGPreprocess Source Target SourceVol TargetVol
+#   AGThresholdedResampledData Source Target Output
+#   AGResample Source Target
+#   AGNormalize SourceImage TargetImage NormalizeSource SourceScanOrder TargetScanOrder
+#   AGTestWriting
+#   AGReadvtkImageData
+#   AGTestReadvtkImageData
+#   AGUpdateInitial
+#   AGTurnInitialOff
+#   AGCreateLinMat
+#   AGSaveGridTransform
+#   AGColorComparison
+#==========================================================================auto=
 #===============================================================================
 # FILE:        AG.tcl   
 # PROCEDURES:  
@@ -172,7 +235,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.16.2.1 $} {$Date: 2005/12/20 09:47:51 $}]
+        {$Revision: 1.16.2.2 $} {$Date: 2005/12/20 22:54:55 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -262,6 +325,12 @@ proc AGInit {} {
         {all <Shift-3> {AGBindingCallback Shift-3 %W %X %Y %x %y %t}} }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC AGBindingCallback
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc AGBindingCallback {args} {
     # placeholder for future callbacks
 }
@@ -1373,6 +1442,12 @@ proc AGTransformScale { Source Target} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC AGWriteHomogeneousOriginal
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc AGWriteHomogeneousOriginal {t ii fileid} {
 
    
@@ -1418,6 +1493,12 @@ proc AGWriteHomogeneousOriginal {t ii fileid} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC AGReadHomogeneousOriginal
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc AGReadHomogeneousOriginal {t filename} {
 
    

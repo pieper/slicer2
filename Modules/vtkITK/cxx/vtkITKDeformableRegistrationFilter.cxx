@@ -1,3 +1,16 @@
+/*=auto=========================================================================
+
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkITKDeformableRegistrationFilter.cxx,v $
+  Date:      $Date: 2005/12/20 22:55:45 $
+  Version:   $Revision: 1.5.2.1 $
+
+=========================================================================auto=*/
 #include "vtkITKDeformableRegistrationFilter.h" // This class
 
 void vtkITKDeformableRegistrationFilter::ConnectOutputPipelines()

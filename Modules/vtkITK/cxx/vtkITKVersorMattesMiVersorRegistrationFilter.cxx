@@ -1,3 +1,16 @@
+/*=auto=========================================================================
+
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkITKVersorMattesMiVersorRegistrationFilter.cxx,v $
+  Date:      $Date: 2005/12/20 22:55:54 $
+  Version:   $Revision: 1.11.2.1 $
+
+=========================================================================auto=*/
 #include "vtkITKVersorMattesMiVersorRegistrationFilter.h"
 typedef itk::Array<unsigned int> UnsignedIntArray;
 typedef itk::Array<double> DoubleArray;

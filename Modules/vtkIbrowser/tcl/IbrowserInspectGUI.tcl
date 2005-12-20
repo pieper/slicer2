@@ -1,3 +1,29 @@
+#=auto==========================================================================
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
+# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: IbrowserInspectGUI.tcl,v $
+#   Date:      $Date: 2005/12/20 22:56:01 $
+#   Version:   $Revision: 1.1.2.2 $
+# 
+#===============================================================================
+# FILE:        IbrowserInspectGUI.tcl
+# PROCEDURES:  
+#   IbrowserUpdateInspectTab
+#   IbrowserBuildInspectFrame
+#   IbrowserPlotConfigPlotType
+#   IbrowserPlotCheckReferenceOnsets
+#   IbrowserPlotCheckReferenceHeight
+#   IbrowserPlotCheckReferenceSpan
+#   IbrowserPlotCheckReferenceSpan
+#   IbrowserPlotResetReferenceEntries
+#   IbrowserPlotAddReference
+#   IbrowserPlotDeleteReference
+#   IbrowserPlotDeleteAllReferences
+#==========================================================================auto=
 
 
 #-------------------------------------------------------------------------------
@@ -237,6 +263,12 @@ proc IbrowserBuildInspectFrame { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserPlotConfigPlotType
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserPlotConfigPlotType { txt } {
 
     $::Ibrowser(plot,Plotmb) config -text $txt
@@ -246,6 +278,12 @@ proc IbrowserPlotConfigPlotType { txt } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserPlotCheckReferenceOnsets
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserPlotCheckReferenceOnsets { } {
     #--- check:
     #--- trim any leading or trailing white spaces
@@ -278,6 +316,12 @@ proc IbrowserPlotCheckReferenceOnsets { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserPlotCheckReferenceHeight
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserPlotCheckReferenceHeight { } {
     #--- check height and set Ibrowser(plot,RefHeight)
      set height $::Ibrowser(plot,ReferenceHeight)
@@ -291,6 +335,12 @@ proc IbrowserPlotCheckReferenceHeight { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserPlotCheckReferenceSpan
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserPlotCheckReferenceSpan { } {
 
     #--- How many volumes in this interval;
@@ -312,6 +362,12 @@ proc IbrowserPlotCheckReferenceSpan { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC 
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc  IbrowserPlotCheckReferenceName { } {
 
     #--- Need to append the name of the reference waveform.
@@ -331,6 +387,12 @@ proc  IbrowserPlotCheckReferenceName { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserPlotResetReferenceEntries
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserPlotResetReferenceEntries { } {
     #--- reset the entry default onsets
     #set ::Ibrowser(plot,ReferenceOnsets) 0
@@ -346,6 +408,12 @@ proc IbrowserPlotResetReferenceEntries { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserPlotAddReference
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserPlotAddReference { } {
 
     #--- add valid reference to lists.
@@ -390,6 +458,12 @@ proc IbrowserPlotAddReference { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserPlotDeleteReference
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserPlotDeleteReference { } {
 
     #--- get the selection
@@ -410,6 +484,12 @@ proc IbrowserPlotDeleteReference { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserPlotDeleteAllReferences
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserPlotDeleteAllReferences { } {
     #--- all reference waveforms are being deleted,
     #--- so delete all lists that describe those defined.

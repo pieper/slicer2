@@ -1,3 +1,16 @@
+/*=auto=========================================================================
+
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkIntervalHashNode.h,v $
+  Date:      $Date: 2005/12/20 22:55:58 $
+  Version:   $Revision: 1.3.2.1 $
+
+=========================================================================auto=*/
 #ifndef __vtkIntervalHashNode_h
 #define __vtkIntervalHashNode_h
 

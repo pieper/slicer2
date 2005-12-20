@@ -1,3 +1,20 @@
+#=auto==========================================================================
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
+# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: DTMRIVoxelizeTracts.tcl,v $
+#   Date:      $Date: 2005/12/20 22:55:12 $
+#   Version:   $Revision: 1.2.2.1 $
+# 
+#===============================================================================
+# FILE:        DTMRIVoxelizeTracts.tcl
+# PROCEDURES:  
+#   DTMRIVoxelizeTractsBuildGUI
+#   DTMRIVoxelizeTractsColorROIFromTracts
+#==========================================================================auto=
 proc DTMRIVoxelizeTractsInit {} {
 
     global DTMRI Volume
@@ -6,7 +23,7 @@ proc DTMRIVoxelizeTractsInit {} {
     #------------------------------------
     set m "VoxelizeTracts"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.2 $} {$Date: 2005/11/16 20:47:06 $}]
+                                 {$Revision: 1.2.2.1 $} {$Date: 2005/12/20 22:55:12 $}]
 
     set DTMRI(VoxTractsROILabelmap) $Volume(idNone)
 }
@@ -97,6 +114,12 @@ proc DTMRIVoxelizeTractsBuildGUI {} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIVoxelizeTractsColorROIFromTracts
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIVoxelizeTractsColorROIFromTracts {} {
     global DTMRI Label Volume
 

@@ -1,5 +1,14 @@
 #=auto==========================================================================
-
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
+# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: slicerIso.tcl,v $
+#   Date:      $Date: 2005/12/20 22:56:08 $
+#   Version:   $Revision: 1.10.8.1 $
+# 
 #===============================================================================
 # FILE:        slicerIso.tcl
 # PROCEDURES:  

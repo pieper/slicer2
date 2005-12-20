@@ -1,3 +1,16 @@
+/*=auto=========================================================================
+
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkIntervalDrop.h,v $
+  Date:      $Date: 2005/12/20 22:55:57 $
+  Version:   $Revision: 1.3.2.1 $
+
+=========================================================================auto=*/
 #ifndef __vtkIntervalDrop_h
 #define __vtkIntervalDrop_h
 

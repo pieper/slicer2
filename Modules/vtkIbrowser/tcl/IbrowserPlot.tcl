@@ -1,3 +1,29 @@
+#=auto==========================================================================
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
+# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: IbrowserPlot.tcl,v $
+#   Date:      $Date: 2005/12/20 22:56:02 $
+#   Version:   $Revision: 1.1.2.1 $
+# 
+#===============================================================================
+# FILE:        IbrowserPlot.tcl
+# PROCEDURES:  
+#   IbrowserPopUpPlot
+#   IbrowserDrawPlotAllSamples x y z
+#   IbrowserClosePlotWindow
+#   IbrowserCheckDataVolumeDimensions
+#   IbrowserGetVoxelFromSelection x y
+#   IbrowserCheckSelectionAgainstVolumeLimits argstr
+#   IbrowserBuildReferenceVector
+#   IbrowserMakeBoxcarKernel
+#   IbrowserMakeImpulseKernel
+#   IbrowserMakeHalfsineKernel
+#   IbrowserMakeCanonicalHRFKernel
+#==========================================================================auto=
 
 #-------------------------------------------------------------------------------
 # .PROC IbrowserPopUpPlot
@@ -449,6 +475,12 @@ proc IbrowserCheckSelectionAgainstVolumeLimits {argstr} {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserBuildReferenceVector
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserBuildReferenceVector { refIndex sigMax } {
     #--- Builds the reference vector and stores in global
 
@@ -513,6 +545,12 @@ proc IbrowserBuildReferenceVector { refIndex sigMax } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserMakeBoxcarKernel
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserMakeBoxcarKernel { samps height } {
     #--- builds a list that defines a boxcar function
     #--- for the number of samples and max height requested
@@ -526,6 +564,12 @@ proc IbrowserMakeBoxcarKernel { samps height } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserMakeImpulseKernel
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserMakeImpulseKernel { samps height } {
     set i 0
     while { $i < $samps } {
@@ -537,6 +581,12 @@ proc IbrowserMakeImpulseKernel { samps height } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserMakeHalfsineKernel
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserMakeHalfsineKernel { samps height } {
     set PI 3.14159265
     set period [ expr 2 * $samps ]
@@ -554,6 +604,12 @@ proc IbrowserMakeHalfsineKernel { samps height } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserMakeCanonicalHRFKernel
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserMakeCanonicalHRFKernel { samps height } {
     #--- computes a single hemodynamic response function
     #--- as difference of two gamma functions recommended in

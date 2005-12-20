@@ -1,3 +1,16 @@
+/*=auto=========================================================================
+
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkLevelSetsTCLInit.cxx,v $
+  Date:      $Date: 2005/12/20 22:56:07 $
+  Version:   $Revision: 1.2.16.1 $
+
+=========================================================================auto=*/
 /*  ==================================================
     Module : vtkLevelSets
     Authors: Karl Krissian (from initial code by Liana Lorigo and Renaud Keriven)

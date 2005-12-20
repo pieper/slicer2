@@ -1,38 +1,14 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
-# This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
-# Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
-# research purposes only, provided that (1) the above copyright notice and 
-# the following four paragraphs appear on all copies of this software, and 
-# (2) that source code to any modifications to this software be made 
-# publicly available under terms no more restrictive than those in this 
-# License Agreement. Use of this software constitutes acceptance of these 
-# terms and conditions.
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 # 
-# 3D Slicer Software has not been reviewed or approved by the Food and 
-# Drug Administration, and is for non-clinical, IRB-approved Research Use 
-# Only.  In no event shall data or images generated through the use of 3D 
-# Slicer Software be used in the provision of patient care.
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
 # 
-# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-# POSSIBILITY OF SUCH DAMAGE.
+#   Program:   3D Slicer
+#   Module:    $RCSfile: EMLocalSegment.tcl,v $
+#   Date:      $Date: 2005/12/20 22:55:25 $
+#   Version:   $Revision: 1.65.2.1 $
 # 
-# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-# NON-INFRINGEMENT.
-# 
-# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-# 
-#
 #===============================================================================
 # FILE:        EMLocalSegment.tcl
 # PROCEDURES:  
@@ -40,94 +16,96 @@
 #   EMSegmentForceInit
 #   EMSegmentInit
 #   EMSegmentBuildGUI
-#   EMSegmentUpdateLocalProb
-#   EMSegmentDefineLocalProb
+#   EMSegmentUpdateLocalProb ModelLabel Sclass
+#   EMSegmentDefineLocalProb f Panel Sclass General
 #   EMSegmentEnter
 #   EMSegmentExit
 #   EMSegmentShowFile
-#   EMSegmentBindingCallback
-#   EMSegmentLoadMRML
+#   EMSegmentBindingCallback event x y
+#   EMSegmentDefineNodeAttributeList MrmlNodeType
+#   EMSegmentLoadMRMLNode NodeType attr
+#   EMSegmentLoadMRML tag attr
 #   EMSegmentUpdateMRML
-#   EMSegmentProbVolumeSelectNode
+#   EMSegmentProbVolumeSelectNode type id ArrayName ModelLabel ModelName
 #   EMSegmentUpdateReferenceStandard
-#   EMSegmentReferenceStandardSelectNode
-#   EMSegmentBuildEntryBox
-#   EMSegmentAddEntries
-#   EMSegmentUpdateEntries
-#   EMSegmentFindParentClass
-#   EMSegmentClassNavigation
-#   EMSegmentBuildWeightPannel
-#   EMSegmentMRMLDeleteCreateNodesNodesListEntries 
-#   EMSegmentSaveSetting 
-#   EMSegmentSaveSettingClass 
-#   EMSegmentChangeSuperClassName
-#   EMSegmentStartEM
-#   EMSegmentEraseSampleMenu
-#   EMSegmentClickLabel
+#   EMSegmentReferenceStandardSelectNode type id ArrayName ModelLabel ModelName
+#   EMSegmentBuildEntryBox f Name
+#   EMSegmentAddEntries f NameList AttributeList EntryTypeList
+#   EMSegmentUpdateEntries Name
+#   EMSegmentFindParentClass Sclass SuperClass
+#   EMSegmentClassNavigation direction
+#   EMSegmentBuildWeightPannel f Sclass Tab
+#   EMSegmentMRMLDeleteCreateNodesNodesListEntries  Type New LastNode
+#   EMSegmentSaveSetting  FileFlag FileName CheckToProceed
+#   EMSegmentSaveSettingClass  SuperClass LastNode
+#   EMSegmentChangeSuperClassName Active SuperClass
+#   EMSegmentStartEM save_mode
+#   EMSegmentEraseSampleMenu f
+#   EMSegmentClickLabel Sclass ActiveGui label colorcode
 #   EMSegmentDisplayClassDefinition
-#   EMSegmentTransfereClassType
-#   EMSegmentChangeSuperClass
+#   EMSegmentTransfereClassType ActiveGui DeleteNode
+#   EMSegmentChangeSuperClass NewSuperClass ActiveGui
 #   EMSegmentUpdateClassOverview
-#   EMSegmentCreateClassOverviewButton
-#   EMSegmentClassOverview 
+#   EMSegmentCreateClassOverviewButton Frame
+#   EMSegmentClassOverview  x y
 #   EMSegmentCreateClassOverviewWindow
-#   EMSegmentAddClassToOverview
-#   EMSegmentDefineClassInOverview
-#   EMSegmentDefineSuperClassInOverview
-#   EMSegmentAddGlobalProbEntry
+#   EMSegmentAddClassToOverview cl
+#   EMSegmentDefineClassInOverview cl
+#   EMSegmentDefineSuperClassInOverview cl
+#   EMSegmentAddGlobalProbEntry Frame Sclass General
 #   EMSegmentSumGlobalUpdate
-#   EMSegmentAddColorLabelButton
-#   EMSegmentAddSuperClassName
+#   EMSegmentAddColorLabelButton Frame Sclass General
+#   EMSegmentAddSuperClassName Frame Sclass
 #   EMSegmentAutoSamples 
 #   EMSegmentSetSampleText
-#   EMSegmentUseSamples
-#   EMSegmentFindClassAndTestfromIntClass
-#   EMSegmentChangeClass
+#   EMSegmentUseSamples change
+#   EMSegmentFindClassAndTestfromIntClass IntLabel
+#   EMSegmentChangeClass Sclass
 #   EMSegmentUpdateClassNavigationButton
-#   EMSegmentChangeIntensityClass 
-#   EMSegmentUpdateClasses 
-#   EMSegmentPlotCurveRegion
+#   EMSegmentChangeIntensityClass  Sclass reset
+#   EMSegmentUpdateClasses  flag
+#   EMSegmentPlotCurveRegion numGraph
 #   EMSegmentCalculateClassMeanCovariance
 #   EMSegmentCalcProb
-#   EMSegmentEraseSample  
-#   EMSegmentCreateDeleteClasses  
-#   EMSegmentSetMaxInputChannelDef
-#   EMSegmentReadGreyValue
-#   EMSegmentDefineSample
-#   EMSegmentEnterDisplaySample 
+#   EMSegmentEraseSample   i
+#   EMSegmentCreateDeleteClasses   ChangeGui DeleteNode InitClasses HeadClass
+#   EMSegmentSetMaxInputChannelDef NewMaxInputChannelDef
+#   EMSegmentReadGreyValue x y flag
+#   EMSegmentDefineSample SampleList
+#   EMSegmentEnterDisplaySample  x y
 #   EMSegmentLeaveSample 
-#   EMSegmentChangeVolumeGraph
-#   EMSegmentCreateGraphButton
-#   EMSegmentMultipleDrawDeleteCurveRegion
-#   EMSegmentDeleteGraphButton
-#   EMSegmentDrawDeleteCurveRegion
-#   EMSegmentExecute 
-#   EMSegmentCreateCIMRowsColumns
+#   EMSegmentChangeVolumeGraph VolumeID numGraph
+#   EMSegmentCreateGraphButton Sclass Label Color Above UpdateGraph
+#   EMSegmentMultipleDrawDeleteCurveRegion Sclass
+#   EMSegmentDeleteGraphButton Sclass
+#   EMSegmentDrawDeleteCurveRegion Sclass NumGraph
+#   EMSegmentExecute  menue command save_mode
+#   EMSegmentCreateCIMRowsColumns start end
 #   EMSegmentSetCIMMatrix
-#   EMSegmentChangeCIMMatrix
-#   EMSegmentSegmentationBoundaryMax 
-#   EMSegmentAssignInput
-#   EMSegmentSelectfromVolumeList
-#   EMSegmentChangeVolumeSegmented 
-#   EMSegmentTransfereVolume
+#   EMSegmentChangeCIMMatrix CIMType
+#   EMSegmentSegmentationBoundaryMax  flag VolID
+#   EMSegmentAssignInput froot
+#   EMSegmentSelectfromVolumeList type
+#   EMSegmentChangeVolumeSegmented  index
+#   EMSegmentTransfereVolume from
 #   EMSegmentUpdateVolumeList
-#   EMSegmentDeleteFromSelList
-#   EMSegmentCreate_Mean_Covariance_InputChannelWeights_RowsColumns 
-#   EMSegmentCreateGraphDisplayButton
-#   EMSegmentShowGraphWindow
+#   EMSegmentDeleteFromSelList args
+#   EMSegmentCreate_Mean_Covariance_InputChannelWeights_RowsColumns  OldNumInputCh NewNumInputCh
+#   EMSegmentCreateGraphDisplayButton f
+#   EMSegmentShowGraphWindow x y
 #   EMSegmentCreateGraphWindow
-#   EMSegmentCreateHistogramButton
-#   EMSegmentGraphXAxisUpdate path Xmin Xmax Xsca 
-#   EMSegmentGraphYAxisUpdate path Ymin Ymax Ysca 
-#   EMSegmentCreateDisplayRedLine 
-#   EMSegmentCreateDisplayRedCross 
-#   EMSegmentChangeDiceVolume
+#   EMSegmentCreateHistogramButton f index
+#   EMSegmentGraphXAxisUpdate path Xmin Xmax Xsca  path Xmin Xmax Xsca
+#   EMSegmentGraphYAxisUpdate path Ymin Ymax Ysca  path Ymin Ymax Ysca
+#   EMSegmentCreateDisplayRedLine  NumGraph Value
+#   EMSegmentCreateDisplayRedCross  NumGraph Xvalue Yvalue
+#   EMSegmentChangeDiceVolume vol
 #   EMSegmentCalcDice
-#   EMSegmentWriteClassModels 
+#   EMSegmentWriteClassModels  SuperClass
 #   EMSegmentMakeModels
 #   EMSegmentReadTextBox  
-#   EMSegmentScrolledHorizontal  
-#   EMSegmentScrolledText  
+#   EMSegmentScrolledHorizontal   f
+#   EMSegmentScrolledText   f
 #   EMSegmentWriteTextBox  
 #==========================================================================auto=
 
@@ -288,7 +266,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.65 $} {$Date: 2005/12/11 03:36:21 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.65.2.1 $} {$Date: 2005/12/20 22:55:25 $}]}
 
     # Initialize module-level variables
     #------------------------------------

@@ -1,9 +1,22 @@
+/*=auto=========================================================================
+
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkIntervalAnimator.cxx,v $
+  Date:      $Date: 2005/12/20 22:55:57 $
+  Version:   $Revision: 1.3.2.1 $
+
+=========================================================================auto=*/
 #include "vtkIntervalAnimator.h"
 #include "vtkIbrowserConfigure.h"
 #include <stdio.h>
 
 
-vtkCxxRevisionMacro(vtkIntervalAnimator, "$Revision: 1.3 $");
+vtkCxxRevisionMacro(vtkIntervalAnimator, "$Revision: 1.3.2.1 $");
 
 int vtkIntervalAnimator::animationPaused = 0;
 int vtkIntervalAnimator::animationRunning = 0;

@@ -1,4 +1,31 @@
 #=auto==========================================================================
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
+# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: Download.tcl,v $
+#   Date:      $Date: 2005/12/20 22:54:43 $
+#   Version:   $Revision: 1.2.2.1 $
+# 
+#===============================================================================
+# FILE:        Download.tcl
+# PROCEDURES:  
+#   DownloadInit
+#   DownloadFile urlAdress outputFile
+#   DownloadFile
+#   Download_UrlToFile url file chunk
+#   Download_UrlToFile
+#   Download_ProgressStart
+#   Download_Progress token total current
+#   Download_Progress
+#   Download_ProgressComplete
+#   Download_ValidUrl token
+#   Download_PrintProtocol maxTabLength token
+#   Download_ErrorMsg
+#==========================================================================auto=
+#=auto==========================================================================
 # (c) Copyright 2003 Massachusetts Institute of Technology (MIT) All Rights Reserved.
 #
 # This software ("3D Slicer") is provided by The Brigham and Women's 
@@ -62,6 +89,12 @@ proc DownloadInit {} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC DownloadFile
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DownloadFile {urlAdress outputFile} {
     Download_ProgressStart $urlAdress $outputFile 
     set Token [Download_UrlToFile $urlAdress $outputFile] 
@@ -85,6 +118,12 @@ proc DownloadFile {urlAdress outputFile} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC Download_UrlToFile
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc Download_UrlToFile { url file {chunk 4096} } {
      # 1.) Download File
      if {[catch {set out [open $file w]} errormsg]} {
@@ -118,6 +157,12 @@ proc Download_UrlToFile { url file {chunk 4096} } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC Download_ProgressStart
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc Download_ProgressStart {UrlAdress FileLocation} {
     global Gui
     puts "Start downloading from the web .... " 
@@ -162,6 +207,12 @@ proc Download_ProgressStart {UrlAdress FileLocation} {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC Download_Progress
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc Download_Progress {token total current} {
     upvar #0 $token state
     global Gui
@@ -222,6 +273,12 @@ proc Download_FinishedDownloading {token} {
   http::cleanup $token 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC Download_ErrorMsg
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc Download_ErrorMsg {msg} {
     global Gui 
     if {[winfo exists $Gui(wDownload)]} {$Gui(wDownload).lStatus configure -fg red -text "Status:           $msg" 

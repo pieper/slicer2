@@ -1,3 +1,29 @@
+#=auto==========================================================================
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
+# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: OsteoPlan.tcl,v $
+#   Date:      $Date: 2005/12/20 22:54:38 $
+#   Version:   $Revision: 1.8.12.2 $
+# 
+#===============================================================================
+# FILE:        OsteoPlan.tcl
+# PROCEDURES:  
+#   OsteoPlanInit
+#   OsteoPlanBuildGUI
+#   OsteoPlanEnter
+#   OsteoPlanExit
+#   OsteoPlanUpdateGUI
+#   ResetOsteo
+#   OsteoApplyCut
+#   OsteoUncut
+#   ExtractComponent
+#   OsteoCopyModel
+#   OsteoWriteComponent
+#==========================================================================auto=
 # OsteoPlan.tcl
 # 1998 Peter C. Everett peverett@bwh.harvard.edu: Created
 # 02/02/02 Krishna C. Yeshwant kcy@bwh.harvard.edu: Edited
@@ -7,6 +33,12 @@
 # OsteoPlanInit
 #--------------
 
+#-------------------------------------------------------------------------------
+# .PROC OsteoPlanInit
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc OsteoPlanInit {} {
     global Module OsteoPlan Osteo Gui
 
@@ -33,7 +65,7 @@ proc OsteoPlanInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8.12.1 $} {$Date: 2005/12/20 21:16:06 $}]
+        {$Revision: 1.8.12.2 $} {$Date: 2005/12/20 22:54:38 $}]
 
     # Initialize module-level variables
     set Osteo(pointlabels) 1
@@ -89,7 +121,10 @@ proc OsteoPlanBuildVTK {} {
 
 
 #-------------------------------------------------------------------------------
-# OsteoPlanBuildGUI
+# .PROC OsteoPlanBuildGUI
+# 
+# .ARGS
+# .END
 #-------------------------------------------------------------------------------
 proc OsteoPlanBuildGUI {} {
     global Gui Module OsteoPlan Osteo Volume Model
@@ -311,6 +346,12 @@ proc OsteoPlanBuildGUI {} {
     set Osteo(gui) 1
 }
 
+#-------------------------------------------------------------------------------
+# .PROC OsteoPlanEnter
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc OsteoPlanEnter {} {
     global OsteoPlan Gui
 #   OsteoPlanPushBindings 
@@ -327,6 +368,12 @@ proc OsteoPlanEnter {} {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC OsteoPlanExit
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc OsteoPlanExit {} {
 #    popEventManager
 ###    OsteoPlanPopBindings
@@ -335,7 +382,10 @@ proc OsteoPlanExit {} {
 
 
 #-------------------------------------------------------------------------------
-# OsteoPlanUpdateGUI
+# .PROC OsteoPlanUpdateGUI
+# 
+# .ARGS
+# .END
 #-------------------------------------------------------------------------------
 proc OsteoPlanUpdateGUI {} {
     global Module Osteo Point Model
@@ -349,6 +399,12 @@ proc OsteoPlanUpdateGUI {} {
     
 }
 
+#-------------------------------------------------------------------------------
+# .PROC ResetOsteo
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc ResetOsteo {} {
     global Osteo
 
@@ -364,6 +420,12 @@ proc ResetOsteo {} {
     OsteoPlanBuildVTK
 }
 
+#-------------------------------------------------------------------------------
+# .PROC OsteoApplyCut
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc OsteoApplyCut {} {
     global Osteo Model
 
@@ -450,6 +512,12 @@ proc OsteoApplyCut {} {
     puts "Leaving OsteoApplyCut"
 }
 
+#-------------------------------------------------------------------------------
+# .PROC OsteoUncut
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc OsteoUncut {} {
     global Osteo Model
     
@@ -463,6 +531,12 @@ proc OsteoUncut {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC ExtractComponent
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc ExtractComponent { widget x y } {
     global viewRen Point Model Osteo Module
     
@@ -504,6 +578,12 @@ proc ExtractComponent { widget x y } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC OsteoCopyModel
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc OsteoCopyModel { id pd {name ""} } {
     global OsteoPlan Model Mrml Label
     ### See models.tcl:865
@@ -712,6 +792,12 @@ proc SelectModelMenu { fRoot variable {create 0}} {
 #    ModelsAddGUI $Tabs(Models,fVisibility).fGrid $newID
 #}
 
+#-------------------------------------------------------------------------------
+# .PROC OsteoWriteComponent
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc OsteoWriteComponent {} {
     global OsteoPlan Module Gui Mrml Model Osteo
 
