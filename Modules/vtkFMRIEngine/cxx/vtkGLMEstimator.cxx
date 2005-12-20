@@ -52,6 +52,8 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageViewer.h"
 #include "vtkGLMDetector.h"
 
+#include <fstream>
+
 
 vtkStandardNewMacro(vtkGLMEstimator);
 
@@ -285,8 +287,8 @@ void vtkGLMEstimator::ComputeMeans()
     // grand mean
     this->GrandMean = gt / this->NumberOfInputs;
 }
-
  
+
 void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
 {
     if (this->NumberOfInputs == 0 || this->GetInput(0) == NULL)
@@ -314,7 +316,8 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
     // for each regressor: beta value
     // plus chisq (the sum of squares of the residuals from the best-fit)
     // plus the correlation coefficient at lag 1 generated from error modeling.
-    output->SetNumberOfScalarComponents(noOfRegressors+2);
+    // plus one % signal change for each regressors
+    output->SetNumberOfScalarComponents(noOfRegressors * 2 + 2);
     output->SetDimensions(imgDim[0], imgDim[1], imgDim[2]);
     output->AllocateScalars();
    
@@ -331,12 +334,9 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
     // Use memory allocation for MS Windows VC++ compiler.
     // beta[noOfRegressors] is not allowed by MS Windows VC++ compiler.
     float *beta = new float [noOfRegressors];
-    if (beta == NULL)
-    {
-        vtkErrorMacro( << "Memory allocation failed.");
-        return;
-    }
 
+    // array of % signal change; one for each beta
+    float *pSigChanges = new float [noOfRegressors];
 
     vox = 0;
     vtkDataArray *scalarsInOutput = output->GetPointData()->GetScalars();
@@ -349,27 +349,30 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
             {
                 // Gets time course for this voxel
                 float total = 0.0;
+                float scaledTotal = 0.0;
                 for (int i = 0; i < this->NumberOfInputs; i++)
                 {
                     short *value 
                         = (short *)this->GetInput(i)->GetScalarPointer(ii, jj, kk);
 
                     // time course is scaled by user option
-                    float v = 1.0;
+                    float scale = 1.0;
                     if (this->GlobalEffect == 1)
                     {
-                        v = 100.0 / this->GrandMean;
+                        scale = 100.0 / this->GrandMean;
                     }
                     else if (this->GlobalEffect == 2)
                     {
-                        v = 100.0 / this->GlobalMeans[i];
+                        scale = 100.0 / this->GlobalMeans[i];
                     }
                     else if (this->GlobalEffect == 3)
                     {
-                        v = (100.0 / this->GlobalMeans[i]) * (100.0 / this->GrandMean);
+                        scale = (100.0 / this->GlobalMeans[i]) * (100.0 / this->GrandMean);
                     }
 
-                    tc->SetComponent(i, 0, (v * (*value)));
+                    float v = scale * (*value);
+                    scaledTotal += v;
+                    tc->SetComponent(i, 0, v);
                     total += *value;
                 }   
 
@@ -390,25 +393,43 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
                         ((vtkGLMDetector *)this->Detector)->FitModel( tc, beta, &chisq );
                     }
                      // now have all we need to compute inferences
+
+                    // compute % signal changes for all betas
+                    float mean = scaledTotal / this->NumberOfInputs;
+                    for (int dd = 0; dd < noOfRegressors; dd++)
+                    {
+                        pSigChanges[dd] = 100 * beta[dd] / mean;
+                    }
                 }
                 else
                 {
                     for (int dd = 0; dd < noOfRegressors; dd++)
                     {
                         beta[dd] = 0.0;
+                        pSigChanges[dd] = 0.0;
                         chisq = p = 0.0;
                     }
                 }
        
+                // put values into output volume
                 int yy = 0;
+                // betas
                 for (int dd = 0; dd < noOfRegressors; dd++)
                 {
                     scalarsInOutput->SetComponent(vox, yy++, beta[dd]);
                 }
+                // chisq and p
                 scalarsInOutput->SetComponent(vox, yy++, chisq);
-                scalarsInOutput->SetComponent(vox, yy, p);
+                scalarsInOutput->SetComponent(vox, yy++, p);
+                // % signal changes
+                for (int dd = 0; dd < noOfRegressors; dd++)
+                {
+                    scalarsInOutput->SetComponent(vox, yy++, pSigChanges[dd]);
+                }
+
                 vox++;
 
+                // progress bar update
                 if (!(count%target))
                 {
                     UpdateProgress(count / (100.0*target));
@@ -419,7 +440,8 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
     }
 
     delete [] beta;
- 
+    delete [] pSigChanges;
+
     GeneralLinearModel::Free();
     tc->Delete();
 }
