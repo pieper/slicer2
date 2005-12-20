@@ -55,11 +55,19 @@ public:
     // Description:
     // Returns the indices and intensities of all voxels in the defined ROI, 
     // in the labelmap volumes
-    vtkFloatArray *GetRegionVoxels();
+    vtkFloatArray *GetRegionVoxels() {return this->RegionVoxels;};
 
+    // Description:
+    // Returns the average percent signal changes in the defined ROI 
+    vtkFloatArray *GetPercentSignalChanges() {return this->SignalChanges;};
+
+    // Description:
+    // Sets/gets label
     vtkSetMacro(Label, int);
     vtkGetMacro(Label, int);
 
+    // Description:
+    // Sets/gets voxel count 
     vtkSetMacro(Count, int);
     vtkGetMacro(Count, int);
 
@@ -76,6 +84,8 @@ protected:
 
     int Label;
     int Count;
+
+    vtkFloatArray *SignalChanges;
 };
 
 #endif
