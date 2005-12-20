@@ -386,7 +386,15 @@ set Path(program) $prog
 # .END
 #------------------------------------------------------------------------------- 
 proc SplashRaise {} { 
-    if {[winfo exists .splash]} {
+    # don't raise it if there's an error message up
+    set winlist [winfo children .]
+    if {$::Module(verbose)} {
+        puts "Is there a tk message box up: [lsearch $winlist ".__tk_*"]"
+    }
+    if {[lsearch $winlist ".__tk_*"] != -1} {
+        # message is up, don't raise it now, but try later
+        after 100 "after idle SplashRaise"
+    } elseif {[winfo exists .splash]} {
         raise .splash
 
         # and keep the focus on it so that it captures key presses
@@ -942,7 +950,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.107.2.1 2005/12/20 15:29:48 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.107.2.2 2005/12/20 16:57:02 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
