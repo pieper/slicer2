@@ -181,7 +181,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27 $} {$Date: 2005/09/23 17:30:54 $}]
+        {$Revision: 1.27.2.1 $} {$Date: 2005/12/20 18:42:43 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -604,6 +604,8 @@ proc TransformVolumeRun {} {
     global TransformVolume Volume
     
     $TransformVolume(brun) configure -state disabled
+    #-- accumulate newly created volume nodes
+    set localIDs ""
 
     # get displacement volume
     set TransformVolume(DispVolume) [$TransformVolume(displacementVol) selectedID]
@@ -677,11 +679,12 @@ proc TransformVolumeRun {} {
         }
 
         # get the volume
-        $isv slicer_volume $resVolName $label_map
-        
+        set newID [$isv slicer_volume $resVolName $label_map]
+        lappend localIDs $newID
     }
 
     $TransformVolume(brun) configure -state normal
+    return $localIDs
 
 }
 
