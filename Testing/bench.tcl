@@ -79,4 +79,6 @@ proc bench_run {} {
 
 }
 
-bench_run
+proc bench_summarize {} {
+
+}
