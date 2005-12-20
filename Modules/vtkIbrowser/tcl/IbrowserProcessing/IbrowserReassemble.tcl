@@ -40,6 +40,7 @@
 #   IbrowserCancelReassembleSequence
 #   IbrowserValidReassembleAxis
 #   IbrowserReassembleSequence
+#   IbrowserUpdateReassembleGUI
 #==========================================================================auto=
 
 
@@ -88,6 +89,7 @@ global Gui
     }
 
     set ::Ibrowser(Process,Reassemble,mbIntervals) $f.fSelectInterval.mbIntervals
+    bind $::Ibrowser(Process,Reassemble,mbIntervals) <ButtonPress-1> "IbrowserUpdateReassembleGUI"
     set ::Ibrowser(Process,Reassemble,mIntervals) $f.fSelectInterval.mbIntervals.m
     pack $f.fSelectInterval.lText -pady 2 -padx 2 -anchor w
     pack $f.fSelectInterval.mbIntervals -pady 2 -padx 2 -anchor w
@@ -118,6 +120,26 @@ global Gui
     pack $f.fConfiguration.bApply $f.fConfiguration.bCancel -side top -anchor w -padx 20 -pady 5
     place $f -in $master -relwidth 1.0 -relheight 1.0 -y 0
     
+}
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateReassembleGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserUpdateReassembleGUI { } {
+
+    if { [info exists ::Ibrowser(Process,Reassemble,mIntervals) ] } {
+        set m $::Ibrowser(Process,Reassemble,mIntervals)
+        $m delete 0 end
+        foreach id $::Ibrowser(idList) {
+            $m add command -label $::Ibrowser($id,name)  \
+                -command "IbrowserSetActiveInterval $id"
+        }
+    }
 }
 
 

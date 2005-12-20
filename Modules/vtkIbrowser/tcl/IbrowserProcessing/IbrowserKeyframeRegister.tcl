@@ -52,6 +52,7 @@
 #   IbrowserKeyframeUndoInterpolate
 #   IbrowserKeyframeResetAllTransforms
 #   IbrowserKeyframeDeleteAllTransforms
+#   IbrowserUpdateKeyframeRegisterGUI
 #==========================================================================auto=
 
 
@@ -127,6 +128,7 @@ proc IbrowserBuildKeyframeRegisterGUI { f master } {
 
 
 
+
 #-------------------------------------------------------------------------------
 # .PROC IbrowserBuildKeyframeRegisterKeyframesGUI
 # 
@@ -153,8 +155,9 @@ proc IbrowserBuildKeyframeRegisterKeyframesGUI { nf } {
     }
     TooltipAdd $ff.mbIntervals \
         "Select the interval to keyframe register."
-    set ::Ibrowser(Process,KeyframeRegister,mbIntervals) $ff.mbIntervals
-    set ::Ibrowser(Process,KeyframeRegister,mIntervals) $ff.mbIntervals.m
+    set ::Ibrowser(Process,KeyframeRegister,mbIntervals) $nf.fInput.mbIntervals
+    #bind $::Ibrowser(Process,KeyframeRegister,mbIntervals) <ButtonPress-1> "IbrowserUpdateKeyframeRegisterGUI"
+    set ::Ibrowser(Process,KeyframeRegister,mIntervals) $nf.fInput.mbIntervals.m
     grid $ff.lChooseProcInterval -row 0 -column 0 -pady 1 -padx $::Gui(pad) -sticky e
     grid $ff.mbIntervals -row 0 -column 1 -pady 1 -padx $::Gui(pad) -sticky e
 
@@ -174,8 +177,9 @@ proc IbrowserBuildKeyframeRegisterKeyframesGUI { nf } {
     }
     TooltipAdd $ff.mbReference \
         "Select the reference volume for all keyframes."
-    set ::Ibrowser(Process,KeyframeRegister,mbReference) $ff.mbReference
-    set ::Ibrowser(Process,KeyframeRegister,mReference) $ff.mbReference.m
+    set ::Ibrowser(Process,KeyframeRegister,mbReference) $nf.fInput.mbReference
+    #bind $::Ibrowser(Process,KeyframeRegister,mbReference) <ButtonPress-1> "IbrowserUpdateKeyframeRegisterReference"
+    set ::Ibrowser(Process,KeyframeRegister,mReference) $nf.fInput.mbReference.m
     grid $ff.lReference -row 2 -column 0 -pady 1 -padx $::Gui(pad) -sticky e
     grid $ff.mbReference -row 2 -column 1 -pady 1 -padx $::Gui(pad) -sticky e
 
@@ -238,6 +242,59 @@ proc IbrowserBuildKeyframeRegisterKeyframesGUI { nf } {
     #--- pack notebook frame
     pack $nf.fInput $nf.fKeyframes $nf.fKeyframeList -side top \
         -pady $Gui(pad) -padx $Gui(pad) -fill both        
+}
+
+
+
+
+proc IbrowserUpdateKeyframeRegisterGUI { } {
+
+    if { [info exists ::Ibrowser(Process,KeyframeRegister,mIntervals) ] } {
+        #--- configure interval selection menu
+        set m $::Ibrowser(Process,KeyframeRegister,mIntervals)
+        set mb $::Ibrowser(Process,KeyframeRegister,mbIntervals)
+        set mbR $::Ibrowser(Process,KeyframeRegister,mbReference)
+        $m delete 0 end
+        foreach id $::Ibrowser(idList) {
+            $m add command -label $::Ibrowser($id,name) -command "IbrowserSetActiveInterval $id;
+                     IbrowserProcessingSelectInternalReference none $::Volume(idNone);
+                     $mbR config -text none;
+                     IbrowserKeyframeClearAllKeyframes"
+        }
+    }
+
+}
+
+
+
+proc IbrowserUpdateKeyframeRegisterReference { } {
+
+    if { [info exists ::Ibrowser(Process,KeyframeRegister,mReference) ] } {    
+        #--- configure reference selection menu and menubutton
+        set m $::Ibrowser(Process,KeyframeRegister,mReference)
+        $m delete 0 end
+        set id $::Ibrowser(activeInterval)
+        if { $id == $::Ibrowser(idNone) } {
+            set mb $::Ibrowser(Process,KeyframeRegister,mbReference)
+            $mb configure -text $::Ibrowser(${::Ibrowser(idNone)},name)
+        } else {
+            set mb $::Ibrowser(Process,KeyframeRegister,mbReference)
+            set start $::Ibrowser($::Ibrowser(activeInterval),firstMRMLid)
+            set stop $::Ibrowser($::Ibrowser(activeInterval),lastMRMLid)
+            set count 0
+            #---build selections; all volumes in an interval
+            set vname "none"
+            $m add command -label $vname \
+                -command "IbrowserProcessingSelectInternalReference $vname $::Volume(idNone)"
+            for { set i $start } { $i <= $stop } { incr i } {
+                set vname [ ::Volume($i,node) GetName ]
+                $m add command -label $vname \
+                    -command "IbrowserProcessingSelectInternalReference $vname $i;
+                                         $mb configure -text $vname"
+                incr count
+            }
+        }
+    }
 }
 
 

@@ -38,6 +38,7 @@
 # PROCEDURES:  
 #   IbrowserBuildMotionCorrectGUI
 #   IbrowserMotionCorrectGo
+#   IbrowserUdpateMotionCorrectGUI
 #==========================================================================auto=
 
 
@@ -85,6 +86,7 @@ proc IbrowserBuildMotionCorrectGUI { f master } {
         -command "IbrowserSetActiveInterval $i"
     }
     set ::Ibrowser(Process,MotionCorrect,mbIntervals) $ff.mbIntervals
+    bind $::Ibrowser(Process,MotionCorrect,mbIntervals) <ButtonPress-1> "IbrowserUpdateMotionCorrectGUI"
     set ::Ibrowser(Process,MotionCorrect,mIntervals) $ff.mbIntervals.m
     grid $ff.lChooseProcInterval $ff.mbIntervals -pady 1 -padx $::Gui(pad) -sticky e
     grid $ff.mbIntervals -sticky e
@@ -99,6 +101,7 @@ proc IbrowserBuildMotionCorrectGUI { f master } {
             -command ""
     }
     set ::Ibrowser(Process,MotionCorrect,mbReference) $ff.mbReference
+    bind $::Ibrowser(Process,MotionCorrect,mbReference) <ButtonPress-1> "IbrowserUpdateMotionCorrectReference"
     set ::Ibrowser(Process,MotionCorrect,mReference) $ff.mbReference.m
     grid $ff.lReference $ff.mbReference -pady 1 -padx $::Gui(pad) -sticky e
     grid $ff.mbReference -sticky e
@@ -162,6 +165,61 @@ proc IbrowserBuildMotionCorrectGUI { f master } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateMotionCorrectGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserUpdateMotionCorrectGUI { } {
+
+    if { [info exists ::Ibrowser(Process,MotionCorrect,mIntervals) ] } {
+        #--- configure interval selection menu
+        set m $::Ibrowser(Process,MotionCorrect,mIntervals)
+        set mb $::Ibrowser(Process,MotionCorrect,mbIntervals)
+        set mbR $::Ibrowser(Process,MotionCorrect,mbReference)
+        $m delete 0 end
+        foreach id $::Ibrowser(idList) {
+            $m add command -label $::Ibrowser($id,name)  \
+                -command "IbrowserSetActiveInterval $id;
+                     IbrowserProcessingSelectInternalReference none $::Volume(idNone);
+                     $mbR config -text none"
+        }
+    }
+}
+
+
+
+
+proc IbrowserUpdateMotionCorrectReference { } {
+    
+    if { [info exists ::Ibrowser(Process,MotionCorrect,mReference) ] } {    
+        #--- configure reference selection menu and menubutton
+        set m $::Ibrowser(Process,MotionCorrect,mReference)
+        $m delete 0 end
+        set id $::Ibrowser(activeInterval)
+        if { $id == $::Ibrowser(idNone) } {
+            set mb $::Ibrowser(Process,MotionCorrect,mbReference)
+            $mb configure -text $::Ibrowser(${::Ibrowser(idNone)},name)
+        } else {
+            set mb $::Ibrowser(Process,MotionCorrect,mbReference)
+            set start $::Ibrowser($::Ibrowser(activeInterval),firstMRMLid)
+            set stop $::Ibrowser($::Ibrowser(activeInterval),lastMRMLid)
+            set count 0
+            #---build selections; all volumes in an interval
+            set vname "none"
+            $m add command -label $vname \
+                -command "IbrowserProcessingSelectInternalReference $vname $::Volume(idNone)"
+            for { set i $start } { $i <= $stop } { incr i } {
+                set vname [ ::Volume($i,node) GetName ]
+                $m add command -label $vname \
+                    -command "IbrowserProcessingSelectInternalReference $vname $i;
+                                         $mb configure -text $vname"
+                incr count
+            }
+        }
+    }
+}
 
 
 

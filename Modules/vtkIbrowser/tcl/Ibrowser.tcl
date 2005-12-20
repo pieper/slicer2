@@ -99,7 +99,7 @@ proc IbrowserInit {} {
     #---Set category and version info
     set Module($m,category) "Alpha"
        lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.14.2.2 $} {$Date: 2005/12/19 22:13:41 $}]
+        {$Revision: 1.14.2.3 $} {$Date: 2005/12/20 17:33:40 $}]
 
     #---Initialize module-level variables
     #---Global array with the same name as the module. Ibrowser()
@@ -188,14 +188,13 @@ proc IbrowserInit {} {
     source ${modulePath}IbrowserHelpGUI.tcl    
     source ${modulePath}IbrowserInspectGUI.tcl
     
+    #--- Developers: ADD NEW PROCESSES TO THIS GLOBAL LIST
+    set ::Ibrowser(Process,AllProcesses) "Reorient MotionCorrect Smooth Reassemble KeyframeRegister"
     #--- These contain extra procs for
     #--- IO / processing / visualization
-    #source ${modulePath}IbrowserProcessing/IbrowserProcessingUtils.tcl
-    source ${modulePath}IbrowserProcessing/IbrowserReorient.tcl
-    source ${modulePath}IbrowserProcessing/IbrowserMotionCorrect.tcl
-    source ${modulePath}IbrowserProcessing/IbrowserSmooth.tcl
-    source ${modulePath}IbrowserProcessing/IbrowserKeyframeRegister.tcl
-    source ${modulePath}IbrowserProcessing/IbrowserReassemble.tcl
+    foreach process $::Ibrowser(Process,AllProcesses) {
+        source ${modulePath}IbrowserProcessing/Ibrowser${process}.tcl
+    }
     
     #--- These contain tcl code for the interval controller
     #--- which is launched in proc IbrowserEnter().
@@ -489,7 +488,7 @@ proc IbrowserUpdateMRML { } {
     #--- names of new intervals as they are added by a user.
 
     #--- update menu buttons.
-    foreach process "MotionCorrect KeyframeRegister Smooth Reorient Reassemble" {
+    foreach process $::Ibrowser(Process,AllProcesses) {
         if { [info exists ::Ibrowser(Process,$process,mbIntervals) ] } {
             set name $::Ibrowser(${::Ibrowser(activeInterval)},name)
             $::Ibrowser(Process,$process,mbIntervals) config -text $name
@@ -506,6 +505,7 @@ proc IbrowserUpdateMRML { } {
             }
         }
     }
+    
     #--- not yet implemented
     if { [info exists ::Ibrowser(New,mAssembleSequences) ] } {
         set m $::Ibrowser(New,mAssembleSequences)
@@ -518,103 +518,53 @@ proc IbrowserUpdateMRML { } {
         }
     }
 
-    foreach process "Smooth Reorient Reassemble" {
-        if { [info exists ::Ibrowser(Process,${process},mIntervals) ] } {
-            set m $::Ibrowser(Process,${process},mIntervals)
-            $m delete 0 end
-            foreach id $::Ibrowser(idList) {
-                $m add command -label $::Ibrowser($id,name)  \
-                    -command "IbrowserSetActiveInterval $id"
+
+    #--- infrastructure to manage the KeyframeRegister menubuttons and menus
+    #--- is also in IbrowserKeyframeRegister.tcl, but it doesn't seem to work
+    #--- there; so it's here for now. Every other process manages its own GUI
+    #--- from inside it's own tcl file.
+    if { [info exists ::Ibrowser(Process,KeyframeRegister,mIntervals) ] } {
+        #--- configure interval selection menu
+        set m $::Ibrowser(Process,KeyframeRegister,mIntervals)
+        set mb $::Ibrowser(Process,KeyframeRegister,mbIntervals)
+        set mbR $::Ibrowser(Process,KeyframeRegister,mbReference)
+        $m delete 0 end
+        foreach id $::Ibrowser(idList) {
+            $m add command -label $::Ibrowser($id,name) -command "IbrowserSetActiveInterval $id;
+                     IbrowserProcessingSelectInternalReference none $::Volume(idNone);
+                     $mbR config -text none;
+                     IbrowserKeyframeClearAllKeyframes"
+        }
+    }
+    if { [info exists ::Ibrowser(Process,KeyframeRegister,mReference) ] } {    
+        #--- configure reference selection menu and menubutton
+        set m $::Ibrowser(Process,KeyframeRegister,mReference)
+        $m delete 0 end
+        set id $::Ibrowser(activeInterval)
+        if { $id == $::Ibrowser(idNone) } {
+            set mb $::Ibrowser(Process,KeyframeRegister,mbReference)
+            $mb configure -text $::Ibrowser(${::Ibrowser(idNone)},name)
+        } else {
+            set mb $::Ibrowser(Process,KeyframeRegister,mbReference)
+            set start $::Ibrowser($::Ibrowser(activeInterval),firstMRMLid)
+            set stop $::Ibrowser($::Ibrowser(activeInterval),lastMRMLid)
+            set count 0
+            #---build selections; all volumes in an interval
+            set vname "none"
+            $m add command -label $vname \
+                -command "IbrowserProcessingSelectInternalReference $vname $::Volume(idNone)"
+            for { set i $start } { $i <= $stop } { incr i } {
+                set vname [ ::Volume($i,node) GetName ]
+                $m add command -label $vname \
+                    -command "IbrowserProcessingSelectInternalReference $vname $i;
+                                         $mb configure -text $vname"
+                incr count
             }
         }
     }
 
-    #--- may be more processes someday..."
-    foreach process "MotionCorrect" {
-        if { [info exists ::Ibrowser(Process,${process},mIntervals) ] } {
-            #--- configure interval selection menu
-            set m $::Ibrowser(Process,${process},mIntervals)
-            $m delete 0 end
-            foreach id $::Ibrowser(idList) {
-                $m add command -label $::Ibrowser($id,name)  \
-                    -command "IbrowserSetActiveInterval $id"
-            }
 
-            #--- configure reference selection menu and menubutton
-            set m $::Ibrowser(Process,${process},mReference)
-            $m delete 0 end
-            set id $::Ibrowser(activeInterval)
-            if { $id == $::Ibrowser(idNone) } {
-                set mb $::Ibrowser(Process,${process},mbReference)
-                $mb configure -text $::Ibrowser(${::Ibrowser(idNone)},name)
-            } else {
-                set mb $::Ibrowser(Process,${process},mbReference)
-                #set volnum $::Ibrowser(ViewDrop)
-                #set volID $::Ibrowser($id,$volnum,MRMLid)
-                #set vname [ ::Volume($volID,node) GetName ]
-                #$mb configure -text $vname
-                #$mb configure -text "none"
-                set start $::Ibrowser($::Ibrowser(activeInterval),firstMRMLid)
-                set stop $::Ibrowser($::Ibrowser(activeInterval),lastMRMLid)
-                set count 0
-                #---build selections; all volumes in an interval
-                set vname "none"
-                $m add command -label $vname \
-                    -command "IbrowserProcessingSelectInternalReference $vname $::Volume(idNone)"
-                for { set i $start } { $i <= $stop } { incr i } {
-                    set vname [ ::Volume($i,node) GetName ]
-                    $m add command -label $vname \
-                        -command "IbrowserProcessingSelectInternalReference $vname $i;
-                                         $mb configure -text $vname"
-                    incr count
-                }
-            }
-        }
-    }
 
-    #--- may be more processes someday..."
-    foreach process "KeyframeRegister" {
-        if { [info exists ::Ibrowser(Process,${process},mIntervals) ] } {
-            #--- configure interval selection menu
-            set m $::Ibrowser(Process,${process},mIntervals)
-            $m delete 0 end
-            foreach id $::Ibrowser(idList) {
-                $m add command -label $::Ibrowser($id,name)  \
-                    -command "IbrowserSetActiveInterval $id;
-                                     IbrowserKeyframeClearAllKeyframes"
-            }
-
-            #--- configure reference selection menu and menubutton
-            set m $::Ibrowser(Process,${process},mReference)
-            $m delete 0 end
-            set id $::Ibrowser(activeInterval)
-            if { $id == $::Ibrowser(idNone) } {
-                set mb $::Ibrowser(Process,${process},mbReference)
-                $mb configure -text $::Ibrowser(${::Ibrowser(idNone)},name)
-            } else {
-                set mb $::Ibrowser(Process,${process},mbReference)
-                #set volnum $::Ibrowser(ViewDrop)
-                #set volID $::Ibrowser($id,$volnum,MRMLid)
-                #set vname [ ::Volume($volID,node) GetName ]
-                #$mb configure -text $vname
-                $mb configure -text "none"
-                set start $::Ibrowser($::Ibrowser(activeInterval),firstMRMLid)
-                set stop $::Ibrowser($::Ibrowser(activeInterval),lastMRMLid)
-                set count 0
-                #---build selections; all volumes in an interval
-                set vname "none"
-                $m add command -label $vname \
-                    -command "IbrowserProcessinGSelecdtInternalReference $vname $::Volume(idNone)"
-                for { set i $start } { $i <= $stop } { incr i } {
-                    set vname [ ::Volume($i,node) GetName ]
-                    $m add command -label $vname \
-                        -command "IbrowserProcessingSelectInternalReference $vname $i;
-                                         $mb configure -text $vname"
-                    incr count
-                }
-            }
-        }
-    }    
 }
 
 

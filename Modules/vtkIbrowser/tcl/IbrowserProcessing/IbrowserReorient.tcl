@@ -41,6 +41,7 @@
 #   IbrowserFlipVolumeSequenceLR
 #   IbrowserFlipVolumeSequenceAP
 #   IbrowserFlipVolumeSequenceIS
+#   IbrowserUpdateReorientGUI
 #==========================================================================auto=
 
 
@@ -87,6 +88,7 @@ proc IbrowserBuildReorientGUI { f master } {
             -command "IbrowserSetActiveInterval $i"
     }
     set ::Ibrowser(Process,Reorient,mbIntervals) $f.fSelectInterval.mbIntervals
+    bind $::Ibrowser(Process,Reorient,mbIntervals) <ButtonPress-1> "IbrowserUpdateReorientGUI"
     set ::Ibrowser(Process,Reorient,mIntervals) $f.fSelectInterval.mbIntervals.m
     pack $f.fSelectInterval.lText -pady 2 -padx 2 -anchor w
     pack $f.fSelectInterval.mbIntervals -pady 2 -padx 2 -anchor w
@@ -117,6 +119,24 @@ proc IbrowserBuildReorientGUI { f master } {
 }
 
 
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateReorientGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserUpdateReorientGUI { } {
+
+    if { [info exists ::Ibrowser(Process,Reorient,mIntervals) ] } {
+        set m $::Ibrowser(Process,Reorient,mIntervals)
+        $m delete 0 end
+        foreach id $::Ibrowser(idList) {
+            $m add command -label $::Ibrowser($id,name)  \
+                -command "IbrowserSetActiveInterval $id"
+        }
+    }
+}
 
 
 

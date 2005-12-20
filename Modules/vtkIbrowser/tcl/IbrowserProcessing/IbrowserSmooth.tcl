@@ -37,6 +37,7 @@
 # FILE:        IbrowserSmooth.tcl
 # PROCEDURES:  
 #   IbrowserCancelSmoothSequence
+#   IbrowserUpdateSmoothGUI
 #==========================================================================auto=
 
 proc IbrowserBuildSmoothGUI { f master } {
@@ -80,8 +81,10 @@ proc IbrowserBuildSmoothGUI { f master } {
             -command "IbrowserSetActiveInterval $i"
     }
 
-    set ::Ibrowser(Process,Smooth,mbIntervals) $f.fSelectInterval.mbIntervals
     set ::Ibrowser(Process,Smooth,mIntervals) $f.fSelectInterval.mbIntervals.m
+    set ::Ibrowser(Process,Smooth,mbIntervals) $f.fSelectInterval.mbIntervals
+    bind $::Ibrowser(Process,Smooth,mbIntervals) <ButtonPress-1> "IbrowserUpdateSmoothGUI"
+    
     pack $f.fSelectInterval.lText -pady 2 -padx 2 -anchor w
     pack $f.fSelectInterval.mbIntervals -pady 2 -padx 2 -anchor w
     
@@ -119,6 +122,28 @@ proc IbrowserBuildSmoothGUI { f master } {
     
     place $f -in $master -relwidth 1.0 -relheight 1.0 -y 0
 }
+
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateSmoothGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserUpdateSmoothGUI { } {
+
+    if { [info exists ::Ibrowser(Process,Smooth,mIntervals) ] } {
+        set m $::Ibrowser(Process,Smooth,mIntervals)
+        $m delete 0 end
+        foreach id $::Ibrowser(idList) {
+            $m add command -label $::Ibrowser($id,name)  \
+                -command "IbrowserSetActiveInterval $id"
+        }
+    }
+}
+
 
 
 #-------------------------------------------------------------------------------
