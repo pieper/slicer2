@@ -91,7 +91,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.60.2.1 $} {$Date: 2005/12/16 17:15:35 $}]
+        {$Revision: 1.60.2.2 $} {$Date: 2005/12/20 07:29:22 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -711,7 +711,7 @@ proc ModelMakerWrite {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc ModelMakerWriteAll {} {
+proc ModelMakerWriteAll { {prefix ""} } {
     global ModelMaker Model
 
     if {$::Module(verbose)} {
@@ -719,11 +719,15 @@ proc ModelMakerWriteAll {} {
     }
     # set the prefix, will append the model name to it
     # set ModelMaker(prefix) [MainFileSaveModel $m $ModelMaker(prefix)]
+    if {$prefix != "" } {
+    set ModelMaker(prefix) $prefix
+    } else {
     set ModelMaker(prefix) [tk_chooseDirectory \
                                 -initialdir $::env(SLICER_HOME) \
                                 -mustexist true \
                                 -title "Select Directory In Which To Save Model Files" \
                                 -parent .tMain ]
+    }
     if {$ModelMaker(prefix) == ""} {
         if {$::Module(verbose)} { puts "ModelMakeWrite: empty prefix for model $m" }
         return
@@ -973,7 +977,7 @@ $ModelMaker(n,mcubes) polygons reduced to $ModelMaker(n,decimator)."
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc ModelMakerCreateAll {} {
+proc ModelMakerCreateAll {{AskSureFlag 1}} {
     global Model ModelMaker Label Module Gui
 
     set numModels 0
@@ -1023,11 +1027,13 @@ proc ModelMakerCreateAll {} {
         set lastLabel $ModelMaker(endLabel)
     }
 
+    if {$AskSureFlag} { 
     set sure [tk_messageBox -type yesno -message "About to create models from labels $startLabel to $lastLabel out of volume $volid, are you sure?"]
     if {$sure == "no"} {
         DevInfoWindow "Aborting model creation..."
         $ModelMaker(bCreateAll) config -state normal
         return
+    }
     }
 
     # calculate the histogram, how many of each label
