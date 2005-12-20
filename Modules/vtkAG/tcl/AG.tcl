@@ -172,7 +172,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.16 $} {$Date: 2005/11/26 17:22:43 $}]
+        {$Revision: 1.17 $} {$Date: 2005/12/20 09:50:54 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -200,7 +200,8 @@ proc AGInit {} {
    
     set AG(Linear)    "1"
     set AG(Warp)      "1"
-    set AG(Verbose)  "2"
+    # It is not necessary to see all the information
+    set AG(Verbose)   "0"
     set AG(Scale)    "-1"
     set AG(2D)        "0"
     
@@ -711,7 +712,7 @@ proc AGBuildExpertFrame {} {
     set AG(mbLR) $f.mbLR
     set m $AG(mbLR).m
    foreach v "{translation} {rigid group} {similarity group} {affine group}" {
-       $m add command -label $v -command "ModifyOption LinearRegistration {$v}"
+       $m add command -label $v -command "ModifyOptions LinearRegistration {$v}"
    }
     TooltipAdd $f.mbLR "Choose how to restrict linear registration." 
     #pack $f.lLR $f.mbLR  -padx $Gui(pad) -side left -anchor w   
@@ -727,7 +728,7 @@ proc AGBuildExpertFrame {} {
     set AG(mbWarp) $f.mbWarp
     set m $AG(mbWarp).m
    foreach v "{demons} {optical flow}" {
-       $m add command -label $v -command "ModifyOption Warp {$v}"
+       $m add command -label $v -command "ModifyOptions Warp {$v}"
    }
     TooltipAdd $f.mbWarp "Choose how to warp." 
     #pack $f.lWarp $f.mbWarp -after $f.lLR  -padx $Gui(pad) -side left -anchor w   
@@ -742,7 +743,7 @@ proc AGBuildExpertFrame {} {
     set AG(mbIntensityTFM) $f.mbIntensityTFM
     set m $AG(mbIntensityTFM).m
    foreach v "{mono functional} {piecewise median} {no intensity transform}" {
-       $m add command -label $v -command "ModifyOption IntensityTFM {$v}"
+       $m add command -label $v -command "ModifyOptions IntensityTFM {$v}"
    }
     TooltipAdd $f.mbIntensityTFM "Choose intensity transform typehow."  
     grid $f.lIntensityTFM $f.mbIntensityTFM   -pady 2 -padx $Gui(pad) -sticky w
@@ -756,7 +757,7 @@ proc AGBuildExpertFrame {} {
     set AG(mbCriterion) $f.mbCriterion
     set m $AG(mbCriterion).m
    foreach v "{GCR L1 norm} {GCR L2 norm} {Correlation} {mutual information}" {
-       $m add command -label $v -command "ModifyOption Criterion {$v}"
+       $m add command -label $v -command "ModifyOptions Criterion {$v}"
    }
     TooltipAdd $f.mbCriterion "Choose the criterion." 
     grid $f.lCriterion $f.mbCriterion   -pady 2 -padx $Gui(pad) -sticky w
@@ -811,7 +812,7 @@ proc AGBuildExpertFrame {} {
   #  set AG(mbVerbose) $f.mbVerbose
   #  set m $AG(mbVerbose).m
   # foreach v "0 1 2" {
-  #     $m add command -label $v -command "ModifyOption Verbose {$v}"
+  #     $m add command -label $v -command "ModifyOptions Verbose {$v}"
   # }
   #  TooltipAdd $f.mbVerbose "Choose the Verbose." 
   #  grid $f.lVerbose $f.mbVerbose   -pady 2 -padx $Gui(pad) -sticky w
@@ -1465,11 +1466,11 @@ proc AGReadHomogeneousOriginal {t filename} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc AGWriteHomogeneous {t } {
+proc AGWriteHomogeneous {t fileid} {
     global AG
     
-    puts " Start to save homogeneous Transform"
-    #puts $fileid "Homogeneous Transform\n"
+    puts " Start to save homogeneous Transform $fileid"
+    # puts $fileid "Homogeneous Transform\n"
 
     set str ""
     set m [DataAddTransform 1 0 0]
@@ -1523,10 +1524,11 @@ proc AGWriteHomogeneous {t } {
         set one_element [wldtfm GetElement $i $j]
     #    $matout SetElement $i $j $one_element
         set str "$str $one_element"
-            if {$fileid!=-1} {puts $fileid  "  $one_element "}
+    if {$fileid!=-1} {puts $fileid  "  $one_element "}
     }
     if {$fileid!=-1} {puts $fileid "\n"}
     }
+    close $fileid 
     # Add a transform to the slicer.
     puts " m is $m"
     puts " str is ---$str"
@@ -1534,7 +1536,6 @@ proc AGWriteHomogeneous {t } {
     MainUpdateMRML
     DevInfoWindow "Matrix $m generated."
 } 
-
 
 #-------------------------------------------------------------------------------
 # .PROC AGReadGrid
@@ -1804,6 +1805,65 @@ proc AGWriteTransform {gt flag it FileName} {
     WriteIntensityTransform $it  $fileid
     }
     close $fileid
+}
+
+#-------------------------------------------------------------------------------
+# .PROC AGThresholdedResampledData
+# Compares the max and min values of the Original and resampled Data and defines Output in such a way that it is like ResampledData 
+# but in the same scalar range as OriginalData
+#
+# .ARGS
+# vtkImageData Source
+# vtkImageData Target
+# vtkImageData Output
+# .END
+#-------------------------------------------------------------------------------
+    
+proc AGThresholdedOutput { OriginalData ResampledData Output } {
+
+    vtkImageAccumulate ia
+    ia SetInput $OriginalData
+    ia Update
+    set InputMin [lindex [ia GetMin] 0]
+    set InputMax [lindex [ia GetMax] 0]
+
+    ia SetInput $ResampledData 
+    ia Update
+    set OutputMin [lindex [ia GetMin] 0]
+    set OutputMax [lindex [ia GetMax] 0]
+
+    ia Delete
+
+    set CurrentOutput $ResampledData  
+
+    if {$InputMin  > $OutputMin} {
+    puts "AGThresholdedOutput: Change lower scalar value of data from $OutputMin to $InputMin"
+    vtkImageThreshold lowerThr
+               lowerThr SetInput $CurrentOutput 
+               lowerThr ThresholdByLower $InputMin
+           lowerThr SetInValue $InputMin
+               lowerThr ReplaceOutOff 
+    lowerThr Update
+    set CurrentOutput [lowerThr GetOutput]
+    }
+
+    if {$InputMax  < $OutputMax} {
+    puts "AGThresholdedOutput: Change upper scalar value of data from $OutputMax to $InputMax"
+    vtkImageThreshold upperThr
+               upperThr SetInput $CurrentOutput 
+               upperThr ThresholdByUpper $InputMax
+           upperThr SetInValue $InputMax
+               upperThr ReplaceOutOff 
+    upperThr Update
+    set CurrentOutput [upperThr GetOutput]
+    }
+
+
+    $Output  DeepCopy  $CurrentOutput
+    $CurrentOutput Update
+
+    catch {lowerThr Delete}
+    catch {upperThr Delete}
 }
 
 #-------------------------------------------------------------------------------
@@ -2714,6 +2774,66 @@ proc AGPreprocess {Source Target SourceVol TargetVol} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC AGThresholdedResampledData
+# Compares the max and min values of the Original and resampled Data and defines Output in such a way that it is like ResampledData 
+# but in the same scalar range as OriginalData
+#
+# .ARGS
+# vtkImageData Source
+# vtkImageData Target
+# vtkImageData Output
+# .END
+#-------------------------------------------------------------------------------
+    
+proc AGThresholdedOutput { OriginalData ResampledData Output } {
+
+    vtkImageAccumulate ia
+    ia SetInput $OriginalData
+    ia Update
+    set InputMin [lindex [ia GetMin] 0]
+    set InputMax [lindex [ia GetMax] 0]
+
+    ia SetInput $ResampledData 
+    ia Update
+    set OutputMin [lindex [ia GetMin] 0]
+    set OutputMax [lindex [ia GetMax] 0]
+
+    ia Delete
+
+    set CurrentOutput $ResampledData  
+
+    if {$InputMin  > $OutputMin} {
+    puts "AGThresholdedOutput: Change lower scalar value of data from $OutputMin to $InputMin"
+    vtkImageThreshold lowerThr
+               lowerThr SetInput $CurrentOutput 
+               lowerThr ThresholdByLower $InputMin
+           lowerThr SetInValue $InputMin
+               lowerThr ReplaceOutOff 
+    lowerThr Update
+    set CurrentOutput [lowerThr GetOutput]
+    }
+
+    if {$InputMax  < $OutputMax} {
+    puts "AGThresholdedOutput: Change upper scalar value of data from $OutputMax to $InputMax"
+    vtkImageThreshold upperThr
+               upperThr SetInput $CurrentOutput 
+               upperThr ThresholdByUpper $InputMax
+           upperThr SetInValue $InputMax
+               upperThr ReplaceOutOff 
+    upperThr Update
+    set CurrentOutput [upperThr GetOutput]
+    }
+
+
+    $Output  DeepCopy  $CurrentOutput
+    $CurrentOutput Update
+
+    catch {lowerThr Delete}
+    catch {upperThr Delete}
+}
+
+
+#-------------------------------------------------------------------------------
 # .PROC AGResample
 # .Resample a new source according to the target and the transform saved i
 # AG(Transform).
@@ -2751,27 +2871,25 @@ proc AGResample {Source Target Resampled} {
   }     else {
       Cast SetOutputScalarType [$Source GetScalarType]
   }
-  
-  catch "ITrans Delete"
-  vtkImageTransformIntensity ITrans
-
-  ITrans SetInput [Cast GetOutput]
-  
-  if  {$ResampleOptions(intens) == 1 } {
-      if {$AG(Warp)} {
-        ITrans SetIntensityTransform $AG(tfm)
-      }
-  }
-
+ 
   catch "Reslicer Delete"
-  if {$ResampleOptions(tensors) == 0} {
-     
+  if {$ResampleOptions(tensors) == 0} {     
       vtkImageReslice Reslicer
   } else {
       vtkImageResliceST Reslicer
   }
 
-  Reslicer SetInput [ITrans GetOutput]
+  if {($ResampleOptions(intens) == 1) && $AG(Warp)} {
+      catch "ITrans Delete"
+      vtkImageTransformIntensity ITrans
+      ITrans SetInput [Cast GetOutput]
+      ITrans SetIntensityTransform $AG(tfm)
+
+      Reslicer SetInput [ITrans GetOutput]
+  } else {
+      Reslicer SetInput [Cast GetOutput]      
+  }
+
   Reslicer SetInterpolationMode $ResampleOptions(interp)
 
 # Should it be this way, or inverse in the other way?     
@@ -2852,9 +2970,9 @@ proc AGResample {Source Target Resampled} {
   #if { ($AG(InputVolSource2) == $Volume(idNone)) || ($AG(InputVolTarget2) == $Volume(idNone)) }  {     
   #   Reslicer UnRegisterAllOutputs
   #}
+  catch {ITrans Delete}
   Reslicer Delete
-  
-  ITrans Delete
+
 }
 
 
@@ -3111,59 +3229,62 @@ proc AGNormalize { SourceImage TargetImage NormalizedSource SourceScanOrder Targ
 
     [reslice GetOutput]  SetOrigin 0 0 0
 
-    $NormalizedSource DeepCopy  [reslice GetOutput]
-  
+    # vtkImageReslice with Cubic Interpolation can produce volumes with negative values even though 
+    # input does not have any. The following insures that this does not happen 
+    AGThresholdedOutput [changeinfo GetOutput] [reslice GetOutput] $NormalizedSource 
     $NormalizedSource SetUpdateExtentToWholeExtent
   
     if {$AG(Debug) == 1} {
 
-    set scalar_range [[reslice GetOutput] GetScalarRange]
-    puts "Resclier's scalar range is : $scalar_range"
+      set scalar_range [[reslice GetOutput] GetScalarRange]
+      puts "Resclier's scalar range is : $scalar_range"
+        
+  
+      set DataType [[reslice GetOutput] GetDataObjectType]
+      puts " Reliscer output, data type is $DataType"
+  
+      set dim_arr [[reslice GetOutput] GetDimensions]
+  
+      puts " Reliscer output, dimensions:$dim_arr"
+        
+     
+      set origin_arr [[reslice GetOutput] GetOrigin]
+  
+      puts " Reliscer output, origin : $origin_arr"
+        
+      #set {extent_1 extent_2 extent_3 extent_4 extent_5 extent_6} [[reslice GetOutput] GetExtent]
+  
+      set extent_arr [[reslice GetOutput] GetExtent]
+  
+  
+  
+      #parray extent_arr
+      puts " Reliscer output, extent:$extent_arr"
       
-
-    set DataType [[reslice GetOutput] GetDataObjectType]
-    puts " Reliscer output, data type is $DataType"
-
-    set dim_arr [[reslice GetOutput] GetDimensions]
-
-    puts " Reliscer output, dimensions:$dim_arr"
+  
+      set spacing_arr [[reslice GetOutput] GetSpacing]
       
-   
-    set origin_arr [[reslice GetOutput] GetOrigin]
-
-    puts " Reliscer output, origin : $origin_arr"
+  
+  
+      #parray extent_arr
+      puts " Reliscer output, spacings:$spacing_arr"
       
-    #set {extent_1 extent_2 extent_3 extent_4 extent_5 extent_6} [[reslice GetOutput] GetExtent]
-
-    set extent_arr [[reslice GetOutput] GetExtent]
-
-
-
-    #parray extent_arr
-    puts " Reliscer output, extent:$extent_arr"
-    
-
-    set spacing_arr [[reslice GetOutput] GetSpacing]
-    
-
-
-    #parray extent_arr
-    puts " Reliscer output, spacings:$spacing_arr"
-    
-    
       
-    
-    set ScalarSize [[reslice GetOutput] GetScalarSize]
-    puts " Reliscer output, ScalarSize is $ScalarSize"
+        
       
-    set ScalarType [[reslice GetOutput] GetScalarTypeAsString]
-    puts " Reliscer output, ScalarType is $ScalarType"
-    
-    set ScalarComponents [[reslice GetOutput] GetNumberOfScalarComponents]
-    puts " Reliscer output,  $ScalarComponents  scalar comonents."
+      set ScalarSize [[reslice GetOutput] GetScalarSize]
+      puts " Reliscer output, ScalarSize is $ScalarSize"
+        
+      set ScalarType [[reslice GetOutput] GetScalarTypeAsString]
+      puts " Reliscer output, ScalarType is $ScalarType"
+      
+      set ScalarComponents [[reslice GetOutput] GetNumberOfScalarComponents]
+      puts " Reliscer output,  $ScalarComponents  scalar comonents."
 
     }
-    #reslice UnRegisterAllOutputs
+
+    xform Delete
+    changeinfo Delete
     reslice Delete
 }
 
@@ -3527,8 +3648,12 @@ proc AGCreateLinMat {} {
         set int_H [$t IsA vtkHomogeneousTransform]
         if { ($int_H != 0) && !$done} {
             set done 1
-        #AGRegWriteHomogeneous creates the matrix
-        AGWriteHomogeneous $t $i -1 
+
+        set fname [tk_getSaveFile -defaultextension ".txt" -title "File to save linear transform"]
+        set fileid [ open $fname w ]
+        puts "fileid is $fileid"
+
+            AGWriteHomogeneous $t $fileid
         }
     }
     if {!$done} {
