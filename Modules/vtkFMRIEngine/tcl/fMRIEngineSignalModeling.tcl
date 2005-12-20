@@ -1897,7 +1897,7 @@ proc fMRIEngineUpdateProgressText {} {
     # part is for glm. Each part has 100 steps. When the count reachs 100, it 
     # means computing means is done and then we update the progress text for 
     # glm computing.
-    if {$fMRIEngine(progressCount) == 100} {
+    if {$fMRIEngine(progressCount) == 100 && $Gui(progressText) != $fMRIEngine(glmProgressText)} {
         puts "...done"
         set Gui(progressText) $fMRIEngine(glmProgressText) 
         puts $Gui(progressText)
@@ -1984,14 +1984,17 @@ proc fMRIEngineFitModel {} {
     fMRIEngine(actEstimator) SetGlobalEffect $op 
 
     # adds progress bar
-    set Gui(progressText) "Performing intensity normalization..."
-    puts $Gui(progressText)
-
     if {$fMRIEngine(curRunForModelFitting) == "concatenated"} {
         set fMRIEngine(glmProgressText) "Estimating all runs..."
     } else {
         set fMRIEngine(glmProgressText) "Estimating run$fMRIEngine(curRunForModelFitting); may take awhile..."
     }
+    if {$op > 0} {
+        set Gui(progressText) "Performing intensity normalization..."
+    } else {
+        set Gui(progressText) $fMRIEngine(glmProgressText)
+    }
+    puts $Gui(progressText)
 
     # set up observers for progress event 
     set obs1 [fMRIEngine(actEstimator) AddObserver StartEvent MainStartProgress]
