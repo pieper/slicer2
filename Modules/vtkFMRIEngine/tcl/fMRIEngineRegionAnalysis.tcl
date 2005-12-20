@@ -1339,7 +1339,7 @@ proc fMRIEngineSaveRegionVoxels {} {
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEnginePrepareForRegionStats {} {
-    global fMRIEngine Volume Slice
+    global fMRIEngine fMRIModelView Volume Slice
 
     set n $Volume(idNone)
     set tId $n 
@@ -1371,13 +1371,31 @@ proc fMRIEnginePrepareForRegionStats {} {
 
     fMRIEngine(actROIStats) AddInput [Volume($lId,vol) GetOutput]
     fMRIEngine(actROIStats) AddInput [Volume($tId,vol) GetOutput]
+    fMRIEngine(actROIStats) AddInput $fMRIEngine(actBetaVolume) 
     fMRIEngine(actROIStats) SetLabel 16 
     fMRIEngine(actROIStats) Update 
 
     set count [fMRIEngine(actROIStats) GetCount] 
+
     if {$count == 0} {
         DevErrorWindow "No label has been selected."
         return 1
+    }
+
+    set fMRIEngine(roiStatsOutput) [fMRIEngine(actROIStats) GetOutput] 
+ 
+    # average % signal changes from defined ROI; one for each ev
+    set percent [fMRIEngine(actROIStats) GetPercentSignalChanges] 
+
+    set vector $fMRIEngine($tId,contrastVector)
+    set names $fMRIModelView(Design,evNames)
+    set index 0
+    foreach v $vector n $names {
+        if {$v != 0} {
+            set p [$percent GetComponent $index 0]
+            set fMRIEngine($n,signalChange) $p
+        }
+        incr index
     }
 
     return 0
@@ -1391,7 +1409,7 @@ proc fMRIEnginePrepareForRegionStats {} {
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineShowRegionStats {} {
-    global fMRIEngine Volume Slice
+    global fMRIEngine fMRIModelView Volume Slice
 
     set r [fMRIEnginePrepareForRegionStats]
     # if error, return
@@ -1399,11 +1417,10 @@ proc fMRIEngineShowRegionStats {} {
         return 1
     }
 
+
     if {[info exists fMRIEngine(regionStatsToplevel)]} {
         fMRIEngineCloseRegionStatsWindow
     }
-
-    set input [fMRIEngine(actROIStats) GetOutput] 
 
     # Create the GUI, i.e. two Tk image viewer, one for the image
     # the other for the histogram, and a slice slider
@@ -1431,10 +1448,7 @@ proc fMRIEngineShowRegionStats {} {
     pack $w.f1 $w.f2 -side left -padx 5 -pady 5 -fill both -expand t
 
     # Create the histogram widget
-    fMRIEngineCreateHistogram $w.f1 600 400 $input
-
-    # compute signal change
-    fMRIEngineComputeSignalChange
+    fMRIEngineCreateHistogram $w.f1 600 400 
 
     # show region stats
     if {$fMRIEngine(thresholdingOption) == "uncorrected"} {
@@ -1473,10 +1487,14 @@ proc fMRIEngineShowRegionStats {} {
         6,1 $w.f2.lSDVal -fill x -padx 5 -pady 1 -anchor w 
 
     set c 7
-    foreach ev $fMRIEngine(allConditionEVs) {
-        if {$ev != "baseline"} {
-            label $w.f2.l$ev -text "Signal change:\n($ev)"
-            eval {label $w.f2.lv$ev -textvariable fMRIEngine($ev,signalChange)} 
+    foreach ev $fMRIModelView(Design,evNames) {
+        if {[info exists fMRIEngine($ev,signalChange)] && $fMRIEngine($ev,signalChange) != ""} {
+            set ev2 $ev
+            regsub -all {\.} $ev _ ev 
+            set sc [format "%.2f" $fMRIEngine($ev2,signalChange)]
+            label $w.f2.l$ev -text "Signal change:\n($ev2)"
+            set sc "$sc %" 
+            eval {label $w.f2.lv$ev -text $sc} 
 
             blt::table $w.f2 \
                 $c,0 $w.f2.l$ev -padx 1 -pady 1 -anchor e \
@@ -1530,24 +1548,18 @@ proc fMRIEngineComputeSignalChange {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc fMRIEngineCreateHistogram {parent {width 350} {height 250} input} {
+proc fMRIEngineCreateHistogram {parent {width 350} {height 250}} {
     global fMRIEngine
+
+    set input $fMRIEngine(roiStatsOutput) 
+    set dim [$input GetDimensions]
 
     set extent [$input GetWholeExtent] 
     scan $extent "%d %d %d %d %d %d" x1 x2 y1 y2 z1 z2
 
-    # manually get min and max in the input valume
-    set minX 1000000.0
-    set maxX -1000000.0
-    for {set i $x1} {$i <= $x2} {incr i} {
-        set v [$input GetScalarComponentAsDouble $i 0 0 0]
-        if {$v > $maxX} {
-            set maxX $v
-        }
-        if {$v < $minX} {
-            set minX $v
-        }
-    }
+    set range [$input GetScalarRange]
+    set minX [lindex $range 0]
+    set maxX [lindex $range 1]
 
     # set numBins [expr $width / 2]
     set numBins 100 
