@@ -140,7 +140,6 @@ proc Usage { {msg ""} } {
     set msg "$msg\n   --no-threads : disables multi threading"
     set msg "$msg\n   --no-tkcon : disables tk console"
     set msg "$msg\n   --load-dicom <dir> : read dicom files from <dir>"
-    set msg "$msg\n   --load-analyze <file.hdr> : read analyze file from <file.hdr>"
     set msg "$msg\n   --load-freesurfer-volume <COR-.info> : read freesurfer files"
     set msg "$msg\n   --load-freesurfer-label-volume <COR-.info> : read freesurfer label files"
     set msg "$msg\n   --load-freesurfer-model <file> : read freesurfer model file"
@@ -170,7 +169,6 @@ set ::SLICER(load-dicom) ""
 set ::SLICER(crystal-eyes-stereo) "false"
 set ::SLICER(old-voxel-shift) "false"
 set ::SLICER(immediate-mode) "false"
-set ::SLICER(load-analyze) ""
 set ::SLICER(load-freesurfer-volume) ""
 set ::SLICER(load-freesurfer-label-volume) ""
 set ::SLICER(load-freesurfer-model) ""
@@ -221,14 +219,6 @@ for {set i 0} {$i < $argc} {incr i} {
                 } else {
                     lappend ::SLICER(load-dicom) $dicomarg
                 }
-            }
-        }
-        "--load-analyze" {
-            incr i
-            if { $i == $argc } {
-                Usage "missing argument for $a\n"
-            } else {
-                lappend ::SLICER(load-analyze) [lindex $argv $i]
             }
         }
         "--load-freesurfer-volume" {
@@ -952,7 +942,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.107 2005/12/06 23:48:22 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.107.2.1 2005/12/20 15:29:48 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
@@ -979,19 +969,6 @@ __vtkVersionInstance Delete
 #
 foreach arg $::SLICER(load-dicom) {
     DICOMLoadStudy $arg
-}
-
-#
-# read analyze volumes specified on command line
-#
-foreach arg $::SLICER(load-analyze) {
-    if { [catch "package require vtkCISGFile"] } {
-        DevErrorWindow "vtkCISGFile Module required for --load-analyze option."
-        break
-    }
-    set ::Volume(VolAnalyze,FileName) $arg
-    set ::Volume(name) [file root [file tail $arg]]
-    VolAnalyzeApply
 }
 
 #
