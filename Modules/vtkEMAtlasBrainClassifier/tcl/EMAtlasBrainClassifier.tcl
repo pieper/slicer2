@@ -106,7 +106,7 @@ proc EMAtlasBrainClassifierInit {} {
    set Module($m,depend) ""
 
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.26.2.1 $} {$Date: 2005/12/20 09:36:34 $}]
+       {$Revision: 1.26.2.2 $} {$Date: 2005/12/20 20:12:44 $}]
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
     set EMAtlasBrainClassifier(Volume,T2W)  $Volume(idNone)
@@ -474,6 +474,11 @@ proc EMAtlasBrainClassifierDefineNodeAttributeList {MrmlNodeType} {
     set SetListLower ""
     set AttributeList ""
     set InitList ""
+
+    if {[info command vtkMrml${MrmlNodeType}Node] == ""} {
+        DevErrorWindow "EMAtlasBrainClassifier: error, no node of type vtkMrml${MrmlNodeType}Node defined.\nModule vtkEMLocalSegment may not have loaded properly."
+        return ""
+    }
 
     vtkMrml${MrmlNodeType}Node blub
     set nMethods [blub ListMethods]
