@@ -39,9 +39,10 @@
 #   MeasureInit
 #   Test event W X Y x y t
 #   MeasureBuildGUI
-#   TopFrameBuildGUI
+#   MeasureTopFrameBuildGUI
 #   MeasureSetCsysVisibility
-#   MiddleFrameBuildGUI
+#   MeasureMiddleFrameBuildGUI
+#   MeasureBottomFrameBuildGUI
 #   BuildModelSelector fRoot
 #   UpdateModelSelector fRoot
 #   SelectModel  fRoot id
@@ -110,7 +111,7 @@ proc MeasureInit {} {
     
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.25 $} {$Date: 2005/11/25 21:30:37 $}]
+        {$Revision: 1.25.2.1 $} {$Date: 2005/12/20 20:27:39 $}]
     
     # Initialize module-level variables
     #    set Measure(Model1) $Model(idNone)
@@ -305,26 +306,30 @@ NOTE: None of the slicer measurement tools have been validated...the results may
     #-----------------------------------------
     # Measure->Top frame
     #-----------------------------------------
-    TopFrameBuildGUI
+    MeasureTopFrameBuildGUI
     
     #-----------------------------------------
     # Measure->Middle frame
     #-----------------------------------------    
     #    SelectModelGUI $f 1
-    MiddleFrameBuildGUI
+    MeasureMiddleFrameBuildGUI
     #    DevAddSelectButton Measure $f Model1 "Models:" Grid
     #    lappend Model(mbActiveList) $f.mbModel1
     #    lappend Model(mActiveList) $f.mbModel1.m
     
+    #-----------------------------------------
+    # Measure->Bottom frame
+    #-----------------------------------------    
+    MeasureBottomFrameBuildGUI
 }
 
 #-------------------------------------------------------------------------------
-# .PROC TopFrameBuildGUI
+# .PROC MeasureTopFrameBuildGUI
 # Build the top frame of the Measure module's gui.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc TopFrameBuildGUI {} {
+proc MeasureTopFrameBuildGUI {} {
     global Module Gui Measure
     
     set f $Module(Measure,fMeasure).fTop
@@ -384,16 +389,29 @@ proc MeasureSetCsysVisibility {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MiddleFrameBuildGUI
+# .PROC MeasureMiddleFrameBuildGUI
 # Build the middle frame of the Measure module's gui.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MiddleFrameBuildGUI {} {
+proc MeasureMiddleFrameBuildGUI {} {
     global Module
 
     BuildModelSelector $Module(Measure,fMeasure)
     #    UpdateModelSelector $Module(Measure,fMeasure).fSelModel.mb.m 1
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MeasureBottomFrameBuildGUI
+# Add a fiducials interface here
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MeasureBottomFrameBuildGUI {} {
+    global Module
+
+    set f $Module(Measure,fMeasure).fBottom
+    FiducialsAddActiveListFrame $f 275 10
 }
 
 #-------------------------------------------------------------------------------
