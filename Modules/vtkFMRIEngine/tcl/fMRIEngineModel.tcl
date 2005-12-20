@@ -292,9 +292,6 @@ proc fMRIEngineViewModel {} {
                 set ev [$fMRIEngine(evsListBox) get $i] 
                 if {$ev != ""} {
                     set found [string first $v $ev 0] 
-                    puts $v
-                    puts $ev
-                    puts $found
                     if {$found >= 0} {
                         break
                     }
