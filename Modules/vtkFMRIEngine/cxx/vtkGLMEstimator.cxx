@@ -52,7 +52,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageViewer.h"
 #include "vtkGLMDetector.h"
 
-#include <fstream>
 
 
 vtkStandardNewMacro(vtkGLMEstimator);
