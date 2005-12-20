@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Developer.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:43 $
-#   Version:   $Revision: 1.51.2.2 $
+#   Date:      $Date: 2005/12/20 22:56:51 $
+#   Version:   $Revision: 1.51.2.3 $
 # 
 #===============================================================================
 # FILE:        Developer.tcl
@@ -665,11 +665,15 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
     ############################################################
     
     if { $DefaultExt != ""} {
-        set typelist \
-            ""
-        foreach de $DefaultExt {
-            append typelist " \{\"$de Files\" \{\*.$de\}\}"
-        } 
+        set ext_list ""
+        foreach ext $DefaultExt {
+            if { ![string match .* $ext] } {
+                lappend ext_list .$ext
+            } else {
+                lappend ext_list $ext
+            }
+        }
+        set typelist [list [list Files $ext_list]]
         append typelist " \{\"All Files\" \{\*\}\}"
     } else {
         set typelist {{"All Files" {*}}}
