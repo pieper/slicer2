@@ -33,7 +33,7 @@ proc OsteoPlanInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8 $} {$Date: 2004/04/13 21:00:09 $}]
+        {$Revision: 1.8.12.1 $} {$Date: 2005/12/20 21:16:06 $}]
 
     # Initialize module-level variables
     set Osteo(pointlabels) 1
@@ -127,9 +127,10 @@ proc OsteoPlanBuildGUI {} {
     set c { menu $f1.mbPoints.m -tearoff 0 $Gui(WMA) -postcommand \
         {} }
     eval [subst $c]
-    foreach item { Update Import Export } {
-    $f1.mbPoints.m add command -label $item -command OPPoints$item
-    }
+    # these commands don't exist
+    # foreach item { Update Import Export } {
+    # $f1.mbPoints.m add command -label $item -command OPPoints$item
+    # }
     $f1.mbPoints.m add checkbutton -label "Show Labels" \
         -variable Osteo(pointlabels) -onvalue 1 -offvalue 0 \
         -command { PointLabelVisibility $Osteo(pointlabels) }
