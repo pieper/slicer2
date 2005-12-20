@@ -1,4 +1,16 @@
 
+#=auto==========================================================================
+# Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
+#  See Doc/copyright/copyright.txt
+#  or http://www.slicer.org/copyright/copyright.txt for details.
+# 
+#  Program:   3D Slicer
+#  Module:    $RCSfile: slicerd.tcl,v $
+#  Date:      $Date: 2005/12/20 21:58:17 $
+#  Version:   $Revision: 1.8.2.1 $
+#===============================================================================
+
 #
 # experimental slicer daemon - sp 2005-09-23
 # - meant to be as simple as possible
