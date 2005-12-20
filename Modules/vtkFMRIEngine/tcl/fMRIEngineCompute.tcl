@@ -240,6 +240,7 @@ proc fMRIEngineComputeContrasts {} {
                     incr count
                 }
 
+
                 fMRIEngine(actVolumeGenerator) SetContrastVector fMRIEngine(contrast)
                 fMRIEngine(actVolumeGenerator) SetDesignMatrix fMRIEngine(designMatrix)
                 fMRIEngine(actVolumeGenerator) SetInput $fMRIEngine(actBetaVolume)
@@ -295,6 +296,10 @@ proc fMRIEngineComputeContrasts {} {
 
                 # set the act volume to the color of FMRI 
                 MainVolumesSetParam LutID 7 
+
+                # Save contrast vector for activation volume
+                # This will be used for % signal change
+                set fMRIEngine($i,contrastVector) $contrVector
 
                 MainEndProgress
                 puts "...done"
