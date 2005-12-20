@@ -49,6 +49,8 @@ vtkStandardNewMacro(vtkActivationRegionStats);
 vtkActivationRegionStats::vtkActivationRegionStats()
 {
     this->RegionVoxels = NULL; 
+    this->SignalChanges = NULL;
+
     this->Label = 0;
     this->Count = 0;
 }
@@ -60,23 +62,22 @@ vtkActivationRegionStats::~vtkActivationRegionStats()
     {
         this->RegionVoxels->Delete();
     }
-}
 
-
-vtkFloatArray *vtkActivationRegionStats::GetRegionVoxels()
-{
-    return this->RegionVoxels;
+    if (this->SignalChanges != NULL)
+    {
+        this->SignalChanges->Delete();
+    }
 }
 
 
 void vtkActivationRegionStats::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
 {
-    if (this->NumberOfInputs != 2)
+    if (this->NumberOfInputs != 3)
     {
-        vtkErrorMacro( << "This filter can only accept two input images.");
+        vtkErrorMacro( << "This filter can only accept three input images.");
         return;
     }
-    // this->NumberOfInputs == 2
+    // this->NumberOfInputs == 3 
     else
     {
         int dim[3];  
@@ -93,10 +94,21 @@ void vtkActivationRegionStats::SimpleExecute(vtkImageData *inputs, vtkImageData*
         int *y = new int[size];
         int *z = new int[size];
 
-        // Number of inputs == 2 means we are going to compute stats 
-        // for t volume: the first volume is the label map volume and 
-        // and the second is the t volume.
+        int len = (this->GetInput(2)->GetNumberOfScalarComponents() - 2) / 2;
+        double *signalChanges = new double [len];
+        for (int d = 0; d < len; d++) {
+            signalChanges[d] = 0.0; // initialization 
+        }
+
+        // Number of inputs == 3 means we are going to compute stats 
+        // for t volume: 
+        // the first volume - the label map volume 
+        // the second volume - the t volume
+        // the third volume - the beta volume
         int indx = 0;
+        int index2 = 0;
+        vtkDataArray *betas = this->GetInput(2)->GetPointData()->GetScalars();
+
         // Voxel iteration through the entire image volume
         for (int kk = 0; kk < dim[2]; kk++)
         {
@@ -113,7 +125,15 @@ void vtkActivationRegionStats::SimpleExecute(vtkImageData *inputs, vtkImageData*
 
                         float *tv = (float *)this->GetInput(1)->GetScalarPointer(ii, jj, kk);
                         t[indx++] = *tv;
+
+                        // get % signal changes
+                        int yy = len + 2;
+                        for (int d = 0; d < len; d++) {
+                            signalChanges[d] += betas->GetComponent(index2, yy++);
+                        }
                     }
+                     
+                    index2++;
                 }
             } 
         }
@@ -135,6 +155,7 @@ void vtkActivationRegionStats::SimpleExecute(vtkImageData *inputs, vtkImageData*
 
             // create the output image
             output->SetWholeExtent(0, this->Count-1, 0, 0, 0, 0);
+            output->SetExtent(0, this->Count-1, 0, 0, 0, 0);
             output->SetScalarType(VTK_FLOAT);
             output->SetOrigin(this->GetInput(0)->GetOrigin());
             output->SetSpacing(this->GetInput(0)->GetSpacing());
@@ -150,12 +171,22 @@ void vtkActivationRegionStats::SimpleExecute(vtkImageData *inputs, vtkImageData*
                 // since the former handles memory allocation if needed.
                 this->RegionVoxels->InsertTuple4(i, x[i], y[i], z[i], t[i]);
             }
+
+            // get average % signal changes
+            this->SignalChanges = vtkFloatArray::New();
+            this->SignalChanges->SetNumberOfTuples(len);
+            this->SignalChanges->SetNumberOfComponents(1);
+            for (int d = 0; d < len; d++) {
+                signalChanges[d] /= indx; 
+                this->SignalChanges->SetComponent(d, 0, signalChanges[d]);
+            }
         }
 
         delete [] t;
         delete [] x;
         delete [] y;
         delete [] z;
+        delete [] signalChanges;
     }
 } 
 
@@ -166,9 +197,15 @@ void vtkActivationRegionStats::ExecuteInformation(vtkImageData *input, vtkImageD
 {
     this->vtkSimpleImageToImageFilter::ExecuteInformation();
 
-    if (this->NumberOfInputs == 2 && this->Count > 0)
+    if (this->NumberOfInputs == 3 && this->Count > 0)
     {
+        int dim[3];  
+        dim[0] = this->Count;
+        dim[1] = 1;
+        dim[2] = 1;
+        output->SetDimensions(dim);
         output->SetWholeExtent(0, this->Count-1, 0, 0, 0, 0);
+        output->SetExtent(0, this->Count-1, 0, 0, 0, 0);
         output->SetScalarType(VTK_FLOAT);
         output->SetOrigin(this->GetInput(0)->GetOrigin());
         output->SetSpacing(this->GetInput(0)->GetSpacing());
