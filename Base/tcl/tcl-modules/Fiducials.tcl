@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Fiducials.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:35 $
-#   Version:   $Revision: 1.65.2.2 $
+#   Date:      $Date: 2005/12/20 23:53:39 $
+#   Version:   $Revision: 1.65.2.3 $
 # 
 #===============================================================================
 # FILE:        Fiducials.tcl
@@ -96,7 +96,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.65.2.2 $} {$Date: 2005/12/20 22:54:35 $}]
+        {$Revision: 1.65.2.3 $} {$Date: 2005/12/20 23:53:39 $}]
     
     # Initialize module-level variables
     set Fiducials(renList) "viewRen matRen"
@@ -2318,6 +2318,12 @@ proc FiducialsSetActiveList {name {menu ""} {cb ""}} {
         } else {
             set cblist $cb
         }
+        if {$menu == ""} {
+            set menulist $Fiducials(mbActiveList)
+        } else {
+            set menulist $menu
+        }
+        set menuindex 0
         foreach s $cblist {
             # clear out the checkboxes
             if {[$s getnumbuttons] != 0} {
@@ -2330,9 +2336,16 @@ proc FiducialsSetActiveList {name {menu ""} {cb ""}} {
             foreach pid [FiducialsGetPointIdListFromName $name] {
                 if {[$s index "[Point($pid,node) GetName]"] == -1} {
                     # add it
-                    if {$::Module(verbose)} { puts "SetActiveList: Adding a fid $pid, selected id list = $Fiducials($fid,selectedPointIdList)"}
-                    $s add "[Point($pid,node) GetName]" -text "[Point($pid,node) GetName]" \
-                        -command "FiducialsSelectionFromCheckbox $menu $s no $pid"
+                    if {$::Module(verbose)} { puts "SetActiveList: Adding a fid $pid, selected id list = $Fiducials($fid,selectedPointIdList)\n\tmenu = $menu"}                        
+                    if {$menu == ""} {
+                        set thismenu [lindex $menulist $menuindex]
+                        $s add "[Point($pid,node) GetName]" -text "[Point($pid,node) GetName]" \
+                            -command "FiducialsSelectionFromCheckbox $thismenu $s no $pid"
+                        incr menuindex
+                    } else {
+                        $s add "[Point($pid,node) GetName]" -text "[Point($pid,node) GetName]" \
+                            -command "FiducialsSelectionFromCheckbox $menu $s no $pid"
+                    }
                 }
                 if {[info exists Fiducials($name,fid)] == 1} {
                     set fid $Fiducials($name,fid)
@@ -2443,53 +2456,68 @@ proc FiducialsSelectionUpdate {fid pid on} {
             return 
         }
     }
+    FiducialsUpdateAllCheckBoxes $fid $pid $on
+    FiducialsUpdateSelectionForActor $fid
+}
+
+#-------------------------------------------------------------------------------
+# .PROC FiducialsUpdateAllCheckBoxes
+# encapsulate going through all the active checkboxes and updating selections
+# .ARGS
+# int fid fiducials list id
+# int pid point id
+# bool on is the point selected or no?
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsUpdateAllCheckBoxes {fid pid on} {
+    global Fiducials
+
     # update all the scrollboxes if this is the active list
     if {$fid == $Fiducials($Fiducials(activeList),fid)} {
     
-    set counter 0
-    foreach menu $Fiducials(mbActiveList) {
-        # get the corresponding scrollbox
-        set cb [lindex $Fiducials(scrollActiveList) $counter]
-        if { $cb == "" } { continue }
-        if {[$menu cget -text] == $Fiducials($fid,name)} {
-            if {$::Module(verbose)} {
-                if {[string first "FiducialsEdit" $menu] != -1} { 
-                    puts "FiducialsSelectionUpdate:\n\tmenu = $menu\n\tcb = $cb\n\tmenu text = [$menu cget -text]\n\tfid = $fid\n\tfid name = $Fiducials($fid,name)"
-                }
-            }
-            # clear everything
-            # $scroll selection clear 0 end
-            if {[$cb getnumbuttons] == 0} {
-                if {$::Module(verbose)} { 
-                    puts "FiducialsSelectionUpdate: no elements, not deselecting"
-                }
-            } else {
+        set counter 0
+        foreach menu $Fiducials(mbActiveList) {
+            # get the corresponding scrollbox
+            set cb [lindex $Fiducials(scrollActiveList) $counter]
+            if { $cb == "" } { continue }
+            if {[$menu cget -text] == $Fiducials($fid,name)} {
                 if {$::Module(verbose)} {
-                    puts "FiducialsSelectionUpdate: selected list = $Fiducials($fid,selectedPointIdList), deselecting everything and then reselected (right now cb sel = [$cb getselind])"
+                    if {[string first "FiducialsEdit" $menu] != -1} { 
+                        puts "FiducialsUpdateAllCheckBoxes:\n\tmenu = $menu\n\tcb = $cb\n\tmenu text = [$menu cget -text]\n\tfid = $fid\n\tfid name = $Fiducials($fid,name)"
+                    }
                 }
-                $cb deselect
-            
-                #re-color the entries
-                foreach pid $Fiducials($fid,selectedPointIdList) {
-                    set sid [lsearch $Fiducials($fid,pointIdList) $pid]
-                    # last arg determines if invoke 1 or select 0
-                    $cb select $sid 0
+                # clear everything
+                # $scroll selection clear 0 end
+                if {[$cb getnumbuttons] == 0} {
+                    if {$::Module(verbose)} { 
+                        puts "FiducialsUpdateAllCheckBoxes: no elements, not deselecting"
+                    }
+                } else {
                     if {$::Module(verbose)} {
-                        if {[string first "FiducialsEdit" $menu] != -1} {
-                            puts "FiducialsSelectionUpdate: pid = $pid, selected sid = $sid for cb $cb"
+                        puts "FiducialsUpdateAllCheckBoxes: selected list = $Fiducials($fid,selectedPointIdList), deselecting everything and then reselected (right now cb sel = [$cb getselind])"
+                    }
+                    $cb deselect
+                    
+                    #re-color the entries
+                    foreach pid $Fiducials($fid,selectedPointIdList) {
+                        set sid [lsearch $Fiducials($fid,pointIdList) $pid]
+                        # last arg determines if invoke 1 or select 0
+                        $cb select $sid 0
+                        if {$::Module(verbose)} {
+                            if {[string first "FiducialsEdit" $menu] != -1} {
+                                puts "FiducialsUpdateAllCheckBoxes: pid = $pid, selected sid = $sid for cb $cb"
+                            }
                         }
                     }
                 }
+                incr counter
             }
-            incr counter
+        }
+    } else {
+        if {$::Module(verbose)} {
+            puts "$fid is not the active list $Fiducials($Fiducials(activeList),fid), leaving checkboxes alone"
         }
     }
-} else {
-    if {$::Module(verbose)} {
-        puts "$fid is not the active list $Fiducials($Fiducials(activeList),fid), leaving checkboxes alone"
-    }
-}
-    FiducialsUpdateSelectionForActor $fid
 }
 
 #-------------------------------------------------------------------------------
@@ -2530,7 +2558,8 @@ proc FiducialsSelectionFromPicker {actor cellId} {
 #-------------------------------------------------------------------------------
 # .PROC FiducialsSelectionFromCheckbox
 # Call back from the checkboxes, make sure the id is either in the selected list or not
-# and then call FiducialsSelectionFromScroll?
+# and then call FiducialsSelectionFromScroll, and update the other active checkbox lists
+# via a call to FiducialsUpdateAllCheckBoxes.
 # .ARGS 
 # widget menu the menu with the selected list name as the current text
 # widget cb the checkbox containing the fiducials list
@@ -2563,6 +2592,7 @@ proc FiducialsSelectionFromCheckbox {menu cb focusOnActiveFiducial pid} {
         set selpind [lsearch $Fiducials($fid,selectedPointIdList) $pid]
         set checkboxInd [lsearch $Fiducials($fid,pointIdList) $pid]
         if {[lsearch $selind $checkboxInd] == -1} {
+            set on 0
             # it's not selected, make sure it's not on the selected fids list
             if {$selpind != -1} {
                 # remove it from the list
@@ -2579,10 +2609,12 @@ proc FiducialsSelectionFromCheckbox {menu cb focusOnActiveFiducial pid} {
                 }
             }
         } else {
+            set on 1
             # make sure it's on the selected fids list
             if {$selpind == -1} {
                 # add it
                 lappend Fiducials($fid,selectedPointIdList) $pid
+                set on 1
                 if {$::Module(verbose)} {
                     puts "Added pid $pid to the selected list: $Fiducials($fid,selectedPointIdList)"
                 }
@@ -2597,6 +2629,11 @@ proc FiducialsSelectionFromCheckbox {menu cb focusOnActiveFiducial pid} {
             puts "\t\t**FiducialsUpdateSelectionFromCheckbox calling FiducialsSelectionFromScroll"
         }
         FiducialsSelectionFromScroll $menu $cb $focusOnActiveFiducial $pid
+
+        if {$::Module(verbose)} {
+            puts "calling FiducialsUpdateAllCheckBoxes... on = $on"
+        }
+        FiducialsUpdateAllCheckBoxes $fid $pid $on
     }
 }
 
