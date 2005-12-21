@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkNRRDReader.cxx,v $
-  Date:      $Date: 2005/12/20 22:56:23 $
-  Version:   $Revision: 1.1.2.3 $
+  Date:      $Date: 2005/12/21 19:13:29 $
+  Version:   $Revision: 1.1.2.4 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -52,7 +52,7 @@ extern "C" {
 #include "teem/ten.h"
 }
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.1.2.3 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.1.2.4 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -591,9 +591,40 @@ void vtkNRRDReader::ExecuteInformation()
 
    if (AIR_EXISTS(this->nrrd->measurementFrame[0][0])) 
    {
-     for (int j=0;j<3;j++)
-       for (int i=0;i<3;i++)
-         MeasurementFrameMatrix->SetElement(i,j,this->nrrd->measurementFrame[i][j]);
+    for (int i=0;i<3;i++)
+      {
+       
+     switch (this->nrrd->space)
+      {
+            // on read, convert non-RAS coords into RAS coords, when we can
+          case nrrdSpaceRightAnteriorSuperior:
+            // no change needed
+            MeasurementFrameMatrix->SetElement(i,0,this->nrrd->measurementFrame[i][0]);
+            MeasurementFrameMatrix->SetElement(i,1,this->nrrd->measurementFrame[i][1]);
+            MeasurementFrameMatrix->SetElement(i,2,this->nrrd->measurementFrame[i][2]);
+          break;
+          case nrrdSpaceLeftAnteriorSuperior:
+           // L -> R
+            MeasurementFrameMatrix->SetElement(i,0,-this->nrrd->measurementFrame[i][0]);
+            MeasurementFrameMatrix->SetElement(i,1,this->nrrd->measurementFrame[i][1]);
+            MeasurementFrameMatrix->SetElement(i,2,this->nrrd->measurementFrame[i][2]); 
+            break;
+          case nrrdSpaceLeftPosteriorSuperior:
+           // L -> R
+           // P -> A
+            MeasurementFrameMatrix->SetElement(i,0,-this->nrrd->measurementFrame[i][0]);
+            MeasurementFrameMatrix->SetElement(i,1,-this->nrrd->measurementFrame[i][1]);
+            MeasurementFrameMatrix->SetElement(i,2,this->nrrd->measurementFrame[i][2]);            
+            break;
+          default:
+            // we're not coming from a space for which the conversion
+            // to LPS is well-defined
+            MeasurementFrameMatrix->SetElement(i,0,this->nrrd->measurementFrame[i][0]);
+            MeasurementFrameMatrix->SetElement(i,1,this->nrrd->measurementFrame[i][1]);
+            MeasurementFrameMatrix->SetElement(i,2,this->nrrd->measurementFrame[i][2]); 
+            break;
+      }
+      }
    }
    
    this->vtkImageReader2::ExecuteInformation();
