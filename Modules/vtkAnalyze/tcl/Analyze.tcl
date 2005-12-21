@@ -1,14 +1,38 @@
 #=auto==========================================================================
-#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+#
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for 
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
 # 
-#   See Doc/copyright/copyright.txt
-#   or http://www.slicer.org/copyright/copyright.txt for details.
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
 # 
-#   Program:   3D Slicer
-#   Module:    $RCSfile: Analyze.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:57 $
-#   Version:   $Revision: 1.13.2.1 $
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
 # 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
+#
 #===============================================================================
 # FILE:        Analyze.tcl
 # PROCEDURES:  
@@ -18,7 +42,6 @@
 #   AnalyzeEnter
 #   AnalyzeEnter
 #   AnalyzeExit
-#   AnalyzeSetVolumeNamePrefix 
 #   AnalyzeApply 
 #   AnalyzeCreateMrmlNodeForVolume the the
 #   AnalyzeCreateVolumeNameFromFileName  the
@@ -139,7 +162,7 @@ proc AnalyzeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.13.2.1 $} {$Date: 2005/12/20 22:54:57 $}]
+        {$Revision: 1.13.2.2 $} {$Date: 2005/12/21 21:06:49 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -211,13 +234,7 @@ proc AnalyzeBuildGUI {} {
     # Refer to the documentation for details on the syntax.
     #
     set help "
-    The Analyze module is an example for developers.  It shows how to add a module 
-    to the Slicer.  The source code is in slicer2/Modules/vtkAnalyze/tcl/Analyze.tcl.
-    <P>
-    Description by tab:
-    <BR>
-    <UL>
-    <LI><B>Tons o' Stuff:</B> This tab is a demo for developers.
+    The Analyze module tends to load an Analyze image into 3D Slicer by using vtk classes.
     "
     regsub -all "\n" $help {} help
     MainHelpApplyTags Analyze $help
@@ -473,12 +490,6 @@ proc AnalyzeCreateMrmlNodeForVolume {volName volData} {
     set sliceSpacing 0
     set zSpacing [expr $sliceThickness + $sliceSpacing]
 
-#puts "pixelWidth = $pixelWidth"
-#puts "pixelHeight = $pixelHeight"
-#puts "sliceThickness = $sliceThickness"
-#puts "zSpacing = $zSpacing"
-#puts "orient = $AnalyzeCache(orient)"
-
     eval Volume($i,node) SetSpacing $pixelWidth $pixelHeight $zSpacing 
     Volume($i,node) SetNumScalars [$volData GetNumberOfScalarComponents]
     set ext [$volData GetWholeExtent]
@@ -548,13 +559,6 @@ proc AnalyzeLoadVolumes {} {
     set minY 0
     set maxY [expr $y*$z*$n-1] 
 
-
-#puts " x = $x"
-#puts " y = $y"
-#puts " z = $z"
-#puts " n = $n"
-
-
     ir SetFileName $AnalyzeCache(fileName)
     ir SetDataByteOrder $AnalyzeCache(byteOrder) 
     ir SetDataScalarType $AnalyzeCache(dataType)
@@ -565,17 +569,7 @@ proc AnalyzeLoadVolumes {} {
     set yy [lindex $pixDims 1]
     set zz [lindex $pixDims 2]
 
-
-#puts " littleEndian = $AnalyzeCache(byteOrder)"
-#puts " VolBXH(bxh-dim,x,spacing) = $xx"
-#puts " VolBXH(bxh-dim,y,spacing) = $yy"
-#puts " VolBXH(bxh-sliceThickness) = $zz"
-
-
     ir SetDataSpacing $xx $yy $zz 
-#    ir SetDataSpacing $VolBXH(bxh-dim,x,spacing) \
-#        $VolBXH(bxh-dim,y,spacing) $VolBXH(bxh-sliceThickness)
- 
     ir ReleaseDataFlagOff
     ir SetDataExtent $minX $maxX $minY $maxY 0 0 
 
@@ -617,25 +611,35 @@ proc AnalyzeLoadVolumes {} {
             extract SetVOI $x1 $x2 $y1 $y2 0 0 
             extract Update
 
-#            puts "y1 = $y1"
-#            puts "y2 = $y2"
-#            puts "yBase = $yBase"
-
             set d [extract GetOutput]
             # Setting directly the extent of extract's output does not 
             # change its extent. That's why DeepCopy is here.
             vol DeepCopy $d
             vol SetExtent 0 [expr $x - 1] 0 [expr $y - 1] 0 0 
 
-            vtkImageFlipper fp
-            fp SetInput vol
-            fp SetFlippingSequence "012"
-            fp Update
+            # flip the image to get right orientation
+            vtkImageFlip flipX
+            flipX SetInput vol 
+            flipX SetFilteredAxis 0
+            flipX Update
 
-            imageAppend AddInput [fp GetOutput] 
+            vtkImageFlip flipY
+            flipY SetInput [flipX GetOutput] 
+            flipY SetFilteredAxis 1 
+            flipY Update
+
+            vtkImageFlip flipZ
+            flipZ SetInput [flipY GetOutput] 
+            flipZ SetFilteredAxis 2 
+            flipZ Update
+
+            imageAppend AddInput [flipZ GetOutput] 
+
             extract Delete
             vol Delete
-            fp Delete
+            flipX Delete
+            flipY Delete
+            flipZ Delete
 
             incr i
         }
