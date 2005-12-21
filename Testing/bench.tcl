@@ -79,6 +79,58 @@ proc bench_run {} {
 
 }
 
-proc bench_summarize {} {
+proc bench_summarize { dir } {
+
+    set files [glob $dir/bench-*]
+
+    set hosts ""
+    foreach f $files {
+        scan [file tail $f] "bench-%s" host
+        lappend hosts $host
+        set fp [open $f "r"]
+        gets $fp line
+        array set $host $line
+        close $fp
+    }
+
+    array set host0 [array get [lindex $hosts 0]]
+
+    foreach bench $host0(benchmarks) {
+        set bench [file root [file tail $bench]]
+
+        puts "== $bench == "
+
+        puts "{| border=\"2\" "
+        puts "|+ $bench"
+        puts "|- "
+        puts -nonewline "! " 
+        
+        for {set i 1} {$i <= 10} {incr i} {
+            puts -nonewline " !! $i " 
+        }
+        puts -nonewline " !! % 2 Threads !! % Max Threads " 
+        puts ""
+        puts "|- "
+        foreach host $hosts {
+            array set h [array get $host]
+            puts "|- align=\"right\" "
+            puts "! $host"
+            puts -nonewline "| "
+            for {set t 1} {$t <= 10} {incr t} {
+                if {$t <= $h($host,numThreads)} {
+                    puts -nonewline "[format %3.2f $h($host,$bench,$t,2)] || "
+                } else {
+                    puts -nonewline " || "
+                }
+            }
+            puts " [format %3.2f $h($host,$bench,percent2)] || [format %3.2f $h($host,$bench,percent)] "
+               
+        }
+        puts "|}"
+        puts ""
+    }
+
+
 
 }
+
