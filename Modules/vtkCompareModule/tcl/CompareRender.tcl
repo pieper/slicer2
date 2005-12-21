@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: CompareRender.tcl,v $
-#   Date:      $Date: 2005/12/20 22:55:00 $
-#   Version:   $Revision: 1.1.2.2 $
+#   Date:      $Date: 2005/12/21 14:13:57 $
+#   Version:   $Revision: 1.1.2.3 $
 # 
 #===============================================================================
 # FILE:        CompareRender.tcl
@@ -74,5 +74,7 @@ proc CompareRenderMosaik {{scale ""}} {
     global CompareMosaik
 
     set s $CompareMosaik(mosaikIndex)
-    slCompare${s}Win Render
+    if { [info command slCompare${s}Win] != "" } {
+        slCompare${s}Win Render
+    }
 }
