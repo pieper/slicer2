@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRI.tcl,v $
-#   Date:      $Date: 2005/12/20 22:55:10 $
-#   Version:   $Revision: 1.120.2.2 $
+#   Date:      $Date: 2005/12/21 22:56:05 $
+#   Version:   $Revision: 1.120.2.3 $
 # 
 #===============================================================================
 # FILE:        DTMRI.tcl
@@ -482,7 +482,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.120.2.2 $} {$Date: 2005/12/20 22:55:10 $}]
+                  {$Revision: 1.120.2.3 $} {$Date: 2005/12/21 22:56:05 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -609,11 +609,11 @@ proc DTMRIUpdateMRML {} {
      # Do MRML update of Tensor nodes.
      TensorUpdateMRML Tensor
 
-     DevUpdateNodeSelectButton Tensor DTMRI ActiveGlyph ActiveGlyph DevSelectNode 0 0 0 DTMRISetTensor
-     DevUpdateNodeSelectButton Tensor DTMRI ActiveTract ActiveTract DevSelectNode 0 0 0 DTMRISetTensor
-     DevUpdateNodeSelectButton Tensor DTMRI ActiveMask ActiveMask DevSelectNode 0 0 0 DTMRISetTensor
-     DevUpdateNodeSelectButton Tensor DTMRI ActiveScalars ActiveScalars DevSelectNode 0 0 0 DTMRISetTensor
-     DevUpdateNodeSelectButton Tensor DTMRI ActiveSave ActiveSave DevSelectNode 0 0 0 DTMRISetTensor
+     DevUpdateNodeSelectButton Tensor DTMRI ActiveGlyph ActiveGlyph DevSelectNode 0 0 0 DTMRISetTensorGlyph
+     DevUpdateNodeSelectButton Tensor DTMRI ActiveTract ActiveTract DevSelectNode 0 0 0 DTMRISetTensorTract
+     DevUpdateNodeSelectButton Tensor DTMRI ActiveMask ActiveMask DevSelectNode 0 0 0 DTMRISetTensorMask
+     DevUpdateNodeSelectButton Tensor DTMRI ActiveScalars ActiveScalars DevSelectNode 0 0 0 DTMRISetTensorScalars
+     DevUpdateNodeSelectButton Tensor DTMRI ActiveSave ActiveSave DevSelectNode 0 0 0 DTMRISetTensorSave
      
      # Do MRML update for Tensor Registration tab. Necessary because
      # multiple lists are used.
@@ -1602,6 +1602,45 @@ proc DTMRISetTensor {} {
   
 }  
 
+proc DTMRISetTensorGlyph {} {
+  global DTMRI Tensor
+  
+  set Tensor(activeID) $DTMRI(ActiveGlyph)
+  DTMRISetActive $Tensor(activeID)
+  
+}  
+
+proc DTMRISetTensorTract {} {
+  global DTMRI Tensor
+  
+  set Tensor(activeID) $DTMRI(ActiveTract)
+  DTMRISetActive $Tensor(activeID)
+  
+}  
+
+proc DTMRISetTensorMask {} {
+  global DTMRI Tensor
+  
+  set Tensor(activeID) $DTMRI(ActiveMask)
+  DTMRISetActive $Tensor(activeID)
+  
+}  
+
+proc DTMRISetTensorSave {} {
+  global DTMRI Tensor
+  
+  set Tensor(activeID) $DTMRI(ActiveSave)
+  DTMRISetActive $Tensor(activeID)
+  
+}  
+
+proc DTMRISetTensorScalars {} {
+  global DTMRI Tensor
+  
+  set Tensor(activeID) $DTMRI(ActiveScalars)
+  DTMRISetActive $Tensor(activeID)
+  
+}  
 
 #-------------------------------------------------------------------------------
 # .PROC DTMRISetActive
