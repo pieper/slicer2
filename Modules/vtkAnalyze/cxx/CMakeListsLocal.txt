@@ -12,7 +12,6 @@
 
 # note: - SET replaced SOURCE_FILES for cmake 1.6
 SET(LOCAL_MODULE_SRCS
-vtkImageFlipper.cxx
 vtkAnalyzeHeaderExtractor.cxx
 )
 
