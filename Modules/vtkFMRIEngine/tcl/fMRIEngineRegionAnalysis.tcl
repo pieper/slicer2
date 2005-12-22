@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEngineRegionAnalysis.tcl,v $
-#   Date:      $Date: 2005/12/20 22:55:32 $
-#   Version:   $Revision: 1.14.2.3 $
+#   Date:      $Date: 2005/12/22 17:40:24 $
+#   Version:   $Revision: 1.14.2.4 $
 # 
 #===============================================================================
 # FILE:        fMRIEngineRegionAnalysis.tcl
@@ -537,6 +537,7 @@ proc fMRIEngineBuildUIForROIStats {parent} {
         -selectcolor white} $Gui(WEA)
     set fMRIEngine(tcPlottingOption) "Long"
     pack $f.r$param -side top -pady 2 
+    set fMRIEngine(gui,roiTimecourseRadioButton) $f.r$param 
 
     set f $parent.fPlot.fPeristimulus
     set param Short 
@@ -546,6 +547,7 @@ proc fMRIEngineBuildUIForROIStats {parent} {
         -relief raised -offrelief raised -overrelief raised \
         -selectcolor white} $Gui(WEA)
     pack $f.r$param -side top -pady 2 
+    set fMRIEngine(gui,roiPeristimulusRadioButton) $f.r$param 
 
     set f $parent.fPlot.fPlot
     DevAddButton $f.bPlot "Plot time series" "fMRIEngineDoRegionTimecourse" 20 
@@ -566,6 +568,15 @@ proc fMRIEngineBuildUIForROIStats {parent} {
 #-------------------------------------------------------------------------------
 proc fMRIEngineUpdateCondsForROIPlot {} {
     global fMRIEngine
+
+    # Peristimulus histogram plotting will be disabled if the paradigm desgin is 
+    # event-related or mixed.
+    if {$fMRIEngine(paradigmDesignType) != "blocked"} {
+        $fMRIEngine(gui,roiTimecourseRadioButton) select 
+        $fMRIEngine(gui,roiPeristimulusRadioButton) config -state disabled
+    } else {
+        $fMRIEngine(gui,roiPeristimulusRadioButton) config -state normal 
+    }
 
     set run $fMRIEngine(curRunForModelFitting)
     if {$run == "none"} {

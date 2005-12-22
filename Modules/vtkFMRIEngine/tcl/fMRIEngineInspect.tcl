@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEngineInspect.tcl,v $
-#   Date:      $Date: 2005/12/20 22:55:31 $
-#   Version:   $Revision: 1.29.2.2 $
+#   Date:      $Date: 2005/12/22 17:41:48 $
+#   Version:   $Revision: 1.29.2.3 $
 # 
 #===============================================================================
 # FILE:        fMRIEngineInspect.tcl
@@ -114,6 +114,15 @@ proc fMRIEngineUpdateViewTab {} {
     global fMRIEngine Gui Volume
 
     set fMRIEngine(currentTab) "Inspect"
+
+    # Peristimulus histogram plotting will be disabled if the paradigm desgin is 
+    # event-related or mixed.
+    if {$fMRIEngine(paradigmDesignType) != "blocked"} {
+        $fMRIEngine(gui,viewTimecourseRadioButton) select 
+        $fMRIEngine(gui,viewPeristimulusRadioButton) config -state disabled
+    } else {
+        $fMRIEngine(gui,viewPeristimulusRadioButton) config -state normal 
+    }
 
     $fMRIEngine(inspectListBox) delete 0 end
     if {[info exists fMRIEngine(actVolumeNames)]} {
@@ -306,6 +315,7 @@ proc fMRIEngineBuildUIForPlot {parent} {
         -selectcolor white} $Gui(WEA)
     set fMRIEngine(tcPlottingOption) "Long"
     pack $f.r$param -side top -pady 2 
+    set fMRIEngine(gui,viewTimecourseRadioButton) $f.r$param 
 
     set f $parent.fPlot.fOptions.fPeristimulus
     set param Short 
@@ -315,6 +325,7 @@ proc fMRIEngineBuildUIForPlot {parent} {
         -relief raised -offrelief raised -overrelief raised \
         -selectcolor white} $Gui(WEA)
     pack $f.r$param -side top -pady 2 
+    set fMRIEngine(gui,viewPeristimulusRadioButton) $f.r$param 
 }
 
 
