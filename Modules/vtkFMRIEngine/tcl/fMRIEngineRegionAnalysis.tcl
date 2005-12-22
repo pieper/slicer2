@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEngineRegionAnalysis.tcl,v $
-#   Date:      $Date: 2005/12/22 20:17:35 $
-#   Version:   $Revision: 1.14.2.5 $
+#   Date:      $Date: 2005/12/22 20:31:55 $
+#   Version:   $Revision: 1.14.2.6 $
 # 
 #===============================================================================
 # FILE:        fMRIEngineRegionAnalysis.tcl
@@ -1251,7 +1251,16 @@ proc fMRIEnginePrepareForRegionStats {} {
         return 1 
     }
 
-    # always uses a new instance of vtkActivationRegionStats 
+    # Always uses a new instance of vtkActivationRegionStats 
+    # vtkActivationRegionStats computes stats for a defined 
+    # ROI. The required input for this class includes:
+    # 1. The label map volume which defines an ROI.
+    # 2. The activation volume.
+    # 3. The beta volume which holds % signal change for each
+    #    regressors (evs) and each voxel. For now, the beta
+    #    volume is the output of the GLM estimation. In the
+    #    future, if we add new detection methods into fMRIEngine, 
+    #    we need to do some changes here.
     if {[info commands fMRIEngine(actROIStats)] != ""} {
         fMRIEngine(actROIStats) Delete
         unset -nocomplain fMRIEngine(actROIStats)
