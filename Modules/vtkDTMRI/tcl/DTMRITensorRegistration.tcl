@@ -91,7 +91,7 @@ proc DTMRITensorRegistrationInit {} {
     #------------------------------------
     set m "TensorRegistration"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.23 $} {$Date: 2005/12/16 15:33:25 $}]
+                                 {$Revision: 1.24 $} {$Date: 2005/12/22 10:10:53 $}]
 
     # Does the AG module exist? If not the registration tab will not be displayed
     if {[catch "package require vtkAG"]} {
@@ -1790,13 +1790,49 @@ proc DTMRIRegRun {} {
       }
       #DTMRIWritevtkImageData Source "source.vtk"
       #DTMRIWritevtkImageData Target "target.vtk"
-
       warp Update
       TransformDTMRI Concatenate warp
   }
   # end warp
+  if {$DTMRI(reg,Debug)} {
+      if {$DTMRI(reg,Warp)} {
+      
+      set DataType [[warp GetDisplacementGrid] GetDataObjectType]
+      puts " Transform displacementGrid, data type is $DataType"
+      
+      set dim_arr [[warp GetDisplacementGrid] GetDimensions]
+      
+      puts " Transform displacementGrid, dimensions:$dim_arr"
+      
+      #set {extent_1 extent_2 extent_3 extent_4 extent_5 extent_6} [[warp GetDisplacementGrid] GetExtent]
+
+      set extent_arr [[warp GetDisplacementGrid] GetExtent]
+
+      set origin_arr [[warp GetDisplacementGrid] GetOrigin]
+
+      puts " Transform DisplacementGrid, origin : $origin_arr"
+     
+      #parray extent_arr
+      puts " Transform displacementGrid, extent:$extent_arr"
+
+    
+      set ScalarSize [[warp GetDisplacementGrid] GetScalarSize]
+      puts " Transform displacementGrid, ScalarSize is $ScalarSize"
+      
+      set ScalarType [[warp GetDisplacementGrid] GetScalarTypeAsString]
+      puts " Transform displacementGrid, ScalarType is $ScalarType"
+      
+      set ScalarComponents [[warp GetDisplacementGrid] GetNumberOfScalarComponents]
+      puts " Transform displacementGrid,  $ScalarComponents  scalar components."
+      
+      }
+  }
+  warp Delete
+  Target Delete
+  Source Delete
   
-  
+  vtkImageData Source
+  vtkImageData Target
   #Target2 DeepCopy [Tensor($DTMRI(InputTensorTarget),data) GetOutput]
   #Source2 DeepCopy [Tensor($DTMRI(InputTensorSource),data) GetOutput]
 
@@ -1834,7 +1870,9 @@ proc DTMRIRegRun {} {
   DTMRIRegResample Source Target Resampled
   puts "done."
   #set v Resampled 
-
+  Source Delete
+  Target Delete
+  
   # Build up full tensor again from 6 tensor components
   catch "setT Delete"
   vtkImageSetTensorComponents setT
@@ -1842,6 +1880,7 @@ proc DTMRIRegRun {} {
   setT Update
   Tensor($DTMRI(ResultTensor),data) SetImageData [setT GetOutput]
   setT Delete
+  Resampled Delete
   
   #warp scalar data from source and add to result
   #if no scalar data present, do not warp
@@ -1872,42 +1911,9 @@ proc DTMRIRegRun {} {
   
   MainUpdateMRML
 
-  if {$DTMRI(reg,Debug)} {
-      if {$DTMRI(reg,Warp)} {
-      
-      set DataType [[warp GetDisplacementGrid] GetDataObjectType]
-      puts " Transform displacementGrid, data type is $DataType"
-      
-      set dim_arr [[warp GetDisplacementGrid] GetDimensions]
-      
-      puts " Transform displacementGrid, dimensions:$dim_arr"
-      
-      #set {extent_1 extent_2 extent_3 extent_4 extent_5 extent_6} [[warp GetDisplacementGrid] GetExtent]
 
-      set extent_arr [[warp GetDisplacementGrid] GetExtent]
-
-      set origin_arr [[warp GetDisplacementGrid] GetOrigin]
-
-      puts " Transform DisplacementGrid, origin : $origin_arr"
-     
-      #parray extent_arr
-      puts " Transform displacementGrid, extent:$extent_arr"
-
-    
-      set ScalarSize [[warp GetDisplacementGrid] GetScalarSize]
-      puts " Transform displacementGrid, ScalarSize is $ScalarSize"
-      
-      set ScalarType [[warp GetDisplacementGrid] GetScalarTypeAsString]
-      puts " Transform displacementGrid, ScalarType is $ScalarType"
-      
-      set ScalarComponents [[warp GetDisplacementGrid] GetNumberOfScalarComponents]
-      puts " Transform displacementGrid,  $ScalarComponents  scalar components."
-      
-      }
-  }
-
-  Target Delete
-  Source Delete
+  #Target Delete
+  #Source Delete
   #if { ($DTMRI(MaskVol) != $Volume(idNone)) } {
   #    Mask Delete
   #}
@@ -2004,7 +2010,12 @@ proc DTMRIRegCoregister {SourceVolume TargetTensor} {
     
     # Do we have a labelmap? If so, nearest neighbour interp will be used
     set DTMRI(reg,Labelmap) [Volume($SourceVolume,node) GetLabelMap]
+    if {$DTMRI(reg,Labelmap)} {
+      Volume($v2,node) SetLabelMap $DTMRI(reg,Labelmap)
+      Volume($v2,node) SetInterpolate [expr !$DTMRI(reg,Labelmap)]
+    }
     
+    puts $DTMRI(reg,Labelmap)
     # Temporarily set initial_tfm off, such that it won't be applied twice
     # (once in RegNormalize and once in RegResample)
     set previous_initial_tfm $DTMRI(reg,Initial_tfm)
@@ -2037,9 +2048,9 @@ proc DTMRIRegCoregister {SourceVolume TargetTensor} {
     catch "Resampled Delete"
     vtkImageData Resampled
     set DTMRI(reg,Tensors)  "0"
+
     DTMRIRegResample Source Target Resampled
     Resampled SetOrigin 0 0 0
-DTMRIWritevtkImageData Resampled "/tmp/resampled.vtk"
     Volume($v2,vol) SetImageData  Resampled
     MainVolumesUpdate $v2
     MainUpdateMRML
@@ -2087,6 +2098,8 @@ proc DTMRIRegPreprocess {Source Target SourceVol TargetVol} {
   set  TargetScanOrder [Tensor($TargetVol,node) GetScanOrder]
 
   DTMRIRegNormalize $Source $Target NormalizedSource $SourceScanOrder $TargetScanOrder
+  $Source Delete
+  vtkImageData $Source
   $Source DeepCopy NormalizedSource
   NormalizedSource Delete
 
@@ -2198,7 +2211,9 @@ proc DTMRIRegResample {Source Target Resampled} {
   }     else {
       Cast SetOutputScalarType [$Source GetScalarType]
   }
-  
+  if {$DTMRI(reg,Labelmap)} {
+    Cast SetOutputScalarType [$Source GetScalarType]
+  }
   catch "ITrans Delete"
   vtkImageTransformIntensity ITrans
 
@@ -2225,6 +2240,7 @@ proc DTMRIRegResample {Source Target Resampled} {
   if {$DTMRI(reg,Labelmap)} {
     Reslicer SetInterpolationModeToNearestNeighbor
     Reslicer SetInterpolationMode 0
+    [Reslicer GetOutput] SetScalarTypeToShort
   }
   
 # Should it be this way, or inverse in the other way?     
@@ -2279,13 +2295,13 @@ proc DTMRIRegResample {Source Target Resampled} {
       set ScalarComponents [[Reslicer GetOutput] GetNumberOfScalarComponents]
       puts " Reliscer output,  $ScalarComponents  scalar comonents."
   }
-  Cast Delete
   
   $Resampled DeepCopy [Reslicer GetOutput]
 
   Reslicer Delete
-  
   ITrans Delete
+  Cast Delete
+
 }
 
 
@@ -2539,7 +2555,7 @@ proc DTMRIRegNormalize { SourceImage TargetImage NormalizedSource SourceScanOrde
         puts " out dim:  $outdim"
         puts " out spacing :  $outspa" 
     }
-
+   
     reslice Update
     [reslice GetOutput] SetUpdateExtent $outext_0 $outext_1 $outext_2 $outext_3 $outext_4 $outext_5
     
