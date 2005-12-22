@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDisplayTracts.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:03 $
-  Version:   $Revision: 1.6.2.1 $
+  Date:      $Date: 2005/12/22 15:08:47 $
+  Version:   $Revision: 1.6.2.2 $
 
 =========================================================================auto=*/
 #include "vtkDisplayTracts.h"
@@ -16,6 +16,7 @@
 #include "vtkRenderer.h"
 #include "vtkAppendPolyData.h"
 #include "vtkTubeFilter.h"
+#include "vtkTransformPolyDataFilter.h"
 #include "vtkClipPolyData.h"
 
 
@@ -49,6 +50,7 @@ vtkDisplayTracts::vtkDisplayTracts()
   // internal/output collections
   this->ClippedStreamlines = vtkCollection::New();
   this->Mappers = vtkCollection::New();
+  this->TransformFilters = vtkCollection::New();
   this->TubeFilters = vtkCollection::New();
   this->Actors = vtkCollection::New();
 
@@ -263,6 +265,7 @@ void vtkDisplayTracts::CreateGraphicsObjects()
   vtkActor *currActor;
   vtkTransform *currTransform;
   vtkRenderer *currRenderer;
+  vtkTransformPolyDataFilter *currTransFilter;
   vtkTubeFilter *currTubeFilter;
 
   // Find out how many streamlines we have, and if they all have actors
@@ -294,6 +297,8 @@ void vtkDisplayTracts::CreateGraphicsObjects()
       this->Actors->AddItem((vtkObject *)currActor);
       currMapper = vtkPolyDataMapper::New();
       this->Mappers->AddItem((vtkObject *)currMapper);
+          currTransFilter = vtkTransformPolyDataFilter::New();
+          this->TransformFilters->AddItem((vtkObject *) currTransFilter);
       currTubeFilter = vtkTubeFilter::New();
       this->TubeFilters->AddItem((vtkObject *)currTubeFilter);
 
@@ -301,15 +306,17 @@ void vtkDisplayTracts::CreateGraphicsObjects()
       this->ApplyUserSettingsToGraphicsObject(numActorsCreated);
 
       // Hook up the pipeline
-      currTubeFilter->SetInput(currStreamline->GetOutput());
+          currTransFilter->SetInput(currStreamline->GetOutput());
+      currTubeFilter->SetInput(currTransFilter->GetOutput());
       currMapper->SetInput(currTubeFilter->GetOutput());
       currMapper->SetLookupTable(this->StreamlineLookupTable);
       currMapper->UseLookupTableScalarRangeOn();
       currActor->SetMapper(currMapper);
       
       // Place the actor correctly in the scene
-      currActor->SetUserMatrix(currTransform->GetMatrix());
-
+      //currActor->SetUserMatrix(currTransform->GetMatrix());
+      currTransFilter->SetTransform(currTransform);
+          
       // add to the scene (to each renderer)
       // This is the same as MainAddActor in Main.tcl.
       this->Renderers->InitTraversal();
@@ -404,6 +411,7 @@ void vtkDisplayTracts::DeleteStreamline(int index)
   vtkRenderer *currRenderer;
   //vtkLookupTable *currLookupTable;
   vtkPolyDataMapper *currMapper;
+  vtkTransformPolyDataFilter *currTransFilter;
   vtkTubeFilter *currTubeFilter;
   vtkHyperStreamline *currStreamline;
   vtkActor *currActor;
@@ -441,6 +449,14 @@ void vtkDisplayTracts::DeleteStreamline(int index)
     {
       this->Mappers->RemoveItem(index);
       currMapper->Delete();
+    }
+
+  vtkDebugMacro( << "Delete transformFilter" );
+  currTransFilter = (vtkTransformPolyDataFilter *) this->TransformFilters->GetItemAsObject(index);
+  if (currTransFilter != NULL)
+    {
+      this->TransformFilters->RemoveItem(index);
+      currTransFilter->Delete();
     }
 
   vtkDebugMacro( << "Delete tubeFilter" );

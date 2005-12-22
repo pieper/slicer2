@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDisplayTracts.h,v $
-  Date:      $Date: 2005/12/20 22:55:04 $
-  Version:   $Revision: 1.5.2.1 $
+  Date:      $Date: 2005/12/22 15:08:48 $
+  Version:   $Revision: 1.5.2.2 $
 
 =========================================================================auto=*/
 // .NAME vtkDisplayTracts - 
@@ -161,6 +161,7 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
   vtkCollection *Streamlines;
   vtkCollection *ClippedStreamlines;
   vtkCollection *Mappers;
+  vtkCollection *TransformFilters;
   vtkCollection *TubeFilters;
   vtkCollection *Actors;
   int NumberOfVisibleActors;
