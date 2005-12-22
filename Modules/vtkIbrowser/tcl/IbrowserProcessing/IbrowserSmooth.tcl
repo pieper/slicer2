@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,12 +32,13 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        IbrowserSmooth.tcl
 # PROCEDURES:  
-#   IbrowserCancelSmoothSequence
 #   IbrowserUpdateSmoothGUI
+#   IbrowserCancelSmoothSequence
+#   IbrowserHelpSmooth
 #==========================================================================auto=
 
 proc IbrowserBuildSmoothGUI { f master } {
@@ -421,13 +422,19 @@ proc IbrowserSmoothSequence { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserHelpSmooth
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserHelpSmooth { } {
 
     set i [ IbrowserGetHelpWinID ]
     set txt "<H3>Spatial smoothing</H3>
- <P> This tool creates a new interval containing a set of volumes that are spatially smoothed versions of each volume in a selected source interval. Spatial smoothing is a process by which voxel values are averaged with their spatial neighbours, which has the effect of blurring the sharp edges in the original data.
+ <P> This tool creates a new interval containing a set of volumes that are spatially smoothed versions of each volume in a selected source interval. Spatial smoothing is a process by which voxel values are averaged with their spatial neighbours, which has the effect of blurring the sharp edges in the original data. This tool implements Gaussian smoothing.
 <P> When a Gaussian filter is used for smoothing, the width of the kernel is often described as the Full Width at Half Maximum (FWHM). The FWHM defines the width of the kernel at half of the maximum of the height of the Gaussian, and is related to sigma by:
 <P>        FWHM = sigma * sqrt(8*log(2))
-<P> In this tool, the spatial FWHM is specified in millimeters for each axis along which filtering is desired. A FWHM=0.0 will prevent filtering along any axis."
+<P> In this tool, the spatial FWHM should be specified in millimeters for each axis along which filtering is desired. A FWHM=0.0 will prevent filtering along any axis."
     DevCreateTextPopup infowin$i "Ibrowser information" 100 100 18 $txt
 }

@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,12 +32,14 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        IbrowserKeyframeRegister.tcl
 # PROCEDURES:  
 #   IbrowserBuildKeyframeRegisterGUI
 #   IbrowserBuildKeyframeRegisterKeyframesGUI
+#   IbrowserUpdateKeyframeRegisterGUI
+#   IbrowserUpdateKeyframeRegisterReference
 #   IbrowserKeyframeClearAllKeyframes
 #   IbrowserBuildKeyframeRegisterInterpolateGUI
 #   IbrowserAddKeyframeToList
@@ -52,7 +54,7 @@
 #   IbrowserKeyframeUndoInterpolate
 #   IbrowserKeyframeResetAllTransforms
 #   IbrowserKeyframeDeleteAllTransforms
-#   IbrowserUpdateKeyframeRegisterGUI
+#   IbrowserHelpKeyframeRegister
 #==========================================================================auto=
 
 
@@ -247,6 +249,12 @@ proc IbrowserBuildKeyframeRegisterKeyframesGUI { nf } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateKeyframeRegisterGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserUpdateKeyframeRegisterGUI { } {
 
     if { [info exists ::Ibrowser(Process,KeyframeRegister,mIntervals) ] } {
@@ -267,6 +275,12 @@ proc IbrowserUpdateKeyframeRegisterGUI { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateKeyframeRegisterReference
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserUpdateKeyframeRegisterReference { } {
 
     if { [info exists ::Ibrowser(Process,KeyframeRegister,mReference) ] } {    
@@ -909,6 +923,12 @@ proc IbrowserKeyframeDeleteAllTransforms { } {
     }
 }
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserHelpKeyframeRegister
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserHelpKeyframeRegister { } {
 
     set i [ IbrowserGetHelpWinID ]
@@ -917,10 +937,10 @@ proc IbrowserHelpKeyframeRegister { } {
 <P>1. In the Keyframes tab, select an interval to be registered using one of its volumes as the reference;
 <P>2. Add transform nodes to each volume in the interval;
 <P>3. Choose a reference volume from the sequence;
-<P>4. Select keyframes, to which manual transforms will be specified;
+<P>4. Select keyframes, for which manual transforms will be specified;
 <P>5. In the Interpolate tab, select a keyframe;
 <P>6. Load the keyframe in the viewer, (keyframe is loaded into the FG, with reference in the BG);
-<P>7. (the keyframe's matrix is loaded and the user is moved to the alignments module for manual transforming);
+<P>7. (the keyframe's matrix is loaded and the user is automatically moved to the alignments module for manual transforming);
 <P>8. when the transform is acceptable, move back to the Ibrowser module to repeat for the next keyframe.
 <P>9. When all keyframes are specified, interpolate all transforms between the keyframes.
 <P>10. Undo the interpolation if the results indicate that keyframes need to be edited;
