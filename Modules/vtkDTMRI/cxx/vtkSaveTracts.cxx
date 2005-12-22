@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSaveTracts.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:08 $
-  Version:   $Revision: 1.5.2.1 $
+  Date:      $Date: 2005/12/22 15:10:34 $
+  Version:   $Revision: 1.5.2.2 $
 
 =========================================================================auto=*/
 #include "vtkSaveTracts.h"
@@ -125,7 +125,7 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
   vtkMrmlColorNode *currColorNode;
   std::stringstream colorNameStr;
   vtkMrmlTree *colorTreeTwo;
-
+  vtkTransformPolyDataFilter *currBackTransform;
 
   // Test that we have required input
   if (this->Streamlines == 0) 
@@ -234,8 +234,7 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
         this->TubeFilters->GetNextItemAsObject();
       currActor = (vtkActor *) this->Actors->GetNextItemAsObject();
     }
-
-
+  
   // traverse appender collection (collectionOfModels) and write each to disk
   cout << "Traverse APPENDERS" << endl;
   writer = vtkPolyDataWriter::New();
@@ -281,11 +280,22 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
                                -translation[2]);
       break;
     }
-
+  vtkPolyData *writerInput;
+  currBackTransform = vtkTransformPolyDataFilter::New();  
   while(currAppender)
     {
       cout << idx << endl;
-
+      //Transform tubes back from World to ScaledIjk
+      //Now tubes live in World space.
+      
+      if (!this->SaveForAnalysis) {       
+         currBackTransform->SetInput(currAppender->GetOutput());
+         currBackTransform->SetTransform(this->WorldToTensorScaledIJK);
+         currBackTransform->Update();
+             writerInput = currBackTransform->GetOutput();
+       } else {
+         writerInput = currAppender->GetOutput();
+       }
 
       if (this->SaveForAnalysis) {
         // First find the tensors that correspond to each point on the paths.
@@ -293,7 +303,7 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
         // so the probing makes sense.
         vtkProbeFilter *probe = vtkProbeFilter::New();
         probe->SetSource(this->InputTensorField);
-        probe->SetInput(currAppender->GetOutput());
+        probe->SetInput(writerInput);
         vtkDebugMacro("Probing tensors");
         probe->Update();
 
@@ -385,7 +395,7 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
         // system in which they are displayed. (world coordinates, RAS + transforms)
         currTransformer = vtkTransformPolyDataFilter::New();
         currTransformer->SetTransform(currTransform);
-        currTransformer->SetInput(currAppender->GetOutput());
+        currTransformer->SetInput(writerInput);
         currTransformer->Update();
 
         writer->SetInput(currTransformer->GetOutput());
@@ -512,6 +522,7 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
   cout << "DELETING" << endl;
 
   // Delete all objects we created
+  currBackTransform->Delete();
   collectionOfModels->Delete();
   writer->Delete();
   tree->Delete();
