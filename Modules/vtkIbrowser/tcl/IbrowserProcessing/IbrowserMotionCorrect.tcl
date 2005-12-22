@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,13 +32,17 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        IbrowserMotionCorrect.tcl
 # PROCEDURES:  
 #   IbrowserBuildMotionCorrectGUI
+#   IbrowserUpdateMotionCorrectGUI
+#   IbrowserUpdateMotionCorrectReference
+#   IbrowserMotionCorrectStop
 #   IbrowserMotionCorrectGo
-#   IbrowserUdpateMotionCorrectGUI
+#   IbrowserHardenTransforms
+#   IbrowserHelpMotionCorrection
 #==========================================================================auto=
 
 
@@ -56,6 +60,7 @@ proc IbrowserBuildMotionCorrectGUI { f master } {
     #--- and specification params
     set ::Ibrowser(fProcessMotionCorrect) $f
     set ::Ibrowser(Process,MotionCorrectQuality) 1
+    set ::Ibrowser(Process,MotionCorrect,Hardened) 0
     set ::Ibrowser(Process,MotionCorrectIterate) 0
     set ::Ibrowser(Process,InternalReference) $::Volume(idNone)
     set ::Ibrowser(Process,ExternalReference) $::Volume(idNone)
@@ -112,41 +117,37 @@ proc IbrowserBuildMotionCorrectGUI { f master } {
     eval { label $ff.lQuality -text "quality:" } $Gui(WLA)
     eval { label $ff.lBlank -text "" } $Gui(WLA)
     eval { radiobutton $ff.rQualityCoarse -indicatoron 1\
-               -text "coarse" -value 1 -variable ::Ibrowser(Process,MotionCorrectQuality) \
+               -text "coarse" -value "Coarse" -variable ::VersorMattesMIRegistration(Objective) \
                -command "VersorMattesMIRegistrationCoarseParam" \
            } $Gui(WCA)
     grid $ff.lQuality $ff.rQualityCoarse -padx $Gui(pad) -sticky w
     
     eval { radiobutton $ff.rQualityFair -indicatoron 1\
-               -text "fair" -value 2 -variable ::Ibrowser(Process,MotionCorrectQuality) \
+               -text "fair" -value "Fine" -variable ::VersorMattesMIRegistration(Objective) \
                -command "VersorMattesMIRegistrationFineParam" \
            } $Gui(WCA)
     grid $ff.lBlank $ff.rQualityFair -padx $Gui(pad) -sticky w
     
     eval { radiobutton $ff.rQualityGood -indicatoron 1\
-               -text "good (slow)" -value 3 -variable ::Ibrowser(Process,MotionCorrectQuality) \
+               -text "good (slow)" -value "Slow" -variable ::VersorMattesMIRegistration(Objective) \
                -command "VersorMattesMIRegistrationGSlowParam" \
            } $Gui(WCA)
     grid $ff.lBlank $ff.rQualityGood -padx $Gui(pad) -sticky w
     
     eval { radiobutton $ff.rQualityBest -indicatoron 1\
-               -text "best (very slow)" -value 4 -variable ::Ibrowser(Process,MotionCorrectQuality) \
+               -text "best (very slow)" -value "VerySlow" -variable ::VersorMattesMIRegistration(Objective) \
                -command "VersorMattesMIRegistrationVerySlowParam" \
            } $Gui(WCA)
     grid $ff.lBlank $ff.rQualityBest -padx $Gui(pad) -sticky w
 
+    set ::Ibrowser(Process,MotionCorrectIterations) 1
+    set ::Ibrowser(Process,MotionCorrectIterate) 0
     eval { label $ff.lIterate -text "iterations:" } $Gui(WLA)    
-    eval { radiobutton $ff.rIterateMany -indicatoron 1\
-               -text "repeat" -value 1 -variable ::Ibrowser(Process,MotionCorrectIterate) \
-           } $Gui(WCA)
-    grid $ff.lIterate $ff.rIterateMany -padx $Gui(pad) -sticky w
+    eval { entry $ff.eIterate -width 8 \
+               -textvariable ::Ibrowser(Process,MotionCorrectIterations} $Gui(WEA)
+    grid $ff.lIterate $ff.eIterate -padx $Gui(pad) -sticky w
 
-    eval { radiobutton $ff.rIterateOnce -indicatoron 1\
-               -text "do once" -value 0 -variable ::Ibrowser(Process,MotionCorrectIterate) \
-           } $Gui(WCA)
-    grid $ff.lBlank $ff.rIterateOnce -padx $Gui(pad) -sticky w
-
-    DevAddButton $ff.bGo "Go" "IbrowserMotionCorrectGo $ff.bGo" 8
+    DevAddButton $ff.bGo "Run" "IbrowserMotionCorrectGo $ff.bGo" 8
     grid $ff.lBlank $ff.bGo -padx $Gui(pad) -pady $Gui(pad) -sticky w
     set ::Ibrowser(Process,MotionCorrect,Go) $ff.bGo
     
@@ -154,8 +155,9 @@ proc IbrowserBuildMotionCorrectGUI { f master } {
     #---HARDEN TRANSFORMS FRAME
     set ff $f.fResample
     DevAddButton $ff.bCancel "Cancel" "IbrowserRemoveNonReferenceTransforms" 8
-    pack $ff.bCancel -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
-        
+    DevAddButton $ff.bApply "Apply transforms" "IbrowserHardenTransforms" 8
+    pack $ff.bCancel $ff.bApply -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+    
 
     pack $f.fOverview $f.fInput $f.fModel $f.fResample -side top -pady $Gui(pad) -padx $Gui(pad) -fill both
 
@@ -191,6 +193,12 @@ proc IbrowserUpdateMotionCorrectGUI { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateMotionCorrectReference
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserUpdateMotionCorrectReference { } {
     
     if { [info exists ::Ibrowser(Process,MotionCorrect,mReference) ] } {    
@@ -222,6 +230,20 @@ proc IbrowserUpdateMotionCorrectReference { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserMotionCorrectStop
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserMotionCorrectStop { stopbutton } {
+
+    set ::Ibrowser(Process,MotionCorrectAbort) 1
+    VersorMattesMIRegistrationStop
+    $stopbutton configure -command "IbrowserMotionCorrectGo $stopbutton"
+    $stopbutton configure -text "Run"
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC IbrowserMotionCorrectGo
@@ -231,105 +253,261 @@ proc IbrowserUpdateMotionCorrectReference { } {
 #-------------------------------------------------------------------------------
 proc IbrowserMotionCorrectGo { stopbutton } {
 
-    
-    set state [ $stopbutton cget -text ]
-    if { $state  == "Stop" } {
-        $stopbutton configure -text "Go"
-        #--- stop the loop.
-        IbrowserSayThis "aborting motion correction." 0
-        set ::Ibrowser(AbortMotionCorrection) 1
-        puts "Aborting motion correction!"
-        return
+
+    if { $::Ibrowser(Process,MotionCorrecIterations) > 1 } {
+        set ::Ibrowser(Process,MotionCorrectIterate) 1
+    } else {
+        set ::Ibrowser(Process,MotionCorrectIterate) 0
     }
 
-    set ::Ibrowser(AbortMotionCorrection) 0    
-    #--- it's go
-    if { [lsearch $::Ibrowser(idList) $::Ibrowser(activeInterval) ] == -1 } {
-        DevErrorWindow "First select a valid sequence to motion correct."
-        return
-    } elseif { $::Ibrowser(activeInterval) == $::Ibrowser(idNone) } {
-        DevErrorWindow "First select a valid sequence to motion correct."
-        return
+    #--- catch any events to stop motion correction
+    set ::Ibrowser(Process,MotionCorrectAbort) 0
+    if { $::Ibrowser(Process,MotionCorrectIterate) } {
+        $stopbutton configure -text "Stop"
+        $stopbutton configure -command "IbrowserMotionCorrectStop $stopbutton"
+    } else {
+        #--- make the "Go" button go quiet while registering
+        $stopbutton configure -state disabled
     }
-    
-    if { [lsearch $::Volume(idList) $::Ibrowser(Process,InternalReference) ] == -1 } {
-        DevErrorWindow "First select a valid reference volume."
-        return
-    } elseif { $::Ibrowser(Process,InternalReference) == $::Volume(idNone) } {
-        DevErrorWindow "First select a valid reference volume."
-        return
-    }    
 
-    set tvid $::Ibrowser(Process,InternalReference)
-    set iid $::Ibrowser(activeInterval)
-    set start $::Ibrowser($iid,firstMRMLid)
-    set stop $::Ibrowser($iid,lastMRMLid)
-    set ::RigidIntensityRegistration(Repeat) $::Ibrowser(Process,MotionCorrectIterate)
-    
-    #--- now register each volume in the selected interval to reference...
-    set numdrops $::Ibrowser($iid,numDrops)
-    IbrowserRaiseProgressBar
-    set progcount 0
 
-    #--- test to see if user interrupted registration for any of the volumes.
-    $stopbutton configure -text "Stop"
-    for { set vid $start } { $vid <= $stop } { incr vid } {
-        if { $numdrops != 0} {
-            set progress [ expr double ($progcount) / double ($numdrops) ]
-            IbrowserUpdateProgressBar $progress "::"
-            IbrowserPrintProgressFeedback
+    
+    if { $::Ibrowser(Process,MotionCorrectAbort) == 0 } {
+        #--- it's go
+        if { [lsearch $::Ibrowser(idList) $::Ibrowser(activeInterval) ] == -1 } {
+            DevErrorWindow "First select a valid sequence to motion correct."
+            return
+        } elseif { $::Ibrowser(activeInterval) == $::Ibrowser(idNone) } {
+            DevErrorWindow "First select a valid sequence to motion correct."
+            return
         }
-        #--- don't try to register a volume to itself...
-        if { $vid != $tvid } {
-            #--- set targets and sources
-            set ::RigidIntensityRegistration(sourceID) $vid
-            set ::RigidIntensityRegistration(targetID) $tvid
-            set ::Matrix(activeID) ""
-            set ::Matrix(volume) $vid
-            set ::Matrix(refVolume) $tvid
-            #--- register and increment to next volume
-            IbrowserSayThis "starting motion correction." 0
-            VersorMattesMIRegistrationAutoRun
-            #--- save the transform ID so we can use it later
-            #--- for deleting, if motion correction is canceled.
-            for { set j 0 } { $j < $numdrops } { incr j } {
-                set dropID  $::Ibrowser($iid,$j,MRMLid)
-                if { $dropID == $vid } {
-                    set ::Ibrowser($iid,$j,transformID) [ expr $::Transform(nextID) - 1 ]
+        
+        if { [lsearch $::Volume(idList) $::Ibrowser(Process,InternalReference) ] == -1 } {
+            DevErrorWindow "First select a valid reference volume."
+            return
+        } elseif { $::Ibrowser(Process,InternalReference) == $::Volume(idNone) } {
+            DevErrorWindow "First select a valid reference volume."
+            return
+        }    
+
+        set tvid $::Ibrowser(Process,InternalReference)
+        set iid $::Ibrowser(activeInterval)
+        set start $::Ibrowser($iid,firstMRMLid)
+        set stop $::Ibrowser($iid,lastMRMLid)
+        set numdrops $::Ibrowser($iid,numDrops)
+        
+        #--- now register each volume in the selected interval to reference...
+        IbrowserRaiseProgressBar
+        set progcount 0
+        #--- test to see if user interrupted registration for any of the volumes.
+        set drop 0
+        for { set vid $start } { $vid <= $stop } { incr vid } {
+            if { $numdrops != 0} {
+                #--- draw the ibrowser's progress bar
+                set progress [ expr double ($progcount) / double ($numdrops) ]
+                IbrowserUpdateProgressBar $progress "::"
+                IbrowserPrintProgressFeedback
+            }
+            #--- don't try to register a volume to itself...
+            if { $vid != $tvid } {
+                #--- check to see if transforms exist; if not add 
+                if { ! [info exists ::Ibrowser($iid,$drop,transformID) ] } {
+                    IbrowserAddSingleTransform $iid $vid $drop       
+                } 
+                #--- set targets and sources
+                set ::RigidIntensityRegistration(sourceID) $vid
+                set ::RigidIntensityRegistration(targetID) $tvid
+                IbrowserSlicesSetVolumeAll Fore $tvid
+                IbrowserSlicesSetVolumeAll Back $vid
+                set ::VersorMattesMIRegistration(Repeat) $::Ibrowser(Process,MotionCorrectIterate)
+                set ::Matrix(activeID) $::Ibrowser($iid,$drop,transformID)
+                set ::Matrix(volume) $vid
+                set ::Matrix(refVolume) $tvid
+                #--- register 
+                IbrowserSayThis "starting motion correction." 0
+                set ::Ibrowser(Process,MotionCorrectAbort) [ VersorMattesMIRegistrationAutoRun ]
+                #--- listen for events until the current registration
+                #--- is finished or stopped by user.
+                while { $::VersorMattesMIRegistration(isdone) == 0 } {
+                    update
+                }
+                #--- drop out of loop entirely if user stopped registration
+                if { $::Ibrowser(Process,MotionCorrectAbort) == 1 } {
+                    puts "stopping motion correction."
                     break
                 }
+                puts "Registered volume $drop of [expr $numdrops - 1] volumes to reference..."
             }
-            puts "Registered $j of [expr $numdrops - 1] volumes to reference..."
-            #--- try to catch a user's click of the "stop" button
-            update idletasks
-            if { $::Ibrowser(AbortMotionCorrection) } {
-                break
-            }
+            incr progcount
+            incr drop
         }
-        incr progcount
     }
 
+    #--- clean up and send message.
+    set ::Ibrowser(Process,MotionCorrect,Hardened) 0
     IbrowserLowerProgressBar
-    #--- clean transforms up if aborted...
-    if { $::Ibrowser(AbortMotionCorrection) } {
+    if { $::Ibrowser(Process,MotionCorrectAbort) == 1 } {
         IbrowserSayThis "motion correction stopped by user, removing transforms..." 0
-        IbrowserRemoveNonReferenceTransforms
     } else {
         IbrowserSayThis "motion correction complete." 0
     }
 
+    #--- leave the button ready to run again.
+    $stopbutton configure -state normal
+    $stopbutton configure -text "Run"
+    $stopbutton configure -command "IbrowserMotionCorrectGo $stopbutton"
+
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserHardenTransforms
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserHardenTransforms { } {
+    global Volume Transform
+    
+    #--- get the motion correction reference
+    set RefID $::Ibrowser(Process,InternalReference)
+    set rnode Volume($RefID,node)
+
+    #--- get the interval's id and volume info
+    set sIID $::Ibrowser(activeInterval)
+    set start $::Ibrowser($sIID,firstMRMLid)
+    set stop $::Ibrowser($sIID,lastMRMLid)
+    set numDrops $::Ibrowser($sIID,numDrops)
+    
+    #--- find out which volume is the reference volume
+    set insertRefHere -1
+    for { set i 0 } { $i < $numDrops } { incr i } {
+        if { $RefID == $::Ibrowser($sIID,$i,MRMLid) } {
+            set insertRefHere $i
+            break
+        }
+    }
+
+    #--- error catching if can't find the reference
+    if { $insertRefHere < 0 } {
+        DevErrorWindow "Reference volume is not inside selected interval $::Ibrowser($sIID,name)"
+        return
+    }
+
+    #--- set up new interval name in multivolumereader convention
+    if { [info exists ::MultiVolumeReader(defaultSequenceName)] } {
+        incr ::MultiVolumeReader(defaultSequenceName)
+    } else {
+        set ::MultiVolumeReader(defaultSequenceName) 1
+    }
+    set mmID $::MultiVolumeReader(defaultSequenceName)
+    set iname [format "multiVol%d" $mmID]
+
+    #--- init interval and get new id
+    set newIID [ IbrowserInitNewInterval $iname ]
+    
+    #--- create new volumes; copy reference directly and xform the rest.
+    IbrowserRaiseProgressBar
+    set top [ expr $numDrops - 1]
+    for { set i 0 } { $i < $numDrops } { incr i } {
+
+        #--- feed ibrowser's progress bar
+        if { $top != 0 } {
+            set progress [ expr double ($i) / double ($top) ]
+            IbrowserUpdateProgressBar $progress "::"
+        }
+
+        if { $i == $insertRefHere } {
+            #--- copy the reference volume into the new interval
+            set newnode [ MainMrmlAddNode Volume ]
+            set vid [ $newnode GetID]
+            set rname [ $rnode GetName ]
+            MainVolumesCreate $vid
+            $newnode Copy Volume($RefID,node)
+            $newnode SetName ${iname}_mc_${i}_$rname
+            MainVolumesCopyData $vid $RefID Off
+            set ::Ibrowser($newIID,$i,MRMLid) $vid
+        } else {
+            #--- transform the volume and insert into new interval
+            set tid  $::Ibrowser($sIID,$i,transformID)
+            #--- find it in the TransformVolume menu and select:
+            #--- have to go thru TransformVolume's widget for this.
+            set tname [ Transform($tid,node) GetName ]
+            set lastTran [$::TransformVolume(transform) get end]
+            set gottran ""
+            set tindx 0
+            set nope 1
+            while { $gottran != $lastTran } {
+                set gottran [$::TransformVolume(transform) get $tindx ]                
+                if {$gottran == $tname} {
+                    set nope 0
+                    break
+                }
+                incr tindx
+            }
+            if { $nope } {
+                DevErrorWindow "Can't find the transform for volume $i in interval $::Ibrowser(IID,name)."
+                return
+            }
+
+            #--- Configure TransformVolume module stuff and doit.
+            $::TransformVolume(transform) select $tindx
+            set ::TransformVolume(DispVolume) 0
+            set ::TransformVolume(ResamplingMode) 0
+            set ::TransformVolume(InterpolationMode) "Cubic"
+            set ::TransformVolume(ResultPrefix) "${iname}_mc_${i}"
+            set newVID [ TransformVolumeRun ]
+            set ::Ibrowser($newIID,$i,MRMLid) $newVID
+            
+            #--- copy parameters from old node into this node.
+            set oldID $::TransformVolume(VolIDs)
+            set newnode [ Volume($newVID,node) ]
+            $newnode Copy Volume($oldID,node)
+        }
+
+        if {$i == 0} {
+            set ::Ibrowser($newIID,firstMRMLid) $vid
+            puts "firstMRMLid = $vid"
+        } elseif { $i == $top } {
+            set ::Ibrowser($newIID,lastMRMLid) $vid
+            puts "lastMRMLid = $vid"
+        }
+    }
+
+    #--- create interval
+    IbrowserMakeNewInterval $iname \
+        $::IbrowserController(Info,Ival,imageIvalType) \
+        0.0 [expr $numDrops-1] $numDrops
+
+    #--- update multivolumereader to reflect this new sequence
+    IbrowserUpdateMultiVolumeReader $iname $newIID
+    
+    #--- report in ibrowser's message panel
+    IbrowserLowerProgressBar
+    IbrowserSayThis "motion correction transforms committed in new interval $iname." 0
+    set ::Ibrowser(Process,MotionCorrect,Hardened) 1
+}
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserHelpMotionCorrection
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserHelpMotionCorrection { } {
 
     set i [ IbrowserGetHelpWinID ]
     set txt "<H3>Motion correction</H3>
- <P> This tool lets you select an interval to motion correct (a source interval), to select a reference (target) volume from within the source interval, and register all of the other volumes in the source interval to the reference. Motion correction adds a transform to each non-reference volume in the interval, and may not work properly if the reference or target volume nodes already have transforms applied to them. It is recommended that an interval be motion corrected first, using any of its volumes as the reference, and if subsequent transforms are necessary, that those operations be carried out in a second step.
-<P> To abort motion correction, first stop the registration of an individual volume by clicking the <I>Stop</I> button on the popup window, and then stop the registration of subsequent volumes in the source interval by clicking the <I>Stop</I> button on the gui panel. (You may have to press <I>Stop</I> one more time in the popup window.) Then, wait a short time for the registration to stop and any registration transforms that were added to the scene to be deleted.
-<P> It is often of interest to co-register a motion-corrected interval with another reference volume outside the motion-corrected interval. To accomplish this, motion correct an interval, then navigate to the Data module and add a transform around all volumes in the motion-corrected interval. Then go to the Alignments module, select the matrix you just created, select a reference volume from outside the interval, select the reference volume used in motion correction to be the volume to move in co-registration. Configure and perform the registration (the registration will work properly if the reference volume has one less transform applied to it than the volume to move does). The resulting matrix will bring all volumes in the motion-corrected interval into alignment with the new external reference volume."
+ <P> This tool lets you select an interval to motion correct (a source interval), to select a reference volume from within the source interval, and to register all of the other volumes in the source interval to the reference. Currently, the only kind of registration available for motion correction in the ibrowser module is rigid registration by Mutual Information.
+<P> Motion correction adds a transform to each non-reference volume in the interval, and may not work properly if the reference or target volume nodes already have transforms applied to them. It is recommended that an interval be motion corrected first, using any of its volumes as the reference, and if subsequent transforms are necessary, that those operations be carried out in a second step after transforms have been applied.
+<P> To abort motion correction: in non-repeat mode, stop the registration of an individual volume by clicking the <I>Stop</I> button on the popup window; in repeat mode, press the <I>Stop</I> button in the GUI panel, and in either case, wait a short time for the registration to stop. Any registration transforms that were added to the scene will not be deleted, and can be used for subsequent registration attempts. They can be deleted using the <I>Cancel</I> button.
+<P> Important note: until the <I>Apply transforms</I> option is completed, these volumes will not be suitable for collective statistical processing (such as in the fMRIEngine module). If you'd like to keep image data in its original space, and use the transforms for visualization only, <B>don't</B> use the <I>Apply</I> button. If you'd like to perform additional processing on the motion corrected data, then <B>do</B> use the <I>Apply</I> button to transform the image data. Applying transforms will create a new interval containing transformed motion corrected data from teh original interval. (You may also want to delete the original interval to save memory).
+<P> <B>Quality settings (from vtkRigidIntensityRegistration):</B>
+<P><B>Coarse:</B> The coarse method will generally do a good job on all images. It takes 5 - 10 minutes to run. It requires no user intervention; though it updates regularly so that the user can stop the algorithm if she is satisfied with the result.
+<P> <B>Fine:</B> The fine method can be run after the coarse method to fine-tune the result. Unlike the 'fine' selection in the vtkRigidIntensityRegistration module, this method iterates a finite number of times and stops, to accommodate correcting a multi-volume sequence. You can expect it to take awhile.
+<P> <B>Good:</B> This method is designed for the user to be able to walk away, and to come back to find a good registration later. It does not update the alignment until finished.
+<P><B>Best:</B> This method is certainly designed to be left unattended and running for some time. It generally works very well. It does not update the alignment until finished."
     DevCreateTextPopup infowin$i "Ibrowser information" 100 100 18 $txt
 }
 
