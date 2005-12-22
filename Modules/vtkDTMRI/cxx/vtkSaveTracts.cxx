@@ -1,38 +1,14 @@
 /*=auto=========================================================================
 
-(c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 
-This software ("3D Slicer") is provided by The Brigham and Women's 
-Hospital, Inc. on behalf of the copyright holders and contributors.
-Permission is hereby granted, without payment, to copy, modify, display 
-and distribute this software and its documentation, if any, for  
-research purposes only, provided that (1) the above copyright notice and 
-the following four paragraphs appear on all copies of this software, and 
-(2) that source code to any modifications to this software be made 
-publicly available under terms no more restrictive than those in this 
-License Agreement. Use of this software constitutes acceptance of these 
-terms and conditions.
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
 
-3D Slicer Software has not been reviewed or approved by the Food and 
-Drug Administration, and is for non-clinical, IRB-approved Research Use 
-Only.  In no event shall data or images generated through the use of 3D 
-Slicer Software be used in the provision of patient care.
-
-IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-POSSIBILITY OF SUCH DAMAGE.
-
-THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-NON-INFRINGEMENT.
-
-THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkSaveTracts.cxx,v $
+  Date:      $Date: 2005/12/22 15:13:27 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 #include "vtkSaveTracts.h"
@@ -149,7 +125,7 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
   vtkMrmlColorNode *currColorNode;
   std::stringstream colorNameStr;
   vtkMrmlTree *colorTreeTwo;
-
+  vtkTransformPolyDataFilter *currBackTransform;
 
   // Test that we have required input
   if (this->Streamlines == 0) 
@@ -258,8 +234,7 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
         this->TubeFilters->GetNextItemAsObject();
       currActor = (vtkActor *) this->Actors->GetNextItemAsObject();
     }
-
-
+  
   // traverse appender collection (collectionOfModels) and write each to disk
   cout << "Traverse APPENDERS" << endl;
   writer = vtkPolyDataWriter::New();
@@ -305,11 +280,22 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
                                -translation[2]);
       break;
     }
-
+  vtkPolyData *writerInput;
+  currBackTransform = vtkTransformPolyDataFilter::New();  
   while(currAppender)
     {
       cout << idx << endl;
-
+      //Transform tubes back from World to ScaledIjk
+      //Now tubes live in World space.
+      
+      if (!this->SaveForAnalysis) {       
+         currBackTransform->SetInput(currAppender->GetOutput());
+         currBackTransform->SetTransform(this->WorldToTensorScaledIJK);
+         currBackTransform->Update();
+             writerInput = currBackTransform->GetOutput();
+       } else {
+         writerInput = currAppender->GetOutput();
+       }
 
       if (this->SaveForAnalysis) {
         // First find the tensors that correspond to each point on the paths.
@@ -317,7 +303,7 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
         // so the probing makes sense.
         vtkProbeFilter *probe = vtkProbeFilter::New();
         probe->SetSource(this->InputTensorField);
-        probe->SetInput(currAppender->GetOutput());
+        probe->SetInput(writerInput);
         vtkDebugMacro("Probing tensors");
         probe->Update();
 
@@ -409,7 +395,7 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
         // system in which they are displayed. (world coordinates, RAS + transforms)
         currTransformer = vtkTransformPolyDataFilter::New();
         currTransformer->SetTransform(currTransform);
-        currTransformer->SetInput(currAppender->GetOutput());
+        currTransformer->SetInput(writerInput);
         currTransformer->Update();
 
         writer->SetInput(currTransformer->GetOutput());
@@ -536,6 +522,7 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
   cout << "DELETING" << endl;
 
   // Delete all objects we created
+  currBackTransform->Delete();
   collectionOfModels->Delete();
   writer->Delete();
   tree->Delete();
