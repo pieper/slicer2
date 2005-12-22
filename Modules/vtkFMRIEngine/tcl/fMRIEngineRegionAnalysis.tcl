@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEngineRegionAnalysis.tcl,v $
-#   Date:      $Date: 2005/12/22 17:40:24 $
-#   Version:   $Revision: 1.14.2.4 $
+#   Date:      $Date: 2005/12/22 20:17:35 $
+#   Version:   $Revision: 1.14.2.5 $
 # 
 #===============================================================================
 # FILE:        fMRIEngineRegionAnalysis.tcl
@@ -29,8 +29,6 @@
 #   fMRIEngineSelectCondForROIPlot cond count
 #   fMRIEngineResetLabelMap
 #   fMRIEngineDoROIStats type
-#   fMRIEngineComputeROIIntensityStats
-#   fMRIEngineComputeROITStats
 #   fMRIEngineCloseROIStatsWindow
 #   fMRIEnginePlotROIStats type
 #   fMRIEngineDoRegionTimecourse
@@ -651,102 +649,6 @@ proc fMRIEngineResetLabelMap {} {
     }
 }
 
- 
-#-------------------------------------------------------------------------------
-# .PROC fMRIEngineDoROIStats
-# 
-# .ARGS
-# string type type = 1 for intensity; type = 2 for t 
-# .END
-#-------------------------------------------------------------------------------
-proc fMRIEngineDoROIStats {type} {
-
-    set r 1 
-    switch $type {
-        "intensity" {
-            set r [fMRIEngineComputeROIIntensityStats]
-        }
-        "t" {
-            set r [fMRIEngineComputeROITStats]
-        }
-    }
-
-    if {$r == 0} {
-        fMRIEnginePlotROIStats $type
-    }
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC fMRIEngineComputeROIIntensityStats
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc fMRIEngineComputeROIIntensityStats {} {
-
-    return 1 
-
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC fMRIEngineComputeROITStats
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc fMRIEngineComputeROITStats {} {
-    global fMRIEngine Volume Slice
-
-    set n $Volume(idNone)
-    set tId $n 
-    set lId $n 
-    foreach s $Slice(idList) {
-        if {$tId == $n} {
-            set tId $Slice($s,backVolID)
-        }
-        if {$lId == $n} {
-            set lId $Slice($s,labelVolID)
-        }
-    }
-
-    if {$n == $tId} {
-        DevErrorWindow "Put your activation volume into the background."
-        return 1 
-    }
-    if {$n == $lId} {
-        DevErrorWindow "Your label map is not visible."
-        return 1 
-    }
-
-    # always uses a new instance of vtkActivationRegionStats 
-    if {[info commands fMRIEngine(actROIStats)] != ""} {
-        fMRIEngine(actROIStats) Delete
-        unset -nocomplain fMRIEngine(actROIStats)
-    }
-    vtkActivationRegionStats fMRIEngine(actROIStats)
-
-    fMRIEngine(actROIStats) AddInput [Volume($lId,vol) GetOutput]
-    fMRIEngine(actROIStats) AddInput [Volume($tId,vol) GetOutput]
-    fMRIEngine(actROIStats) SetLabel 16 
-    fMRIEngine(actROIStats) Update 
-
-    set count [fMRIEngine(actROIStats) GetCount] 
-    if {$count < 1} {
-        DevErrorWindow "No label has been selected."
-        return 1
-    }
-
-    set fMRIEngine(t,count) $count 
-    set fMRIEngine(t,max)   [fMRIEngine(actROIStats) GetMax] 
-    set fMRIEngine(t,min)   [fMRIEngine(actROIStats) GetMin] 
-    set fMRIEngine(t,mean)  [fMRIEngine(actROIStats) GetMean] 
-
-    return 0
-
-}
- 
 
 #-------------------------------------------------------------------------------
 # .PROC fMRIEngineCloseROIStatsWindow
@@ -1496,36 +1398,6 @@ proc fMRIEngineShowRegionStats {} {
         $c,0 $w.f2.btn -padx 5 -pady 30 -cspan 2
 
     return 0
-}
-
-
-# compute signal change for all conditions
-proc fMRIEngineComputeSignalChange {} {
-    global fMRIEngine
-
-    fMRIEngineDoRegionTimecourse 0
-    fMRIEngineCreateCurvesFromTimeCourse 
-
-    # compute average signal for each condition
-    foreach ev $fMRIEngine(allConditionEVs) {
-        set total 0.0
-        foreach v $fMRIEngine($ev,ave) {
-            set total [expr $total+$v]
-        }
-        set len [llength $fMRIEngine($ev,ave)]
-        set fMRIEngine($ev,averageSignal) [expr 1.0 * $total / $len]
-    }
-
-    # compute signal change for each condition 
-    foreach ev $fMRIEngine(allConditionEVs) {
-        if {$ev != "baseline"} {
-            set sc [expr 100 * ($fMRIEngine($ev,averageSignal)-$fMRIEngine(baseline,averageSignal)) \
-                    / $fMRIEngine(baseline,averageSignal)]
-
-            set sc [format "%.2f" $sc]
-            set fMRIEngine($ev,signalChange) "$sc %" 
-        }
-    }
 }
 
 
