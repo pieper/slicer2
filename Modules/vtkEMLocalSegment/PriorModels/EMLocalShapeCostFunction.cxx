@@ -567,7 +567,7 @@ void EMLocalShapeCostFunction::TransfereArrayIntoPCAShapeParameters(float* PCAPa
 // Distance map calculations 
 // Published in ICCV05
 // The distance map is transfered to the space pf space conditioned probabilities via the logistic function 
-inline double EMLocalShapeCostFunction::Transfere_DistanceMap_Into_SpatialPrior(double distance, float variance, float boundary, float Min, float Max) {
+double EMLocalShapeCostFunction::Transfere_DistanceMap_Into_SpatialPrior(double distance, float variance, float boundary, float Min, float Max) {
   // Currently just doing it because if the maximum value is 0 or 20 then you get something like 0.001 and 0.99993 => error 
   if (distance < Min) return 0.0;
   if (distance > Max) return double(this->NumberOfTrainingSamples);
