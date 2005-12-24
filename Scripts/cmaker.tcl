@@ -234,6 +234,10 @@ for {set i 0} {$i < $argc} {incr i} {
             set VTK_ARG_DEBUG   "-DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo"
             set AttributeFlag 1
         }
+        "--release"    { puts "Compiling in relwithdebinfo mode" 
+            set VTK_ARG_DEBUG   "-DCMAKE_BUILD_TYPE:STRING=Release"
+            set AttributeFlag 1
+        }
         default {
             if {[string range $a 0 1 ] == "--"} { 
                 puts stderr "Do not know option $a. Currently the following attributes are defined: "
