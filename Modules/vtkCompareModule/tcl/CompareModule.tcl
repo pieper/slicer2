@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: CompareModule.tcl,v $
-#   Date:      $Date: 2005/12/20 22:55:00 $
-#   Version:   $Revision: 1.1.2.2 $
+#   Date:      $Date: 2005/12/27 18:34:28 $
+#   Version:   $Revision: 1.1.2.3 $
 # 
 #===============================================================================
 # FILE:        CompareModule.tcl
@@ -16,7 +16,7 @@
 #   CompareModuleBuildGUI
 #   CompareModuleBuildVTK
 #   CompareModuleEnter
-#   CompareModuleEnter
+#   CompareModuleExit
 #   CompareModuleSetLinking
 #   CompareModuleResetOffsets
 #   CompareModuleEnableLinkControls
@@ -38,7 +38,7 @@ proc CompareModuleInit {} {
     set m CompareModule
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.2 $} {$Date: 2005/12/20 22:55:00 $}]
+        {$Revision: 1.1.2.3 $} {$Date: 2005/12/27 18:34:28 $}]
 
     # Module Summary Info
     #------------------------------------
@@ -258,7 +258,7 @@ Description by tab:
         eval {radiobutton $f.fLinkingSetting.rLinking$value -width $width -indicatoron 0\
             -text "$text" -value "$value" -variable CompareViewer(linked) \
             -command "CompareModuleSetLinking"} $Gui(WCA)
-            pack $f.fLinkingSetting.rLinking$value -side left
+        pack $f.fLinkingSetting.rLinking$value -side left
     }
 
     eval {button $f.fReset.bReset \
@@ -284,7 +284,7 @@ Description by tab:
     set fov2 [expr $View(fov) / 2]
 
     eval {entry $f.eOffset -width 4 -textvariable CompareSlice(offset)} $Gui(WEA)
-        bind $f.eOffset <Return>   "CompareSlicesSetOffsetAll; CompareRenderSlices"
+    bind $f.eOffset <Return>   "CompareSlicesSetOffsetAll; CompareRenderSlices"
         bind $f.eOffset <FocusOut> "CompareSlicesSetOffsetAll; CompareRenderSlices"
 
     # tooltip for entry box
@@ -616,7 +616,7 @@ Description by tab:
     set fov2 [expr $View(fov) / 2]
 
     eval {entry $f.eOffset -width 4 -textvariable CompareMosaik(offset)} $Gui(WEA)
-        bind $f.eOffset <Return>   "CompareMosaikSetOffset; CompareRenderMosaik"
+    bind $f.eOffset <Return>   "CompareMosaikSetOffset; CompareRenderMosaik"
         bind $f.eOffset <FocusOut> "CompareMosaikSetOffset; CompareRenderMosaik"
 
     # tooltip for entry box
@@ -773,21 +773,35 @@ proc CompareModuleBuildVTK {} {
 # .END
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# .PROC CompareModuleEnter
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc CompareModuleEnter {} {
     global CompareModule CompareViewer CompareGui
 
     CompareViewerSetMode $CompareViewer(mode)
     wm deiconify $CompareGui(tCompareViewer)
     CompareRenderSlices
+
+    #Update ENST logo
+    set modulepath $::PACKAGE_DIR_VTKCOMPAREMODULE/../../../images
+    if {[file exist [ExpandPath [file join \
+                     $modulepath "slicer_ENST_CNRS_GET_logo.ppm"]]]} {
+        image create photo iWelcome \
+        -file [ExpandPath [file join $modulepath "slicer_ENST_CNRS_GET_logo.ppm"]]
+    }
+
 }
 
+#-------------------------------------------------------------------------------
+# .PROC CompareModuleExit
+# Called when this module is exited by the user.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc CompareModuleExit {} {
 
+    #Restore standard slicer logo
+    image create photo iWelcome \
+        -file [ExpandPath [file join gui "welcome.ppm"]]
+}
 
 
 #-------------------------------------------------------------------------------
@@ -807,16 +821,6 @@ proc CompareModuleSetLinking {} {
     CompareModuleEnableLinkControls
     CompareSlicesEnableControls
 
-    # resets zoom and pan
-    CompareSlicesResetZoomAll
-
-    # Updates linking slidebar range
-    set fov2 [expr $View(fov) / 2]
-    set fov2Min [expr -$fov2]
-    set sO ${Module(CompareModule,fDisplay)}.fLinking.fOffset.fSlider.sOffset
-    set config "-from $fov2Min -to $fov2"
-    eval $sO config $config
-
     # set all orientations to the value displayed in the orientation menu button
     set mOrient ${Module(CompareModule,fDisplay)}.fLinking.fOrientation.fChooseOrient.mbOrient
     set cget  "-text"
@@ -828,8 +832,6 @@ proc CompareModuleSetLinking {} {
     foreach s $CompareSlice(idList) {
       set CompareSlice($s,offsetIncrement) 1
     }
-
-    CompareRenderSlices
 
   } else {
     # disable controls if linked mode is off
