@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPruneStreamline.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:07 $
-  Version:   $Revision: 1.3.2.1 $
+  Date:      $Date: 2005/12/27 22:35:24 $
+  Version:   $Revision: 1.3.2.2 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -42,7 +42,7 @@
 
 #define VTK_MARGIN 0.1
 
-vtkCxxRevisionMacro(vtkPruneStreamline, "$Revision: 1.3.2.1 $");
+vtkCxxRevisionMacro(vtkPruneStreamline, "$Revision: 1.3.2.2 $");
 vtkStandardNewMacro(vtkPruneStreamline);
 
 vtkPruneStreamline::vtkPruneStreamline()
@@ -111,9 +111,6 @@ void vtkPruneStreamline::Execute()
     numNOTROIs = 0; 
     
   numStreamlines = numCells/2;
-
-  cout<<"Number of streamlines to attemp pruning: "<<numStreamlines<<endl;
-  cout<<"Number of Cells: "<<numCells<<endl;
     
   vtkIdType npts;
   vtkIdType *ptId;
@@ -188,9 +185,7 @@ void vtkPruneStreamline::Execute()
     
     
     for(int cellId=0; cellId<2; cellId++) {
-     cout<<"Cell ID: "<<cellId<<endl;
      inLines->GetNextCell(npts,ptId);
-     cout<<"Num points in cell: "<<npts<<endl;
   
      for(int j=0;j<npts;j++) {
          
@@ -261,11 +256,7 @@ int vtkPruneStreamline::TestForStreamline(int* streamlineANDTest, int nptsAND, i
   int test;
   test =0;
   
-  //cout<<"StreamlineTest: "<<endl;
-  for(i=0;i<nptsAND;i++) {
-    cout<<streamlineANDTest[i]<<endl;
-  }  
-  
+    
   test = 1;
   for(i=0;i<nptsAND;i++) {
     test = test && (streamlineANDTest[i]>this->Threshold);    
@@ -274,7 +265,6 @@ int vtkPruneStreamline::TestForStreamline(int* streamlineANDTest, int nptsAND, i
   for(i=0;i<nptsNOT;i++) {
     test = test && (streamlineNOTTest[i]<=this->Threshold);    
   }
-  cout<<"Test result: "<<test<<endl;
   
   return test;        
     

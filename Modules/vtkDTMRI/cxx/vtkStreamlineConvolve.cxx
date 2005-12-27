@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkStreamlineConvolve.cxx,v $
-  Date:      $Date: 2005/12/27 22:22:15 $
-  Version:   $Revision: 1.2.8.2 $
+  Date:      $Date: 2005/12/27 22:35:38 $
+  Version:   $Revision: 1.2.8.3 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -36,7 +36,7 @@
 #include "vtkPolyData.h"
 #include "math.h"
 
-vtkCxxRevisionMacro(vtkStreamlineConvolve, "$Revision: 1.2.8.2 $");
+vtkCxxRevisionMacro(vtkStreamlineConvolve, "$Revision: 1.2.8.3 $");
 vtkStandardNewMacro(vtkStreamlineConvolve);
 
 // Construct with lower threshold=0, upper threshold=1, and threshold 
@@ -216,7 +216,6 @@ void vtkStreamlineConvolveExecute(vtkStreamlineConvolve *self,
 
      
   numPts = streamlines->GetNumberOfPoints();
-  cout<<"Number of points in Streamlines: "<<numPts<<endl;
   
   output->SetPoints(streamlines->GetPoints());
   output->SetLines(streamlines->GetLines());
@@ -264,7 +263,6 @@ void vtkStreamlineConvolveExecute(vtkStreamlineConvolve *self,
   int abort=0;
   vtkIdType progressInterval = numPts/20+1;
   
-  cout<<"Starting convolution throught streamline points"<<endl;
   for (int ptId=0; ptId < numPts && !abort; ptId++)
     {
     if ( !(ptId % progressInterval) )

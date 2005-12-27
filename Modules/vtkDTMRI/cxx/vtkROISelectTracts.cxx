@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkROISelectTracts.cxx,v $
-  Date:      $Date: 2005/12/27 22:21:59 $
-  Version:   $Revision: 1.3.2.2 $
+  Date:      $Date: 2005/12/27 22:35:30 $
+  Version:   $Revision: 1.3.2.3 $
 
 =========================================================================auto=*/
 
@@ -108,7 +108,6 @@ void vtkROISelectTracts::ConvertStreamlinesToPolyLines()
       npts += strPoints->GetNumberOfPoints();
     }
   
-  cout<<"Number of points of the streamlines: "<<npts<<endl;
   
   newPoints->SetNumberOfPoints(npts);
   
@@ -116,7 +115,6 @@ void vtkROISelectTracts::ConvertStreamlinesToPolyLines()
   this->Streamlines->InitTraversal();
   for(int i=0 ; i<numStreamlines; i++)
     {
-      cout<<"Processing streamline: "<<i<<endl;
       currStreamline= dynamic_cast<vtkHyperStreamlinePoints *> (this->Streamlines->GetNextItemAsObject());
     
       strPoints = currStreamline->GetHyperStreamline0();
@@ -137,7 +135,7 @@ void vtkROISelectTracts::ConvertStreamlinesToPolyLines()
           strIdx++;
         }
     }
-  cout<<"Saving streamlines as poly lines"<<endl;
+
   this->StreamlinesAsPolyLines->SetPoints(newPoints);
   this->StreamlinesAsPolyLines->SetLines(newLines);
   newPoints->Delete();
@@ -159,7 +157,6 @@ void vtkROISelectTracts::FindStreamlinesThatPassThroughROI()
     }
   
 
-  cout<<"Converting Streamlines to PolyLines"<<endl;
   this->ConvertStreamlinesToPolyLines();
  
   vtkStreamlineConvolve *conv = vtkStreamlineConvolve::New();
@@ -196,7 +193,6 @@ void vtkROISelectTracts::FindStreamlinesThatPassThroughROI()
      vtkErrorMacro("Kernel dimensions does not fit.");
     } 
       
-  cout<<"Updtating vtkStreamlineConvolve"<<endl;
   conv->Update();
  
   finder->SetInput(conv->GetOutput());
@@ -205,7 +201,6 @@ void vtkROISelectTracts::FindStreamlinesThatPassThroughROI()
   finder->SetThreshold(this->PassThreshold);
  
   //Update minipipeline
-  cout<<"Updating vtkPruneStreamline"<<endl;
   finder->Update();
  
   //Get streamline info and set visibility off.
@@ -237,7 +232,7 @@ void vtkROISelectTracts::HighlightStreamlinesPassTest()
     }
 
   int numStr = this->StreamlineIdPassTest->GetNumberOfTuples();
-  cout<<"Number of Streamlines that pass test: "<<numStr<<endl;
+  //cout<<"Number of Streamlines that pass test: "<<numStr<<endl;
     
   if (numStr == 0)
     return;
@@ -341,8 +336,8 @@ void vtkROISelectTracts::DeleteStreamlinesNotPassTest()
     }
 
   int numStr = this->StreamlineIdPassTest->GetNumberOfTuples();
-  cout<<"Number of Streamlines that pass test: "<<numStr<<endl;
-
+  //cout<<"Number of Streamlines that pass test: "<<numStr<<endl;
+  
   //nothing to delete.
   if (numStr == 0)
     return;
