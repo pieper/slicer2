@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkStreamlineConvolve.h,v $
-  Date:      $Date: 2005/12/20 22:55:09 $
-  Version:   $Revision: 1.2.8.1 $
+  Date:      $Date: 2005/12/27 22:22:20 $
+  Version:   $Revision: 1.2.8.2 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -43,6 +43,7 @@
 #include "vtkDoubleArray.h"
 
 #include "vtkPolyData.h"
+#include "vtkTransform.h"
 
 class VTK_DTMRI_EXPORT vtkStreamlineConvolve : public vtkStructuredPointsToPolyDataFilter
 {
@@ -76,11 +77,16 @@ public:
   // Set/Get the Streamline to convolve with.
   vtkSetObjectMacro(Streamlines,vtkPolyData);
   vtkGetObjectMacro(Streamlines,vtkPolyData); 
-   
+  
+  // Descritpion:
+  // Transformation that maps one point of the streamline
+  // into the ijk space of the image input.
+  vtkSetObjectMacro(Transform,vtkTransform);
+  vtkGetObjectMacro(Transform,vtkTransform); 
 
 protected:
   vtkStreamlineConvolve();
-  ~vtkStreamlineConvolve() {};
+  ~vtkStreamlineConvolve();
 
   // Usual data generation method
   void Execute();
@@ -92,6 +98,7 @@ protected:
   int KernelSize[3];
   double Kernel[343];
   vtkPolyData *Streamlines;
+  vtkTransform *Transform;
 
 private:
   vtkStreamlineConvolve(const vtkStreamlineConvolve&);  // Not implemented.

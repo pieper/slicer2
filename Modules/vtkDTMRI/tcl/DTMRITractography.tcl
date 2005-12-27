@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITractography.tcl,v $
-#   Date:      $Date: 2005/12/20 22:55:12 $
-#   Version:   $Revision: 1.42.2.2 $
+#   Date:      $Date: 2005/12/27 22:23:03 $
+#   Version:   $Revision: 1.42.2.3 $
 # 
 #===============================================================================
 # FILE:        DTMRITractography.tcl
@@ -58,7 +58,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.42.2.2 $} {$Date: 2005/12/20 22:55:12 $}]
+                                 {$Revision: 1.42.2.3 $} {$Date: 2005/12/27 22:23:03 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -1761,6 +1761,7 @@ proc DTMRIFindStreamlinesThroughROI { {verbose 1} } {
     set ROISelectTracts DTMRI(vtk,ROISelectTracts)
     
     $ROISelectTracts SetInputROI [Volume($v,vol) GetOutput] 
+    
     $ROISelectTracts SetInputROIValue $DTMRI(ROILabel)
     $ROISelectTracts SetInputANDROIValues DTMRI(vtk,ListANDLabels)
     $ROISelectTracts SetInputNOTROIValues DTMRI(vtk,ListNOTLabels)
@@ -1768,14 +1769,10 @@ proc DTMRIFindStreamlinesThroughROI { {verbose 1} } {
     $ROISelectTracts SetPassThreshold $DTMRI(stream,threshold)
 
     # Get positioning information from the MRML node
-    # world space (what you see in the viewer) to ijk (array) space
-    vtkTransform transform
-    transform SetMatrix [Volume($v,node) GetWldToIjk]
-    # now it's ijk to world
-    transform Inverse
-    $ROISelectTracts SetROIToWorld transform
-    transform Delete
-
+    # world space (what you see in the viewer) to ijk (array) space    
+    [$ROISelectTracts GetROIWldToIjk] SetMatrix [Volume($v,node) GetWldToIjk]
+    $ROISelectTracts SetStreamlineWldToScaledIjk [[$ROISelectTracts GetStreamlineController] GetWorldToTensorScaledIJK]
+    
     # create all streamlines
     puts "Initial number of tracts: [[DTMRI(vtk,streamlineControl) GetStreamlines] GetNumberOfItems]"
     $ROISelectTracts FindStreamlinesThatPassThroughROI

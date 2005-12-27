@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkStreamlineConvolve.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:09 $
-  Version:   $Revision: 1.2.8.1 $
+  Date:      $Date: 2005/12/27 22:22:15 $
+  Version:   $Revision: 1.2.8.2 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -36,7 +36,7 @@
 #include "vtkPolyData.h"
 #include "math.h"
 
-vtkCxxRevisionMacro(vtkStreamlineConvolve, "$Revision: 1.2.8.1 $");
+vtkCxxRevisionMacro(vtkStreamlineConvolve, "$Revision: 1.2.8.2 $");
 vtkStandardNewMacro(vtkStreamlineConvolve);
 
 // Construct with lower threshold=0, upper threshold=1, and threshold 
@@ -44,6 +44,7 @@ vtkStandardNewMacro(vtkStreamlineConvolve);
 vtkStreamlineConvolve::vtkStreamlineConvolve()
 {
 
+  this->Transform = vtkTransform::New();
   int idx;
   for (idx = 0; idx < 343; idx++)
     {
@@ -64,6 +65,11 @@ vtkStreamlineConvolve::vtkStreamlineConvolve()
   this->Streamlines = NULL; 
 }
 
+//----------------------------------------------------------------------------
+vtkStreamlineConvolve::~vtkStreamlineConvolve()
+{
+  this->Transform->Delete();
+}  
 
 //----------------------------------------------------------------------------
 // Set a 3x3 kernel 
@@ -175,11 +181,7 @@ void vtkStreamlineConvolveExecute(vtkStreamlineConvolve *self,
   int *kernelSize;
   int kernelMiddle[3];
 
-  vtkPoints *newPoints;
-  vtkPointData *pd, *outPD;
-  vtkCellArray *verts;
-  vtkIdType ptId, numPts, pts[1];
-  double x[3];
+  vtkIdType ptId, numPts;
   vtkPolyData *output = self->GetOutput();
   vtkPolyData *streamlines = self->GetStreamlines();
 
@@ -201,7 +203,7 @@ void vtkStreamlineConvolveExecute(vtkStreamlineConvolve *self,
   int inImageMax0, inImageMax1, inImageMax2;
 
   // Points of the streamline
-  double *globalpt;
+  double globalpt[3],in[4],out[4];
   int roundpt[3];
 
   //
@@ -271,15 +273,23 @@ void vtkStreamlineConvolveExecute(vtkStreamlineConvolve *self,
       abort = self->GetAbortExecute();
       }
     //Streamline point in global coordinate system (scale IJK)
-    globalpt = streamlines->GetPoint(ptId);
-    
-    // Point in IJK
-    roundpt[0]=static_cast<int> (floor((globalpt[0]-origin[0])/spacing[0]));
-    roundpt[1]=static_cast<int> (floor((globalpt[1]-origin[1])/spacing[1]));
-    roundpt[2]=static_cast<int> (floor((globalpt[2]-origin[2])/spacing[2]));
-    
+    streamlines->GetPoint(ptId,globalpt);
+    in[0] = globalpt[0];
+    in[1] = globalpt[1];
+    in[2] = globalpt[2];
+    in[3] = 1;
+    self->GetTransform()->MultiplyPoint(in,out);
+    roundpt[0] = static_cast<int> (floor(out[0]));
+    roundpt[1] = static_cast<int> (floor(out[1]));
+    roundpt[2] = static_cast<int> (floor(out[2]));
+
     inPtr = (T *) input->GetScalarPointer(roundpt);
-    
+    if (inPtr == NULL) {
+       //Point outside buffer. Set result to zero
+       outScalars->SetValue(ptId,0.0);
+       break;
+    }   
+        
     // loop through neighborhood pixels
     // as sort of a hack to handle boundaries, 
     // input pointer will be marching through data that does not exist.

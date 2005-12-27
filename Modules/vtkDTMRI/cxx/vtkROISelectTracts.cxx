@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkROISelectTracts.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:07 $
-  Version:   $Revision: 1.3.2.1 $
+  Date:      $Date: 2005/12/27 22:21:59 $
+  Version:   $Revision: 1.3.2.2 $
 
 =========================================================================auto=*/
 
@@ -40,7 +40,8 @@ vtkROISelectTracts::vtkROISelectTracts()
 {
   // matrices
   // Initialize these to identity, so if the user doesn't set them it's okay.
-  this->ROIToWorld = vtkTransform::New();
+  this->ROIWldToIjk = vtkTransform::New();
+  this->StreamlineWldToScaledIjk = vtkTransform::New();
   
   // The user may need to set these, depending on class usage
   this->InputROI = NULL;
@@ -68,8 +69,8 @@ vtkROISelectTracts::vtkROISelectTracts()
 vtkROISelectTracts::~vtkROISelectTracts()
 {
   // matrices
-  this->ROIToWorld->Delete();
-  
+  this->ROIWldToIjk->Delete();
+  this->StreamlineWldToScaledIjk->Delete();
   // volumes
   if (this->InputROI) this->InputROI->Delete();
   if (this->InputROI2) this->InputROI2->Delete();
@@ -168,6 +169,16 @@ void vtkROISelectTracts::FindStreamlinesThatPassThroughROI()
   conv->SetStreamlines(this->StreamlinesAsPolyLines);
   conv->SetInput(this->InputROI);
   
+  //Set transformation to go from ScaleIjk of the streamlines
+  //to ijk of the ROI
+  vtkTransform *trans = vtkTransform::New();
+  trans->Concatenate(this->StreamlineWldToScaledIjk);
+  trans->Inverse();
+  trans->PostMultiply();
+  trans->Concatenate(this->ROIWldToIjk);
+  conv->SetTransform(trans);
+  
+   
   int val = this->ConvolutionKernel->GetNumberOfTuples();
   if (val == 27)
     {
@@ -202,6 +213,7 @@ void vtkROISelectTracts::FindStreamlinesThatPassThroughROI()
  
  
   //Delete minipipeline
+  trans->Delete();
   conv->Delete();
   finder->Delete();
  

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkROISelectTracts.h,v $
-  Date:      $Date: 2005/12/20 22:55:07 $
-  Version:   $Revision: 1.3.2.1 $
+  Date:      $Date: 2005/12/27 22:22:05 $
+  Version:   $Revision: 1.3.2.2 $
 
 =========================================================================auto=*/
 // .NAME vtkROISelectTracts - 
@@ -41,11 +41,19 @@ class VTK_DTMRI_EXPORT vtkROISelectTracts : public vtkObject
   vtkTypeMacro(vtkROISelectTracts,vtkObject);
 
   // Description
-  // Transformation used in seeding streamlines.  Their start
-  // points are specified in the coordinate system of the ROI volume.
-  // Transform the ijk coordinates of the ROI to world coordinates.
-  vtkSetObjectMacro(ROIToWorld, vtkTransform);
-  vtkGetObjectMacro(ROIToWorld, vtkTransform);
+  // This transformation relates a point in the Wld coordinate system with
+  // a point into the memory array for the ROI. It is used to create a combine
+  // transform that is used in the vtkStreemlineConvolve
+  // Transformation used in seeding streamlines. 
+  vtkSetObjectMacro(ROIWldToIjk, vtkTransform);
+  vtkGetObjectMacro(ROIWldToIjk, vtkTransform);
+  
+  // Description
+  // Transformation used in seeding streamline. Relates streamlines points,
+  // given in scaled ijk coordinates(origin and spacing) to the world coordinate
+  // system (slicer 3D viewer)
+  vtkSetObjectMacro(StreamlineWldToScaledIjk, vtkTransform);
+  vtkGetObjectMacro(StreamlineWldToScaledIjk, vtkTransform);
 
   // Description
   // Convolution Kernel that is used to convolve the fiber with when
@@ -63,7 +71,9 @@ class VTK_DTMRI_EXPORT vtkROISelectTracts : public vtkObject
      StreamlineController = controller;
      Streamlines = controller->GetStreamlines();
      Actors = controller->GetDisplayTracts()->GetActors();
-  };   
+  };
+  
+  vtkGetObjectMacro(StreamlineController,vtkMultipleStreamlineController);   
      
   // Description
   // Streamlines will be started at locations with this value in the InputROI.
@@ -125,8 +135,8 @@ class VTK_DTMRI_EXPORT vtkROISelectTracts : public vtkObject
   int InputROIValue;
   int InputROI2Value;
  
-  vtkTransform *ROIToWorld;
- 
+  vtkTransform *ROIWldToIjk;
+  vtkTransform *StreamlineWldToScaledIjk;
   vtkShortArray *InputANDROIValues;
   vtkShortArray *InputNOTROIValues;
   int PassThreshold;
