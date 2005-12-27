@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: CompareSlices.tcl,v $
-#   Date:      $Date: 2005/12/20 22:55:00 $
-#   Version:   $Revision: 1.1.2.2 $
+#   Date:      $Date: 2005/12/27 18:32:07 $
+#   Version:   $Revision: 1.1.2.3 $
 # 
 #===============================================================================
 # FILE:        CompareSlices.tcl
@@ -62,9 +62,9 @@ proc CompareSlicesInit {} {
         set CompareSlice($s,controls) ""
 
         set CompareSlice($s,orient) Axial
-        set CompareSlice($s,offset) 0
+    set CompareSlice($s,offset) 0
         set CompareSlice($s,offsetIncrement) 1
-        set CompareSlice($s,zoom) 1
+    set CompareSlice($s,zoom) 1
 
         set CompareSlice($s,backVolID) 0
         set CompareSlice($s,foreVolID) 0
@@ -277,7 +277,7 @@ proc CompareSlicesUpdateMRML {} {
                 foreach v $Volume(idList) {
                     set colbreak [MainVolumesBreakVolumeMenu $m]
 
-                    $m add command -label [Volume($v,node) GetName] \
+            $m add command -label [Volume($v,node) GetName] \
                         -command "CompareSlicesSetVolume ${layer} ${s} $v; \
                         CompareViewerHideSliceControls; CompareRenderSlice $s" \
                         -columnbreak $colbreak
@@ -440,9 +440,9 @@ proc CompareSlicesSetOffsetAll {{value ""}} {
     if {[ValidateFloat $value] == 0}  {
         # don't change slice offset if value is bad
         # Set slider to the last used offset for this orient
-        foreach s $CompareSlice(idList) {
+    foreach s $CompareSlice(idList) {
            set value [MultiSlicer GetOffset $s]
-        }
+    }
     }
     set CompareSlice(offset) $value
     foreach s $CompareSlice(idList) {
@@ -621,8 +621,8 @@ proc CompareSlicesSetOrientAll {orient} {
     # resets zoom and pan
     CompareSlicesResetZoomAll
 
-    CompareModuleResetOffsets
-    set CompareSlice(offset) 0
+    #CompareModuleResetOffsets
+    #set CompareSlice(offset) 0
 
     foreach s $CompareSlice(idList) {
         MultiSlicer SetOrientString $s $orient
@@ -634,21 +634,32 @@ proc CompareSlicesSetOrientAll {orient} {
         # Set slider increments
         CompareSlicesSetOffsetIncrement $s
 
-        # Set slider to the last used offset for this orient
-        set CompareSlice($s,offset) [MultiSlicer GetOffset $s]
+        # FIXME : done in CompareSlicesSetSliderRange
+    # Set slider to the last used offset for this orient
+        set CompareSlice($s,offset) [MultiSlicer GetOffset 0]
+    MultiSlicer SetOffset $s $CompareSlice($s,offset)
 
         # Change text on menu button
         CompareSlicesConfigGui $s fOrient.mbOrient$s "-text \"$orient\""
         $CompareSlice($s,lOrient) config -text $orient
 
         # update menu value
-        set mOrient ${Module(CompareModule,fDisplay)}.fLinking.fOrientation.fChooseOrient.mbOrient
+    set mOrient ${Module(CompareModule,fDisplay)}.fLinking.fOrientation.fChooseOrient.mbOrient
         set config  "-text \"$orient\""
         eval $mOrient config $config
 
         # Anno
         CompareSlicesSetAnno $s $CompareSlice($s,orient)
     }
+
+    # Updates linking slidebar range
+    set CompareSlice(offset) [MultiSlicer GetOffset 0]
+    set lo [MultiSlicer GetOffsetRangeLow  0]
+    set hi [MultiSlicer GetOffsetRangeHigh 0]
+
+    set sO ${Module(CompareModule,fDisplay)}.fLinking.fOffset.fSlider.sOffset
+    set config "-from $lo -to $hi"
+    eval $sO config $config
 }
 
 #-------------------------------------------------------------------------------
