@@ -1,38 +1,14 @@
 /*=auto=========================================================================
 
-(c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 
-This software ("3D Slicer") is provided by The Brigham and Women's 
-Hospital, Inc. on behalf of the copyright holders and contributors.
-Permission is hereby granted, without payment, to copy, modify, display 
-and distribute this software and its documentation, if any, for  
-research purposes only, provided that (1) the above copyright notice and 
-the following four paragraphs appear on all copies of this software, and 
-(2) that source code to any modifications to this software be made 
-publicly available under terms no more restrictive than those in this 
-License Agreement. Use of this software constitutes acceptance of these 
-terms and conditions.
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
 
-3D Slicer Software has not been reviewed or approved by the Food and 
-Drug Administration, and is for non-clinical, IRB-approved Research Use 
-Only.  In no event shall data or images generated through the use of 3D 
-Slicer Software be used in the provision of patient care.
-
-IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-POSSIBILITY OF SUCH DAMAGE.
-
-THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-NON-INFRINGEMENT.
-
-THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkROISelectTracts.cxx,v $
+  Date:      $Date: 2005/12/27 22:29:23 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 
@@ -64,7 +40,8 @@ vtkROISelectTracts::vtkROISelectTracts()
 {
   // matrices
   // Initialize these to identity, so if the user doesn't set them it's okay.
-  this->ROIToWorld = vtkTransform::New();
+  this->ROIWldToIjk = vtkTransform::New();
+  this->StreamlineWldToScaledIjk = vtkTransform::New();
   
   // The user may need to set these, depending on class usage
   this->InputROI = NULL;
@@ -92,8 +69,8 @@ vtkROISelectTracts::vtkROISelectTracts()
 vtkROISelectTracts::~vtkROISelectTracts()
 {
   // matrices
-  this->ROIToWorld->Delete();
-  
+  this->ROIWldToIjk->Delete();
+  this->StreamlineWldToScaledIjk->Delete();
   // volumes
   if (this->InputROI) this->InputROI->Delete();
   if (this->InputROI2) this->InputROI2->Delete();
@@ -131,7 +108,6 @@ void vtkROISelectTracts::ConvertStreamlinesToPolyLines()
       npts += strPoints->GetNumberOfPoints();
     }
   
-  cout<<"Number of points of the streamlines: "<<npts<<endl;
   
   newPoints->SetNumberOfPoints(npts);
   
@@ -139,7 +115,6 @@ void vtkROISelectTracts::ConvertStreamlinesToPolyLines()
   this->Streamlines->InitTraversal();
   for(int i=0 ; i<numStreamlines; i++)
     {
-      cout<<"Processing streamline: "<<i<<endl;
       currStreamline= dynamic_cast<vtkHyperStreamlinePoints *> (this->Streamlines->GetNextItemAsObject());
     
       strPoints = currStreamline->GetHyperStreamline0();
@@ -160,7 +135,7 @@ void vtkROISelectTracts::ConvertStreamlinesToPolyLines()
           strIdx++;
         }
     }
-  cout<<"Saving streamlines as poly lines"<<endl;
+
   this->StreamlinesAsPolyLines->SetPoints(newPoints);
   this->StreamlinesAsPolyLines->SetLines(newLines);
   newPoints->Delete();
@@ -182,7 +157,6 @@ void vtkROISelectTracts::FindStreamlinesThatPassThroughROI()
     }
   
 
-  cout<<"Converting Streamlines to PolyLines"<<endl;
   this->ConvertStreamlinesToPolyLines();
  
   vtkStreamlineConvolve *conv = vtkStreamlineConvolve::New();
@@ -192,6 +166,16 @@ void vtkROISelectTracts::FindStreamlinesThatPassThroughROI()
   conv->SetStreamlines(this->StreamlinesAsPolyLines);
   conv->SetInput(this->InputROI);
   
+  //Set transformation to go from ScaleIjk of the streamlines
+  //to ijk of the ROI
+  vtkTransform *trans = vtkTransform::New();
+  trans->Concatenate(this->StreamlineWldToScaledIjk);
+  trans->Inverse();
+  trans->PostMultiply();
+  trans->Concatenate(this->ROIWldToIjk);
+  conv->SetTransform(trans);
+  
+   
   int val = this->ConvolutionKernel->GetNumberOfTuples();
   if (val == 27)
     {
@@ -209,7 +193,6 @@ void vtkROISelectTracts::FindStreamlinesThatPassThroughROI()
      vtkErrorMacro("Kernel dimensions does not fit.");
     } 
       
-  cout<<"Updtating vtkStreamlineConvolve"<<endl;
   conv->Update();
  
   finder->SetInput(conv->GetOutput());
@@ -218,7 +201,6 @@ void vtkROISelectTracts::FindStreamlinesThatPassThroughROI()
   finder->SetThreshold(this->PassThreshold);
  
   //Update minipipeline
-  cout<<"Updating vtkPruneStreamline"<<endl;
   finder->Update();
  
   //Get streamline info and set visibility off.
@@ -226,6 +208,7 @@ void vtkROISelectTracts::FindStreamlinesThatPassThroughROI()
  
  
   //Delete minipipeline
+  trans->Delete();
   conv->Delete();
   finder->Delete();
  
@@ -249,7 +232,7 @@ void vtkROISelectTracts::HighlightStreamlinesPassTest()
     }
 
   int numStr = this->StreamlineIdPassTest->GetNumberOfTuples();
-  cout<<"Number of Streamlines that pass test: "<<numStr<<endl;
+  //cout<<"Number of Streamlines that pass test: "<<numStr<<endl;
     
   if (numStr == 0)
     return;
@@ -353,8 +336,8 @@ void vtkROISelectTracts::DeleteStreamlinesNotPassTest()
     }
 
   int numStr = this->StreamlineIdPassTest->GetNumberOfTuples();
-  cout<<"Number of Streamlines that pass test: "<<numStr<<endl;
-
+  //cout<<"Number of Streamlines that pass test: "<<numStr<<endl;
+  
   //nothing to delete.
   if (numStr == 0)
     return;

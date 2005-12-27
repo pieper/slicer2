@@ -1,38 +1,14 @@
 /*=auto=========================================================================
 
-(c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 
-This software ("3D Slicer") is provided by The Brigham and Women's 
-Hospital, Inc. on behalf of the copyright holders and contributors.
-Permission is hereby granted, without payment, to copy, modify, display 
-and distribute this software and its documentation, if any, for  
-research purposes only, provided that (1) the above copyright notice and 
-the following four paragraphs appear on all copies of this software, and 
-(2) that source code to any modifications to this software be made 
-publicly available under terms no more restrictive than those in this 
-License Agreement. Use of this software constitutes acceptance of these 
-terms and conditions.
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
 
-3D Slicer Software has not been reviewed or approved by the Food and 
-Drug Administration, and is for non-clinical, IRB-approved Research Use 
-Only.  In no event shall data or images generated through the use of 3D 
-Slicer Software be used in the provision of patient care.
-
-IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-POSSIBILITY OF SUCH DAMAGE.
-
-THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-NON-INFRINGEMENT.
-
-THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkROISelectTracts.h,v $
+  Date:      $Date: 2005/12/27 22:29:23 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 // .NAME vtkROISelectTracts - 
@@ -65,11 +41,19 @@ class VTK_DTMRI_EXPORT vtkROISelectTracts : public vtkObject
   vtkTypeMacro(vtkROISelectTracts,vtkObject);
 
   // Description
-  // Transformation used in seeding streamlines.  Their start
-  // points are specified in the coordinate system of the ROI volume.
-  // Transform the ijk coordinates of the ROI to world coordinates.
-  vtkSetObjectMacro(ROIToWorld, vtkTransform);
-  vtkGetObjectMacro(ROIToWorld, vtkTransform);
+  // This transformation relates a point in the Wld coordinate system with
+  // a point into the memory array for the ROI. It is used to create a combine
+  // transform that is used in the vtkStreemlineConvolve
+  // Transformation used in seeding streamlines. 
+  vtkSetObjectMacro(ROIWldToIjk, vtkTransform);
+  vtkGetObjectMacro(ROIWldToIjk, vtkTransform);
+  
+  // Description
+  // Transformation used in seeding streamline. Relates streamlines points,
+  // given in scaled ijk coordinates(origin and spacing) to the world coordinate
+  // system (slicer 3D viewer)
+  vtkSetObjectMacro(StreamlineWldToScaledIjk, vtkTransform);
+  vtkGetObjectMacro(StreamlineWldToScaledIjk, vtkTransform);
 
   // Description
   // Convolution Kernel that is used to convolve the fiber with when
@@ -87,7 +71,9 @@ class VTK_DTMRI_EXPORT vtkROISelectTracts : public vtkObject
      StreamlineController = controller;
      Streamlines = controller->GetStreamlines();
      Actors = controller->GetDisplayTracts()->GetActors();
-  };   
+  };
+  
+  vtkGetObjectMacro(StreamlineController,vtkMultipleStreamlineController);   
      
   // Description
   // Streamlines will be started at locations with this value in the InputROI.
@@ -149,8 +135,8 @@ class VTK_DTMRI_EXPORT vtkROISelectTracts : public vtkObject
   int InputROIValue;
   int InputROI2Value;
  
-  vtkTransform *ROIToWorld;
- 
+  vtkTransform *ROIWldToIjk;
+  vtkTransform *StreamlineWldToScaledIjk;
   vtkShortArray *InputANDROIValues;
   vtkShortArray *InputNOTROIValues;
   int PassThreshold;

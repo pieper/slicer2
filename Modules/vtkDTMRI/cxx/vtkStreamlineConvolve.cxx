@@ -1,38 +1,14 @@
 /*=auto=========================================================================
 
-(c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 
-This software ("3D Slicer") is provided by The Brigham and Women's 
-Hospital, Inc. on behalf of the copyright holders and contributors.
-Permission is hereby granted, without payment, to copy, modify, display 
-and distribute this software and its documentation, if any, for  
-research purposes only, provided that (1) the above copyright notice and 
-the following four paragraphs appear on all copies of this software, and 
-(2) that source code to any modifications to this software be made 
-publicly available under terms no more restrictive than those in this 
-License Agreement. Use of this software constitutes acceptance of these 
-terms and conditions.
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
 
-3D Slicer Software has not been reviewed or approved by the Food and 
-Drug Administration, and is for non-clinical, IRB-approved Research Use 
-Only.  In no event shall data or images generated through the use of 3D 
-Slicer Software be used in the provision of patient care.
-
-IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-POSSIBILITY OF SUCH DAMAGE.
-
-THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-NON-INFRINGEMENT.
-
-THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkStreamlineConvolve.cxx,v $
+  Date:      $Date: 2005/12/27 22:29:13 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -60,7 +36,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkPolyData.h"
 #include "math.h"
 
-vtkCxxRevisionMacro(vtkStreamlineConvolve, "$Revision: 1.3 $");
+vtkCxxRevisionMacro(vtkStreamlineConvolve, "$Revision: 1.4 $");
 vtkStandardNewMacro(vtkStreamlineConvolve);
 
 // Construct with lower threshold=0, upper threshold=1, and threshold 
@@ -68,6 +44,7 @@ vtkStandardNewMacro(vtkStreamlineConvolve);
 vtkStreamlineConvolve::vtkStreamlineConvolve()
 {
 
+  this->Transform = vtkTransform::New();
   int idx;
   for (idx = 0; idx < 343; idx++)
     {
@@ -88,6 +65,11 @@ vtkStreamlineConvolve::vtkStreamlineConvolve()
   this->Streamlines = NULL; 
 }
 
+//----------------------------------------------------------------------------
+vtkStreamlineConvolve::~vtkStreamlineConvolve()
+{
+  this->Transform->Delete();
+}  
 
 //----------------------------------------------------------------------------
 // Set a 3x3 kernel 
@@ -199,11 +181,7 @@ void vtkStreamlineConvolveExecute(vtkStreamlineConvolve *self,
   int *kernelSize;
   int kernelMiddle[3];
 
-  vtkPoints *newPoints;
-  vtkPointData *pd, *outPD;
-  vtkCellArray *verts;
-  vtkIdType ptId, numPts, pts[1];
-  double x[3];
+  vtkIdType ptId, numPts;
   vtkPolyData *output = self->GetOutput();
   vtkPolyData *streamlines = self->GetStreamlines();
 
@@ -225,7 +203,7 @@ void vtkStreamlineConvolveExecute(vtkStreamlineConvolve *self,
   int inImageMax0, inImageMax1, inImageMax2;
 
   // Points of the streamline
-  double globalpt[3],pcoord[3];
+  double globalpt[3],in[4],out[4];
   int roundpt[3];
 
   //
@@ -238,7 +216,6 @@ void vtkStreamlineConvolveExecute(vtkStreamlineConvolve *self,
 
      
   numPts = streamlines->GetNumberOfPoints();
-  cout<<"Number of points in Streamlines: "<<numPts<<endl;
   
   output->SetPoints(streamlines->GetPoints());
   output->SetLines(streamlines->GetLines());
@@ -286,7 +263,6 @@ void vtkStreamlineConvolveExecute(vtkStreamlineConvolve *self,
   int abort=0;
   vtkIdType progressInterval = numPts/20+1;
   
-  cout<<"Starting convolution throught streamline points"<<endl;
   for (int ptId=0; ptId < numPts && !abort; ptId++)
     {
     if ( !(ptId % progressInterval) )
@@ -296,17 +272,22 @@ void vtkStreamlineConvolveExecute(vtkStreamlineConvolve *self,
       }
     //Streamline point in global coordinate system (scale IJK)
     streamlines->GetPoint(ptId,globalpt);
-    
-    // Point in IJK
-    //roundpt[0]=static_cast<int> (floor((globalpt[0]-origin[0])/spacing[0]));
-    //roundpt[1]=static_cast<int> (floor((globalpt[1]-origin[1])/spacing[1]));
-    //roundpt[2]=static_cast<int> (floor((globalpt[2]-origin[2])/spacing[2]));
-    if (0 == input->ComputeStructuredCoordinates(globalpt,roundpt,pcoord)) {
-        outScalars->SetValue(ptId,0.0);
-        break;
-    }        
+    in[0] = globalpt[0];
+    in[1] = globalpt[1];
+    in[2] = globalpt[2];
+    in[3] = 1;
+    self->GetTransform()->MultiplyPoint(in,out);
+    roundpt[0] = static_cast<int> (floor(out[0]));
+    roundpt[1] = static_cast<int> (floor(out[1]));
+    roundpt[2] = static_cast<int> (floor(out[2]));
+
     inPtr = (T *) input->GetScalarPointer(roundpt);
-    
+    if (inPtr == NULL) {
+       //Point outside buffer. Set result to zero
+       outScalars->SetValue(ptId,0.0);
+       break;
+    }   
+        
     // loop through neighborhood pixels
     // as sort of a hack to handle boundaries, 
     // input pointer will be marching through data that does not exist.
