@@ -60,7 +60,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkPolyData.h"
 #include "math.h"
 
-vtkCxxRevisionMacro(vtkStreamlineConvolve, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkStreamlineConvolve, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkStreamlineConvolve);
 
 // Construct with lower threshold=0, upper threshold=1, and threshold 
@@ -225,7 +225,7 @@ void vtkStreamlineConvolveExecute(vtkStreamlineConvolve *self,
   int inImageMax0, inImageMax1, inImageMax2;
 
   // Points of the streamline
-  double *globalpt;
+  double globalpt[3],pcoord[3];
   int roundpt[3];
 
   //
@@ -295,13 +295,16 @@ void vtkStreamlineConvolveExecute(vtkStreamlineConvolve *self,
       abort = self->GetAbortExecute();
       }
     //Streamline point in global coordinate system (scale IJK)
-    globalpt = streamlines->GetPoint(ptId);
+    streamlines->GetPoint(ptId,globalpt);
     
     // Point in IJK
-    roundpt[0]=static_cast<int> (floor((globalpt[0]-origin[0])/spacing[0]));
-    roundpt[1]=static_cast<int> (floor((globalpt[1]-origin[1])/spacing[1]));
-    roundpt[2]=static_cast<int> (floor((globalpt[2]-origin[2])/spacing[2]));
-    
+    //roundpt[0]=static_cast<int> (floor((globalpt[0]-origin[0])/spacing[0]));
+    //roundpt[1]=static_cast<int> (floor((globalpt[1]-origin[1])/spacing[1]));
+    //roundpt[2]=static_cast<int> (floor((globalpt[2]-origin[2])/spacing[2]));
+    if (0 == input->ComputeStructuredCoordinates(globalpt,roundpt,pcoord)) {
+        outScalars->SetValue(ptId,0.0);
+        break;
+    }        
     inPtr = (T *) input->GetScalarPointer(roundpt);
     
     // loop through neighborhood pixels
