@@ -57,7 +57,7 @@ puts stderr "SLICER_HOME is $::SLICER_HOME"
 # section below, or genlib will happily build the library again.
 
 set ::CMAKE_TAG "CMake-2-0-6"
-set ::TEEM_TAG "Teem-1-9-0"
+set ::TEEM_TAG "Teem-1-9-0-patches"
 set ::VTK_TAG "Slicer-2-6"
 # get the latest ITK from CVS using HEAD
 set ::ITK_TAG "Slicer-2-6"
