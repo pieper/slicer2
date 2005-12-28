@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: isregistration.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:49 $
-#   Version:   $Revision: 1.33.2.1 $
+#   Date:      $Date: 2005/12/28 19:26:53 $
+#   Version:   $Revision: 1.33.2.2 $
 # 
 #===============================================================================
 # FILE:        isregistration.tcl
@@ -112,6 +112,7 @@ if { [itcl::find class isregistration] == "" } {
         variable _volume_serial 0
         # is this the first time we are iterating
         variable _firsttime 1
+        variable _abort 0
 
         # the m_time of matrix being altered
         # keep track so we can see if it was changed
@@ -139,6 +140,7 @@ if { [itcl::find class isregistration] == "" } {
         variable _sourcenorm ""
 
         method step {} {}
+        method is_abort {} { return $_abort }
         method StringMatrix { mat4x4 } {}
         method StringToMatrix { mat4x4 str} {}
         method GetSimilarityMatrix { s2 mat s1 } {}
@@ -440,6 +442,7 @@ itcl::body isregistration::step {} {
     $itk_option(-update_procedure) $this
 
     if {$itk_option(-auto_repeat) == 0} {
+        set _abort 0
          isprogress .regprogress \
           -title "Rigid Registration" -geometry 300x100+100+100  \
           -cancel_text "Stop Registration" \
@@ -518,8 +521,9 @@ itcl::body isregistration::step {} {
 
     # the next iteration will not be the first iter...
     set _firsttime 0;
-
+    
     if {$itk_option(-auto_repeat) == 0} {
+        set _abort [ .regprogress is_abort ]
         destroy .regprogress
         $itk_option(-stop_procedure);
         stop
