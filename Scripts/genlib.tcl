@@ -215,9 +215,11 @@ if { ![file exists $SLICER_LIB] } {
 #
 
 if {$isWindows} {
-    cd $SLICER_HOME
-    runcmd curl -k -O http://www.na-mic.org/Slicer/Download/External/Slicer2.6-Lib-win32.zip
-    runcmd unzip ./Slicer2.6-Lib-win32.zip
+    if {![file exists $::CMAKE]} {
+        cd $SLICER_HOME
+        runcmd curl -k -O http://www.na-mic.org/Slicer/Download/External/Slicer2.6-Lib-win32.zip
+        runcmd unzip ./Slicer2.6-Lib-win32.zip
+    }
 }
 
 
@@ -227,8 +229,8 @@ if {$isWindows} {
 #
 
 # set in slicer_vars
-if { ![file exists $CMAKE] } {
-    file mkdir $CMAKE_PATH
+if { ![file exists $::CMAKE] } {
+    file mkdir $::CMAKE_PATH
     cd $SLICER_LIB
 
 
@@ -239,7 +241,7 @@ if { ![file exists $CMAKE] } {
         runcmd $::CVS -d :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login
         runcmd $::CVS -z3 -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $::CMAKE_TAG CMake
 
-        cd $CMAKE_PATH
+        cd $::CMAKE_PATH
         if { $isSolaris } {
             # make sure to pick up curses.h in /local/os/include
             runcmd $SLICER_LIB/CMake/bootstrap --init=$SLICER_HOME/Scripts/spl.cmake.init
@@ -270,7 +272,7 @@ if { ![file exists $::TEEM_TEST_FILE] } {
         set C_FLAGS ""
     }
 
-    runcmd $CMAKE \
+    runcmd $::CMAKE \
         -G$GENERATOR \
         -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
         -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
@@ -469,7 +471,7 @@ if { ![file exists $::VTK_TEST_FILE] } {
     # -- the text needs to be duplicated to avoid quoting problems with paths that have spaces
     #
     if { $isLinux && $::tcl_platform(machine) == "x86_64" } {
-        runcmd $CMAKE \
+        runcmd $::CMAKE \
             -G$GENERATOR \
             -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
             -DBUILD_SHARED_LIBS:BOOL=ON \
@@ -497,7 +499,7 @@ if { ![file exists $::VTK_TEST_FILE] } {
             -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
             ../VTK
     } else {
-        runcmd $CMAKE \
+        runcmd $::CMAKE \
             -G$GENERATOR \
             -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
             -DBUILD_SHARED_LIBS:BOOL=ON \
@@ -524,7 +526,7 @@ if { ![file exists $::VTK_TEST_FILE] } {
         # Darwin will fail on the first make, then succeed on the second
         catch "eval runcmd $::MAKE -j4"
         set OpenGLString "-framework OpenGL -lgl"
-        runcmd $CMAKE -G$GENERATOR -DOPENGL_gl_LIBRARY:STRING=$OpenGLString -DVTK_USE_SYSTEM_ZLIB:BOOL=ON ../VTK
+        runcmd $::CMAKE -G$GENERATOR -DOPENGL_gl_LIBRARY:STRING=$OpenGLString -DVTK_USE_SYSTEM_ZLIB:BOOL=ON ../VTK
     }
     
     if { $isWindows } {
@@ -553,7 +555,7 @@ if { ![file exists $::ITK_TEST_FILE] } {
 
 
 
-    runcmd $CMAKE \
+    runcmd $::CMAKE \
         -G$GENERATOR \
         -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
         -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
@@ -590,7 +592,7 @@ if { ![file exists $::SANDBOX_TEST_FILE] } {
 
     if { $isLinux && $::tcl_platform(machine) == "x86_64" } {
         # to build correctly, 64 bit linux requires shared libs for the sandbox
-        runcmd $CMAKE \
+        runcmd $::CMAKE \
             -G$GENERATOR \
             -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
             -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
@@ -605,7 +607,7 @@ if { ![file exists $::SANDBOX_TEST_FILE] } {
             ../NAMICSandBox
     } else {
         # windows and mac require static libs for the sandbox
-        runcmd $CMAKE \
+        runcmd $::CMAKE \
             -G$GENERATOR \
             -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
             -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
