@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: VersorMattesMIRegistration.tcl,v $
-#   Date:      $Date: 2005/12/20 22:56:22 $
-#   Version:   $Revision: 1.9.2.3 $
+#   Date:      $Date: 2005/12/28 19:48:57 $
+#   Version:   $Revision: 1.9.2.4 $
 # 
 #===============================================================================
 # FILE:        VersorMattesMIRegistration.tcl
@@ -133,7 +133,7 @@ proc VersorMattesMIRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.9.2.3 $} {$Date: 2005/12/20 22:56:22 $}]
+        {$Revision: 1.9.2.4 $} {$Date: 2005/12/28 19:48:57 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -150,6 +150,7 @@ proc VersorMattesMIRegistrationInit {} {
 
     ## Set the default to fast registration
     VersorMattesMIRegistrationVerySlowParam
+    set ::VersorMattesMIRegistration(abort) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -665,6 +666,9 @@ proc VersorMattesMIRegistrationAutoRun {} {
         -vtk_itk_reg       vtkITKVersorMattesMiVersorRegistrationFilter               
 
 
+    #--- catches whether the registration was stopped by user
+    set ::VersorMattesMIRegistration(abort) 0
+
     if {$::Module(verbose)} {
         puts "to see the pop-up window, type: pack .mi.reg -fill both -expand true"
     }
@@ -678,10 +682,13 @@ proc VersorMattesMIRegistrationAutoRun {} {
     if {$::Module(verbose)} {
         puts "VersorMattesMIRegistrationAutoRun: calling .mi.reg start"
     }
+
     .mi.reg start
+
     if {$::Module(verbose)} { 
         puts "VersorMattesMIRegistrationAutoRun: done .mi.reg"
     }
+    return $::VersorMattesMIRegistration(abort) 
 }
 
 #-------------------------------------------------------------------------------
@@ -692,6 +699,8 @@ proc VersorMattesMIRegistrationAutoRun {} {
 #-------------------------------------------------------------------------------
 proc VersorMattesMIRegistrationStop {} {
     global VersorMattesMIRegistration RigidIntensityRegistration
+
+    set ::VersorMattesMIRegistration(abort) [ .mi.reg is_abort ]
     .mi.reg stop
     $VersorMattesMIRegistration(b1Run) configure -command \
                                           "VersorMattesMIRegistrationAutoRun"
@@ -751,12 +760,6 @@ proc VersorMattesMIRegistrationSetOptimizerOption { vtkITKMI } {
     }
 }
 
-#-------------------------------------------------------------------------------
-# .PROC RigidIntensityRegistrationCheckParametersVersorMattesMI
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
 proc RigidIntensityRegistrationCheckParametersVersorMattesMI {} {
     global VersorMattesMIRegistration RigidIntensityRegistration
 
