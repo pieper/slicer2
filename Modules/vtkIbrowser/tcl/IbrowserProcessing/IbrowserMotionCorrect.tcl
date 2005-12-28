@@ -40,6 +40,10 @@
 #   IbrowserUpdateMotionCorrectGUI
 #   IbrowserUpdateMotionCorrectReference
 #   IbrowserMotionCorrectStop
+#   IbrowserSetCoarseParam
+#   IbrowserSetFairParam
+#   IbrowserSetGoodParam
+#   IbrowserSetBestParam
 #   IbrowserMotionCorrectGo
 #   IbrowserHardenTransforms
 #   IbrowserHelpMotionCorrection
@@ -118,34 +122,27 @@ proc IbrowserBuildMotionCorrectGUI { f master } {
     eval { label $ff.lBlank -text "" } $Gui(WLA)
     eval { radiobutton $ff.rQualityCoarse -indicatoron 1\
                -text "coarse" -value "Coarse" -variable ::VersorMattesMIRegistration(Objective) \
-               -command "VersorMattesMIRegistrationCoarseParam" \
+               -command "IbrowserSetCoarseParam"
            } $Gui(WCA)
     grid $ff.lQuality $ff.rQualityCoarse -padx $Gui(pad) -sticky w
     
     eval { radiobutton $ff.rQualityFair -indicatoron 1\
                -text "fair" -value "Fine" -variable ::VersorMattesMIRegistration(Objective) \
-               -command "VersorMattesMIRegistrationFineParam" \
+               -command "IbrowserSetFairParam"
            } $Gui(WCA)
     grid $ff.lBlank $ff.rQualityFair -padx $Gui(pad) -sticky w
     
     eval { radiobutton $ff.rQualityGood -indicatoron 1\
                -text "good (slow)" -value "Slow" -variable ::VersorMattesMIRegistration(Objective) \
-               -command "VersorMattesMIRegistrationGSlowParam" \
+               -command "IbrowserSetGoodParam"
            } $Gui(WCA)
     grid $ff.lBlank $ff.rQualityGood -padx $Gui(pad) -sticky w
     
     eval { radiobutton $ff.rQualityBest -indicatoron 1\
                -text "best (very slow)" -value "VerySlow" -variable ::VersorMattesMIRegistration(Objective) \
-               -command "VersorMattesMIRegistrationVerySlowParam" \
+               -command "IbrowserSetBestParam"
            } $Gui(WCA)
     grid $ff.lBlank $ff.rQualityBest -padx $Gui(pad) -sticky w
-
-    set ::Ibrowser(Process,MotionCorrectIterations) 1
-    set ::Ibrowser(Process,MotionCorrectIterate) 0
-    eval { label $ff.lIterate -text "iterations:" } $Gui(WLA)    
-    eval { entry $ff.eIterate -width 8 \
-               -textvariable ::Ibrowser(Process,MotionCorrectIterations} $Gui(WEA)
-    grid $ff.lIterate $ff.eIterate -padx $Gui(pad) -sticky w
 
     DevAddButton $ff.bGo "Run" "IbrowserMotionCorrectGo $ff.bGo" 8
     grid $ff.lBlank $ff.bGo -padx $Gui(pad) -pady $Gui(pad) -sticky w
@@ -165,6 +162,75 @@ proc IbrowserBuildMotionCorrectGUI { f master } {
     #--- process-specific raised GUI panel.
     place $f -in $master -relheight 1.0 -relwidth 1.0
 }
+
+
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserSetCoarseParam
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserSetCoarseParam { } {
+    VersorMattesMIRegistrationCoarseParam
+    set ::RigidIntensityRegistration(Repeat) 0
+    set ::VersorMattesMIRegistration(UpdateIterations) "100"
+    set ::VersorMattesMIRegistration(MinimumStepLength) ".001"
+    set ::VersorMattesMIRegistration(MaximumStepLength) "2.0"
+}
+
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserSetFairParam
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserSetFairParam { } {
+    VersorMattesMIRegistrationFineParam
+    set ::RigidIntensityRegistration(Repeat) 0
+    set ::VersorMattesMIRegistration(UpdateIterations) "100 200"
+    set ::VersorMattesMIRegistration(MinimumStepLength) ".001 .01"
+    set ::VersorMattesMIRegistration(MaximumStepLength) "2.0 1.0"
+}
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserSetGoodParam
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserSetGoodParam { } {
+    VersorMattesMIRegistrationGSlowParam
+    set ::RigidIntensityRegistration(Repeat) 0
+    set ::VersorMattesMIRegistration(UpdateIterations) "500 1000 100" 
+    set ::VersorMattesMIRegistration(MinimumStepLength) ".02 .01 .001"
+    set ::VersorMattesMIRegistration(MaximumStepLength) "4.0 1.0 0.75"
+}
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserSetBestParam
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserSetBestParam { } {
+    VersorMattesMIRegistrationVerySlowParam
+    set ::RigidIntensityRegistration(Repeat) 0
+    set ::VersorMattesMIRegistration(UpdateIterations) "1000 1000 1000"
+    set ::VersorMattesMIRegistration(MinimumStepLength) ".01 .001 .005"
+    set ::VersorMattesMIRegistration(MaximumStepLength) "4.0 1.0 0.5"
+}
+
+
 
 
 #-------------------------------------------------------------------------------
@@ -241,7 +307,8 @@ proc IbrowserMotionCorrectStop { stopbutton } {
     set ::Ibrowser(Process,MotionCorrectAbort) 1
     VersorMattesMIRegistrationStop
     $stopbutton configure -command "IbrowserMotionCorrectGo $stopbutton"
-    $stopbutton configure -text "Run"
+    #$stopbutton configure -text "Run"
+    $stopbutton configure -state normal
 }
 
 
@@ -254,39 +321,36 @@ proc IbrowserMotionCorrectStop { stopbutton } {
 proc IbrowserMotionCorrectGo { stopbutton } {
 
 
-    if { $::Ibrowser(Process,MotionCorrecIterations) > 1 } {
-        set ::Ibrowser(Process,MotionCorrectIterate) 1
-    } else {
-        set ::Ibrowser(Process,MotionCorrectIterate) 0
-    }
 
     #--- catch any events to stop motion correction
     set ::Ibrowser(Process,MotionCorrectAbort) 0
-    if { $::Ibrowser(Process,MotionCorrectIterate) } {
-        $stopbutton configure -text "Stop"
-        $stopbutton configure -command "IbrowserMotionCorrectStop $stopbutton"
-    } else {
-        #--- make the "Go" button go quiet while registering
-        $stopbutton configure -state disabled
-    }
-
-
+    #$stopbutton configure -text "Stop"
+    #$stopbutton configure -command "IbrowserMotionCorrectStop $stopbutton"
+    $stopbutton configure -state disabled
     
     if { $::Ibrowser(Process,MotionCorrectAbort) == 0 } {
         #--- it's go
         if { [lsearch $::Ibrowser(idList) $::Ibrowser(activeInterval) ] == -1 } {
             DevErrorWindow "First select a valid sequence to motion correct."
+            $stopbutton configure -state normal
+            $stopbutton configure -text "Run"
             return
         } elseif { $::Ibrowser(activeInterval) == $::Ibrowser(idNone) } {
             DevErrorWindow "First select a valid sequence to motion correct."
+            $stopbutton configure -state normal
+            $stopbutton configure -text "Run"
             return
         }
         
         if { [lsearch $::Volume(idList) $::Ibrowser(Process,InternalReference) ] == -1 } {
             DevErrorWindow "First select a valid reference volume."
+            $stopbutton configure -state normal
+            $stopbutton configure -text "Run"
             return
         } elseif { $::Ibrowser(Process,InternalReference) == $::Volume(idNone) } {
             DevErrorWindow "First select a valid reference volume."
+            $stopbutton configure -state normal
+            $stopbutton configure -text "Run"
             return
         }    
 
@@ -355,7 +419,6 @@ proc IbrowserMotionCorrectGo { stopbutton } {
     #--- leave the button ready to run again.
     $stopbutton configure -state normal
     $stopbutton configure -text "Run"
-    $stopbutton configure -command "IbrowserMotionCorrectGo $stopbutton"
 
 }
 
@@ -456,21 +519,19 @@ proc IbrowserHardenTransforms { } {
             set ::TransformVolume(ResamplingMode) 0
             set ::TransformVolume(InterpolationMode) "Cubic"
             set ::TransformVolume(ResultPrefix) "${iname}_mc_${i}"
-            set newVID [ TransformVolumeRun ]
-            set ::Ibrowser($newIID,$i,MRMLid) $newVID
+            set vid [ TransformVolumeRun ]
+            set ::Ibrowser($newIID,$i,MRMLid) $vid
             
             #--- copy parameters from old node into this node.
             set oldID $::TransformVolume(VolIDs)
-            set newnode [ Volume($newVID,node) ]
+            set newnode Volume($vid,node)
             $newnode Copy Volume($oldID,node)
         }
 
-        if {$i == 0} {
+        if { $i == 0 } {
             set ::Ibrowser($newIID,firstMRMLid) $vid
-            puts "firstMRMLid = $vid"
         } elseif { $i == $top } {
             set ::Ibrowser($newIID,lastMRMLid) $vid
-            puts "lastMRMLid = $vid"
         }
     }
 
@@ -501,13 +562,13 @@ proc IbrowserHelpMotionCorrection { } {
     set txt "<H3>Motion correction</H3>
  <P> This tool lets you select an interval to motion correct (a source interval), to select a reference volume from within the source interval, and to register all of the other volumes in the source interval to the reference. Currently, the only kind of registration available for motion correction in the ibrowser module is rigid registration by Mutual Information.
 <P> Motion correction adds a transform to each non-reference volume in the interval, and may not work properly if the reference or target volume nodes already have transforms applied to them. It is recommended that an interval be motion corrected first, using any of its volumes as the reference, and if subsequent transforms are necessary, that those operations be carried out in a second step after transforms have been applied.
-<P> To abort motion correction: in non-repeat mode, stop the registration of an individual volume by clicking the <I>Stop</I> button on the popup window; in repeat mode, press the <I>Stop</I> button in the GUI panel, and in either case, wait a short time for the registration to stop. Any registration transforms that were added to the scene will not be deleted, and can be used for subsequent registration attempts. They can be deleted using the <I>Cancel</I> button.
+<P> To abort motion correction: stop the registration of an individual volume by clicking the <I>Stop</I> button on the popup window and wait a short time for the registration to stop. Any registration transforms that were added to the scene will not be deleted, and can be used for subsequent registration attempts. They can be deleted using the <I>Cancel</I> button.
 <P> Important note: until the <I>Apply transforms</I> option is completed, these volumes will not be suitable for collective statistical processing (such as in the fMRIEngine module). If you'd like to keep image data in its original space, and use the transforms for visualization only, <B>don't</B> use the <I>Apply</I> button. If you'd like to perform additional processing on the motion corrected data, then <B>do</B> use the <I>Apply</I> button to transform the image data. Applying transforms will create a new interval containing transformed motion corrected data from teh original interval. (You may also want to delete the original interval to save memory).
 <P> <B>Quality settings (from vtkRigidIntensityRegistration):</B>
-<P><B>Coarse:</B> The coarse method will generally do a good job on all images. It takes 5 - 10 minutes to run. It requires no user intervention; though it updates regularly so that the user can stop the algorithm if she is satisfied with the result.
-<P> <B>Fine:</B> The fine method can be run after the coarse method to fine-tune the result. Unlike the 'fine' selection in the vtkRigidIntensityRegistration module, this method iterates a finite number of times and stops, to accommodate correcting a multi-volume sequence. You can expect it to take awhile.
-<P> <B>Good:</B> This method is designed for the user to be able to walk away, and to come back to find a good registration later. It does not update the alignment until finished.
-<P><B>Best:</B> This method is certainly designed to be left unattended and running for some time. It generally works very well. It does not update the alignment until finished."
+<P><B>Coarse:</B> The coarse method will generally do a good job on all images. It requires no user intervention; though it updates regularly so that the user can stop the algorithm if she is satisfied with the result.
+<P> <B>Fair:</B> The fine method can be run after the coarse method to fine-tune the result. You can expect it to take longer than the coarse method.
+<P> <B>Good:</B> This method is designed for the user to be able to walk away, and to come back to find a good registration later. It does not update the alignment in Slicer's main viewer until finished.
+<P><B>Best:</B> This method is certainly designed to be left unattended and running for some time. It generally works very well. It does not update the alignment in Slicer's main viewer until finished."
     DevCreateTextPopup infowin$i "Ibrowser information" 100 100 18 $txt
 }
 
