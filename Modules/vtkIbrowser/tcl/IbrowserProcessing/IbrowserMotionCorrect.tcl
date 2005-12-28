@@ -381,8 +381,8 @@ proc IbrowserMotionCorrectGo { stopbutton } {
                 #--- set targets and sources
                 set ::RigidIntensityRegistration(sourceID) $vid
                 set ::RigidIntensityRegistration(targetID) $tvid
-                IbrowserSlicesSetVolumeAll Fore $tvid
-                IbrowserSlicesSetVolumeAll Back $vid
+                IbrowserSlicesSetVolumeAll Fore $vid
+                IbrowserSlicesSetVolumeAll Back $tvid
                 set ::VersorMattesMIRegistration(Repeat) $::Ibrowser(Process,MotionCorrectIterate)
                 set ::Matrix(activeID) $::Ibrowser($iid,$drop,transformID)
                 set ::Matrix(volume) $vid
