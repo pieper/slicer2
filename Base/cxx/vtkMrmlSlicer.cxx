@@ -1978,7 +1978,7 @@ void vtkMrmlSlicer::SetReformatPoint(vtkMrmlDataVolume *vol,
   ref->SetPoint(x, y);
   ref->GetWldPoint(this->WldPoint);
   ref->GetIjkPoint(this->IjkPoint);
-
+  
   int ext[6];
   vol->GetOutput()->GetWholeExtent(ext);
 
@@ -2257,7 +2257,8 @@ void vtkMrmlSlicer::ComputeNTPFromCamera(vtkCamera *camera)
 }
 
 // this function is used to set the reformat matrix directly for ALL the slices
-// It is called from Locator.tcl to set the reformat matrix to be the same than// the locator matrix
+// It is called from Locator.tcl to set the reformat matrix to be the same
+// as the locator matrix
  
 void vtkMrmlSlicer::SetDirectNTP(vtkFloatingPointType nx, vtkFloatingPointType ny, vtkFloatingPointType nz,
   vtkFloatingPointType tx, vtkFloatingPointType ty, vtkFloatingPointType tz, vtkFloatingPointType px, vtkFloatingPointType py, vtkFloatingPointType pz)
