@@ -1229,6 +1229,9 @@ char* vtkMrmlVolumeNode::ComputeScanOrderFromRasToIjk(vtkMatrix4x4 *RasToIjk)
             return "SI";
          }
          break;
+  default:
+      cerr << "vtkMrmlVolumeNode::ComputeScanOrderFromRasToIjk:\n\tMax components "<< max_comp << " not in valid range 0,1,2\n";
+      return "";
    }        
  
 }

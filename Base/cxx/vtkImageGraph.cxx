@@ -206,12 +206,18 @@ unsigned long vtkImageGraph::GetMTime() {
 int vtkImageGraph::AddCurveRegion(vtkImageData *plot,vtkFloatingPointType color0,vtkFloatingPointType color1,vtkFloatingPointType color2, int type, int ignore) {
   vtkFloatingPointType color[3];
   GraphEntryList* result;
+  bool ignoreFlag = true;
+
+  if (ignore == 0)
+  {
+      ignoreFlag = false;
+  }
   result = this->GraphList.MatchGraphEntry(plot);
   // Plot does not exist in graph => Add it to it 
   if (result == NULL) {
     this->Modified();  
     color[0] = color0; color[1] = color1; color[2] = color2;
-    return GraphList.AddEntry(plot,color,type, bool(ignore));  
+    return GraphList.AddEntry(plot,color,type, ignoreFlag);  
   }
   // Plot exists in graph => Check if we have to update values 
   memcpy(color,result->GetColor(),3*sizeof(vtkFloatingPointType)); 
@@ -225,8 +231,8 @@ int vtkImageGraph::AddCurveRegion(vtkImageData *plot,vtkFloatingPointType color0
     result->SetType(type);
     this->Modified();  
   }
-  if (bool(ignore) != result->GetIgnoreGraphMinGraphMax()) {
-    result->SetIgnoreGraphMinGraphMax(bool(ignore));
+  if (ignoreFlag != result->GetIgnoreGraphMinGraphMax()) {
+    result->SetIgnoreGraphMinGraphMax(ignoreFlag);
     this->Modified();  
   }
   return result->GetID();
