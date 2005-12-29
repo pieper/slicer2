@@ -511,7 +511,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
       case 1: SagPolyStack->SetPolygon(this->PolyDraw->GetPoints(), s, d);
               break;
       case 2: CorPolyStack->SetPolygon(this->PolyDraw->GetPoints(), s, d);
-              break;
+              break; 
     }
   };
 
@@ -525,6 +525,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
               break;
       case 2: return this->CorPolyStack->GetPoints(s);
               break;
+    default: fprintf(stderr,"StackGetPoints: window %d  out of valid range 0-2, returning null pointer", window);
+        return NULL;
+        break;
     }
   };
 
@@ -537,7 +540,11 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
       case 1: return this->SagPolyStack->GetPoints(s, p);
               break;
       case 2: return this->CorPolyStack->GetPoints(s, p);
-              break;
+              break;                 
+    default: fprintf(stderr,"StackGetPoints: window %d out of valid range 0-2, returning null pointer",window);
+        return NULL;
+        break;
+    
     }
   };
 
@@ -620,6 +627,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
                   break;
           case 2: return this->CorPolyStack->GetNumberOfPoints(s);
                   break;
+      default: fprintf(stderr,"StackGetNumberOfPoints: window %d out of valid range 0-2, returning -1",window);
+          return -1;
+          break;
       }
   };
 
@@ -633,6 +643,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
                   break;
           case 2: return this->CorPolyStack->ListGetInsertPosition(s);
                   break;
+      default: fprintf(stderr,"StackGetInsertPosition: window %d out of valid range 0-2, returning -1",window);
+          return -1;
+          break;
       }
   };
 
@@ -646,6 +659,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
                   break;
           case 2: return this->CorPolyStack->ListGetNextInsertPosition(s, p);
                   break;
+      default: fprintf(stderr,"StackGetNextInsertPosition: window %d out of valid range 0-2, returning -1",window);
+          return -1;
+          break;
       }
   };
 
@@ -659,6 +675,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
                   break;
           case 2: return this->CorPolyStack->ListGetRetrievePosition(s);
                   break;
+      default: fprintf(stderr,"StackGetRetrievePosition: window %d out of valid range 0-2, returning -1",window);
+          return -1;
+          break;
       }
   };
 
@@ -672,6 +691,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
                   break;
           case 2: return this->CorPolyStack->ListGetNextRetrievePosition(s, p);
                   break;
+      default: fprintf(stderr,"StackGetNextRetrievePosition: window %d out of valid range 0-2, returning -1",window);
+          return -1;
+          break;
       }
   };
 
@@ -685,6 +707,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
                   break;
           case 2: return this->CorPolyStack->GetPreshape(s, p);
                   break;
+      default: fprintf(stderr,"StackGetPreshape: window %d out of valid range 0-2, returning -1",window);
+          return -1;
+          break;
       }
   };
 
@@ -698,6 +723,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
                   break;
           case 2: return this->CorPolyStack->GetLabel(s, p);
                   break;
+      default: fprintf(stderr,"StackGetLabel: window %d out of valid range 0-2, returning -1",window);
+          return -1;
+          break;
       }
   };
 
@@ -711,6 +739,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
                   break;
           case 2: return this->CorPolyStack->GetNumApplyable(s);
                   break;
+      default: fprintf(stderr,"StackGetNumApplyable: window %d out of valid range 0-2, returning -1",window);
+          return -1;
+          break;
       }
   };
 
@@ -724,6 +755,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
                   break;
           case 2: return this->CorPolyStack->GetApplyable(s, q);
                   break;
+      default: fprintf(stderr,"StackGetApplyable: window %d out of valid range 0-2, returning -1",window);
+          return -1;
+          break;
       }
   };
 
