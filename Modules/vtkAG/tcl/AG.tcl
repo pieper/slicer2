@@ -172,7 +172,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.17 $} {$Date: 2005/12/20 09:50:54 $}]
+        {$Revision: 1.18 $} {$Date: 2005/12/29 08:44:25 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1706,7 +1706,7 @@ proc AGReadLinearNonLinearTransform {} {
        AGReadHomogeneousOriginal gt $fname
    }
    set fname2 [tk_getOpenFile -defaultextension ".vtk" -title "File for non-linear transform"]
-   if { $fname != "" } {
+   if { $fname2 != "" } {
       AGReadGrid gt $fname2        
    }
    set AG(Transform) gt
