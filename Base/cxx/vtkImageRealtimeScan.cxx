@@ -457,12 +457,12 @@ void vtkImageRealtimeScan::ExecuteInformation()
 {
     vtkFloatingPointType spacing[3];
     short dim[3];
-    int i, j, ext[6];
+    int ext[6];
 #ifndef _WIN32
+    int i, j;
     long n, nbytes;
 #endif
     static char buf[200];
-    vtkFloatingPointType matrix[16];
     
     // Request header info
     if (!Test && sockfd >= 0) {
@@ -494,7 +494,8 @@ void vtkImageRealtimeScan::ExecuteInformation()
     else
     {
 #ifndef _WIN32
-        short patPos;
+    vtkFloatingPointType matrix[16];
+    short patPos;
         bcopy(&buf[OFFSET_IMG_TBLPOS],  &(this->TablePosition), LEN_IMG_TBLPOS);
         bcopy(&buf[OFFSET_IMG_PATPOS],  &patPos, LEN_IMG_PATPOS);
         bcopy(&buf[OFFSET_IMG_IMANUM],  &(this->ImageNum), LEN_IMG_IMANUM);
@@ -543,7 +544,6 @@ void vtkImageRealtimeScan::ExecuteInformation()
   // normal vtk crap for the UpdateInformation procedure
  
   vtkImageData *output = this->GetOutput();
-  unsigned long mem;
 
   output->SetWholeExtent(ext);
   output->SetScalarType(VTK_SHORT);
@@ -553,12 +553,18 @@ void vtkImageRealtimeScan::ExecuteInformation()
 
 void vtkImageRealtimeScan::Execute(vtkImageData *data)
 {
-    long n, nbytes, numPoints;
-    short *image, *outPtr;
-    int idxR, idxY, idxZ, ny, nx, outIncX, outIncY, outIncZ;
-    int rowLength, errcode;
+    long numPoints;
+    short *outPtr;
+    int ny, nx;
+    int errcode;
     int *outExt;
+#ifndef _WIN32
+    long n, nbytes;
+    short *image;
+    int idxR, idxY, idxZ, outIncX, outIncY, outIncZ;
+    int rowLength;
     char *img;
+#endif
      char fileName[1000];
  
     if (data->GetScalarType() != VTK_SHORT)
