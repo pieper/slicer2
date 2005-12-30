@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Main.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:26 $
-#   Version:   $Revision: 1.128.2.3 $
+#   Date:      $Date: 2005/12/30 19:10:50 $
+#   Version:   $Revision: 1.128.2.4 $
 # 
 #===============================================================================
 # FILE:        Main.tcl
@@ -441,7 +441,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.128.2.3 $} {$Date: 2005/12/20 22:54:26 $}]
+        {$Revision: 1.128.2.4 $} {$Date: 2005/12/30 19:10:50 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -605,6 +605,10 @@ proc MainBuildGUI {} {
         "MainMenu View Quad512"
     $Gui(mView) add command -label "1x512" -command \
         "MainMenu View Single512"
+    $Gui(mView) add command -label "1x512 COR" -command \
+        "MainMenu View Single512COR"
+    $Gui(mView) add command -label "1x512 SAG" -command \
+        "MainMenu View Single512SAG"
     $Gui(mView) add command -label "4x256" -command \
         "MainMenu View Quad256"
     $Gui(mView) add separator
