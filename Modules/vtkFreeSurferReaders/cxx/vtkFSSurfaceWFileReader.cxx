@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSSurfaceWFileReader.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:38 $
-  Version:   $Revision: 1.4.2.1 $
+  Date:      $Date: 2005/12/30 23:10:49 $
+  Version:   $Revision: 1.4.2.2 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceWFileReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/12/20 22:55:38 $
-  Version:   $Revision: 1.4.2.1 $
+  Date:      $Date: 2005/12/30 23:10:49 $
+  Version:   $Revision: 1.4.2.2 $
 
 =========================================================================*/
 #include "vtkFSSurfaceWFileReader.h"
@@ -147,8 +147,8 @@ int vtkFSSurfaceWFileReader::ReadWFile()
     // should raise some kind of message to the user like, "This wfile
     // appears to be for a different surface; continue loading?"
     if (vIndexFromFile < 0 || vIndexFromFile >= this->NumberOfVertices) { 
-        vtkErrorMacro (<< "vtkFSSurfaceWFileReader.cxx Execute: Read an index that is out of bounds (" << vIndexFromFile << " not in 0-" << this->NumberOfVertices << ", skipping.");
-      continue;
+        vtkErrorMacro (<< "vtkFSSurfaceWFileReader.cxx Execute: Read an index that is out of bounds (" << vIndexFromFile << " not in 0-" << this->NumberOfVertices << ", breaking.");
+      break;
     }
     
     // Set the value in the scalars array based on the index we read
