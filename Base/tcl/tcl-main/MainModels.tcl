@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainModels.tcl,v $
-#   Date:      $Date: 2005/12/30 22:29:42 $
-#   Version:   $Revision: 1.70.2.2 $
+#   Date:      $Date: 2005/12/30 22:43:05 $
+#   Version:   $Revision: 1.70.2.3 $
 # 
 #===============================================================================
 # FILE:        MainModels.tcl
@@ -71,7 +71,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.70.2.2 $} {$Date: 2005/12/30 22:29:42 $}]
+        {$Revision: 1.70.2.3 $} {$Date: 2005/12/30 22:43:05 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -331,8 +331,6 @@ proc MainModelsCreate {m} {
 proc MainModelsRead {m} {
     global Model Gui Module
 
-    set reader ""
-
     # If fileName = "", then do nothing
     set fileName [Model($m,node) GetFullFileName]
     if {$fileName == ""} {
@@ -342,7 +340,7 @@ proc MainModelsRead {m} {
         } else {
             puts "MainModelsRead: empty filename for Model($m,node)"
         }
-        return
+        return -1
     }
 
     # Check fileName
@@ -383,9 +381,9 @@ proc MainModelsRead {m} {
         }
     }
 
-    if {$reader == ""} {
+    if {[info command reader] == ""} {
         DevErrorWindow "No reader found for models with the extension $suffix"
-        return
+        return -1
     }
     # Progress Reporting
     reader AddObserver StartEvent     MainStartProgress
