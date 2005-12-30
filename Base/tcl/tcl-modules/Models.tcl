@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Models.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:37 $
-#   Version:   $Revision: 1.68.2.1 $
+#   Date:      $Date: 2005/12/30 22:49:22 $
+#   Version:   $Revision: 1.68.2.2 $
 # 
 #===============================================================================
 # FILE:        Models.tcl
@@ -66,7 +66,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.68.2.1 $} {$Date: 2005/12/20 22:54:37 $}]
+            {$Revision: 1.68.2.2 $} {$Date: 2005/12/30 22:49:22 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -1295,7 +1295,9 @@ proc ModelsPickScalarsLut { parentButton } {
 # .END
 #-------------------------------------------------------------------------------
 proc ModelsSetScalarsLut { mid lutid {setDefault "true"} } {
-
+    if {$::Module(verbose)} {
+        puts "ModelsSetScalarsLut model = $mid, lut = $lutid"
+    }
 
     if { ![info exists ::Models($mid,defaultLut)] } {
         set ::Models($mid,defaultLut) 0
@@ -1309,12 +1311,27 @@ proc ModelsSetScalarsLut { mid lutid {setDefault "true"} } {
         set ::Models($mid,defaultLut) $lutid
     }
 
-    foreach r $::Module(Renderers) {
-        Model($mid,mapper,$r) SetLookupTable Lut($lutid,lut)
+    if {[info command Lut($lutid,lut)] == ""} {
+        DevWarningWindow "ModelsSetScalarsLut: no look up table for id $lutid!"
+        return
     }
 
-    # save the lut id in the node
-    Model($mid,node) SetLUTName $lutid
+    foreach r $::Module(Renderers) {
+        if {$::Module(verbose)} {
+            puts "ModelsSetScalarsLut: setting lookup table for model $mid mapper $r to Lut($lutid,lut) (exists = [info command Lut($lutid,lut)]"
+        }
+        Model($mid,mapper,$r) SetLookupTable Lut($lutid,lut)
+    }
+    if {$::Module(verbose) && $::tcl_platform(platform) == "windows"} {
+        puts "ModelsSetScalarsLut: done setting lookup table for all renderers, NOT saving the lut name in the model node now: \"$lutid\", model exists = [info command Model($mid,node)]"
+    }
+    if {$::tcl_platform(platform) != "windows"} {
+        # save the lut id in the node
+        Model($mid,node) SetLUTName $lutid
+    }
+    if {$::Module(verbose)} {
+        puts "ModelsSetScalarsLut: returning"
+    }
 }
 
 #-------------------------------------------------------------------------------
