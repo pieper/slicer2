@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: ModelMaker.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:36 $
-#   Version:   $Revision: 1.60.2.3 $
+#   Date:      $Date: 2005/12/30 20:16:30 $
+#   Version:   $Revision: 1.60.2.4 $
 # 
 #===============================================================================
 # FILE:        ModelMaker.tcl
@@ -67,7 +67,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.60.2.3 $} {$Date: 2005/12/20 22:54:36 $}]
+        {$Revision: 1.60.2.4 $} {$Date: 2005/12/30 20:16:30 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)
@@ -790,7 +790,8 @@ proc ModelMakerSetVolume {v} {
         return
     }
 
-    if {[Volume($v,node) GetLabelMap] == 0} {
+    if {[Volume($v,node) GetName] != "None" &&
+        [Volume($v,node) GetLabelMap] == 0} {
         DevWarningWindow "WARNING: active volume '[Volume($v,node) GetName]' is not a label map. Please select a different volume."
     }
 
