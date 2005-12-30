@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainModels.tcl,v $
-#   Date:      $Date: 2005/12/30 22:43:05 $
-#   Version:   $Revision: 1.70.2.3 $
+#   Date:      $Date: 2005/12/30 22:53:42 $
+#   Version:   $Revision: 1.70.2.4 $
 # 
 #===============================================================================
 # FILE:        MainModels.tcl
@@ -71,7 +71,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.70.2.3 $} {$Date: 2005/12/30 22:43:05 $}]
+        {$Revision: 1.70.2.4 $} {$Date: 2005/12/30 22:53:42 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -1294,14 +1294,16 @@ proc MainModelsSetTensorVisibility {m {value ""}} {
     } else {
         
         # if we were displaying tensors, stop.
-        MainRemoveActor Model($m,tensorGlyphActor)
+        if {[info command Model($m,tensorGlyphActor)] != ""} {
+            MainRemoveActor Model($m,tensorGlyphActor)
+        }
         
         # Also delete the pipeline
-        Model($m,sphereSource) Delete
-        Model($m,tensorGlyph) Delete
-        Model($m,tensorGlyphActor) Delete
-        Model($m,tensorGlyphMapper) Delete
-        Model($m,tensorNormals) Delete
+        catch "Model($m,sphereSource) Delete"
+        catch "Model($m,tensorGlyph) Delete"
+        catch "Model($m,tensorGlyphActor) Delete"
+        catch "Model($m,tensorGlyphMapper) Delete"
+        catch "Model($m,tensorNormals) Delete"
     }
 
     # If this is the active model, update GUI
