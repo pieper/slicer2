@@ -106,7 +106,7 @@ proc EMAtlasBrainClassifierInit {} {
    set Module($m,depend) ""
 
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.28 $} {$Date: 2006/01/02 06:00:21 $}]
+       {$Revision: 1.29 $} {$Date: 2006/01/02 09:47:27 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -2134,7 +2134,11 @@ proc EMAtlasBrainClassifier_SetVtkAtlasSuperClassSetting {SuperClass} {
   EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintBias      $EMAtlasBrainClassifier(Cattrib,$SuperClass,PrintBias)
   EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintLabelMap  $EMAtlasBrainClassifier(Cattrib,$SuperClass,PrintLabelMap)
   EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetProbDataWeight $EMAtlasBrainClassifier(Cattrib,$SuperClass,LocalPriorWeight)
-  
+
+  # Kilian : Jan06 Added new parameters to simplify debuging
+    catch {EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetInitialBiasPrintPrefix  $EMAtlasBrainClassifier(Cattrib,$SuperClass,InitialBiasPrintPrefix)}
+    catch {EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPredefinedLabelMap      $EMAtlasBrainClassifier(Cattrib,$SuperClass,PredefinedLabelMap)}
+
   set ClassIndex 0
   foreach i $EMAtlasBrainClassifier(Cattrib,$SuperClass,ClassList) {
     if {$EMAtlasBrainClassifier(Cattrib,$i,IsSuperClass)} {
