@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEnginePlot.tcl,v $
-#   Date:      $Date: 2006/01/02 15:42:12 $
-#   Version:   $Revision: 1.29.2.2 $
+#   Date:      $Date: 2006/01/02 17:41:55 $
+#   Version:   $Revision: 1.29.2.3 $
 # 
 #===============================================================================
 # FILE:        fMRIEnginePlot.tcl
@@ -95,7 +95,7 @@ proc fMRIEngineMakeTimecoursePlotWindow {} {
         pack $w.graph -side top  
 
         $w.graph legend configure -position bottom -relief raised \
-            -font fixed -fg black 
+            -font fixed -fg black -bg white 
         $w.graph axis configure y -title "Intensity"
         # $w.graph grid on
         # $w.graph grid configure -color black
@@ -710,7 +710,7 @@ proc fMRIEngineDrawPlotLong {} {
     $fMRIEngine(timeCourseGraph) element create $fMRIEngine(signalCurve) \
         -label "response" -xdata xVecSig -ydata yVecSig
     $fMRIEngine(timeCourseGraph) element configure $fMRIEngine(signalCurve) \
-        -symbol none -color red -linewidth 1 
+        -symbol none -color red -linewidth 1
     $fMRIEngine(timeCourseGraph) element create $fMRIEngine(evCurve) \
         -label $fMRIEngine(curEVForPlotting) -xdata xVecEV -ydata yVecEV
     $fMRIEngine(timeCourseGraph) element configure $fMRIEngine(evCurve) \
