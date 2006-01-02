@@ -310,6 +310,7 @@ static void vtkImageEMAtlasSegmenter_TransfereDataToOutputExtension(vtkImageEMAt
 //----------------------------------------------------------------------------
 // Transferes the data from the  working extent (that is only the area defined by the SegmentationBounday)
 // to the Extent of the output and prints it out 
+
 template <class TIn>
 static void vtkImageEMAtlasSegmenter_PrintDataToOutputExtension(vtkImageEMAtlasSegmenter *self,TIn* inputExtension_Vector, int outputScalar, char* FileName){
   vtkImageData *OriginalExtension_Data = vtkImageData::New(); 
@@ -330,6 +331,114 @@ static void vtkImageEMAtlasSegmenter_PrintDataToOutputExtension(vtkImageEMAtlasS
   self->GEImageWriter(OriginalExtension_Data,FileName,1);
   OriginalExtension_Data->Delete();    
 }
+
+template <class TIn, class TOut>
+static void  vtkImageEMAtlasSegmenter_TransfereDataToOutputExtension(vtkImageEMAtlasSegmenter  *selfPtr,TIn* inputExtension_Vector, TOut* outputExtension_Ptr, int outputExtent_Inc[3], int SliceNum) {
+  // -----------------------------------------------------
+  // 1.) Setup Parameteres 
+  // -----------------------------------------------------
+  // Get increments to march through data
+  int outputExtension[6];
+  memcpy(outputExtension,selfPtr->GetExtent(), sizeof(int)*6);
+
+  int SegmentationBoundaryMin[3];
+  memcpy(SegmentationBoundaryMin,selfPtr->GetSegmentationBoundaryMin(), sizeof(int)*3);
+
+  int DimensionX = selfPtr->GetDimensionX();
+  int DimensionY = selfPtr->GetDimensionY();
+  int DimensionZ = selfPtr->GetDimensionZ();
+
+  if (SliceNum > 0) {
+    outputExtension[4] += SliceNum-1 + SegmentationBoundaryMin[2] -1;
+    outputExtension[5] = outputExtension[4];
+    SegmentationBoundaryMin[2] = 1;
+    DimensionZ = 1;
+  }
+
+  int idxR, idxY, idxZ;
+
+  // We assume output is 1 scalar 
+  TOut* outputExtensionStart_Ptr = outputExtension_Ptr; 
+
+  int LengthOfXDim = outputExtension[1] - outputExtension[0] +1  + outputExtent_Inc[1];
+  int LengthOfYDim = LengthOfXDim*(outputExtension[3] - outputExtension[2] + 1) +  outputExtent_Inc[2];  
+  // Location of the first voxel 
+  outputExtensionStart_Ptr += (SegmentationBoundaryMin[0] - 1) + (SegmentationBoundaryMin[1] - 1) * LengthOfXDim
+         + LengthOfYDim *(SegmentationBoundaryMin[2] - 1);
+
+  int BoundaryDataIncY = LengthOfXDim - DimensionX;
+  int BoundaryDataIncZ = LengthOfYDim - DimensionY *LengthOfXDim;
+
+  // -----------------------------------------------------
+  // 2.) Set output to zero 
+  // -----------------------------------------------------
+
+  // Initializa output by setting it to zero
+  for (idxZ = outputExtension[4]; idxZ <= outputExtension[5]; idxZ++) {
+    for (idxY = outputExtension[2]; idxY <= outputExtension[3]; idxY++) {
+      memset(outputExtension_Ptr,0,sizeof(TOut)*(outputExtension[1] - outputExtension[0] + 1));
+      outputExtension_Ptr +=  LengthOfXDim;
+    }
+  }
+  outputExtension_Ptr = outputExtensionStart_Ptr ;  
+
+
+  // -----------------------------------------------------
+  // 3.) Define output in working Extension 
+  // -----------------------------------------------------
+  int index = 0;
+  // 3.) Write result in outPtr
+  for (idxZ = 0; idxZ < DimensionZ; idxZ++) {
+    for (idxY = 0; idxY < DimensionY; idxY++) {
+      for (idxR = 0; idxR < DimensionX; idxR++) {
+        *outputExtension_Ptr = (TOut) inputExtension_Vector[index];
+    index ++; 
+        outputExtension_Ptr++;
+      }
+      outputExtension_Ptr +=  BoundaryDataIncY;
+    }
+    outputExtension_Ptr +=  BoundaryDataIncZ;
+  }
+}
+
+
+template <class TIn>
+static void  vtkImageEMAtlasSegmenter_PrintDataToOutputExtension(vtkImageEMAtlasSegmenter *selfPtr,TIn* inputExtension_Vector, int outputScalar, char* FileName ,int SliceNum, int OriginalExtensionFlag, int PrintOutputFlag){
+  vtkImageData *OriginalExtension_Data = vtkImageData::New(); 
+  int ChangedExtent[6];
+  memcpy(ChangedExtent, selfPtr->GetExtent(), sizeof(int)*6); 
+  // Just move it one up - this is just a shortcut - fix it later 
+  // Whatever extent [4] and [5] is set to that will the numbering of the slice number int the print out 
+  if (!ChangedExtent[4]) {
+    ChangedExtent[4] ++;
+    ChangedExtent[5] ++;
+  }
+  if (SliceNum > 0) {
+    ChangedExtent[4] += SliceNum-1 + selfPtr->GetSegmentationBoundaryMin()[2] -1 ;
+    ChangedExtent[5] = ChangedExtent[4];
+  } 
+  TIn* OriginalExtension_DataPtr = (TIn*)  vtkImageEMAtlasSegmenter_GetPointerToVtkImageData(OriginalExtension_Data,outputScalar,ChangedExtent);
+  int OutIncX, OutIncY, OutIncZ;
+  OriginalExtension_Data->GetContinuousIncrements(selfPtr->GetExtent(), OutIncX, OutIncY, OutIncZ);
+  if ( OriginalExtensionFlag) {
+    int NumX = ChangedExtent[1] -ChangedExtent[0] + 1;
+    for(int z = 0; z <= ChangedExtent[5] -ChangedExtent[4]; z++) {
+      for(int y = 0; y <= ChangedExtent[3] -ChangedExtent[2]; y++) {
+    memcpy(OriginalExtension_DataPtr, inputExtension_Vector,sizeof(TIn)*NumX);
+    inputExtension_Vector += NumX;
+    OriginalExtension_DataPtr += NumX+OutIncY;
+      }
+      OriginalExtension_DataPtr += OutIncZ;
+    }
+  } else {
+    int outInc[3] = {OutIncX, OutIncY, OutIncZ};
+
+     vtkImageEMAtlasSegmenter_TransfereDataToOutputExtension(selfPtr,inputExtension_Vector,OriginalExtension_DataPtr ,outInc,SliceNum);
+  } 
+  selfPtr->GEImageWriter(OriginalExtension_Data,FileName,PrintOutputFlag);
+  OriginalExtension_Data->Delete();    
+}
+
 //------------------------------------------------------------------------------
 int* vtkImageEMAtlasSegmenter::GetSegmentationBoundaryMin() {
   if (!this->HeadClass) {
@@ -515,17 +624,6 @@ static void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate(int id,
          *wyp = new double[NumClasses],*wypPtr = wyp,*wzn = new double[NumClasses],*wznPtr = wzn, *wzp = new double[NumClasses],*wzpPtr = wzp;  
   
 
-  // cout << "imgX " << imgX << " imgY " << imgY << " imgXY " << imgXY << " StartVoxel " << StartVoxel  << " EndVoxel " << EndVoxel  << " NumClasses " << NumClasses  << "    NumTotalTypeCLASS " << NumTotalTypeCLASS << " NumInputImages " <<  NumInputImages << " Alpha  " << Alpha  << endl;
-
-  // for (i=0; i< NumTotalTypeCLASS; i++) wm_input_start[i] = wm_input[i];
-
-  //for (i=0 ; i < NumClasses; i++) {
-  //  for (l=0;l< NumChildClasses[i];l++){
-  //        cout << index  << " " << TissueProbability[index] << " " << ProbDataPtr[index] << " " << InvSqrtDetLogCov[index] << " " << LogMu[index] << " " << InvLogCov[index] << " " << NumInputImages << endl;
-  //      index ++;
-  //      }
-  // }
-
   // -----------------------------------------------------------
   // neighbouring field values
   // -----------------------------------------------------------
@@ -544,14 +642,8 @@ static void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate(int id,
   // Calculate Neighbouring Tissue Relationships
   // -----------------------------------------------------------
 
-  unsigned char* MapVectorPtr = MapVector;
-
   j = StartVoxel;
-  bool flag = false;
   int ClassIndex;
-  int blub0 = 0 ;
-  int blub1 = 0 ;
-
   while (j< EndVoxel) {
     if (*MapVector < EMSEGMENT_DEFINED) {
       // Is is 0 => it is not an edge -> fast smmothing
@@ -612,7 +704,7 @@ static void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate(int id,
 
       wxn++;wxp++;wyn++;wyp++;wzn++;wzp++;
     }
-      }
+     }
       wxp = wxpPtr; wxn = wxnPtr; wyn = wynPtr; wyp = wypPtr; wzn = wznPtr; wzp = wzpPtr; 
       // -----------------------------------------------------------
       // Calculate Probabilities and Update Weights
@@ -646,7 +738,8 @@ static void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate(int id,
       wxp = wxpPtr; wxn = wxnPtr; wyn = wynPtr; wyp = wypPtr; wzn = wznPtr; wzp = wzpPtr;
       // I do not know if I should assign it ot first or second term
       if (normRow == 0.0) {
-    index = 0;
+        index = 0;
+
     for (i=0; i<NumClasses; i++) {
        NeighborhoodEnergy = TissueProbability[i] * exp((*wxp++) + (*wxn++) + (*wyp++) + (*wyn++) + (*wzp++) + (*wzn++));
       for (l=0;l< NumChildClasses[i];l++){
@@ -654,7 +747,7 @@ static void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate(int id,
         normRow += w_m_output[index][j];
         index ++;
       }
-    } 
+    }
     wxp = wxpPtr; wxn = wxnPtr; wyn = wynPtr; wyp = wypPtr; wzn = wznPtr; wzp = wzpPtr;
     if (normRow == 0.0) {
       index = 0;
@@ -676,7 +769,7 @@ static void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate(int id,
       for (i=0; i<  NumTotalTypeCLASS; i++) {
     w_m_output[i][j] /= normRow; 
       }
-    }
+    } // End of < EMSEGMENT_DEFINED
     cY_M += NumInputImages;MapVector++;
     for (i=0; i < NumTotalTypeCLASS; i++) {
       w_m_input[i] ++;
@@ -684,17 +777,13 @@ static void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate(int id,
     }
     j++;
     if (!(j % imgX)) {
-      blub0 ++ ;
       for (i=0; i < NumTotalTypeCLASS; i++) { if (ProbDataPtr[i]) ProbDataPtr[i] += ProbDataIncY[i];}
-      if (!(j % imgXY)) {blub1++;
+      if (!(j % imgXY)) {
          for (i=0; i <  NumTotalTypeCLASS; i++) { 
      if (ProbDataPtr[i]) ProbDataPtr[i] += ProbDataIncZ[i];}
       }
     }
   }
-
-  // cout << " Blubber " << blub0 << " " << blub1 << endl;
-
 
   //j = 0;
   //while (j < NumClasses) { 
@@ -720,8 +809,7 @@ static void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate(int id,
 // Calculate MF - parrallelised version 
 // user interface when called with threads 
 // -----------------------------------------------------------
-void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DThreadPrivate(void *jobparm) {
-  EMAtlas_MF_Approximation_Work_Private *job = (EMAtlas_MF_Approximation_Work_Private *)jobparm;
+void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DThreadPrivate(void *jobparm) {  EMAtlas_MF_Approximation_Work_Private *job = (EMAtlas_MF_Approximation_Work_Private *)jobparm;
   // Define Type of ProbDataPtr
    switch (job->ProbDataType) {
     vtkTemplateMacro26(vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate,job->id, job->w_m_input,job->MapVector,job->cY_M,job->imgX,job->imgY,
@@ -827,7 +915,7 @@ void vtkImageEMAtlasSegmenter::PrintIntermediateResultsToFile(int iter, float **
   // Generate LabelMap if necessary
   if (actSupCl->GetPrintLabelMap() || QualityFile) {
     // Define Label Map with the exetensions defined by the SegmentationBoundary
-    int Ext[6] = { 0, this->GetDimensionX()-1, 0, this->GetDimensionY()-1, 0, this->GetDimensionZ()-1};
+    int Ext[6] = { 0, this->GetDimensionX()-1, 0, this->GetDimensionY()-1, 0, this->GetDimensionZ() - 1 };
     LabelMap_WorkingExtension_Data = vtkImageData::New(); 
     LabelMap_WorkingExtension_Ptr = (short*) vtkImageEMAtlasSegmenter_GetPointerToVtkImageData(LabelMap_WorkingExtension_Data ,VTK_SHORT,Ext);    
     this->DetermineLabelMap(LabelMap_WorkingExtension_Ptr, NumTotalTypeCLASS, NumChildClasses, actSupCl, ROI, this->ImageProd, w_m);
@@ -835,7 +923,14 @@ void vtkImageEMAtlasSegmenter::PrintIntermediateResultsToFile(int iter, float **
     // Transfere it to output Extension
     if (actSupCl->GetPrintLabelMap() || QualityFile) {  
       LabelMap_OriginalExtension_Data = vtkImageData::New();  
-      LabelMap_OriginalExtension_DataPtr = (short*) vtkImageEMAtlasSegmenter_GetPointerToVtkImageData(LabelMap_OriginalExtension_Data,VTK_SHORT,this->Extent);
+    int ChangedExtent[6];
+
+    memcpy(ChangedExtent, this->Extent, sizeof(int)*6); 
+    if (!ChangedExtent[4]) {
+      ChangedExtent[4] ++;
+      ChangedExtent[5] ++;
+    }
+      LabelMap_OriginalExtension_DataPtr = (short*) vtkImageEMAtlasSegmenter_GetPointerToVtkImageData(LabelMap_OriginalExtension_Data,VTK_SHORT,ChangedExtent);
       int outIncX, outIncY, outIncZ;
       LabelMap_OriginalExtension_Data->GetContinuousIncrements(this->Extent, outIncX, outIncY, outIncZ);
       int outInc[3] = {outIncX, outIncY, outIncZ};
@@ -975,10 +1070,9 @@ int vtkImageEMAtlasSegmenter::MF_Approx_Workpile(float **w_m_input,unsigned char
 
   // numthreads = 1;
   numthreads = vtkMultiThreader::GetGlobalDefaultNumberOfThreads(); 
-  cout << " Debug: Kilian: Number of Threads: " <<   numthreads << endl;
+  cout << "Debug: Kilian: Number of Threads: " <<   numthreads << endl;
 
   jobsize = this->ImageProd/numthreads;
-
   for (i = 0; i < numthreads; i++) {
     job[i].id                = i;
     job[i].w_m_input         = new float*[NumTotalTypeCLASS];
@@ -1240,11 +1334,6 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
   int SmoothingSigma        = self->GetSmoothingSigma();
   // Bias Information
   int BiasPrint             = actSupCl->GetPrintBias();
-  int BiasLengthFileName    = 0;
-  if (self->GetPrintDir() != NULL) BiasLengthFileName = int(strlen(self->GetPrintDir()));
-  char *PrintDir = new char[BiasLengthFileName + 2];
-  if (((BiasPrint) )&& (BiasLengthFileName)) strcpy(PrintDir,self->GetPrintDir());
-  else sprintf(PrintDir,"\n");
 
   // Kilian: Jan06: InitialBias_FilePrefix allows initializing a bias field with a precomputed from outside 
   // - carefull Bias Field has to be in little Endian                
@@ -1379,13 +1468,7 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
     inv_iv_mat[i] = new double[VirtualOveralInputChannelNum];
   }
 
-  FILE **BiasFile = new FILE*[NumInputImages];
-  bool PrintBiasFlag;
-  if (BiasLengthFileName) BiasLengthFileName = BiasLengthFileName + 15 + NumInputImages/10 + int(strlen(LevelName));
-  char *BiasFileName = new char[BiasLengthFileName+2];
-  if (BiasLengthFileName == 0)  sprintf(BiasFileName,"\n");
-
-  if (SegmentLevelSucessfullFlag) {
+   if (SegmentLevelSucessfullFlag) {
     // ------------------------------------------------------------
     // Start Algorithm 
     // ------------------------------------------------------------
@@ -1403,23 +1486,45 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
       if (((ROI) && (!InitialBias_FilePrefix)) || (iter > 1)) {
           // cout << "-------------------- Bias Field Correction -------------------" << endl; 
           // Kilian - Jan 06 : changed this line bc Bias is also defined in areas outside the ROI 
-          PrintBiasFlag = bool((iter ==  NumIter) && BiasPrint && BiasLengthFileName);
-          if (PrintBiasFlag) cout << "vtkImageEMAtlasAlgorithm: Write Bias to " << PrintDir << endl;
-  
-          for (i = 0; i<ImageMaxZ;i++){
-        // Open File to write Bias Field
-        if (PrintBiasFlag) {
-           for (l=0; l< NumInputImages; l++) { 
-             sprintf(BiasFileName,"%s/Bias_%s_Ch%d.%03d",PrintDir,LevelName,l,i+1);
-             BiasFile[l]= fopen(BiasFileName, "w");
-             if ( BiasFile[l] == NULL ) {
-               vtkEMAddErrorMessageSelf("vtkImageEMAtlasAlgorithm::Error: Could not open file " << BiasFileName);
-               PrintBiasFlag = 0; 
-               for (k=0; k< l; k++) fclose(BiasFile[l]);
-               l = NumInputImages;
-             }
-           }
+      char** BiasFileName       = NULL;
+          double* BiasSlice         = NULL;
+          double* BiasSlicePtr      = NULL;
+          bool PrintBiasFlag = bool((iter ==  NumIter) && BiasPrint);
+
+          if (PrintBiasFlag) {
+
+        char *BiasDirectory = new char[250];
+        if (self->GetPrintDir() != NULL) sprintf(BiasDirectory,"%s/Bias/blub",self->GetPrintDir());
+        else sprintf(BiasDirectory,"Bias/blub");
+        
+        if (vtkFileOps::makeDirectoryIfNeeded(BiasDirectory) == -1) {
+          vtkEMAddErrorMessageSelf( "Could not create the directory :" << self->GetPrintDir() << "/Bias");
+          PrintBiasFlag = 0;
+        } else {
+          cout << "vtkImageEMAtlasAlgorithm: Print Bias (Type: Double) to " << self->GetPrintDir() << "/Bias" << endl;
+
+          BiasSlicePtr = BiasSlice = new double[ImageProd*NumInputImages];
+          memset(BiasSlice, 0, sizeof(double)*ImageProd*NumInputImages);
+ 
+          BiasFileName = new char*[NumInputImages];
+          for (int i = 0 ; i < NumInputImages; i++)  BiasFileName[i] = new char[250];  
+          
+          int *SegmentationBoundaryMin = self->GetSegmentationBoundaryMin();
+          int *SegmentationBoundaryMax = self->GetSegmentationBoundaryMax();
+          int *Extent               = self->GetExtent();
+          for (int l=0; l< NumInputImages; l++) {
+        if (self->GetPrintDir()) sprintf(BiasFileName[l],"%s/Bias/BiasL%sCh%d",self->GetPrintDir(),LevelName,l);
+        else sprintf(BiasFileName[l],"Bias/BiasL%sCh%d",LevelName,l);
+        
+        // If BoundaryMin and Max do not span full length we have to add empty slices 
+        for (int i = 1; i < SegmentationBoundaryMin[2]; i++) vtkImageEMAtlasSegmenter_PrintDataToOutputExtension(self,BiasSlice,VTK_DOUBLE,BiasFileName[l],i-SegmentationBoundaryMin[2],0,0);
+        for (int i = 1; i <= Extent[5]- Extent[4] + 1 - SegmentationBoundaryMax[2]; i++) vtkImageEMAtlasSegmenter_PrintDataToOutputExtension(self,BiasSlice,VTK_DOUBLE,BiasFileName[l],i-SegmentationBoundaryMin[2],0,0);
+          }
         }
+        delete[] BiasDirectory;
+      }
+
+          for (i = 0; i<ImageMaxZ;i++) {
             // Define Bias Value
         for (j = 0; j<ImageMaxY;j++){
           for (k = 0; k<ImageMaxX;k++){
@@ -1441,51 +1546,66 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
             for (l=0; l< NumInputImages; l++) {
               b_m = 0.0;
               if (VirtualOveralInputChannelFlag[l]) {
-            mindex = 0;
-            for (m = 0; m< NumInputImages; m++) {
-              if (VirtualOveralInputChannelFlag[m]) {
-                b_m += inv_iv_mat[lindex][mindex]*r_m[m](i,j,k);
-                mindex ++;
+                mindex = 0;
+                for (m = 0; m< NumInputImages; m++) {
+                if (VirtualOveralInputChannelFlag[m]) {
+                  b_m += inv_iv_mat[lindex][mindex]*r_m[m](i,j,k);
+                  mindex ++;
+                }
               }
-            }
-            lindex ++;
-            (*cY_M ++) = fabs((*InputVector)[l] - b_m);
-              } else {cY_M ++;}
-              if (PrintBiasFlag) {
-        // b_m = r_m[l](i,j,k);
-        fwrite(&b_m, sizeof(double), 1, BiasFile[l]); 
-            // fwrite(&(*InputVector)[l], sizeof(float), 1, BiasFile[l]); 
+              lindex ++;
+              (*cY_M ++) = fabs((*InputVector)[l] - b_m);
+              if (BiasSlice) (*BiasSlice ++) = b_m;
+              } else {
+                cY_M ++;
+                if (BiasSlice) BiasSlice ++;
               }
             }
           } else { 
-            b_m = 0.0;
             for (l=0; l< NumInputImages; l++) {
-                      (*cY_M ++) = fabs((*InputVector)[l]);
-              if (PrintBiasFlag) {
-            // b_m = r_m[l](i,j,k);
-            fwrite(&b_m, sizeof(double), 1, BiasFile[l]); 
-            // fwrite(&(*InputVector)[l], sizeof(float), 1, BiasFile[l]); 
-              }
+          (*cY_M ++) = fabs((*InputVector)[l]);
+          if (BiasSlice) (*BiasSlice ++) = 0.0;
             }
           }
         } else {
-      // Kilian - Jan 06 Now we can print out the bias even if ROI != NULL ! 
-      if (PrintBiasFlag) {
-        b_m = 0.0;
-            for (l=0; l< NumInputImages; l++) fwrite(&b_m, sizeof(double), 1, BiasFile[l]); 
-      }
-      cY_M += NumInputImages;
+        // Kilian - Jan 06 Now we can print out the bias even if ROI != NULL ! 
+    if (BiasSlice) {
+      for (l=0; l< NumInputImages; l++) (*BiasSlice ++) = 0.0;
+    }
+        cY_M += NumInputImages;
     }
         InputVector++;
       }
         }
-        if (PrintBiasFlag) {
-          for (l=0; l< NumInputImages; l++) {
-            fflush(BiasFile[l]);
-            fclose(BiasFile[l]);
-          }
-        }
-      }
+         // Print Bias Field if necessary  
+       if (PrintBiasFlag) {
+      double *BiasSliceInput = new double[ImageProd];
+      for (int l=0; l< NumInputImages; l++) {
+         BiasSlice = BiasSlicePtr + l;
+
+         for (int m = 0 ; m < imgXY; m ++) {
+         BiasSliceInput[m] = *BiasSlice;
+         BiasSlice += NumInputImages;
+         }
+         // Remember for windows always use - BiasFile = fopen(BiasFileName, "wb") - otherwise does not work for double or float    
+         vtkImageEMAtlasSegmenter_PrintDataToOutputExtension(self,BiasSliceInput,VTK_DOUBLE,BiasFileName[l],i+1,0,0);
+       }
+       delete[] BiasSliceInput;
+    }
+    BiasSlice = BiasSlicePtr;
+
+
+
+      } // End of Z
+
+  if (BiasSlice) delete[] BiasSlice;
+
+
+  if (BiasFileName) {
+    for (int i = 0; i < NumInputImages; i++)  delete[] BiasFileName[i];
+    delete[] BiasFileName;
+  }
+
         } else {
       // Option 1. : Bias Field is initialized with outside source
       if (InitialBias_FilePrefix) {
@@ -1493,23 +1613,23 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
         // Make sure that the bias field are written with little Endian
             // The initial volumes have to defined as following <>_Ch%d.%03d , 
         // e.g. InitialBias_FilePrefix = "Bias_1.0" => For first input channel Volume has to exists with the name Bias_1.0_Ch0.*
-        char *PrefixName = char[int(strlen(InitialBias_FilePrefix)) + 5];
-        cpit << "Kilian Extent: " << self->GetExtent()[4] << " " << self->GetExtent()[5] <<endl;
+        char *PrefixName = new char[int(strlen(InitialBias_FilePrefix)) + 5];
+        cout << "Kilian Extent: " << self->GetExtent()[4] << " " << self->GetExtent()[5] <<endl;
         for (j = 0 ; j < NumInputImages; j ++ ) {
-        vtkImageData  *InitialBias = vtkImageData::New(); 
-        sprintf(PrefixName,"%s_Ch%d",InitialBias_FilePrefix,j);
+           vtkImageReader  *InitialBias = vtkImageReader::New(); 
+           sprintf(PrefixName,"%s_Ch%d",InitialBias_FilePrefix,j);
 
-        self->GEImageReader(InitialBias,InitialBias_FilePrefix self->GetExtent()[4],self->GetExtent()[5],VTK_DOUBLE);
-        double* InitialBiasPtr = (double*) self->GetPointerToVtkImageData(InitialBias,VTK_DOUBLE,self->GetExtent());
-        cY_M += j;
-        for (i=0; i< ImageProd; i++) {
-          *cY_M = fabs((*InputVector)[j] - *InitialBiasPtr);
-          InputVector ++;
-          InitialBiasPtr ++;
-          cY_M += NumInputImages;
-        }
-        InitialBias->Delete();
-        cY_M = cY_MPtr;InputVector = InputVectorPtr;
+           self->GEImageReader(InitialBias,PrefixName,self->GetExtent()[4],self->GetExtent()[5],VTK_DOUBLE);
+           double* InitialBiasPtr = (double*) self->GetPointerToVtkImageData(InitialBias->GetOutput(),VTK_DOUBLE,self->GetExtent());
+           cY_M += j;
+           for (i=0; i< ImageProd; i++) {
+             *cY_M = fabs((*InputVector)[j] - *InitialBiasPtr);
+             InputVector ++;
+             InitialBiasPtr ++;
+             cY_M += NumInputImages;
+           }
+           InitialBias->Delete();
+           cY_M = cY_MPtr;InputVector = InputVectorPtr;
         }
         delete []PrefixName;
         
@@ -1698,6 +1818,7 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
     // M-step
     // -----------------------------------------------------------
     if (iter < NumIter) {
+      cout << "vtkImageEMAtlasAlgorithm: Determine Image Inhomogeneity" << endl;
       // cout << "vtkImageEMAtlasAlgorithm: Mstep " << endl;
       // compute weighted residuals 
       // r_m  = (w_m.*(repmat(cY_M,[1 num_classes]) - repmat(mu,[prod(imS) 1])))*(ivar)';
@@ -1761,7 +1882,7 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
     // -----------------------------------------------------------
     // Print out Parameters
     // -----------------------------------------------------------
-    if ( ( (actSupCl->GetPrintFrequency()) && (iter % (actSupCl->GetPrintFrequency()) == 0) ) || ((iter == NumIter ) && (actSupCl->GetPrintFrequency() == -1)) ) {
+    if ( ( (actSupCl->GetPrintFrequency() > 0) && (iter % (actSupCl->GetPrintFrequency()) == 0) ) || ((iter == NumIter ) && (actSupCl->GetPrintFrequency() == -1)) ) {
       cout << "vtkImageEMAtlasAlgorithm: Print intermediate result to " <<self->GetPrintDir() << endl;
       self->PrintIntermediateResultsToFile(iter, w_m, ROI, OutputVector, NumTotalTypeCLASS, NumChildClasses, actSupCl, LevelName, ClassList, ClassListType, LabelList, QualityFile);
       cout << "vtkImageEMAtlasAlgorithm: Return to Algorithm " << endl;
@@ -1792,8 +1913,6 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
   delete[] ProbDataMinusWeight;
   delete[] ClassType;
   delete[] NumChildClasses;
-  delete[] PrintDir;
-  delete[] BiasFileName;
   delete[] LogMu;
   delete[] LogCovariance;
   delete[] VirtualNumInputImages;
@@ -1808,8 +1927,7 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
 
   delete[] OutputVector;
   delete[] ProbDataPtrCopy;
-  delete[] BiasFile;
-  for (i=0;i < NumTotalTypeCLASS; i++)  delete[] w_m_second[i];
+   for (i=0;i < NumTotalTypeCLASS; i++)  delete[] w_m_second[i];
   delete[] w_mPtr;
   delete[] w_m_second;
   delete[] w_m_secondPtr;
@@ -1861,15 +1979,15 @@ int vtkImageEMAtlasSegmenter::HierarchicalSegmentation(vtkImageEMAtlasSuperClass
         *OutputVectorPtr    = OutputVector;
 
   // Kilian : Jan 06 We simply jump over segmentation and use previous calculated results - make generation of optimal parameters simpler
-  if (head->GetPredefinedLabelMap()) {
+  if (head->GetPredefinedLabelMapPrefix()) {
     SegmentLevelSucessfullFlag = 1;
     // Make sure it is of type short and little endian
     cout <<"Loading Predefined LabelMap" << endl;
     cout << "Kilian: Extent: " << this->Extent[4] << " " << this->Extent[5] << endl;
 
-    vtkImageData *PredefinedLabelMap = vtkImageData::New();
-    self->GEImageReader(PredefinedLabelMap,head->GetPredefinedLabelMapPrefix(),this->Extent[4],this->Extent[5],VTK_SHORT);
-    memcpy(SegmentationResult,this->GetPointerToVtkImageData(PredefinedLabelMap,VTK_SHORT,this->Extent),sizeof(short)*this->ImageProd);
+    vtkImageReader *PredefinedLabelMap = vtkImageReader::New();
+    this->GEImageReader(PredefinedLabelMap,head->GetPredefinedLabelMapPrefix(),this->Extent[4],this->Extent[5],VTK_SHORT);
+    memcpy(SegmentationResult,this->GetPointerToVtkImageData(PredefinedLabelMap->GetOutput(),VTK_SHORT,this->Extent),sizeof(short)*this->ImageProd);
 
     PredefinedLabelMap->Delete();
     cout << "Skipping segmentation" << endl;

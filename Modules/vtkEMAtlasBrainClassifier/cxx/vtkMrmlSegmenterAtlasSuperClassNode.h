@@ -123,8 +123,8 @@ public:
   // Description:
   // Kilian: Jan06: InitialBias_FilePrefix allows initializing a bias field with a precomputed one 
   // - carefull Bias Field has to be in little Endian  - needed it for debugging
-  vtkSetStringMacro(InitialBiasPrintPrefix);
-  vtkGetStringMacro(InitialBiasPrintPrefix);
+  vtkSetStringMacro(InitialBiasFilePrefix);
+  vtkGetStringMacro(InitialBiasFilePrefix);
 
   // Description:
   // Kilian: Jan06: This allows you to "jump" over the hirarchical segmentation level by providing an already existing 
@@ -132,6 +132,7 @@ public:
   vtkSetStringMacro(PredefinedLabelMapPrefix); 
   vtkGetStringMacro(PredefinedLabelMapPrefix); 
 
+  // When adding new variables do not forget to add them also to vtkMrmlSegmenterSuperClass in the appropriate way  
 protected:
   vtkMrmlSegmenterAtlasSuperClassNode();
   ~vtkMrmlSegmenterAtlasSuperClassNode();
@@ -158,7 +159,7 @@ protected:
   float StopMFAValue;    
   int StopMFAMaxIter;
 
-  char* InitialBiasPrintPrefix;  
+  char* InitialBiasFilePrefix;  
   char* PredefinedLabelMapPrefix; 
 
 };

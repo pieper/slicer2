@@ -72,7 +72,7 @@ vtkMrmlSegmenterAtlasSuperClassNode::vtkMrmlSegmenterAtlasSuperClassNode() {
   this->StopMFAValue        = 0.0; 
   this->StopMFAMaxIter      = 0; 
 
-  this->InitialBiasPrintPrefix = NULL;  
+  this->InitialBiasFilePrefix = NULL;  
   this->PredefinedLabelMapPrefix     = NULL; 
 }
 
@@ -97,7 +97,7 @@ void vtkMrmlSegmenterAtlasSuperClassNode::Write(ofstream& of)
   of << " StopMFAValue='" << this->StopMFAValue <<  "'";
   of << " StopMFAMaxIter='" << this->StopMFAMaxIter <<  "'";
 
-  if (this->InitialBiasPrintPrefix) of << " InitialBiasPrintPrefix='" << this->InitialBiasPrintPrefix <<  "'";
+  if (this->InitialBiasFilePrefix) of << " InitialBiasFilePrefix='" << this->InitialBiasFilePrefix <<  "'";
   if (this->PredefinedLabelMapPrefix) of << " PredefinedLabelMapPrefix='" << this-> PredefinedLabelMapPrefix <<  "'" ;
 }
 
@@ -121,7 +121,7 @@ void vtkMrmlSegmenterAtlasSuperClassNode::Copy(vtkMrmlNode *anode)
   this->StopMFAValue   = node->StopMFAValue; 
   this->StopMFAMaxIter = node->StopMFAMaxIter; 
 
-  this->InitialBiasPrintPrefix =  node->InitialBiasPrintPrefix;
+  this->InitialBiasFilePrefix =  node->InitialBiasFilePrefix;
   this->PredefinedLabelMapPrefix     =  node->PredefinedLabelMapPrefix;
 
 }
@@ -142,7 +142,7 @@ void vtkMrmlSegmenterAtlasSuperClassNode::PrintSelf(ostream& os, vtkIndent inden
   os << indent << "StopMFAValue:                  " << this->StopMFAValue << "\n";
   os << indent << "StopMFAMaxIter:                " << this->StopMFAMaxIter << "\n";
 
-  os << indent << "InitialBiasPrintPrefix:        " << (this->InitialBiasPrintPrefix ? this->InitialBiasPrintPrefix : "(none)" ) << "\n";
+  os << indent << "InitialBiasFilePrefix:        " << (this->InitialBiasFilePrefix ? this->InitialBiasFilePrefix : "(none)" ) << "\n";
   os << indent << "PredefinedLabelMapPrefix:            " << (this->PredefinedLabelMapPrefix ? this->PredefinedLabelMapPrefix : "(none)" ) << "\n";
 
 
