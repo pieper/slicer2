@@ -106,7 +106,7 @@ proc EMAtlasBrainClassifierInit {} {
    set Module($m,depend) ""
 
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.27 $} {$Date: 2005/12/20 09:32:54 $}]
+       {$Revision: 1.28 $} {$Date: 2006/01/02 06:00:21 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -1121,7 +1121,7 @@ proc EMAtlasBrainClassifier_NumberOfTrainingSamples { } {
 
 #-------------------------------------------------------------------------------
 # .PROC EMAtlasBrainClassifier_RegistrationInitialize 
-# Checks if atlas has to be dowloaded and if registration is necessary. Return values 
+# Checks if atlas has to be downloaded and if registration is necessary. Return values 
 # -1 Atlas does not exist and could not be downloaded
 #  0 Registered Atlas exists 
 #  1 Atlas exists but has to be registered 
@@ -1312,7 +1312,7 @@ proc EMAtlasBrainClassifierDownloadAtlas { } {
     set text "The module did not detect an atlas at the default location. An atlas can be"
     set text "$text\ndownloaded by pressing the \"\OK\" button. This might take a while! "
     set text "$text\nIf you want to continue and you have PROBLEMS downloading the data please do the following:"
-    set text "$text\nDowload the data from http://na-mic.org/Wiki/index.php/Slicer:Data_EMAtlas"
+    set text "$text\nDownload the data from http://na-mic.org/Wiki/index.php/Slicer:Data_EMAtlas"
     set text "$text\nto [file dirname $EMAtlasBrainClassifier(AtlasDir)]"
     set text "$text\nand uncompress the file.\n"      
     set text "$text\nBy pressing the \"OK\" button I agree with the copyright restriction explained in further "
@@ -1415,8 +1415,8 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource NonRigidRegistrationF
 
     puts -nonewline "Start the linear registration with MI criterion and type "
     switch  $LinearRegistrationType {
-    -1 { puts "translation." }
-    0 { puts "rigid." }
+        -1 { puts "translation." }
+        0 { puts "rigid." }
         1 { puts "similarity." }
         2 { puts "affine." }
     default {puts "Do not know type   $LinearRegistrationType" ; return}
@@ -2308,7 +2308,7 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
 
     # ---------------------------------------------------------------
     # Setup Pipeline
-    if {[EMAtlasBrainClassifier_InitilizePipeline] == 0} { return }  
+    if {[EMAtlasBrainClassifier_InitilizePipeline] == 0} { return 0}  
 
     # ---------------------------------------------------------------
     # Align T2 to T1 
@@ -2347,7 +2347,7 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     # Register Atlases 
     if {$RegisterAtlasDirList != "" } {
        set RunRegistrationFlag [EMAtlasBrainClassifier_RegistrationInitialize "$RegisterAtlasDirList" ] 
-       if {$RunRegistrationFlag < 0} {return} 
+       if {$RunRegistrationFlag < 0} {return 0} 
        if {$RunRegistrationFlag} { 
           EMAtlasBrainClassifier_AtlasRegistration "$RegisterAtlasDirList" "$RegisterAtlasNameList"
        } else {
@@ -2381,7 +2381,7 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
                                     set DoNotStart 1 
                                     if {[catch {source [file join $env(SLICER_HOME) Modules/vtkEMPrivateSegment/tcl/EMSegmentBatch.tcl]} ErrorMsg]} {
                                        DevErrorWindow "Cannot source EMSegmentBatch. Error: $ErrorMsg"
-                                       return
+                                       return 0
                                     }
                                 
                                     Segmentation $XMLFile 
@@ -2390,7 +2390,7 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
                                     EMAtlasBrainClassifier_StartEM 
                                     EMAtlasBrainClassifier_SaveSegmentation  
                                  }
-         default   {DevErrorWindow "Error: Segmentation mode $EMAtlasBrainClassifier(SegmentationMode) is unknown"; return }
+         default   {DevErrorWindow "Error: Segmentation mode $EMAtlasBrainClassifier(SegmentationMode) is unknown"; return 0}
     }
 
     # ---------------------------------------------------------------------- 
@@ -2400,6 +2400,7 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     }
 
     puts "=========== Finished  ============ "
+    return 1
 }
 
 #-------------------------------------------------------------------------------
@@ -2409,13 +2410,18 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
 # Execute: slicer2-... <XML-File> --exec "EMAtlasBrainClassifier_BatchMode <SegmentationMode>"
 # <XML-File> = The first volume defines the spgr image and the second volume defines the aligned t2w images"
 #             The directory of the XML-File defines the working directory" 
+# <AlgorithmVersion>  = Optional - the pipeline can be run in different version. Look at EMAtlasBrainClassifierChangeAlgorithm 
+#                       for the different settings
 # <SegmmentationMode> = Optional - you can run a variaty of different versions, such as EMLocalSegment
 #                       which is the version defined in vtkEMLocalSegment
+# <TemplateXMLFile>   = Optional - if the pipeline should use an xml file other then the default - please make sure to define AtlasDir 
+#                       if structures are included that are not in the default atlas - otherwise the default atlas will be deleted and re-downloaded
+# <AtlasDir>          = Optional - Location of atlas directory   
 # .ARGS
 # 
 # .END
 #-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_BatchMode {{SegmentationMode EMAtlasBrainClassifier} {AlgorithmVersion Standard} {SPGRVolID 1} {T2VolID 2} {ExitFlag 1}} {
+proc EMAtlasBrainClassifier_BatchMode {{AlgorithmVersion Standard} {SegmentationMode ""} {TemplateXMLFile ""} {AtlasDir "" } {SPGRVolID 1} {T2VolID 2} {ExitFlag 1}} {
     global Mrml EMAtlasBrainClassifier Volume
  
     set EMAtlasBrainClassifier(WorkingDirectory) $Mrml(dir)
@@ -2430,15 +2436,32 @@ proc EMAtlasBrainClassifier_BatchMode {{SegmentationMode EMAtlasBrainClassifier}
     set EMAtlasBrainClassifier(Save,T2W)  1
     set EMAtlasBrainClassifier(BatchMode) 1
 
-    set EMAtlasBrainClassifier(SegmentationMode) $SegmentationMode
     set EMAtlasBrainClassifier(AlgorithmVersion) $AlgorithmVersion
     EMAtlasBrainClassifierChangeAlgorithm 
 
+    if {$SegmentationMode != "" } {
+    set EMAtlasBrainClassifier(SegmentationMode) $SegmentationMode
+    }
+
+    if {$TemplateXMLFile != "" } {
+    set EMAtlasBrainClassifier(XMLTemplate) $TemplateXMLFile
+    }
+
+    if {$AtlasDir != "" } {
+       set EMAtlasBrainClassifier(AtlasDir) $AtlasDir
+    }
+    puts "Run segmentation with the following options:"
+    puts "Algorithm: $EMAtlasBrainClassifier(AlgorithmVersion)"
+    puts "Mode:      $EMAtlasBrainClassifier(SegmentationMode)"
+    puts "Template:  $EMAtlasBrainClassifier(XMLTemplate)"
+    puts "AtlasDir:  $EMAtlasBrainClassifier(AtlasDir)"
 
     SplashKill
  
-    EMAtlasBrainClassifierStartSegmentation
-    
-    if {$ExitFlag} {MainExitProgram}
+    set SucessFlag [EMAtlasBrainClassifierStartSegmentation]
+
+    if {$ExitFlag} {MainExitProgram [expr 1 - $SucessFlag ] }
+
+    return $SucessFlag
 }
 
