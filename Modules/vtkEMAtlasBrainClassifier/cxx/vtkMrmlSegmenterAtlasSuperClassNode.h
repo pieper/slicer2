@@ -119,6 +119,19 @@ public:
   vtkGetMacro(StopMFAMaxIter,int); 
   vtkSetMacro(StopMFAMaxIter,int); 
 
+
+  // Description:
+  // Kilian: Jan06: InitialBias_FilePrefix allows initializing a bias field with a precomputed one 
+  // - carefull Bias Field has to be in little Endian  - needed it for debugging
+  vtkSetStringMacro(InitialBiasPrintPrefix);
+  vtkGetStringMacro(InitialBiasPrintPrefix);
+
+  // Description:
+  // Kilian: Jan06: This allows you to "jump" over the hirarchical segmentation level by providing an already existing 
+  // labelmap of the region of interes 
+  vtkSetStringMacro(PredefinedLabelMapPrefix); 
+  vtkGetStringMacro(PredefinedLabelMapPrefix); 
+
 protected:
   vtkMrmlSegmenterAtlasSuperClassNode();
   ~vtkMrmlSegmenterAtlasSuperClassNode();
@@ -144,6 +157,10 @@ protected:
   int StopMFAType;       
   float StopMFAValue;    
   int StopMFAMaxIter;
+
+  char* InitialBiasPrintPrefix;  
+  char* PredefinedLabelMapPrefix; 
+
 };
 
 #endif

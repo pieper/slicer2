@@ -40,6 +40,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageEMAtlasSegmenter.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageAccumulate.h"
+#include "vtkMultiThreader.h" 
 
 //------------------------------------------------------------------------------
 // Define Procedures for vtkImageEMAtlasSegmenter
@@ -77,7 +78,6 @@ vtkImageEMAtlasSegmenter::vtkImageEMAtlasSegmenter()
   this->activeSuperClass = NULL;
   this->activeClass      = NULL;
   this->activeClassType  = SUPERCLASS;
-
 }
 
 //------------------------------------------------------------------------------
@@ -99,6 +99,7 @@ void vtkImageEMAtlasSegmenter::PrintSelf(ostream& os,vtkIndent indent) {
    os << indent << "NumInputImages:             " << this->NumInputImages << "\n";
    os << indent << "PrintDir:                   " << (this->PrintDir ? this->PrintDir : "(none)") << "\n"; 
    os << indent << "NumberOfTrainingSamples:    " << this->NumberOfTrainingSamples << "\n";
+
    os << indent << "activeSuperClass:           " ;
    if (this->activeSuperClass) os << this->activeSuperClass->GetLabel() << "\n";
    else os << "(none) \n"; 
@@ -847,7 +848,7 @@ void vtkImageEMAtlasSegmenter::PrintIntermediateResultsToFile(int iter, float **
   // -----------------------------------------------------------
   if (actSupCl->GetPrintLabelMap()) {
     // Define File
-    char FileName[1000];
+    char FileName[250];
     cout << "Labelmap will be printed in directory "<< this->PrintDir << "/labelmaps" << endl;
     sprintf(FileName,"%s/labelmaps/EMLabelMapL%sI%d",this->PrintDir,LevelName,iter); 
     if (vtkFileOps::makeDirectoryIfNeeded(FileName) == -1) {
@@ -972,8 +973,10 @@ int vtkImageEMAtlasSegmenter::MF_Approx_Workpile(float **w_m_input,unsigned char
   // Sylvain did not like this because different results are produced on different machines - Kilian
   // I threw threaded function out - however to reduce labor I did not change the structure, which I should
 
-  // numthreads = vtkThreadNumCpus(void) ;
-  numthreads = 1;
+  // numthreads = 1;
+  numthreads = vtkMultiThreader::GetGlobalDefaultNumberOfThreads(); 
+  cout << " Debug: Kilian: Number of Threads: " <<   numthreads << endl;
+
   jobsize = this->ImageProd/numthreads;
 
   for (i = 0; i < numthreads; i++) {
@@ -1048,9 +1051,9 @@ int vtkImageEMAtlasSegmenter::MF_Approx_Workpile(float **w_m_input,unsigned char
   return 0; /* Success */
 }
 
-
 template  <class Tin>
-static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDataPtrStart, float** InputVector, short *ROI, EMTriVolume& iv_m, EMVolume *r_m, float **w_m, char *LevelName, int &SegmentLevelSucessfullFlag) {
+static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDataPtrStart, float** InputVector, short *ROI, EMTriVolume& iv_m, 
+                     EMVolume *r_m, float **w_m, char *LevelName,  int &SegmentLevelSucessfullFlag) {
   cout << "vtkImageEMAtlasAlgorithm: Initialize Variables for " << LevelName <<  endl;
 
   SegmentLevelSucessfullFlag = 1;
@@ -1243,7 +1246,9 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
   if (((BiasPrint) )&& (BiasLengthFileName)) strcpy(PrintDir,self->GetPrintDir());
   else sprintf(PrintDir,"\n");
 
-
+  // Kilian: Jan06: InitialBias_FilePrefix allows initializing a bias field with a precomputed from outside 
+  // - carefull Bias Field has to be in little Endian                
+  char *InitialBias_FilePrefix = actSupCl->GetInitialBiasFilePrefix();
 
   // -----------------------------------------------------------
   // Print Quality Measure  Setup 
@@ -1260,7 +1265,7 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
   }
   if (QualityFlag) {
     QualityFile = new FILE*[EMSEGMENT_NUM_OF_QUALITY_MEASURE];
-    char FileName[1000]; 
+    char FileName[250]; 
     for (i = 0; i < EMSEGMENT_NUM_OF_QUALITY_MEASURE ; i++) QualityFile[i] = NULL;
     for (int c = 0; c < NumClasses; c++) {
       if (ClassListType[c]== CLASS) {
@@ -1393,11 +1398,12 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
       // transform r (smoothed weighted residuals) by iv (smoother inv covariances)
       // b_m = r_m./iv_m ;
       // Bias can only be calculated in the top level => The rest we leave out
-      // If numiter == 1 => bias is iv_m and r_m are never calculated -> this line has to be changed when we want to handle different itteration per hierarchy level sequence ! 
-      if (((ROI) && (NumIter > 1)) || (iter > 1)) {
-      // cout << "-------------------- Bias Field Correction -------------------" << endl; 
-    // If needed the bias can also be printed out if ROI != NULL - just have to do slight modifications 
-          PrintBiasFlag = bool((iter ==  NumIter) && BiasPrint && BiasLengthFileName && (ROI == NULL));
+      // Kilian - Jan 06 : changed this line bc we now calculate iv_m anr r_m even if ROI = NULL and NumIter = 1  
+      // Now the exception is called if iter == 0 and InitialBias_FilePrefix is defined or ROI is not defined 
+      if (((ROI) && (!InitialBias_FilePrefix)) || (iter > 1)) {
+          // cout << "-------------------- Bias Field Correction -------------------" << endl; 
+          // Kilian - Jan 06 : changed this line bc Bias is also defined in areas outside the ROI 
+          PrintBiasFlag = bool((iter ==  NumIter) && BiasPrint && BiasLengthFileName);
           if (PrintBiasFlag) cout << "vtkImageEMAtlasAlgorithm: Write Bias to " << PrintDir << endl;
   
           for (i = 0; i<ImageMaxZ;i++){
@@ -1446,8 +1452,8 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
             (*cY_M ++) = fabs((*InputVector)[l] - b_m);
               } else {cY_M ++;}
               if (PrintBiasFlag) {
-            // b_m = r_m[l](i,j,k);
-            fwrite(&b_m, sizeof(double), 1, BiasFile[l]); 
+        // b_m = r_m[l](i,j,k);
+        fwrite(&b_m, sizeof(double), 1, BiasFile[l]); 
             // fwrite(&(*InputVector)[l], sizeof(float), 1, BiasFile[l]); 
               }
             }
@@ -1462,11 +1468,16 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
               }
             }
           }
-            } else {
-              cY_M += NumInputImages;
-            }
-            InputVector++;
-        }
+        } else {
+      // Kilian - Jan 06 Now we can print out the bias even if ROI != NULL ! 
+      if (PrintBiasFlag) {
+        b_m = 0.0;
+            for (l=0; l< NumInputImages; l++) fwrite(&b_m, sizeof(double), 1, BiasFile[l]); 
+      }
+      cY_M += NumInputImages;
+    }
+        InputVector++;
+      }
         }
         if (PrintBiasFlag) {
           for (l=0; l< NumInputImages; l++) {
@@ -1476,15 +1487,52 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
         }
       }
         } else {
-          // The first time !
-        // cY_M  = fabs(InputVector - b_m) = {b_m ==0} = fabs(InputVector) = InputVector;
-          // we assume InputVector >= 0
+      // Option 1. : Bias Field is initialized with outside source
+      if (InitialBias_FilePrefix) {
+        cout << "Initializing Bias field with volumes defined by " << InitialBias_FilePrefix << endl;
+        // Make sure that the bias field are written with little Endian
+            // The initial volumes have to defined as following <>_Ch%d.%03d , 
+        // e.g. InitialBias_FilePrefix = "Bias_1.0" => For first input channel Volume has to exists with the name Bias_1.0_Ch0.*
+        char *PrefixName = char[int(strlen(InitialBias_FilePrefix)) + 5];
+        cpit << "Kilian Extent: " << self->GetExtent()[4] << " " << self->GetExtent()[5] <<endl;
+        for (j = 0 ; j < NumInputImages; j ++ ) {
+        vtkImageData  *InitialBias = vtkImageData::New(); 
+        sprintf(PrefixName,"%s_Ch%d",InitialBias_FilePrefix,j);
+
+        self->GEImageReader(InitialBias,InitialBias_FilePrefix self->GetExtent()[4],self->GetExtent()[5],VTK_DOUBLE);
+        double* InitialBiasPtr = (double*) self->GetPointerToVtkImageData(InitialBias,VTK_DOUBLE,self->GetExtent());
+        cY_M += j;
         for (i=0; i< ImageProd; i++) {
-           // Kili change it if you have too
-           memcpy(cY_M,(*InputVector),sizeof(float)*NumInputImages);
-           cY_M += NumInputImages;
-           InputVector++;
+          *cY_M = fabs((*InputVector)[j] - *InitialBiasPtr);
+          InputVector ++;
+          InitialBiasPtr ++;
+          cY_M += NumInputImages;
         }
+        InitialBias->Delete();
+        cY_M = cY_MPtr;InputVector = InputVectorPtr;
+        }
+        delete []PrefixName;
+        
+      } else {
+        // The first time !
+        // cY_M  = fabs(InputVector - b_m) = {b_m ==0} = fabs(InputVector) = InputVector;
+        // we assume InputVector >= 0
+        for (i=0; i< ImageProd; i++) {
+          // Kili change it if you have too
+          memcpy(cY_M,(*InputVector),sizeof(float)*NumInputImages);
+          cY_M += NumInputImages;
+          InputVector++;
+        }
+      }
+      // Kilian - Jan 06 : Make sure the case is covered if ROI == NULL and NumIter = 1 
+      //                   => iv_m and r_m have to be defined for next hierarchical segmentation
+      if (NumIter == 1) {
+        iv_m.SetValue(0.0); 
+        for (m=0; m<NumInputImages; m++) r_m[m].SetValue(0.0);
+      }
+          // cout << "-------------------- Bias Field Correction -------------------" << endl; 
+ 
+
         }
   
         cY_M = cY_MPtr;OutputVector = OutputVectorPtr;InputVector = InputVectorPtr;
@@ -1795,7 +1843,6 @@ int vtkImageEMAtlasSegmenter::HierarchicalSegmentation(vtkImageEMAtlasSuperClass
   // ---------------------------------------------------------------
   cout <<"====================================== Segmenting Level " << LevelName << " ==========================================" << endl;
   int       i;
-  char      *NewLevelName = new char[strlen(LevelName)+5];
   void      **ClassList = head->GetClassList();
   classType *ClassListType = head->GetClassListType();
   int       NumClasses = head->GetNumClasses();
@@ -1813,50 +1860,63 @@ int vtkImageEMAtlasSegmenter::HierarchicalSegmentation(vtkImageEMAtlasSuperClass
         *SegResultPtr       = SegmentationResult,
         *OutputVectorPtr    = OutputVector;
 
-  memset(SegmentationResult,0,sizeof(short)*this->ImageProd);
+  // Kilian : Jan 06 We simply jump over segmentation and use previous calculated results - make generation of optimal parameters simpler
+  if (head->GetPredefinedLabelMap()) {
+    SegmentLevelSucessfullFlag = 1;
+    // Make sure it is of type short and little endian
+    cout <<"Loading Predefined LabelMap" << endl;
+    cout << "Kilian: Extent: " << this->Extent[4] << " " << this->Extent[5] << endl;
 
+    vtkImageData *PredefinedLabelMap = vtkImageData::New();
+    self->GEImageReader(PredefinedLabelMap,head->GetPredefinedLabelMapPrefix(),this->Extent[4],this->Extent[5],VTK_SHORT);
+    memcpy(SegmentationResult,this->GetPointerToVtkImageData(PredefinedLabelMap,VTK_SHORT,this->Extent),sizeof(short)*this->ImageProd);
 
+    PredefinedLabelMap->Delete();
+    cout << "Skipping segmentation" << endl;
 
-  float **w_m            = new float*[NumTotalTypeCLASS];
-  for (i=0; i<NumTotalTypeCLASS; i++) w_m[i] = new float[this->ImageProd];
-  void  **ProbDataPtr    = new void*[NumTotalTypeCLASS];
-  head->GetProbDataPtr(ProbDataPtr,0);
+  } else {
+    // Run EM Algorithm and determine labelmap 
+    memset(SegmentationResult,0,sizeof(short)*this->ImageProd);
+    float **w_m            = new float*[NumTotalTypeCLASS];
+    for (i=0; i<NumTotalTypeCLASS; i++) w_m[i] = new float[this->ImageProd];
+    void  **ProbDataPtr    = new void*[NumTotalTypeCLASS];
+    head->GetProbDataPtr(ProbDataPtr,0);
 
-  // This is retroactive - it gives the warning here that the superclass ignores prob data even though that was important on the 
-  // last level segmentation where the super class was involved - this is just simpler to program
-  if ((head->GetProbDataWeight() == 0.0) && (this->GetHeadClass() != head)) {
-    for (i=0; i<NumTotalTypeCLASS; i++) {
-      if (ProbDataPtr[i]) {
-    i = NumTotalTypeCLASS;
-    vtkEMAddWarningMessage("Super Class segmented on Level " << LevelName  << " has ProbDataWeight == 0.0, but there are sub classes that have probability maps defined\n          => Probability Maps will be ignored!");
-      } 
+    // This is retroactive - it gives the warning here that the superclass ignores prob data even though that was important on the 
+    // last level segmentation where the super class was involved - this is just simpler to program
+    if ((head->GetProbDataWeight() == 0.0) && (this->GetHeadClass() != head)) {
+      for (i=0; i<NumTotalTypeCLASS; i++) {
+    if (ProbDataPtr[i]) {
+      i = NumTotalTypeCLASS;
+      vtkEMAddWarningMessage("Super Class segmented on Level " << LevelName  << " has ProbDataWeight == 0.0, but there are sub classes that have probability maps defined\n          => Probability Maps will be ignored!");
+    } 
+      }
     }
-  }
 
-  int           *NumChildClasses = new int[NumClasses];
-
-  this->activeSuperClass = head;
-  // ---------------------------------------------------------------
-  // 2. Segment Subject
-  // ---------------------------------------------------------------
-
-  switch (this->GetInput(0)->GetScalarType()) {
-    vtkTemplateMacro9(vtkImageEMAtlasAlgorithm,this,(VTK_TT**) ProbDataPtr, InputVector, ROI,iv_m,r_m,w_m, LevelName, SegmentLevelSucessfullFlag);
-  }
-
-  if (SegmentLevelSucessfullFlag) { 
+    this->activeSuperClass = head;
     // ---------------------------------------------------------------
-    // 3. Analyze weights to determine label map and clean up 
+    // 2. Segment Subject
     // ---------------------------------------------------------------
-    for (i=0; i < NumClasses; i++) NumChildClasses[i]   = ((ClassListType[i] == CLASS) ? 1 : ((vtkImageEMAtlasSuperClass*) ClassList[i])->GetTotalNumberOfClasses(false));
-   // this->PrintIntermediateResultsToFile(2, w_m, OutputVector, NumTotalTypeCLASS, NumChildClasses, this->activeSuperClass, LevelName);
-    this->DetermineLabelMap(SegmentationResult, NumTotalTypeCLASS, NumChildClasses, this->activeSuperClass, ROI, this->ImageProd, w_m);
-  }
-  delete[] NumChildClasses;
-  delete[] ProbDataPtr;   
+
+     switch (this->GetInput(0)->GetScalarType()) {
+        vtkTemplateMacro9(vtkImageEMAtlasAlgorithm,this,(VTK_TT**) ProbDataPtr, InputVector, ROI,iv_m,r_m,w_m, LevelName, SegmentLevelSucessfullFlag);
+     }
+
+     if (SegmentLevelSucessfullFlag) { 
+      // ---------------------------------------------------------------
+      // 3. Analyze weights to determine label map and clean up 
+      // ---------------------------------------------------------------
+       int  *NumChildClasses = new int[NumClasses];
+        for (i=0; i < NumClasses; i++) NumChildClasses[i]   = ((ClassListType[i] == CLASS) ? 1 : ((vtkImageEMAtlasSuperClass*) ClassList[i])->GetTotalNumberOfClasses(false));
+       this->DetermineLabelMap(SegmentationResult, NumTotalTypeCLASS, NumChildClasses, this->activeSuperClass, ROI, this->ImageProd, w_m);
+       delete[] NumChildClasses;
+     }
+     delete[] ProbDataPtr;   
  
-  for (i=0; i<NumTotalTypeCLASS; i++) delete[] w_m[i]; 
-  delete []w_m  ;
+     for (i=0; i<NumTotalTypeCLASS; i++) delete[] w_m[i]; 
+     delete []w_m  ;
+  }
+
 
   if (SegmentLevelSucessfullFlag) { 
     // ---------------------------------------------------------------
@@ -1874,6 +1934,8 @@ int vtkImageEMAtlasSegmenter::HierarchicalSegmentation(vtkImageEMAtlasSuperClass
     OutputVectorPtr = OutputVector;SegResultPtr = SegmentationResult; ROIPtr = ROI;
   
     // 4.) Run it for all sub Superclasses
+    char      *NewLevelName = new char[strlen(LevelName)+5];
+
     for (i=0; i <NumClasses; i++) {
       // need to save results
       if (ClassListType[i] == SUPERCLASS &&  SegmentLevelSucessfullFlag) {
@@ -1882,9 +1944,10 @@ int vtkImageEMAtlasSegmenter::HierarchicalSegmentation(vtkImageEMAtlasSuperClass
          SegmentLevelSucessfullFlag = this->HierarchicalSegmentation((vtkImageEMAtlasSuperClass*) ClassList[i],InputVector,SegmentationResult,OutputVector,iv_m,r_m,NewLevelName);
       } 
     }
+    delete []NewLevelName;
+
   }
   delete []SegmentationResult;
-  delete []NewLevelName;
   cout << "End vtkImageEMAtlasSegmenter::HierachicalSegmentation"<< endl; 
   return SegmentLevelSucessfullFlag;
 }

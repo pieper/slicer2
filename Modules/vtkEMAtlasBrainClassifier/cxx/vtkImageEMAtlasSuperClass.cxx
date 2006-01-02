@@ -66,7 +66,10 @@ void vtkImageEMAtlasSuperClass::CreateVariables() {
   this->PrintFrequency      = 0;
   this->PrintBias           = 0;
   this->PrintLabelMap       = 0;
-  
+
+  this->InitialBiasFilePrefix = NULL;
+  this->PredefinedLabelMapPrefix = NULL; 
+ 
 }
 
 //------------------------------------------------------------------------------
@@ -314,6 +317,9 @@ void vtkImageEMAtlasSuperClass::PrintSelf(ostream& os,vtkIndent indent) {
   os << indent << "PrintFrequency:          " << this->PrintFrequency << endl;
   os << indent << "PrintBias:               " << this->PrintBias<< endl;
   os << indent << "PrintLabelMap:           " << this->PrintLabelMap << endl;
+
+  os << indent << "InitialBiasFilePrefix:     " << (this->InitialBiasFilePrefix ? this->InitialBiasFilePrefix : "(none)") << "\n";
+  os << indent << "PredefinedLabelMapPrefix:         " << (this->PredefinedLabelMapPrefix ? this->PredefinedLabelMapPrefix : "(none)") << "\n";
 
   char** Directions= new char*[6];
   Directions[0] = "West "; Directions[1] = "North"; Directions[2] = "Up   "; Directions[3] = "East "; Directions[4] = "South"; Directions[5] = "Down ";

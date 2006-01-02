@@ -112,6 +112,18 @@ class VTK_EMATLASBRAINCLASSIFIER_EXPORT vtkImageEMAtlasSuperClass : public vtkIm
   vtkGetMacro(PrintLabelMap, int);
   vtkSetMacro(PrintLabelMap, int);  
 
+  // Description:
+  // Kilian: Jan06: InitialBias_FilePrefix allows initializing a bias field with a precomputed one 
+  // - carefull Bias Field has to be in little Endian   
+  vtkSetStringMacro(InitialBiasFilePrefix);
+  vtkGetStringMacro(InitialBiasFilePrefix);
+
+  // Description:
+  // Kilian: Jan06: This allows you to "jump" over the hirarchical segmentation level by providing an already existing 
+  // labelmap of the region of interes 
+  vtkGetStringMacro(PredefinedLabelMapPrefix); 
+  vtkSetStringMacro(PredefinedLabelMapPrefix); 
+
   vtkImageEMAtlasSuperClass() {this->CreateVariables();}
   ~vtkImageEMAtlasSuperClass() {this->DeleteSuperClassVariables();}
 
@@ -134,6 +146,9 @@ protected:
   int PrintFrequency;    // Print out the result after how many steps  (-1 == just last result, 0 = No Printing, i> 0 => every i-th slice )
   int PrintBias;         // Should the bias be printed too (Only works for GE)
   int PrintLabelMap;     // Print out inbetween label map   
+  char* InitialBiasFilePrefix;     // Initialize Bias field with outside source 
+  char* PredefinedLabelMapPrefix;  // This allows you to "jump" over the hirarchical segmentation level by providing an already existing 
+                                   // labelmap of the region of interest 
 
 };
 #endif
