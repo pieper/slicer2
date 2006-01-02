@@ -156,6 +156,18 @@ public:
   void SetStopMFAMaxIter(int init) {AtlasNode->SetStopMFAMaxIter(init);}
 
   // Description:
+  // Kilian: Jan06: InitialBias_FilePrefix allows initializing a bias field with a precomputed one 
+  // - carefull Bias Field has to be in little Endian  - needed it for debugging
+  char* GetInitialBiasFilePrefix() {return AtlasNode->GetInitialBiasFilePrefix();}
+  void  SetInitialBiasFilePrefix(char* init) { AtlasNode->SetInitialBiasFilePrefix(init);}
+
+  // Description:
+  // Kilian: Jan06: This allows you to "jump" over the hirarchical segmentation level by providing an already existing 
+  // labelmap of the region of interes 
+  char* GetPredefinedLabelMapPrefix() {return AtlasNode->GetPredefinedLabelMapPrefix();}
+  void  SetPredefinedLabelMapPrefix(char* init) { AtlasNode->SetPredefinedLabelMapPrefix(init);}
+
+  // Description:
   // You can stop the bias calculation after a certain number of iterations
   // By default it is set to -1 which means it never stops
   vtkGetMacro(StopBiasCalculation,int); 
@@ -191,7 +203,6 @@ public:
   vtkGetMacro(RegistrationIndependentSubClassFlag,int);      
   vtkSetMacro(RegistrationIndependentSubClassFlag,int);      
  
-
 protected:
   vtkMrmlSegmenterSuperClassNode();
   ~vtkMrmlSegmenterSuperClassNode(){this->AtlasNode->Delete();};
