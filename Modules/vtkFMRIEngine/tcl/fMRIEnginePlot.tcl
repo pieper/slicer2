@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEnginePlot.tcl,v $
-#   Date:      $Date: 2005/12/20 22:55:32 $
-#   Version:   $Revision: 1.29.2.1 $
+#   Date:      $Date: 2006/01/02 15:42:12 $
+#   Version:   $Revision: 1.29.2.2 $
 # 
 #===============================================================================
 # FILE:        fMRIEnginePlot.tcl
@@ -86,12 +86,12 @@ proc fMRIEngineMakeTimecoursePlotWindow {} {
     # Plot the time course
     if {[info exists fMRIEngine(timeCourseToplevel)] == 0 } {
         set w .tcren
-        toplevel $w
+        toplevel $w -bg white
         wm title $w $plotTitle 
         wm minsize $w $plotWidth $plotHeight
         wm geometry $w $plotGeometry 
 
-        blt::graph $w.graph -plotbackground white -width $graphWidth 
+        blt::graph $w.graph -bg white -width $graphWidth 
         pack $w.graph -side top  
 
         $w.graph legend configure -position bottom -relief raised \
@@ -100,11 +100,11 @@ proc fMRIEngineMakeTimecoursePlotWindow {} {
         # $w.graph grid on
         # $w.graph grid configure -color black
 
-        frame $w.fButtons
+        frame $w.fButtons -bg white
         pack $w.fButtons -side top
-        button $w.fButtons.bSave -text "Save" -font fixed \
+        button $w.fButtons.bSave -text "Save" -font fixed -bg white \
             -command "fMRIEngineSaveTimeCourseGraph" -width 8 
-        button $w.fButtons.bClose -text "Close" -font fixed \
+        button $w.fButtons.bClose -text "Close" -font fixed -bg white \
             -command "fMRIEngineCloseTimeCourseWindow" -width 8 
         pack $w.fButtons.bSave $w.fButtons.bClose -side left -pady 5 -padx 1 
 
