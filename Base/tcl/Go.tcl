@@ -405,7 +405,7 @@ proc SplashRaise {} {
         if {[grab current .splash] == ""} {
             # do a local grab so that all mouse clicks will go into the 
             # splash screen and not queue up while it's up. 
-            grab set .splash
+            catch {grab set .splash}
             update idletasks
         }
         after 100 "after idle SplashRaise"
@@ -952,7 +952,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.108 2005/12/15 16:03:03 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.109 2006/01/02 06:04:19 pohl Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
