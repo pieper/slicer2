@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEngineRegionAnalysis.tcl,v $
-#   Date:      $Date: 2005/12/22 20:31:55 $
-#   Version:   $Revision: 1.14.2.6 $
+#   Date:      $Date: 2006/01/02 15:43:13 $
+#   Version:   $Revision: 1.14.2.7 $
 # 
 #===============================================================================
 # FILE:        fMRIEngineRegionAnalysis.tcl
@@ -1323,7 +1323,7 @@ proc fMRIEngineShowRegionStats {} {
     # Create the GUI, i.e. two Tk image viewer, one for the image
     # the other for the histogram, and a slice slider
     set w .regionStats 
-    toplevel $w 
+    toplevel $w -bg white 
     set fMRIEngine(regionStatsToplevel) $w
  
     wm title $w "Region Stats" 
@@ -1341,8 +1341,8 @@ proc fMRIEngineShowRegionStats {} {
     wm protocol $w WM_DELETE_WINDOW "fMRIEngineCloseRegionStatsWindow" 
     
     # Pack all gui elements
-    frame $w.f1
-    frame $w.f2 
+    frame $w.f1 -bg white
+    frame $w.f2 -bg white 
     pack $w.f1 $w.f2 -side left -padx 5 -pady 5 -fill both -expand t
 
     # Create the histogram widget
@@ -1354,20 +1354,22 @@ proc fMRIEngineShowRegionStats {} {
     } else {
         set pLabel "p threshold\n(corrected)"
     }
-    label $w.f2.lPValue -text $pLabel 
-    eval {label $w.f2.lPVal -textvariable fMRIEngine(pValue)} 
-    label $w.f2.lTValue -text "t threshold:"
-    eval {label $w.f2.lTVal -textvariable fMRIEngine(tStat)} 
-    label $w.f2.lCount -text "Voxel count:"
-    eval {label $w.f2.lCountVal -textvariable fMRIEngine(regionVoxelCount)} 
-    label $w.f2.lMin -text "Min: "
-    eval {label $w.f2.lMinVal -textvariable fMRIEngine(regionMin)} 
-    label $w.f2.lMax -text "Max:"
-    eval {label $w.f2.lMaxVal -textvariable fMRIEngine(regionMax)} 
-    label $w.f2.lMean -text "Mean:"
-    eval {label $w.f2.lMeanVal -textvariable fMRIEngine(regionMean)} 
-    label $w.f2.lSD -text "Standard deviation:"
-    eval {label $w.f2.lSDVal -textvariable fMRIEngine(regionStandardDeviation)} 
+    label $w.f2.lPValue -text $pLabel -bg white 
+    eval {label $w.f2.lPVal -textvariable fMRIEngine(pValue) -bg white} 
+    label $w.f2.lTValue -text "t threshold:" -bg white
+    eval {label $w.f2.lTVal -textvariable fMRIEngine(tStat) -bg white} 
+    label $w.f2.lCount -text "Voxel count:" -bg white
+    eval {label $w.f2.lCountVal -textvariable fMRIEngine(regionVoxelCount) -bg white} 
+    label $w.f2.lMin -text "Min: " -bg white
+    eval {label $w.f2.lMinVal -textvariable fMRIEngine(regionMin) -bg white} 
+    label $w.f2.lMax -text "Max:" -bg white
+    eval {label $w.f2.lMaxVal -textvariable fMRIEngine(regionMax) -bg white} 
+    label $w.f2.lMean -text "Mean:" -bg white
+    eval {label $w.f2.lMeanVal -textvariable fMRIEngine(regionMean) -bg white} 
+    label $w.f2.lSD -text "Standard deviation:" -bg white
+    eval {label $w.f2.lSDVal -textvariable fMRIEngine(regionStandardDeviation) -bg white} 
+    label $w.f2.lSC -text "Signal change:" -bg white
+
     blt::table $w.f2 \
         0,0 $w.f2.lPValue -padx 1 -pady 1 -anchor e \
         0,1 $w.f2.lPVal -fill x -padx 5 -pady 1 -anchor w \
@@ -1382,17 +1384,18 @@ proc fMRIEngineShowRegionStats {} {
         5,0 $w.f2.lMean -padx 1 -pady 1 -anchor e \
         5,1 $w.f2.lMeanVal -fill x -padx 5 -pady 1 -anchor w \
         6,0 $w.f2.lSD -padx 1 -pady 1 -anchor e \
-        6,1 $w.f2.lSDVal -fill x -padx 5 -pady 1 -anchor w 
+        6,1 $w.f2.lSDVal -fill x -padx 5 -pady 1 -anchor w \
+        7,0 $w.f2.lSC -padx 1 -pady 1 -anchor e
 
-    set c 7
+    set c 8 
     foreach ev $fMRIModelView(Design,evNames) {
         if {[info exists fMRIEngine($ev,signalChange)] && $fMRIEngine($ev,signalChange) != ""} {
             set ev2 $ev
             regsub -all {\.} $ev _ ev 
             set sc [format "%.2f" $fMRIEngine($ev2,signalChange)]
-            label $w.f2.l$ev -text "Signal change:\n($ev2)"
+            label $w.f2.l$ev -text "$ev2" -bg white
             set sc "$sc %" 
-            eval {label $w.f2.lv$ev -text $sc} 
+            eval {label $w.f2.lv$ev -text $sc -bg white} 
 
             blt::table $w.f2 \
                 $c,0 $w.f2.l$ev -padx 1 -pady 1 -anchor e \
@@ -1402,7 +1405,7 @@ proc fMRIEngineShowRegionStats {} {
         }
     }
 
-    button $w.f2.btn -text "Close" -command "fMRIEngineCloseRegionStatsWindow" -width 15 
+    button $w.f2.btn -text "Close" -command "fMRIEngineCloseRegionStatsWindow" -width 15 -bg white
     blt::table $w.f2 \
         $c,0 $w.f2.btn -padx 5 -pady 30 -cspan 2
 
@@ -1484,7 +1487,7 @@ proc fMRIEngineCreateHistogram {parent {width 350} {height 250}} {
         set yStep [expr ceil($div)]
     }
 
-    blt::graph $parent.graph -plotbackground white -width $width -height $height 
+    blt::graph $parent.graph -bg white -width $width -height $height 
     pack $parent.graph -side top  
     set fMRIEngine(regionHistogram) $parent.graph
 
