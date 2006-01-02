@@ -261,7 +261,7 @@ if { ![file exists $::TEEM_TEST_FILE] } {
     cd $SLICER_LIB
 
     runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login 
-    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r ::$TEEM_TAG teem
+    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TEEM_TAG teem
 
     file mkdir $SLICER_LIB/teem-build
     cd $SLICER_LIB/teem-build
