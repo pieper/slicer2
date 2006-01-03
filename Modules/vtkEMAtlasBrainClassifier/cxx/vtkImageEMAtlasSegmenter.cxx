@@ -1174,8 +1174,13 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
   int ImageMaxX             = self->GetDimensionX();
 
   int imgXY                 = ImageMaxY*ImageMaxX;
-  int NumIter               = self->GetNumIter();
-  int NumRegIter            = self->GetNumRegIter();
+
+  // Kilian: Jan 06 : Now we can define iteration sequnce at each level of the hierarchy
+  //int NumIter               = self->GetNumIter();
+  //int NumRegIter            = self->GetNumRegIter();
+  int NumIter               = actSupCl->GetStopEMMaxIter(); 
+  int NumRegIter            = actSupCl->GetStopMFAMaxIter();
+ 
   double Alpha              = self->GetAlpha();
 
   int *ProbDataIncZ = new int[NumTotalTypeCLASS];           
@@ -1486,7 +1491,7 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
       if (((ROI) && (!InitialBias_FilePrefix)) || (iter > 1)) {
           // cout << "-------------------- Bias Field Correction -------------------" << endl; 
           // Kilian - Jan 06 : changed this line bc Bias is also defined in areas outside the ROI 
-      char** BiasFileName       = NULL;
+          char** BiasFileName       = NULL;
           double* BiasSlice         = NULL;
           double* BiasSlicePtr      = NULL;
           bool PrintBiasFlag = bool((iter ==  NumIter) && BiasPrint);
@@ -1611,16 +1616,18 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
       if (InitialBias_FilePrefix) {
         cout << "Initializing Bias field with volumes defined by " << InitialBias_FilePrefix << endl;
         // Make sure that the bias field are written with little Endian
-            // The initial volumes have to defined as following <>_Ch%d.%03d , 
-        // e.g. InitialBias_FilePrefix = "Bias_1.0" => For first input channel Volume has to exists with the name Bias_1.0_Ch0.*
+            // The initial volumes have to defined as following <>Ch%d.%03d , 
+        // e.g. InitialBias_FilePrefix = "Bias_1.0" => For first input channel Volume has to exists with the name Bias_1.0Ch0.*
         char *PrefixName = new char[int(strlen(InitialBias_FilePrefix)) + 5];
-        cout << "Kilian Extent: " << self->GetExtent()[4] << " " << self->GetExtent()[5] <<endl;
+    int ChangedExtent[6] = {self->GetExtent()[0],self->GetExtent()[1],self->GetExtent()[2],self->GetExtent()[3], self->GetExtent()[4] + 1 ,self->GetExtent()[5] + 1 };
+    cout <<"Loading initial Image Inhomogoneity setting from slices " << ChangedExtent[4] << " to " << ChangedExtent[5] << endl;
         for (j = 0 ; j < NumInputImages; j ++ ) {
            vtkImageReader  *InitialBias = vtkImageReader::New(); 
-           sprintf(PrefixName,"%s_Ch%d",InitialBias_FilePrefix,j);
+           sprintf(PrefixName,"%sCh%d",InitialBias_FilePrefix,j);
 
-           self->GEImageReader(InitialBias,PrefixName,self->GetExtent()[4],self->GetExtent()[5],VTK_DOUBLE);
-           double* InitialBiasPtr = (double*) self->GetPointerToVtkImageData(InitialBias->GetOutput(),VTK_DOUBLE,self->GetExtent());
+           self->GEImageReader(InitialBias,PrefixName,ChangedExtent[4],ChangedExtent[5],VTK_DOUBLE);
+           double* InitialBiasPtr = (double*) self->GetPointerToVtkImageData(InitialBias->GetOutput(),VTK_DOUBLE,ChangedExtent);
+       cout << "Initializing Image inhomogeneity for channel " << j << endl;
            cY_M += j;
            for (i=0; i< ImageProd; i++) {
              *cY_M = fabs((*InputVector)[j] - *InitialBiasPtr);
@@ -1981,14 +1988,14 @@ int vtkImageEMAtlasSegmenter::HierarchicalSegmentation(vtkImageEMAtlasSuperClass
   // Kilian : Jan 06 We simply jump over segmentation and use previous calculated results - make generation of optimal parameters simpler
   if (head->GetPredefinedLabelMapPrefix()) {
     SegmentLevelSucessfullFlag = 1;
+
     // Make sure it is of type short and little endian
-    cout <<"Loading Predefined LabelMap" << endl;
-    cout << "Kilian: Extent: " << this->Extent[4] << " " << this->Extent[5] << endl;
-
+     int ChangedExtent[6] = {this->Extent[0],this->Extent[1],this->Extent[2],this->Extent[3], this->Extent[4] +1 ,this->Extent[5] + 1 };
+    cout <<"Loading Predefined LabelMap from slices " << ChangedExtent[4] << " to " << ChangedExtent[5] << endl;
     vtkImageReader *PredefinedLabelMap = vtkImageReader::New();
-    this->GEImageReader(PredefinedLabelMap,head->GetPredefinedLabelMapPrefix(),this->Extent[4],this->Extent[5],VTK_SHORT);
-    memcpy(SegmentationResult,this->GetPointerToVtkImageData(PredefinedLabelMap->GetOutput(),VTK_SHORT,this->Extent),sizeof(short)*this->ImageProd);
+    this->GEImageReader(PredefinedLabelMap,head->GetPredefinedLabelMapPrefix(),ChangedExtent[4],ChangedExtent[5], VTK_SHORT);
 
+    memcpy(SegmentationResult,this->GetPointerToVtkImageData(PredefinedLabelMap->GetOutput(),VTK_SHORT,ChangedExtent),sizeof(short)*this->ImageProd);
     PredefinedLabelMap->Delete();
     cout << "Skipping segmentation" << endl;
 

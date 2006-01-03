@@ -67,6 +67,9 @@ void vtkImageEMAtlasSuperClass::CreateVariables() {
   this->PrintBias           = 0;
   this->PrintLabelMap       = 0;
 
+  this->StopEMMaxIter       = 0; 
+  this->StopMFAMaxIter       = 0; 
+
   this->InitialBiasFilePrefix = NULL;
   this->PredefinedLabelMapPrefix = NULL; 
  
@@ -317,6 +320,8 @@ void vtkImageEMAtlasSuperClass::PrintSelf(ostream& os,vtkIndent indent) {
   os << indent << "PrintFrequency:          " << this->PrintFrequency << endl;
   os << indent << "PrintBias:               " << this->PrintBias<< endl;
   os << indent << "PrintLabelMap:           " << this->PrintLabelMap << endl;
+  os << indent << "StopEMMaxIter:                 " << this->StopEMMaxIter << endl;
+  os << indent << "StopMFAMaxIter:                " << this->StopMFAMaxIter << endl;
 
   os << indent << "InitialBiasFilePrefix:     " << (this->InitialBiasFilePrefix ? this->InitialBiasFilePrefix : "(none)") << "\n";
   os << indent << "PredefinedLabelMapPrefix:         " << (this->PredefinedLabelMapPrefix ? this->PredefinedLabelMapPrefix : "(none)") << "\n";

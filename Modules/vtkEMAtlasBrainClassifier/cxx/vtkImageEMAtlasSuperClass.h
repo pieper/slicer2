@@ -124,6 +124,19 @@ class VTK_EMATLASBRAINCLASSIFIER_EXPORT vtkImageEMAtlasSuperClass : public vtkIm
   vtkGetStringMacro(PredefinedLabelMapPrefix); 
   vtkSetStringMacro(PredefinedLabelMapPrefix); 
 
+
+  // Description:  
+  // Kilian: Jan 06: We cano now define different iteration sequnces at differnt hierarchies
+  // Number of maximum iterations - similar to NumIter
+  vtkGetMacro(StopEMMaxIter,int);      
+  vtkSetMacro(StopEMMaxIter,int);
+ 
+  // Description:  
+  // What is the obundary value, note if the number of iterations 
+  // extend MFAiter than stops than - similar to RegIter 
+  vtkGetMacro(StopMFAMaxIter,int);      
+  vtkSetMacro(StopMFAMaxIter,int);      
+
   vtkImageEMAtlasSuperClass() {this->CreateVariables();}
   ~vtkImageEMAtlasSuperClass() {this->DeleteSuperClassVariables();}
 
@@ -149,6 +162,9 @@ protected:
   char* InitialBiasFilePrefix;     // Initialize Bias field with outside source 
   char* PredefinedLabelMapPrefix;  // This allows you to "jump" over the hirarchical segmentation level by providing an already existing 
                                    // labelmap of the region of interest 
+
+  int StopEMMaxIter; // Maximum number of iterations  if StopEMValue is not  is not reached 
+  int  StopMFAMaxIter;   // Maximum number of iterations by the MFA if StopEMValue is not reached 
 
 };
 #endif
