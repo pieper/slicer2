@@ -106,7 +106,7 @@ proc EMAtlasBrainClassifierInit {} {
    set Module($m,depend) ""
 
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.30 $} {$Date: 2006/01/02 20:40:55 $}]
+       {$Revision: 1.31 $} {$Date: 2006/01/03 07:27:09 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -906,32 +906,38 @@ proc EMAtlasBrainClassifierReadNextKey {input} {
 proc EMAtlasBrainClassifier_Normalize { Mode } {
     global Volume EMAtlasBrainClassifier
 
-    puts "=========== Normalize $Mode ============ "
-
-    # Normalize Data
-    vtkImageData outData 
+    # Initialize Normalization 
     set VolIDInput $EMAtlasBrainClassifier(Volume,${Mode}) 
-    EMAtlasBrainClassifier_NormalizeVolume [Volume($VolIDInput,vol) GetOutput] outData $Mode
 
-    # Put Normilzed Data into Mrml Structure
     set VolIDOutput [DevCreateNewCopiedVolume $VolIDInput "" "Normed$Mode"]
-    Volume($VolIDOutput,vol) SetImageData outData 
-    outData Delete
 
-    set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/[string tolower $Mode]/[file tail [Volume($EMAtlasBrainClassifier(Volume,${Mode}),node) GetFilePrefix]]norm"
+    set Prefix $EMAtlasBrainClassifier(WorkingDirectory)/[string tolower $Mode]/[file tail [Volume($VolIDInput,node) GetFilePrefix]]norm
     puts "--- $EMAtlasBrainClassifier(WorkingDirectory) $Prefix"
     Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
     Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
     Volume($VolIDOutput,node) SetFilePattern "%s.%03d"
     Volume($VolIDOutput,node) SetLittleEndian $EMAtlasBrainClassifier(LittleEndian)
 
-    set EMAtlasBrainClassifier(Volume,Normalized${Mode}) $VolIDOutput
+    set StartSlice [format "%03d" [lindex [Volume($EMAtlasBrainClassifier(Volume,$Mode),node) GetImageRange] 0]]
+    # Jump over Normalization if normed images already exists - only in batch mode
+    if {$EMAtlasBrainClassifier(BatchMode)  && [file exists $Prefix.$StartSlice] } {
+    puts "=========== Load Normalized Input $Mode  ============ "
+    MainVolumesRead $VolIDOutput
+    set CalculatedFlag 0
+    }  else {
+    vtkImageData outData 
+    EMAtlasBrainClassifier_NormalizeVolume [Volume($VolIDInput,vol) GetOutput] outData $Mode
+    Volume($VolIDOutput,vol) SetImageData outData 
+    outData Delete
+    set CalculatedFlag 1 
+    }
 
     # Clean Up 
+    set EMAtlasBrainClassifier(Volume,Normalized${Mode}) $VolIDOutput
     MainUpdateMRML
     RenderAll
 
-    if {$EMAtlasBrainClassifier(Save,$Mode)} {
+    if {$EMAtlasBrainClassifier(Save,$Mode) && ($CalculatedFlag)} {
        EMAtlasBrainClassifierVolumeWriter $VolIDOutput  
     }
 }
@@ -946,11 +952,14 @@ proc EMAtlasBrainClassifier_Normalize { Mode } {
 # .END
 #-------------------------------------------------------------------------------
 # Kilian: I need this so I can also run it without MRML structure 
-proc EMAtlasBrainClassifier_NormalizeVolume { Vol OutVol Mode } {
-    global Volume Matrix EMAtlasBrainClassifier
-    puts "Number Of Scalar: [$Vol GetNumberOfScalarComponents]" 
-    vtkImageData hist
+# Calling this function recursively does not greatly improve the accuracy of the normalization.
+# From my experiment, the expected intensity of the normalized image is within 1% of the 
+# target expected intensity defined by EMAtlasBrainClassifier(Normalize,*). The error is mostly due 
+# computational inaccuracy caused by the data format short. 
 
+proc EMAtlasBrainClassifier_NormalizeVolume { Vol OutVol Mode} {
+    global Volume Matrix EMAtlasBrainClassifier
+    vtkImageData hist
 
     vtkImageAccumulate ia
     ia SetInput $Vol
@@ -960,7 +969,19 @@ proc EMAtlasBrainClassifier_NormalizeVolume { Vol OutVol Mode } {
 
     # Get maximum image value 
     set max [lindex [ia GetMax] 0]
-    puts "Absolute Max: $max"
+    set min [lindex [ia GetMin] 0]
+
+    puts "=========== Start Normalize Image ============ "
+    puts "Image Information:" 
+    puts "  Input Channel:    $Mode"
+    puts "  Number Of Scalar: [$Vol GetNumberOfScalarComponents]" 
+    puts "  Absolute Min:     $min"
+    puts "  Absolute Max:     $max"
+
+    # Notre: The next line used to be  ia SetComponentExtent 0 1000 0 0 0 0
+    # No change for image with intensities samller 1000
+    # bc 1000 defines the number of bins and first component of origin (0) + 1000 determines max of histogram, which is 1000
+    # For images greater 1000 the function would crash later bc of [hist GetScalarComponentAsFloat [expr $i - $trough] 0 0 0] with $i - $trough > 1000
 
     ia SetComponentExtent 0 $max 0 0 0 0
     ia Update
@@ -982,14 +1003,16 @@ proc EMAtlasBrainClassifier_NormalizeVolume { Vol OutVol Mode } {
     # max is now the upper bound intensity value for 99% of the voxels  
     set max $i 
     set min 0
-    puts "Max: $max"
-    puts "Min: $min"
     set width [expr $max / 5]
-    puts "Width: $width"
-    set fwidth [expr 1.0 / $width ]
-    
+
+    set fwidth [expr 1.0 / $width ]    
     # Smooth histogram by applying a window of width with 20% of the intensity value 
     set sHistMax  [expr ($max - $min) - $width]
+
+    puts "Histogram Parameters:"
+    puts "  Smoothing Width: $width"
+    puts "  Max Intensity:   $sHistMax"
+
     for {set x 0} {$x <= $sHistMax } {incr x} { 
       set sHist($x) 0
       for {set k 0} {$k <= $width} {incr k} {
@@ -1016,7 +1039,9 @@ proc EMAtlasBrainClassifier_NormalizeVolume { Vol OutVol Mode } {
        incr x
     }
 
-    puts "Threshold: $trough"
+    puts "Bounds for Expected Value Calculation:"
+    puts "  Lower Bound: $trough"
+    puts "  Upper Bound: $max"
 
     # Calculate the mean intensity value of the voxels with range [trough, max]  
     vtkImageAccumulate ia2
@@ -1035,27 +1060,29 @@ proc EMAtlasBrainClassifier_NormalizeVolume { Vol OutVol Mode } {
       set num [expr $num + $val]
       incr i
     }
-    # Normalize image by factor M which is the expect value in this range 
-    set M [expr $total * 1.0 / $num]
-
-    puts "M: $M"
+    # Normalize image by factor ExpValue which is the expect value in this range 
+    set ExpValue [expr $total * 1.0 / $num]
+    set IntensityMul  [expr $EMAtlasBrainClassifier(Normalize,$Mode) / $ExpValue]
+    puts "Results of Filter:"
+    puts "  Expect Image Intensity: $ExpValue"
+    puts "  Normalization Factor:   $IntensityMul"
 
     vtkImageMathematics im
     im SetInput1 $Vol
-    im SetConstantK [expr ($EMAtlasBrainClassifier(Normalize,$Mode) / $M)]
-    puts "Mode: $Mode"
-     
-
+    im SetConstantK $IntensityMul 
+ 
     im SetOperationToMultiplyByK
     im Update 
     $OutVol DeepCopy [im GetOutput]
+
 
     ia Delete
     im Delete
     ia2 Delete
     hist Delete
-    puts "Done"
-} 
+
+    puts "=========== Normalization Completed ============ "
+}
  
 
 ##################
@@ -2134,6 +2161,9 @@ proc EMAtlasBrainClassifier_SetVtkAtlasSuperClassSetting {SuperClass} {
   EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintBias      $EMAtlasBrainClassifier(Cattrib,$SuperClass,PrintBias)
   EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintLabelMap  $EMAtlasBrainClassifier(Cattrib,$SuperClass,PrintLabelMap)
   EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetProbDataWeight $EMAtlasBrainClassifier(Cattrib,$SuperClass,LocalPriorWeight)
+  # Kilian Jan 06: Wont change anything bc currently the template file is defined in such a way that it is the same accross superclasses 
+  EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopEMMaxIter  $EMAtlasBrainClassifier(Cattrib,$SuperClass,StopEMMaxIter)
+  EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopMFAMaxIter $EMAtlasBrainClassifier(Cattrib,$SuperClass,StopMFAMaxIter)
 
   # Kilian : Jan06 Added new parameters to simplify debuging
   if {$EMAtlasBrainClassifier(Cattrib,$SuperClass,InitialBiasFilePrefix) != "" } {
