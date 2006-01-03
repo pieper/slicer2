@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEngineRegionAnalysis.tcl,v $
-#   Date:      $Date: 2006/01/02 15:43:13 $
-#   Version:   $Revision: 1.14.2.7 $
+#   Date:      $Date: 2006/01/03 21:40:50 $
+#   Version:   $Revision: 1.14.2.8 $
 # 
 #===============================================================================
 # FILE:        fMRIEngineRegionAnalysis.tcl
@@ -57,18 +57,42 @@ proc fMRIEngineBuildUIForROITab {parent} {
     global fMRIEngine Gui Module
 
     set f $Module(fMRIEngine,fROI)
-    Notebook-create $f.fNotebook \
-                    -pages {{Region Map} Stats} \
-                    -pad 2 \
-                    -bg $Gui(activeWorkspace) \
-                    -height 350 \
-                    -width 240
-    pack $f.fNotebook -fill both -expand 1
- 
-    set w [Notebook-frame $f.fNotebook {Region Map}]
-    fMRIEngineBuildUIForROIRegionMap $w
-    set w [Notebook-frame $f.fNotebook Stats]
-    fMRIEngineBuildUIForROIStats $w
+
+    #--- create blt notebook
+    blt::tabset $f.tsNotebook -relief flat -borderwidth 0
+    pack $f.tsNotebook -side top
+
+    #--- notebook configure
+    $f.tsNotebook configure -width 240
+    # $f.tsNotebook configure -height 356 
+    $f.tsNotebook configure -height 340 
+    $f.tsNotebook configure -background $::Gui(activeWorkspace)
+    $f.tsNotebook configure -activebackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -selectbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -tabbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -highlightbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -highlightcolor $::Gui(activeWorkspace)
+    $f.tsNotebook configure -foreground black
+    $f.tsNotebook configure -activeforeground black
+    $f.tsNotebook configure -selectforeground black
+    $f.tsNotebook configure -tabforeground black
+    $f.tsNotebook configure -relief flat
+    $f.tsNotebook configure -tabrelief raised
+
+    #--- tab configure
+    set i 0
+    foreach t "{RegionMap} Stats" {
+        $f.tsNotebook insert $i $t
+        frame $f.tsNotebook.f$t -bg $Gui(activeWorkspace) -bd 2
+        fMRIEngineBuildUIForROI${t} $f.tsNotebook.f$t
+
+        $f.tsNotebook tab configure $t -window $f.tsNotebook.f$t 
+        $f.tsNotebook tab configure $t -activebackground $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -selectbackground $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -background $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -fill both -padx $::Gui(pad) -pady $::Gui(pad) 
+        incr i
+    }
 }
 
 

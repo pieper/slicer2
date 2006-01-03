@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEngine.tcl,v $
-#   Date:      $Date: 2005/12/20 22:55:30 $
-#   Version:   $Revision: 1.27.2.2 $
+#   Date:      $Date: 2006/01/03 21:41:01 $
+#   Version:   $Revision: 1.27.2.3 $
 # 
 #===============================================================================
 # FILE:        fMRIEngine.tcl
@@ -146,7 +146,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27.2.2 $} {$Date: 2005/12/20 22:55:30 $}]
+        {$Revision: 1.27.2.3 $} {$Date: 2006/01/03 21:41:01 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -170,7 +170,6 @@ proc fMRIEngineInit {} {
     fMRIEngineCreateBindings 
 
     # Source all appropriate tcl files here. 
-    source "$fMRIEngine(modulePath)/tcl/notebook.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEnginePlot.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineModel.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineInspect.tcl"
@@ -293,20 +292,41 @@ proc fMRIEngineBuildGUI {} {
     #------------------------------
     set f $fSequence.fOption
 
-    Notebook-create $f.fNotebook \
-                    -pages {Load Select} \
-                    -pad 2 \
-                    -bg $Gui(activeWorkspace) \
-                    -height 356 \
-                    -width 240
-    Notebook-setCallback $f.fNotebook \
-        fMRIEngineUpdateSequences
-    pack $f.fNotebook -fill both -expand 1
- 
-    set w [Notebook-frame $f.fNotebook Load]
-    fMRIEngineBuildUIForLoad $w
-    set w [Notebook-frame $f.fNotebook Select]
-    fMRIEngineBuildUIForSelect $w
+    #--- create blt notebook
+    blt::tabset $f.tsNotebook -relief flat -borderwidth 0
+    pack $f.tsNotebook -side top
+
+    #--- notebook configure
+    $f.tsNotebook configure -width 240
+    $f.tsNotebook configure -height 396 
+    $f.tsNotebook configure -background $::Gui(activeWorkspace)
+    $f.tsNotebook configure -activebackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -selectbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -tabbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -highlightbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -highlightcolor $::Gui(activeWorkspace)
+    $f.tsNotebook configure -foreground black
+    $f.tsNotebook configure -activeforeground black
+    $f.tsNotebook configure -selectforeground black
+    $f.tsNotebook configure -tabforeground black
+    $f.tsNotebook configure -relief flat
+    $f.tsNotebook configure -tabrelief raised
+
+    #--- tab configure
+    set i 0
+    foreach t "Load Select" {
+        $f.tsNotebook insert $i $t
+        frame $f.tsNotebook.f$t -bg $Gui(activeWorkspace) -bd 2
+        fMRIEngineBuildUIFor${t} $f.tsNotebook.f$t
+
+        $f.tsNotebook tab configure $t -window $f.tsNotebook.f$t 
+        $f.tsNotebook tab configure $t -activebackground $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -selectbackground $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -background $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -fill both -padx $::Gui(pad) -pady 1 
+
+        incr i
+    }
  
     #-------------------------------------------
     # Setup tab 

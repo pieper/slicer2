@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEngineInspect.tcl,v $
-#   Date:      $Date: 2005/12/22 17:41:48 $
-#   Version:   $Revision: 1.29.2.3 $
+#   Date:      $Date: 2006/01/03 21:41:13 $
+#   Version:   $Revision: 1.29.2.4 $
 # 
 #===============================================================================
 # FILE:        fMRIEngineInspect.tcl
@@ -175,21 +175,45 @@ proc fMRIEngineBuildUIForViewTab {parent} {
     global fMRIEngine Gui
 
     set f $parent
-    Notebook-create $f.fNotebook \
-                    -pages {Select Threshold Plot} \
-                    -pad 2 \
-                    -bg $Gui(activeWorkspace) \
-                    -height 356 
-    # width 240
-    pack $f.fNotebook -fill both -expand 1
- 
-    set w [Notebook-frame $f.fNotebook Select ]
-    fMRIEngineBuildUIForChoose $w
-    set w [Notebook-frame $f.fNotebook Threshold ]
-    fMRIEngineBuildUIForThreshold $w
-    set w [Notebook-frame $f.fNotebook Plot]
-    fMRIEngineBuildUIForPlot $w
 
+    #--- create blt notebook
+    blt::tabset $f.tsNotebook -relief flat -borderwidth 0
+    pack $f.tsNotebook -side top
+
+    #--- notebook configure
+    $f.tsNotebook configure -width 240
+    $f.tsNotebook configure -height 260 
+    $f.tsNotebook configure -background $::Gui(activeWorkspace)
+    $f.tsNotebook configure -activebackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -selectbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -tabbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -highlightbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -highlightcolor $::Gui(activeWorkspace)
+    $f.tsNotebook configure -foreground black
+    $f.tsNotebook configure -activeforeground black
+    $f.tsNotebook configure -selectforeground black
+    $f.tsNotebook configure -tabforeground black
+    $f.tsNotebook configure -relief flat
+    $f.tsNotebook configure -tabrelief raised
+
+    #--- tab configure
+    set i 0
+    foreach t "Choose Thrshld Plot" {
+        $f.tsNotebook insert $i $t
+        frame $f.tsNotebook.f$t -bg $Gui(activeWorkspace) -bd 2
+        if {$t == "Thrshld"} {
+            fMRIEngineBuildUIForThreshold $f.tsNotebook.f$t
+        } else {
+            fMRIEngineBuildUIFor${t} $f.tsNotebook.f$t
+        }
+
+        $f.tsNotebook tab configure $t -window $f.tsNotebook.f$t 
+        $f.tsNotebook tab configure $t -activebackground $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -selectbackground $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -background $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -fill both -padx 1 -pady $::Gui(pad) 
+        incr i
+    }
 }
 
 
