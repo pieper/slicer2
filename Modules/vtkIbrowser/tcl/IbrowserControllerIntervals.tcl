@@ -728,6 +728,9 @@ proc IbrowserDeleteIntervalVolumes { id } {
 
 
 
+
+
+
 #-------------------------------------------------------------------------------
 # .PROC IbrowserDeleteInterval
 # 
@@ -796,7 +799,12 @@ proc IbrowserDeleteInterval { ivalName } {
     }
     if { $del >= 0 } {
         set ::MultiVolumeReader(sequenceNames) [ lreplace $::MultiVolumeReader(sequenceNames) $del $del ]
+        unset -nocomplain ::MultiVolumeReader($ivalName,firstMRMLid)
+        unset -nocomplain ::MultiVolumeReader($ivalName,lastMRMLid)        
+        unset -nocomplain ::MultiVolumeReader($ivalName,volumeExtent)
+        unset -nocomplain ::MultiVolumeReader($ivalName,noOfVolumes)
     }
+
     
     #--- report in Ibrowser's message panel"
     set tt "Deleted interval $ivalName."
@@ -887,6 +895,8 @@ proc IbrowserInitNewInterval { newname } {
     return $id
     
 }
+
+
 
 
 #-------------------------------------------------------------------------------
@@ -1513,13 +1523,23 @@ proc IbrowserRenameInterval { old new } {
     set first $::Ibrowser($id,firstMRMLid)
     set last $::Ibrowser($id,lastMRMLid)
     set i 0
+
     for { set vid $first } { $vid <= $last } { incr vid} {
         #::Volume($vid,node) SetName ${new}_${i}_${old}
-        ::Volume($vid,node) SetName ${old}_${new}
+        #::Volume($vid,node) SetName ${old}_${new}
+        set vname [ ::Volume($vid,node) GetName]
+        set cc [ string last $old $vname]
+        #--- trim off the underbar and replace, if name is found.
+        if { $cc > 0 } {
+            set cc [ expr $cc - 2 ]
+            set vname [ string range $vname 0 $cc ]
+            ::Volume($vid,node) SetName ${vname}_${new}
+        }
         incr i
     }
 
-    #--- adjust the multivolume reader
+    #--- adjust the multivolume reader where all sequences
+    #--- are stored and referred to by other modules (fmriengine)
     set cnt 0
     set change -1
     foreach name $::MultiVolumeReader(sequenceNames) {
@@ -1528,11 +1548,20 @@ proc IbrowserRenameInterval { old new } {
         }
         incr cnt
     }
+    #--- replace 
     if { $change >= 0 } {
         set ::MultiVolumeReader(sequenceNames) [ lreplace $::MultiVolumeReader(sequenceNames) \
                                                      $change $change $new ]
+        set ::MultiVolumeReader($new,noOfVolumes) $::MultiVolumeReader($old,noOfVolumes)
+        unset -nocomplain ::MultiVolumeReader($old,noOfVolumes)
+        set ::MultiVolumeReader($new,firstMRMLid) $::MultiVolumeReader($old,firstMRMLid)
+        unset -nocomplain ::MultiVolumeReader($old,firstMRMLid)
+        set ::MultiVolumeReader($new,lastMRMLid) $::MultiVolumeReader($old,lastMRMLid)
+        unset -nocomplain ::MultiVolumeReader($old,lastMRMLid)    
+        set ::MultiVolumeReader($new,volumeExtent) $::MultiVolumeReader($old,volumeExtent)
+        unset -nocomplain ::MultiVolumeReader($old,volumeExtent)
     }
-
+    
     MainUpdateMRML
 }
 
