@@ -92,8 +92,8 @@ if {$file != ""} {
             ProcessFile $filename $::verbose
         }
     }
-
     if {$::doModsFlag == 1} {
+        puts "Processing modules..."
         # process files in modules
         set modulePaths [glob -nocomplain $moddir/*]
         foreach modpath $modulePaths {
