@@ -100,7 +100,7 @@ proc IbrowserInit {} {
     #---Set category and version info
     set Module($m,category) "Alpha"
        lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.14.2.5 $} {$Date: 2005/12/22 16:24:58 $}]
+        {$Revision: 1.14.2.6 $} {$Date: 2006/01/03 16:50:21 $}]
 
     #---Initialize module-level variables
     #---Global array with the same name as the module. Ibrowser()
@@ -211,7 +211,6 @@ proc IbrowserInit {} {
     source ${modulePath}IbrowserControllerSlider.tcl
     source ${modulePath}IbrowserControllerDrops.tcl
     source ${modulePath}IbrowserControllerProgressBar.tcl
-    source ${modulePath}notebook.tcl
 
     source ${modulePath}IbrowserPlot.tcl
     
@@ -522,7 +521,8 @@ proc IbrowserUpdateMRML { } {
 
     #--- infrastructure to manage the KeyframeRegister menubuttons and menus
     #--- is also in IbrowserKeyframeRegister.tcl, but it doesn't seem to work
-    #--- there; so it's here for now. Every other process manages its own GUI
+    #--- there; so it's here for now. May have something to do with notebook
+    #--- in which it's contained...? Every other process manages its own GUI
     #--- from inside it's own tcl file.
     if { [info exists ::Ibrowser(Process,KeyframeRegister,mIntervals) ] } {
         #--- configure interval selection menu
@@ -563,9 +563,6 @@ proc IbrowserUpdateMRML { } {
             }
         }
     }
-
-
-
 }
 
 

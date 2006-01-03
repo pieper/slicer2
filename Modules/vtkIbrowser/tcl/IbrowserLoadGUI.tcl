@@ -75,20 +75,43 @@ proc IbrowserBuildLoadFrame { } {
     #------------------------------
     set f $fNew.fOption
 
-    #---WJP comment out tabs during development
-    Notebook:create $f.fNotebook \
-        #-pages {Load Assemble Append Import} \
-        -pages {Load Assemble} \
-        -pad 2 \
-        -bg $Gui(activeWorkspace) \
-        -height 300 \
-        -width 240
-    pack $f.fNotebook -fill both -expand 1
-    #--- Load or construct a sequence from disk
-    set w [ Notebook:frame $f.fNotebook Load ]
-    IbrowserBuildUIForLoad $w
-    set w [ Notebook:frame $f.fNotebook Assemble ]
-    IbrowserBuildUIForAssemble $w
+
+    #---
+    #--- create notebook frames for stages of keyframe interpolation
+    if { [catch "package require BLT" ] } {
+        DevErrorWindow "Must have the BLT package installed to generate keyframe registration interface."
+        return
+    }
+    
+    #--- create blt notebook
+    blt::tabset $f.tsNotebook -relief flat -borderwidth 0
+    pack $f.tsNotebook -side top
+
+    #--- notebook configure
+    $f.tsNotebook configure -width 250
+    $f.tsNotebook configure -height 320
+    $f.tsNotebook configure -background $::Gui(activeWorkspace)
+    $f.tsNotebook configure -activebackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -selectbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -tabbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -foreground black
+    $f.tsNotebook configure -activeforeground black
+    $f.tsNotebook configure -selectforeground black
+    $f.tsNotebook configure -tabforeground black
+    $f.tsNotebook configure -relief flat
+    $f.tsNotebook configure -tabrelief raised
+
+    #--- tab configure
+    set i 0
+    foreach t "Load Assemble" {
+        $f.tsNotebook insert $i $t
+        frame $f.tsNotebook.f$t -bg $Gui(activeWorkspace) -bd 2
+        IbrowserBuildUIFor${t} $f.tsNotebook.f$t
+        $f.tsNotebook tab configure $t -window $f.tsNotebook.f$t  \
+            -fill both -padx $::Gui(pad) -pady $::Gui(pad)
+        incr i
+    }
+
     #--- WJP comment out during development
     #set w [ Notebook:frame $f.fNotebook Append ]
     #IbrowserBuildUIForAppend $w

@@ -107,20 +107,41 @@ proc IbrowserBuildKeyframeRegisterGUI { f master } {
 
     #---
     #--- create notebook frames for stages of keyframe interpolation
-    Notebook:create $f.fNotebook \
-        -pages { Keyframes Interpolate } \
-        -pad 2 \
-        -bg $Gui(activeWorkspace) \
-        -height 300 \
-        -width 240
-    pack $f.fNotebook -fill both -expand 1
-
-    set nf [ Notebook:frame $f.fNotebook Keyframes ]
-    IbrowserBuildKeyframeRegisterKeyframesGUI $nf
-    set nf [ Notebook:frame $f.fNotebook Interpolate ]
-    IbrowserBuildKeyframeRegisterInterpolateGUI $nf
-
+    if { [catch "package require BLT" ] } {
+        DevErrorWindow "Must have the BLT package installed to generate keyframe registration interface."
+        return
+    }
     
+    #--- create blt notebook
+    blt::tabset $f.tsNotebook -relief flat -borderwidth 0
+    pack $f.tsNotebook -side top
+
+    #--- notebook configure
+    $f.tsNotebook configure -width 250
+    $f.tsNotebook configure -height 320
+    $f.tsNotebook configure -background $::Gui(activeWorkspace)
+    $f.tsNotebook configure -activebackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -selectbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -tabbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -foreground black
+    $f.tsNotebook configure -activeforeground black
+    $f.tsNotebook configure -selectforeground black
+    $f.tsNotebook configure -tabforeground black
+    $f.tsNotebook configure -relief flat
+    $f.tsNotebook configure -tabrelief raised
+
+    #--- tab configure
+    set i 0
+    foreach t "Keyframes Interpolate" {
+        $f.tsNotebook insert $i $t
+        frame $f.tsNotebook.f$t -bg $Gui(activeWorkspace) -bd 2
+        IbrowserBuildKeyframeRegister${t}GUI $f.tsNotebook.f$t
+        $f.tsNotebook tab configure $t -window $f.tsNotebook.f$t  \
+            -fill both -padx $::Gui(pad) -pady $::Gui(pad)
+        incr i
+    }
+
+
     #--- Place the KeyframeRegister GUI in the
     #--- process-specific raised GUI panel.
     place $f -in $master -relheight 1.0 -relwidth 1.0
@@ -149,7 +170,7 @@ proc IbrowserBuildKeyframeRegisterKeyframesGUI { nf } {
     set ff $nf.fInput
     eval { label $ff.lChooseProcInterval -text "interval:" } $Gui(WLA)
     eval { menubutton $ff.mbIntervals -text "none" \
-               -relief raised -bd 2 -width 18 \
+               -relief raised -bd 2 -width 14 \
                -menu $ff.mbIntervals.m -indicatoron 1 } $::Gui(WMBA)
     eval { menu $ff.mbIntervals.m } $::Gui(WMA)
     foreach i $::Ibrowser(idList) {
@@ -171,7 +192,7 @@ proc IbrowserBuildKeyframeRegisterKeyframesGUI { nf } {
     
     eval { label $ff.lReference -text "reference:" } $Gui(WLA)
     eval { menubutton $ff.mbReference -text "none" \
-               -relief raised -bd 2 -width 18 -indicatoron 1 \
+               -relief raised -bd 2 -width 14 -indicatoron 1 \
                -menu $ff.mbReference.m } $::Gui(WMBA)
     eval { menu $ff.mbReference.m } $::Gui(WMA)
     foreach i $::Ibrowser(idList) {
