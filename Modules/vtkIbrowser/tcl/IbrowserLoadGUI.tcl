@@ -89,7 +89,7 @@ proc IbrowserBuildLoadFrame { } {
 
     #--- notebook configure
     $f.tsNotebook configure -width 250
-    $f.tsNotebook configure -height 320
+    $f.tsNotebook configure -height 340
     $f.tsNotebook configure -background $::Gui(activeWorkspace)
     $f.tsNotebook configure -activebackground $::Gui(activeWorkspace)
     $f.tsNotebook configure -selectbackground $::Gui(activeWorkspace)
@@ -670,7 +670,7 @@ proc IbrowserMultiVolumeReaderBuildGUI {parent {status 0}} {
     pack $f.fSingle $f.fMultiple $f.fName -side top -pady 1
 
    set f $parent.fReaderConfig.fFile.fSingle
-    eval {radiobutton $f.r1 -width 23 -text {Load a single file} \
+    eval {radiobutton $f.r1 -width 27 -text {Load a single file} \
         -variable MultiVolumeReader(fileChoice) -value single \
         -relief flat -offrelief flat -overrelief raised \
         -selectcolor white} $Gui(WEA)
@@ -683,7 +683,7 @@ proc IbrowserMultiVolumeReaderBuildGUI {parent {status 0}} {
         -selectcolor white} $Gui(WEA)
 
     DevAddLabel $f.lFilter " Filter:"
-    eval {entry $f.eFilter -width 24 \
+    eval {entry $f.eFilter -width 25 \
         -textvariable MultiVolumeReader(filter)} $Gui(WEA)
 
     #The "sticky" option aligns items to the left (west) side
@@ -711,13 +711,15 @@ proc IbrowserMultiVolumeReaderBuildGUI {parent {status 0}} {
 
     set f $parent.fReaderConfig.fStatus
     frame $f.fVName -bg $Gui(activeWorkspace)
-    pack $f.fVName  -pady 2
-    set f $f.fVName
-    DevAddLabel $f.lVName "loading volume:"
+    pack $f.fVName  -pady 5
+    set f $f.fVName 
+    DevAddLabel $f.lVName1 "volume:"
+
     set Volume(name) ""
-    eval { label $f.lvolname -width 30 -bg $::Gui(activeWorkspace) \
-        -textvariable Volume(name)}
-    pack $f.lVName $f.lvolname -side top -padx $Gui(pad) -pady 2 
+    eval {label $f.lVName2 -width 30 -relief flat \
+        -textvariable Volume(name) } $Gui(WEA)
+
+    pack $f.lVName1 $f.lVName2 -side left -padx $Gui(pad) -pady 0 
 
     # The Navigate frame
     set f $parent.fVolumeNav
@@ -875,7 +877,7 @@ proc IbrowserMultiVolumeReaderLoad { status } {
     for {set i $first } { $i <= $last } { incr i } {
         set ::Ibrowser($id,$vcount,MRMLid) $i
         set old [ ::Volume($i,node) GetName ]
-        ::Volume($i,node) SetName ${old}_{$iname}
+        ::Volume($i,node) SetName ${old}_${iname}
         incr vcount
     }
 
@@ -887,8 +889,8 @@ proc IbrowserMultiVolumeReaderLoad { status } {
     set spanmax [ expr $m - 1 ]
     IbrowserMakeNewInterval $iname $::IbrowserController(Info,Ival,imageIvalType) 0.0 $spanmax $m
         #--- for feeback...
-    set ::Volume(VolAnalyze,FileName) ""
     set ::Volume(name) ""
+    set ::Volume(VolAnalyze,FileName) ""
     IbrowserUpdateMRML
     set ::Ibrowser(BGInterval) $id
     IbrowserSelectBGIcon $id $::IbrowserController(Icanvas)
