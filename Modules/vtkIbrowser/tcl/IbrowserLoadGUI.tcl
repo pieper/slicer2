@@ -94,6 +94,8 @@ proc IbrowserBuildLoadFrame { } {
     $f.tsNotebook configure -activebackground $::Gui(activeWorkspace)
     $f.tsNotebook configure -selectbackground $::Gui(activeWorkspace)
     $f.tsNotebook configure -tabbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -highlightbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -highlightcolor $::Gui(activeWorkspace)
     $f.tsNotebook configure -foreground black
     $f.tsNotebook configure -activeforeground black
     $f.tsNotebook configure -selectforeground black
