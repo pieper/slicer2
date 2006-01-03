@@ -109,8 +109,12 @@ proc IbrowserBuildLoadFrame { } {
         $f.tsNotebook insert $i $t
         frame $f.tsNotebook.f$t -bg $Gui(activeWorkspace) -bd 2
         IbrowserBuildUIFor${t} $f.tsNotebook.f$t
-        $f.tsNotebook tab configure $t -window $f.tsNotebook.f$t  \
-            -fill both -padx $::Gui(pad) -pady $::Gui(pad)
+
+        $f.tsNotebook tab configure $t -window $f.tsNotebook.f$t 
+        $f.tsNotebook tab configure $t -activebackground $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -selectbackground $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -background $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -fill both -padx $::Gui(pad) -pady $::Gui(pad)
         incr i
     }
 
