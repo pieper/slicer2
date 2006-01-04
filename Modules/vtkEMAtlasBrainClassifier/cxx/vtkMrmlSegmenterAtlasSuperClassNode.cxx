@@ -97,8 +97,8 @@ void vtkMrmlSegmenterAtlasSuperClassNode::Write(ofstream& of)
   of << " StopMFAValue='" << this->StopMFAValue <<  "'";
   of << " StopMFAMaxIter='" << this->StopMFAMaxIter <<  "'";
 
-  if (this->InitialBiasFilePrefix) of << " InitialBiasFilePrefix='" << this->InitialBiasFilePrefix <<  "'";
-  if (this->PredefinedLabelMapPrefix) of << " PredefinedLabelMapPrefix='" << this-> PredefinedLabelMapPrefix <<  "'" ;
+  if (this->InitialBiasFilePrefix && strcmp(this->InitialBiasFilePrefix , "")) of << " InitialBiasFilePrefix='" << this->InitialBiasFilePrefix <<  "'";
+  if (this->PredefinedLabelMapPrefix && strcmp(PredefinedLabelMapPrefix, "")) of << " PredefinedLabelMapPrefix='" << this-> PredefinedLabelMapPrefix <<  "'" ;
 }
 
 //----------------------------------------------------------------------------
