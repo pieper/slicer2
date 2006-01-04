@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlModelNode.h,v $
-  Date:      $Date: 2005/12/20 22:44:27 $
-  Version:   $Revision: 1.24.2.1 $
+  Date:      $Date: 2006/01/04 22:18:12 $
+  Version:   $Revision: 1.24.2.2 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlModelNode - MRML node to represent a 3D surface model.
@@ -133,8 +133,8 @@ public:
     // Description:
     // Numerical ID of the color lookup table to use for rendering the overlay
     // for this model
-    vtkGetStringMacro(LUTName);
-    vtkSetStringMacro(LUTName);
+    vtkGetMacro(LUTName,int);
+    vtkSetMacro(LUTName,int);
 
     // Scalar overlay file list
 
@@ -156,7 +156,7 @@ protected:
   char *FileName;
   char *FullFileName;
   char *Color;
-    char *LUTName;
+  int LUTName;
     
   // Numbers
   float Opacity;

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlModelNode.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:27 $
-  Version:   $Revision: 1.20.2.1 $
+  Date:      $Date: 2006/01/04 22:18:12 $
+  Version:   $Revision: 1.20.2.2 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -56,7 +56,7 @@ vtkMrmlModelNode::vtkMrmlModelNode()
   this->RasToWld = vtkMatrix4x4::New();
 
   // Scalars
-  this->LUTName = "-1";
+  this->LUTName = -1;
   this->ScalarFileNamesVec.clear();
   
 }
@@ -119,7 +119,8 @@ void vtkMrmlModelNode::Write(ofstream& of, int nIndent)
     of << " description='" << this->Description << "'";
   }
 
-  if (this->LUTName && strcmp(this->LUTName,""))
+  //if (this->LUTName && strcmp(this->LUTName,""))
+  if (this->LUTName != -1)
   {
       of << " lutName='" << this->LUTName << "'";
   }
