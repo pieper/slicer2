@@ -192,6 +192,9 @@ proc EMSegmentInit {} {
     #  set EMSegment(SegmentMode) 1
     #} 
     set EMSegment(SegmentMode) 0
+    # If you segment images with EM method defined by EMAtlasBrainClassifier
+    set EMSegment(EMAtlasBrainClassifierFlag) 0
+
     if {$::Module(verbose)} {
         puts "Debugging - just loading local version"
     }
@@ -288,7 +291,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.65 $} {$Date: 2005/12/11 03:36:21 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.66 $} {$Date: 2006/01/04 21:15:18 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -2635,7 +2638,13 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
               set BeginName ""
             }
             foreach Attribute $EMSegment(Gui${Name}AttributeList) {
-        if {$Attribute != "LocalPriorName"} { eval SegmenterSuperClass($pid,node) Set$Attribute $EMSegment(Cattrib,$i,$Attribute) }
+        if {$Attribute != "LocalPriorName"} { 
+            if {$Attribute  == "InitialBiasFilePrefix" || $Attribute  == "PredefinedLabelMapPrefix" } {
+            SegmenterSuperClass($pid,node) Set$Attribute "$EMSegment(Cattrib,$i,$Attribute)"
+            } else {
+            eval SegmenterSuperClass($pid,node) Set$Attribute $EMSegment(Cattrib,$i,$Attribute) 
+                    }
+        }
             }
          }
 
@@ -2874,21 +2883,29 @@ proc EMSegmentStartEM { {save_mode "save"} } {
   } else {
      set EMSegment(VolumeNameList) ""
      foreach v $Volume(idList) {lappend EMSegment(VolumeNameList)  [Volume($v,node) GetName]}
-     set NumInputImagesSet [EMSegmentAlgorithmStart] 
-     # For debugging
-     # puts [EMSegment(vtkEMSegment) Print]
 
-     EMSegment(vtkEMSegment) Update
-     if {[EMSegment(vtkEMSegment) GetErrorFlag]} {
+     if { $EMSegment(EMAtlasBrainClassifierFlag) } {
+     set NumInputImagesSet [EMAtlasBrainClassifier_AlgorithmStart EMSegment]
+     set vtkEMSegment EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier)
+     } else {
+     set NumInputImagesSet [EMSegmentAlgorithmStart] 
+     set vtkEMSegment EMSegment(vtkEMSegment)
+
+     }
+     # For debugging
+     # puts [$vtkEMSegment Print]
+
+     $vtkEMSegment Update
+     if {[$vtkEMSegment GetErrorFlag]} {
          set ErrorFlag 1
-         DevErrorWindow "Error Report: \n[EMSegment(vtkEMSegment) GetErrorMessages]Fix errors before resegmenting !"
+         DevErrorWindow "Error Report: \n[$vtkEMSegment GetErrorMessages]Fix errors before resegmenting !"
          RenderAll
      }
-    if {[EMSegment(vtkEMSegment) GetWarningFlag]} {
+    if {[$vtkEMSegment GetWarningFlag]} {
          set WarningFlag 1
          puts "================================================"
          puts "Warning Report:"
-         puts "[EMSegment(vtkEMSegment) GetWarningMessages]"
+         puts "[$vtkEMSegment GetWarningMessages]"
          puts "================================================"
     }
 
@@ -2927,15 +2944,15 @@ proc EMSegmentStartEM { {save_mode "save"} } {
            } else { Volume($result,node) SetLittleEndian 0}    
            MainVolumesRead $result
        } else {
-           Volume($result,vol) SetImageData [EMSegment(vtkEMSegment) GetOutput]
-           EMSegment(vtkEMSegment) Update
+           Volume($result,vol) SetImageData [$vtkEMSegment GetOutput]
+           $vtkEMSegment Update
            # ----------------------------------------------
            # 5. Recover Values 
            # ----------------------------------------------
            # set index 0
            # foreach v $EMSegment(SelVolList,VolumeList) {
            #     if {$EMSegment(IntensityAvgValue,$v) < 0} {
-           #        set EMSegment(IntensityAvgValue,$v) [EMSegment(vtkEMSegment) GetIntensityAvgValueCurrent $index]
+           #        set EMSegment(IntensityAvgValue,$v) [$vtkEMSegment GetIntensityAvgValueCurrent $index]
            #    }
            #    incr index
            # }
@@ -2970,15 +2987,19 @@ proc EMSegmentStartEM { {save_mode "save"} } {
      # if it does not work also do the same to the input of all the subclasses - should be fine 
      while {$NumInputImagesSet > 0} {
            incr NumInputImagesSet -1
-           EMSegment(vtkEMSegment) SetImageInput $NumInputImagesSet "" 
+           $vtkEMSegment SetImageInput $NumInputImagesSet "" 
      }
 
-     if {[EMSegment(vtkEMSegment) GetErrorFlag] == 0} { 
-         Volume($result,vol) SetImageData [EMSegment(vtkEMSegment) GetOutput]
+     if {[$vtkEMSegment GetErrorFlag] == 0} { 
+         Volume($result,vol) SetImageData [$vtkEMSegment GetOutput]
      }
-     EMSegment(vtkEMSegment) SetOutput ""
+     $vtkEMSegment SetOutput ""
      # Delete instance
+     if { $EMSegment(EMAtlasBrainClassifierFlag) } {
+     EMAtlasBrainClassifier_DeleteVtkEMAtlasBrainClassifier EMSegment
+     } else {
      EMSegmentAlgorithmDeletevtkEMSegment
+     }
      MainUpdateMRML
      RenderAll
    }
