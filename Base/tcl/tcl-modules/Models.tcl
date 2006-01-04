@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Models.tcl,v $
-#   Date:      $Date: 2005/12/30 22:49:22 $
-#   Version:   $Revision: 1.68.2.2 $
+#   Date:      $Date: 2006/01/04 22:19:59 $
+#   Version:   $Revision: 1.68.2.3 $
 # 
 #===============================================================================
 # FILE:        Models.tcl
@@ -66,7 +66,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.68.2.2 $} {$Date: 2005/12/30 22:49:22 $}]
+            {$Revision: 1.68.2.3 $} {$Date: 2006/01/04 22:19:59 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -1322,13 +1322,12 @@ proc ModelsSetScalarsLut { mid lutid {setDefault "true"} } {
         }
         Model($mid,mapper,$r) SetLookupTable Lut($lutid,lut)
     }
-    if {$::Module(verbose) && $::tcl_platform(platform) == "windows"} {
-        puts "ModelsSetScalarsLut: done setting lookup table for all renderers, NOT saving the lut name in the model node now: \"$lutid\", model exists = [info command Model($mid,node)]"
+    if {$::Module(verbose)} {
+        puts "ModelsSetScalarsLut: done setting lookup table for all renderers, saving the lut name in the model node now: \"$lutid\", model exists = [info command Model($mid,node)]"
     }
-    if {$::tcl_platform(platform) != "windows"} {
-        # save the lut id in the node
-        Model($mid,node) SetLUTName $lutid
-    }
+    # save the lut id in the node
+    Model($mid,node) SetLUTName $lutid
+
     if {$::Module(verbose)} {
         puts "ModelsSetScalarsLut: returning"
     }
