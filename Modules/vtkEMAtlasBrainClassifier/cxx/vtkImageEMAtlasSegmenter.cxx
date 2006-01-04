@@ -417,7 +417,7 @@ static void  vtkImageEMAtlasSegmenter_PrintDataToOutputExtension(vtkImageEMAtlas
     ChangedExtent[4] += SliceNum-1 + selfPtr->GetSegmentationBoundaryMin()[2] -1 ;
     ChangedExtent[5] = ChangedExtent[4];
   } 
-  TIn* OriginalExtension_DataPtr = (TIn*)  vtkImageEMAtlasSegmenter_GetPointerToVtkImageData(OriginalExtension_Data,outputScalar,ChangedExtent);
+  TIn* OriginalExtension_DataPtr = (TIn*) vtkImageEMAtlasSegmenter_GetPointerToVtkImageData(OriginalExtension_Data,outputScalar,ChangedExtent);
   int OutIncX, OutIncY, OutIncZ;
   OriginalExtension_Data->GetContinuousIncrements(selfPtr->GetExtent(), OutIncX, OutIncY, OutIncZ);
   if ( OriginalExtensionFlag) {
@@ -825,7 +825,6 @@ void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DThreadPrivate(void *jobpar
 void vtkImageEMAtlasSegmenter::PrintIntermediateResultsToFile(int iter, float **w_m, short* ROI, unsigned char* OutputVector, int NumTotalTypeCLASS, int* NumChildClasses, 
                                 vtkImageEMAtlasSuperClass* actSupCl, char* LevelName, void **ClassList, classType *ClassListType, int* LabelList, 
                                 FILE** QualityFile) {
-
   // -----------------------------------------------------------
   // 1. Print out Weights
   // -----------------------------------------------------------
@@ -909,36 +908,18 @@ void vtkImageEMAtlasSegmenter::PrintIntermediateResultsToFile(int iter, float **
   // -----------------------------------------------------------
   vtkImageData *LabelMap_WorkingExtension_Data  = NULL;
   short* LabelMap_WorkingExtension_Ptr = NULL;
-  vtkImageData *LabelMap_OriginalExtension_Data = NULL;
-  short* LabelMap_OriginalExtension_DataPtr = NULL;
  
   // Generate LabelMap if necessary
-  if (actSupCl->GetPrintLabelMap() || QualityFile) {
-    // Define Label Map with the exetensions defined by the SegmentationBoundary
-    int Ext[6] = { 0, this->GetDimensionX()-1, 0, this->GetDimensionY()-1, 0, this->GetDimensionZ() - 1 };
-    LabelMap_WorkingExtension_Data = vtkImageData::New(); 
-    LabelMap_WorkingExtension_Ptr = (short*) vtkImageEMAtlasSegmenter_GetPointerToVtkImageData(LabelMap_WorkingExtension_Data ,VTK_SHORT,Ext);    
-    this->DetermineLabelMap(LabelMap_WorkingExtension_Ptr, NumTotalTypeCLASS, NumChildClasses, actSupCl, ROI, this->ImageProd, w_m);
-
-    // Transfere it to output Extension
-    if (actSupCl->GetPrintLabelMap() || QualityFile) {  
-      LabelMap_OriginalExtension_Data = vtkImageData::New();  
-    int ChangedExtent[6];
-
-    memcpy(ChangedExtent, this->Extent, sizeof(int)*6); 
-    if (!ChangedExtent[4]) {
-      ChangedExtent[4] ++;
-      ChangedExtent[5] ++;
+    if (actSupCl->GetPrintLabelMap() || QualityFile) {
+      // Define Label Map with the exetensions defined by the SegmentationBoundary
+      int Ext[6] = { 0, this->GetDimensionX()-1, 0, this->GetDimensionY()-1, 0, this->GetDimensionZ()-1};
+      LabelMap_WorkingExtension_Data = vtkImageData::New(); 
+      LabelMap_WorkingExtension_Ptr = (short*) vtkImageEMAtlasSegmenter_GetPointerToVtkImageData(LabelMap_WorkingExtension_Data ,VTK_SHORT,Ext);    
+      this->DetermineLabelMap(LabelMap_WorkingExtension_Ptr, NumTotalTypeCLASS, NumChildClasses, actSupCl, ROI, this->ImageProd, w_m);
     }
-      LabelMap_OriginalExtension_DataPtr = (short*) vtkImageEMAtlasSegmenter_GetPointerToVtkImageData(LabelMap_OriginalExtension_Data,VTK_SHORT,ChangedExtent);
-      int outIncX, outIncY, outIncZ;
-      LabelMap_OriginalExtension_Data->GetContinuousIncrements(this->Extent, outIncX, outIncY, outIncZ);
-      int outInc[3] = {outIncX, outIncY, outIncZ};
-      vtkImageEMAtlasSegmenter_TransfereDataToOutputExtension(this,LabelMap_WorkingExtension_Ptr,LabelMap_OriginalExtension_DataPtr ,outInc);
-    }
-  }
 
-  // -----------------------------------------------------------
+
+ // -----------------------------------------------------------
   //  Print Label Map 
   // -----------------------------------------------------------
   if (actSupCl->GetPrintLabelMap()) {
@@ -950,29 +931,64 @@ void vtkImageEMAtlasSegmenter::PrintIntermediateResultsToFile(int iter, float **
       vtkEMAddErrorMessage( "Could not create the directory :" << this->PrintDir << "/LabelMaps");
       return;
     }
-    this->GEImageWriter(LabelMap_OriginalExtension_Data,FileName,1);
+
+    // Transfere it to output Extension - Do not use the same extension as for Dice measure bc of different extensions !
+    vtkImageData *OriginalExtension_Data = vtkImageData::New();
+    int ChangedExtent[6];
+
+    memcpy(ChangedExtent, this->Extent, sizeof(int)*6); 
+    if (!ChangedExtent[4]) {
+      ChangedExtent[4] ++;
+      ChangedExtent[5] ++;
+    }
+    short* OriginalExtension_DataPtr = (short*) vtkImageEMAtlasSegmenter_GetPointerToVtkImageData(OriginalExtension_Data,VTK_SHORT,ChangedExtent);
+    int outIncX, outIncY, outIncZ;
+    OriginalExtension_Data->GetContinuousIncrements(ChangedExtent, outIncX, outIncY, outIncZ);
+    int outInc[3] = {outIncX, outIncY, outIncZ};
+    vtkImageEMAtlasSegmenter_TransfereDataToOutputExtension(this,LabelMap_WorkingExtension_Ptr,OriginalExtension_DataPtr ,outInc,0);
+    this->GEImageWriter(OriginalExtension_Data,FileName,1);
+    OriginalExtension_Data->Delete();
   }
 
   // -----------------------------------------------------------
   //  Print Quality Measure 
   // -----------------------------------------------------------
   if (QualityFile) {
+    // -------------------------------------------------
+    // Transfere it to output Extension
+    vtkImageData *OriginalExtension_Data = vtkImageData::New();
+    short *OriginalExtension_DataPtr = (short*) vtkImageEMAtlasSegmenter_GetPointerToVtkImageData(OriginalExtension_Data,VTK_SHORT,this->Extent);
+    int outIncX, outIncY, outIncZ;
+    OriginalExtension_Data->GetContinuousIncrements(this->Extent, outIncX, outIncY, outIncZ);
+    int outInc[3] = {outIncX, outIncY, outIncZ};
+    vtkImageEMAtlasSegmenter_TransfereDataToOutputExtension(this,LabelMap_WorkingExtension_Ptr,OriginalExtension_DataPtr ,outInc,0);
+
+
     // Write into the file
     cout << "===================================================" << endl;
     int index = 0;
     for ( int c = 0 ; c < NumClasses; c++) {
       if (ClassListType[c] == CLASS) {
     int PrintQuality = ((vtkImageEMAtlasClass*) ClassList[c])->GetPrintQuality();    
-    if  (PrintQuality &&  (QualityFile[PrintQuality -1])) {     
+     if  (PrintQuality &&  (QualityFile[PrintQuality -1])) {     
       vtkImageData *QualityReference = ((vtkImageEMAtlasClass*) ClassList[c])->GetReferenceStandard();
       switch (PrintQuality) {
-      case 1: fprintf(QualityFile[PrintQuality -1],"%10f ",vtkImageEMGeneral::CalcSimularityMeasure(LabelMap_OriginalExtension_Data,QualityReference, LabelList[c],1)); 
+      case 1: {
+    int *SegmentationBoundaryMax = this->GetSegmentationBoundaryMax();
+    int *SegmentationBoundaryMin = this->GetSegmentationBoundaryMin();
+
+    int MinExtent[3] = {SegmentationBoundaryMin[0] -1, SegmentationBoundaryMin[1] -1, SegmentationBoundaryMin[2] -1 };
+    int MaxExtent[3] = {SegmentationBoundaryMax[0] -1, SegmentationBoundaryMax[1] -1, SegmentationBoundaryMax[2] -1 };
+
+    fprintf(QualityFile[PrintQuality -1],"%10f ",vtkImageEMGeneral::CalcSimularityMeasure(OriginalExtension_Data,QualityReference, LabelList[c],1, MinExtent, MaxExtent)); 
+
         break;
+      }
         // Fill in other quality standards if needed
       }
       cout << endl;
 
-    }
+      }
     // Fill the other spaces 
         index ++;
       } else {
@@ -981,10 +997,10 @@ void vtkImageEMAtlasSegmenter::PrintIntermediateResultsToFile(int iter, float **
     }
     cout << "===================================================" << endl;
     for (int i = 0; i < EMSEGMENT_NUM_OF_QUALITY_MEASURE ; i++) if (QualityFile[i]) fprintf(QualityFile[i],"\n");
+    OriginalExtension_Data->Delete();
   }
 
   if (LabelMap_WorkingExtension_Data) LabelMap_WorkingExtension_Data->Delete();
-  if (LabelMap_OriginalExtension_Data) LabelMap_OriginalExtension_Data->Delete();
 }
 
 //------------------------------------------------------------------------------
