@@ -106,7 +106,7 @@ proc EMAtlasBrainClassifierInit {} {
    set Module($m,depend) ""
 
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.31 $} {$Date: 2006/01/03 07:27:09 $}]
+       {$Revision: 1.32 $} {$Date: 2006/01/04 21:21:29 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -2021,7 +2021,7 @@ proc EMAtlasBrainClassifier_StartEM { } {
    foreach v $Volume(idList) {
        lappend EMAtlasBrainClassifier(VolumeNameList)  [Volume($v,node) GetName]
    }
-   set NumInputImagesSet [EMAtlasBrainClassifier_AlgorithmStart] 
+   set NumInputImagesSet [EMAtlasBrainClassifier_AlgorithmStart EMAtlasBrainClassifier] 
 
    EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) Update
 
@@ -2103,7 +2103,7 @@ proc EMAtlasBrainClassifier_StartEM { } {
    }
    EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) SetOutput ""
    
-   EMAtlasBrainClassifier_DeleteVtkEMAtlasBrainClassifier
+   EMAtlasBrainClassifier_DeleteVtkEMAtlasBrainClassifier EMAtlasBrainClassifier
    MainUpdateMRML
    RenderAll
    
@@ -2123,19 +2123,24 @@ proc EMAtlasBrainClassifier_StartEM { } {
 # string Sclass
 # .END
 #-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_SetVtkGenericClassSetting {vtkGenericClass Sclass} {
-  global EMAtlasBrainClassifier Volume
-  $vtkGenericClass SetNumInputImages $EMAtlasBrainClassifier(NumInputChannel) 
-  eval $vtkGenericClass SetSegmentationBoundaryMin $EMAtlasBrainClassifier(SegmentationBoundaryMin,0) $EMAtlasBrainClassifier(SegmentationBoundaryMin,1) $EMAtlasBrainClassifier(SegmentationBoundaryMin,2)
-  eval $vtkGenericClass SetSegmentationBoundaryMax $EMAtlasBrainClassifier(SegmentationBoundaryMax,0) $EMAtlasBrainClassifier(SegmentationBoundaryMax,1) $EMAtlasBrainClassifier(SegmentationBoundaryMax,2)
+proc EMAtlasBrainClassifier_SetVtkGenericClassSetting {EMVersionVariable vtkGenericClass Sclass} {
+  global Volume
 
-  $vtkGenericClass SetProbDataWeight $EMAtlasBrainClassifier(Cattrib,$Sclass,LocalPriorWeight)
+  # Kilian Jan 06 : Changed this here so that I could also call the functions from EMLocalSegment
+  # So now we link the variable with the name $EMVersionVariable to EMArray
+  upvar #0 $EMVersionVariable EMArray
 
-  $vtkGenericClass SetTissueProbability $EMAtlasBrainClassifier(Cattrib,$Sclass,Prob)
-  $vtkGenericClass SetPrintWeights $EMAtlasBrainClassifier(Cattrib,$Sclass,PrintWeights)
+  $vtkGenericClass SetNumInputImages $EMArray(NumInputChannel) 
+  eval $vtkGenericClass SetSegmentationBoundaryMin $EMArray(SegmentationBoundaryMin,0) $EMArray(SegmentationBoundaryMin,1) $EMArray(SegmentationBoundaryMin,2)
+  eval $vtkGenericClass SetSegmentationBoundaryMax $EMArray(SegmentationBoundaryMax,0) $EMArray(SegmentationBoundaryMax,1) $EMArray(SegmentationBoundaryMax,2)
 
-  for {set y 0} {$y < $EMAtlasBrainClassifier(NumInputChannel)} {incr y} {
-      if {[info exists EMAtlasBrainClassifier(Cattrib,$Sclass,InputChannelWeights,$y)]} {$vtkGenericClass SetInputChannelWeights $EMAtlasBrainClassifier(Cattrib,$Sclass,InputChannelWeights,$y) $y}
+  $vtkGenericClass SetProbDataWeight $EMArray(Cattrib,$Sclass,LocalPriorWeight)
+
+  $vtkGenericClass SetTissueProbability $EMArray(Cattrib,$Sclass,Prob)
+  $vtkGenericClass SetPrintWeights $EMArray(Cattrib,$Sclass,PrintWeights)
+
+  for {set y 0} {$y < $EMArray(NumInputChannel)} {incr y} {
+      if {[info exists EMArray(Cattrib,$Sclass,InputChannelWeights,$y)]} {$vtkGenericClass SetInputChannelWeights $EMArray(Cattrib,$Sclass,InputChannelWeights,$y) $y}
   }
 }
 
@@ -2148,68 +2153,73 @@ proc EMAtlasBrainClassifier_SetVtkGenericClassSetting {vtkGenericClass Sclass} {
 # string SuperClass
 # .END
 #-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_SetVtkAtlasSuperClassSetting {SuperClass} {
-  global EMAtlasBrainClassifier Volume
+
+proc EMAtlasBrainClassifier_SetVtkAtlasSuperClassSetting {EMVersionVariable SuperClass} {
+  global Volume
+  
+  # Kilian Jan 06 : Changed this here so that I could also call the functions from EMLocalSegment
+  # So now we link the variable with the name $EMVersionVariable to EMArray
+  upvar #0 $EMVersionVariable EMArray
 
   catch { EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) Delete}
   vtkImageEMAtlasSuperClass EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass)      
 
   # Define SuperClass specific parameters
-  EMAtlasBrainClassifier_SetVtkGenericClassSetting EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) $SuperClass
+  EMAtlasBrainClassifier_SetVtkGenericClassSetting $EMVersionVariable EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) $SuperClass
 
-  EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintFrequency $EMAtlasBrainClassifier(Cattrib,$SuperClass,PrintFrequency)
-  EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintBias      $EMAtlasBrainClassifier(Cattrib,$SuperClass,PrintBias)
-  EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintLabelMap  $EMAtlasBrainClassifier(Cattrib,$SuperClass,PrintLabelMap)
-  EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetProbDataWeight $EMAtlasBrainClassifier(Cattrib,$SuperClass,LocalPriorWeight)
+  EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintFrequency $EMArray(Cattrib,$SuperClass,PrintFrequency)
+  EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintBias      $EMArray(Cattrib,$SuperClass,PrintBias)
+  EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintLabelMap  $EMArray(Cattrib,$SuperClass,PrintLabelMap)
+  EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetProbDataWeight $EMArray(Cattrib,$SuperClass,LocalPriorWeight)
   # Kilian Jan 06: Wont change anything bc currently the template file is defined in such a way that it is the same accross superclasses 
-  EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopEMMaxIter  $EMAtlasBrainClassifier(Cattrib,$SuperClass,StopEMMaxIter)
-  EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopMFAMaxIter $EMAtlasBrainClassifier(Cattrib,$SuperClass,StopMFAMaxIter)
+  EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopEMMaxIter  $EMArray(Cattrib,$SuperClass,StopEMMaxIter)
+  EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopMFAMaxIter $EMArray(Cattrib,$SuperClass,StopMFAMaxIter)
 
   # Kilian : Jan06 Added new parameters to simplify debuging
-  if {$EMAtlasBrainClassifier(Cattrib,$SuperClass,InitialBiasFilePrefix) != "" } {
-      puts "SuperClass $SuperClass: Activated initial Bias setting with $EMAtlasBrainClassifier(Cattrib,$SuperClass,InitialBiasFilePrefix) " 
-      EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetInitialBiasFilePrefix     $EMAtlasBrainClassifier(Cattrib,$SuperClass,InitialBiasFilePrefix)
+  if {$EMArray(Cattrib,$SuperClass,InitialBiasFilePrefix) != "" } {
+      puts "SuperClass $SuperClass: Activated initial Bias setting with $EMArray(Cattrib,$SuperClass,InitialBiasFilePrefix) " 
+      EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetInitialBiasFilePrefix     $EMArray(Cattrib,$SuperClass,InitialBiasFilePrefix)
   }
-  if {$EMAtlasBrainClassifier(Cattrib,$SuperClass,PredefinedLabelMapPrefix)  != "" } {
-    puts "SuperClass $SuperClass: Activated predefined labelmap with $EMAtlasBrainClassifier(Cattrib,$SuperClass,PredefinedLabelMapPrefix)" 
-    EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPredefinedLabelMapPrefix  $EMAtlasBrainClassifier(Cattrib,$SuperClass,PredefinedLabelMapPrefix) 
+  if {$EMArray(Cattrib,$SuperClass,PredefinedLabelMapPrefix)  != "" } {
+    puts "SuperClass $SuperClass: Activated predefined labelmap with $EMArray(Cattrib,$SuperClass,PredefinedLabelMapPrefix)" 
+    EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPredefinedLabelMapPrefix  $EMArray(Cattrib,$SuperClass,PredefinedLabelMapPrefix) 
   }
 
   set ClassIndex 0
-  foreach i $EMAtlasBrainClassifier(Cattrib,$SuperClass,ClassList) {
-    if {$EMAtlasBrainClassifier(Cattrib,$i,IsSuperClass)} {
-        if {[EMAtlasBrainClassifier_SetVtkAtlasSuperClassSetting $i]} {return [EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMSuperClass) GetErrorFlag]}
+  foreach i $EMArray(Cattrib,$SuperClass,ClassList) {
+    if {$EMArray(Cattrib,$i,IsSuperClass)} {
+        if {[EMAtlasBrainClassifier_SetVtkAtlasSuperClassSetting  $EMVersionVariable $i]} {return [EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMSuperClass) GetErrorFlag]}
           EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) AddSubClass EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMSuperClass) $ClassIndex
     } else {
       catch {EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMClass) destroy}
       vtkImageEMAtlasClass EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMClass)      
-      EMAtlasBrainClassifier_SetVtkGenericClassSetting EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMClass) $i
+      EMAtlasBrainClassifier_SetVtkGenericClassSetting $EMVersionVariable EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMClass) $i
 
-      EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMClass) SetLabel             $EMAtlasBrainClassifier(Cattrib,$i,Label) 
+      EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMClass) SetLabel             $EMArray(Cattrib,$i,Label) 
 
-      if {$EMAtlasBrainClassifier(Cattrib,$i,ProbabilityData) != $Volume(idNone)} {
+      if {$EMArray(Cattrib,$i,ProbabilityData) != $Volume(idNone)} {
           # Pipeline does not automatically update volumes bc of fake first input  
-          Volume($EMAtlasBrainClassifier(Cattrib,$i,ProbabilityData),vol) Update
-          EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMClass) SetProbDataPtr [Volume($EMAtlasBrainClassifier(Cattrib,$i,ProbabilityData),vol) GetOutput]
+          Volume($EMArray(Cattrib,$i,ProbabilityData),vol) Update
+          EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMClass) SetProbDataPtr [Volume($EMArray(Cattrib,$i,ProbabilityData),vol) GetOutput]
       
       } else {
-         set EMAtlasBrainClassifier(Cattrib,$i,LocalPriorWeight) 0.0
+         set EMArray(Cattrib,$i,LocalPriorWeight) 0.0
       }
-      EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMClass) SetProbDataWeight $EMAtlasBrainClassifier(Cattrib,$i,LocalPriorWeight)
+      EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMClass) SetProbDataWeight $EMArray(Cattrib,$i,LocalPriorWeight)
 
-      for {set y 0} {$y < $EMAtlasBrainClassifier(NumInputChannel)} {incr y} {
-          EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMClass) SetLogMu $EMAtlasBrainClassifier(Cattrib,$i,LogMean,$y) $y
-          for {set x 0} {$x < $EMAtlasBrainClassifier(NumInputChannel)} {incr x} {
-            EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMClass) SetLogCovariance $EMAtlasBrainClassifier(Cattrib,$i,LogCovariance,$y,$x) $y $x
+      for {set y 0} {$y < $EMArray(NumInputChannel)} {incr y} {
+          EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMClass) SetLogMu $EMArray(Cattrib,$i,LogMean,$y) $y
+          for {set x 0} {$x < $EMArray(NumInputChannel)} {incr x} {
+            EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMClass) SetLogCovariance $EMArray(Cattrib,$i,LogCovariance,$y,$x) $y $x
           }
       }
 
       # Setup Quality Related information
-      if {($EMAtlasBrainClassifier(Cattrib,$i,ReferenceStandardData) !=  $Volume(idNone)) && $EMAtlasBrainClassifier(Cattrib,$i,PrintQuality) } {
-        EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMClass) SetReferenceStandard [Volume($EMAtlasBrainClassifier(Cattrib,$i,ReferenceStandardData),vol) GetOutput]
+      if {($EMArray(Cattrib,$i,ReferenceStandardData) !=  $Volume(idNone)) && $EMArray(Cattrib,$i,PrintQuality) } {
+        EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMClass) SetReferenceStandard [Volume($EMArray(Cattrib,$i,ReferenceStandardData),vol) GetOutput]
       } 
 
-      EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMClass) SetPrintQuality $EMAtlasBrainClassifier(Cattrib,$i,PrintQuality)
+      EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMClass) SetPrintQuality $EMArray(Cattrib,$i,PrintQuality)
       # After everything is defined add CLASS to its SUPERCLASS
       EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) AddSubClass EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMClass) $ClassIndex
     }
@@ -2219,12 +2229,12 @@ proc EMAtlasBrainClassifier_SetVtkAtlasSuperClassSetting {SuperClass} {
   # After attaching all the classes we can defineMRF parameters
   set x 0  
 
-  foreach i $EMAtlasBrainClassifier(Cattrib,$SuperClass,ClassList) {
+  foreach i $EMArray(Cattrib,$SuperClass,ClassList) {
       set y 0
 
-      foreach j $EMAtlasBrainClassifier(Cattrib,$SuperClass,ClassList) {
+      foreach j $EMArray(Cattrib,$SuperClass,ClassList) {
         for {set k 0} { $k < 6} {incr k} {
-           EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetMarkovMatrix $EMAtlasBrainClassifier(Cattrib,$SuperClass,CIMMatrix,$i,$j,[lindex $EMAtlasBrainClassifier(CIMList) $k]) $k $y $x
+           EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetMarkovMatrix $EMArray(Cattrib,$SuperClass,CIMMatrix,$i,$j,[lindex $EMArray(CIMList) $k]) $k $y $x
         }
         incr y
       }
@@ -2243,39 +2253,43 @@ proc EMAtlasBrainClassifier_SetVtkAtlasSuperClassSetting {SuperClass} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_AlgorithmStart { } {
-   global EMAtlasBrainClassifier Volume 
+proc EMAtlasBrainClassifier_AlgorithmStart {EMVersionVariable } {
+   global Volume 
    # puts "Start EMAtlasBrainClassifier_AlgorithmStart"
+
+   # Kilian Jan 06 : Changed this here so that I could also call the functions from EMLocalSegment
+   # So now we link the variable with the name $EMVersionVariable to EMArray
+   upvar #0 $EMVersionVariable EMArray
 
    set NumInputImagesSet 0
    vtkImageEMAtlasSegmenter EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier)
    
    # How many input images do you have
-   EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) SetNumInputImages $EMAtlasBrainClassifier(NumInputChannel) 
-   EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) SetNumberOfTrainingSamples $EMAtlasBrainClassifier(NumberOfTrainingSamples)
-   if {[EMAtlasBrainClassifier_SetVtkAtlasSuperClassSetting 0]} { return 0 }
+   EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) SetNumInputImages $EMArray(NumInputChannel) 
+   EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) SetNumberOfTrainingSamples $EMArray(NumberOfTrainingSamples)
+   if {[EMAtlasBrainClassifier_SetVtkAtlasSuperClassSetting $EMVersionVariable 0]} { return 0 }
    # Transfer image information
    set NumInputImagesSet 0
-   foreach v $EMAtlasBrainClassifier(SelVolList,VolumeList) {       
+   foreach v $EMArray(SelVolList,VolumeList) {       
      EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) SetImageInput $NumInputImagesSet [Volume($v,vol) GetOutput]
      incr NumInputImagesSet
    }
    # Transfer Bias Print out Information
-   EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) SetPrintDir $EMAtlasBrainClassifier(PrintDir)
-   EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) SetHeadClass          EMAtlasBrainClassifier(Cattrib,0,vtkImageEMSuperClass)
+   EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) SetPrintDir     $EMArray(PrintDir)
+   EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) SetHeadClass    EMAtlasBrainClassifier(Cattrib,0,vtkImageEMSuperClass)
 
    #----------------------------------------------------------------------------
    # Transfering General Information
    #----------------------------------------------------------------------------
-   EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) SetAlpha           $EMAtlasBrainClassifier(Alpha) 
+   EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) SetAlpha           $EMArray(Alpha) 
 
-   EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) SetSmoothingWidth  $EMAtlasBrainClassifier(SmWidth)    
-   EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) SetSmoothingSigma  $EMAtlasBrainClassifier(SmSigma)      
+   EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) SetSmoothingWidth  $EMArray(SmWidth)    
+   EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) SetSmoothingSigma  $EMArray(SmSigma)      
 
-   EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) SetNumIter         $EMAtlasBrainClassifier(Cattrib,0,StopEMMaxIter) 
-   EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) SetNumRegIter      $EMAtlasBrainClassifier(Cattrib,0,StopMFAMaxIter) 
+   EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) SetNumIter         $EMArray(Cattrib,0,StopEMMaxIter) 
+   EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) SetNumRegIter      $EMArray(Cattrib,0,StopMFAMaxIter) 
 
-   return  $EMAtlasBrainClassifier(NumInputChannel) 
+   return  $EMArray(NumInputChannel) 
 }
 
 #-------------------------------------------------------------------------------
@@ -2285,12 +2299,15 @@ proc EMAtlasBrainClassifier_AlgorithmStart { } {
 # string Superclass
 # .END
 #-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_DeleteVtkEMSuperClass { SuperClass } {
-   global EMAtlasBrainClassifier
+proc EMAtlasBrainClassifier_DeleteVtkEMSuperClass { EMVersionVariable SuperClass } {
+   # Kilian Jan 06 : Changed this here so that I could also call the functions from EMLocalSegment
+   # So now we link the variable with the name $EMVersionVariable to EMArray
+   upvar #0 $EMVersionVariable EMArray
+
    EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) Delete
-   foreach i $EMAtlasBrainClassifier(Cattrib,$SuperClass,ClassList) {
-         if {$EMAtlasBrainClassifier(Cattrib,$i,IsSuperClass)} {
-            EMAtlasBrainClassifier_DeleteVtkEMSuperClass  $i
+   foreach i $EMArray(Cattrib,$SuperClass,ClassList) {
+         if {$EMArray(Cattrib,$i,IsSuperClass)} {
+            EMAtlasBrainClassifier_DeleteVtkEMSuperClass $EMVersionVariable $i
          } else {
             EMAtlasBrainClassifier(Cattrib,$i,vtkImageEMClass) Delete
          }
@@ -2303,10 +2320,9 @@ proc EMAtlasBrainClassifier_DeleteVtkEMSuperClass { SuperClass } {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_DeleteVtkEMAtlasBrainClassifier { } {
-     global EMAtlasBrainClassifier
+proc EMAtlasBrainClassifier_DeleteVtkEMAtlasBrainClassifier {EMVersionVariable } {
      EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier) Delete
-     EMAtlasBrainClassifier_DeleteVtkEMSuperClass 0
+     EMAtlasBrainClassifier_DeleteVtkEMSuperClass $EMVersionVariable 0
 }
 
 #-------------------------------------------------------------------------------
