@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEngine.tcl,v $
-#   Date:      $Date: 2006/01/03 21:41:01 $
-#   Version:   $Revision: 1.27.2.3 $
+#   Date:      $Date: 2006/01/05 17:49:43 $
+#   Version:   $Revision: 1.27.2.4 $
 # 
 #===============================================================================
 # FILE:        fMRIEngine.tcl
@@ -146,7 +146,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27.2.3 $} {$Date: 2006/01/03 21:41:01 $}]
+        {$Revision: 1.27.2.4 $} {$Date: 2006/01/05 17:49:43 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -252,20 +252,21 @@ proc fMRIEngineBuildGUI {} {
     volumes to process.
     <BR>
     <B>Set Up</B> allows you to specify paradigm design, signal modeling and \
-    contrasts, to estimate the linear modeling, and to save/load/view a design.
+    contrasts, to estimate the linear modeling and save/load the beta volume, \
+    and to save/load/view a design.
     <BR>
     <B>Detect</B> lets you to choose contrast(s) to compute \
     activation volume(s).
     <BR>
     <B>ROI</B> enables you to create a labelmap, to perform region of interest \
-    analysis, and to view the stat results out of the defined roi.
+    analysis, and to view the stats results out of the defined roi.
     <BR>
     <B>View</B> gives you the ability to view the activation \
     at different thresholds and dynamically plot any voxel \
     time course.
     <BR><BR>
     Check the file README.txt in the docs directory of this module \
-    for details about how to build and use the module.
+    for details about how to use the module.
     <BR><BR><B>Warning</B>: It may not be possible to run this process \
     to completion on Windows, due to memory allocation constraints.
     "
