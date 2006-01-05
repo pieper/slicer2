@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:44 $
-  Version:   $Revision: 1.8.2.1 $
+  Date:      $Date: 2006/01/05 15:24:57 $
+  Version:   $Revision: 1.8.2.2 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/12/20 22:55:44 $
-  Version:   $Revision: 1.8.2.1 $
+  Date:      $Date: 2006/01/05 15:24:57 $
+  Version:   $Revision: 1.8.2.2 $
 
   Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -72,7 +72,7 @@
 #include "itkGDCMImageIO.h"
 #include <itksys/SystemTools.hxx>
 
-vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.8.2.1 $");
+vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.8.2.2 $");
 vtkStandardNewMacro(vtkITKArchetypeImageSeriesReader);
 
 //----------------------------------------------------------------------------
@@ -340,8 +340,8 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
         imageIO = seriesReader->GetImageIO();
         if (imageIO.GetPointer() == NULL) 
           {
-            itkGenericExceptionMacro ( "vtkITKArchetypeImageSeriesReader::ExecuteInformation: ImageIO for file " << fileNameCollapsed.c_str() << " does not exist.");
-            return;
+            //itkGenericExceptionMacro ( "vtkITKArchetypeImageSeriesReader::ExecuteInformation: ImageIO for file " << fileNameCollapsed.c_str() << " does not exist.");
+            //return;  TODO - figure out why imageIO is NULL for image series with more than one file
           }
       }
     if (this->UseNativeCoordinateOrientation)
@@ -430,7 +430,11 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
   output->SetWholeExtent(extent);
   if (this->UseNativeScalarType)
     {
-    if (imageIO->GetComponentType() == itk::ImageIOBase::UCHAR)
+      if (imageIO.GetPointer() == NULL) 
+      {
+      this->SetOutputScalarType(VTK_SHORT); // TODO - figure out why multi-file series doen't have an imageIO
+      }
+    else if (imageIO->GetComponentType() == itk::ImageIOBase::UCHAR)
       {
       this->SetOutputScalarType(VTK_UNSIGNED_CHAR);
       }
