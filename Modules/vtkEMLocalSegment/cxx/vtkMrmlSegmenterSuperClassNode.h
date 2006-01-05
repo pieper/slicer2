@@ -164,8 +164,14 @@ public:
   // Description:
   // Kilian: Jan06: This allows you to "jump" over the hirarchical segmentation level by providing an already existing 
   // labelmap of the region of interes 
-  char* GetPredefinedLabelMapPrefix() {return AtlasNode->GetPredefinedLabelMapPrefix();}
+  char* GetPredefinedLabelMapPrefix()           { return AtlasNode->GetPredefinedLabelMapPrefix();}
   void  SetPredefinedLabelMapPrefix(char* init) { AtlasNode->SetPredefinedLabelMapPrefix(init);}
+  
+  // Description:
+  // Kilian Jan06: This is necessary so we can load in predefined labelmaps with different anatomical structures
+  // If we cannot define the label of the superclass it would change everytime we change the tree structure
+  int  GetPredefinedLabelID() {return AtlasNode->GetPredefinedLabelID();}
+  void SetPredefinedLabelID(int init) {AtlasNode->SetPredefinedLabelID(init);}
 
   // Description:
   // You can stop the bias calculation after a certain number of iterations
