@@ -106,7 +106,7 @@ proc EMAtlasBrainClassifierInit {} {
    set Module($m,depend) ""
 
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.32 $} {$Date: 2006/01/04 21:21:29 $}]
+       {$Revision: 1.32.2.1 $} {$Date: 2006/01/05 21:15:43 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -2184,6 +2184,7 @@ proc EMAtlasBrainClassifier_SetVtkAtlasSuperClassSetting {EMVersionVariable Supe
     puts "SuperClass $SuperClass: Activated predefined labelmap with $EMArray(Cattrib,$SuperClass,PredefinedLabelMapPrefix)" 
     EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPredefinedLabelMapPrefix  $EMArray(Cattrib,$SuperClass,PredefinedLabelMapPrefix) 
   }
+  EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPredefinedLabelID $EMArray(Cattrib,$SuperClass,PredefinedLabelID) 
 
   set ClassIndex 0
   foreach i $EMArray(Cattrib,$SuperClass,ClassList) {

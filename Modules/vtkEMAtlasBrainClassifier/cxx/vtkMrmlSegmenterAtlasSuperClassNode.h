@@ -101,7 +101,6 @@ public:
   vtkGetMacro(StopEMMaxIter,int); 
   vtkSetMacro(StopEMMaxIter,int); 
 
-
   // Description:  
   // After which criteria should be stopped   
   // 0 = fixed iterations 
@@ -131,6 +130,12 @@ public:
   // labelmap of the region of interes 
   vtkSetStringMacro(PredefinedLabelMapPrefix); 
   vtkGetStringMacro(PredefinedLabelMapPrefix); 
+
+  // Description:
+  // Kilian: Jan06: Gives superclass the predefined ID , make sure that no other class has that label/ID - this simplifies 
+  // using PredefinedLabelMapPrefix with different structure settings
+  vtkGetMacro(PredefinedLabelID,int); 
+  vtkSetMacro(PredefinedLabelID,int); 
 
   // When adding new variables do not forget to add them also to vtkMrmlSegmenterSuperClass in the appropriate way  
 protected:
@@ -162,6 +167,7 @@ protected:
   char* InitialBiasFilePrefix;  
   char* PredefinedLabelMapPrefix; 
 
+  int PredefinedLabelID;
 };
 
 #endif

@@ -72,7 +72,7 @@ void vtkImageEMAtlasSuperClass::CreateVariables() {
 
   this->InitialBiasFilePrefix = NULL;
   this->PredefinedLabelMapPrefix = NULL; 
- 
+  this->PredefinedLabelID  =-1; 
 }
 
 //------------------------------------------------------------------------------
@@ -212,30 +212,53 @@ int vtkImageEMAtlasSuperClass::GetAllLabels(short *LabelList, int result, int Ma
 }
 
 //------------------------------------------------------------------------------
-void vtkImageEMAtlasSuperClass::LabelAllSuperClasses(short *TakenLabelList, int Max) {
+int vtkImageEMAtlasSuperClass::LabelAllSuperClasses(short *TakenLabelList, int Result,  int Max) {
   int i,j,k;
-  short label=1;
+  short label=0;
+  // You have to have atleast one label defined
+  assert(Result && Result <= Max);
+
   for (i=0;  i < this->NumClasses; i++) {
     if (this->ClassListType[i] == SUPERCLASS) {
-      ((vtkImageEMAtlasSuperClass*) this->ClassList[i])->LabelAllSuperClasses(TakenLabelList,Max);
-    
-      for (j = 0; j <Max; j++){
-    while ((label > TakenLabelList[j]) && ( j < Max)) j++;
-    // Write here the section this does not work right now 
-    if (label == TakenLabelList[j]) label++;
-        else { 
-      if (label < TakenLabelList[j]) {
-        k = Max -1;
-        while (k>j) {TakenLabelList[k] =  TakenLabelList[k-1];k--;}
-      } 
-      // Otherwise it has to be a zero becuase the list is ordered numerical
-      TakenLabelList[j] = label;
-      ((vtkImageEMAtlasSuperClass*) this->ClassList[i])->Label = label; 
-      j= Max; 
+      Result = ((vtkImageEMAtlasSuperClass*) this->ClassList[i])->LabelAllSuperClasses(TakenLabelList,Result,Max);
+
+      // Kilian : Jan 06:now we predefine the label - just make sure that it is not included already in the las
+      int PreLabelID = ((vtkImageEMAtlasSuperClass*) this->ClassList[i])->PredefinedLabelID;
+      if ( PreLabelID > -1) {
+    // Check if it is already given away
+    j = 0;
+    while (( j < Result)  && (PreLabelID > TakenLabelList[j])) j++;
+    if ((j < Result) && (PreLabelID == TakenLabelList[j])) {
+        vtkEMAddWarningMessage("Could not use PredefinedLabelID " << PreLabelID << "bc another class with that label already exists !");
+        PreLabelID = -1;
+    } else {
+      cout << "Used PredefinedLabelID " << PreLabelID << endl;
     }
+      } 
+
+      // Kilian Jan06: There used to be a bug in this code - for example if TakenLabelList label list consists of (e.g. 0 1 2 3 0 0) => Max = 5
+      //               then the old code woud it assign the label 4 at position 5 => it is not part of taken label anymore and the TakenLabelList 
+      //               is not in order.
+      if ( PreLabelID < 0) {
+    // Just add at the end of the list
+    PreLabelID = TakenLabelList[Result -1] + 1;
+    j = Result;
       }
+      // Othierwise Max to small
+      assert(j < Max);
+
+      // Need to make an empty space !
+      if ( PreLabelID < TakenLabelList[j]) {
+    k = Max -1;
+    while (k>j) {TakenLabelList[k] =  TakenLabelList[k-1];k--;}
+      } 
+
+      TakenLabelList[j] =  PreLabelID;
+      ((vtkImageEMAtlasSuperClass*) this->ClassList[i])->Label =  PreLabelID;
+      Result ++;
     }
   }
+  return Result;
 }
 
 //------------------------------------------------------------------------------
@@ -324,8 +347,8 @@ void vtkImageEMAtlasSuperClass::PrintSelf(ostream& os,vtkIndent indent) {
   os << indent << "StopMFAMaxIter:                " << this->StopMFAMaxIter << endl;
 
   os << indent << "InitialBiasFilePrefix:     " << (this->InitialBiasFilePrefix ? this->InitialBiasFilePrefix : "(none)") << "\n";
-  os << indent << "PredefinedLabelMapPrefix:         " << (this->PredefinedLabelMapPrefix ? this->PredefinedLabelMapPrefix : "(none)") << "\n";
-
+  os << indent << "PredefinedLabelMapPrefix:  " << (this->PredefinedLabelMapPrefix ? this->PredefinedLabelMapPrefix : "(none)") << "\n";
+  os << indent << "PredefinedLabelID:         " << this->PredefinedLabelID << "\n";
   char** Directions= new char*[6];
   Directions[0] = "West "; Directions[1] = "North"; Directions[2] = "Up   "; Directions[3] = "East "; Directions[4] = "South"; Directions[5] = "Down ";
   os << indent << "MrfParams:               " << endl;

@@ -74,6 +74,8 @@ vtkMrmlSegmenterAtlasSuperClassNode::vtkMrmlSegmenterAtlasSuperClassNode() {
 
   this->InitialBiasFilePrefix = NULL;  
   this->PredefinedLabelMapPrefix     = NULL; 
+
+  this->PredefinedLabelID = -1;
 }
 
 //----------------------------------------------------------------------------
@@ -99,6 +101,7 @@ void vtkMrmlSegmenterAtlasSuperClassNode::Write(ofstream& of)
 
   if (this->InitialBiasFilePrefix && strcmp(this->InitialBiasFilePrefix , "")) of << " InitialBiasFilePrefix='" << this->InitialBiasFilePrefix <<  "'";
   if (this->PredefinedLabelMapPrefix && strcmp(PredefinedLabelMapPrefix, "")) of << " PredefinedLabelMapPrefix='" << this-> PredefinedLabelMapPrefix <<  "'" ;
+  if (this->PredefinedLabelID > -1) of << " PredefinedLabelID ='" << this->PredefinedLabelID << "'";
 }
 
 //----------------------------------------------------------------------------
@@ -123,6 +126,7 @@ void vtkMrmlSegmenterAtlasSuperClassNode::Copy(vtkMrmlNode *anode)
 
   this->InitialBiasFilePrefix =  node->InitialBiasFilePrefix;
   this->PredefinedLabelMapPrefix     =  node->PredefinedLabelMapPrefix;
+  this->PredefinedLabelID = node->PredefinedLabelID;
 
 }
 
@@ -142,9 +146,9 @@ void vtkMrmlSegmenterAtlasSuperClassNode::PrintSelf(ostream& os, vtkIndent inden
   os << indent << "StopMFAValue:                  " << this->StopMFAValue << "\n";
   os << indent << "StopMFAMaxIter:                " << this->StopMFAMaxIter << "\n";
 
-  os << indent << "InitialBiasFilePrefix:        " << (this->InitialBiasFilePrefix ? this->InitialBiasFilePrefix : "(none)" ) << "\n";
-  os << indent << "PredefinedLabelMapPrefix:            " << (this->PredefinedLabelMapPrefix ? this->PredefinedLabelMapPrefix : "(none)" ) << "\n";
-
+  os << indent << "InitialBiasFilePrefix:         " << (this->InitialBiasFilePrefix ? this->InitialBiasFilePrefix : "(none)" ) << "\n";
+  os << indent << "PredefinedLabelMapPrefix:      " << (this->PredefinedLabelMapPrefix ? this->PredefinedLabelMapPrefix : "(none)" ) << "\n";
+  os << indent << "PredefinedLabelID:             " << this->PredefinedLabelID << "\n";
 
 }
 

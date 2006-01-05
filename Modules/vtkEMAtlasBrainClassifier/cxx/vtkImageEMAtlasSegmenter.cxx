@@ -1643,7 +1643,16 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
 
            self->GEImageReader(InitialBias,PrefixName,ChangedExtent[4],ChangedExtent[5],VTK_DOUBLE);
            double* InitialBiasPtr = (double*) self->GetPointerToVtkImageData(InitialBias->GetOutput(),VTK_DOUBLE,ChangedExtent);
-       cout << "Initializing Image inhomogeneity for channel " << j << endl;
+           cout << "Initializing Image inhomogeneity for channel " << j << endl;
+       if (ROI &&  NumIter > 1) {
+         cout << "Warning: NumIter > 1 even though you initilize the image inhomogeneities with outside source " << endl;
+             cout << "         => might produce unwanted effects at the edges of the region of interest !" << endl ;
+         // bc iv_m and r_m are 0 outside the region of interest - as the convolution filter does not care about it it impacts the results
+             // Solution: Change convolution filter to include region of interest 
+             // Problem:  No smoothing might accure in small areas in the region of interest => Noise has an effect on the results
+             // Question: Why not calculate r_m and iv_m as is and smooth bias directly ? => would be a lot more effecient !
+             //           Currently Bias = smooth(iv_m) * smooth(r_m), why not Bias = smooth (iv_m * r_m) ?
+       }
            cY_M += j;
            for (i=0; i< ImageProd; i++) {
              *cY_M = fabs((*InputVector)[j] - *InitialBiasPtr);
@@ -2119,13 +2128,18 @@ static void vtkImageEMAtlasSegmenterExecute(vtkImageEMAtlasSegmenter *self,float
 
   // Label All SuperClasses 
   {
-    int TotalNumClasses = self->GetHeadClass()->GetTotalNumberOfClasses(1);
+      int TotalNumClasses = self->GetHeadClass()->GetTotalNumberOfClasses(1);
       short *LabelList = new short[TotalNumClasses];
       memset(LabelList,0,sizeof(short)*TotalNumClasses);
       // Get all existing labels
-      self->GetHeadClass()->GetAllLabels(LabelList,0,TotalNumClasses);
+      int index = self->GetHeadClass()->GetAllLabels(LabelList,0,TotalNumClasses);
+      // Otherwise no classes defined
+      assert(index);
       // Label all super classes
-      self->GetHeadClass()->LabelAllSuperClasses(LabelList,TotalNumClasses);
+      self->GetHeadClass()->LabelAllSuperClasses(LabelList,index, TotalNumClasses);
+      cout << "Label " ;
+      for (int i = 0 ; i < TotalNumClasses; i++) cout << LabelList[i] << " " ;
+      cout << endl;
       delete[] LabelList;
   }
 
