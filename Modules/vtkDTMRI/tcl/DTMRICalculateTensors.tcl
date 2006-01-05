@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRICalculateTensors.tcl,v $
-#   Date:      $Date: 2005/12/20 22:55:10 $
-#   Version:   $Revision: 1.35.2.1 $
+#   Date:      $Date: 2006/01/05 18:43:44 $
+#   Version:   $Revision: 1.35.2.2 $
 # 
 #===============================================================================
 # FILE:        DTMRICalculateTensors.tcl
@@ -45,7 +45,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.35.2.1 $} {$Date: 2005/12/20 22:55:10 $}]
+                                 {$Revision: 1.35.2.2 $} {$Date: 2006/01/05 18:43:44 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -298,18 +298,45 @@ proc DTMRICalculateTensorsBuildGUI {} {
     DevAddLabel $f.lIni "Gradient Ordering scheme:"
     pack $f.lIni -side top -pady 2
 
-    Notebook:create $f.fNotebook \
-                    -pages {{Slice Interleav.} {Volume Interleav.}} \
-                    -pad 2 \
-                    -bg $Gui(activeWorkspace) \
-                    -height 325 \
-                    -width 240
+    if { [catch "package require BLT" ] } {
+        DevErrorWindow "Must have the BLT package to create GUI."
+        return
+    }
+
+    #--- create blt notebook
+    blt::tabset $f.fNotebook -relief flat -borderwidth 0
     pack $f.fNotebook -fill both -expand 1
+
+    #--- notebook configure
+    $f.fNotebook configure -width 250
+    $f.fNotebook configure -height 335
+    $f.fNotebook configure -background $::Gui(activeWorkspace)
+    $f.fNotebook configure -activebackground $::Gui(activeWorkspace)
+    $f.fNotebook configure -selectbackground $::Gui(activeWorkspace)
+    $f.fNotebook configure -tabbackground $::Gui(activeWorkspace)
+    $f.fNotebook configure -foreground black
+    $f.fNotebook configure -activeforeground black
+    $f.fNotebook configure -selectforeground black
+    $f.fNotebook configure -tabforeground black
+    $f.fNotebook configure -relief flat
+    $f.fNotebook configure -tabrelief raised     
+    $f.fNotebook configure -highlightbackground $::Gui(activeWorkspace)
+    $f.fNotebook configure -highlightcolor $::Gui(activeWorkspace) 
+        #--- tab configure
+    set i 0
+    foreach name "{Slice Interleav.} {Volume Interleav.}" t "SliceInterleav VolumeInterleav" {
+        $f.fNotebook insert $i $name
+        frame $f.fNotebook.f$t -bg $Gui(activeWorkspace) -bd 2
+        $f.fNotebook tab configure $name -window $f.fNotebook.f$t  \
+            -fill both -padx $::Gui(pad) -pady $::Gui(pad)
+        incr i
+    } 
+
 
     set f $fConvert.fPattern.fNotebook
 
-    set FrameCont [Notebook:frame $f {Slice Interleav.}] 
-    set FrameInter [Notebook:frame $f {Volume Interleav.}]
+    set FrameCont $f.fSliceInterleav 
+    set FrameInter $f.fVolumeInterleav
 
     foreach Page "$FrameCont $FrameInter" {   
 

@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRI.tcl,v $
-#   Date:      $Date: 2005/12/21 22:56:05 $
-#   Version:   $Revision: 1.120.2.3 $
+#   Date:      $Date: 2006/01/05 18:42:54 $
+#   Version:   $Revision: 1.120.2.4 $
 # 
 #===============================================================================
 # FILE:        DTMRI.tcl
@@ -465,7 +465,6 @@ proc DTMRIInit {} {
 
     # Source all appropriate tcl files here. 
     #------------------------------------
-    source "$env(SLICER_HOME)/Modules/vtkDTMRI/tcl/notebook.tcl"
     source "$env(SLICER_HOME)/Modules/vtkDTMRI/tcl/VTKObjectInspection.tcl"
     
     # List of all submodules (most are tcl files for tabs within this module)
@@ -482,7 +481,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.120.2.3 $} {$Date: 2005/12/21 22:56:05 $}]
+                  {$Revision: 1.120.2.4 $} {$Date: 2006/01/05 18:42:54 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -819,26 +818,46 @@ especially Diffusion DTMRI MRI.
     set f $fInput
     frame $f.fTitle -bg $Gui(backdrop)
     pack $f.fTitle -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
+    
+    if { [catch "package require BLT" ] } {
+        DevErrorWindow "Must have the BLT package to create GUI."
+        return
+    }
 
-
-    Notebook:create $f.fNotebook \
-                        -pages {{Option 1} {Option 2}} \
-                        -pad 2 \
-                        -bg $Gui(activeWorkspace) \
-                        -height 260 \
-                        -width 240
+    #--- create blt notebook
+    blt::tabset $f.fNotebook -relief flat -borderwidth 0
     pack $f.fNotebook -fill both -expand 1
+
+    #--- notebook configure
+    $f.fNotebook configure -width 260
+    $f.fNotebook configure -height 270
+    $f.fNotebook configure -background $::Gui(activeWorkspace)
+    $f.fNotebook configure -activebackground $::Gui(activeWorkspace)
+    $f.fNotebook configure -selectbackground $::Gui(activeWorkspace)
+    $f.fNotebook configure -tabbackground $::Gui(activeWorkspace)
+    $f.fNotebook configure -foreground black
+    $f.fNotebook configure -activeforeground black
+    $f.fNotebook configure -selectforeground black
+    $f.fNotebook configure -tabforeground black
+    $f.fNotebook configure -relief flat
+    $f.fNotebook configure -tabrelief raised     
+    $f.fNotebook configure -highlightbackground $::Gui(activeWorkspace)
+    $f.fNotebook configure -highlightcolor $::Gui(activeWorkspace) 
+        #--- tab configure
+    set i 0
+    foreach t "{Option1} {Option2}" {
+        $f.fNotebook insert $i $t
+        frame $f.fNotebook.f$t -bg $Gui(activeWorkspace) -bd 2
+        $f.fNotebook tab configure $t -window $f.fNotebook.f$t  \
+            -fill both -padx $::Gui(pad) -pady $::Gui(pad)
+        incr i
+    } 
 
     set f $fInput.fNotebook
 
-    set FrameOption1 [Notebook:frame $f {Option 1}] 
-    set FrameOption2 [Notebook:frame $f {Option 2}]
-
-#    foreach frame "$FrameOption1 $FrameOption2" {
-#        frame $frame -bg $Gui(activeWorkspace)
-#        pack $frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
-#    }
-
+     set FrameOption1 "$f.fOption1"
+     set FrameOption2 "$f.fOption2"
+         
     # $f.fTitle configure -bg $Gui(backdrop)
     foreach frame "$FrameOption1 $FrameOption2" {
         $frame configure  -relief groove -bd 3 

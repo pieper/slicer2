@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITensorRegistration.tcl,v $
-#   Date:      $Date: 2005/12/20 22:55:11 $
-#   Version:   $Revision: 1.22.2.1 $
+#   Date:      $Date: 2006/01/05 18:44:54 $
+#   Version:   $Revision: 1.22.2.2 $
 # 
 #===============================================================================
 # FILE:        DTMRITensorRegistration.tcl
@@ -68,7 +68,7 @@ proc DTMRITensorRegistrationInit {} {
     #------------------------------------
     set m "TensorRegistration"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.22.2.1 $} {$Date: 2005/12/20 22:55:11 $}]
+                                 {$Revision: 1.22.2.2 $} {$Date: 2006/01/05 18:44:54 $}]
 
     # Does the AG module exist? If not the registration tab will not be displayed
     if {[catch "package require vtkAG"]} {
@@ -201,21 +201,47 @@ proc DTMRITensorRegistrationBuildGUI {} {
     frame $f.fTitle -bg $Gui(backdrop)
     pack $f.fTitle -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
 
-    Notebook:create $f.fNotebook \
-                        -pages {{Main} {Tfm} {Prmd} {Adv} {Help}} \
-                        -pad 2 \
-                        -bg $Gui(activeWorkspace) \
-                        -height 320 \
-                        -width 240
+    if { [catch "package require BLT" ] } {
+        DevErrorWindow "Must have the BLT package to create GUI."
+        return
+    }
+
+    #--- create blt notebook
+    blt::tabset $f.fNotebook -relief flat -borderwidth 0
     pack $f.fNotebook -fill both -expand 1
 
-    set f $fRegist.fNotebook
+    #--- notebook configure
+    $f.fNotebook configure -width 240
+    $f.fNotebook configure -height 360
+    $f.fNotebook configure -background $::Gui(activeWorkspace)
+    $f.fNotebook configure -activebackground $::Gui(activeWorkspace)
+    $f.fNotebook configure -selectbackground $::Gui(activeWorkspace)
+    $f.fNotebook configure -tabbackground $::Gui(activeWorkspace)
+    $f.fNotebook configure -foreground black
+    $f.fNotebook configure -activeforeground black
+    $f.fNotebook configure -selectforeground black
+    $f.fNotebook configure -tabforeground black
+    $f.fNotebook configure -relief flat
+    $f.fNotebook configure -tabrelief raised     
+    $f.fNotebook configure -highlightbackground $::Gui(activeWorkspace)
+    $f.fNotebook configure -highlightcolor $::Gui(activeWorkspace) 
+        #--- tab configure
+    set i 0
+    foreach t "{Main} {Tfm} {Prmd} {Adv} {Help}" {
+        $f.fNotebook insert $i $t
+        frame $f.fNotebook.f$t -bg $Gui(activeWorkspace) -bd 2
+        $f.fNotebook tab configure $t -window $f.fNotebook.f$t  \
+            -fill both -padx $::Gui(pad) -pady $::Gui(pad)
+        incr i
+    } 
 
-    set FrameMain [Notebook:frame $f {Main}]
-    set FrameTfm [Notebook:frame $f {Tfm}]
-    set FramePrmd [Notebook:frame $f {Prmd}]
-    set FrameAdvanced [Notebook:frame $f {Adv}]
-    set FrameHelp [Notebook:frame $f {Help}] 
+    set f $fRegist.fNotebook
+         
+    set FrameMain $f.fMain
+    set FrameTfm $f.fTfm
+    set FramePrmd $f.fPrmd
+    set FrameAdvanced $f.fAdv
+    set FrameHelp $f.fHelp 
     
     foreach frame "$FrameMain $FrameTfm $FramePrmd $FrameAdvanced $FrameHelp" {
         $frame configure -relief groove -bd 3
