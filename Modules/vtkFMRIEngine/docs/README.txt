@@ -1,44 +1,4 @@
-This file describes how to build fMRIEngine module and
-how to use it.
-
-
-Build fMRIEngine module
------------------------
-
-
-The building process for fMRIEngine module is the same
-as that for other customized modules except the following:
-
-1. It needs GNU Scientific Library (GSL) library for
-activation computation
-
-The GSL is a numerical library for C and C++ programmers. 
-It is free software under the GNU General Public License.
-You need install it before you start to build fMRIEngine.
-The website to download GSL is http://www.gnu.org/software/gsl/.
-
-In your cxx source directory (e.g. slicer2/Modules/vtkFMRIEngine/cxx
-in Unix system), edit file CMakeListsLocal.txt to point to 
-the location you installed GSL.
-
-GSL version 1.4 works well for our development.
-
-
-2. It needs BLT library for voxel time course plotting
-
-BLT is an extension to Tcl/Tk.  It adds plotting widgets (X-Y graph, 
-barchart, stripchart), a powerful geometry manager, a new canvas 
-item, and several new commands to Tk.
-
-Download BLT from http://ovh.dl.sourceforge.net/sourceforge/blt/.
-Under Unix/Linux, you simply compile and link with the Tcl/Tk libraries. 
-It does not require the Tcl or Tk source files. For Windows NT and 
-Windows 95/98, self-installing pre-compiled versions are available.
-
-
-Use fMRIEngine module
----------------------
-
+This file describes how to use it.
 
 1. Load/select a sequence of fMRI volumes
 
