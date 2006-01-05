@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: CompareModule.tcl,v $
-#   Date:      $Date: 2005/12/27 18:34:28 $
-#   Version:   $Revision: 1.1.2.3 $
+#   Date:      $Date: 2006/01/05 18:29:07 $
+#   Version:   $Revision: 1.1.2.4 $
 # 
 #===============================================================================
 # FILE:        CompareModule.tcl
@@ -38,7 +38,7 @@ proc CompareModuleInit {} {
     set m CompareModule
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.3 $} {$Date: 2005/12/27 18:34:28 $}]
+        {$Revision: 1.1.2.4 $} {$Date: 2006/01/05 18:29:07 $}]
 
     # Module Summary Info
     #------------------------------------
@@ -781,7 +781,7 @@ proc CompareModuleEnter {} {
     CompareRenderSlices
 
     #Update ENST logo
-    set modulepath $::PACKAGE_DIR_VTKCOMPAREMODULE/../../../images
+    set modulepath $::PACKAGE_DIR_VTKCompareModule/../../../images
     if {[file exist [ExpandPath [file join \
                      $modulepath "slicer_ENST_CNRS_GET_logo.ppm"]]]} {
         image create photo iWelcome \
