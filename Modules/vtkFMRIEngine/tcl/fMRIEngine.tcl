@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEngine.tcl,v $
-#   Date:      $Date: 2006/01/05 17:49:43 $
-#   Version:   $Revision: 1.27.2.4 $
+#   Date:      $Date: 2006/01/06 15:34:14 $
+#   Version:   $Revision: 1.27.2.5 $
 # 
 #===============================================================================
 # FILE:        fMRIEngine.tcl
@@ -146,7 +146,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27.2.4 $} {$Date: 2006/01/05 17:49:43 $}]
+        {$Revision: 1.27.2.5 $} {$Date: 2006/01/06 15:34:14 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -299,7 +299,7 @@ proc fMRIEngineBuildGUI {} {
 
     #--- notebook configure
     $f.tsNotebook configure -width 240
-    $f.tsNotebook configure -height 396 
+    $f.tsNotebook configure -height 410 
     $f.tsNotebook configure -background $::Gui(activeWorkspace)
     $f.tsNotebook configure -activebackground $::Gui(activeWorkspace)
     $f.tsNotebook configure -selectbackground $::Gui(activeWorkspace)
@@ -317,7 +317,7 @@ proc fMRIEngineBuildGUI {} {
     set i 0
     foreach t "Load Select" {
         $f.tsNotebook insert $i $t
-        frame $f.tsNotebook.f$t -bg $Gui(activeWorkspace) -bd 2
+        frame $f.tsNotebook.f$t -bg $Gui(activeWorkspace) -bd 2 
         fMRIEngineBuildUIFor${t} $f.tsNotebook.f$t
 
         $f.tsNotebook tab configure $t -window $f.tsNotebook.f$t 
