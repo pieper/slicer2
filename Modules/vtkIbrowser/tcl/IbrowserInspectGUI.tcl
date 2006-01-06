@@ -1,3 +1,68 @@
+#=auto==========================================================================
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
+# This software ("3D Slicer") is provided by The Brigham and Women's 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
+# Permission is hereby granted, without payment, to copy, modify, display 
+# and distribute this software and its documentation, if any, for  
+# research purposes only, provided that (1) the above copyright notice and 
+# the following four paragraphs appear on all copies of this software, and 
+# (2) that source code to any modifications to this software be made 
+# publicly available under terms no more restrictive than those in this 
+# License Agreement. Use of this software constitutes acceptance of these 
+# terms and conditions.
+# 
+# 3D Slicer Software has not been reviewed or approved by the Food and 
+# Drug Administration, and is for non-clinical, IRB-approved Research Use 
+# Only.  In no event shall data or images generated through the use of 3D 
+# Slicer Software be used in the provision of patient care.
+# 
+# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
+# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
+# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
+# POSSIBILITY OF SUCH DAMAGE.
+# 
+# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
+# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
+# NON-INFRINGEMENT.
+# 
+# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
+# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
+# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+# 
+# 
+#===============================================================================
+# FILE:        IbrowserInspectGUI.tcl
+# PROCEDURES:  
+#   IbrowserUpdateInspectTab
+#   IbrowserBuildInspectFrame
+#   IbrowserPlotConfigPlotType
+#   IbrowserPlotCheckReferenceOnsets
+#   IbrowserPlotCheckReferenceHeight
+#   IbrowserPlotCheckReferenceSpan
+#   IbrowserPlotCheckReferenceSpan
+#   IbrowserPlotResetReferenceEntries
+#   IbrowserPlotAddReference
+#   IbrowserPlotDeleteReference
+#   IbrowserPlotDeleteAllReferences
+#==========================================================================auto=
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateInspectTab
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserUpdateInspectTab { } {
+
+    set ::Ibrowser(currentTab) "Inspect"
+}
+
+
+
 #-------------------------------------------------------------------------------
 # .PROC IbrowserBuildInspectFrame
 # 
@@ -17,6 +82,7 @@ proc IbrowserBuildInspectFrame { } {
     #--- Inspect frame: add buttons and pack
     #-------------------------------------------
     set fInspect $::Module(Ibrowser,fInspect)
+    bind $::Module(Ibrowser,bInspect) <ButtonPress-1> "IbrowserUpdateInspectTab"
     set f $fInspect
 
     #--- Frames: use packer to put them in place
@@ -51,26 +117,28 @@ proc IbrowserBuildInspectFrame { } {
     set ::Ibrowser(plot,Plotmb) $f.mbSig
 
    #--- make the menu
-    foreach l "{$::Ibrowser(plot,TypeVvvn)} {$::Ibrowser(plot,TypeHistogram)} {$::Ibrowser(plot,TypeROIAvg)}" {
+    foreach l "{$::Ibrowser(plot,TypeVvvn)}" {
         $f.mbSig.menu add command -label $l \
             -command "IbrowserPlotConfigPlotType {$l}"
     }
     pack $f.mbSig -pady $Gui(pad) -padx $::Gui(pad) -side top
 
     #--- turn detrending on or off...
-    DevAddLabel $f.lFiltering "Detrending:"
-    set ::Ibrowser(plot,Detrending) 0
-    pack $f.lFiltering -side left -pady $::Gui(pad) -padx 5
-    eval { radiobutton $f.rDetrendON \
-               -text "on" -value 1 -variable ::Ibrowser(plot,Detrending) \
-               -indicatoron 0 } $::Gui(WCA)
-    pack $f.rDetrendON -side left -padx 0 -pady 0
-    TooltipAdd $f.rDetrendON "Highpass filters the samples to remove slow-varying trends."
-    eval { radiobutton $f.rDetrendOFF \
-               -text "off" -value 0 -variable ::Ibrowser(plot,Detrending) \
-               -indicatoron 0 } $::Gui(WCA)
-    pack $f.rDetrendOFF -side left -padx 0 -pady 0
-    TooltipAdd $f.rDetrendOFF "Turns off highpass filtering."
+    if { 0 } {
+        DevAddLabel $f.lFiltering "Detrending:"
+        set ::Ibrowser(plot,Detrending) 0
+        pack $f.lFiltering -side left -pady $::Gui(pad) -padx 5
+        eval { radiobutton $f.rDetrendON \
+                   -text "on" -value 1 -variable ::Ibrowser(plot,Detrending) \
+                   -indicatoron 0 } $::Gui(WCA)
+        pack $f.rDetrendON -side left -padx 0 -pady 0
+        TooltipAdd $f.rDetrendON "Highpass filters the samples to remove slow-varying trends."
+        eval { radiobutton $f.rDetrendOFF \
+                   -text "off" -value 0 -variable ::Ibrowser(plot,Detrending) \
+                   -indicatoron 0 } $::Gui(WCA)
+        pack $f.rDetrendOFF -side left -padx 0 -pady 0
+        TooltipAdd $f.rDetrendOFF "Turns off highpass filtering."
+    }
 
     #---
     #--- fInspect-->fAddRef
@@ -219,6 +287,12 @@ proc IbrowserBuildInspectFrame { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserPlotConfigPlotType
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserPlotConfigPlotType { txt } {
 
     $::Ibrowser(plot,Plotmb) config -text $txt
@@ -228,6 +302,12 @@ proc IbrowserPlotConfigPlotType { txt } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserPlotCheckReferenceOnsets
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserPlotCheckReferenceOnsets { } {
     #--- check:
     #--- trim any leading or trailing white spaces
@@ -260,6 +340,12 @@ proc IbrowserPlotCheckReferenceOnsets { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserPlotCheckReferenceHeight
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserPlotCheckReferenceHeight { } {
     #--- check height and set Ibrowser(plot,RefHeight)
      set height $::Ibrowser(plot,ReferenceHeight)
@@ -273,6 +359,12 @@ proc IbrowserPlotCheckReferenceHeight { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserPlotCheckReferenceSpan
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserPlotCheckReferenceSpan { } {
 
     #--- How many volumes in this interval;
@@ -294,6 +386,12 @@ proc IbrowserPlotCheckReferenceSpan { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC 
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc  IbrowserPlotCheckReferenceName { } {
 
     #--- Need to append the name of the reference waveform.
@@ -313,6 +411,12 @@ proc  IbrowserPlotCheckReferenceName { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserPlotResetReferenceEntries
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserPlotResetReferenceEntries { } {
     #--- reset the entry default onsets
     #set ::Ibrowser(plot,ReferenceOnsets) 0
@@ -328,6 +432,12 @@ proc IbrowserPlotResetReferenceEntries { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserPlotAddReference
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserPlotAddReference { } {
 
     #--- add valid reference to lists.
@@ -372,6 +482,12 @@ proc IbrowserPlotAddReference { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserPlotDeleteReference
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserPlotDeleteReference { } {
 
     #--- get the selection
@@ -392,6 +508,12 @@ proc IbrowserPlotDeleteReference { } {
 
 
 
+#-------------------------------------------------------------------------------
+# .PROC IbrowserPlotDeleteAllReferences
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc IbrowserPlotDeleteAllReferences { } {
     #--- all reference waveforms are being deleted,
     #--- so delete all lists that describe those defined.
@@ -419,5 +541,4 @@ proc IbrowserPlotDeleteAllReferences { } {
     set ::Ibrowser(plot,RefCounter) 1
     IbrowserPlotResetReferenceEntries
 }
-
 

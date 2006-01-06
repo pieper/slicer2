@@ -1,38 +1,14 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
-# This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
-# Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
-# research purposes only, provided that (1) the above copyright notice and 
-# the following four paragraphs appear on all copies of this software, and 
-# (2) that source code to any modifications to this software be made 
-# publicly available under terms no more restrictive than those in this 
-# License Agreement. Use of this software constitutes acceptance of these 
-# terms and conditions.
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 # 
-# 3D Slicer Software has not been reviewed or approved by the Food and 
-# Drug Administration, and is for non-clinical, IRB-approved Research Use 
-# Only.  In no event shall data or images generated through the use of 3D 
-# Slicer Software be used in the provision of patient care.
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
 # 
-# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-# POSSIBILITY OF SUCH DAMAGE.
+#   Program:   3D Slicer
+#   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
+#   Date:      $Date: 2006/01/06 17:57:31 $
+#   Version:   $Revision: 1.33 $
 # 
-# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-# NON-INFRINGEMENT.
-# 
-# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-# 
-#
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
 # PROCEDURES:  
@@ -42,20 +18,45 @@
 #   EMAtlasBrainClassifierEnter
 #   EMAtlasBrainClassifierExit
 #   EMAtlasBrainClassifierUpdateMRML
+#   EMAtlasBrainClassifierDefineNodeAttributeList MrmlNodeType
+#   EMAtlasBrainClassifierChangeAlgorithm 
 #   EMAtlasBrainClassifierDefineWorkingDirectory
 #   EMAtlasBrainClassifierDefineAtlasDir
 #   EMAtlasBrainClassifierDefineXMLTemplate
-#   EMAtlasBrainClassifier_Normalize VolIDInput VolIDOutput Mode
+#   EMAtlasBrainClassifierCreateClasses   class
 #   EMAtlasBrainClassifierVolumeWriter VolID
-#   EMAtlasBrainClassifierReadXMLFile FileName
-#   EMAtlasBrainClassifierGrepLine input search_string
-#   EMAtlasBrainClassifierReadNextKey input
 #   EMAtlasBrainClassifierLoadAtlasVolume GeneralDir AtlasDir AtlasName
 #   EMAtlasBrainClassifierResetEMSegment
 #   EMAtlasBrainClassifierDeleteAllVolumeNodesButSPGRAndT2W
-#   EMAtlasBrainClassifierStartSegmentation
+#   EMAtlasBrainClassifier_InitilizePipeline 
+#   EMAtlasBrainClassifierReadXMLFile FileName
+#   EMAtlasBrainClassifierGrepLine input search_string
+#   EMAtlasBrainClassifierReadNextKey input
+#   EMAtlasBrainClassifier_Normalize VolIDInput VolIDOutput Mode
+#   EMAtlasBrainClassifier_NormalizeVolume vol out Mode
+#   EMAtlasBrainClassifier_AtlasList 
+#   EMAtlasBrainClassifier_GetNumberOfTrainingSamples 
+#   EMAtlasBrainClassifier_RegistrationInitialize  RegisterAtlasDirList
+#   EMAtlasBrainClassifier_AtlasRegistration  RegisterAtlasDirList RegisterAtlasNameList
+#   EMAtlasBrainClassifier_LoadAtlas RegisterAtlasDirList RegisterAtlasNameList
+#   EMAtlasBrainClassifierDownloadAtlas
 #   EMAtlasBrainClassifierRegistration inTarget inSource
+#   EMAtlasBrainClassifierWriteTransformation
 #   EMAtlasBrainClassifierResample inTarget inSource outResampled
+#   EMAtlasBrainClassifier_GenerateModels
+#   EMAtlasBrainClassifier_InitilizeSegmentation
+#   EMAtlasBrainClassifierDeleteClasses   class
+#   EMAtlasBrainClassifierInitializeValues 
+#   EMAtlasBrainClassifier_StartEM 
+#   EMAtlasBrainClassifier_StartEM
+#   EMAtlasBrainClassifier_SetVtkGenericClassSetting vtkGenericClass Sclass
+#   EMAtlasBrainClassifier_SetVtkAtlasSuperClassSetting SuperClass
+#   EMAtlasBrainClassifier_AlgorithmStart
+#   EMAtlasBrainClassifier_DeleteVtkEMSuperClass Superclass
+#   EMAtlasBrainClassifier_DeleteVtkEMAtlasBrainClassifier
+#   EMAtlasBrainClassifier_SaveSegmentation
+#   EMAtlasBrainClassifierStartSegmentation
+#   EMAtlasBrainClassifier_BatchMode 
 #==========================================================================auto=
 
 ##################
@@ -106,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
    set Module($m,depend) ""
 
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.32 $} {$Date: 2006/01/04 21:21:29 $}]
+       {$Revision: 1.33 $} {$Date: 2006/01/06 17:57:31 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -475,6 +476,11 @@ proc EMAtlasBrainClassifierDefineNodeAttributeList {MrmlNodeType} {
     set SetListLower ""
     set AttributeList ""
     set InitList ""
+
+    if {[info command vtkMrml${MrmlNodeType}Node] == ""} {
+        DevErrorWindow "EMAtlasBrainClassifier: error, no node of type vtkMrml${MrmlNodeType}Node defined.\nModule vtkEMLocalSegment may not have loaded properly."
+        return ""
+    }
 
     vtkMrml${MrmlNodeType}Node blub
     set nMethods [blub ListMethods]
@@ -957,10 +963,15 @@ proc EMAtlasBrainClassifier_Normalize { Mode } {
 # target expected intensity defined by EMAtlasBrainClassifier(Normalize,*). The error is mostly due 
 # computational inaccuracy caused by the data format short. 
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifier_NormalizeVolume
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifier_NormalizeVolume { Vol OutVol Mode} {
     global Volume Matrix EMAtlasBrainClassifier
     vtkImageData hist
-
     vtkImageAccumulate ia
     ia SetInput $Vol
     ia SetComponentSpacing 1 1 1
@@ -1511,6 +1522,12 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource NonRigidRegistrationF
   set EMAtlasBrainClassifier(Transform) TransformEMAtlasBrainClassifier
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierWriteTransformation
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierWriteTransformation { } { 
     global AG  EMAtlasBrainClassifier
 
@@ -1623,6 +1640,12 @@ proc EMAtlasBrainClassifierResample {inTarget inSource outResampled bgValue} {
     # Threshold Delete
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifier_GenerateModels
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifier_GenerateModels { } {  
    global EMAtlasBrainClassifier ModelMaker Volume 
 
@@ -1991,6 +2014,12 @@ proc EMAtlasBrainClassifierInitializeValues { } {
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifier_StartEM
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifier_StartEM { } {
    global EMAtlasBrainClassifier Volume Mrml env tcl_platform EMSegment
    # ----------------------------------------------
@@ -2154,6 +2183,12 @@ proc EMAtlasBrainClassifier_SetVtkGenericClassSetting {EMVersionVariable vtkGene
 # .END
 #-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifier_SetVtkAtlasSuperClassSetting
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifier_SetVtkAtlasSuperClassSetting {EMVersionVariable SuperClass} {
   global Volume
   

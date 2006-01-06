@@ -1,37 +1,13 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 # 
-# This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors.
-# Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for  
-# research purposes only, provided that (1) the above copyright notice and 
-# the following four paragraphs appear on all copies of this software, and 
-# (2) that source code to any modifications to this software be made 
-# publicly available under terms no more restrictive than those in this 
-# License Agreement. Use of this software constitutes acceptance of these 
-# terms and conditions.
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
 # 
-# 3D Slicer Software has not been reviewed or approved by the Food and 
-# Drug Administration, and is for non-clinical, IRB-approved Research Use 
-# Only.  In no event shall data or images generated through the use of 3D 
-# Slicer Software be used in the provision of patient care.
-# 
-# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-# POSSIBILITY OF SUCH DAMAGE.
-# 
-# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-# NON-INFRINGEMENT.
-# 
-# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: Models.tcl,v $
+#   Date:      $Date: 2006/01/06 17:57:00 $
+#   Version:   $Revision: 1.69 $
 # 
 #===============================================================================
 # FILE:        Models.tcl
@@ -90,7 +66,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.68 $} {$Date: 2005/12/07 23:06:57 $}]
+            {$Revision: 1.69 $} {$Date: 2006/01/06 17:57:00 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -1319,7 +1295,9 @@ proc ModelsPickScalarsLut { parentButton } {
 # .END
 #-------------------------------------------------------------------------------
 proc ModelsSetScalarsLut { mid lutid {setDefault "true"} } {
-
+    if {$::Module(verbose)} {
+        puts "ModelsSetScalarsLut model = $mid, lut = $lutid"
+    }
 
     if { ![info exists ::Models($mid,defaultLut)] } {
         set ::Models($mid,defaultLut) 0
@@ -1333,12 +1311,26 @@ proc ModelsSetScalarsLut { mid lutid {setDefault "true"} } {
         set ::Models($mid,defaultLut) $lutid
     }
 
-    foreach r $::Module(Renderers) {
-        Model($mid,mapper,$r) SetLookupTable Lut($lutid,lut)
+    if {[info command Lut($lutid,lut)] == ""} {
+        DevWarningWindow "ModelsSetScalarsLut: no look up table for id $lutid!"
+        return
     }
 
+    foreach r $::Module(Renderers) {
+        if {$::Module(verbose)} {
+            puts "ModelsSetScalarsLut: setting lookup table for model $mid mapper $r to Lut($lutid,lut) (exists = [info command Lut($lutid,lut)]"
+        }
+        Model($mid,mapper,$r) SetLookupTable Lut($lutid,lut)
+    }
+    if {$::Module(verbose)} {
+        puts "ModelsSetScalarsLut: done setting lookup table for all renderers, saving the lut name in the model node now: \"$lutid\", model exists = [info command Model($mid,node)]"
+    }
     # save the lut id in the node
     Model($mid,node) SetLUTName $lutid
+
+    if {$::Module(verbose)} {
+        puts "ModelsSetScalarsLut: returning"
+    }
 }
 
 #-------------------------------------------------------------------------------

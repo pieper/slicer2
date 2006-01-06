@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,15 +32,28 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        IbrowserDisplayGUI.tcl
 # PROCEDURES:  
+#   IbrowserUpdateDisplayTab
 #   IbrowserBuildDisplayFrame
 #   IbrowserUpdateMainViewer
 #   IbrowserSlicesSetVolumeAll
 #   IbrowserSetIntervalParam
 #==========================================================================auto=
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateDisplayTab
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserUpdateDisplayTab { } {
+
+    set ::Ibrowser(currentTab) "Display"
+}
 
 
 #-------------------------------------------------------------------------------
@@ -53,6 +66,7 @@ proc IbrowserBuildDisplayFrame { } {
     global Gui Module Volume
 
     set fDisplay $::Module(Ibrowser,fDisplay)
+    bind $::Module(Ibrowser,bDisplay) <ButtonPress-1> "IbrowserUpdateDisplayTab"
     #--- initialize to save values that Volumes module starts with.
     
     set w $fDisplay
@@ -430,5 +444,4 @@ proc IbrowserSetIntervalParam { setThis { myparam -10} } {
     }        
     IbrowserLowerProgressBar
 }
-
 

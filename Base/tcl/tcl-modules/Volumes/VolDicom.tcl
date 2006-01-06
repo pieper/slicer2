@@ -1,29 +1,20 @@
 #=auto==========================================================================
-# (c) Copyright 2002 Massachusetts Institute of Technology
-#
-# Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for any purpose, 
-# provided that the above copyright notice and the following three paragraphs 
-# appear on all copies of this software.  Use of this software constitutes 
-# acceptance of these terms and conditions.
-#
-# IN NO EVENT SHALL MIT BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, 
-# INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE 
-# AND ITS DOCUMENTATION, EVEN IF MIT HAS BEEN ADVISED OF THE POSSIBILITY OF 
-# SUCH DAMAGE.
-#
-# MIT SPECIFICALLY DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTIES INCLUDING, 
-# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR 
-# A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-#
-# THE SOFTWARE IS PROVIDED "AS IS."  MIT HAS NO OBLIGATION TO PROVIDE 
-# MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. 
-#
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
+# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: VolDicom.tcl,v $
+#   Date:      $Date: 2006/01/06 17:57:04 $
+#   Version:   $Revision: 1.28 $
+# 
 #===============================================================================
 # FILE:        VolDicom.tcl
 # PROCEDURES:  
 #   VolDicomInit
 #   VolDicomBuildGUI
+#   DICOMLoadStudy
 #   AddListUnique
 #   DICOMFileNameTextBoxVisibleButton
 #   DICOMPreviewImageClick

@@ -1,3 +1,16 @@
+/*=auto=========================================================================
+
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkNRRDReader.cxx,v $
+  Date:      $Date: 2006/01/06 17:58:04 $
+  Version:   $Revision: 1.2 $
+
+=========================================================================auto=*/
 /*=========================================================================
 
   Program:   Visualization Toolkit
@@ -17,6 +30,7 @@
 #include <string>
 
 #include "vtkByteSwap.h"
+#include "vtkMath.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageData.h"
 
@@ -38,7 +52,7 @@ extern "C" {
 #include "teem/ten.h"
 }
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -78,7 +92,7 @@ vtkNRRDReader::~vtkNRRDReader()
 vtkMatrix4x4* vtkNRRDReader::GetRasToIjkMatrix()
 {
   this->ExecuteInformation();
-  return RasToIjkMatrix;
+  return this->RasToIjkMatrix;
 }
 
 vtkMatrix4x4* vtkNRRDReader::GetMeasurementFrameMatrix()
@@ -252,22 +266,22 @@ void vtkNRRDReader::ExecuteInformation()
 
    HeaderKeyValue.clear();
 
-   if (RasToIjkMatrix) {
-     RasToIjkMatrix->Delete();
+   if (this->RasToIjkMatrix) {
+     this->RasToIjkMatrix->Delete();
    }
-   RasToIjkMatrix = vtkMatrix4x4::New();
+   this->RasToIjkMatrix = vtkMatrix4x4::New();
    vtkMatrix4x4* IjkToRasMatrix = vtkMatrix4x4::New();
 
-   RasToIjkMatrix->Identity();
+   this->RasToIjkMatrix->Identity();
    IjkToRasMatrix->Identity();
 
-  if (MeasurementFrameMatrix) {
-     MeasurementFrameMatrix->Delete();
-  }
-  MeasurementFrameMatrix = vtkMatrix4x4::New();
-  MeasurementFrameMatrix->Identity();   
+   if (MeasurementFrameMatrix) {
+      MeasurementFrameMatrix->Delete();
+   }
+   MeasurementFrameMatrix = vtkMatrix4x4::New();
+   MeasurementFrameMatrix->Identity();   
 
-  if (nrrdTypeBlock == this->nrrd->type)
+   if (nrrdTypeBlock == this->nrrd->type)
     {
     vtkErrorMacro("ReadImageInformation: Cannot currently "
                       "handle nrrdTypeBlock");
@@ -545,15 +559,15 @@ void vtkNRRDReader::ExecuteInformation()
        for (int i=0; i < 3; i++) {
            IjkToRasMatrix->SetElement(i, 3, origin[i]);
        }
-       vtkMatrix4x4::Invert(IjkToRasMatrix, RasToIjkMatrix);
+       vtkMatrix4x4::Invert(IjkToRasMatrix, this->RasToIjkMatrix);
    } else {
-       vtkMatrix4x4::Invert(IjkToRasMatrix, RasToIjkMatrix);
+       vtkMatrix4x4::Invert(IjkToRasMatrix, this->RasToIjkMatrix);
        for (int i=0; i < 3; i++) {
-           RasToIjkMatrix->SetElement(i, 3, (dataExtent[2*i+1] - dataExtent[2*i])/2.0);
+           this->RasToIjkMatrix->SetElement(i, 3, (dataExtent[2*i+1] - dataExtent[2*i])/2.0);
        }
    }
   
-   RasToIjkMatrix->SetElement(3,3,1.0);
+   this->RasToIjkMatrix->SetElement(3,3,1.0);
    IjkToRasMatrix->Delete();
 
    this->SetDataSpacing(spacings);
@@ -577,9 +591,40 @@ void vtkNRRDReader::ExecuteInformation()
 
    if (AIR_EXISTS(this->nrrd->measurementFrame[0][0])) 
    {
-     for (int j=0;j<3;j++)
-       for (int i=0;i<3;i++)
-         MeasurementFrameMatrix->SetElement(i,j,this->nrrd->measurementFrame[i][j]);
+    for (int i=0;i<3;i++)
+      {
+       
+     switch (this->nrrd->space)
+      {
+            // on read, convert non-RAS coords into RAS coords, when we can
+          case nrrdSpaceRightAnteriorSuperior:
+            // no change needed
+            MeasurementFrameMatrix->SetElement(i,0,this->nrrd->measurementFrame[i][0]);
+            MeasurementFrameMatrix->SetElement(i,1,this->nrrd->measurementFrame[i][1]);
+            MeasurementFrameMatrix->SetElement(i,2,this->nrrd->measurementFrame[i][2]);
+          break;
+          case nrrdSpaceLeftAnteriorSuperior:
+           // L -> R
+            MeasurementFrameMatrix->SetElement(i,0,-this->nrrd->measurementFrame[i][0]);
+            MeasurementFrameMatrix->SetElement(i,1,this->nrrd->measurementFrame[i][1]);
+            MeasurementFrameMatrix->SetElement(i,2,this->nrrd->measurementFrame[i][2]); 
+            break;
+          case nrrdSpaceLeftPosteriorSuperior:
+           // L -> R
+           // P -> A
+            MeasurementFrameMatrix->SetElement(i,0,-this->nrrd->measurementFrame[i][0]);
+            MeasurementFrameMatrix->SetElement(i,1,-this->nrrd->measurementFrame[i][1]);
+            MeasurementFrameMatrix->SetElement(i,2,this->nrrd->measurementFrame[i][2]);            
+            break;
+          default:
+            // we're not coming from a space for which the conversion
+            // to LPS is well-defined
+            MeasurementFrameMatrix->SetElement(i,0,this->nrrd->measurementFrame[i][0]);
+            MeasurementFrameMatrix->SetElement(i,1,this->nrrd->measurementFrame[i][1]);
+            MeasurementFrameMatrix->SetElement(i,2,this->nrrd->measurementFrame[i][2]); 
+            break;
+      }
+      }
    }
    
    this->vtkImageReader2::ExecuteInformation();
@@ -698,7 +743,7 @@ void vtkNRRDReader::AllocatePointData(vtkImageData *out) {
   out->SetScalarType(this->DataType);
   pd->SetNumberOfComponents(this->GetNumberOfComponents());
 
-  // allocate enough memory
+  // allocate enough memors
   pd->SetNumberOfTuples((Extent[1] - Extent[0] + 1)*
                       (Extent[3] - Extent[2] + 1)*
                       (Extent[5] - Extent[4] + 1));
@@ -724,6 +769,53 @@ void vtkNRRDReader::AllocatePointData(vtkImageData *out) {
   pd->Delete();
 }
 
+int
+tenSpaceDirectionReduce(Nrrd *nout, const Nrrd *nin, double SD[9]) {
+  char me[]="tenSpaceDirectionReduce", err[BIFF_STRLEN];
+  double SDT[9], tenMeasr[9], tenSlice[9];
+  float *tdata;
+  size_t ii, nn;
+  unsigned int si, sj;
+  double det;
+  
+  if (!(nout && nin)) {
+    sprintf(err, "%s: got NULL pointer", me);
+    biffAdd(TEN, err); return 1;
+  }
+  if (tenTensorCheck(nin, nrrdTypeFloat, AIR_TRUE, AIR_TRUE)) {
+    sprintf(err, "%s: ", me);
+    biffAdd(TEN, err); return 1;
+  }
+  if (3 != nin->spaceDim) {
+    sprintf(err, "%s: input nrrd needs 3-D (not %u-D) space dimension",
+            me, nin->spaceDim);
+    biffAdd(TEN, err); return 1;
+  }
+  if (!ELL_3M_EXISTS(SD)) {
+    sprintf(err, "%s: 3x3 space direction doesn't exist", me);
+    biffAdd(TEN, err); return 1;
+  }
+
+  //ELL_3M_INV(SD, SDINV, det);
+  ELL_3M_TRANSPOSE(SDT, SD);
+
+  if (nout != nin) {
+    if (nrrdCopy(nout, nin)) {
+      sprintf(err, "%s: trouble with initial copy", me);
+      biffAdd(TEN, err); return 1;
+    }
+  }
+  nn = nrrdElementNumber(nout)/nout->axis[0].size;
+  tdata = (float*)(nout->data);
+  for (ii=0; ii<nn; ii++) {
+    TEN_T2M(tenMeasr, tdata);
+    ell_3m_mul_d(tenSlice, SD, tenMeasr);
+    ell_3m_mul_d(tenSlice, tenSlice, SDT);
+    TEN_M2T_TT(tdata, float, tenSlice);
+    tdata += 7;
+  }
+  return 0;
+}
 
 
 //----------------------------------------------------------------------------
@@ -835,23 +927,23 @@ void vtkNRRDReader::ExecuteData(vtkDataObject *output)
      || nrrdKind3DSymMatrix == this->nrrd->axis[0].kind) {
 
        if (nrrdKind3DSymMatrix == this->nrrd->axis[0].kind) {
-     // we pad on a constant value 1 mask, then 
-     ptrdiff_t minIdx[4], maxIdx[4];
-     Nrrd *ntmp = nrrdNew();
-     minIdx[0] = -1;
-     minIdx[1] = minIdx[2] = minIdx[3] = 0;
-     maxIdx[0] = static_cast<ptrdiff_t>(this->nrrd->axis[0].size - 1);
-     maxIdx[1] = static_cast<ptrdiff_t>(this->nrrd->axis[1].size - 1);
-     maxIdx[2] = static_cast<ptrdiff_t>(this->nrrd->axis[2].size - 1);
-     maxIdx[3] = static_cast<ptrdiff_t>(this->nrrd->axis[3].size - 1);
-     if (nrrdCopy(ntmp, this->nrrd)
-         || nrrdPad_nva(this->nrrd, ntmp, minIdx, maxIdx,
-                nrrdBoundaryPad, 1.0)) {
-       char *err =  biffGetDone(NRRD); // would be nice to free(err)
-       vtkErrorMacro("Read: Error padding on conf mask in " 
-             << this->GetFileName() << ":\n" << err);
-       return;
-     }
+         // we pad on a constant value 1 mask, then 
+         ptrdiff_t minIdx[4], maxIdx[4];
+         Nrrd *ntmp = nrrdNew();
+         minIdx[0] = -1;
+         minIdx[1] = minIdx[2] = minIdx[3] = 0;
+         maxIdx[0] = static_cast<ptrdiff_t>(this->nrrd->axis[0].size - 1);
+         maxIdx[1] = static_cast<ptrdiff_t>(this->nrrd->axis[1].size - 1);
+         maxIdx[2] = static_cast<ptrdiff_t>(this->nrrd->axis[2].size - 1);
+         maxIdx[3] = static_cast<ptrdiff_t>(this->nrrd->axis[3].size - 1);
+         if (nrrdCopy(ntmp, this->nrrd)
+             || nrrdPad_nva(this->nrrd, ntmp, minIdx, maxIdx,
+                    nrrdBoundaryPad, 1.0)) {
+           char *err =  biffGetDone(NRRD); // would be nice to free(err)
+           vtkErrorMacro("Read: Error padding on conf mask in " 
+                 << this->GetFileName() << ":\n" << err);
+           return;
+         }
        }
 
        const char *key;
@@ -865,15 +957,30 @@ void vtkNRRDReader::ExecuteData(vtkDataObject *output)
        if (!E) E |= nrrdCopy(ntmp, this->nrrd);
        if (!E) key = TEN;
        if (!E && AIR_EXISTS(ntmp->measurementFrame[0][0])) {
-     // scan order-specific logic to tweak measurement frame goes here
-     E |= tenMeasurementFrameReduce(ntmp, ntmp);
+         // scan order-specific logic to tweak measurement frame goes here
+         
+         double RasToVTK[9];
+         int iii, jjj;
+         for (iii = 0; iii < 3; iii++) {
+            for (jjj = 0; jjj < 3; jjj++) {
+                RasToVTK[iii*3+jjj] = this->RasToIjkMatrix->GetElement(iii,jjj);
+            }
+            vtkMath::Normalize(RasToVTK+iii*3);
+         }
+         for (iii = 0; iii < 3; iii++) {
+            // famous Y flip -- to get RasToVtk
+            RasToVTK[3+iii] *= -1.;
+         }
+
+         E |= tenMeasurementFrameReduce(ntmp, ntmp);
+         E |= tenSpaceDirectionReduce(ntmp, ntmp, RasToVTK);
        }
        if (!E) E |= tenExpand(this->nrrd, ntmp, 1, -1);
        if (E) {
-     char *err =  biffGetDone(key); // would be nice to free(err)
-     vtkErrorMacro("Read: Error copying, crapping or cropping:\n"
-               << err);
-     return;
+         char *err =  biffGetDone(key); // would be nice to free(err)
+         vtkErrorMacro("Read: Error copying, crapping or cropping:\n"
+                   << err);
+         return;
        }
        nrrdNuke(ntmp);
      }
@@ -887,9 +994,8 @@ void vtkNRRDReader::ExecuteData(vtkDataObject *output)
 
      // release the memory while keeping the struct
      nrrdEmpty(nrrd);     
-     
-     cout<<"Reader done"<<endl;
 }
+
 
 //----------------------------------------------------------------------------
 void vtkNRRDReader::PrintSelf(ostream& os, vtkIndent indent)

@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,16 +32,18 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        IbrowserLoadGUI.tcl
 # PROCEDURES:  
+#   IbrowserUpdateNewTab
 #   IbrowserBuildUIForImport
 #   IbrowserBuildUIForAppend
 #   IbrowserBuildUIForAssemble
 #   IbrowserAssembleSequence
 #   IbrowserAssembleSequenceFromFiles
 #   IbrowserAssembleSequenceFromSequences
+#   IbrowserUpdateMultiVolumeReader
 #   IbrowserAssembleSequenceFromVolumes
 #   IbrowserCancelAssembleSequence
 #   IbrowserAddVolumeToSequenceList
@@ -58,6 +60,7 @@ proc IbrowserBuildLoadFrame { } {
     
 
     set fNew $::Module(Ibrowser,fNew)
+    bind $::Module(Ibrowser,bNew) <ButtonPress-1> "IbrowserUpdateNewTab"
     set f $fNew
     #---------------------------------------------------------------
     #--- fNew (packer)
@@ -72,20 +75,49 @@ proc IbrowserBuildLoadFrame { } {
     #------------------------------
     set f $fNew.fOption
 
-    #---WJP comment out tabs during development
-    Notebook:create $f.fNotebook \
-        #-pages {Load Assemble Append Import} \
-        -pages {Load Assemble} \
-        -pad 2 \
-        -bg $Gui(activeWorkspace) \
-        -height 300 \
-        -width 240
-    pack $f.fNotebook -fill both -expand 1
-    #--- Load or construct a sequence from disk
-    set w [ Notebook:frame $f.fNotebook Load ]
-    IbrowserBuildUIForLoad $w
-    set w [ Notebook:frame $f.fNotebook Assemble ]
-    IbrowserBuildUIForAssemble $w
+
+    #---
+    #--- create notebook frames for stages of keyframe interpolation
+    if { [catch "package require BLT" ] } {
+        DevErrorWindow "Must have the BLT package installed to generate keyframe registration interface."
+        return
+    }
+    
+    #--- create blt notebook
+    blt::tabset $f.tsNotebook -relief flat -borderwidth 0
+    pack $f.tsNotebook -side top
+
+    #--- notebook configure
+    $f.tsNotebook configure -width 250
+    $f.tsNotebook configure -height 340
+    $f.tsNotebook configure -background $::Gui(activeWorkspace)
+    $f.tsNotebook configure -activebackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -selectbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -tabbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -highlightbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -highlightcolor $::Gui(activeWorkspace)
+    $f.tsNotebook configure -foreground black
+    $f.tsNotebook configure -activeforeground black
+    $f.tsNotebook configure -selectforeground black
+    $f.tsNotebook configure -tabforeground black
+    $f.tsNotebook configure -relief flat
+    $f.tsNotebook configure -tabrelief raised
+
+    #--- tab configure
+    set i 0
+    foreach t "Load Assemble" {
+        $f.tsNotebook insert $i $t
+        frame $f.tsNotebook.f$t -bg $Gui(activeWorkspace) -bd 2
+        IbrowserBuildUIFor${t} $f.tsNotebook.f$t
+
+        $f.tsNotebook tab configure $t -window $f.tsNotebook.f$t 
+        $f.tsNotebook tab configure $t -activebackground $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -selectbackground $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -background $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -fill both -padx $::Gui(pad) -pady $::Gui(pad)
+        incr i
+    }
+
     #--- WJP comment out during development
     #set w [ Notebook:frame $f.fNotebook Append ]
     #IbrowserBuildUIForAppend $w
@@ -104,8 +136,19 @@ proc IbrowserBuildLoadFrame { } {
     eval {label $f.lLogoImages -width 200 -height 45 \
               -image $uselogo -justify center} $Gui(BLA)
     pack $f.lLogoImages -side bottom -padx 2 -pady 1 -expand 0
-
 }
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateNewTab
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserUpdateNewTab { } {
+
+    set ::Ibrowser(currentTab) "New"
+}
+
 
 
 
@@ -396,6 +439,33 @@ proc IbrowserAssembleSequenceFromFiles { } {
 proc IbrowserAssembleSequenceFromSequences { } {
 }
 
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateMultiVolumeReader
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserUpdateMultiVolumeReader { iname iid } {
+
+    #--- register the sequence with the MultiVolumeReader so fMRIEngine can see the sequence
+    lappend ::MultiVolumeReader(sequenceNames) $iname
+    set ::MultiVolumeReader($iname,noOfVolumes) $::Ibrowser($iid,numDrops)
+    set ::MultiVolumeReader($iname,firstMRMLid) $::Ibrowser($iid,firstMRMLid)
+    set ::MultiVolumeReader($iname,lastMRMLid) $::Ibrowser($iid,lastMRMLid)
+    set id $::Ibrowser($iid,firstMRMLid)
+    #--- assuming that all volumes in the interval contain the same extent.
+    set ::MultiVolumeReader($iname,volumeExtent) [ [ ::Volume($id,vol) GetOutput ] GetExtent ]
+    set ::MultiVolumeReader(sequenceName) ""
+    set ::MultiVolumeReader(filter) ""
+    set ::Volume(name) ""
+    
+}
+
+
+
+
 #-------------------------------------------------------------------------------
 # .PROC IbrowserAssembleSequenceFromVolumes
 # 
@@ -409,11 +479,19 @@ proc IbrowserAssembleSequenceFromVolumes { } {
         DevErrorWindow "No volumes have been selected."
         return
     }
-    #--- get the interval started
+
+    #--- register this with the multiVolumeReader so fMRIEngine can see sequence
     set ivalID $::Ibrowser(uniqueNum)
-    set ::Ibrowser(loadVol,name) [format "assembleVol%d" $ivalID]
+    if { [info exists ::MultiVolumeReader(defaultSequenceName)] } {
+        incr ::MultiVolumeReader(defaultSequenceName)
+    } else {
+        set ::MultiVolumeReader(defaultSequenceName) 1
+    }
+
+    #--- get the interval started
+    set mmID $::MultiVolumeReader(defaultSequenceName)
+    set ::Ibrowser(loadVol,name) [format "multiVol%d" $mmID]
     set iname $::Ibrowser(loadVol,name)
-    #lappend $::MultiVolumeReader(sequenceNames) $iname
     set ::Ibrowser($ivalID,name) $iname
     set ::Ibrowser($iname,intervalID) $ivalID
 
@@ -452,6 +530,9 @@ proc IbrowserAssembleSequenceFromVolumes { } {
         set spanmax [ expr $numVols - 1 ]
         IbrowserMakeNewInterval $iname $::IbrowserController(Info,Ival,imageIvalType) \
             0.0 $spanmax $numVols
+
+        #--- update multivolumereader to reflect this multi-volume sequence
+        IbrowserUpdateMultiVolumeReader $iname $ivalID
     }
 
     #--- empty assembleList
@@ -595,7 +676,7 @@ proc IbrowserMultiVolumeReaderBuildGUI {parent {status 0}} {
     pack $f.fSingle $f.fMultiple $f.fName -side top -pady 1
 
    set f $parent.fReaderConfig.fFile.fSingle
-    eval {radiobutton $f.r1 -width 23 -text {Load a single file} \
+    eval {radiobutton $f.r1 -width 27 -text {Load a single file} \
         -variable MultiVolumeReader(fileChoice) -value single \
         -relief flat -offrelief flat -overrelief raised \
         -selectcolor white} $Gui(WEA)
@@ -608,7 +689,7 @@ proc IbrowserMultiVolumeReaderBuildGUI {parent {status 0}} {
         -selectcolor white} $Gui(WEA)
 
     DevAddLabel $f.lFilter " Filter:"
-    eval {entry $f.eFilter -width 24 \
+    eval {entry $f.eFilter -width 25 \
         -textvariable MultiVolumeReader(filter)} $Gui(WEA)
 
     #The "sticky" option aligns items to the left (west) side
@@ -636,13 +717,15 @@ proc IbrowserMultiVolumeReaderBuildGUI {parent {status 0}} {
 
     set f $parent.fReaderConfig.fStatus
     frame $f.fVName -bg $Gui(activeWorkspace)
-    pack $f.fVName  -pady 2
-    set f $f.fVName
-    DevAddLabel $f.lVName "loading volume:"
+    pack $f.fVName  -pady 5
+    set f $f.fVName 
+    DevAddLabel $f.lVName1 "volume:"
+
     set Volume(name) ""
-    eval { label $f.lvolname -width 30 -bg $::Gui(activeWorkspace) \
-        -textvariable Volume(name)}
-    pack $f.lVName $f.lvolname -side top -padx $Gui(pad) -pady 2 
+    eval {label $f.lVName2 -width 30 -relief flat \
+        -textvariable Volume(name) } $Gui(WEA)
+
+    pack $f.lVName1 $f.lVName2 -side left -padx $Gui(pad) -pady 0 
 
     # The Navigate frame
     set f $parent.fVolumeNav
@@ -789,11 +872,9 @@ proc IbrowserMultiVolumeReaderLoad { status } {
     set first $::MultiVolumeReader(firstMRMLid)
     set last $::MultiVolumeReader(lastMRMLid)
 
-    set k [llength $::MultiVolumeReader(sequenceNames)]
-    set indx [expr $k-1]
-    set iname [lindex $::MultiVolumeReader(sequenceNames) $indx ]
-    set ::Ibrowser(loadVol,name) $iname
-    set ::Ibrowser(loadVol,name) [format "%s-%d" $::Ibrowser(loadVol,name) $id]
+    set mmID $::MultiVolumeReader(defaultSequenceName)
+    set ::Ibrowser(loadVol,name) [format "multiVol%d" $mmID]
+    set iname $::Ibrowser(loadVol,name)
     
     set vcount 0
     #--- give ibrowser a way to refer to each vol
@@ -802,7 +883,7 @@ proc IbrowserMultiVolumeReaderLoad { status } {
     for {set i $first } { $i <= $last } { incr i } {
         set ::Ibrowser($id,$vcount,MRMLid) $i
         set old [ ::Volume($i,node) GetName ]
-        ::Volume($i,node) SetName ${old}_{$iname}
+        ::Volume($i,node) SetName ${old}_${iname}
         incr vcount
     }
 
@@ -814,9 +895,10 @@ proc IbrowserMultiVolumeReaderLoad { status } {
     set spanmax [ expr $m - 1 ]
     IbrowserMakeNewInterval $iname $::IbrowserController(Info,Ival,imageIvalType) 0.0 $spanmax $m
         #--- for feeback...
-    set ::Volume(VolAnalyze,FileName) ""
     set ::Volume(name) ""
+    set ::Volume(VolAnalyze,FileName) ""
     IbrowserUpdateMRML
     set ::Ibrowser(BGInterval) $id
     IbrowserSelectBGIcon $id $::IbrowserController(Icanvas)
 }
+

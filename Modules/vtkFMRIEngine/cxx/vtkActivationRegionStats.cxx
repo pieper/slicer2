@@ -1,38 +1,14 @@
 /*=auto=========================================================================
 
-(c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 
-This software ("3D Slicer") is provided by The Brigham and Women's 
-Hospital, Inc. on behalf of the copyright holders and contributors.
-Permission is hereby granted, without payment, to copy, modify, display 
-and distribute this software and its documentation, if any, for  
-research purposes only, provided that (1) the above copyright notice and 
-the following four paragraphs appear on all copies of this software, and 
-(2) that source code to any modifications to this software be made 
-publicly available under terms no more restrictive than those in this 
-License Agreement. Use of this software constitutes acceptance of these 
-terms and conditions.
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
 
-3D Slicer Software has not been reviewed or approved by the Food and 
-Drug Administration, and is for non-clinical, IRB-approved Research Use 
-Only.  In no event shall data or images generated through the use of 3D 
-Slicer Software be used in the provision of patient care.
-
-IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-POSSIBILITY OF SUCH DAMAGE.
-
-THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-NON-INFRINGEMENT.
-
-THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkActivationRegionStats.cxx,v $
+  Date:      $Date: 2006/01/06 17:57:35 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 
@@ -49,6 +25,8 @@ vtkStandardNewMacro(vtkActivationRegionStats);
 vtkActivationRegionStats::vtkActivationRegionStats()
 {
     this->RegionVoxels = NULL; 
+    this->SignalChanges = NULL;
+
     this->Label = 0;
     this->Count = 0;
 }
@@ -60,23 +38,22 @@ vtkActivationRegionStats::~vtkActivationRegionStats()
     {
         this->RegionVoxels->Delete();
     }
-}
 
-
-vtkFloatArray *vtkActivationRegionStats::GetRegionVoxels()
-{
-    return this->RegionVoxels;
+    if (this->SignalChanges != NULL)
+    {
+        this->SignalChanges->Delete();
+    }
 }
 
 
 void vtkActivationRegionStats::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
 {
-    if (this->NumberOfInputs != 2)
+    if (this->NumberOfInputs != 3)
     {
-        vtkErrorMacro( << "This filter can only accept two input images.");
+        vtkErrorMacro( << "This filter can only accept three input images.");
         return;
     }
-    // this->NumberOfInputs == 2
+    // this->NumberOfInputs == 3 
     else
     {
         int dim[3];  
@@ -93,10 +70,21 @@ void vtkActivationRegionStats::SimpleExecute(vtkImageData *inputs, vtkImageData*
         int *y = new int[size];
         int *z = new int[size];
 
-        // Number of inputs == 2 means we are going to compute stats 
-        // for t volume: the first volume is the label map volume and 
-        // and the second is the t volume.
+        int len = (this->GetInput(2)->GetNumberOfScalarComponents() - 2) / 2;
+        double *signalChanges = new double [len];
+        for (int d = 0; d < len; d++) {
+            signalChanges[d] = 0.0; // initialization 
+        }
+
+        // Number of inputs == 3 means we are going to compute stats 
+        // for t volume: 
+        // the first volume - the label map volume 
+        // the second volume - the t volume
+        // the third volume - the beta volume
         int indx = 0;
+        int index2 = 0;
+        vtkDataArray *betas = this->GetInput(2)->GetPointData()->GetScalars();
+
         // Voxel iteration through the entire image volume
         for (int kk = 0; kk < dim[2]; kk++)
         {
@@ -113,7 +101,15 @@ void vtkActivationRegionStats::SimpleExecute(vtkImageData *inputs, vtkImageData*
 
                         float *tv = (float *)this->GetInput(1)->GetScalarPointer(ii, jj, kk);
                         t[indx++] = *tv;
+
+                        // get % signal changes
+                        int yy = len + 2;
+                        for (int d = 0; d < len; d++) {
+                            signalChanges[d] += betas->GetComponent(index2, yy++);
+                        }
                     }
+                     
+                    index2++;
                 }
             } 
         }
@@ -135,6 +131,7 @@ void vtkActivationRegionStats::SimpleExecute(vtkImageData *inputs, vtkImageData*
 
             // create the output image
             output->SetWholeExtent(0, this->Count-1, 0, 0, 0, 0);
+            output->SetExtent(0, this->Count-1, 0, 0, 0, 0);
             output->SetScalarType(VTK_FLOAT);
             output->SetOrigin(this->GetInput(0)->GetOrigin());
             output->SetSpacing(this->GetInput(0)->GetSpacing());
@@ -150,12 +147,22 @@ void vtkActivationRegionStats::SimpleExecute(vtkImageData *inputs, vtkImageData*
                 // since the former handles memory allocation if needed.
                 this->RegionVoxels->InsertTuple4(i, x[i], y[i], z[i], t[i]);
             }
+
+            // get average % signal changes
+            this->SignalChanges = vtkFloatArray::New();
+            this->SignalChanges->SetNumberOfTuples(len);
+            this->SignalChanges->SetNumberOfComponents(1);
+            for (int d = 0; d < len; d++) {
+                signalChanges[d] /= indx; 
+                this->SignalChanges->SetComponent(d, 0, signalChanges[d]);
+            }
         }
 
         delete [] t;
         delete [] x;
         delete [] y;
         delete [] z;
+        delete [] signalChanges;
     }
 } 
 
@@ -166,9 +173,15 @@ void vtkActivationRegionStats::ExecuteInformation(vtkImageData *input, vtkImageD
 {
     this->vtkSimpleImageToImageFilter::ExecuteInformation();
 
-    if (this->NumberOfInputs == 2 && this->Count > 0)
+    if (this->NumberOfInputs == 3 && this->Count > 0)
     {
+        int dim[3];  
+        dim[0] = this->Count;
+        dim[1] = 1;
+        dim[2] = 1;
+        output->SetDimensions(dim);
         output->SetWholeExtent(0, this->Count-1, 0, 0, 0, 0);
+        output->SetExtent(0, this->Count-1, 0, 0, 0, 0);
         output->SetScalarType(VTK_FLOAT);
         output->SetOrigin(this->GetInput(0)->GetOrigin());
         output->SetSpacing(this->GetInput(0)->GetSpacing());

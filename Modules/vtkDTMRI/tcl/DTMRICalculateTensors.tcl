@@ -1,43 +1,20 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
-# This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
-# Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
-# research purposes only, provided that (1) the above copyright notice and 
-# the following four paragraphs appear on all copies of this software, and 
-# (2) that source code to any modifications to this software be made 
-# publicly available under terms no more restrictive than those in this 
-# License Agreement. Use of this software constitutes acceptance of these 
-# terms and conditions.
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 # 
-# 3D Slicer Software has not been reviewed or approved by the Food and 
-# Drug Administration, and is for non-clinical, IRB-approved Research Use 
-# Only.  In no event shall data or images generated through the use of 3D 
-# Slicer Software be used in the provision of patient care.
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
 # 
-# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-# POSSIBILITY OF SUCH DAMAGE.
+#   Program:   3D Slicer
+#   Module:    $RCSfile: DTMRICalculateTensors.tcl,v $
+#   Date:      $Date: 2006/01/06 17:57:27 $
+#   Version:   $Revision: 1.36 $
 # 
-# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-# NON-INFRINGEMENT.
-# 
-# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-# 
-#
 #===============================================================================
 # FILE:        DTMRICalculateTensors.tcl
 # PROCEDURES:  
 #   DTMRICalculateTensorsInit
 #   DTMRICalculateTensorsBuildGUI
+#   DTMRIConvertUpdate
 #   ShowPatternFrame
 #   DTMRIDisplayScrollBar module tab
 #   DTMRICreatePatternSlice
@@ -46,7 +23,10 @@
 #   DTMRIUpdateTipsPattern
 #   DTMRIViewProps
 #   ConvertVolumeToTensors
+#   DTMRICreateNewNode node:
+#   DTMRICreateNewNode refnode voldata name description
 #   DTMRICreateNewVolume volume name desc scanOrder
+#   DTMRIComputeRasToIjkFromCorners refnode volid: extent:
 #==========================================================================auto=
 
 
@@ -65,7 +45,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.35 $} {$Date: 2005/12/13 23:36:11 $}]
+                                 {$Revision: 1.36 $} {$Date: 2006/01/06 17:57:27 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -318,18 +298,45 @@ proc DTMRICalculateTensorsBuildGUI {} {
     DevAddLabel $f.lIni "Gradient Ordering scheme:"
     pack $f.lIni -side top -pady 2
 
-    Notebook:create $f.fNotebook \
-                    -pages {{Slice Interleav.} {Volume Interleav.}} \
-                    -pad 2 \
-                    -bg $Gui(activeWorkspace) \
-                    -height 325 \
-                    -width 240
+    if { [catch "package require BLT" ] } {
+        DevErrorWindow "Must have the BLT package to create GUI."
+        return
+    }
+
+    #--- create blt notebook
+    blt::tabset $f.fNotebook -relief flat -borderwidth 0
     pack $f.fNotebook -fill both -expand 1
+
+    #--- notebook configure
+    $f.fNotebook configure -width 250
+    $f.fNotebook configure -height 335
+    $f.fNotebook configure -background $::Gui(activeWorkspace)
+    $f.fNotebook configure -activebackground $::Gui(activeWorkspace)
+    $f.fNotebook configure -selectbackground $::Gui(activeWorkspace)
+    $f.fNotebook configure -tabbackground $::Gui(activeWorkspace)
+    $f.fNotebook configure -foreground black
+    $f.fNotebook configure -activeforeground black
+    $f.fNotebook configure -selectforeground black
+    $f.fNotebook configure -tabforeground black
+    $f.fNotebook configure -relief flat
+    $f.fNotebook configure -tabrelief raised     
+    $f.fNotebook configure -highlightbackground $::Gui(activeWorkspace)
+    $f.fNotebook configure -highlightcolor $::Gui(activeWorkspace) 
+        #--- tab configure
+    set i 0
+    foreach name "{Slice Interleav.} {Volume Interleav.}" t "SliceInterleav VolumeInterleav" {
+        $f.fNotebook insert $i $name
+        frame $f.fNotebook.f$t -bg $Gui(activeWorkspace) -bd 2
+        $f.fNotebook tab configure $name -window $f.fNotebook.f$t  \
+            -fill both -padx $::Gui(pad) -pady $::Gui(pad)
+        incr i
+    } 
+
 
     set f $fConvert.fPattern.fNotebook
 
-    set FrameCont [Notebook:frame $f {Slice Interleav.}] 
-    set FrameInter [Notebook:frame $f {Volume Interleav.}]
+    set FrameCont $f.fSliceInterleav 
+    set FrameInter $f.fVolumeInterleav
 
     foreach Page "$FrameCont $FrameInter" {   
 
@@ -509,6 +516,12 @@ proc DTMRICalculateTensorsBuildGUI {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC DTMRIConvertUpdate
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc DTMRIConvertUpdate {} {
   global DTMRI Volume Module
   

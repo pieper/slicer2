@@ -1,4 +1,15 @@
 #=auto==========================================================================
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
+# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: LevelSets.tcl,v $
+#   Date:      $Date: 2006/01/06 17:57:56 $
+#   Version:   $Revision: 1.36 $
+# 
+#===============================================================================
 # FILE:        LevelSets.tcl
 # PROCEDURES:  
 #   LevelSetsInit
@@ -173,7 +184,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.35 $} {$Date: 2005/12/14 17:53:40 $}]
+        {$Revision: 1.36 $} {$Date: 2006/01/06 17:57:56 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -540,7 +551,7 @@ proc LevelSetsBuildInitFrame {} {
 
     # Parameters->FidPoints Frame
     frame $fch0.fFidPoints      -bg $Gui(activeWorkspace) -relief groove -bd 1
-    FiducialsAddActiveListFrame $fch0.fFidPoints 7 10 "LevelSets-seed"
+    FiducialsAddActiveListFrame $fch0.fFidPoints 275 10 "LevelSets-seed"
 
     pack $fch0.fRadius $fch0.fFidPoints      -side top -padx 0 -pady 1 -fill x -expand true
 

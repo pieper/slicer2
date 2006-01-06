@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,11 +32,13 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        IbrowserSmooth.tcl
 # PROCEDURES:  
+#   IbrowserUpdateSmoothGUI
 #   IbrowserCancelSmoothSequence
+#   IbrowserHelpSmooth
 #==========================================================================auto=
 
 proc IbrowserBuildSmoothGUI { f master } {
@@ -52,6 +54,16 @@ proc IbrowserBuildSmoothGUI { f master } {
     set ::Ibrowser(Process,Smooth,is_FWHM) 4.0
     set ::Ibrowser(Process,Smooth,ap_FWHM) 4.0
     
+    #--- create menu buttons and associated menus...
+    frame $f.fOverview -bg $Gui(activeWorkspace) -bd 2
+    pack $f.fOverview -side top
+    
+    set ff $f.fOverview
+    DevAddButton $ff.bHelp "?" "IbrowserHelpSmooth" 2 
+    eval { label $ff.lOverview -text \
+               "Spatially smooths selected volume." } $Gui(WLA)
+    grid $ff.bHelp $ff.lOverview -pady 1 -padx 1 -sticky w
+
     frame $f.fSpace -bg $::Gui(activeWorkspace) -bd 2 
     eval { label $f.fSpace.lSpace -text "       " } $Gui(WLA)
     pack $f.fSpace -side top 
@@ -70,8 +82,10 @@ proc IbrowserBuildSmoothGUI { f master } {
             -command "IbrowserSetActiveInterval $i"
     }
 
-    set ::Ibrowser(Process,Smooth,mbIntervals) $f.fSelectInterval.mbIntervals
     set ::Ibrowser(Process,Smooth,mIntervals) $f.fSelectInterval.mbIntervals.m
+    set ::Ibrowser(Process,Smooth,mbIntervals) $f.fSelectInterval.mbIntervals
+    bind $::Ibrowser(Process,Smooth,mbIntervals) <ButtonPress-1> "IbrowserUpdateSmoothGUI"
+    
     pack $f.fSelectInterval.lText -pady 2 -padx 2 -anchor w
     pack $f.fSelectInterval.mbIntervals -pady 2 -padx 2 -anchor w
     
@@ -111,6 +125,28 @@ proc IbrowserBuildSmoothGUI { f master } {
 }
 
 
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateSmoothGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserUpdateSmoothGUI { } {
+
+    if { [info exists ::Ibrowser(Process,Smooth,mIntervals) ] } {
+        set m $::Ibrowser(Process,Smooth,mIntervals)
+        $m delete 0 end
+        foreach id $::Ibrowser(idList) {
+            $m add command -label $::Ibrowser($id,name)  \
+                -command "IbrowserSetActiveInterval $id"
+        }
+    }
+}
+
+
+
 #-------------------------------------------------------------------------------
 # .PROC IbrowserCancelSmoothSequence
 # 
@@ -122,6 +158,7 @@ proc IbrowserCancelSmoothSequence { } {
     #--- revert to default values.
     set ::Ibrowser(Process,Smooth,rl_FWHM) 4.0
     set ::Ibrowser(Process,Smooth,is_FWHM) 4.0
+    set ::Ibrowser(Process,Smooth,ap_FWHM) 4.0
 }
 
 
@@ -134,24 +171,48 @@ proc IbrowserSmoothSequence { } {
 
     set rl_fwhm $::Ibrowser(Process,Smooth,rl_FWHM)
     set is_fwhm $::Ibrowser(Process,Smooth,is_FWHM)
+    set ap_fwhm $::Ibrowser(Process,Smooth,ap_FWHM)
+
     #--- arbitrary acceptible mm range for filter FWHM
     set max 100.0
-    set min 0.1
+    set min 0.0
+    set rl_off 0
+    set is_off 0
+    set ap_off 0
+    
     #--- check for valid filter values.
     if { $rl_fwhm < $min } {
-        DevErrorWindow "Value for R/L FWHM must be greater than $min mm."
+        DevErrorWindow "FWHM values must be non-negative."
         return
+    } elseif { $rl_fwhm == $min } {
+        set rl_off 1
     } elseif { $rl_fwhm > $max } {
         DevErrorWindow "Value for R/L FWHM must be less than $max mm."
         return
     } 
     if { $is_fwhm < $min } {
-        DevErrorWindow "Value for I/S FWHM must be greater than $min"
+        DevErrorWindow "FWHM values must be non-negative."
         return
+    } elseif { $is_fwhm == $min } {
+        set is_off 1
     } elseif { $is_fwhm > $max } {
         DevErrorWindow "Value for I/S FWHM must be less than $max mm."
         return
     } 
+    if { $ap_fwhm < $min } {
+        DevErrorWindow "FWHM values must be non-negative."
+        return
+    } elseif { $ap_fwhm == $min } {
+        set ap_off 1
+    } elseif { $ap_fwhm > $max } {
+        DevErrorWindow "Value for A/P FWHM must be less than $max mm."
+        return
+    } 
+    if { $rl_off && $is_off && $ap_off } {
+        DevErrorWindow "Specify a valid kernel FWHM along at least one dimension."
+        return
+    }
+
     #--- if no interval is selected...
     if { $::Ibrowser(activeInterval) == $::Ibrowser(none,intervalID) } {
         DevErrorWindow "Please select an interval to smooth."
@@ -162,7 +223,7 @@ proc IbrowserSmoothSequence { } {
 
     #--- get the destination interval started
     set dstID $::Ibrowser(uniqueNum)
-    set ::Ibrowser(loadVol,name) [format "imageData-%d" $dstID]
+    set ::Ibrowser(loadVol,name) [format "multiVol%d" $dstID]
     set dstName $::Ibrowser(loadVol,name)
     set ::Ibrowser($dstID,name) $dstName
     set ::Ibrowser($dstName,intervalID) $dstID
@@ -185,21 +246,76 @@ proc IbrowserSmoothSequence { } {
         lappend newnodeList  $node 
     }
 
-    #--- create 2D gaussian filter
+    #--- check for gantry tilt.
+    set gantrytilt 0
+    for { set n 0 } { $n < $numVols } { incr n } {
+        set vid $::Ibrowser($srcID,$n,MRMLid)
+        set tilt [ ::Volume($vid,node) GetTilt ]
+        if { $tilt } {
+            set gantrytilt 1
+        }
+    }
+    if { $gantrytilt } {
+        DevErrorWindow "Smoothing will not work for volumes with non-zero gantry tilt."
+        return
+    }
+
+    #--- create 3D gaussian filter
     vtkImageGaussianSmooth gaussian
-    gaussian SetDimensionality 2
+    gaussian SetDimensionality 3
 
     #--- for each new data volume
+    set pcount 0
     for { set n 0 } { $n < $numVols } { incr n } {
         set dstnode [ lindex $newnodeList $n ]
         set dstnodeID [ $dstnode GetID ]
 
-        #--- set the source volume
-        set vid $firstVolID
-        gaussian SetInput  [ ::Volume($vid,vol) GetOutput ]
-        set imdata [ gaussian GetOutput ]
-        $imdata Update
+        if { $numVols != 0 } {
+            set progress [ expr double ( $pcount ) / double ( $numVols ) ]
+            IbrowserUpdateProgressBar $progress "::"
+            IbrowserPrintProgressFeedback
+        }
 
+        #--- set the source volume
+        set vid $::Ibrowser($srcID,$n,MRMLid)
+
+        #--- translate filter dimensions to VTK space
+        set newvec [ IbrowserGetRasToVtkAxis RL ::Volume($vid,node) ]
+        #--- unpack the vector into x, y and z
+        foreach { x y z } $newvec { }
+        #--- set the appropriate parameters
+        if { ($x == 1) || ($x == -1) } {
+            set vtk_rl_fwhm $rl_fwhm
+        } elseif { ($y == 1) || ( $y == -1) } {
+            set vtk_is_fwhm $rl_fwhm
+        } elseif { ($z == 1) || ($z == -1) } {
+            set vtk_ap_fwhm $rl_fwhm
+        }
+        set newvec [ IbrowserGetRasToVtkAxis AP ::Volume($vid,node) ]
+        #--- unpack the vector into x, y and z
+        foreach { x y z } $newvec { }
+        #--- set the appropriate parameters
+        if { ($x == 1) || ($x == -1) } {
+            set vtk_rl_fwhm $ap_fwhm
+        } elseif { ($y == 1) || ( $y == -1) } {
+            set vtk_is_fwhm $ap_fwhm
+        } elseif { ($z == 1) || ($z == -1) } {
+            set vtk_ap_fwhm $ap_fwhm
+        }
+        set newvec [ IbrowserGetRasToVtkAxis SI ::Volume($vid,node) ]
+        #--- unpack the vector into x, y and z
+        foreach { x y z } $newvec { }
+        #--- set the appropriate parameters
+        if { ($x == 1) || ($x == -1) } {
+            set vtk_rl_fwhm $is_fwhm
+        } elseif { ($y == 1) || ( $y == -1) } {
+            set vtk_is_fwhm $is_fwhm
+        } elseif { ($z == 1) || ($z == -1) } {
+            set vtk_ap_fwhm $is_fwhm
+        }
+
+        #--- get volume dimensions, extents, and voxel spacings
+        set imdata [ ::Volume($vid,vol) GetOutput ]
         set dim [ $imdata GetDimensions ]
         set dimx [ lindex $dim 0 ]
         set dimy [ lindex $dim 1 ]
@@ -216,27 +332,49 @@ proc IbrowserSmoothSequence { } {
         set ystart [expr 1 + [lindex $ext 2]]
         set ystop [expr 1 + [lindex $ext 3]]            
         set zstart [expr 1 + [lindex $ext 4]]
-        set zstop [expr 1 + [lindex $ext 5]] 
+        set zstop [expr 1 + [lindex $ext 5]]
+
+        #--- which directions correspond to which spacings?
+        #--- configure filter:
+        #--- sigma = FWHM / sqrt (8*ln(2))
+        #--- radius = 3*sigma (effective cutoff point for filter)
+        #--- must configure filter in pixel units, so also convert from mm...
+        set scanOrder [ ::Volume($vid,node) GetScanOrder]
+        if { $scanOrder == "SI" || $scanOrder == "IS" } {
+            set pix2mmRL [ expr 1.0 / $pixwid ]
+            set pix2mmAP [ expr 1.0 / $pixhit ]
+            set pix2mmIS [ expr 1.0 / $zSpacing ]
+        } elseif { $scanOrder == "RL" || $scanOrder == "LR" } {
+            set pix2mmIS [ expr 1.0 / $pixwid ]
+            set pix2mmAP [ expr 1.0 / $pixhit ]
+            set pix2mmRL [ expr 1.0 / $zSpacing ]
+        } else {
+            set pix2mmRL [ expr 1.0 / $pixwid ]
+            set pix2mmIS [ expr 1.0 / $pixhit ]
+            set pix2mmAP [ expr 1.0 / $zSpacing ]
+        }
+        
         #puts "configuring MrmlVolumeNode $n: "
         #puts "....image dimensions: $dimx $dimy $dimz"
         #puts "....pixwid = $pixwid; pixhit = $pixhit; pixdepth = $zSpacing"
         #puts "....image extent = $xstart $xstop; $ystart $ystop; $zstart $zstop"
 
-        #--- configure filter:
-        #--- sigma = FWHM / sqrt (8*ln(2))
-        #--- radius = 3*sigma (effective cutoff point for filter)
-        #--- should radius be set to some higher num of std.deviations?
-        #--- must configure filter in pixel units, so also convert from mm...
-        set pix2mmRL [ expr 1.0 / $pixwid ]
-        set pix2mmIS [ expr 1.0 / $pixhit ]
-        set rl_sigma [ expr $rl_fwhm * $pix2mmRL / 2.355  ]
-        set is_sigma [ expr $is_fwhm * $pix2mmIS / 2.355 ]
+        set rl_sigma [ expr $vtk_rl_fwhm * $pix2mmRL / 2.355  ]
+        set is_sigma [ expr $vtk_is_fwhm * $pix2mmIS / 2.355 ]
+        set ap_sigma [ expr $vtk_ap_fwhm * $pix2mmAP / 2.355 ]
         set rl_radius [ expr $rl_sigma * $pix2mmRL * 3.0 ] 
         set is_radius [ expr $is_sigma * $pix2mmIS * 3.0  ]
-        puts "$rl_sigma $is_sigma $rl_radius $is_radius"
-        gaussian SetStandardDeviations $rl_sigma $is_sigma
-        gaussian SetRadiusFactors $rl_radius $is_radius
-    
+        set ap_radius [ expr $ap_sigma * $pix2mmAP * 3.0 ]
+        puts "sigma: $rl_sigma $is_sigma $ap_sigma"
+        puts "radius: $rl_radius $is_radius $ap_radius"
+        gaussian SetStandardDeviations $rl_sigma $is_sigma $ap_sigma
+        gaussian SetRadiusFactors $rl_radius $is_radius $ap_radius
+
+        #--- do the filtering...
+        gaussian SetInput  [ ::Volume($vid,vol) GetOutput ]
+        set imdata [ gaussian GetOutput ]
+        $imdata Update
+
         #--- configure node
         $dstnode SetName ${dstName}_${n}
         $dstnode SetLabelMap [ ::Volume($firstVolID,node) GetLabelMap ]
@@ -261,6 +399,7 @@ proc IbrowserSmoothSequence { } {
         ::Volume($dstnodeID,vol) SetImageData  $imdata
 
         set ::Ibrowser($dstID,$n,MRMLid) $dstnodeID
+        incr pcount
     }
 
     gaussian Delete
@@ -277,6 +416,25 @@ proc IbrowserSmoothSequence { } {
     IbrowserSayThis $tt 0
     IbrowserLowerProgressBar    
     set ::Ibrowser(Process,reassembleChoice) ""
+    MainUpdateMRML
+    RenderAll
 }
 
 
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserHelpSmooth
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserHelpSmooth { } {
+
+    set i [ IbrowserGetHelpWinID ]
+    set txt "<H3>Spatial smoothing</H3>
+ <P> This tool creates a new interval containing a set of volumes that are spatially smoothed versions of each volume in a selected source interval. Spatial smoothing is a process by which voxel values are averaged with their spatial neighbours, which has the effect of blurring the sharp edges in the original data. This tool implements Gaussian smoothing.
+<P> When a Gaussian filter is used for smoothing, the width of the kernel is often described as the Full Width at Half Maximum (FWHM). The FWHM defines the width of the kernel at half of the maximum of the height of the Gaussian, and is related to sigma by:
+<P>        FWHM = sigma * sqrt(8*log(2))
+<P> In this tool, the spatial FWHM should be specified in millimeters for each axis along which filtering is desired. A FWHM=0.0 will prevent filtering along any axis."
+    DevCreateTextPopup infowin$i "Ibrowser information" 100 100 18 $txt
+}

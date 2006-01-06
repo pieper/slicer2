@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITractography.tcl,v $
-#   Date:      $Date: 2005/12/27 22:29:53 $
-#   Version:   $Revision: 1.44 $
+#   Date:      $Date: 2006/01/06 17:57:28 $
+#   Version:   $Revision: 1.45 $
 # 
 #===============================================================================
 # FILE:        DTMRITractography.tcl
@@ -58,7 +58,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.44 $} {$Date: 2005/12/27 22:29:53 $}]
+                                 {$Revision: 1.45 $} {$Date: 2006/01/06 17:57:28 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -317,13 +317,40 @@ proc DTMRITractographyBuildGUI {} {
     pack $f.fActive -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
 
     # notebook frame (to contain settings, seeding,  select, display frames)
-    Notebook:create $f.fNotebook \
-        -pages {{Settings} {Seed} {Select} {Display}} \
-        -pad 0 \
-        -bg $Gui(activeWorkspace) \
-        -height 500 \
-        -width 400
+
+    if { [catch "package require BLT" ] } {
+        DevErrorWindow "Must have the BLT package to create GUI."
+        return
+    }
+
+    #--- create blt notebook
+    blt::tabset $f.fNotebook -relief flat -borderwidth 0
     pack $f.fNotebook -side top -padx $Gui(pad) -pady $Gui(pad) -fill both -expand true
+
+    #--- notebook configure
+    $f.fNotebook configure -width 400
+    $f.fNotebook configure -height 500
+    $f.fNotebook configure -background $::Gui(activeWorkspace)
+    $f.fNotebook configure -activebackground $::Gui(activeWorkspace)
+    $f.fNotebook configure -selectbackground $::Gui(activeWorkspace)
+    $f.fNotebook configure -tabbackground $::Gui(activeWorkspace)
+    $f.fNotebook configure -foreground black
+    $f.fNotebook configure -activeforeground black
+    $f.fNotebook configure -selectforeground black
+    $f.fNotebook configure -tabforeground black
+    $f.fNotebook configure -relief flat
+    $f.fNotebook configure -tabrelief raised     
+    $f.fNotebook configure -highlightbackground $::Gui(activeWorkspace)
+    $f.fNotebook configure -highlightcolor $::Gui(activeWorkspace) 
+        #--- tab configure
+    set i 0
+    foreach t "{Settings} {Seed} {Select} {Display}" {
+        $f.fNotebook insert $i $t
+        frame $f.fNotebook.f$t -bg $Gui(activeWorkspace) -bd 2
+        $f.fNotebook tab configure $t -window $f.fNotebook.f$t  \
+            -fill both -padx $::Gui(pad) -pady $::Gui(pad)
+        incr i
+    } 
 
     #-------------------------------------------
     # Tract->Active frame
@@ -344,11 +371,12 @@ proc DTMRITractographyBuildGUI {} {
     # Tract->Notebook frame
     #-------------------------------------------
     set f $fTract.fNotebook
-
-    set fSettings [Notebook:frame $f {Settings}]
-    set fSeeding [Notebook:frame $f {Seed}]
-    set fSelection [Notebook:frame $f {Select}]
-    set fDisplay [Notebook:frame $f {Display}]
+    
+    set fSettings $f.fSettings
+    set fSeeding $f.fSeed
+    set fSelection $f.fSelect
+    set fDisplay $f.fDisplay    
+    
     foreach frame "$fSettings $fSeeding $fSelection $fDisplay" {
         $frame configure -relief groove -bd 3
     }

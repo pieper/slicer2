@@ -1,3 +1,16 @@
+/*=auto=========================================================================
+
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkImageFastSignedChamfer.h,v $
+  Date:      $Date: 2006/01/06 17:57:54 $
+  Version:   $Revision: 1.3 $
+
+=========================================================================auto=*/
 /*  ==================================================
     Module : vtkLevelSets
     Authors: Karl Krissian
@@ -35,8 +48,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkImageFastSignedChamfer.h,v $
   Language:  C++
-  Date:      $Date: 2004/08/23 13:22:32 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/01/06 17:57:54 $
+  Version:   $Revision: 1.3 $
   Author:    Karl Krissian
 
 =========================================================================*/

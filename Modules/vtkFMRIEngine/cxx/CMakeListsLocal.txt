@@ -19,9 +19,15 @@ IF (USE_ITK_FILE)
 ENDIF(USE_ITK_FILE)
 
 # system dependent link and include dirs
-LINK_DIRECTORIES(
+IF (WIN32)
+    LINK_DIRECTORIES(
         ${SANDBOX_BUILD_DIR}/Distributions/bin/${CMAKE_BUILD_TYPE}
-)
+    )
+ELSE (WIN32)
+    LINK_DIRECTORIES(
+        ${SANDBOX_BUILD_DIR}/Distributions/bin
+    )
+ENDIF (WIN32)
 
 INCLUDE_DIRECTORIES(
         ${VTKSLICERBASE_SOURCE_DIR}/cxx 

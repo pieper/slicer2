@@ -1,37 +1,13 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 # 
-# This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors.
-# Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for  
-# research purposes only, provided that (1) the above copyright notice and 
-# the following four paragraphs appear on all copies of this software, and 
-# (2) that source code to any modifications to this software be made 
-# publicly available under terms no more restrictive than those in this 
-# License Agreement. Use of this software constitutes acceptance of these 
-# terms and conditions.
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
 # 
-# 3D Slicer Software has not been reviewed or approved by the Food and 
-# Drug Administration, and is for non-clinical, IRB-approved Research Use 
-# Only.  In no event shall data or images generated through the use of 3D 
-# Slicer Software be used in the provision of patient care.
-# 
-# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-# POSSIBILITY OF SUCH DAMAGE.
-# 
-# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-# NON-INFRINGEMENT.
-# 
-# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: MainModels.tcl,v $
+#   Date:      $Date: 2006/01/06 17:56:54 $
+#   Version:   $Revision: 1.71 $
 # 
 #===============================================================================
 # FILE:        MainModels.tcl
@@ -95,7 +71,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.70 $} {$Date: 2005/12/01 23:16:16 $}]
+        {$Revision: 1.71 $} {$Date: 2006/01/06 17:56:54 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -364,7 +340,7 @@ proc MainModelsRead {m} {
         } else {
             puts "MainModelsRead: empty filename for Model($m,node)"
         }
-        return
+        return -1
     }
 
     # Check fileName
@@ -405,7 +381,10 @@ proc MainModelsRead {m} {
         }
     }
 
-
+    if {[info command reader] == ""} {
+        DevErrorWindow "No reader found for models with the extension $suffix"
+        return -1
+    }
     # Progress Reporting
     reader AddObserver StartEvent     MainStartProgress
     reader AddObserver ProgressEvent "MainShowProgress reader"
@@ -1315,14 +1294,16 @@ proc MainModelsSetTensorVisibility {m {value ""}} {
     } else {
         
         # if we were displaying tensors, stop.
-        MainRemoveActor Model($m,tensorGlyphActor)
+        if {[info command Model($m,tensorGlyphActor)] != ""} {
+            MainRemoveActor Model($m,tensorGlyphActor)
+        }
         
         # Also delete the pipeline
-        Model($m,sphereSource) Delete
-        Model($m,tensorGlyph) Delete
-        Model($m,tensorGlyphActor) Delete
-        Model($m,tensorGlyphMapper) Delete
-        Model($m,tensorNormals) Delete
+        catch "Model($m,sphereSource) Delete"
+        catch "Model($m,tensorGlyph) Delete"
+        catch "Model($m,tensorGlyphActor) Delete"
+        catch "Model($m,tensorGlyphMapper) Delete"
+        catch "Model($m,tensorNormals) Delete"
     }
 
     # If this is the active model, update GUI

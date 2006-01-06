@@ -1,37 +1,13 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 # 
-# This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors.
-# Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for  
-# research purposes only, provided that (1) the above copyright notice and 
-# the following four paragraphs appear on all copies of this software, and 
-# (2) that source code to any modifications to this software be made 
-# publicly available under terms no more restrictive than those in this 
-# License Agreement. Use of this software constitutes acceptance of these 
-# terms and conditions.
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
 # 
-# 3D Slicer Software has not been reviewed or approved by the Food and 
-# Drug Administration, and is for non-clinical, IRB-approved Research Use 
-# Only.  In no event shall data or images generated through the use of 3D 
-# Slicer Software be used in the provision of patient care.
-# 
-# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-# POSSIBILITY OF SUCH DAMAGE.
-# 
-# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-# NON-INFRINGEMENT.
-# 
-# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: fMRIEngineParadigmDesign.tcl,v $
+#   Date:      $Date: 2006/01/06 17:57:38 $
+#   Version:   $Revision: 1.15 $
 # 
 #===============================================================================
 # FILE:        fMRIEngineParadigmDesign.tcl
@@ -263,7 +239,7 @@ proc fMRIEngineShowConditionToEdit {} {
 
             set fMRIEngine(entry,title) $fMRIEngine($run,$title,title)
             set fMRIEngine(entry,tr) $fMRIEngine($run,tr)
-            set fMRIEngine(entry,startVol) $fMRIEngine($run,$title,startVol)
+            set fMRIEngine(entry,startVol) $fMRIEngine($run,startVol)
             set fMRIEngine(entry,onsets) $fMRIEngine($run,$title,onsets)
             set fMRIEngine(entry,durations) $fMRIEngine($run,$title,durations)
         }
@@ -307,7 +283,6 @@ proc fMRIEngineDeleteCondition {} {
                 #--- wjp added.
                 fMRIModelViewDeleteConditionName $run $title
                 unset -nocomplain fMRIEngine($run,$title,title)
-                unset -nocomplain fMRIEngine($run,$title,startVol)
                 unset -nocomplain fMRIEngine($run,$title,onsets)
                 unset -nocomplain fMRIEngine($run,$title,durations)
             } else {
@@ -317,7 +292,6 @@ proc fMRIEngineDeleteCondition {} {
                     #--- wjp added.
                     fMRIModelViewDeleteConditionName $r $title
                     unset -nocomplain fMRIEngine($r,$title,title)
-                    unset -nocomplain fMRIEngine($r,$title,startVol)
                     unset -nocomplain fMRIEngine($r,$title,onsets)
                     unset -nocomplain fMRIEngine($r,$title,durations)
                 }
@@ -474,7 +448,6 @@ proc fMRIEngineIdenticalizeConditions {} {
             set count 2 
             while {$count <= $runs} {
                 set fMRIEngine($count,$title,title) $fMRIEngine(1,$title,title)  
-                set fMRIEngine($count,$title,startVol) $fMRIEngine(1,$title,startVol) 
                 set fMRIEngine($count,$title,onsets) $fMRIEngine(1,$title,onsets) 
                 set fMRIEngine($count,$title,durations) $fMRIEngine(1,$title,durations) 
 
@@ -515,9 +488,9 @@ proc fMRIEngineEditCondition {} {
         set run [string trim $run]
         set t [string trim $title]
         if {$fMRIEngine($run,tr) == $tr                 &&
+            $fMRIEngine($run,startVol) == $startVol  &&
             [info exists fMRIEngine($run,$t,title)]     &&
             $fMRIEngine($run,$t,title) == $title        &&
-            $fMRIEngine($run,$t,startVol) == $startVol  &&
             $fMRIEngine($run,$t,onsets) == $onsets      &&
             $fMRIEngine($run,$t,durations) == $durations} {
             DevErrorWindow "This condition already exists."
@@ -558,8 +531,8 @@ proc fMRIEngineAddCondition {} {
             fMRIModelViewAddConditionName $currRun $title
         } else {
             if {$fMRIEngine($currRun,tr) == $tr                     &&
+                $fMRIEngine($currRun,startVol) == $startVol         &&
                 $fMRIEngine($currRun,$title,title) == $title        &&
-                $fMRIEngine($currRun,$title,startVol) == $startVol  &&
                 $fMRIEngine($currRun,$title,onsets) == $onsets      &&
                 $fMRIEngine($currRun,$title,durations) == $durations} {
                 DevErrorWindow "This condition already exists."
@@ -569,9 +542,9 @@ proc fMRIEngineAddCondition {} {
 
         set fMRIEngine($currRun,designType) $fMRIEngine(paradigmDesignType)
         set fMRIEngine($currRun,tr) $tr
+        set fMRIEngine($currRun,startVol) $startVol
 
         set fMRIEngine($currRun,$title,title) $title
-        set fMRIEngine($currRun,$title,startVol) $startVol
         set fMRIEngine($currRun,$title,onsets) $onsets
         set fMRIEngine($currRun,$title,durations) $durations
     } else {
@@ -582,8 +555,8 @@ proc fMRIEngineAddCondition {} {
                 fMRIModelViewAddConditionName $r $title
             } else {
                 if {$fMRIEngine($r,tr) == $tr                     &&
+                    $fMRIEngine($r,startVol) == $startVol         &&
                     $fMRIEngine($r,$title,title) == $title        &&
-                    $fMRIEngine($r,$title,startVol) == $startVol  &&
                     $fMRIEngine($r,$title,onsets) == $onsets      &&
                     $fMRIEngine($r,$title,durations) == $durations} {
                     DevErrorWindow "This condition already exists."
@@ -593,9 +566,9 @@ proc fMRIEngineAddCondition {} {
 
             set fMRIEngine($r,designType) $fMRIEngine(paradigmDesignType)
             set fMRIEngine($r,tr) $tr
+            set fMRIEngine($r,startVol) $startVol
 
             set fMRIEngine($r,$title,title) $title
-            set fMRIEngine($r,$title,startVol) $startVol
             set fMRIEngine($r,$title,onsets) $onsets
             set fMRIEngine($r,$title,durations) $durations
         }
@@ -732,6 +705,11 @@ proc fMRIEngineAddOrEditCondition {} {
         # add a new condition
         fMRIEngineAddCondition
     }
+
+    # clean fields for next condition
+    set fMRIEngine(entry,title)      ""
+    set fMRIEngine(entry,onsets)     ""
+    set fMRIEngine(entry,durations)  ""
 
     fMRIEngineShowConditions 
     set ::fMRIEngine(SignalModelDirty) 1

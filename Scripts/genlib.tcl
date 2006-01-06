@@ -201,11 +201,6 @@ if { $GENLIB(clean) } {
         if { [file exists $SLICER_HOME/isPatched] } {
             runcmd rm $SLICER_HOME/isPatched
         }
-    } elseif { $isWindows }  {
-        file delete -force $SLICER_LIB/VTK
-        file delete -force $SLICER_LIB/VTK-build
-        file delete -force $SLICER_LIB/Insight
-        file delete -force $SLICER_LIB/Insight-build
     } else {
         file delete -force $SLICER_LIB
     }
@@ -216,30 +211,37 @@ if { ![file exists $SLICER_LIB] } {
 }
 
 ################################################################################
+# Get and unzip Slicer Lib file if Windows
+#
+
+if {$isWindows} {
+    if {![file exists $::CMAKE]} {
+        cd $SLICER_HOME
+        runcmd curl -k -O http://www.na-mic.org/Slicer/Download/External/Slicer2.6-Lib-win32.zip
+        runcmd unzip ./Slicer2.6-Lib-win32.zip
+    }
+}
+
+
+
+################################################################################
 # Get and build CMake
 #
 
 # set in slicer_vars
-if { ![file exists $CMAKE] } {
-    file mkdir $CMAKE_PATH
+if { ![file exists $::CMAKE] } {
+    file mkdir $::CMAKE_PATH
     cd $SLICER_LIB
 
 
     if {$isWindows} {
-        puts stderr "-- genlib.tcl cannot generate the cmake or tcl binaries for windows --"
-        puts stderr ""
-        puts stderr "Follow the instructions at the following link"
-        puts stderr "to download precompiled versions of parts of the windows Lib"
-        puts stderr "http://www.na-mic.org/Wiki/index.php/Slicer:Slicer_2.5_Building"
-        puts stderr ""
-        puts stderr "Then re-run genlib.tcl to build VTK and ITK"
-        puts stderr ""
+        puts stderr "Slicer2.6-Lib-win32.zip did not download and unzip correctly."
         exit
     } else {
         runcmd $::CVS -d :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login
         runcmd $::CVS -z3 -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $::CMAKE_TAG CMake
 
-        cd $CMAKE_PATH
+        cd $::CMAKE_PATH
         if { $isSolaris } {
             # make sure to pick up curses.h in /local/os/include
             runcmd $SLICER_LIB/CMake/bootstrap --init=$SLICER_HOME/Scripts/spl.cmake.init
@@ -258,8 +260,8 @@ if { ![file exists $CMAKE] } {
 if { ![file exists $::TEEM_TEST_FILE] } {
     cd $SLICER_LIB
 
-    runcmd $::CVS -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/teem login 
-    runcmd $::CVS -z3 -d:pserver:anonymous:@cvs.sourceforge.net:/cvsroot/teem checkout -r $::TEEM_TAG teem
+    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login 
+    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TEEM_TAG teem
 
     file mkdir $SLICER_LIB/teem-build
     cd $SLICER_LIB/teem-build
@@ -270,7 +272,7 @@ if { ![file exists $::TEEM_TEST_FILE] } {
         set C_FLAGS ""
     }
 
-    runcmd $CMAKE \
+    runcmd $::CMAKE \
         -G$GENERATOR \
         -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
         -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
@@ -299,14 +301,7 @@ if { ![file exists $::TEEM_TEST_FILE] } {
 if { ![file exists $::TCL_TEST_FILE] } {
 
     if {$isWindows} {
-        puts stderr "-- genlib.tcl cannot generate the tcl binaries for windows --"
-        puts stderr "1) Get a copy of Tcl 8.4 from tcl.activestate.com."
-        puts stderr "2) Set the TCL_BIN_DIR, TCL_LIB_DIR and TCL_INCLUDE_DIR in slicer_variables.tcl."
-        puts stderr "3) Get BLT from http://prdownloads.sourceforge.net/blt/blt24z-for-tcl84.exe?download"
-        puts stderr "4) Install BLT to a *different* directory than where you installed activetcl"
-        puts stderr "5) copy BLT24.dll and BLT24lite24.dll to TCL_BIN_DIR"
-        puts stderr "6) copy blt2.4 to TCL_LIB_DIR"
-        puts stderr "With these pieces in place, genlib can build VTK and ITK"
+        puts stderr "Slicer2.6-Lib-win32.zip did not download and unzip correctly."
         exit
     }
 
@@ -476,7 +471,7 @@ if { ![file exists $::VTK_TEST_FILE] } {
     # -- the text needs to be duplicated to avoid quoting problems with paths that have spaces
     #
     if { $isLinux && $::tcl_platform(machine) == "x86_64" } {
-        runcmd $CMAKE \
+        runcmd $::CMAKE \
             -G$GENERATOR \
             -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
             -DBUILD_SHARED_LIBS:BOOL=ON \
@@ -504,7 +499,7 @@ if { ![file exists $::VTK_TEST_FILE] } {
             -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
             ../VTK
     } else {
-        runcmd $CMAKE \
+        runcmd $::CMAKE \
             -G$GENERATOR \
             -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
             -DBUILD_SHARED_LIBS:BOOL=ON \
@@ -531,7 +526,7 @@ if { ![file exists $::VTK_TEST_FILE] } {
         # Darwin will fail on the first make, then succeed on the second
         catch "eval runcmd $::MAKE -j4"
         set OpenGLString "-framework OpenGL -lgl"
-        runcmd $CMAKE -G$GENERATOR -DOPENGL_gl_LIBRARY:STRING=$OpenGLString -DVTK_USE_SYSTEM_ZLIB:BOOL=ON ../VTK
+        runcmd $::CMAKE -G$GENERATOR -DOPENGL_gl_LIBRARY:STRING=$OpenGLString -DVTK_USE_SYSTEM_ZLIB:BOOL=ON ../VTK
     }
     
     if { $isWindows } {
@@ -560,7 +555,7 @@ if { ![file exists $::ITK_TEST_FILE] } {
 
 
 
-    runcmd $CMAKE \
+    runcmd $::CMAKE \
         -G$GENERATOR \
         -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
         -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
@@ -595,19 +590,37 @@ if { ![file exists $::SANDBOX_TEST_FILE] } {
     file mkdir $SLICER_LIB/NAMICSandBox-build
     cd $SLICER_LIB/NAMICSandBox-build
 
-    runcmd $CMAKE \
-        -G$GENERATOR \
-        -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
-        -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
-        -DBUILD_SHARED_LIBS:BOOL=ON \
-        -DCMAKE_SKIP_RPATH:BOOL=ON \
-        -DBUILD_EXAMPLES:BOOL=OFF \
-        -DBUILD_TESTING:BOOL=OFF \
-        -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
-        -DVTK_DIR:PATH=$VTK_DIR \
-        -DITK_DIR:FILEPATH=$ITK_BINARY_PATH \
-        -DOPENGL_glu_LIBRARY:FILEPATH=\" \" \
-        ../NAMICSandBox
+    if { $isLinux && $::tcl_platform(machine) == "x86_64" } {
+        # to build correctly, 64 bit linux requires shared libs for the sandbox
+        runcmd $::CMAKE \
+            -G$GENERATOR \
+            -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
+            -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
+            -DBUILD_SHARED_LIBS:BOOL=ON \
+            -DCMAKE_SKIP_RPATH:BOOL=ON \
+            -DBUILD_EXAMPLES:BOOL=OFF \
+            -DBUILD_TESTING:BOOL=OFF \
+            -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
+            -DVTK_DIR:PATH=$VTK_DIR \
+            -DITK_DIR:FILEPATH=$ITK_BINARY_PATH \
+            -DOPENGL_glu_LIBRARY:FILEPATH=\" \" \
+            ../NAMICSandBox
+    } else {
+        # windows and mac require static libs for the sandbox
+        runcmd $::CMAKE \
+            -G$GENERATOR \
+            -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
+            -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
+            -DBUILD_SHARED_LIBS:BOOL=OFF \
+            -DCMAKE_SKIP_RPATH:BOOL=ON \
+            -DBUILD_EXAMPLES:BOOL=OFF \
+            -DBUILD_TESTING:BOOL=OFF \
+            -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
+            -DVTK_DIR:PATH=$VTK_DIR \
+            -DITK_DIR:FILEPATH=$ITK_BINARY_PATH \
+            -DOPENGL_glu_LIBRARY:FILEPATH=\" \" \
+            ../NAMICSandBox
+    }
 
     if {$isWindows} {
         if { $MSVC6 } {

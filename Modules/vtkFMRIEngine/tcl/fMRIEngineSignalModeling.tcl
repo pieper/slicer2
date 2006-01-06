@@ -1,37 +1,13 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 # 
-# This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors.
-# Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for  
-# research purposes only, provided that (1) the above copyright notice and 
-# the following four paragraphs appear on all copies of this software, and 
-# (2) that source code to any modifications to this software be made 
-# publicly available under terms no more restrictive than those in this 
-# License Agreement. Use of this software constitutes acceptance of these 
-# terms and conditions.
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
 # 
-# 3D Slicer Software has not been reviewed or approved by the Food and 
-# Drug Administration, and is for non-clinical, IRB-approved Research Use 
-# Only.  In no event shall data or images generated through the use of 3D 
-# Slicer Software be used in the provision of patient care.
-# 
-# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-# POSSIBILITY OF SUCH DAMAGE.
-# 
-# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-# NON-INFRINGEMENT.
-# 
-# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: fMRIEngineSignalModeling.tcl,v $
+#   Date:      $Date: 2006/01/06 17:57:38 $
+#   Version:   $Revision: 1.30 $
 # 
 #===============================================================================
 # FILE:        fMRIEngineSignalModeling.tcl
@@ -69,6 +45,7 @@
 #   fMRIEngineIncrementEVCountForRun
 #   fMRIEngineAddDerivativeSignalsToRun
 #   fMRIEngineCombineRunDerivativeCheck
+#   fMRIEngineUpdateProgressText
 #   fMRIEngineFitModel
 #==========================================================================auto=
 
@@ -1749,6 +1726,17 @@ proc fMRIEngineCountEVs {} {
         #-- end if ev != ""
         incr i
     }
+
+    # if signal modeling has not been done yet but the user wants 
+    # to view the design, warn him/her.
+    for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} {
+        if {! [info exists fMRIEngine($r,namesOfEVs)]} {
+            DevErrorWindow "Complete signal modeling first for run$r."
+            return 0
+        }
+    }
+
+
     #--- Re-order the name lists of all runs to match the order of EVs
     #--- in the first run. This organizes the design matrix so that
     #--- appropriate EVs from each run are concatenated in analysis.
@@ -1869,6 +1857,30 @@ proc fMRIEngineCombineRunDerivativeCheck { } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineUpdateProgressText
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineUpdateProgressText {} {
+    global fMRIEngine Gui 
+
+    incr fMRIEngine(progressCount)
+    MainShowProgress fMRIEngine(actEstimator)
+
+    # The progress event of vtkGLMEstimator (new fMRIEngine(actEstimator)) is 
+    # composed of two parts: first part is for computing means and the second
+    # part is for glm. Each part has 100 steps. When the count reachs 100, it 
+    # means computing means is done and then we update the progress text for 
+    # glm computing.
+    if {$fMRIEngine(progressCount) == 100 && $Gui(progressText) != $fMRIEngine(glmProgressText)} {
+        puts "...done"
+        set Gui(progressText) $fMRIEngine(glmProgressText) 
+        puts $Gui(progressText)
+    }
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC fMRIEngineFitModel
@@ -1916,6 +1928,16 @@ proc fMRIEngineFitModel {} {
     }
 
 
+    # generates data without popping up the model image 
+    #--- for now just do it. (testing for ways to keep model.)
+    if { $::fMRIEngine(SignalModelDirty) } {
+        set done [fMRIModelViewGenerateModel]
+        if {! $done} {
+            DevErrorWindow "Error in generating model for model fitting."
+            return 
+        }
+    }
+
 
     # always uses a new instance of vtkActivationEstimator 
     if {[info commands fMRIEngine(actEstimator)] != ""} {
@@ -1939,32 +1961,25 @@ proc fMRIEngineFitModel {} {
     fMRIEngine(actEstimator) SetGlobalEffect $op 
 
     # adds progress bar
-    set obs1 [fMRIEngine(actEstimator) AddObserver StartEvent MainStartProgress]
-    set obs2 [fMRIEngine(actEstimator) AddObserver ProgressEvent \
-              "MainShowProgress fMRIEngine(actEstimator)"]
-    set obs3 [fMRIEngine(actEstimator) AddObserver EndEvent MainEndProgress]
     if {$fMRIEngine(curRunForModelFitting) == "concatenated"} {
-        set Gui(progressText) "Estimating all runs..."
+        set fMRIEngine(glmProgressText) "Estimating all runs..."
     } else {
-        set Gui(progressText) "Estimating run$fMRIEngine(curRunForModelFitting); may take awhile..."
+        set fMRIEngine(glmProgressText) "Estimating run$fMRIEngine(curRunForModelFitting); may take awhile..."
+    }
+    if {$op > 0} {
+        set Gui(progressText) "Performing intensity normalization..."
+    } else {
+        set Gui(progressText) $fMRIEngine(glmProgressText)
     }
     puts $Gui(progressText)
 
+    # set up observers for progress event 
+    set obs1 [fMRIEngine(actEstimator) AddObserver StartEvent MainStartProgress]
+    set obs2 [fMRIEngine(actEstimator) AddObserver ProgressEvent fMRIEngineUpdateProgressText]
+    set obs3 [fMRIEngine(actEstimator) AddObserver EndEvent MainEndProgress]
+    set fMRIEngine(progressCount) 0 
 
 
-    # generates data without popping up the model image 
-    #--- for now just do it. (testing for ways to keep model.)
-    if { $::fMRIEngine(SignalModelDirty) } {
-        set done [fMRIModelViewGenerateModel]
-        if {! $done} {
-            DevErrorWindow "Error in generating model for model fitting."
-            return 
-        }
-    }
-
-
-    
- 
     # always uses a new instance of vtkActivationDetector
     if {[info commands fMRIEngine(detector)] != ""} {
         fMRIEngine(detector) Delete
@@ -1986,6 +2001,8 @@ proc fMRIEngineFitModel {} {
     fMRIEngine(actEstimator) SetDetector fMRIEngine(detector)  
     fMRIEngine(actEstimator) Update
     set fMRIEngine(actBetaVolume) [fMRIEngine(actEstimator) GetOutput]
+
+    # remove observers for progress event 
     fMRIEngine(actEstimator) RemoveObserver $obs1 
     fMRIEngine(actEstimator) RemoveObserver $obs2 
     fMRIEngine(actEstimator) RemoveObserver $obs3 

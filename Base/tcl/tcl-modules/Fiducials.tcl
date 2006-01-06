@@ -1,37 +1,13 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 # 
-# This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors.
-# Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for  
-# research purposes only, provided that (1) the above copyright notice and 
-# the following four paragraphs appear on all copies of this software, and 
-# (2) that source code to any modifications to this software be made 
-# publicly available under terms no more restrictive than those in this 
-# License Agreement. Use of this software constitutes acceptance of these 
-# terms and conditions.
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
 # 
-# 3D Slicer Software has not been reviewed or approved by the Food and 
-# Drug Administration, and is for non-clinical, IRB-approved Research Use 
-# Only.  In no event shall data or images generated through the use of 3D 
-# Slicer Software be used in the provision of patient care.
-# 
-# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-# POSSIBILITY OF SUCH DAMAGE.
-# 
-# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-# NON-INFRINGEMENT.
-# 
-# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: Fiducials.tcl,v $
+#   Date:      $Date: 2006/01/06 17:56:59 $
+#   Version:   $Revision: 1.66 $
 # 
 #===============================================================================
 # FILE:        Fiducials.tcl
@@ -64,11 +40,12 @@
 #   FiducialsActiveDeleteList
 #   FiducialsDeleteList name
 #   FiducialsSetFiducialsVisibility name visibility rendererName
-#   FiducialsSetActiveList name menu scroll
+#   FiducialsSetActiveList name menu cb
 #   FiducialsSelectionUpdate fid pid on
 #   FiducialsSelectionFromPicker actor cellId
-#   FiducialsSelectionFromScroll menu scroll focusOnActiveFiducial
-#   FiducialsUpdateSelectionForActor fid
+#   FiducialsSelectionFromCheckbox menu cb focusOnActiveFiducial pid
+#   FiducialsSelectionFromScroll menu cb focusOnActiveFiducial pid
+#   FiducialsUpdateSelectionForActor fid pid
 #   FiducialsPointIdFromGlyphCellId fid cid
 #   FiducialsScalarIdFromPointId fid pid
 #   FiducialsScalarIdFromPointId2D fid pid r
@@ -87,6 +64,7 @@
 #   FiducialsPrint2DPoints id
 #   FiducialsSliceNumberToRendererName s
 #   FiducialsMainFileClose
+#   FiducialsUpdateZoom2D s zoom
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -118,7 +96,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.65 $} {$Date: 2005/12/14 17:53:12 $}]
+        {$Revision: 1.66 $} {$Date: 2006/01/06 17:56:59 $}]
     
     # Initialize module-level variables
     set Fiducials(renList) "viewRen matRen"
@@ -160,6 +138,7 @@ proc FiducialsInit {} {
 
     # use this as a flag to try and avoid looping too often when called from slices update
     set Fiducials(updating2D) 0
+    set Fiducials(updating2DZoom) 0
 
     set Fiducials(howto) "
 You can add Fiducial points in the volume using the 2D slice windows or on any models in the 3D View.
@@ -392,7 +371,7 @@ proc FiducialsBuildGUI {} {
     #-------------------------------------------
     set f $fEdit.fMiddle
 
-    FiducialsAddActiveListFrame $f 10 25 
+    FiducialsAddActiveListFrame $f 275 10 
 }
 
 #-------------------------------------------------------------------------------
@@ -2339,6 +2318,12 @@ proc FiducialsSetActiveList {name {menu ""} {cb ""}} {
         } else {
             set cblist $cb
         }
+        if {$menu == ""} {
+            set menulist $Fiducials(mbActiveList)
+        } else {
+            set menulist $menu
+        }
+        set menuindex 0
         foreach s $cblist {
             # clear out the checkboxes
             if {[$s getnumbuttons] != 0} {
@@ -2351,9 +2336,16 @@ proc FiducialsSetActiveList {name {menu ""} {cb ""}} {
             foreach pid [FiducialsGetPointIdListFromName $name] {
                 if {[$s index "[Point($pid,node) GetName]"] == -1} {
                     # add it
-                    if {$::Module(verbose)} { puts "SetActiveList: Adding a fid $pid, selected id list = $Fiducials($fid,selectedPointIdList)"}
-                    $s add "[Point($pid,node) GetName]" -text "[Point($pid,node) GetName]" \
-                        -command "FiducialsSelectionFromCheckbox $menu $s no $pid"
+                    if {$::Module(verbose)} { puts "SetActiveList: Adding a fid $pid, selected id list = $Fiducials($fid,selectedPointIdList)\n\tmenu = $menu"}                        
+                    if {$menu == ""} {
+                        set thismenu [lindex $menulist $menuindex]
+                        $s add "[Point($pid,node) GetName]" -text "[Point($pid,node) GetName]" \
+                            -command "FiducialsSelectionFromCheckbox $thismenu $s no $pid"
+                        incr menuindex
+                    } else {
+                        $s add "[Point($pid,node) GetName]" -text "[Point($pid,node) GetName]" \
+                            -command "FiducialsSelectionFromCheckbox $menu $s no $pid"
+                    }
                 }
                 if {[info exists Fiducials($name,fid)] == 1} {
                     set fid $Fiducials($name,fid)
@@ -2464,53 +2456,68 @@ proc FiducialsSelectionUpdate {fid pid on} {
             return 
         }
     }
+    FiducialsUpdateAllCheckBoxes $fid $pid $on
+    FiducialsUpdateSelectionForActor $fid
+}
+
+#-------------------------------------------------------------------------------
+# .PROC FiducialsUpdateAllCheckBoxes
+# encapsulate going through all the active checkboxes and updating selections
+# .ARGS
+# int fid fiducials list id
+# int pid point id
+# bool on is the point selected or no?
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsUpdateAllCheckBoxes {fid pid on} {
+    global Fiducials
+
     # update all the scrollboxes if this is the active list
     if {$fid == $Fiducials($Fiducials(activeList),fid)} {
     
-    set counter 0
-    foreach menu $Fiducials(mbActiveList) {
-        # get the corresponding scrollbox
-        set cb [lindex $Fiducials(scrollActiveList) $counter]
-        if { $cb == "" } { continue }
-        if {[$menu cget -text] == $Fiducials($fid,name)} {
-            if {$::Module(verbose)} {
-                if {[string first "FiducialsEdit" $menu] != -1} { 
-                    puts "FiducialsSelectionUpdate:\n\tmenu = $menu\n\tcb = $cb\n\tmenu text = [$menu cget -text]\n\tfid = $fid\n\tfid name = $Fiducials($fid,name)"
-                }
-            }
-            # clear everything
-            # $scroll selection clear 0 end
-            if {[$cb getnumbuttons] == 0} {
-                if {$::Module(verbose)} { 
-                    puts "FiducialsSelectionUpdate: no elements, not deselecting"
-                }
-            } else {
+        set counter 0
+        foreach menu $Fiducials(mbActiveList) {
+            # get the corresponding scrollbox
+            set cb [lindex $Fiducials(scrollActiveList) $counter]
+            if { $cb == "" } { continue }
+            if {[$menu cget -text] == $Fiducials($fid,name)} {
                 if {$::Module(verbose)} {
-                    puts "FiducialsSelectionUpdate: selected list = $Fiducials($fid,selectedPointIdList), deselecting everything and then reselected (right now cb sel = [$cb getselind])"
+                    if {[string first "FiducialsEdit" $menu] != -1} { 
+                        puts "FiducialsUpdateAllCheckBoxes:\n\tmenu = $menu\n\tcb = $cb\n\tmenu text = [$menu cget -text]\n\tfid = $fid\n\tfid name = $Fiducials($fid,name)"
+                    }
                 }
-                $cb deselect
-            
-                #re-color the entries
-                foreach pid $Fiducials($fid,selectedPointIdList) {
-                    set sid [lsearch $Fiducials($fid,pointIdList) $pid]
-                    # last arg determines if invoke 1 or select 0
-                    $cb select $sid 0
+                # clear everything
+                # $scroll selection clear 0 end
+                if {[$cb getnumbuttons] == 0} {
+                    if {$::Module(verbose)} { 
+                        puts "FiducialsUpdateAllCheckBoxes: no elements, not deselecting"
+                    }
+                } else {
                     if {$::Module(verbose)} {
-                        if {[string first "FiducialsEdit" $menu] != -1} {
-                            puts "FiducialsSelectionUpdate: pid = $pid, selected sid = $sid for cb $cb"
+                        puts "FiducialsUpdateAllCheckBoxes: selected list = $Fiducials($fid,selectedPointIdList), deselecting everything and then reselected (right now cb sel = [$cb getselind])"
+                    }
+                    $cb deselect
+                    
+                    #re-color the entries
+                    foreach pid $Fiducials($fid,selectedPointIdList) {
+                        set sid [lsearch $Fiducials($fid,pointIdList) $pid]
+                        # last arg determines if invoke 1 or select 0
+                        $cb select $sid 0
+                        if {$::Module(verbose)} {
+                            if {[string first "FiducialsEdit" $menu] != -1} {
+                                puts "FiducialsUpdateAllCheckBoxes: pid = $pid, selected sid = $sid for cb $cb"
+                            }
                         }
                     }
                 }
+                incr counter
             }
-            incr counter
+        }
+    } else {
+        if {$::Module(verbose)} {
+            puts "$fid is not the active list $Fiducials($Fiducials(activeList),fid), leaving checkboxes alone"
         }
     }
-} else {
-    if {$::Module(verbose)} {
-        puts "$fid is not the active list $Fiducials($Fiducials(activeList),fid), leaving checkboxes alone"
-    }
-}
-    FiducialsUpdateSelectionForActor $fid
 }
 
 #-------------------------------------------------------------------------------
@@ -2551,7 +2558,8 @@ proc FiducialsSelectionFromPicker {actor cellId} {
 #-------------------------------------------------------------------------------
 # .PROC FiducialsSelectionFromCheckbox
 # Call back from the checkboxes, make sure the id is either in the selected list or not
-# and then call FiducialsSelectionFromScroll?
+# and then call FiducialsSelectionFromScroll, and update the other active checkbox lists
+# via a call to FiducialsUpdateAllCheckBoxes.
 # .ARGS 
 # widget menu the menu with the selected list name as the current text
 # widget cb the checkbox containing the fiducials list
@@ -2584,6 +2592,7 @@ proc FiducialsSelectionFromCheckbox {menu cb focusOnActiveFiducial pid} {
         set selpind [lsearch $Fiducials($fid,selectedPointIdList) $pid]
         set checkboxInd [lsearch $Fiducials($fid,pointIdList) $pid]
         if {[lsearch $selind $checkboxInd] == -1} {
+            set on 0
             # it's not selected, make sure it's not on the selected fids list
             if {$selpind != -1} {
                 # remove it from the list
@@ -2600,10 +2609,12 @@ proc FiducialsSelectionFromCheckbox {menu cb focusOnActiveFiducial pid} {
                 }
             }
         } else {
+            set on 1
             # make sure it's on the selected fids list
             if {$selpind == -1} {
                 # add it
                 lappend Fiducials($fid,selectedPointIdList) $pid
+                set on 1
                 if {$::Module(verbose)} {
                     puts "Added pid $pid to the selected list: $Fiducials($fid,selectedPointIdList)"
                 }
@@ -2618,6 +2629,11 @@ proc FiducialsSelectionFromCheckbox {menu cb focusOnActiveFiducial pid} {
             puts "\t\t**FiducialsUpdateSelectionFromCheckbox calling FiducialsSelectionFromScroll"
         }
         FiducialsSelectionFromScroll $menu $cb $focusOnActiveFiducial $pid
+
+        if {$::Module(verbose)} {
+            puts "calling FiducialsUpdateAllCheckBoxes... on = $on"
+        }
+        FiducialsUpdateAllCheckBoxes $fid $pid $on
     }
 }
 
@@ -2920,20 +2936,30 @@ proc FiducialsGetAllNodesFromList {name} {
 #-------------------------------------------------------------------------------
 # .PROC FiducialsAddActiveListFrame
 #  Given a frame, this procedure packs into it an fiducials list drop down menu
-#  and a scrollbox that contains all the fiducial points of the active list. 
+#  and a checkbox list that contains all the fiducial points of the active list. 
 #  These are updated automatically when a new list/point are created/selected.
 # .ARGS
 #      str frame tk frame in which to pack the Fiducials panel
-#      int scrollHeight height of the scrollbar, a good range is 5<->15
-#      int scrollWidth width if the scrollbar, a good range is 5<->15
+#      int scrollHeight height of the scrollbar, a good range is 200<->300, if not in that range 275 is used.
+#      int scrollWidth width if the scrollbar, a good range is 5<->15, if not in that range, 10 is used
 #      list defaultNames (optional) the name of the Fiducial lists you would like to add to the drop down menu 
 # .END
 #-------------------------------------------------------------------------------
 proc FiducialsAddActiveListFrame {frame scrollHeight scrollWidth {defaultNames ""}} {
     global Fiducials Gui
     
-    # put a scrolled frame around it all
-    set sf [iwidgets::scrolledframe $frame.sf -height 275 -width 20  -sbwidth $scrollWidth \
+    # put a scrolled frame around it all, with a good height
+    if {$scrollHeight < 200 || $scrollHeight > 300} {
+        set height 275
+    } else {
+        set height $scrollHeight
+    }
+    if {$scrollWidth < 5 || $scrollWidth > 15} {
+        set sbWidth 10
+    } else {
+        set sbWidth $scrollWidth
+    }
+    set sf [iwidgets::scrolledframe $frame.sf -height $height -width 20  -sbwidth $sbWidth \
                 -vscrollmode dynamic -hscrollmode dynamic -borderwidth 1 \
                -troughcolor $Gui(activeWorkspace) -background $Gui(activeWorkspace)]
     pack $frame.sf -expand yes -fill both
@@ -3344,4 +3370,76 @@ proc FiducialsMainFileClose {} {
 
     # set the delete flag to be 1 and clear out everything
     FiducialsResetVariables 1
+}
+
+#-------------------------------------------------------------------------------
+# .PROC FiducialsUpdateZoom2D
+# Adjust the location of the 2d fids to match the zoom for this slice.
+# Adjust all of them, so that if the slices are scrolled, they're all correct w/o another call
+# .ARGS
+# int s the slice number
+# float zoom the zoom value
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsUpdateZoom2D { s zoom } {
+    global Fiducials 
+# global Module
+
+    # not quite right yet
+    return
+
+    set Module(verbose) 1
+
+    if {$Fiducials(updating2DZoom) == 1} {
+        if {$Module(verbose)} {
+            puts "FiducialsUpdateZoom2D: already updating, returning"
+        }
+        return
+    } 
+    set Fiducials(updating2DZoom) 1
+
+    if {$Module(verbose)} {
+        puts "FiducialsUpdateZoom2D s= $s, zoom = $zoom, updating flag = $Fiducials(updating2DZoom)"
+    }
+
+    # try and find fids on this slice
+    # foreach fiducials list
+    set updateNeeded 0
+    foreach fid $Fiducials(listOfIds) {
+        foreach pid $Fiducials($fid,pointIdList) {
+            foreach {x y pointSlice pointOffset} [Point($pid,node) GetXYSO] { break }
+            if {$pointSlice == $s} {
+                if {$Module(verbose)} {
+                    puts "List $fid: Point $pid is on slice ${s}: x $x, y $y, o $pointOffset (slice offset = $::Slice($s,offset))"
+                    puts "\txyz = [Point($pid,node) GetXYZ]"
+                }
+                $::Interactor(activeSlicer) SetScreenPoint $s $x $y
+                set refPoint [$::Interactor(activeSlicer) GetReformatPoint]
+                scan $refPoint "%d %d" zx zy
+                if {$Module(verbose)} {
+                    puts "\treformatpoint = $zx $zy (raw = $refPoint)"
+                }
+                # reset the point's xyso and flag to call FiducialsVTKUpdatePoints2D
+                if {[info command Point($pid,node)] != ""} {
+                    Point($pid,node) SetXYSO $zx $zy $pointSlice $pointOffset
+                    set updateNeeded 1
+                } else {
+                    puts "FiducialsUpdateZoom2D: No point node for $pid!"
+                }
+            } else {
+                if {$Module(verbose)} {
+                    puts "List $fid: Point $pid is on slice $pointSlice, not the currently changing slice $s"
+                }
+            }
+        }
+
+        if {$updateNeeded} {
+            if {$Module(verbose)} {
+                puts "Need to update 2d fid locations for list $fid"
+            }
+            FiducialsVTKUpdatePoints2D $fid
+            set updateNeeded 0
+        }
+    }
+    set Fiducials(updating2DZoom) 0
 }

@@ -1,37 +1,13 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 # 
-# This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors.
-# Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for  
-# research purposes only, provided that (1) the above copyright notice and 
-# the following four paragraphs appear on all copies of this software, and 
-# (2) that source code to any modifications to this software be made 
-# publicly available under terms no more restrictive than those in this 
-# License Agreement. Use of this software constitutes acceptance of these 
-# terms and conditions.
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
 # 
-# 3D Slicer Software has not been reviewed or approved by the Food and 
-# Drug Administration, and is for non-clinical, IRB-approved Research Use 
-# Only.  In no event shall data or images generated through the use of 3D 
-# Slicer Software be used in the provision of patient care.
-# 
-# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-# POSSIBILITY OF SUCH DAMAGE.
-# 
-# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-# NON-INFRINGEMENT.
-# 
-# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: Main.tcl,v $
+#   Date:      $Date: 2006/01/06 17:56:53 $
+#   Version:   $Revision: 1.129 $
 # 
 #===============================================================================
 # FILE:        Main.tcl
@@ -465,7 +441,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.128 $} {$Date: 2005/12/10 19:58:38 $}]
+        {$Revision: 1.129 $} {$Date: 2006/01/06 17:56:53 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -629,8 +605,15 @@ proc MainBuildGUI {} {
         "MainMenu View Quad512"
     $Gui(mView) add command -label "1x512" -command \
         "MainMenu View Single512"
+    $Gui(mView) add command -label "1x512 COR" -command \
+        "MainMenu View Single512COR"
+    $Gui(mView) add command -label "1x512 SAG" -command \
+        "MainMenu View Single512SAG"
     $Gui(mView) add command -label "4x256" -command \
         "MainMenu View Quad256"
+    $Gui(mView) add separator
+    $Gui(mView) add command -label "Large Image..." -command \
+        "MainMenu View LargeImage"
     $Gui(mView) add separator
     $Gui(mView) add command -label "Black" -command \
         "MainViewSetBackgroundColor Black; Render3D"
@@ -1805,8 +1788,15 @@ http://www.slicer.org"
         }
     }
     "View" {
-            MainViewerSetMode $cmd
+        switch $cmd {
+            "LargeImage" {
+                MainViewerSetLargeImageOn
+            }
+            default {
+                MainViewerSetMode $cmd
+            }
         }  
+    }
     }
 }
 
@@ -1818,6 +1808,8 @@ http://www.slicer.org"
 #-------------------------------------------------------------------------------
 proc MainExitQuery { } {
     global Gui Volume Model TetraMesh
+
+    set msg ""
 
     # See if any models or volumes are unsaved
     set volumes ""
@@ -1832,6 +1824,18 @@ proc MainExitQuery { } {
             }
         }
     }
+    if {$volumes != ""} {
+         set msg "\
+The image data for the following volumes are unsaved:\n\
+$volumes\n\nDo you wish to save them before exiting?\n"
+        set retval [DevYesNo $msg]
+        if {$retval == "yes"} {
+            Tab Editor row1 Volumes
+            TabbedFrameInvoke $::Module(Editor,fVolumes) File
+            return
+        }
+    }
+
     set models ""
     foreach v $Model(idList) {
         if {[info exists Model($v,dirty)] == 1} {
@@ -1844,6 +1848,18 @@ proc MainExitQuery { } {
             }
         }
     }
+    if {$models != ""} {
+         set msg "\
+The polygon data for the following surface models are unsaved:\n\
+$models\n\nDo you wish to save them before exiting?"
+        set retval [DevYesNo $msg]
+        if {$retval == "yes"} {
+            Tab ModelMaker row1 Save
+            return
+        }
+    }
+
+
     set tetmesh ""
     foreach v $TetraMesh(idList) {
         if {[info exists TetraMesh($v,dirty)] == 1} {
@@ -1856,7 +1872,19 @@ proc MainExitQuery { } {
             }
         }
     }
+    if {$tetmesh != ""} {
+       set msg "\
+The Volume Meshes for the following tetrahedral mesh are unsaved:\n\
+$tetmesh\n\nDo you wish to save them before exiting?" 
+        set retval [DevYesNo $msg]
+        if {$retval == "yes"} {
+            Tab TetraMesh row1 Read
+            return
+        }
+    }
 
+    MainExitProgram
+    if {0} {
     if {[llength "$tetmesh $models $volumes"] == 0} {
         MainExitProgram
     }
@@ -1885,6 +1913,7 @@ $tetmesh\n\n"
     set x 20
     set y 50
     YesNoPopup Exit $x $y $msg MainExitProgram 
+    }
 }
 
 #-------------------------------------------------------------------------------

@@ -1,38 +1,14 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
-# This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
-# Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
-# research purposes only, provided that (1) the above copyright notice and 
-# the following four paragraphs appear on all copies of this software, and 
-# (2) that source code to any modifications to this software be made 
-# publicly available under terms no more restrictive than those in this 
-# License Agreement. Use of this software constitutes acceptance of these 
-# terms and conditions.
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 # 
-# 3D Slicer Software has not been reviewed or approved by the Food and 
-# Drug Administration, and is for non-clinical, IRB-approved Research Use 
-# Only.  In no event shall data or images generated through the use of 3D 
-# Slicer Software be used in the provision of patient care.
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
 # 
-# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-# POSSIBILITY OF SUCH DAMAGE.
+#   Program:   3D Slicer
+#   Module:    $RCSfile: VersorMattesMIRegistration.tcl,v $
+#   Date:      $Date: 2006/01/06 17:58:04 $
+#   Version:   $Revision: 1.10 $
 # 
-# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-# NON-INFRINGEMENT.
-# 
-# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-# 
-#
 #===============================================================================
 # FILE:        VersorMattesMIRegistration.tcl
 # PROCEDURES:  
@@ -48,6 +24,8 @@
 #   VersorMattesMIRegistrationAutoRun
 #   VersorMattesMIRegistrationStop
 #   MutualInformationSetMetricOption vtkITKMI
+#   VersorMattesMIRegistrationSetOptimizerOption vtkITKMI
+#   RigidIntensityRegistrationCheckParametersVersorMattesMI
 #   VersorMattesMIRegistrationAutoRun_Vtk
 #   VersorMattesMIRegistrationCopyRegImages res r v
 #==========================================================================auto=
@@ -155,7 +133,7 @@ proc VersorMattesMIRegistrationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.9 $} {$Date: 2005/09/29 20:00:38 $}]
+        {$Revision: 1.10 $} {$Date: 2006/01/06 17:58:04 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -172,6 +150,7 @@ proc VersorMattesMIRegistrationInit {} {
 
     ## Set the default to fast registration
     VersorMattesMIRegistrationVerySlowParam
+    set ::VersorMattesMIRegistration(abort) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -655,6 +634,8 @@ proc VersorMattesMIRegistrationAutoRun {} {
 
     global Path env Gui Matrix Volume VersorMattesMIRegistration
 
+    #--- used by Ibrowser to stop registration for sequence of volumes
+
     # TODO make islicer a package
     source $env(SLICER_HOME)/Modules/iSlicer/tcl/isregistration.tcl
 
@@ -685,6 +666,9 @@ proc VersorMattesMIRegistrationAutoRun {} {
         -vtk_itk_reg       vtkITKVersorMattesMiVersorRegistrationFilter               
 
 
+    #--- catches whether the registration was stopped by user
+    set ::VersorMattesMIRegistration(abort) 0
+
     if {$::Module(verbose)} {
         puts "to see the pop-up window, type: pack .mi.reg -fill both -expand true"
     }
@@ -698,10 +682,13 @@ proc VersorMattesMIRegistrationAutoRun {} {
     if {$::Module(verbose)} {
         puts "VersorMattesMIRegistrationAutoRun: calling .mi.reg start"
     }
+
     .mi.reg start
+
     if {$::Module(verbose)} { 
         puts "VersorMattesMIRegistrationAutoRun: done .mi.reg"
     }
+    return $::VersorMattesMIRegistration(abort) 
 }
 
 #-------------------------------------------------------------------------------
@@ -712,6 +699,8 @@ proc VersorMattesMIRegistrationAutoRun {} {
 #-------------------------------------------------------------------------------
 proc VersorMattesMIRegistrationStop {} {
     global VersorMattesMIRegistration RigidIntensityRegistration
+
+    set ::VersorMattesMIRegistration(abort) [ .mi.reg is_abort ]
     .mi.reg stop
     $VersorMattesMIRegistration(b1Run) configure -command \
                                           "VersorMattesMIRegistrationAutoRun"
@@ -719,6 +708,7 @@ proc VersorMattesMIRegistrationStop {} {
                                           "VersorMattesMIRegistrationAutoRun"
     $VersorMattesMIRegistration(b1Run) configure -text "Start"
     $VersorMattesMIRegistration(b2Run) configure -text "Start"
+    #--- used by Ibrowser to stop registration for sequence of volumes
 }
 
 

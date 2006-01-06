@@ -98,6 +98,7 @@ ENABLE_TESTING()
 #ADD_TEST("slicer-${dtmritestname}" "${SLICER_EXECUTABLE}" --agree_to_license --no-tkcon --script ${tclfile} --exec exit)
 #ENDFOREACH(tclfile)
 
+ADD_TEST("slicer-tarup" "${SLICER_EXECUTABLE}" "--agree_to_license" "--exec" "source" "${CTEST_SLICER_HOME}/Scripts/tarup.tcl" ".," "tarup" "nightly" ".," "exit")
 
 # Setup Find/Use slicer
 SET(SLICERBASE_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})

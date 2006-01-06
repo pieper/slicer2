@@ -1,3 +1,16 @@
+/*=auto=========================================================================
+
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkEdgeGradient.cxx,v $
+  Date:      $Date: 2006/01/06 17:58:00 $
+  Version:   $Revision: 1.3 $
+
+=========================================================================auto=*/
 /*===========================================================
 
 3D Slicer Software Licence Agreement(c)
@@ -63,7 +76,7 @@ Authors: Michael McKenna, David Small, Steve Pieper.
 #include "vtkCollection.h"
 
 
-vtkCxxRevisionMacro(vtkEdgeGradient, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkEdgeGradient, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkEdgeGradient);
 
 

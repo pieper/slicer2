@@ -1,37 +1,13 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 # 
-# This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors.
-# Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for  
-# research purposes only, provided that (1) the above copyright notice and 
-# the following four paragraphs appear on all copies of this software, and 
-# (2) that source code to any modifications to this software be made 
-# publicly available under terms no more restrictive than those in this 
-# License Agreement. Use of this software constitutes acceptance of these 
-# terms and conditions.
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
 # 
-# 3D Slicer Software has not been reviewed or approved by the Food and 
-# Drug Administration, and is for non-clinical, IRB-approved Research Use 
-# Only.  In no event shall data or images generated through the use of 3D 
-# Slicer Software be used in the provision of patient care.
-# 
-# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-# POSSIBILITY OF SUCH DAMAGE.
-# 
-# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-# NON-INFRINGEMENT.
-# 
-# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: fMRIEngine.tcl,v $
+#   Date:      $Date: 2006/01/06 17:57:37 $
+#   Version:   $Revision: 1.28 $
 # 
 #===============================================================================
 # FILE:        fMRIEngine.tcl
@@ -62,8 +38,24 @@
 proc fMRIEngineInit {} {
     global fMRIEngine Module Volume Model env
 
+    # module dependency on BLT 
+    if { [catch "package require BLT"] } {
+        DevErrorWindow "Must have the BLT package to load module fMRIEngine." 
+        return
+    }
+    # module dependency on MultiVolumeReader 
+    if {[catch "package require MultiVolumeReader"]} {
+        DevErrorWindow "Must have module MultiVolumeReader to load module fMRIEngine." 
+        return
+    }
+    # module dependency on vtkMIRIASegment 
+    if {[catch "package require vtkMIRIADSegment"]} {
+        DevErrorWindow "Must have module MIRIADSegment to load module fMRIEngine." 
+        return
+    } 
+
     set m fMRIEngine
-    
+
     # Module Summary Info
     #------------------------------------
     # Description:
@@ -154,7 +146,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.27 $} {$Date: 2005/12/13 22:26:52 $}]
+        {$Revision: 1.28 $} {$Date: 2006/01/06 17:57:37 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -177,15 +169,7 @@ proc fMRIEngineInit {} {
     # Creates bindings
     fMRIEngineCreateBindings 
 
-    # error if no private segment
-    if { [catch "package require BLT"] } {
-        DevErrorWindow "Must have the BLT package for building fMRIEngine UI \
-        and plotting time course."
-        return
-    }
-
     # Source all appropriate tcl files here. 
-    source "$fMRIEngine(modulePath)/tcl/notebook.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEnginePlot.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineModel.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineInspect.tcl"
@@ -199,6 +183,8 @@ proc fMRIEngineInit {} {
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineRegionAnalysis.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineUserInputForModelView.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineSaveAndLoadParadigm.tcl"
+
+  
 }
 
 
@@ -266,20 +252,21 @@ proc fMRIEngineBuildGUI {} {
     volumes to process.
     <BR>
     <B>Set Up</B> allows you to specify paradigm design, signal modeling and \
-    contrasts, to estimate the linear modeling, and to save/load/view a design.
+    contrasts, to estimate the linear modeling and save/load the beta volume, \
+    and to save/load/view a design.
     <BR>
     <B>Detect</B> lets you to choose contrast(s) to compute \
     activation volume(s).
     <BR>
     <B>ROI</B> enables you to create a labelmap, to perform region of interest \
-    analysis, and to view the stat results out of the defined roi.
+    analysis, and to view the stats results out of the defined roi.
     <BR>
     <B>View</B> gives you the ability to view the activation \
     at different thresholds and dynamically plot any voxel \
     time course.
     <BR><BR>
     Check the file README.txt in the docs directory of this module \
-    for details about how to build and use the module.
+    for details about how to use the module.
     <BR><BR><B>Warning</B>: It may not be possible to run this process \
     to completion on Windows, due to memory allocation constraints.
     "
@@ -306,20 +293,41 @@ proc fMRIEngineBuildGUI {} {
     #------------------------------
     set f $fSequence.fOption
 
-    Notebook-create $f.fNotebook \
-                    -pages {Load Select} \
-                    -pad 2 \
-                    -bg $Gui(activeWorkspace) \
-                    -height 356 \
-                    -width 240
-    Notebook-setCallback $f.fNotebook \
-        fMRIEngineUpdateSequences
-    pack $f.fNotebook -fill both -expand 1
- 
-    set w [Notebook-frame $f.fNotebook Load]
-    fMRIEngineBuildUIForLoad $w
-    set w [Notebook-frame $f.fNotebook Select]
-    fMRIEngineBuildUIForSelect $w
+    #--- create blt notebook
+    blt::tabset $f.tsNotebook -relief flat -borderwidth 0
+    pack $f.tsNotebook -side top
+
+    #--- notebook configure
+    $f.tsNotebook configure -width 240
+    $f.tsNotebook configure -height 410 
+    $f.tsNotebook configure -background $::Gui(activeWorkspace)
+    $f.tsNotebook configure -activebackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -selectbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -tabbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -highlightbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -highlightcolor $::Gui(activeWorkspace)
+    $f.tsNotebook configure -foreground black
+    $f.tsNotebook configure -activeforeground black
+    $f.tsNotebook configure -selectforeground black
+    $f.tsNotebook configure -tabforeground black
+    $f.tsNotebook configure -relief flat
+    $f.tsNotebook configure -tabrelief raised
+
+    #--- tab configure
+    set i 0
+    foreach t "Load Select" {
+        $f.tsNotebook insert $i $t
+        frame $f.tsNotebook.f$t -bg $Gui(activeWorkspace) -bd 2 
+        fMRIEngineBuildUIFor${t} $f.tsNotebook.f$t
+
+        $f.tsNotebook tab configure $t -window $f.tsNotebook.f$t 
+        $f.tsNotebook tab configure $t -activebackground $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -selectbackground $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -background $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -fill both -padx $::Gui(pad) -pady 1 
+
+        incr i
+    }
  
     #-------------------------------------------
     # Setup tab 

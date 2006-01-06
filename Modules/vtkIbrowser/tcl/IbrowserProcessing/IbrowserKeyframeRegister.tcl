@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,12 +32,14 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        IbrowserKeyframeRegister.tcl
 # PROCEDURES:  
 #   IbrowserBuildKeyframeRegisterGUI
 #   IbrowserBuildKeyframeRegisterKeyframesGUI
+#   IbrowserUpdateKeyframeRegisterGUI
+#   IbrowserUpdateKeyframeRegisterReference
 #   IbrowserKeyframeClearAllKeyframes
 #   IbrowserBuildKeyframeRegisterInterpolateGUI
 #   IbrowserAddKeyframeToList
@@ -52,6 +54,7 @@
 #   IbrowserKeyframeUndoInterpolate
 #   IbrowserKeyframeResetAllTransforms
 #   IbrowserKeyframeDeleteAllTransforms
+#   IbrowserHelpKeyframeRegister
 #==========================================================================auto=
 
 
@@ -67,6 +70,7 @@ proc IbrowserBuildKeyframeRegisterGUI { f master } {
     #---
     #--- set global variables for frame so we can raise it.
     set ::Ibrowser(fProcessKeyframeRegister) $f
+
 
     #---
     #--- set some globals for this process.
@@ -92,28 +96,64 @@ proc IbrowserBuildKeyframeRegisterGUI { f master } {
     set ::Ibrowser(Process,Matrix,cols) {0 1 2 3}
     set ::Ibrowser(Process,KeyframeRegister,eventManager) ""
 
+    frame $f.fOverview -bg $Gui(activeWorkspace) -bd 2 
+    pack $f.fOverview -side top
+
+    set ff $f.fOverview
+    DevAddButton $ff.bHelp "?" "IbrowserHelpKeyframeRegister" 2 
+    eval { label $ff.lOverview -text \
+               "Specify keyframed registration." } $Gui(WLA)
+    grid $ff.bHelp $ff.lOverview -pady 1 -padx 1 -sticky w
+
     #---
     #--- create notebook frames for stages of keyframe interpolation
-    Notebook:create $f.fNotebook \
-        -pages { Keyframes Interpolate } \
-        -pad 2 \
-        -bg $Gui(activeWorkspace) \
-        -height 300 \
-        -width 240
-    pack $f.fNotebook -fill both -expand 1
-
-    set nf [ Notebook:frame $f.fNotebook Keyframes ]
-    IbrowserBuildKeyframeRegisterKeyframesGUI $nf
-    set nf [ Notebook:frame $f.fNotebook Interpolate ]
-    IbrowserBuildKeyframeRegisterInterpolateGUI $nf
-
+    if { [catch "package require BLT" ] } {
+        DevErrorWindow "Must have the BLT package installed to generate keyframe registration interface."
+        return
+    }
     
+    #--- create blt notebook
+    blt::tabset $f.tsNotebook -relief flat -borderwidth 0
+    pack $f.tsNotebook -side top
+
+    #--- notebook configure
+    $f.tsNotebook configure -width 250
+    $f.tsNotebook configure -height 320
+    $f.tsNotebook configure -background $::Gui(activeWorkspace)
+    $f.tsNotebook configure -activebackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -selectbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -tabbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -highlightbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -highlightcolor $::Gui(activeWorkspace)
+    $f.tsNotebook configure -foreground black
+    $f.tsNotebook configure -activeforeground black
+    $f.tsNotebook configure -selectforeground black
+    $f.tsNotebook configure -tabforeground black
+    $f.tsNotebook configure -relief flat
+    $f.tsNotebook configure -tabrelief raised
+
+    #--- tab configure
+    set i 0
+    foreach t "Keyframes Interpolate" {
+        $f.tsNotebook insert $i $t
+        frame $f.tsNotebook.f$t -bg $Gui(activeWorkspace) -bd 2
+        IbrowserBuildKeyframeRegister${t}GUI $f.tsNotebook.f$t
+        $f.tsNotebook tab configure $t -window $f.tsNotebook.f$t  
+        $f.tsNotebook tab configure $t -activebackground $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -selectbackground $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -background $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -fill both -padx $::Gui(pad) -pady $::Gui(pad)
+        incr i
+    }
+
+
     #--- Place the KeyframeRegister GUI in the
     #--- process-specific raised GUI panel.
     place $f -in $master -relheight 1.0 -relwidth 1.0
 
     
 }
+
 
 
 
@@ -135,7 +175,7 @@ proc IbrowserBuildKeyframeRegisterKeyframesGUI { nf } {
     set ff $nf.fInput
     eval { label $ff.lChooseProcInterval -text "interval:" } $Gui(WLA)
     eval { menubutton $ff.mbIntervals -text "none" \
-               -relief raised -bd 2 -width 18 \
+               -relief raised -bd 2 -width 14 \
                -menu $ff.mbIntervals.m -indicatoron 1 } $::Gui(WMBA)
     eval { menu $ff.mbIntervals.m } $::Gui(WMA)
     foreach i $::Ibrowser(idList) {
@@ -143,20 +183,21 @@ proc IbrowserBuildKeyframeRegisterKeyframesGUI { nf } {
     }
     TooltipAdd $ff.mbIntervals \
         "Select the interval to keyframe register."
-    set ::Ibrowser(Process,KeyframeRegister,mbIntervals) $ff.mbIntervals
-    set ::Ibrowser(Process,KeyframeRegister,mIntervals) $ff.mbIntervals.m
+    set ::Ibrowser(Process,KeyframeRegister,mbIntervals) $nf.fInput.mbIntervals
+    #bind $::Ibrowser(Process,KeyframeRegister,mbIntervals) <ButtonPress-1> "IbrowserUpdateKeyframeRegisterGUI"
+    set ::Ibrowser(Process,KeyframeRegister,mIntervals) $nf.fInput.mbIntervals.m
     grid $ff.lChooseProcInterval -row 0 -column 0 -pady 1 -padx $::Gui(pad) -sticky e
     grid $ff.mbIntervals -row 0 -column 1 -pady 1 -padx $::Gui(pad) -sticky e
 
     DevAddButton $ff.bAddTransforms "add transforms" \
-        "IbrowserAddSequenceTransforms" 18
+        "IbrowserAddTransforms" 18
     TooltipAdd $ff.bAddTransforms \
         "Creates a transform for each volume in the selected interval."
     grid $ff.bAddTransforms -row 1 -column 1 -pady 1 -padx $::Gui(pad) -sticky w
     
     eval { label $ff.lReference -text "reference:" } $Gui(WLA)
     eval { menubutton $ff.mbReference -text "none" \
-               -relief raised -bd 2 -width 18 -indicatoron 1 \
+               -relief raised -bd 2 -width 14 -indicatoron 1 \
                -menu $ff.mbReference.m } $::Gui(WMBA)
     eval { menu $ff.mbReference.m } $::Gui(WMA)
     foreach i $::Ibrowser(idList) {
@@ -164,8 +205,9 @@ proc IbrowserBuildKeyframeRegisterKeyframesGUI { nf } {
     }
     TooltipAdd $ff.mbReference \
         "Select the reference volume for all keyframes."
-    set ::Ibrowser(Process,KeyframeRegister,mbReference) $ff.mbReference
-    set ::Ibrowser(Process,KeyframeRegister,mReference) $ff.mbReference.m
+    set ::Ibrowser(Process,KeyframeRegister,mbReference) $nf.fInput.mbReference
+    #bind $::Ibrowser(Process,KeyframeRegister,mbReference) <ButtonPress-1> "IbrowserUpdateKeyframeRegisterReference"
+    set ::Ibrowser(Process,KeyframeRegister,mReference) $nf.fInput.mbReference.m
     grid $ff.lReference -row 2 -column 0 -pady 1 -padx $::Gui(pad) -sticky e
     grid $ff.mbReference -row 2 -column 1 -pady 1 -padx $::Gui(pad) -sticky e
 
@@ -211,7 +253,7 @@ proc IbrowserBuildKeyframeRegisterKeyframesGUI { nf } {
     pack $ff.lSelectToDel -anchor nw -pady 2 -padx $Gui(pad)
     eval { scrollbar $ff.sVolumes -command "$ff.lbVolumes yview" }
     eval { listbox $ff.lbVolumes -bg $Gui(normalButton) -font {helvetica 8 } \
-               -fg $Gui(textDark) -width 18 -height 6 -yscrollcommand "$ff.sVolumes set"}
+               -fg $Gui(textDark) -width 18 -height 5 -yscrollcommand "$ff.sVolumes set"}
     set ::Ibrowser(Process,KeyframeRegister,lbKeyframe1) $ff.lbVolumes
     pack $ff.lbVolumes -padx 2 -pady 1 -side left
     pack $ff.sVolumes -padx 0 -side left -pady 1 -fill y 
@@ -228,6 +270,71 @@ proc IbrowserBuildKeyframeRegisterKeyframesGUI { nf } {
     #--- pack notebook frame
     pack $nf.fInput $nf.fKeyframes $nf.fKeyframeList -side top \
         -pady $Gui(pad) -padx $Gui(pad) -fill both        
+}
+
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateKeyframeRegisterGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserUpdateKeyframeRegisterGUI { } {
+
+    if { [info exists ::Ibrowser(Process,KeyframeRegister,mIntervals) ] } {
+        #--- configure interval selection menu
+        set m $::Ibrowser(Process,KeyframeRegister,mIntervals)
+        set mb $::Ibrowser(Process,KeyframeRegister,mbIntervals)
+        set mbR $::Ibrowser(Process,KeyframeRegister,mbReference)
+        $m delete 0 end
+        foreach id $::Ibrowser(idList) {
+            $m add command -label $::Ibrowser($id,name) -command "IbrowserSetActiveInterval $id;
+                     IbrowserProcessingSelectInternalReference none $::Volume(idNone);
+                     $mbR config -text none;
+                     IbrowserKeyframeClearAllKeyframes"
+        }
+    }
+
+}
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateKeyframeRegisterReference
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserUpdateKeyframeRegisterReference { } {
+
+    if { [info exists ::Ibrowser(Process,KeyframeRegister,mReference) ] } {    
+        #--- configure reference selection menu and menubutton
+        set m $::Ibrowser(Process,KeyframeRegister,mReference)
+        $m delete 0 end
+        set id $::Ibrowser(activeInterval)
+        if { $id == $::Ibrowser(idNone) } {
+            set mb $::Ibrowser(Process,KeyframeRegister,mbReference)
+            $mb configure -text $::Ibrowser(${::Ibrowser(idNone)},name)
+        } else {
+            set mb $::Ibrowser(Process,KeyframeRegister,mbReference)
+            set start $::Ibrowser($::Ibrowser(activeInterval),firstMRMLid)
+            set stop $::Ibrowser($::Ibrowser(activeInterval),lastMRMLid)
+            set count 0
+            #---build selections; all volumes in an interval
+            set vname "none"
+            $m add command -label $vname \
+                -command "IbrowserProcessingSelectInternalReference $vname $::Volume(idNone)"
+            for { set i $start } { $i <= $stop } { incr i } {
+                set vname [ ::Volume($i,node) GetName ]
+                $m add command -label $vname \
+                    -command "IbrowserProcessingSelectInternalReference $vname $i;
+                                         $mb configure -text $vname"
+                incr count
+            }
+        }
+    }
 }
 
 
@@ -275,7 +382,7 @@ proc IbrowserBuildKeyframeRegisterInterpolateGUI { nf } {
     set ff $nf.fSelect.fListbox
     eval { scrollbar $ff.sVolumes -command "$ff.lbVolumes yview" }
     eval { listbox $ff.lbVolumes -bg $Gui(normalButton) -font {helvetica 8 } \
-               -fg $Gui(textDark) -width 26 -height 5 -yscrollcommand "$ff.sVolumes set"}
+               -fg $Gui(textDark) -width 26 -height 3 -yscrollcommand "$ff.sVolumes set"}
     set ::Ibrowser(Process,KeyframeRegister,lbKeyframe2) $ff.lbVolumes
     pack $ff.lbVolumes -padx 2 -side left -pady 2
     pack $ff.sVolumes -padx 0 -pady 0 -side left -fill y -pady 2
@@ -840,5 +947,32 @@ proc IbrowserKeyframeDeleteAllTransforms { } {
     } else {
         DevErrorWindow "No transforms in interval $::Ibrowser($id,name)."
     }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserHelpKeyframeRegister
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserHelpKeyframeRegister { } {
+
+    set i [ IbrowserGetHelpWinID ]
+    set txt "<H3>Keyframed Registration</H3>
+ <P> This tool is an option for volumes of image data which may be difficult to register with automated intensity registration tools. The process uses a combination of manually specified and linearly interpolated transforms to register the volumes in a selected interval. Results will vary depending on the keyframes chosen and the quality of the manual registrations specified at each. The workflow is as follows:
+<P>1. In the Keyframes tab, select an interval to be registered using one of its volumes as the reference;
+<P>2. Add transform nodes to each volume in the interval;
+<P>3. Choose a reference volume from the sequence;
+<P>4. Select keyframes, for which manual transforms will be specified;
+<P>5. In the Interpolate tab, select a keyframe;
+<P>6. Load the keyframe in the viewer, (keyframe is loaded into the FG, with reference in the BG);
+<P>7. (the keyframe's matrix is loaded and the user is automatically moved to the alignments module for manual transforming);
+<P>8. when the transform is acceptable, move back to the Ibrowser module to repeat for the next keyframe.
+<P>9. When all keyframes are specified, interpolate all transforms between the keyframes.
+<P>10. Undo the interpolation if the results indicate that keyframes need to be edited;
+<P>11. Reset all transforms if you want to start fresh.
+<P>12. Delete all transforms if you want to abort and clean up.
+<P> Undoing the interpolation removes the transforms that have been generated, but not those which have been manually specified; resetting all transforms sets all volume's transforms back to the identity matrix. Deleting all transforms removes the transform nodes that affect the selected interval's volumes."
+    DevCreateTextPopup infowin$i "Ibrowser information" 100 100 18 $txt
 }
 

@@ -1,38 +1,14 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
-# This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
-# Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
-# research purposes only, provided that (1) the above copyright notice and 
-# the following four paragraphs appear on all copies of this software, and 
-# (2) that source code to any modifications to this software be made 
-# publicly available under terms no more restrictive than those in this 
-# License Agreement. Use of this software constitutes acceptance of these 
-# terms and conditions.
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 # 
-# 3D Slicer Software has not been reviewed or approved by the Food and 
-# Drug Administration, and is for non-clinical, IRB-approved Research Use 
-# Only.  In no event shall data or images generated through the use of 3D 
-# Slicer Software be used in the provision of patient care.
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
 # 
-# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-# POSSIBILITY OF SUCH DAMAGE.
+#   Program:   3D Slicer
+#   Module:    $RCSfile: vtkFreeSurferReaders.tcl,v $
+#   Date:      $Date: 2006/01/06 17:57:42 $
+#   Version:   $Revision: 1.49 $
 # 
-# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-# NON-INFRINGEMENT.
-# 
-# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-# 
-#
 #===============================================================================
 # FILE:        vtkFreeSurferReaders.tcl
 # PROCEDURES:  
@@ -44,13 +20,13 @@
 #   vtkFreeSurferReadersExit
 #   vtkFreeSurferReadersSetVolumeFileName
 #   vtkFreeSurferReadersSetModelFileName
+#   vtkFreeSurferReadersSetAnnotationFileName
 #   vtkFreeSurferReadersSetAnnotColorFileName
 #   vtkFreeSurferReadersApply
 #   vtkFreeSurferReadersCORApply
 #   vtkFreeSurferReadersMGHApply
 #   vtkFreeSurferReadersMGHUpdateMRML
 #   vtkFreeSurferReadersShowMGH i
-#   vtkFreeSurferReadersVolumesPropsApplyPre
 #   vtkFreeSurferReadersBApply
 #   vtkFreeSurferReadersBuildSurface m
 #   vtkFreeSurferReadersSetSurfaceVisibility i vis
@@ -61,7 +37,9 @@
 #   vtkFreeSurferReadersCORHeaderRead file
 #   vtkFreeSurferReadersSetUMLSMapping
 #   vtkFreeSurferReadersReadAnnotations  _id
+#   vtkFreeSurferReadersReadAnnotation a _id annotFileName
 #   vtkFreeSurferReadersCheckAnnotError
+#   vtkFreeSurferReadersCheckWError
 #   vtkFreeSurferReadersModelApply
 #   vtkFreeSurferReadersModelCancel
 #   vtkFreeSurferReadersSetLoad param
@@ -74,11 +52,12 @@
 #   vtkFreeSurferReadersCast v toType
 #   vtkFreeSurferReadersSetLoadColours
 #   vtkFreeSurferReadersSetColourFileName
+#   vtkFreeSurferReadersLoadColour overwriteFlag
 #   vtkFreeSurferReadersGDFInit
 #   vtkFreeSurferReadersGDFPlotBuildWindow iID
 #   vtkFreeSurferReadersGDFPlotBuildDynamicWindowElements iID
 #   vtkFreeSurferReadersPlotParseHeader ifnHeader
-#   vtkFreeSurferReadersPlotPlotData iID
+#   vtkFreeSurferReadersPlotPlotData iID dID
 #   vtkFreeSurferReadersPlotCalculateSubjectMeasurement iID inSubject
 #   vtkFreeSurferReadersGDFPlotHilightElement iID iElement
 #   vtkFreeSurferReadersGDFPlotUnhilightElement iID iElement
@@ -97,8 +76,8 @@
 #   vtkFreeSurferReadersGDFPlotPrint iID
 #   vtkFreeSurferReadersPlotShowWindow iID
 #   vtkFreeSurferReadersPlotHideWindow iID
-#   vtkFreeSurferReadersPlotSetVariable iID inVariable
-#   vtkFreeSurferReadersPlotSetVariable iID iMode
+#   vtkFreeSurferReadersPlotSetVariable iID vID
+#   vtkFreeSurferReadersPlotSetMode iID iMode
 #   vtkFreeSurferReadersPlotSetNthClassMarker iID inClass iMarker
 #   vtkFreeSurferReadersPlotSetNthClassColor iID inClass iColor
 #   vtkFreeSurferReadersPlotSetPoint iID iX iY iZ
@@ -134,6 +113,20 @@
 #   vtkFreeSurferReadersQAStop
 #   vtkFreeSurferReadersQASummary
 #   vtkFreeSurferReadersQAMakeNewSubjectsCsh subjectsDir subset
+#   vtkFreeSurferReadersPlotBuildPointList  pointID scalarVar
+#   vtkFreeSurferReadersPickPlot widget x y
+#   vtkFreeSurferReadersPickScalar widget x y
+#   vtkFreeSurferReadersShowScalarValue mid pid val col
+#   vtkFreeSurferReadersBuildModelScalarsGui
+#   vtkFreeSurferReadersScalarSetLoadAddNew
+#   vtkFreeSurferReadersAddLuts
+#   vtkFreeSurferReadersPickScalarsLut parentButton
+#   vtkFreeSurferReadersSetScalarFileName
+#   vtkFreeSurferReadersEditScalarsLut
+#   vtkFreeSurferReadersSetLutParam param
+#   vtkFreeSurferReadersReadScalars m fileName
+#   vtkFreeSurferReadersLoadScalarFile fileName
+#   vtkFreeSurferReadersLoadAnnotationFile fileName
 #==========================================================================auto=
 
 #-------------------------------------------------------------------------------
@@ -335,7 +328,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.48 $} {$Date: 2005/12/01 21:37:13 $}]
+        {$Revision: 1.49 $} {$Date: 2006/01/06 17:57:42 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -382,7 +375,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
               -indicatoron 0 -command "vtkFreeSurferReadersSetLoadColours"} $Gui(WCA)
     TooltipAdd $f.cLoadColours "Load in a FreeSurfer colour definition file when loading a label map.\nWARNING: will override other colours, use at your own risk."
     pack $f.cLoadColours -side top -padx $Gui(pad)
-    DevAddFileBrowse $f vtkFreeSurferReaders "colourFileName" "Colour file:" "vtkFreeSurferReadersSetColourFileName" "" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer colors file (xml txt)"
+    DevAddFileBrowse $f vtkFreeSurferReaders "colourFileName" "Colour file:" "vtkFreeSurferReadersSetColourFileName" "txt xml" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer colors file (xml txt)"
 
 
     DevAddButton $f.bLoadColours "Load" "vtkFreeSurferReadersLoadColour 1"
@@ -424,7 +417,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
     # Display->Scalars->Scalar Frame
     #-------------------------------------------
     set f $fDisplay.fScalars.fScalar
-    DevAddFileBrowse $f vtkFreeSurferReaders "scalarFileName" "Scalar (Overlay) file:" "vtkFreeSurferReadersSetScalarFileName" "" {[file dirname $::Model(FileName)]} "Open" "Browse for a FreeSurfer scalar overlay file for the active model (thickness curv avg_curv sulc area w)"
+    DevAddFileBrowse $f vtkFreeSurferReaders "scalarFileName" "Scalar (Overlay) file:" "vtkFreeSurferReadersSetScalarFileName" "thickness curv avg_curv sulc area w" {[file dirname $::Model(FileName)]} "Open" "Browse for a FreeSurfer scalar overlay file for the active model (thickness curv avg_curv sulc area w)"
     eval {button $f.bLoad -text "Load Scalar File" -width 12 -command "vtkFreeSurferReadersLoadScalarFile"} $Gui(WBA)
     TooltipAdd $f.bLoad "Load the scalar file and associate it with the active model"
     pack $f.bLoad  -side top -pady 1 -padx 1
@@ -481,7 +474,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
 
     set f $fVolumes.fVolume
 
-    DevAddFileBrowse $f  vtkFreeSurferReaders "VolumeFileName" "FreeSurfer File:" "vtkFreeSurferReadersSetVolumeFileName" "" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer volume file (.info, .mgh, .mgz, .bhdr)" 
+    DevAddFileBrowse $f  vtkFreeSurferReaders "VolumeFileName" "FreeSurfer File:" "vtkFreeSurferReadersSetVolumeFileName" "mgz mgh info bhdr" "\$Volume(DefaultDir)" "Open" "Browse for a FreeSurfer volume file (.info, .mgh, .mgz, .bhdr)" 
 
     frame $f.fLabelMap -bg $Gui(activeWorkspace)
     frame $f.fCast  -bg $Gui(activeWorkspace)
@@ -574,7 +567,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
     set fModel $Module(vtkFreeSurferReaders,fModels)
     set f $fModel
 
-    DevAddFileBrowse $f  vtkFreeSurferReaders "ModelFileName" "Model File:" "vtkFreeSurferReadersSetModelFileName" "" {[file dirname $::Model(FileName)]} "Open" "Browse for a FreeSurfer surface file (orig ${vtkFreeSurferReaders(surfaces)})"
+    DevAddFileBrowse $f  vtkFreeSurferReaders "ModelFileName" "Model File:" "vtkFreeSurferReadersSetModelFileName" "orig ${vtkFreeSurferReaders(surfaces)}" {[file dirname $::Model(FileName)]} "Open" "Browse for a FreeSurfer surface file (orig ${vtkFreeSurferReaders(surfaces)})"
     frame $f.fName -bg $Gui(activeWorkspace)
     frame $f.fSurface -bg $Gui(activeWorkspace)
     frame $f.fScalar -bg $Gui(activeWorkspace)
@@ -603,6 +596,8 @@ proc vtkFreeSurferReadersBuildGUI {} {
     pack $f.eName -side left -padx $Gui(pad) -expand 1 -fill x
     pack $f.lName -side left -padx $Gui(pad) 
 
+    if {0} {
+        # this is implicit in the browsing for a model file
     #------------
     # Model->Surface 
     #------------
@@ -618,6 +613,7 @@ proc vtkFreeSurferReadersBuildGUI {} {
                   -indicatoron 0} $Gui(WCA)
         pack $f.c$surface -side top -padx 0
     }
+}
 
     #------------
     # Model->Scalar 
@@ -5906,7 +5902,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set timemsg [join [split $timemsg] "-"]
     # make up the message with single quotes between each one for easy parsing later, 
     # leave out ones on the end as will get empty strings there
-    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.48 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
+    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.49 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"

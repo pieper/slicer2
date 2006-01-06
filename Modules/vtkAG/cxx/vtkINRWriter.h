@@ -1,3 +1,16 @@
+/*=auto=========================================================================
+
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkINRWriter.h,v $
+  Date:      $Date: 2006/01/06 17:57:09 $
+  Version:   $Revision: 1.2 $
+
+=========================================================================auto=*/
 #ifndef __vtkINRWriter_h
 #define __vtkINRWriter_h
 

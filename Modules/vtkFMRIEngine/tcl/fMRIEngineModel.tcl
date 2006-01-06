@@ -1,37 +1,13 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 # 
-# This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors.
-# Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for  
-# research purposes only, provided that (1) the above copyright notice and 
-# the following four paragraphs appear on all copies of this software, and 
-# (2) that source code to any modifications to this software be made 
-# publicly available under terms no more restrictive than those in this 
-# License Agreement. Use of this software constitutes acceptance of these 
-# terms and conditions.
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
 # 
-# 3D Slicer Software has not been reviewed or approved by the Food and 
-# Drug Administration, and is for non-clinical, IRB-approved Research Use 
-# Only.  In no event shall data or images generated through the use of 3D 
-# Slicer Software be used in the provision of patient care.
-# 
-# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-# POSSIBILITY OF SUCH DAMAGE.
-# 
-# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-# NON-INFRINGEMENT.
-# 
-# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: fMRIEngineModel.tcl,v $
+#   Date:      $Date: 2006/01/06 17:57:37 $
+#   Version:   $Revision: 1.20 $
 # 
 #===============================================================================
 # FILE:        fMRIEngineModel.tcl
@@ -275,21 +251,39 @@ proc fMRIEngineViewModel {} {
         }
     }
 
-    #--- brittle test to see if all evs are defined yet for each run.
+    #--- test to see if all evs are defined yet for each run.
     #--- If not, don't view
-    set count 0
-    set size [$::fMRIEngine(evsListBox) size]
-    for {set r 1} {$r <= $fMRIEngine(noOfSpecifiedRuns)} {incr r} { 
-        #--- count number of conditions in each run.
-        set conds [ llength $::fMRIEngine($r,conditionList)  ]
-        set count [ expr $count + $conds ]
-    }
-    #--- add in baseline per run
-    set count2 [ expr $count + $::fMRIEngine(noOfSpecifiedRuns) ]
-    #--- are all conditions modeled?
-    if { ($size != $count) && ($size != $count2) } {
-        DevErrorWindow "Please model all conditions first"
-        return 
+    set j 0
+    set end [$fMRIEngine(gui,conditionsMenuForSignal) index end] 
+    while {$j <= $end} {  
+        set v [$fMRIEngine(gui,conditionsMenuForSignal) entrycget $j -label] 
+        if { ($v != "") && ($v != "all") && ($v != "none") } {
+            set v $v:
+
+            # for each condition, search it over the specified evs
+            # if found, it has been modeled.
+            set size [$fMRIEngine(evsListBox) size]
+            set i 0
+            while {$i < $size} {  
+                set ev [$fMRIEngine(evsListBox) get $i] 
+                if {$ev != ""} {
+                    set found [string first $v $ev 0] 
+                    if {$found >= 0} {
+                        break
+                    }
+                }
+
+                incr i
+            }
+
+            # not found, the condition is not modeled.
+            if {$found == -1} {
+                DevErrorWindow "Please model all conditions first"
+                return 
+            }
+        }
+
+        incr j
     }
 
     #--- looks reasonable. Count evs and launch view.

@@ -1,3 +1,18 @@
+#=auto==========================================================================
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
+# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: ischeckbox.tcl,v $
+#   Date:      $Date: 2006/01/06 17:57:08 $
+#   Version:   $Revision: 1.2 $
+# 
+#===============================================================================
+# FILE:        ischeckbox.tcl
+# PROCEDURES:  
+#==========================================================================auto=
 #
 # Checkbox
 # ----------------------------------------------------------------------

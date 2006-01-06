@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,7 +32,7 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        IbrowserControllerIntervals.tcl
 # PROCEDURES:  
@@ -47,10 +47,10 @@
 #   IbrowserUpdateGlobalYspan
 #   IbrowserUpdateGlobalXspan
 #   IbrowserIntervalRedraw
-#   IbrowserIntervalRedraw
-#   IbrowserDeleteIntervalVolumes
 #   IbrowserCopyIntervalVolumes
 #   IbrowserCopyInterval
+#   IbrowserCopyInterval
+#   IbrowserDeleteIntervalVolumes
 #   IbrowserDeleteInterval
 #   IbrowserDeleteAllIntervals
 #   IbrowserUpdateMaxDrops
@@ -601,6 +601,10 @@ proc IbrowserCopyInterval { sourceName copyName } {
     #--- create interval to contain the volumes.
     IbrowserMakeNewInterval $copyName $::IbrowserController(Info,Ival,imageIvalType) 0.0 $spanmax $m
     
+    #--- update multivolumereader to reflect this multi-volume sequence
+    set id $::Ibrowser($copyName,intervalID)
+    IbrowserUpdateMultiVolumeReader $copyName $id
+    
     #--- report in Ibrowser's message panel"
     set tt "Copied $sourceName to $copyName."
     IbrowserSayThis $tt 0
@@ -635,6 +639,9 @@ proc  IbrowserDeleteIntervalArray { ivalName } {
     unset -nocomplain ::Ibrowser($id,type)
     unset -nocomplain ::Ibrowser($id,opacity)
     unset -nocomplain ::Ibrowser($id,order)
+    unset -nocomplain ::Ibrowser($id,transformID)
+    unset -nocomplain ::Ibrowser($id,matrixID)
+    
     for {set v 0 } { $v < $::Ibrowser($id,numDrops) } { incr v } {
         unset -nocomplain ::Ibrowser($id,v,pos)
         unset -nocomplain ::Ibrowser($id,v,dropTAG)
@@ -721,6 +728,9 @@ proc IbrowserDeleteIntervalVolumes { id } {
 
 
 
+
+
+
 #-------------------------------------------------------------------------------
 # .PROC IbrowserDeleteInterval
 # 
@@ -778,6 +788,24 @@ proc IbrowserDeleteInterval { ivalName } {
     IbrowserUpdateIndexAndSliderBox
     IbrowserUpdateIndexAndSliderMarker 
 
+    #--- adjust the multivolume reader
+    set cnt 0
+    set del -1
+    foreach name $::MultiVolumeReader(sequenceNames) {
+        if { $ivalName == $name } {
+            set del $cnt
+        }
+        incr cnt
+    }
+    if { $del >= 0 } {
+        set ::MultiVolumeReader(sequenceNames) [ lreplace $::MultiVolumeReader(sequenceNames) $del $del ]
+        unset -nocomplain ::MultiVolumeReader($ivalName,firstMRMLid)
+        unset -nocomplain ::MultiVolumeReader($ivalName,lastMRMLid)        
+        unset -nocomplain ::MultiVolumeReader($ivalName,volumeExtent)
+        unset -nocomplain ::MultiVolumeReader($ivalName,noOfVolumes)
+    }
+
+    
     #--- report in Ibrowser's message panel"
     set tt "Deleted interval $ivalName."
     IbrowserSayThis $tt 0
@@ -787,6 +815,8 @@ proc IbrowserDeleteInterval { ivalName } {
     if { $::IbrowserController(Info,Ival,ivalCount) == 1 } {
         IbrowserSynchronizeAllSliders "disabled"
     }
+
+    IbrowserCleanUpEmptyTransformNodes
     MainUpdateMRML
 }
 
@@ -865,6 +895,8 @@ proc IbrowserInitNewInterval { newname } {
     return $id
     
 }
+
+
 
 
 #-------------------------------------------------------------------------------
@@ -1491,11 +1523,45 @@ proc IbrowserRenameInterval { old new } {
     set first $::Ibrowser($id,firstMRMLid)
     set last $::Ibrowser($id,lastMRMLid)
     set i 0
+
     for { set vid $first } { $vid <= $last } { incr vid} {
         #::Volume($vid,node) SetName ${new}_${i}_${old}
-        ::Volume($vid,node) SetName ${old}_${new}
+        #::Volume($vid,node) SetName ${old}_${new}
+        set vname [ ::Volume($vid,node) GetName]
+        set cc [ string last $old $vname]
+        #--- trim off the underbar and replace, if name is found.
+        if { $cc > 0 } {
+            set cc [ expr $cc - 2 ]
+            set vname [ string range $vname 0 $cc ]
+            ::Volume($vid,node) SetName ${vname}_${new}
+        }
         incr i
     }
+
+    #--- adjust the multivolume reader where all sequences
+    #--- are stored and referred to by other modules (fmriengine)
+    set cnt 0
+    set change -1
+    foreach name $::MultiVolumeReader(sequenceNames) {
+        if { $old == $name } {
+            set change $cnt
+        }
+        incr cnt
+    }
+    #--- replace 
+    if { $change >= 0 } {
+        set ::MultiVolumeReader(sequenceNames) [ lreplace $::MultiVolumeReader(sequenceNames) \
+                                                     $change $change $new ]
+        set ::MultiVolumeReader($new,noOfVolumes) $::MultiVolumeReader($old,noOfVolumes)
+        unset -nocomplain ::MultiVolumeReader($old,noOfVolumes)
+        set ::MultiVolumeReader($new,firstMRMLid) $::MultiVolumeReader($old,firstMRMLid)
+        unset -nocomplain ::MultiVolumeReader($old,firstMRMLid)
+        set ::MultiVolumeReader($new,lastMRMLid) $::MultiVolumeReader($old,lastMRMLid)
+        unset -nocomplain ::MultiVolumeReader($old,lastMRMLid)    
+        set ::MultiVolumeReader($new,volumeExtent) $::MultiVolumeReader($old,volumeExtent)
+        unset -nocomplain ::MultiVolumeReader($old,volumeExtent)
+    }
+    
     MainUpdateMRML
 }
 
@@ -1900,5 +1966,4 @@ proc IbrowserGetIntervalPixXstart { ivalName } {
     set id $::Ibrowser($ivalName,intervalID)
     return $::IbrowserController($id,pixxstart)
 }
-
 

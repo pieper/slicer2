@@ -1,3 +1,16 @@
+/*=auto=========================================================================
+
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkSuperquadricSource2.cxx,v $
+  Date:      $Date: 2006/01/06 17:58:06 $
+  Version:   $Revision: 1.2 $
+
+=========================================================================auto=*/
 /*=========================================================================
 
   Program:   Visualization Toolkit
@@ -30,7 +43,7 @@
 
 #include <math.h>
 
-vtkCxxRevisionMacro(vtkSuperquadricSource2, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkSuperquadricSource2, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkSuperquadricSource2);
 
 static void evalSuperquadric2(double u, double v, 

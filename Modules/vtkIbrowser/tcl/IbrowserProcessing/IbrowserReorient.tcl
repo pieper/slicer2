@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,15 +32,17 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        IbrowserReorient.tcl
 # PROCEDURES:  
 #   IbrowserBuildReorientGUI
+#   IbrowserUpdateReorientGUI
 #   IbrowserFlipVolumeSequence
 #   IbrowserFlipVolumeSequenceLR
 #   IbrowserFlipVolumeSequenceAP
 #   IbrowserFlipVolumeSequenceIS
+#   IbrowserHelpReorient
 #==========================================================================auto=
 
 
@@ -58,6 +60,16 @@ proc IbrowserBuildReorientGUI { f master } {
     #--- set a global variable for frame so we can raise it.
     set ::Ibrowser(fProcessReorient) $f
     
+    #--- create menu buttons and associated menus...
+    frame $f.fOverview -bg $Gui(activeWorkspace) -bd 2 
+    pack $f.fOverview -side top
+
+    set ff $f.fOverview
+    DevAddButton $ff.bHelp "?" "IbrowserHelpReorient" 2 
+    eval { label $ff.lOverview -text \
+               "Flip selected volume along major axis." } $Gui(WLA)
+    grid $ff.bHelp $ff.lOverview -pady 1 -padx 1 -sticky w
+
     frame $f.fSpace -bg $::Gui(activeWorkspace) -bd 2 
     eval { label $f.fSpace.lSpace -text "       " } $Gui(WLA)
     pack $f.fSpace -side top 
@@ -77,6 +89,7 @@ proc IbrowserBuildReorientGUI { f master } {
             -command "IbrowserSetActiveInterval $i"
     }
     set ::Ibrowser(Process,Reorient,mbIntervals) $f.fSelectInterval.mbIntervals
+    bind $::Ibrowser(Process,Reorient,mbIntervals) <ButtonPress-1> "IbrowserUpdateReorientGUI"
     set ::Ibrowser(Process,Reorient,mIntervals) $f.fSelectInterval.mbIntervals.m
     pack $f.fSelectInterval.lText -pady 2 -padx 2 -anchor w
     pack $f.fSelectInterval.mbIntervals -pady 2 -padx 2 -anchor w
@@ -107,6 +120,24 @@ proc IbrowserBuildReorientGUI { f master } {
 }
 
 
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateReorientGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserUpdateReorientGUI { } {
+
+    if { [info exists ::Ibrowser(Process,Reorient,mIntervals) ] } {
+        set m $::Ibrowser(Process,Reorient,mIntervals)
+        $m delete 0 end
+        foreach id $::Ibrowser(idList) {
+            $m add command -label $::Ibrowser($id,name)  \
+                -command "IbrowserSetActiveInterval $id"
+        }
+    }
+}
 
 
 
@@ -188,6 +219,8 @@ global Volume
     #--- from left to right, around center.
     #--- Flipped vtkImageData replaces its source
 
+
+    
     set iid $::Ibrowser(activeInterval)
     set firstID $::Ibrowser($iid,firstMRMLid)
     set lastID $::Ibrowser($iid,lastMRMLid)
@@ -211,7 +244,21 @@ global Volume
 
         vtkImageFlip flipLR
         flipLR SetInput [ ::Volume($v,vol) GetOutput ]
-        flipLR SetFilteredAxis 0
+
+        #--- translate the flipaxis to VTK space
+        set newvec [ IbrowserGetRasToVtkAxis RL ::Volume($vid,node) ]
+        #--- unpack the vector into x, y and z
+        foreach { x y z } $newvec { }
+        #--- set the appropriate parameters
+        if { ($x == 1) || ($x == -1) } {
+            flipLR SetFilteredAxis 0
+        } elseif { ($y == 1) || ( $y == -1) } {
+            flipLR SetFilteredAxis 1
+        } elseif { ($z == 1) || ($z == -1) } {
+            flipLR SetFilteredAxis 2
+        }
+
+        #flipLR SetFilteredAxis 0
         ::Volume($v,vol) SetImageData [ flipLR GetOutput ]
         
         MainVolumesUpdate $v
@@ -269,7 +316,21 @@ global Volume
 
         vtkImageFlip flipAP
         flipAP SetInput [ ::Volume($v,vol) GetOutput ]
-        flipAP SetFilteredAxis 1
+
+        #--- translate the flipaxis to VTK space
+        set newvec [ IbrowserGetRasToVtkAxis RL ::Volume($vid,node) ]
+        #--- unpack the vector into x, y and z
+        foreach { x y z } $newvec { }
+        #--- set the appropriate parameters
+        if { ($x == 1) || ($x == -1) } {
+            flipAP SetFilteredAxis 0
+        } elseif { ($y == 1) || ( $y == -1) } {
+            flipAP SetFilteredAxis 1
+        } elseif { ($z == 1) || ($z == -1) } {
+            flipAP SetFilteredAxis 2
+        }
+
+        #flipAP SetFilteredAxis 1
         ::Volume($v,vol) SetImageData [ flipAP GetOutput ]
         
         MainVolumesUpdate $v
@@ -331,7 +392,21 @@ global Volume
         
         vtkImageFlip flipIS
         flipIS SetInput [ ::Volume($v,vol) GetOutput ]
-        flipIS SetFilteredAxis 2
+
+        #--- translate the flipaxis to VTK space
+        set newvec [ IbrowserGetRasToVtkAxis RL ::Volume($vid,node) ]
+        #--- unpack the vector into x, y and z
+        foreach { x y z } $newvec { }
+        #--- set the appropriate parameters
+        if { ($x == 1) || ($x == -1) } {
+            flipIS SetFilteredAxis 0
+        } elseif { ($y == 1) || ( $y == -1) } {
+            flipIS SetFilteredAxis 1
+        } elseif { ($z == 1) || ($z == -1) } {
+            flipIS SetFilteredAxis 2
+        }
+
+        #flipIS SetFilteredAxis 2
         ::Volume($v,vol) SetImageData [ flipIS GetOutput ]
         
         MainVolumesUpdate $v
@@ -354,5 +429,22 @@ global Volume
 
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserHelpReorient
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserHelpReorient { } {
+
+    set i [ IbrowserGetHelpWinID ]
+    set txt "<H3>Reorient</H3>
+ <P> This tool reorients all volumes in a selected interval by flipping them along a specified axis:
+<P>   Right to Left (R/L),
+<P>   Anterior to Posterior (A/P), or
+<P>   Superior to Inferior (S/I)."
+    DevCreateTextPopup infowin$i "Ibrowser information" 100 100 18 $txt
+}
 
 

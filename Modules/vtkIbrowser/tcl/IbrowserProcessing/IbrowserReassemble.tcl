@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,14 +32,16 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        IbrowserReassemble.tcl
 # PROCEDURES:  
 #   IbrowserBuildReassembleGUI
+#   IbrowserUpdateReassembleGUI
 #   IbrowserCancelReassembleSequence
 #   IbrowserValidReassembleAxis
 #   IbrowserReassembleSequence
+#   IbrowserHelpReassemble
 #==========================================================================auto=
 
 
@@ -59,6 +61,15 @@ global Gui
     #--- Set a global variable for frame so we can raise it.
     set ::Ibrowser(fProcessReassemble) $f
     
+    frame $f.fOverview -bg $Gui(activeWorkspace) -bd 2 
+    pack $f.fOverview -side top
+
+    set ff $f.fOverview
+    DevAddButton $ff.bHelp "?" "IbrowserHelpReassemble" 2 
+    eval { label $ff.lOverview -text \
+               "Reassemble slices along major axis." } $Gui(WLA)
+    grid $ff.bHelp $ff.lOverview -pady 1 -padx 1 -sticky w
+
     frame $f.fSpace -bg $::Gui(activeWorkspace) -bd 2 
     eval { label $f.fSpace.lSpace -text "       " } $Gui(WLA)
     pack $f.fSpace -side top 
@@ -79,6 +90,7 @@ global Gui
     }
 
     set ::Ibrowser(Process,Reassemble,mbIntervals) $f.fSelectInterval.mbIntervals
+    bind $::Ibrowser(Process,Reassemble,mbIntervals) <ButtonPress-1> "IbrowserUpdateReassembleGUI"
     set ::Ibrowser(Process,Reassemble,mIntervals) $f.fSelectInterval.mbIntervals.m
     pack $f.fSelectInterval.lText -pady 2 -padx 2 -anchor w
     pack $f.fSelectInterval.mbIntervals -pady 2 -padx 2 -anchor w
@@ -109,6 +121,26 @@ global Gui
     pack $f.fConfiguration.bApply $f.fConfiguration.bCancel -side top -anchor w -padx 20 -pady 5
     place $f -in $master -relwidth 1.0 -relheight 1.0 -y 0
     
+}
+
+
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserUpdateReassembleGUI
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserUpdateReassembleGUI { } {
+
+    if { [info exists ::Ibrowser(Process,Reassemble,mIntervals) ] } {
+        set m $::Ibrowser(Process,Reassemble,mIntervals)
+        $m delete 0 end
+        foreach id $::Ibrowser(idList) {
+            $m add command -label $::Ibrowser($id,name)  \
+                -command "IbrowserSetActiveInterval $id"
+        }
+    }
 }
 
 
@@ -341,13 +373,14 @@ global Volume
             } else {
                 $dstnode SetInterpolate [ ::Volume($firstVolID,node) GetInterpolate ]
             }
+
             ::Volume($dstnodeID,vol) SetImageData  $imdata
-            #puts "New MrmlVolumeNode $dstnodeID:"
-            #puts "----------------------------------------"
-            #puts "new image data dimensions: $dim"
-            #puts "new image data spacing: $zSpacing"
-            #puts "new image data extent: $ext"
-            #puts ""
+            puts "New MrmlVolumeNode $dstnodeID:"
+            puts "----------------------------------------"
+            puts "new image data dimensions: $dim"
+            puts "new image data spacing: $zSpacing"
+            puts "new image data extent: $ext"
+            puts ""
 
             set ::Ibrowser($dstID,$n,MRMLid) $dstnodeID
 
@@ -384,4 +417,20 @@ global Volume
     }
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC IbrowserHelpReassemble
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc IbrowserHelpReassemble { } {
+
+    set i [ IbrowserGetHelpWinID ]
+    set txt "<H3>Reassemble volumes</H3>
+ <P> This tool lets you generate a new interval whose volumes are reassembled versions of those in a selected interval. In the reassembly, an axis (either Right -> Left, Anterior -> Posterior, or Superior -> Inferior) is arrayed along the interval axis. If the selected interval contains a set of volumes that represent a timeseries, then each volume in the reassembled interval will contain the same slice for all timepoints.
+<P> As an example, assume the selected axis is S->I. Then the first volume in the reassembled interval will be comprised of the S-most slice from each volume in the selected interval; the last volume in the reassembled interval will be comprised of the I-most slice from each volume in the selected interval.
+<P> Or, if a selected interval contains a single volume containing the same slice sampled over time, then a reassembled interval can be created which arrays individual timepoints along the Ibrowser's interval axis."
+    DevCreateTextPopup infowin$i "Ibrowser information" 100 100 18 $txt
+}
 

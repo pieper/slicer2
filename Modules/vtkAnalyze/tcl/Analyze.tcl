@@ -162,7 +162,7 @@ proc AnalyzeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.13 $} {$Date: 2005/07/11 21:13:57 $}]
+        {$Revision: 1.14 $} {$Date: 2006/01/06 17:57:14 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -234,13 +234,7 @@ proc AnalyzeBuildGUI {} {
     # Refer to the documentation for details on the syntax.
     #
     set help "
-    The Analyze module is an example for developers.  It shows how to add a module 
-    to the Slicer.  The source code is in slicer2/Modules/vtkAnalyze/tcl/Analyze.tcl.
-    <P>
-    Description by tab:
-    <BR>
-    <UL>
-    <LI><B>Tons o' Stuff:</B> This tab is a demo for developers.
+    The Analyze module tends to load an Analyze image into 3D Slicer by using vtk classes.
     "
     regsub -all "\n" $help {} help
     MainHelpApplyTags Analyze $help
@@ -496,12 +490,6 @@ proc AnalyzeCreateMrmlNodeForVolume {volName volData} {
     set sliceSpacing 0
     set zSpacing [expr $sliceThickness + $sliceSpacing]
 
-#puts "pixelWidth = $pixelWidth"
-#puts "pixelHeight = $pixelHeight"
-#puts "sliceThickness = $sliceThickness"
-#puts "zSpacing = $zSpacing"
-#puts "orient = $AnalyzeCache(orient)"
-
     eval Volume($i,node) SetSpacing $pixelWidth $pixelHeight $zSpacing 
     Volume($i,node) SetNumScalars [$volData GetNumberOfScalarComponents]
     set ext [$volData GetWholeExtent]
@@ -571,13 +559,6 @@ proc AnalyzeLoadVolumes {} {
     set minY 0
     set maxY [expr $y*$z*$n-1] 
 
-
-#puts " x = $x"
-#puts " y = $y"
-#puts " z = $z"
-#puts " n = $n"
-
-
     ir SetFileName $AnalyzeCache(fileName)
     ir SetDataByteOrder $AnalyzeCache(byteOrder) 
     ir SetDataScalarType $AnalyzeCache(dataType)
@@ -588,17 +569,7 @@ proc AnalyzeLoadVolumes {} {
     set yy [lindex $pixDims 1]
     set zz [lindex $pixDims 2]
 
-
-#puts " littleEndian = $AnalyzeCache(byteOrder)"
-#puts " VolBXH(bxh-dim,x,spacing) = $xx"
-#puts " VolBXH(bxh-dim,y,spacing) = $yy"
-#puts " VolBXH(bxh-sliceThickness) = $zz"
-
-
     ir SetDataSpacing $xx $yy $zz 
-#    ir SetDataSpacing $VolBXH(bxh-dim,x,spacing) \
-#        $VolBXH(bxh-dim,y,spacing) $VolBXH(bxh-sliceThickness)
- 
     ir ReleaseDataFlagOff
     ir SetDataExtent $minX $maxX $minY $maxY 0 0 
 
@@ -640,25 +611,35 @@ proc AnalyzeLoadVolumes {} {
             extract SetVOI $x1 $x2 $y1 $y2 0 0 
             extract Update
 
-#            puts "y1 = $y1"
-#            puts "y2 = $y2"
-#            puts "yBase = $yBase"
-
             set d [extract GetOutput]
             # Setting directly the extent of extract's output does not 
             # change its extent. That's why DeepCopy is here.
             vol DeepCopy $d
             vol SetExtent 0 [expr $x - 1] 0 [expr $y - 1] 0 0 
 
-            vtkImageFlipper fp
-            fp SetInput vol
-            fp SetFlippingSequence "012"
-            fp Update
+            # flip the image to get right orientation
+            vtkImageFlip flipX
+            flipX SetInput vol 
+            flipX SetFilteredAxis 0
+            flipX Update
 
-            imageAppend AddInput [fp GetOutput] 
+            vtkImageFlip flipY
+            flipY SetInput [flipX GetOutput] 
+            flipY SetFilteredAxis 1 
+            flipY Update
+
+            vtkImageFlip flipZ
+            flipZ SetInput [flipY GetOutput] 
+            flipZ SetFilteredAxis 2 
+            flipZ Update
+
+            imageAppend AddInput [flipZ GetOutput] 
+
             extract Delete
             vol Delete
-            fp Delete
+            flipX Delete
+            flipY Delete
+            flipZ Delete
 
             incr i
         }

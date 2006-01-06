@@ -108,10 +108,11 @@ set ::SLICER(minor_version) 7
 set ::SLICER(revision) ""
 
 # when packaging a release for distribution, set state to ""
+# when packaging a release candidate, set state to "-rc#" with the candidate number
 # when packaging a release for testing, set state to the date as "-YYYY-MM-DD"
 #  otherwise leave it as "-dev"
 
-set ::SLICER(state) "-dev"
+set ::SLICER(state) "-rc1"
 
 set ::SLICER(version) "$::SLICER(major_version).$::SLICER(minor_version)$::SLICER(revision)$::SLICER(state)"
 
@@ -140,7 +141,6 @@ proc Usage { {msg ""} } {
     set msg "$msg\n   --no-threads : disables multi threading"
     set msg "$msg\n   --no-tkcon : disables tk console"
     set msg "$msg\n   --load-dicom <dir> : read dicom files from <dir>"
-    set msg "$msg\n   --load-analyze <file.hdr> : read analyze file from <file.hdr>"
     set msg "$msg\n   --load-freesurfer-volume <COR-.info> : read freesurfer files"
     set msg "$msg\n   --load-freesurfer-label-volume <COR-.info> : read freesurfer label files"
     set msg "$msg\n   --load-freesurfer-model <file> : read freesurfer model file"
@@ -170,7 +170,6 @@ set ::SLICER(load-dicom) ""
 set ::SLICER(crystal-eyes-stereo) "false"
 set ::SLICER(old-voxel-shift) "false"
 set ::SLICER(immediate-mode) "false"
-set ::SLICER(load-analyze) ""
 set ::SLICER(load-freesurfer-volume) ""
 set ::SLICER(load-freesurfer-label-volume) ""
 set ::SLICER(load-freesurfer-model) ""
@@ -221,14 +220,6 @@ for {set i 0} {$i < $argc} {incr i} {
                 } else {
                     lappend ::SLICER(load-dicom) $dicomarg
                 }
-            }
-        }
-        "--load-analyze" {
-            incr i
-            if { $i == $argc } {
-                Usage "missing argument for $a\n"
-            } else {
-                lappend ::SLICER(load-analyze) [lindex $argv $i]
             }
         }
         "--load-freesurfer-volume" {
@@ -396,7 +387,15 @@ set Path(program) $prog
 # .END
 #------------------------------------------------------------------------------- 
 proc SplashRaise {} { 
-    if {[winfo exists .splash]} {
+    # don't raise it if there's an error message up
+    set winlist [winfo children .]
+    if {$::Module(verbose)} {
+        puts "Is there a tk message box up: [lsearch $winlist ".__tk_*"]"
+    }
+    if {[lsearch $winlist ".__tk_*"] != -1} {
+        # message is up, don't raise it now, but try later
+        after 100 "after idle SplashRaise"
+    } elseif {[winfo exists .splash]} {
         raise .splash
     
         # and keep the focus on it so that it captures key presses
@@ -952,7 +951,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.109 2006/01/02 06:04:19 pohl Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.110 2006/01/06 17:56:52 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
@@ -979,19 +978,6 @@ __vtkVersionInstance Delete
 #
 foreach arg $::SLICER(load-dicom) {
     DICOMLoadStudy $arg
-}
-
-#
-# read analyze volumes specified on command line
-#
-foreach arg $::SLICER(load-analyze) {
-    if { [catch "package require vtkCISGFile"] } {
-        DevErrorWindow "vtkCISGFile Module required for --load-analyze option."
-        break
-    }
-    set ::Volume(VolAnalyze,FileName) $arg
-    set ::Volume(name) [file root [file tail $arg]]
-    VolAnalyzeApply
 }
 
 #

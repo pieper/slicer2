@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,7 +32,7 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        IbrowserControllerIcons.tcl
 # PROCEDURES:  
@@ -1269,12 +1269,21 @@ proc IbrowserCopyIntervalPopUp { win id x y } {
         set f $w.fMsg
         eval {label $f.l -text "Name a copy of $::Ibrowser($id,name)." \
                 -font $::IbrowserController(UI,Medfont) -background #FFFFFF \
-                -foreground #000000 }
+                -foreground #000000 \
+              }
         pack $f.l -padx 5 -pady 5
 
         set f $w.fName
         set ::Ibrowser(thisName) $::Ibrowser($id,name)
-        set ::Ibrowser(afterName) $::Ibrowser($id,name)-copy
+        #set ::Ibrowser(afterName) $::Ibrowser($id,name)-copy
+        if { [ info exists ::MultiVolumeReader(defaultSequenceName)] } {
+            incr ::MultiVolumeReader(defaultSequenceName)
+        } else {
+            set ::MultiVolumeReader(defaultSequenceName) 1
+        }
+        set mmID $::MultiVolumeReader(defaultSequenceName)
+        set ::Ibrowser(afterName) [format "multiVol%d" $mmID]
+
         eval { label $f.l -text "new interval: " -background #FFFFFF \
                 -font $::IbrowserController(UI,Medfont) -foreground #000000 }
         eval { entry $f.e -width 20 -relief sunken -textvariable ::Ibrowser(afterName) }
@@ -1445,7 +1454,6 @@ proc IbrowserSetupNewNames { this after } {
     set ::Ibrowser(afterName) $after
     $::Ibrowser(guiOrderMenuButton) config -text $::Ibrowser(afterName)
 }
-
 
 
 

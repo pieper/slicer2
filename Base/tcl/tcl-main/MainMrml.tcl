@@ -1,37 +1,13 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 # 
-# This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors.
-# Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for  
-# research purposes only, provided that (1) the above copyright notice and 
-# the following four paragraphs appear on all copies of this software, and 
-# (2) that source code to any modifications to this software be made 
-# publicly available under terms no more restrictive than those in this 
-# License Agreement. Use of this software constitutes acceptance of these 
-# terms and conditions.
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
 # 
-# 3D Slicer Software has not been reviewed or approved by the Food and 
-# Drug Administration, and is for non-clinical, IRB-approved Research Use 
-# Only.  In no event shall data or images generated through the use of 3D 
-# Slicer Software be used in the provision of patient care.
-# 
-# IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE TO 
-# ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL 
-# DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
-# EVEN IF THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE BEEN ADVISED OF THE 
-# POSSIBILITY OF SUCH DAMAGE.
-# 
-# THE COPYRIGHT HOLDERS AND CONTRIBUTORS SPECIFICALLY DISCLAIM ANY EXPRESS 
-# OR IMPLIED WARRANTIES INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-# WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND 
-# NON-INFRINGEMENT.
-# 
-# THE SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS 
-# IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
-# PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: MainMrml.tcl,v $
+#   Date:      $Date: 2006/01/06 17:56:55 $
+#   Version:   $Revision: 1.112 $
 # 
 #===============================================================================
 # FILE:        MainMrml.tcl
@@ -101,7 +77,7 @@ proc MainMrmlInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainMrml \
-    {$Revision: 1.111 $} {$Date: 2005/12/12 20:01:22 $}]
+    {$Revision: 1.112 $} {$Date: 2006/01/06 17:56:55 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -1895,10 +1871,12 @@ proc MainMrmlRelativity {oldRoot} {
             if {$Module(verbose) == 1} {
                 puts "MainMrmlRelativity: volume node has file prefix [$node GetFilePrefix], oldroot = $oldRoot, full prefix [$node GetFullPrefix], Mrml(dir) = $Mrml(dir)"
             }
-            # this proc will calculate the relative path between the file passed in and Mrml(dir) which was set before this proc was called, to the new mrml file save location, and return a true relative prefix
+            # this proc will calculate the relative path between the file passed in and 
+            # Mrml(dir) which was set before this proc was called, to the new mrml file 
+            # save location, and return a true relative prefix
             $node SetFilePrefix [MainFileGetRelativePrefixNew [$node GetFullPrefix]]
             # Do I need to set the Full Prefix as well???? No.
-#            $node SetFilePrefix [MainFileGetRelativePrefix [file join $oldRoot [$node GetFilePrefix]]]
+
             if {$Module(verbose) == 1} {
                 puts "MainMrml.tcl MainMrmlRelativity: set file prefix to [$node GetFilePrefix] (full prefix is now [$node GetFullPrefix])"
             }
@@ -1918,14 +1896,15 @@ proc MainMrmlRelativity {oldRoot} {
             set num [$node GetNumberOfDICOMFiles]
             for {set i 0} {$i < $num} {incr i} {
                 set filename [$node GetDICOMFileName $i]
-                if {$::Module(verbose)} {
-                    puts "MainMrmlRelativity: got dicom filename $filename"
-                }
+                
                 #set dir [file dirname $filename]
                 #set name [file tail $filename]
                 #set reldir [MainFileGetRelativePrefix $dir]
                 # set relname [lindex [MainFileGetRelativeDirPrefix $filename] 1]
                 set relname [MainFileGetRelativePrefixNew $filename]
+                if {$::Module(verbose)} {
+                    puts "MainMrmlRelativity: got dicom filename $filename, with new relative name $relname"
+                }
                 $node SetDICOMFileName $i $relname
             }
 
@@ -1985,6 +1964,10 @@ proc MainMrmlWrite {filename} {
 #-------------------------------------------------------------------------------
 proc MainMrmlWriteProceed {filename} {
     global Mrml
+
+    # set the model hierarchy model node colours back to normal if they're collapsed
+    MainModelGroupsRestoreOldColors
+
     # See if colors are different than the defaults
     MainMrmlCheckColors
 
@@ -2030,6 +2013,12 @@ proc MainMrmlWriteProceed {filename} {
     }
     # Colors don't need saving now
     set Mrml(colorsUnsaved) 0
+
+    # restore the model hierarchy model node colours for collapsed model groups?
+    # doesn't seem necessary, as ModelHierarchyEnter and expanding the groups will reset
+    # the colours automatically
+    
+    
 }
 
 #-------------------------------------------------------------------------------
@@ -2065,7 +2054,7 @@ proc MainMrmlCheckVolumes {filename} {
                if {$::Module(verbose)} {
                    puts "MainMrmlCheckVolumes: dicom file, first name is $fname"
                }
-               # if it's a relative file name, prepend the mrml dir
+               # if it's a relative file name, convert to abs to test it
                if {[file pathtype $fname] == "relative"} {
                    set fname2 [file join ${Mrml(dir)} ${fname}]
                    if {$::Module(verbose)} {
@@ -2081,20 +2070,19 @@ proc MainMrmlCheckVolumes {filename} {
        set node [Mrml(dataTree) GetNextItem]
   }
   if {[string length $volumelist]} {
-      YesNoPopup MrmlCheckVolumes 20 50 "The following volumes will not be saved in the XML-file,\n because the first volume file does not exist:\n $volumelist\nWrite XML-file anyway?" "MainMrmlWriteProceed \{$filename\}" 
+      YesNoPopup MrmlCheckVolumes 20 50 "The following volumes will not be saved in the XML-file,\n because the first volume file does not exist:\n $volumelist\nWrite XML-file anyway?\n(press No to save volumes)" "MainMrmlWriteProceed \{$filename\} ; MainMrmlAbsolutivity"  "Tab Editor row1 Volumes ; TabbedFrameInvoke $::Module(Editor,fVolumes) File"
   } else {
       MainMrmlWriteProceed $filename
       
+      # then reset the mrml tree to have absolute filenames
+      MainMrmlAbsolutivity 
   }
-  # then reset the mrml tree to have absolute filenames
-  MainMrmlAbsolutivity 
-    
 } 
 
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlAbsolutivity
 # Traverses the mrml tree and sets the file prefix or full prefix for
-# volume and model nodes to an abosolute path, starting any relative paths from Mrml(dir).
+# volume and model nodes to an absolute path, starting any relative paths from Mrml(dir).
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -2139,7 +2127,7 @@ proc MainMrmlAbsolutivity {} {
                     if {$::Module(verbose)} {
                         puts "MainMrmlAbsolutivity: dicom file \n\trelative old filename $filename\n\tnew one wrt mrml dir $absname\n\tnormalized = [file normalize $absname]"
                     }
-                    $node SetDICOMFileName $i $absname
+                    $node SetDICOMFileName $i [file normalize $absname]
                 }
             }
               

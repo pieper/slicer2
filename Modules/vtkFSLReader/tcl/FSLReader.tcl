@@ -1,10 +1,10 @@
 #=auto==========================================================================
-# (c) Copyright 2005 Massachusetts Institute of Technology (MIT) All Rights Reserved.
-#
+# (c) Copyright 2006 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
 # This software ("3D Slicer") is provided by The Brigham and Women's 
-# Hospital, Inc. on behalf of the copyright holders and contributors. 
+# Hospital, Inc. on behalf of the copyright holders and contributors.
 # Permission is hereby granted, without payment, to copy, modify, display 
-# and distribute this software and its documentation, if any, for 
+# and distribute this software and its documentation, if any, for  
 # research purposes only, provided that (1) the above copyright notice and 
 # the following four paragraphs appear on all copies of this software, and 
 # (2) that source code to any modifications to this software be made 
@@ -32,20 +32,25 @@
 # IS." THE COPYRIGHT HOLDERS AND CONTRIBUTORS HAVE NO OBLIGATION TO 
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 # 
-#
+# 
 #===============================================================================
 # FILE:        FSLReader.tcl
 # PROCEDURES:  
 #   FSLReaderInit
 #   FSLReaderBuildGUI
+#   FSLReaderBrowse
+#   FSLReaderUpdateTimeSeriesMenu
+#   FSLReaderApply
+#   FSLReaderLoadVolumes
+#   FSLReaderUpdateOverlayVolumes
+#   FSLReaderSelectOverlayVolume
+#   FSLReaderUpdateBackgroundVolumes
+#   FSLReaderSelectBackgroundVolume
+#   FSLReaderUpdateVoxelWisePlotButton
+#   FSLReaderUpdateEnableTimecourseButton-back
+#   FSLReaderDisplayVolume
 #   FSLReaderSetPlottingOption option
-#   FSLReaderSetBackgroundOption option
-#   FSLReaderLoadAnalyze4D 
-#   FSLReaderLoadTimeSeries
-#   FSLReaderLoadBackgroundVolume
-#   FSLReaderLoadModels
-#   FSLReaderLoadForegroundVolume
-#   FSLReaderLoadVolume bg
+#   FSLReaderUpdateOverlays
 #   FSLReaderSetFSLDir option pathName
 #   FSLReaderLaunchBrowser
 #   FSLReaderBuildVTK
@@ -161,7 +166,7 @@ proc FSLReaderInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    lappend Module(versions) [ParseCVSInfo $m  {$Revision: 1.10 $} {$Date: 2005/10/19 22:48:49 $}]
+    lappend Module(versions) [ParseCVSInfo $m  {$Revision: 1.11 $} {$Date: 2006/01/06 17:57:39 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -492,6 +497,12 @@ proc FSLReaderBuildGUI {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC FSLReaderBrowse
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc FSLReaderBrowse {} {
     global FSLReader
 
@@ -505,6 +516,12 @@ proc FSLReaderBrowse {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC FSLReaderUpdateTimeSeriesMenu
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc FSLReaderUpdateTimeSeriesMenu {} {
     global FSLReader
 
@@ -568,6 +585,12 @@ proc FSLReaderEnableNativeTimeSeriesMenu {true} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC FSLReaderApply
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc FSLReaderApply {} {
     global FSLReader 
 
@@ -587,6 +610,12 @@ proc FSLReaderApply {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC FSLReaderLoadVolumes
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc FSLReaderLoadVolumes {} {
     global Volume FSLReader AnalyzeCache
 
@@ -751,6 +780,12 @@ proc FSLReaderLoadVolumes {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC FSLReaderUpdateOverlayVolumes
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc FSLReaderUpdateOverlayVolumes {} {
     global FSLReader 
 
@@ -792,6 +827,12 @@ proc FSLReaderUpdateOverlayVolumes {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC FSLReaderSelectOverlayVolume
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc FSLReaderSelectOverlayVolume {overlay} {
     global FSLReader 
 
@@ -804,6 +845,12 @@ proc FSLReaderSelectOverlayVolume {overlay} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC FSLReaderUpdateBackgroundVolumes
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc FSLReaderUpdateBackgroundVolumes {} {
     global FSLReader 
 
@@ -827,6 +874,12 @@ proc FSLReaderUpdateBackgroundVolumes {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC FSLReaderSelectBackgroundVolume
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc FSLReaderSelectBackgroundVolume {back} {
     global FSLReader 
 
@@ -840,6 +893,12 @@ proc FSLReaderSelectBackgroundVolume {back} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC FSLReaderUpdateVoxelWisePlotButton
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc FSLReaderUpdateVoxelWisePlotButton {} {
     global FSLReader 
 
@@ -863,6 +922,12 @@ proc FSLReaderUpdateVoxelWisePlotButton {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC FSLReaderUpdateEnableTimecourseButton-back
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc FSLReaderUpdateEnableTimecourseButton-back {} {
     global FSLReader 
 
@@ -880,6 +945,12 @@ proc FSLReaderUpdateEnableTimecourseButton-back {} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC FSLReaderDisplayVolume
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc FSLReaderDisplayVolume {where volName} {
     global FSLReader Volume
 
@@ -925,6 +996,12 @@ proc FSLReaderSetPlottingOption {option} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC FSLReaderUpdateOverlays
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc FSLReaderUpdateOverlays {} {
     global FSLReader 
 

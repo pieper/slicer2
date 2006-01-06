@@ -1,3 +1,16 @@
+/*=auto=========================================================================
+
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: vtkITKRegistrationFilter.h,v $
+  Date:      $Date: 2006/01/06 17:57:47 $
+  Version:   $Revision: 1.8 $
+
+=========================================================================auto=*/
 // .NAME vtkITKImageToImageFilter - Abstract base class for connecting ITK and VTK
 // .SECTION Description
 // vtkITKImageToImageFilter provides a 
@@ -187,7 +200,7 @@ private:
   void operator=(const vtkITKRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKRegistrationFilter, "$Revision: 1.7 $");
+//vtkCxxRevisionMacro(vtkITKRegistrationFilter, "$Revision: 1.8 $");
 //vtkStandardNewMacro(vtkITKRegistrationFilter);
 
 #endif
