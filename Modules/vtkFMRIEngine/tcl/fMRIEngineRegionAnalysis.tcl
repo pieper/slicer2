@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEngineRegionAnalysis.tcl,v $
-#   Date:      $Date: 2006/01/03 21:40:50 $
-#   Version:   $Revision: 1.14.2.8 $
+#   Date:      $Date: 2006/01/06 16:53:37 $
+#   Version:   $Revision: 1.14.2.9 $
 # 
 #===============================================================================
 # FILE:        fMRIEngineRegionAnalysis.tcl
@@ -65,7 +65,7 @@ proc fMRIEngineBuildUIForROITab {parent} {
     #--- notebook configure
     $f.tsNotebook configure -width 240
     # $f.tsNotebook configure -height 356 
-    $f.tsNotebook configure -height 340 
+    $f.tsNotebook configure -height 350 
     $f.tsNotebook configure -background $::Gui(activeWorkspace)
     $f.tsNotebook configure -activebackground $::Gui(activeWorkspace)
     $f.tsNotebook configure -selectbackground $::Gui(activeWorkspace)
