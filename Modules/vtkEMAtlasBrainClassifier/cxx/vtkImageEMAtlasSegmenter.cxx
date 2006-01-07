@@ -41,6 +41,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkObjectFactory.h"
 #include "vtkImageAccumulate.h"
 #include "vtkMultiThreader.h" 
+#include "assert.h"
 
 // the same as 1 / (e^6 - 1)
 #define EMSEGMENTER_INVERSE_NEIGHBORHOOD_ENERGY 0.00248491165684

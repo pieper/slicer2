@@ -38,7 +38,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageEMAtlasSuperClass.h"
 #include "vtkObjectFactory.h"
 #include "vtkImageData.h"
-
+#include "assert.h"
 //------------------------------------------------------------------------
 vtkImageEMAtlasSuperClass* vtkImageEMAtlasSuperClass::New()
 {
