@@ -174,6 +174,12 @@ public:
   void SetPredefinedLabelID(int init) {AtlasNode->SetPredefinedLabelID(init);}
 
   // Description:
+  // This variable allows to control the influence of the LocalPrior spatially for all substructures 
+  // Note: this variable is applied to all the subclasses during the segmentation bc the subclasses define the local Prior
+  char* GetLocalPriorSpatialWeightName() {return AtlasNode->GetLocalPriorSpatialWeightName();}
+  void  SetLocalPriorSpatialWeightName(char* init) {AtlasNode->SetLocalPriorSpatialWeightName(init);}
+
+  // Description:
   // You can stop the bias calculation after a certain number of iterations
   // By default it is set to -1 which means it never stops
   vtkGetMacro(StopBiasCalculation,int); 

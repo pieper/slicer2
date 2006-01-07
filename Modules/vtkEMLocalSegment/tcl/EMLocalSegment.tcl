@@ -193,7 +193,7 @@ proc EMSegmentInit {} {
     #} 
     set EMSegment(SegmentMode) 0
     # If you segment images with EM method defined by EMAtlasBrainClassifier
-    set EMSegment(EMAtlasBrainClassifierFlag) 0
+    set EMSegment(EMAtlasBrainClassifierFlag) 1
 
     if {$::Module(verbose)} {
         puts "Debugging - just loading local version"
@@ -291,7 +291,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.66 $} {$Date: 2006/01/04 21:15:18 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.66.2.1 $} {$Date: 2006/01/07 04:01:30 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -1946,12 +1946,21 @@ proc EMSegmentUpdateMRML {} {
              EMSegmentChangeSuperClassName 0 -1
 
           }
-          
-      set VolumeName  [SegmenterSuperClass($pid,node) GetLocalPriorName]
-      set VolumeIndex [lsearch $VolumeNameList $VolumeName]
-      if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMSegment(Cattrib,$NumClass,ProbabilityData) [lindex $Volume(idList) $VolumeIndex]
-      } else { set EMSegment(Cattrib,$NumClass,ProbabilityData) $Volume(idNone) }
 
+          # Spatial Probability
+          set VolumeName  [SegmenterSuperClass($pid,node) GetLocalPriorName]
+          set VolumeIndex [lsearch $VolumeNameList $VolumeName]
+          if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMSegment(Cattrib,$NumClass,ProbabilityData) [lindex $Volume(idList) $VolumeIndex]
+          } else { set EMSegment(Cattrib,$NumClass,ProbabilityData) $Volume(idNone) }
+
+          # Spatial Weight of Probability
+      set VolumeName  [SegmenterSuperClass($pid,node) GetLocalPriorSpatialWeightName]
+          set VolumeIndex [lsearch $VolumeNameList $VolumeName]
+          if {($VolumeName != "") && ($VolumeIndex > -1) } { 
+          set EMSegment(Cattrib,$NumClass,ProbDataSpatialWeight) [lindex $Volume(idList) $VolumeIndex]
+          } else { set EMSegment(Cattrib,$NumClass,ProbDataSpatialWeight) $Volume(idNone) }
+
+          # Input Channel Weight
           set InputChannelWeights [SegmenterSuperClass($pid,node) GetInputChannelWeights]
           for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
              if {[lindex $InputChannelWeights $y] == ""} {set EMSegment(Cattrib,$NumClass,InputChannelWeights,$y) 1.0
@@ -2615,6 +2624,13 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
              SegmenterSuperClass($pid,node) SetLocalPriorName ""
           }
 
+      set v $EMSegment(Cattrib,$i,ProbDataSpatialWeight)
+      if {$v != $Volume(idNone) } {
+             SegmenterSuperClass($pid,node) SetLocalPriorSpatialWeightName [Volume($v,node) GetName]
+          } else {
+             SegmenterSuperClass($pid,node) SetLocalPriorSpatialWeightName ""
+          }
+
           set InputChannelWeights ""
           for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
               lappend InputChannelWeights $EMSegment(Cattrib,$i,InputChannelWeights,$y)     
@@ -2638,12 +2654,12 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
               set BeginName ""
             }
             foreach Attribute $EMSegment(Gui${Name}AttributeList) {
-        if {$Attribute != "LocalPriorName"} { 
-            if {$Attribute  == "InitialBiasFilePrefix" || $Attribute  == "PredefinedLabelMapPrefix" } {
-            SegmenterSuperClass($pid,node) Set$Attribute "$EMSegment(Cattrib,$i,$Attribute)"
-            } else {
-            eval SegmenterSuperClass($pid,node) Set$Attribute $EMSegment(Cattrib,$i,$Attribute) 
-                    }
+            if {$Attribute != "LocalPriorName" && $Attribute != "LocalPriorSpatialWeightName" } { 
+               if {$Attribute  == "InitialBiasFilePrefix" || $Attribute  == "PredefinedLabelMapPrefix" } {
+                  SegmenterSuperClass($pid,node) Set$Attribute "$EMSegment(Cattrib,$i,$Attribute)"
+               } else {
+                  eval SegmenterSuperClass($pid,node) Set$Attribute $EMSegment(Cattrib,$i,$Attribute) 
+            }
         }
             }
          }
@@ -3169,7 +3185,7 @@ proc EMSegmentDisplayClassDefinition {} {
     #---------------------
     $EMSegment(Cl-mbClasses) config -text "$EMSegment(Cattrib,$Sclass,Label)"
     
-    # Update ProbablityData
+    # Update ProbabilityData
     if {[lsearch -exact $Volume(idList) $EMSegment(Cattrib,$Sclass,ProbabilityData)] < 0} {
         set EMSegment(Cattrib,$Sclass,ProbabilityData) $Volume(idNone) 
     }
@@ -3228,9 +3244,12 @@ proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
      for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
          set EMSegment(Cattrib,$Sclass,InputChannelWeights,$y) 1.0
      }
-     set EMSegment(Cattrib,$Sclass,ProbabilityData) $Volume(idNone)
+
+     set EMSegment(Cattrib,$Sclass,ProbabilityData)       $Volume(idNone)
      set EMSegment(Cattrib,$Sclass,ReferenceStandardData) $Volume(idNone)
-     set EMSegment(Cattrib,$Sclass,PCAMeanData) $Volume(idNone)
+     set EMSegment(Cattrib,$Sclass,PCAMeanData)           $Volume(idNone)
+     set EMSegment(Cattrib,$Sclass,ProbDataSpatialWeight) $Volume(idNone)
+
 
      foreach EigenList $EMSegment(Cattrib,$Sclass,PCAEigen) {
      if {[lindex $EigenList 3] != ""} { MainMrmlDeleteNode SegmenterPCAEigen [[lindex $EigenList 3] GetID] }
@@ -3274,9 +3293,10 @@ proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
      for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
          set EMSegment(Cattrib,$Sclass,InputChannelWeights,$y) 1.0
      }
-     set EMSegment(Cattrib,$Sclass,ProbabilityData) $Volume(idNone)
+     set EMSegment(Cattrib,$Sclass,ProbabilityData)       $Volume(idNone)
      set EMSegment(Cattrib,$Sclass,ReferenceStandardData) $Volume(idNone)
-     set EMSegment(Cattrib,$Sclass,PCAMeanData) $Volume(idNone)
+     set EMSegment(Cattrib,$Sclass,ProbDataSpatialWeight) $Volume(idNone)
+     set EMSegment(Cattrib,$Sclass,PCAMeanData)           $Volume(idNone)
 
      # 2.) Remove from SuperClass List and add to Class List
      set index [lsearch -exact $EMSegment(GlobalSuperClassList)  $Sclass]
@@ -4384,10 +4404,10 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses {HeadClass 1
       set EMSegment(Cattrib,$i,ColorCode) [lindex $EMSegment(ColorLabelList) [expr 2*(($i-1)%$ColorLabelLength)]]
       # Graph of class is plottet (== 1) or not (== 0)  
 
-      set EMSegment(Cattrib,$i,ProbabilityData) $Volume(idNone)
-
-      set EMSegment(Cattrib,$i,PCAMeanData) $Volume(idNone)
+      set EMSegment(Cattrib,$i,ProbabilityData)       $Volume(idNone)
+      set EMSegment(Cattrib,$i,PCAMeanData)           $Volume(idNone)
       set EMSegment(Cattrib,$i,ReferenceStandardData) $Volume(idNone)
+      set EMSegment(Cattrib,$i,ProbDataSpatialWeight) $Volume(idNone)
     }
     # Define CIM Field as Matrix M(Class1,Class2,Relation of Pixels)
     # where the "Relation of the Pixels" can be set as Pixel with "left", 
