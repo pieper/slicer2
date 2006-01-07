@@ -137,6 +137,12 @@ public:
   vtkGetMacro(PredefinedLabelID,int); 
   vtkSetMacro(PredefinedLabelID,int); 
 
+  // Description:
+  // This variable allows to control the influence of the LocalPrior spatially for all substructures 
+  // Note: this variable is applied to all the subclasses during the segmentation bc the subclasses define the local Prior 
+  vtkSetStringMacro(LocalPriorSpatialWeightName);
+  vtkGetStringMacro(LocalPriorSpatialWeightName);
+
   // When adding new variables do not forget to add them also to vtkMrmlSegmenterSuperClass in the appropriate way  
 protected:
   vtkMrmlSegmenterAtlasSuperClassNode();
@@ -168,6 +174,8 @@ protected:
   char* PredefinedLabelMapPrefix; 
 
   int PredefinedLabelID;
+
+char *LocalPriorSpatialWeightName;
 };
 
 #endif

@@ -72,6 +72,12 @@ typedef struct {
   float         *ProbDataWeight;
   float         *ProbDataMinusWeight;
   int           ProbDataType;
+
+  short         *ProbDataSpatialWeightPtr; 
+  int           ProbDataSpatialWeightIncY;
+  int           ProbDataSpatialWeightIncZ; 
+  int           NumberOfTrainingSamples;
+
   double        **LogMu;
   double        ***InvLogCov;
   double        *InvSqrtDetLogCov;
@@ -151,7 +157,8 @@ class VTK_EMATLASBRAINCLASSIFIER_EXPORT vtkImageEMAtlasSegmenter : public vtkIma
   // Special function for parallelise MF part -> Creating Threads 
   int MF_Approx_Workpile(float **w_m_input,unsigned char* MapVector, float *cY_M, int imgXY,double ***InvLogCov,
                          double *InvSqrtDetLogCov, int NumTotalTypeCLASS, int* NumChildClasses, int NumClasses, void** ProbDataPtr, 
-                         int* ProbDataIncY, int* ProbDataIncZ, float* ProbDataWeight, float *ProbDataMinusWeight, double** LogMu, 
+                         int* ProbDataIncY, int* ProbDataIncZ, float* ProbDataWeight, float *ProbDataMinusWeight,  short* ProbDataSpatialWeightPtr, 
+                         int ProbDataSpatialWeightIncY, int ProbDataSpatialWeightIncZ, int NumberOfTrainingSamples, double** LogMu, 
                          double* TissueProbability, int *VirtualNumInputImages, vtkImageEMAtlasSuperClass* head, float **_m_output);
 
   // Description:
@@ -161,6 +168,7 @@ class VTK_EMATLASBRAINCLASSIFIER_EXPORT vtkImageEMAtlasSegmenter : public vtkIma
                       vtkImageEMAtlasSuperClass* actSupCl, char* LevelName, void **ClassList, classType *ClassListType, int* LabelList, FILE** QualityFile);
 
   // -----------------------------------------------------
+
   // Intensity Correction 
   // -----------------------------------------------------
 

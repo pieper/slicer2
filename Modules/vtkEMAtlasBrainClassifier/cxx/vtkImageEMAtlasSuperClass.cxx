@@ -73,6 +73,9 @@ void vtkImageEMAtlasSuperClass::CreateVariables() {
   this->InitialBiasFilePrefix = NULL;
   this->PredefinedLabelMapPrefix = NULL; 
   this->PredefinedLabelID  =-1; 
+
+  this->ProbDataSpatialWeightPtr = NULL;
+  this->ProbDataSpatialWeightIncY = this->ProbDataSpatialWeightIncZ = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -92,6 +95,7 @@ void vtkImageEMAtlasSuperClass::DeleteSuperClassVariables() {
   this->ClassList           = NULL;
   this->ClassListType       = NULL;
   this->ParentClass         = NULL;
+  this->ProbDataSpatialWeightPtr = NULL;
   this->NumClasses    = 0;
 }
 //------------------------------------------------------------------------------
@@ -349,6 +353,16 @@ void vtkImageEMAtlasSuperClass::PrintSelf(ostream& os,vtkIndent indent) {
   os << indent << "InitialBiasFilePrefix:     " << (this->InitialBiasFilePrefix ? this->InitialBiasFilePrefix : "(none)") << "\n";
   os << indent << "PredefinedLabelMapPrefix:  " << (this->PredefinedLabelMapPrefix ? this->PredefinedLabelMapPrefix : "(none)") << "\n";
   os << indent << "PredefinedLabelID:         " << this->PredefinedLabelID << "\n";
+  os << indent << "ProbDataSpatialWeightPtr:  ";
+  if (this->ProbDataSpatialWeightPtr) {
+    os << "enabled \n";
+    os << indent << "  ProbDataSpatialWeightIncY: " << this->ProbDataSpatialWeightIncY << "\n";
+    os << indent << "  ProbDataSpatialWeightIncZ: " << this->ProbDataSpatialWeightIncZ << "\n";
+  } else {
+    os << "disabled \n" ;
+  }
+
+
   char** Directions= new char*[6];
   Directions[0] = "West "; Directions[1] = "North"; Directions[2] = "Up   "; Directions[3] = "East "; Directions[4] = "South"; Directions[5] = "Down ";
   os << indent << "MrfParams:               " << endl;
@@ -397,8 +411,9 @@ void vtkImageEMAtlasSuperClass::ExecuteData(vtkDataObject *)
    }
 
    
+   int ProbDataPtrIndex = -1; 
+
    {
-     int ProbDataPtrIndex = -1; 
 
      for (int i = 0; i <this->NumClasses; i++) {
        if (!this->ClassList[i]) {
@@ -472,6 +487,36 @@ void vtkImageEMAtlasSuperClass::ExecuteData(vtkDataObject *)
     }
       }
     }
+   }
+
+   // ==================================================
+   // Load ProbDataSpatialWeightPtr
+   // For some reason we leave out first input 
+   // cout << "Hello " << this->vtkProcessObject::GetNumberOfInputs() << " Input " << this->GetInput(1) << " ProbDataPtrIndex " << ProbDataPtrIndex << endl;
+   if ((this->vtkProcessObject::GetNumberOfInputs() > 1) && this->GetInput(1) && (ProbDataPtrIndex > -1)) {
+     int inExt[6];
+     int blub, DataIncY, DataIncZ;
+ 
+     vtkImageData *inData  = (vtkImageData *) this->GetInput(1);
+     if (inData->GetScalarType() != VTK_SHORT) {
+       vtkEMAddErrorMessage("ProbDataSpatialWeight has to of type Short (" << VTK_SHORT << ") but is of type " << inData->GetScalarType() );
+       return ;
+     }
+     if (inData->GetNumberOfScalarComponents() != 1) {  vtkEMAddErrorMessage("ProbDataSpatialWeight has to be defined by one scalar component"); return; }
+
+     inData->GetWholeExtent(inExt);
+     inData->GetContinuousIncrements(inExt, blub, DataIncY, DataIncZ);
+        
+     int LengthOfXDim = inExt[1] - inExt[0] + 1 + DataIncY;
+     int LengthOfYDim = LengthOfXDim*(inExt[3] - inExt[2] + 1 ) + DataIncZ;  
+     int jump = (this->SegmentationBoundaryMin[0] - 1) + (this->SegmentationBoundaryMin[1] - 1) * LengthOfXDim + LengthOfYDim *(this->SegmentationBoundaryMin[2] - 1);
+
+     this->ProbDataSpatialWeightPtr = ((short*)inData->GetScalarPointerForExtent(inExt)) + jump;
+
+     this->ProbDataSpatialWeightIncY =  LengthOfXDim - this->DataDim[0];
+     this->ProbDataSpatialWeightIncZ =  LengthOfYDim - this->DataDim[1] *LengthOfXDim;
+
+     cout << "ProbDataSpatialWeight is activated !" << endl;
    }
 
    // ==================================================

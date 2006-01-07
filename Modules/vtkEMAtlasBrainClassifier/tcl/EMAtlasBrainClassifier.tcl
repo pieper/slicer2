@@ -106,7 +106,7 @@ proc EMAtlasBrainClassifierInit {} {
    set Module($m,depend) ""
 
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.32.2.1 $} {$Date: 2006/01/05 21:15:43 $}]
+       {$Revision: 1.32.2.2 $} {$Date: 2006/01/07 04:00:06 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -623,12 +623,15 @@ proc EMAtlasBrainClassifierCreateClasses {SuperClass Number} {
       }
       set EMAtlasBrainClassifier(Cattrib,$i,ProbabilityData) $Volume(idNone)
       set EMAtlasBrainClassifier(Cattrib,$i,ReferenceStandardData) $Volume(idNone)
+      set EMAtlasBrainClassifier(Cattrib,$i,ProbDataSpatialWeight) $Volume(idNone)
+
       for {set j $Cstart} {$j < $EMAtlasBrainClassifier(ClassIndex) } {incr j 1} {
-      foreach k $EMAtlasBrainClassifier(CIMList) {
+        foreach k $EMAtlasBrainClassifier(CIMList) {
           if {$i == $j} {set EMAtlasBrainClassifier(Cattrib,$SuperClass,CIMMatrix,$i,$j,$k) 1
               } else {set EMAtlasBrainClassifier(Cattrib,$SuperClass,CIMMatrix,$i,$j,$k) 0}
+        }
       }
-      }
+
     }
 }
 
@@ -1097,15 +1100,19 @@ proc EMAtlasBrainClassifier_NormalizeVolume { Vol OutVol Mode} {
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifier_AtlasList { } {
     global  EMAtlasBrainClassifier   
-    set XMLTemplateText [EMAtlasBrainClassifierReadXMLFile $EMAtlasBrainClassifier(XMLTemplate)]
+    set XMLTemplateTextOrig [EMAtlasBrainClassifierReadXMLFile $EMAtlasBrainClassifier(XMLTemplate)]
+    set XMLTemplateText  "$XMLTemplateTextOrig"
 
     set RegisterAtlasDirList "" 
     set RegisterAtlasNameList "" 
-    
+
+    # ----------------------------------------------------------
+    # Determine Spatial Prior to be loaded 
     set NextLineIndex [EMAtlasBrainClassifierGrepLine "$XMLTemplateText" "<SegmenterClass"] 
 
     while {$NextLineIndex != "-1 -1"} {
       set Line [string range "$XMLTemplateText" [lindex $NextLineIndex 0] [lindex $NextLineIndex 1]]
+
       set PriorPrefixIndex [string first "LocalPriorPrefix"  "$Line"]
       set PriorNameIndex   [string first "LocalPriorName"  "$Line"]
       
@@ -1120,11 +1127,37 @@ proc EMAtlasBrainClassifier_AtlasList { } {
           }
       
       }
+
+
       set XMLTemplateText  [string range "$XMLTemplateText" [expr [lindex $NextLineIndex 1] +1] end]
       set NextLineIndex [EMAtlasBrainClassifierGrepLine "$XMLTemplateText" "<SegmenterClass"] 
     }
+
+
+    # ----------------------------------------------------------
+    # Attach to the list LocalPriorSpatialWeightName which have to be of the form <NAME>/I => Directory name and name of volume have to be the same
+    set XMLTemplateText  "$XMLTemplateTextOrig"
+    set NextLineIndex [EMAtlasBrainClassifierGrepLine "$XMLTemplateText" "<SegmenterSuperClass"] 
+
+    while {$NextLineIndex != "-1 -1"} {
+      set Line [string range "$XMLTemplateText" [lindex $NextLineIndex 0] [lindex $NextLineIndex 1]]
+
+      set PSWNameIndex   [string first "LocalPriorSpatialWeightName"  "$Line"]
+      
+      if {($PSWNameIndex > -1)} {
+          set PSWName  [lindex [EMAtlasBrainClassifierReadNextKey  "[string range \"$Line\" $PSWNameIndex end]"] 1]
+          if {($PSWName != "") && ([lsearch $RegisterAtlasNameList "$PSWNameIndex"] < 0)} {
+             lappend  RegisterAtlasDirList  "$PSWName"
+             lappend  RegisterAtlasNameList "$PSWName"
+          }
+      }
+
+      set XMLTemplateText  [string range "$XMLTemplateText" [expr [lindex $NextLineIndex 1] +1] end]
+      set NextLineIndex [EMAtlasBrainClassifierGrepLine "$XMLTemplateText" "<SegmenterSuperClass"] 
+    }
+
     return "{$RegisterAtlasDirList} {$RegisterAtlasNameList}" 
-}
+ }
 
 #-------------------------------------------------------------------------------
 # .PROC EMAtlasBrainClassifier_GetNumberOfTrainingSamples 
@@ -1872,14 +1905,23 @@ proc EMAtlasBrainClassifierInitializeValues { } {
           } else  { 
              lappend SclassMemory [list "$EMAtlasBrainClassifier(SuperClass)" "[lrange $CurrentClassList 1 end]"] 
              # Transfer from Class to SuperClass
-         set EMAtlasBrainClassifier(Cattrib,$NumClass,IsSuperClass) 1
+             set EMAtlasBrainClassifier(Cattrib,$NumClass,IsSuperClass) 1
              set EMAtlasBrainClassifier(SuperClass) $NumClass
           }
+      
+          # Spatial Probability
           set VolumeName  [SegmenterSuperClass($pid,node) GetLocalPriorName]
           set VolumeIndex [lsearch $VolumeNameList $VolumeName]
-      if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMAtlasBrainClassifier(Cattrib,$NumClass,ProbabilityData) [lindex $Volume(idList) $VolumeIndex]
-      } else { set EMAtlasBrainClassifier(Cattrib,$NumClass,ProbabilityData) $Volume(idNone) }
+          if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMAtlasBrainClassifier(Cattrib,$NumClass,ProbabilityData) [lindex $Volume(idList) $VolumeIndex]
+          } else { set EMAtlasBrainClassifier(Cattrib,$NumClass,ProbabilityData) $Volume(idNone) }
 
+          # Spatial Weight of Probability
+      set VolumeName  [SegmenterSuperClass($pid,node) GetLocalPriorSpatialWeightName]
+          set VolumeIndex [lsearch $VolumeNameList $VolumeName]
+          if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMAtlasBrainClassifier(Cattrib,$NumClass,ProbDataSpatialWeight) [lindex $Volume(idList) $VolumeIndex]
+          } else { set EMAtlasBrainClassifier(Cattrib,$NumClass,ProbDataSpatialWeight) $Volume(idNone) }
+
+          # Input Channel Weight
           set InputChannelWeights [SegmenterSuperClass($pid,node) GetInputChannelWeights]
           for {set y 0} {$y < $EMAtlasBrainClassifier(MaxInputChannelDef)} {incr y} {
              if {[lindex $InputChannelWeights $y] == ""} {set EMAtlasBrainClassifier(Cattrib,$NumClass,InputChannelWeights,$y) 1.0
@@ -2171,6 +2213,14 @@ proc EMAtlasBrainClassifier_SetVtkAtlasSuperClassSetting {EMVersionVariable Supe
   EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintBias      $EMArray(Cattrib,$SuperClass,PrintBias)
   EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPrintLabelMap  $EMArray(Cattrib,$SuperClass,PrintLabelMap)
   EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetProbDataWeight $EMArray(Cattrib,$SuperClass,LocalPriorWeight)
+
+  # Kilian Jan 06 :We can now add a spatially varying ProbDataWeight
+  if {$EMArray(Cattrib,$SuperClass,ProbDataSpatialWeight) != $Volume(idNone)} {
+     # Pipeline does not automatically update volumes bc of fake first input  
+     Volume($EMArray(Cattrib,$SuperClass,ProbDataSpatialWeight),vol) Update
+     EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetProbDataSpatialWeightPtr [Volume($EMArray(Cattrib,$SuperClass,ProbDataSpatialWeight),vol)  GetOutput]
+  }
+
   # Kilian Jan 06: Wont change anything bc currently the template file is defined in such a way that it is the same accross superclasses 
   EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopEMMaxIter  $EMArray(Cattrib,$SuperClass,StopEMMaxIter)
   EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetStopMFAMaxIter $EMArray(Cattrib,$SuperClass,StopMFAMaxIter)
@@ -2185,6 +2235,8 @@ proc EMAtlasBrainClassifier_SetVtkAtlasSuperClassSetting {EMVersionVariable Supe
     EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPredefinedLabelMapPrefix  $EMArray(Cattrib,$SuperClass,PredefinedLabelMapPrefix) 
   }
   EMAtlasBrainClassifier(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPredefinedLabelID $EMArray(Cattrib,$SuperClass,PredefinedLabelID) 
+
+
 
   set ClassIndex 0
   foreach i $EMArray(Cattrib,$SuperClass,ClassList) {
@@ -2413,7 +2465,6 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
        }
     }
 
-
     # ---------------------------------------------------------------------- 
     # Segment Image 
 
@@ -2521,4 +2572,3 @@ proc EMAtlasBrainClassifier_BatchMode {{AlgorithmVersion Standard} {Segmentation
 
     return $SucessFlag
 }
-

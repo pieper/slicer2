@@ -143,6 +143,16 @@ class VTK_EMATLASBRAINCLASSIFIER_EXPORT vtkImageEMAtlasSuperClass : public vtkIm
   vtkGetMacro(StopMFAMaxIter,int);      
   vtkSetMacro(StopMFAMaxIter,int);      
 
+  // Description:
+  // Defines influence of ProbDataPtr throughout 
+  // the image when segmenting this class into its substructures 
+  void SetProbDataSpatialWeightPtr(vtkImageData *image) { this->SetInput(1,image); }
+
+  //BTX
+  short* GetProbDataSpatialWeightPtr()  {return this->ProbDataSpatialWeightPtr;}
+  int    GetProbDataSpatialWeightIncY() {return this->ProbDataSpatialWeightIncY;}
+  int    GetProbDataSpatialWeightIncZ() {return this->ProbDataSpatialWeightIncZ;}
+  //ETX
 
   vtkImageEMAtlasSuperClass() {this->CreateVariables();}
   ~vtkImageEMAtlasSuperClass() {this->DeleteSuperClassVariables();}
@@ -174,6 +184,10 @@ protected:
 
   int StopEMMaxIter; // Maximum number of iterations  if StopEMValue is not  is not reached 
   int  StopMFAMaxIter;   // Maximum number of iterations by the MFA if StopEMValue is not reached 
+
+  short *ProbDataSpatialWeightPtr; // Defines a spatial weight when segmenting the superclass into its substructures - has to be from type short
+  int ProbDataSpatialWeightIncY;
+  int ProbDataSpatialWeightIncZ;
 
 };
 #endif

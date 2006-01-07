@@ -76,6 +76,8 @@ vtkMrmlSegmenterAtlasSuperClassNode::vtkMrmlSegmenterAtlasSuperClassNode() {
   this->PredefinedLabelMapPrefix     = NULL; 
 
   this->PredefinedLabelID = -1;
+
+  this->LocalPriorSpatialWeightName = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -100,8 +102,9 @@ void vtkMrmlSegmenterAtlasSuperClassNode::Write(ofstream& of)
   of << " StopMFAMaxIter='" << this->StopMFAMaxIter <<  "'";
 
   if (this->InitialBiasFilePrefix && strcmp(this->InitialBiasFilePrefix , "")) of << " InitialBiasFilePrefix='" << this->InitialBiasFilePrefix <<  "'";
-  if (this->PredefinedLabelMapPrefix && strcmp(PredefinedLabelMapPrefix, "")) of << " PredefinedLabelMapPrefix='" << this-> PredefinedLabelMapPrefix <<  "'" ;
+  if (this->PredefinedLabelMapPrefix && strcmp(this->PredefinedLabelMapPrefix, "")) of << " PredefinedLabelMapPrefix='" << this-> PredefinedLabelMapPrefix <<  "'" ;
   if (this->PredefinedLabelID > -1) of << " PredefinedLabelID ='" << this->PredefinedLabelID << "'";
+  if (this->LocalPriorSpatialWeightName && strcmp(this->LocalPriorSpatialWeightName, "")) of << " LocalPriorSpatialWeightName='" << this->LocalPriorSpatialWeightName <<  "'";
 }
 
 //----------------------------------------------------------------------------
@@ -124,9 +127,11 @@ void vtkMrmlSegmenterAtlasSuperClassNode::Copy(vtkMrmlNode *anode)
   this->StopMFAValue   = node->StopMFAValue; 
   this->StopMFAMaxIter = node->StopMFAMaxIter; 
 
-  this->InitialBiasFilePrefix =  node->InitialBiasFilePrefix;
-  this->PredefinedLabelMapPrefix     =  node->PredefinedLabelMapPrefix;
-  this->PredefinedLabelID = node->PredefinedLabelID;
+  this->InitialBiasFilePrefix    =  node->InitialBiasFilePrefix;
+  this->PredefinedLabelMapPrefix =  node->PredefinedLabelMapPrefix;
+  this->PredefinedLabelID        = node->PredefinedLabelID;
+
+  this->LocalPriorSpatialWeightName = node->LocalPriorSpatialWeightName;
 
 }
 
@@ -149,74 +154,7 @@ void vtkMrmlSegmenterAtlasSuperClassNode::PrintSelf(ostream& os, vtkIndent inden
   os << indent << "InitialBiasFilePrefix:         " << (this->InitialBiasFilePrefix ? this->InitialBiasFilePrefix : "(none)" ) << "\n";
   os << indent << "PredefinedLabelMapPrefix:      " << (this->PredefinedLabelMapPrefix ? this->PredefinedLabelMapPrefix : "(none)" ) << "\n";
   os << indent << "PredefinedLabelID:             " << this->PredefinedLabelID << "\n";
+  os << indent << "LocalPriorSpatialWeightName:   " << (this->LocalPriorSpatialWeightName ? this->LocalPriorSpatialWeightName : "(none)") << "\n";
 
 }
 
-/*
-  this->Indent     = 1;
-  this->PrintEMLabelMapConvergence  = 0;
-  this->PrintEMWeightsConvergence = 0;
-
-  this->PrintShapeSimularityMeasure = 0;
-  this->PrintMFALabelMapConvergence  = 0;
-  this->PrintMFAWeightsConvergence = 0;
-
-  this->StopBiasCalculation = -1;
-  this->RegistrationType    = 0;
-  this->GenerateBackgroundProbability = 0;
-  this->PCAShapeModelType = 0;
-  this->RegistrationIndependentSubClassFlag = 0;
-
-  vtkIndent i1(nIndent);
-  of << i1 << "<SegmenterSuperClass";
-
-  this->vtkMrmlSegmenterAtlasGenericClassNode::Write(of,nIndent);
-  of << " RegistrationType='" << this->RegistrationType << "' ";
-
-  of << " PrintEMLabelMapConvergence='" << this->PrintEMLabelMapConvergence <<  "'";
-  of << " PrintEMWeightsConvergence='" << this->PrintEMWeightsConvergence  <<  "'";
-
-  of << " PrintMFALabelMapConvergence='" << this->PrintMFALabelMapConvergence <<  "'";
-  of << " PrintMFAWeightsConvergence='" << this->PrintMFAWeightsConvergence  <<  "'";
-
-  of << " StopStopBiasCalculation='" << this->StopBiasCalculation <<  "'";
-  of << " GenerateBackgroundProbability='" << this->GenerateBackgroundProbability <<  "'";
-  of << " PrintShapeSimularityMeasure='" << this->PrintShapeSimularityMeasure << "'";
-  of << " PCAShapeModelType='" << this->PCAShapeModelType << "'";
-  of << " RegistrationIndependentSubClassFlag='" << this->RegistrationIndependentSubClassFlag << "'";
-  of << ">\n";
-
-  vtkMrmlNode::MrmlNodeCopy(anode);
-  vtkMrmlSegmenterAtlasGenericClassNode::Copy(anode);
-
-  this->PrintEMLabelMapConvergence    = node->PrintEMLabelMapConvergence;
-  this->PrintEMWeightsConvergence     = node->PrintEMWeightsConvergence;
-  this->PrintMFALabelMapConvergence   = node->PrintMFALabelMapConvergence;
-  this->PrintMFAWeightsConvergence    = node->PrintMFAWeightsConvergence;
-  this->StopBiasCalculation   = node->StopBiasCalculation;
-
-  this->RegistrationType              = node->RegistrationType;
-  this->GenerateBackgroundProbability = node->GenerateBackgroundProbability;
-  this->PrintShapeSimularityMeasure   = node->PrintShapeSimularityMeasure;
-  this->PCAShapeModelType             = node->PCAShapeModelType;
-  this->RegistrationIndependentSubClassFlag = node->RegistrationIndependentSubClassFlag;
-
-  vtkMrmlNode::PrintSelf(os,indent);
-  os << indent << "Name:                          " << (this->Name ? this->Name : "(none)") << "\n";
-  this->vtkMrmlSegmenterAtlasGenericClassNode::PrintSelf(os, indent);
-  os << indent << "RegistrationType:              " << this->RegistrationType<< "\n" ;
-
-  os << indent << "PrintEMLabelMapConvergence:    " << this->PrintEMLabelMapConvergence << "\n";
-  os << indent << "PrintEMWeightsConvergence:     " << this->PrintEMWeightsConvergence << "\n";
-
-  os << indent << "PrintMFALabelMapConvergence:   " << this->PrintMFALabelMapConvergence << "\n";
-  os << indent << "PrintMFAWeightsConvergence:    " << this->PrintMFAWeightsConvergence << "\n";
-
-  os << indent << "StopBiasCalculation:           " << this->StopBiasCalculation << "\n";
-
-  os << indent << "GenerateBackgroundProbability: " << this->GenerateBackgroundProbability << "\n";
-  os << indent << "PrintShapeSimularityMeasure:   " << this->PrintShapeSimularityMeasure << "\n";
-  os << indent << "PCAShapeModelType:             " << this->PCAShapeModelType << "\n";
-  os << indent << "RegistrationIndependentSubClassFlag: " << this->RegistrationIndependentSubClassFlag << "\n";
-
- */

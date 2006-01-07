@@ -42,6 +42,57 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkImageAccumulate.h"
 #include "vtkMultiThreader.h" 
 
+// the same as 1 / (e^6 - 1)
+#define EMSEGMENTER_INVERSE_NEIGHBORHOOD_ENERGY 0.00248491165684
+
+
+// New Fast Gauss definition - necessary to include prior 
+inline double vtkImageEMAtlasBrainClassifier_FastGaussWeight(const double inverse_sigma, const double x, const float weight)
+{
+  if (weight > 0.0 ) {
+    float tmp = float(inverse_sigma * x);
+    return EMSEGMENT_ONE_OVER_ROOT_2_PI * inverse_sigma*(1 - weight + weight * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * tmp * tmp));
+  }
+  return EMSEGMENT_ONE_OVER_ROOT_2_PI * inverse_sigma ; 
+}
+
+inline float  vtkImageEMAtlasBrainClassifier_FastGauss2Weight(const double inverse_sqrt_det_covariance, const float *x ,const double *mu,  double **inv_cov, const int virtualDim, const float weight) {
+  float result = ( virtualDim > 1 ?  EMSEGMENT_ONE_OVER_2_PI : EMSEGMENT_ONE_OVER_ROOT_2_PI) * float(inverse_sqrt_det_covariance);
+  if (weight > 0.0 ) {
+    float term1 = x[0] - float(mu[0]), term2 = x[1] - float(mu[1]);
+    term2 = term1*(float(inv_cov[0][0])*term1 + float(inv_cov[0][1])*term2) + term2*(float(inv_cov[1][0])*term1 + float(inv_cov[1][1])*term2);
+    result *= (1 - weight + weight * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * term2));
+  }
+  return result; 
+}
+
+// Same as FastGauss - just for multi dimensional input ->  x = (vec - mu) * InvCov *(vec - mu) 
+inline float vtkImageEMAtlasBrainClassifier_FastGaussMultiWeight(const double inverse_sqrt_det_covariance, const float x,const int dim, const float weight) {
+ if (weight > 0.0)
+   return pow(EMSEGMENT_ONE_OVER_ROOT_2_PI,dim) * inverse_sqrt_det_covariance * (1 - weight + weight* vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * x));
+ return pow(EMSEGMENT_ONE_OVER_ROOT_2_PI,dim) * inverse_sqrt_det_covariance;
+}
+
+ // Special feature necessary bc we use weighted input images thus a matix of realDim 2 can be virtualDim 1
+ // e.g. 1 0 | 0 0
+inline float  vtkImageEMAtlasBrainClassifier_FastGaussMultiWeight(const double inverse_sqrt_det_covariance, const float* x,const double *mu, double **inv_cov, 
+                                  const int realDim, const int virtualDim, const float weight) {
+  if (realDim <2) return (float) vtkImageEMAtlasBrainClassifier_FastGaussWeight(inverse_sqrt_det_covariance,x[0]- float(mu[0]),weight);
+  if (realDim <3) return vtkImageEMAtlasBrainClassifier_FastGauss2Weight(inverse_sqrt_det_covariance, x ,mu,inv_cov, virtualDim,weight);
+  float term = 0;
+  if (weight > 0.0) {
+    float *x_m = new float[realDim];
+    for (int i=0; i < realDim; i++) x_m[i] = x[i] - float(mu[i]);
+    for (int i=0; i < realDim; i++) {
+      for (int j=0; j < realDim; j++) term += (float(inv_cov[i][j])*x_m[j]);
+      term *= x_m[i];
+    }
+    delete []x_m;
+  }
+  return vtkImageEMAtlasBrainClassifier_FastGaussMultiWeight(inverse_sqrt_det_covariance, term,virtualDim,weight);        
+}
+
+
 //------------------------------------------------------------------------------
 // Define Procedures for vtkImageEMAtlasSegmenter
 //------------------------------------------------------------------------------
@@ -560,6 +611,23 @@ void vtkImageEMAtlasSegmenter::SetNumInputImages(int number) {
 // --------------------------------------------------------------------------------------------------------------------------
 //  Probability Functions 
 // --------------------------------------------------------------------------------------------------------------------------
+// Doing this is a bad idea bc it creates wired artifacts due to the image inhomogeneity correction !
+inline float vtkEMAtlasSegment_ConditionalIntensityProbability(const double InvSqrtDetLogCov, const float* cY_M,const double *LogMu, double **InvLogCov, 
+                                   const int NumInputImages, const int VirtualNumInputImages, const short *ProbDataSpatialWeightPtr, 
+                                   const int NumberOfTrainingSamples) {
+
+  if (ProbDataSpatialWeightPtr && *ProbDataSpatialWeightPtr && 0) {
+    // 0.05 OK
+    float ProbDataSpatialWeight = 1.0 -  0.1 * (float(*ProbDataSpatialWeightPtr) /  float(NumberOfTrainingSamples));
+    return  vtkImageEMAtlasBrainClassifier_FastGaussMultiWeight(InvSqrtDetLogCov,cY_M, LogMu,InvLogCov,NumInputImages, VirtualNumInputImages, ProbDataSpatialWeight); 
+    // do not use ProbDataSpatialWeight or  ProbDataMinusSpatialWeight bc otherwise it is dicontinous bc of ProbDataWeight[i]
+  } 
+
+  // For legacy purposes do not change a think to before even though it is not corect
+  return  vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov,cY_M, LogMu,InvLogCov,NumInputImages, VirtualNumInputImages);
+
+}
+
 
 // Close to Sandies original approach +(part of ISBI04)
 inline double vtkEMAtlasSegment_ConditionalTissueProbability(const double TissueProbability, const double InvSqrtDetLogCov, 
@@ -568,21 +636,27 @@ inline double vtkEMAtlasSegment_ConditionalTissueProbability(const double Tissue
    return TissueProbability  * vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov,cY_M, LogMu,InvLogCov,NumInputImages, VirtualNumInputImages); 
 }
 
-// Kilian's MICCAI02 + ISBI04 paper 
-template <class T> 
-inline double vtkEMAtlasSegment_SpatialIntensityProbability(const double TissueProbability, const float ProbDataMinusWeight, 
-                                                              const float ProbDataWeight, const T *ProbDataPtr, const double InvSqrtDetLogCov, 
-                                                              const float* cY_M,  const double  *LogMu, double **InvLogCov, 
-                                                              const int  NumInputImages, const int VirtualNumInputImages) {
-   return  (ProbDataMinusWeight + ProbDataWeight*(ProbDataPtr == NULL ? 0.0 : double(*ProbDataPtr))) 
-            * vtkEMAtlasSegment_ConditionalTissueProbability(TissueProbability, InvSqrtDetLogCov, cY_M,  LogMu, InvLogCov, NumInputImages, VirtualNumInputImages); 
-} 
+// Kilian Jan06: This way we have spatialy varying influence of the probability distribution
+//               In the case where ProbDataWeight[i] = 1.0 the weight is constant. However, 
+//               when  ProbDataWeight[i] < 1.0 and ProbDataSpatialWeightPtr = NumberOfTrainingSamples =>     ProbDataSpatialWeight  = 1.0
+//                                             and ProbDataSpatialWeightPtr = 0                       =>     ProbDataSpatialWeight  = ProbDataWeight[i]
+
+inline void vtkEMAtlasSegment_ProbDataSpatialWeight(short *ProbDataSpatialWeightPtr, float const ProbDataWeight, float const ProbDataMinusWeight, 
+                                                    int const NumberOfTrainingSamples, float &ProbDataSpatialWeight, float &ProbDataMinusSpatialWeight) {
+
+    if ((ProbDataSpatialWeightPtr) && (*ProbDataSpatialWeightPtr) && (ProbDataWeight < 1.0 )) {
+      ProbDataSpatialWeight      = ProbDataWeight + (1 - ProbDataWeight) * float(*ProbDataSpatialWeightPtr) / float(NumberOfTrainingSamples);
+      if (ProbDataSpatialWeight > 1.0 ) ProbDataSpatialWeight  = 1.0;
+      ProbDataMinusSpatialWeight = float(NumberOfTrainingSamples)*(1 - ProbDataSpatialWeight);
+    } else {
+      ProbDataSpatialWeight      = ProbDataWeight; 
+      ProbDataMinusSpatialWeight = ProbDataMinusWeight; 
+    }
+}
 
 // -----------------------------------------------------------
 // Calculate MF - parrallelised version 
 // -----------------------------------------------------------
-
-
 
 template  <class T>
 static void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate(int id,
@@ -604,7 +678,11 @@ static void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate(int id,
                      int *ProbDataIncY, 
                      int *ProbDataIncZ,
                      float *ProbDataWeight,
-                                     float *ProbDataMinusWeight,
+                     float *ProbDataMinusWeight,
+                     short* ProbDataSpatialWeightPtr, 
+                     int ProbDataSpatialWeightIncY, 
+                     int ProbDataSpatialWeightIncZ, 
+                     int NumberOfTrainingSamples,
                      double **LogMu, 
                      double ***InvLogCov, 
                      double *InvSqrtDetLogCov,
@@ -623,7 +701,9 @@ static void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate(int id,
   double *wxp = new double[NumClasses],*wxpPtr = wxp,*wxn = new double[NumClasses],*wxnPtr = wxn, *wyn = new double[NumClasses],*wynPtr = wyn,
          *wyp = new double[NumClasses],*wypPtr = wyp,*wzn = new double[NumClasses],*wznPtr = wzn, *wzp = new double[NumClasses],*wzpPtr = wzp;  
   
-
+  float ProbDataSpatialWeight;
+  float ProbDataMinusSpatialWeight;
+    
   // -----------------------------------------------------------
   // neighbouring field values
   // -----------------------------------------------------------
@@ -648,89 +728,176 @@ static void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate(int id,
     if (*MapVector < EMSEGMENT_DEFINED) {
       // Is is 0 => it is not an edge -> fast smmothing
       if (*MapVector) {
-    for (i=0;i< NumClasses ;i++){
-      *wxp=*wxn=*wyn=*wyp=*wzn=*wzp=0;
+        for (i=0;i< NumClasses ;i++){
+
+          *wxp=*wxn=*wyn=*wyp=*wzn=*wzp=0;
           ClassIndex = 0;
           for (k=0;k< NumClasses ;k++){
-        for (l=0;l< NumChildClasses[k];l++){
-          // f(j,l,h-1)
-          if (*MapVector&EMSEGMENT_WEST) *wxn += (*w_m_input[ClassIndex])*(float)MrfParams[3][k][i]; 
-          else                     *wxn += w_m_input[ClassIndex][-JumpHorizontal]*(float)MrfParams[3][k][i];
-          // f(j,l,h+1)
-          if (*MapVector&EMSEGMENT_EAST) *wxp += (*w_m_input[ClassIndex])*(float)MrfParams[0][k][i];
-          else                     *wxp += w_m_input[ClassIndex][JumpHorizontal]*(float)MrfParams[0][k][i];
-          //  Remember: The picture is upside down:
-          // Therefore I had to switch the MRF parameters 1 (South) and 4(North)
-          // f(j,l-1,h)
-          if (*MapVector&EMSEGMENT_NORTH)  *wyn += (*w_m_input[ClassIndex])*(float)MrfParams[1][k][i];                       
-          else                     *wyn += w_m_input[ClassIndex][-1]*(float)MrfParams[1][k][i]; 
-          // f(j,l+1,h)
-          if (*MapVector&EMSEGMENT_SOUTH)  *wyp += (*w_m_input[ClassIndex])*(float)MrfParams[4][k][i];
-          else                     *wyp += w_m_input[ClassIndex][1]*(float)MrfParams[4][k][i];
-          // f(j-1,l,h)
-          if (*MapVector&EMSEGMENT_FIRST) *wzn += (*w_m_input[ClassIndex])*(float)MrfParams[5][k][i];  
-          else                     *wzn += w_m_input[ClassIndex][-JumpSlice]*(float)MrfParams[5][k][i]; 
-          // f(j+1,l,h)
-          if (*MapVector&EMSEGMENT_LAST)  *wzp += (*w_m_input[ClassIndex])*(float)MrfParams[2][k][i]; 
-          else                     *wzp += w_m_input[ClassIndex][JumpSlice]*(float)MrfParams[2][k][i]; 
-
-              ClassIndex ++;
+          for (l=0;l< NumChildClasses[k];l++){
+            // f(j,l,h-1)
+            if (*MapVector&EMSEGMENT_WEST) *wxn += (*w_m_input[ClassIndex])*(float)MrfParams[3][k][i]; 
+            else                     *wxn += w_m_input[ClassIndex][-JumpHorizontal]*(float)MrfParams[3][k][i];
+            // f(j,l,h+1)
+            if (*MapVector&EMSEGMENT_EAST) *wxp += (*w_m_input[ClassIndex])*(float)MrfParams[0][k][i];
+            else                     *wxp += w_m_input[ClassIndex][JumpHorizontal]*(float)MrfParams[0][k][i];
+            //  Remember: The picture is upside down:
+            // Therefore I had to switch the MRF parameters 1 (South) and 4(North)
+            // f(j,l-1,h)
+            if (*MapVector&EMSEGMENT_NORTH)  *wyn += (*w_m_input[ClassIndex])*(float)MrfParams[1][k][i];                       
+            else                     *wyn += w_m_input[ClassIndex][-1]*(float)MrfParams[1][k][i]; 
+            // f(j,l+1,h)
+            if (*MapVector&EMSEGMENT_SOUTH)  *wyp += (*w_m_input[ClassIndex])*(float)MrfParams[4][k][i];
+            else                     *wyp += w_m_input[ClassIndex][1]*(float)MrfParams[4][k][i];
+            // f(j-1,l,h)
+            if (*MapVector&EMSEGMENT_FIRST) *wzn += (*w_m_input[ClassIndex])*(float)MrfParams[5][k][i];  
+            else                     *wzn += w_m_input[ClassIndex][-JumpSlice]*(float)MrfParams[5][k][i]; 
+            // f(j+1,l,h)
+            if (*MapVector&EMSEGMENT_LAST)  *wzp += (*w_m_input[ClassIndex])*(float)MrfParams[2][k][i]; 
+            else                     *wzp += w_m_input[ClassIndex][JumpSlice]*(float)MrfParams[2][k][i]; 
+      
+                ClassIndex ++;
+          }
         }
-      }
-      wxn++;wxp++;wyn++;wyp++;wzn++;wzp++;
-    }
+        wxn++;wxp++;wyn++;wyp++;wzn++;wzp++;
+       }
      } else {
-    for (i=0;i<NumClasses ;i++){
-      *wxp=*wxn=*wyn=*wyp=*wzn=*wzp=0;
-      ClassIndex = 0;
-      for (k=0;k<NumClasses ;k++){
-        for (l=0;l< NumChildClasses[k];l++){
-          // f(j,l,h-1)
-          *wxn += w_m_input[ClassIndex][-JumpHorizontal]*(float)MrfParams[3][k][i];
-          // f(j,l,h+1)
-          *wxp += w_m_input[ClassIndex][JumpHorizontal]*(float)MrfParams[0][k][i];
-          // f(j,l-1,h)
-          *wyn += w_m_input[ClassIndex][-1]*(float)MrfParams[4][k][i]; 
-          // f(j,l+1,h)
-          *wyp += w_m_input[ClassIndex][1]*(float)MrfParams[1][k][i];
-          // f(j-1,l,h)
-          *wzn += w_m_input[ClassIndex][-JumpSlice]*(float)MrfParams[5][k][i]; 
-          // f(j+1,l,h)
-          *wzp += w_m_input[ClassIndex][JumpSlice]*(float)MrfParams[2][k][i]; 
-          ClassIndex ++;
-        }
-      }
-      // cout << "Result " << i << " " << *wxp << " " <<  *wxn  << " " << *wyn << " " << *wyp << " " << *wzn << " " << *wzp << endl;      
-
-      wxn++;wxp++;wyn++;wyp++;wzn++;wzp++;
+        for (i=0;i<NumClasses ;i++){
+          *wxp=*wxn=*wyn=*wyp=*wzn=*wzp=0;
+         ClassIndex = 0;
+         for (k=0;k<NumClasses ;k++){
+           for (l=0;l< NumChildClasses[k];l++){
+             // f(j,l,h-1)
+             *wxn += w_m_input[ClassIndex][-JumpHorizontal]*(float)MrfParams[3][k][i];
+             // f(j,l,h+1)
+             *wxp += w_m_input[ClassIndex][JumpHorizontal]*(float)MrfParams[0][k][i];
+             // f(j,l-1,h)
+             *wyn += w_m_input[ClassIndex][-1]*(float)MrfParams[4][k][i]; 
+             // f(j,l+1,h)
+             *wyp += w_m_input[ClassIndex][1]*(float)MrfParams[1][k][i];
+             // f(j-1,l,h)
+             *wzn += w_m_input[ClassIndex][-JumpSlice]*(float)MrfParams[5][k][i]; 
+             // f(j+1,l,h)
+             *wzp += w_m_input[ClassIndex][JumpSlice]*(float)MrfParams[2][k][i]; 
+             ClassIndex ++;
+           }
+          }
+          // cout << "Result " << i << " " << *wxp << " " <<  *wxn  << " " << *wyn << " " << *wyp << " " << *wzn << " " << *wzp << endl;      
+         
+          wxn++;wxp++;wyn++;wyp++;wzn++;wzp++;
     }
      }
-      wxp = wxpPtr; wxn = wxnPtr; wyn = wynPtr; wyp = wypPtr; wzn = wznPtr; wzp = wzpPtr; 
+     wxp = wxpPtr; wxn = wxnPtr; wyn = wynPtr; wyp = wypPtr; wzn = wznPtr; wzp = wzpPtr; 
+
+
       // -----------------------------------------------------------
       // Calculate Probabilities and Update Weights
       // -----------------------------------------------------------
-      // mp = (ones(prod(imS),1)*p).*(1-alpha + alpha*wxn).*(1- alpha +alpha*wxp)...
-      //.*(1- alpha + alpha*wyp).*(1-alpha + alpha*wyn).*(1- alpha + alpha*wzp).*(1-alpha + alpha*wzn);
-      // w have to be normalized !
       normRow = 0;
       index = 0;
-      // if ((j == 13891) || (j == 13946)) cout << "duda0 " << j << " " << ((*MapVector&EMSEGMENT_WEST) ? 1 : 0) << " " << ((*MapVector&EMSEGMENT_EAST) ? 1 : 0) << " - " << ((*MapVector&EMSEGMENT_FIRST) ? 1 : 0)<< " " << ((*MapVector&EMSEGMENT_LAST) ? 1 : 0) << " " << ((*MapVector&EMSEGMENT_SOUTH) ? 1 : 0) << " " << ((*MapVector&EMSEGMENT_NORTH) ? 1 : 0) << endl;
 
       for (i=0; i<NumClasses; i++) {
         // Goes a little bit further in the branches - like it better
         // it should be exp(*ProbData)[i] from Tina's thesis I say now bc values with zero probability will be still displayed
         // Kilian May 2002: I believe the form underneath is correct - Tina's PhD thesis displays it exactly like underneath 
-    // if (((j == 13891) || (j == 13946)) && i == 0) cout << "duda1 " << i << " " << j << " " << *wxp  << " " <<  *wxn  <<  " " << *wyp  << " " <<  *wyn  <<  " " << *wzp  << " " <<  *wzn  <<  endl;
-    NeighborhoodEnergy = (1-Alpha+Alpha*exp((*wxp++) + (*wxn++) + (*wyp++) + (*wyn++) + (*wzp++) + (*wzn++)));
+
+    // Work of MICCAI02 and ISBI04
+    // SpatialTissueDistribution    = ProbDataMinusWeight[i]  + ProbDataWeight[i]  *float(ProbDataPtrCopy[index] == NULL ? 0.0 : *ProbDataPtrCopy[index]);
+    // Note that ProbDataMinusWeight[i] = NumTainingSample* (1 - ProbDataWeight[i]) / NumChildClasses[i]
+    // => sum_k ProbDataMinusWeight[i] = NumTainingSample* (1 - ProbDataWeight[i]) 
+    //    and sum_k ProbDataWeight[i]* ProbDataPtr[k] =  ProbDataWeight[i] * sum_k  ProbDataPtr[k]
+    // Note: - You have a truely spatially varying intensity field as long as  ProbDataWeight[i] > 0 
+    //       - However if ProbDataWeight[i] ~ 0 => you just have a mean intensity of all substructures 
+    //                                          => if you change the intensity of one substructure it impacts the segmentation of the entire structure 
+    //                                             at all locations !  Bad idea in the case of Greymatter with substructures
+    // Work For Journal Publication:
+    // Solution: ProbDataMinusSpatialWeightPtr == NULL: leave it as it is 
+    //           ProbDataMinusSpatialWeightPtr != NULL: Define ProbDataMinusSpatialWeight = (1 - ProbDataMinusSpatialWeight) and use only for first class (k=0)
+    //                                                  SpatialTissueDistribution    = ProbDataMinusSpatialWeight  + ProbDataSpatialWeight  *float( .... 
+    //                                                  For the others define SpatialTissueDistribution = ProbDataSpatialWeight  *float( ....
+    //          => - intensity changes are only local and first class has to define bg of that structure
+    //             - nothing changes when ProbDataWeight[i] ~ 1
+
+        // Kilian Jan 06: Problem:  w_m_output[index][j] =  NeighborhoodEnergy *  SpatialTissueDistribution * TissueProbability[i] * condIntensity 
+        //                          The  NeighborhoodEnergy and condIntensity  are not properly scalled so that the method is difficult to fine tune 
+        //                          Thus changing alpha from 0 to 0.01 has a great effect but the difference between alpha 0.01 and 1.0 is very small 
+        // 
+        //                Solution: Define the influence of the components based in a parameter similar to SpatialTissueDistribution depends on ProbDataSpatialWeight (PDSW)
+        //                          where the STD of a class (not subclass) \in [PDSW, 1] * TrainingSamples. 
+        //                          TrainingSamples is a scalar ascross structures so it does not have an impact on the segmentation results.
+        //
+    //                          - NeighborhoodEnergy: Maximum is e^(6)  => in order for alpha to have any meanining set it to 1 - alpha  + alpha * (e^w -1) / (e^6 -1)
+        //                                                => NE(alpha) \in [\alpha , 1] 
+        //                                                => alpha = 1.0: NE = (e^w -1) so that the product solely on the neighboorhod energy 
+        //                                                                ((e^6 -1) is a structure independent scalar - ignore it)                         
+        //                                                   alpha = 0.5 the NE \in [0.5 , 1] => impact of neighborhood relationship is reduced  
+        //                                                   alpha = 0.0 then NE = 1 and is ignored from w_m
+        //                           
+        //                           The next one is a bad idea bc of the image inhomogeneity correction !                     
+        //                          - condIntensity :     let condIntensity_new = inverse_sqrt_det_covariance * pow(EMSEGMENT_ONE_OVER_ROOT_2_PI,dim) 
+        //                                                         * (PDSW + (1.0 - PDSW) * vtkImageEMGeneral_qnexp2(EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 * term2)
+        //                                                Important:  inverse_sqrt_det_covariance has to be in there for bias calculation
+        //                                                            pow(EMSEGMENT_ONE_OVER_ROOT_2_PI,dim)  has to be defined bc of different dims 
+    //                                          between different tissue classes 
+    //                                                =>  PDSW = 0 :  condIntensity_new =  condIntensity
+    //                                                    PDSW = 1 :  condIntensity_new = 1 => it is constant and does not account for intensities
+        //                                                for legacy purposes only do this when PDSW for head class is loaded    
+
+
+    // -------------------------------------------------------------------------------
+        // Calculate Neighborhood energy Leave unchanged for right now 
+        //if (ProbDataSpatialWeightPtr && *ProbDataSpatialWeightPtr) 
+    //  NeighborhoodEnergy = 1.0; 
+        //else 
+
+    float Energy = exp((*wxp++) + (*wxn++) + (*wyp++) + (*wyn++) + (*wzp++) + (*wzn++));
+    //if (ProbDataSpatialWeightPtr) NeighborhoodEnergy = 1;
+    // else 
+
+        if (ProbDataSpatialWeightPtr) {
+      // NeighborhoodEnergy = 1-Alpha+Alpha*(Energy -1.0) * EMSEGMENTER_INVERSE_NEIGHBORHOOD_ENERGY;
+      NeighborhoodEnergy = 1-0.99+0.99*(Energy -1.0) * EMSEGMENTER_INVERSE_NEIGHBORHOOD_ENERGY;
+    } else {
+      // For legacy definition
+      NeighborhoodEnergy = (1-Alpha+Alpha*Energy);
+    }
+
+    //if (ProbDataSpatialWeightPtr && *ProbDataSpatialWeightPtr) {
+    //  float oldNewModel = float(*ProbDataSpatialWeightPtr) /  float(NumberOfTrainingSamples);
+    //  NeighborhoodEnergy = 1-Alpha  + Alpha* ( (1 - oldNewModel) * Energy  +  oldNewModel * (Energy -1.0) * EMSEGMENTER_INVERSE_NEIGHBORHOOD_ENERGY);   
+    //} else {
+    // 
+    //}
+
+
+
+    // Kilian Jan 06 - read notes in E-Step about what we are doing here
+    vtkEMAtlasSegment_ProbDataSpatialWeight(ProbDataSpatialWeightPtr, ProbDataWeight[i],  ProbDataMinusWeight[i], NumberOfTrainingSamples, ProbDataSpatialWeight, 
+                        ProbDataMinusSpatialWeight);
+
     for (l=0;l< NumChildClasses[i];l++){
-       ConditionalTissueProbability = TissueProbability[i] * vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[index],cY_M, LogMu[index],InvLogCov[index],NumInputImages, VirtualNumInputImages[i]); 
-           SpatialTissueDistribution    = ProbDataMinusWeight[i] + ProbDataWeight[i]*(ProbDataPtr[index] == NULL ? 0.0 : double(*ProbDataPtr[index]));
-           w_m_output[index][j] = (float) NeighborhoodEnergy *  SpatialTissueDistribution *  ConditionalTissueProbability;
-          // if (((j == 13891) || (j == 13946)) && i == 0) {
-        // cout << "duda2 " << index << " " << j << " " << w_m_output[index][j]  << " " <<  mp   << " " << TissueProbability[i] << " " << ProbDataMinusWeight[i] << " " <<ProbDataWeight[i]  << " " << *ProbDataPtr[index]  << " ";
-          //  for (int blub2=0; blub2 < 2; blub2++) cout <<  cY_M[blub2] << " "; 
-      //  cout << endl;
-      // }
+        // -------------------------------------------------------------------------------
+    // Define ConditionalTissueProbability
+      ConditionalTissueProbability = TissueProbability[i]* vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[index],cY_M, LogMu[index],InvLogCov[index],NumInputImages, VirtualNumInputImages[i]);
+
+        // -------------------------------------------------------------------------------
+    // Define Spatial Prior
+      SpatialTissueDistribution    = double(ProbDataSpatialWeight)  * double(ProbDataPtr[index] == NULL ? 0.0 : *ProbDataPtr[index]);
+      // Make sure that the background is correct
+      if ((!ProbDataSpatialWeightPtr)  || !l) SpatialTissueDistribution  += ProbDataMinusSpatialWeight;
+        
+        // -------------------------------------------------------------------------------   
+        // Define Weight
+      w_m_output[index][j] = (float) NeighborhoodEnergy *  SpatialTissueDistribution *  ConditionalTissueProbability;
+
+
+// Debugging information
+#if (0)      
+         if (index ==2 & (w_m_output[2][j] < w_m_output[1][j]) ) cout << "+ " ; 
+         cout << "voxel " << j << " class " << index << " W_M " << w_m_output[index][j]  << " NEI " <<  NeighborhoodEnergy    
+        << " STD " << SpatialTissueDistribution << " PD " << double(*ProbDataPtr[index]) << " CTP " << ConditionalTissueProbability 
+        << " PDSW " << ProbDataSpatialWeight << " PDSWMI " << ProbDataMinusSpatialWeight << " PDSWPtr " << *ProbDataSpatialWeightPtr << endl;
+#endif 
+
       normRow += w_m_output[index][j];
       index ++;
     } 
@@ -755,7 +922,6 @@ static void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate(int id,
         for (l=0;l< NumChildClasses[i];l++){
               // the line below is the same as 
               // vtkEMAtlasSegment_ConditionalTissueProbability(TissueProbability[i], InvSqrtDetLogCov[index],cY_M, LogMu[index],InvLogCov[index],NumInputImages, VirtualNumInputImages[i]); 
-              // Just changed for speed (about 5% faster )
           w_m_output[index][j] = (float) (float) TissueProbability[i] * vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[index],cY_M, LogMu[index],InvLogCov[index],NumInputImages, VirtualNumInputImages[i]); 
                 
           normRow += w_m_output[index][j];
@@ -775,15 +941,20 @@ static void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate(int id,
       w_m_input[i] ++;
       if (ProbDataPtr[i]) ProbDataPtr[i] ++;
     }
+    if (ProbDataSpatialWeightPtr) ProbDataSpatialWeightPtr ++;
+
     j++;
     if (!(j % imgX)) {
       for (i=0; i < NumTotalTypeCLASS; i++) { if (ProbDataPtr[i]) ProbDataPtr[i] += ProbDataIncY[i];}
+      if (ProbDataSpatialWeightPtr) ProbDataSpatialWeightPtr += ProbDataSpatialWeightIncY;
+
       if (!(j % imgXY)) {
          for (i=0; i <  NumTotalTypeCLASS; i++) { 
-     if (ProbDataPtr[i]) ProbDataPtr[i] += ProbDataIncZ[i];}
+           if (ProbDataPtr[i]) ProbDataPtr[i] += ProbDataIncZ[i];}
+         }
+         if (ProbDataSpatialWeightPtr) ProbDataSpatialWeightPtr += ProbDataSpatialWeightIncZ;
       }
     }
-  }
 
   //j = 0;
   //while (j < NumClasses) { 
@@ -812,11 +983,11 @@ static void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate(int id,
 void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DThreadPrivate(void *jobparm) {  EMAtlas_MF_Approximation_Work_Private *job = (EMAtlas_MF_Approximation_Work_Private *)jobparm;
   // Define Type of ProbDataPtr
    switch (job->ProbDataType) {
-    vtkTemplateMacro26(vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate,job->id, job->w_m_input,job->MapVector,job->cY_M,job->imgX,job->imgY,
+    vtkTemplateMacro(vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate(job->id, job->w_m_input,job->MapVector,job->cY_M,job->imgX,job->imgY,
                        job->imgXY,job->StartVoxel,job->EndVoxel, job->NumClasses, job->NumTotalTypeCLASS, job->NumChildClasses, 
-                       job->NumInputImages, job->Alpha,job->MrfParams, (VTK_TT**) job->ProbDataPtr, job->ProbDataIncY,
-                       job->ProbDataIncZ, job->ProbDataWeight, job->ProbDataMinusWeight, job->LogMu,job->InvLogCov,
-                       job->InvSqrtDetLogCov, job->TissueProbability, job->VirtualNumInputImages,job->w_m_output);
+                       job->NumInputImages, job->Alpha,job->MrfParams, (VTK_TT**) job->ProbDataPtr, job->ProbDataIncY, job->ProbDataIncZ, job->ProbDataWeight,
+                       job->ProbDataMinusWeight, job->ProbDataSpatialWeightPtr, job->ProbDataSpatialWeightIncY, job->ProbDataSpatialWeightIncZ, job->NumberOfTrainingSamples, 
+               job->LogMu,job->InvLogCov, job->InvSqrtDetLogCov, job->TissueProbability, job->VirtualNumInputImages,job->w_m_output));
 
    }
 }
@@ -1064,14 +1235,17 @@ void vtkImageEMAtlasSegmenter::DeleteVariables() {
 
 }
 
+
+
+
 // -----------------------------------------------------------
 // Calculate MF - necessary for parrallising algorithm
 // -----------------------------------------------------------
-int vtkImageEMAtlasSegmenter::MF_Approx_Workpile(float **w_m_input,unsigned char* MapVector, float *cY_M, int imgXY,
-                           double ***InvLogCov,double *InvSqrtDetLogCov,  int NumTotalTypeCLASS, 
-                                                   int* NumChildClasses, int NumClasses, void** ProbDataPtr, int* ProbDataIncY, 
-                           int* ProbDataIncZ, float *ProbDataWeight, float *ProbDataMinusWeight,
-                                                   double** LogMu, double* TissueProbability, int *VirtualNumInputImages, vtkImageEMAtlasSuperClass* head, float **w_m_output) {
+int vtkImageEMAtlasSegmenter::MF_Approx_Workpile(float **w_m_input,unsigned char* MapVector, float *cY_M, int imgXY, double ***InvLogCov,double *InvSqrtDetLogCov,  
+                     int NumTotalTypeCLASS, int* NumChildClasses, int NumClasses, void** ProbDataPtr, int* ProbDataIncY, int* ProbDataIncZ, float *ProbDataWeight, 
+                     float *ProbDataMinusWeight, short* ProbDataSpatialWeightPtr, int ProbDataSpatialWeightIncY, int ProbDataSpatialWeightIncZ, 
+                     int NumberOfTrainingSamples, double** LogMu, double* TissueProbability, int *VirtualNumInputImages, vtkImageEMAtlasSuperClass* head, float **w_m_output) {
+
   #define MAXMFAPPROXIMATIONWORKERTHREADS 32
   int numthreads = 0;
   int jobsize,i,j;
@@ -1083,10 +1257,7 @@ int vtkImageEMAtlasSegmenter::MF_Approx_Workpile(float **w_m_input,unsigned char
 
   // Sylvain did not like this because different results are produced on different machines - Kilian
   // I threw threaded function out - however to reduce labor I did not change the structure, which I should
-
-  // numthreads = 1;
-  numthreads = vtkMultiThreader::GetGlobalDefaultNumberOfThreads(); 
-  cout << "Debug: Kilian: Number of Threads: " <<   numthreads << endl;
+  numthreads = 1;
 
   jobsize = this->ImageProd/numthreads;
   for (i = 0; i < numthreads; i++) {
@@ -1134,11 +1305,26 @@ int vtkImageEMAtlasSegmenter::MF_Approx_Workpile(float **w_m_input,unsigned char
     job[i].ProbDataPtr[j] = NULL;
       }    
     }               
-    job[i].ProbDataIncY        = ProbDataIncY;
-    job[i].ProbDataIncZ        = ProbDataIncZ;
-    job[i].ProbDataWeight      = ProbDataWeight;
-    job[i].ProbDataMinusWeight = ProbDataMinusWeight;
+    job[i].ProbDataIncY           = ProbDataIncY;
+    job[i].ProbDataIncZ           = ProbDataIncZ;
+    job[i].ProbDataWeight         = ProbDataWeight;
+    job[i].ProbDataMinusWeight    = ProbDataMinusWeight;
+
+    if (ProbDataSpatialWeightPtr) { 
+      StartPointer  = ((this->GetDimensionX() + ProbDataSpatialWeightIncY)*this->GetDimensionY() + ProbDataSpatialWeightIncZ)*(StartIndex/imgXY); // Z direction
+      StartPointer += (this->GetDimensionX() + ProbDataSpatialWeightIncY)*((StartIndex/this->GetDimensionX()) % this->GetDimensionY()); // Y direction
+      StartPointer += StartIndex % this->GetDimensionX(); // X Direction 
+      job[i].ProbDataSpatialWeightPtr   = ProbDataSpatialWeightPtr +  StartPointer;
+
+    } else {
+      job[i].ProbDataSpatialWeightPtr   = NULL;
+    }
+    job[i].ProbDataSpatialWeightIncY  = ProbDataSpatialWeightIncY;
+    job[i].ProbDataSpatialWeightIncZ  = ProbDataSpatialWeightIncZ;
+    job[i].NumberOfTrainingSamples    = NumberOfTrainingSamples;
+
     // --- End ProbDataPtr Definition
+
     job[i].w_m_output            = new float*[NumTotalTypeCLASS];
     for (j=0; j <NumTotalTypeCLASS; j++) job[i].w_m_output[j] = w_m_output[j];
     job[i].LogMu                 = LogMu;
@@ -1224,6 +1410,7 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
   double *InvSqrtDetWeightedLogCov = new double[NumTotalTypeCLASS];
   
   int NumberOfTrainingSamples       =  self->GetNumberOfTrainingSamples();
+
   int *LabelList                    = new int[NumTotalTypeCLASS];
   int *CurrentLabelList             = new int[NumClasses];
 
@@ -1235,6 +1422,17 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
       CurrentLabelList[i] = ((vtkImageEMAtlasSuperClass*) ClassList[i])->GetLabel();
     }
   }
+
+  short *ProbDataSpatialWeightPtr  = actSupCl->GetProbDataSpatialWeightPtr();
+  short *ProbDataSpatialWeightPtrCopy =  ProbDataSpatialWeightPtr; 
+  if (ProbDataSpatialWeightPtrCopy) {
+    cout << "ProbDataSpatialWeigth is enabled" << endl;
+  }
+
+  int ProbDataSpatialWeightIncY  = actSupCl->GetProbDataSpatialWeightIncY();
+  int ProbDataSpatialWeightIncZ  = actSupCl->GetProbDataSpatialWeightIncZ();
+
+  float ProbDataSpatialWeight,  ProbDataMinusSpatialWeight;
 
   // ------------------------------------------------------
   // Variables defined by Subclasses
@@ -1510,7 +1708,7 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
           char** BiasFileName       = NULL;
           double* BiasSlice         = NULL;
           double* BiasSlicePtr      = NULL;
-          bool PrintBiasFlag = bool((iter ==  NumIter) && BiasPrint);
+          bool PrintBiasFlag = bool((iter ==  NumIter) && BiasPrint && actSupCl->GetPrintFrequency());
 
           if (PrintBiasFlag) {
 
@@ -1698,7 +1896,7 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
     // the MF part is added
   
     cout << "vtkImageEMAtlasAlgorithm: "<< iter << ". Estep " << endl;
-    if ((iter == 1) || (Alpha == 0)) { 
+     if ((iter == 1) || (Alpha == 0)) { 
       for (z = 0; z < ImageMaxZ ; z++) {
         for (y = 0; y < ImageMaxY ; y++) {
           for (x = 0; x < ImageMaxX ; x++) {
@@ -1715,24 +1913,23 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
           normRow = 0;
           ProbValue = -2;
           index = 0;
-          for (i=0; i < NumClasses; i++) {
-            
+          for (i=0; i < NumClasses; i++) {   
+        vtkEMAtlasSegment_ProbDataSpatialWeight(ProbDataSpatialWeightPtr, ProbDataWeight[i],  ProbDataMinusWeight[i], NumberOfTrainingSamples, ProbDataSpatialWeight, 
+                            ProbDataMinusSpatialWeight);
+
+        // Kilan Jan06 See notes to this section in MF approximation 
             for (k=0;k< NumChildClasses[i];k++) {
-              // check down a little bit later
-              // (*w_m)[j] = (*ProbabilityData)[j]*vtkImageEMGeneral::LookupGauss(GaussLookupTable[j],TableLBound[j],TableUBound[j],TableResolution[j],*cY_M, NumInputImages);
-              // (*w_m)[j] = ProbabilityData[i][j]*vtkImageEMGeneral::FastGaussMulti(InvSqrtDetWeightedLogCov[j],*cY_M, LogMu[j],InvLogCov[j],NumInputImages);
-              // If we have a superclass we have to calculate differently!
-              // The proability atlas of a super class is the sum of all its sub classes 
-              // Atlas[SC] = 1 - weight + weight * sum_{sub\in SC}(Atlas[sub])
-              //           = sum_{sub\in SC}((1 - weight) / (# of Sub)  + weight * Atlas[sub])
-              ConditionalTissueProbability =  TissueProbability[i]* vtkImageEMGeneral::FastGaussMulti(InvSqrtDetWeightedLogCov[index],cY_M, LogMu[index],
+          // Conditional Tissue Distribution
+          ConditionalTissueProbability = TissueProbability[i] * vtkImageEMGeneral::FastGaussMulti(InvSqrtDetWeightedLogCov[index],cY_M, LogMu[index],
                                                           InverseWeightedLogCov[index],NumInputImages, VirtualNumInputImages[i]);
-              
-              // Work of MICCAI02 and ISBI04 
-              SpatialTissueDistribution    = ProbDataMinusWeight[i]  + ProbDataWeight[i] *float(ProbDataPtrCopy[index] == NULL ? 0.0 : *ProbDataPtrCopy[index]);
-  
+          
+          // Spatial Prior 
+          SpatialTissueDistribution    = ProbDataSpatialWeight  *float(ProbDataPtrCopy[index] == NULL ? 0.0 : *ProbDataPtrCopy[index]);
+          if ((!ProbDataSpatialWeightPtr)  || !k) SpatialTissueDistribution += ProbDataMinusSpatialWeight; 
+         
               *w_m[index] = (float)  ConditionalTissueProbability * SpatialTissueDistribution; 
               normRow += *w_m[index];
+
 #if (EMVERBOSE)
               fprintf(stdout, "w_m: %12g i:%2d  k:%2d  ind:%2d  PMW:%3.2f  PDW:%3.2f  PDP:", *w_m[index],i,k,index,ProbDataMinusWeight[i], ProbDataWeight[i]); 
               if (ProbDataPtrCopy[index] == NULL) cout << "NULL ";
@@ -1743,7 +1940,7 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
 #endif
               // Predefine those areas where only one Atlas map has a value
               if (ProbValue != -1) {
-            if ((ProbDataPtrCopy[index] && (*ProbDataPtrCopy[index] > 0)) || (ProbDataWeight[i] < 1.0)) {
+            if ((ProbDataPtrCopy[index] && (*ProbDataPtrCopy[index] > 0)) || ( ProbDataSpatialWeight < 1.0)) {
               if (ProbValue == -2) ProbValue = i; //no other class has (*ProbDataPtrCopy[j]) > 0 so far
               else if (ProbValue !=i) ProbValue = -1;                //more than one other class has (*ProbDataPtrCopy[j]) > 0 so far
             } 
@@ -1761,10 +1958,18 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
         if (normRow == 0.0) {
           index = 0;
           for (i=0; i < NumClasses; i++) {
+        vtkEMAtlasSegment_ProbDataSpatialWeight(ProbDataSpatialWeightPtr, ProbDataWeight[i],  ProbDataMinusWeight[i], NumberOfTrainingSamples, ProbDataSpatialWeight, 
+                            ProbDataMinusSpatialWeight);
+
             for (k=0;k< NumChildClasses[i];k++) {
-              if (ProbDataPtrCopy[index]) 
-            *w_m[index] += ProbDataMinusWeight[i] + ProbDataWeight[i] * float(*ProbDataPtrCopy[index]);
-              else if (ProbDataWeight[i] > 0.0) *w_m[index] += ProbDataMinusWeight[i];
+          if ((!ProbDataSpatialWeightPtr)  || !k) {
+          // Note that if !ProbDataSpatialWeightPtr ProbDataMinusWeight[i] = (1 - ProbDataWeight[i]) / NumChildClasses[i]
+          // => sum_k ProbDataMinusWeight[i] = 1 - ProbDataWeight[i] and 
+        if (ProbDataPtrCopy[index])  *w_m[index] += ProbDataMinusSpatialWeight + ProbDataSpatialWeight * float(*ProbDataPtrCopy[index]);
+        else *w_m[index] += ProbDataMinusSpatialWeight;
+          } else {
+        if (ProbDataPtrCopy[index]) *w_m[index] += ProbDataSpatialWeight * float(*ProbDataPtrCopy[index]);
+          }
               normRow += *w_m[index];
               index ++; 
             }
@@ -1773,13 +1978,11 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
             index = 0;
             for (j=0; j <  NumClasses ; j++) {
               for (k=0;k< NumChildClasses[j];k++) { 
-            // The line below is the same as ConditionalTissueProbability is the same as 
-            (float) vtkEMAtlasSegment_ConditionalTissueProbability(TissueProbability[j], InvSqrtDetWeightedLogCov[index],cY_M, LogMu[index],
-                                         InverseWeightedLogCov[index],NumInputImages, VirtualNumInputImages[j]);   
-            *w_m[index] = (float) (float) TissueProbability[j]* vtkImageEMGeneral::FastGaussMulti(InvSqrtDetWeightedLogCov[index],cY_M, LogMu[index],
-                                                          InverseWeightedLogCov[index],NumInputImages, VirtualNumInputImages[j]); 
-            normRow += *w_m[index];
-            index ++;
+        // the line below is the same as vtkEMAtlasSegment_ConditionalTissueProbability
+        *w_m[index] = (float)  TissueProbability[j]* vtkImageEMGeneral::FastGaussMulti(InvSqrtDetWeightedLogCov[index],cY_M, LogMu[index],
+                                                      InverseWeightedLogCov[index],NumInputImages, VirtualNumInputImages[j]); 
+        normRow += *w_m[index];
+        index ++;
               }
             }
           }
@@ -1804,21 +2007,28 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
           *OutputVector |= EMSEGMENT_DEFINED; 
         }
         cY_M += NumInputImages; OutputVector++;
-        for (j=0; j < NumTotalTypeCLASS; j++) { 
-          w_m[j] ++; w_m_second[j]++; 
-          if (ProbDataPtrCopy[j]) ProbDataPtrCopy[j] ++;
-        }
-          }
+             for (j=0; j < NumTotalTypeCLASS; j++) { 
+               w_m[j] ++; w_m_second[j]++; 
+               if (ProbDataPtrCopy[j]) ProbDataPtrCopy[j] ++;
+             }
+         if (ProbDataSpatialWeightPtr) ProbDataSpatialWeightPtr ++;
+          } // End of for (x = 0; x < ImageMaxY ; x++) 
+
           for (j=0; j < NumTotalTypeCLASS; j++) {
-        if (ProbDataPtrCopy[j]) ProbDataPtrCopy[j] += ProbDataIncY[j];
+             if (ProbDataPtrCopy[j]) ProbDataPtrCopy[j] += ProbDataIncY[j];
           }
-        }
+          if (ProbDataSpatialWeightPtr) ProbDataSpatialWeightPtr += ProbDataSpatialWeightIncY;
+        } // End of for (y = 0; y < ImageMaxY ; y++) 
+
         for (j=0; j < NumTotalTypeCLASS; j++) {
           if (ProbDataPtrCopy[j]) ProbDataPtrCopy[j] += ProbDataIncZ[j];
         }
+        if (ProbDataSpatialWeightPtr) ProbDataSpatialWeightPtr += ProbDataSpatialWeightIncZ;
+
       } // End of for (z = 0; z < ImageMaxZ ; z++) 
 
-      cY_M = cY_MPtr;OutputVector = OutputVectorPtr;
+      cY_M = cY_MPtr;OutputVector = OutputVectorPtr; ProbDataSpatialWeightPtr = ProbDataSpatialWeightPtrCopy;
+
       for (j=0; j < NumTotalTypeCLASS; j++) {
         w_m[j]                         = w_mPtr[j];
         w_m_second[j]                  = w_m_secondPtr[j];
@@ -1831,12 +2041,13 @@ static void vtkImageEMAtlasAlgorithm(vtkImageEMAtlasSegmenter *self,Tin **ProbDa
     if (Alpha > 0) {
       for (regiter=1; regiter <= NumRegIter; regiter++) {
         cout << "vtkImageEMAtlasAlgorithm: "<< regiter << ". EM - MF Iteration" << endl;
-        if (regiter%2) self->MF_Approx_Workpile(w_m,OutputVector,cY_M,imgXY,InverseWeightedLogCov,InvSqrtDetWeightedLogCov,NumTotalTypeCLASS,
-                            NumChildClasses,NumClasses,(void**) ProbDataPtrStart, ProbDataIncY,ProbDataIncZ,
-                            ProbDataWeight, ProbDataMinusWeight, LogMu,TissueProbability,VirtualNumInputImages, actSupCl, w_m_second);
-        else self->MF_Approx_Workpile(w_m_second,OutputVector,cY_M,imgXY,InverseWeightedLogCov,InvSqrtDetWeightedLogCov,NumTotalTypeCLASS,NumChildClasses,
-                      NumClasses,(void**) ProbDataPtrStart,ProbDataIncY,ProbDataIncZ,ProbDataWeight,
-                      ProbDataMinusWeight, LogMu,TissueProbability, VirtualNumInputImages, actSupCl, w_m);
+        if (regiter%2) self->MF_Approx_Workpile(w_m,OutputVector,cY_M,imgXY,InverseWeightedLogCov,InvSqrtDetWeightedLogCov,NumTotalTypeCLASS, NumChildClasses, NumClasses, 
+               (void**) ProbDataPtrStart, ProbDataIncY, ProbDataIncZ, ProbDataWeight, ProbDataMinusWeight, ProbDataSpatialWeightPtr, ProbDataSpatialWeightIncY, 
+                            ProbDataSpatialWeightIncZ, NumberOfTrainingSamples, LogMu,TissueProbability, VirtualNumInputImages, actSupCl, w_m_second);
+        //  ---------------
+        else self->MF_Approx_Workpile(w_m_second,OutputVector,cY_M,imgXY,InverseWeightedLogCov,InvSqrtDetWeightedLogCov,NumTotalTypeCLASS,NumChildClasses,NumClasses,
+                           (void**) ProbDataPtrStart, ProbDataIncY, ProbDataIncZ, ProbDataWeight, ProbDataMinusWeight, ProbDataSpatialWeightPtr, ProbDataSpatialWeightIncY,
+                           ProbDataSpatialWeightIncZ, NumberOfTrainingSamples, LogMu, TissueProbability, VirtualNumInputImages, actSupCl, w_m);
       }
       // if it is an odd number of iterations w_m_second holds the current result ! -> Therefore we have to change it !
       if (NumRegIter%2) {
