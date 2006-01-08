@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.h,v $
-  Date:      $Date: 2006/01/06 17:56:49 $
-  Version:   $Revision: 1.44 $
+  Date:      $Date: 2006/01/08 04:48:05 $
+  Version:   $Revision: 1.45 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSlicer - main core of the 3D Slicer
@@ -447,13 +447,13 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
 
   void DrawSetStartMethod(void (*f)(void *), void *arg)
     {
-#if !(VTK_MAJOR_VERSION ==4 && VTK_MINOR_VERSION > 2)
+#if !( (VTK_MAJOR_VERSION ==4 && VTK_MINOR_VERSION > 2) || (VTK_MAJOR_VERSION >= 5) )
       this->PolyDraw->SetStartMethod(f, arg);
 #endif
     }
   void DrawSetStartMethodArgDelete(void (*f)(void *))
     {
-#if !(VTK_MAJOR_VERSION ==4 && VTK_MINOR_VERSION > 2)
+#if !( (VTK_MAJOR_VERSION ==4 && VTK_MINOR_VERSION > 2) || (VTK_MAJOR_VERSION >= 5) )
       this->PolyDraw->SetStartMethodArgDelete(f);
 #endif
     }
