@@ -4,11 +4,10 @@
 
   See Doc/copyright/copyright.txt
   or http://www.slicer.org/copyright/copyright.txt for details.
-
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlData.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:45 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/01/08 04:45:05 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -182,7 +181,12 @@ void vtkMrmlData::ProgressCallbackFunction(vtkObject* caller,
                                               void* clientdata, void*)
 {
   vtkMrmlData *self = (vtkMrmlData *)(clientdata);
+#if (VTK_MAJOR_VERSION >= 5)
+  vtkAlgorithm *obj = self->GetProcessObject();
+#else
   vtkProcessObject *obj = self->GetProcessObject();
+#endif
+
   if (obj)
   {
     self->UpdateProgress(obj->GetProgress());
