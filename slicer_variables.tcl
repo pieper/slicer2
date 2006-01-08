@@ -84,6 +84,7 @@ set ::TCL_BIN_DIR $::SLICER_LIB/tcl-build/bin
 set ::TCL_LIB_DIR $::SLICER_LIB/tcl-build/lib
 set ::TCL_INCLUDE_DIR $::SLICER_LIB/tcl-build/include
 set ::CMAKE_PATH $::SLICER_LIB/CMake-build
+#set ::CMAKE_PATH "c:/Program Files/CMake 2.2"
 set ::SOV_BINARY_DIR " "
 set ::XVNC_EXECUTABLE " "
 
@@ -244,7 +245,7 @@ switch $::tcl_platform(os) {
         if { [file exists "c:/Program Files/Microsoft Visual Studio .NET 2003/Common7/IDE/devenv.exe"] } {
             set ::GENERATOR "Visual Studio 7 .NET 2003" 
             set ::MAKE "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET 2003/Common7/IDE/devenv"
-            set ::COMPILER_PATH "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET 2003/Common7/Vc7/bin"
+            set ::COMPILER_PATH "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET 2003/Vc7/bin"
         }
 
         set ::COMPILER "cl"
