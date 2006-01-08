@@ -4,11 +4,10 @@
 
   See Doc/copyright/copyright.txt
   or http://www.slicer.org/copyright/copyright.txt for details.
-
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlData.h,v $
-  Date:      $Date: 2006/01/06 17:56:45 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/01/08 04:47:34 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlData - Abstract Object used in the slicer to perform
@@ -121,13 +120,18 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlData : public vtkProcessObject {
     return this->IndirectLUT->GetLookupTable();};
 
   // Description:
+  // For internal use during Read/Write
+#if (VTK_MAJOR_VERSION >= 5)
+  vtkGetObjectMacro(ProcessObject, vtkAlgorithm);
+#else
+  vtkGetObjectMacro(ProcessObject, vtkProcessObject);
+#endif
+
+  // Description:
   // Enable or disable FMRI mapping 
   void EnableFMRIMapping(int yes) {
       this->IndirectLUT->SetFMRIMapping(yes);};
 
-  // Description:
-  // For internal use during Read/Write
-  vtkGetObjectMacro(ProcessObject, vtkProcessObject);
 
 protected:
   vtkMrmlData();
@@ -151,7 +155,11 @@ protected:
   vtkIndirectLookupTable *LabelIndirectLUT;
 
   int NeedToWrite;
+#if (VTK_MAJOR_VERSION >= 5)
+  vtkAlgorithm *ProcessObject;
+#else
   vtkProcessObject *ProcessObject;
+#endif
   
   // Callback registered with the ProgressObserver.
   static void ProgressCallbackFunction(vtkObject*, unsigned long, void*,
