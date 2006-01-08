@@ -6,8 +6,8 @@
   or http://www.slicer.org/copyright/copyright.txt for details.
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlData.h,v $
-  Date:      $Date: 2006/01/08 04:47:34 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/01/08 17:49:31 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlData - Abstract Object used in the slicer to perform
@@ -122,7 +122,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlData : public vtkProcessObject {
   // Description:
   // For internal use during Read/Write
 #if (VTK_MAJOR_VERSION >= 5)
-  vtkGetObjectMacro(ProcessObject, vtkAlgorithm);
+  //vtkGetObjectMacro(ProcessObject, vtkAlgorithm);
 #else
   vtkGetObjectMacro(ProcessObject, vtkProcessObject);
 #endif
@@ -156,7 +156,7 @@ protected:
 
   int NeedToWrite;
 #if (VTK_MAJOR_VERSION >= 5)
-  vtkAlgorithm *ProcessObject;
+  //vtkAlgorithm *ProcessObject;
 #else
   vtkProcessObject *ProcessObject;
 #endif
