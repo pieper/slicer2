@@ -112,7 +112,7 @@ set ::SLICER(revision) ""
 # when packaging a release for testing, set state to the date as "-YYYY-MM-DD"
 #  otherwise leave it as "-dev"
 
-set ::SLICER(state) "-rc1"
+set ::SLICER(state) "-dev"
 
 set ::SLICER(version) "$::SLICER(major_version).$::SLICER(minor_version)$::SLICER(revision)$::SLICER(state)"
 
@@ -951,7 +951,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.110 2006/01/06 17:56:52 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.111 2006/01/10 22:16:06 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
