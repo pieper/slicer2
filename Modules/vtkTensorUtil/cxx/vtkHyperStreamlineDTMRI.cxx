@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.cxx,v $
-  Date:      $Date: 2006/01/06 17:58:05 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/01/10 20:50:20 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 #include "vtkHyperStreamlineDTMRI.h"
@@ -26,7 +26,7 @@
 #include "vtkHyperPointandArray.cxx"
 #endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.15 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.16 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 // Construct object with initial starting position (0,0,0); integration step 
@@ -66,7 +66,8 @@ vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()
 
 vtkHyperStreamlineDTMRI::~vtkHyperStreamlineDTMRI()
 {
-
+  this->FractionalAnisotropy0->Delete();
+  this->FractionalAnisotropy1->Delete();
 }
 
 // copied from superclass
