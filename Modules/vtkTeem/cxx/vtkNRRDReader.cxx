@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkNRRDReader.cxx,v $
-  Date:      $Date: 2006/01/11 16:00:20 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2006/01/11 16:07:15 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -50,7 +50,7 @@
 
 #include "teem/ten.h"
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.3 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.4 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -476,7 +476,7 @@ void vtkNRRDReader::ExecuteInformation()
               break;
             }
 
-          for (int j=0; j<this->nrrd->spaceDim; j++) 
+          for (int j=0; (unsigned int)j<this->nrrd->spaceDim; j++) 
             {
              IjkToRasMatrix->SetElement(j,axii , spaceDir[j]*spacing);
             }  
@@ -573,7 +573,7 @@ void vtkNRRDReader::ExecuteInformation()
    this->SetDataExtent(dataExtent);
 
    // Push extra key/value pair data into std::map
-   for (i=0; i < nrrdKeyValueSize(this->nrrd); i++) {
+   for (i=0; (unsigned int)i < nrrdKeyValueSize(this->nrrd); i++) {
      nrrdKeyValueIndex(this->nrrd, &key, &val, i);
      HeaderKeyValue[std::string(key)] = std::string(val);
      free(key);  // key and val point to malloc'd data!!
@@ -773,8 +773,6 @@ tenSpaceDirectionReduce(Nrrd *nout, const Nrrd *nin, double SD[9]) {
   double SDT[9], tenMeasr[9], tenSlice[9];
   float *tdata;
   size_t ii, nn;
-  unsigned int si, sj;
-  double det;
   
   if (!(nout && nin)) {
     sprintf(err, "%s: got NULL pointer", me);
