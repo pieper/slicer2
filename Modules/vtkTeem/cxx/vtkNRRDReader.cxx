@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkNRRDReader.cxx,v $
-  Date:      $Date: 2006/01/06 17:58:04 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/01/11 16:00:20 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -48,11 +48,9 @@
 #include "vtkDoubleArray.h"
 #include "vtkFloatArray.h" 
 
-extern "C" {
 #include "teem/ten.h"
-}
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
