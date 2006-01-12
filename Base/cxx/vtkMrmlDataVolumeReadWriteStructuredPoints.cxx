@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlDataVolumeReadWriteStructuredPoints.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:45 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/01/12 00:08:00 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 #include "vtkPointData.h"
@@ -17,6 +17,7 @@
 #include "vtkPointData.h"
 #include "vtkStructuredPointsReader.h"
 #include "vtkStructuredPointsWriter.h"
+#include "vtkDataArray.h"
 
   //------------------------------------------------------------------------------
   vtkMrmlDataVolumeReadWriteStructuredPoints* vtkMrmlDataVolumeReadWriteStructuredPoints::New()
