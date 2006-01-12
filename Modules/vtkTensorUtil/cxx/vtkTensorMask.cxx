@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMask.cxx,v $
-  Date:      $Date: 2006/01/06 17:58:06 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/01/12 15:36:56 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 #include "vtkTensorMask.h"
@@ -64,7 +64,8 @@ void vtkTensorMask::ExecuteData(vtkDataObject *out)
   data->Delete();
 
   // jump back into normal pipeline: call standard superclass method here
-  this->vtkImageMultipleInputFilter::ExecuteData(out);
+  //  this->vtkImageMultipleInputFilter::ExecuteData(out);
+  this->vtkImageMask::ExecuteData(out);
 }
 
 
@@ -192,7 +193,11 @@ static void vtkTensorMaskExecuteTensor(vtkTensorMask *self, int ext[6],
   maskState = self->GetNotMask();
 
   // input tensors
+#if (VTK_MAJOR_VERSION >= 5)
+  inTensors = self->GetImageDataInput(0)->GetPointData()->GetTensors();
+#else
   inTensors = self->GetInput()->GetPointData()->GetTensors();
+#endif
   // output tensors
   outTensors = self->GetOutput()->GetPointData()->GetTensors();
 
@@ -324,8 +329,11 @@ void vtkTensorMask::ThreadedExecute(vtkImageData **inData,
   // output
   outPtr = outData->GetScalarPointerForExtent(outExt);
   // input tensors
+#if (VTK_MAJOR_VERSION >= 5)
+  inTensors = this->GetImageDataInput(0)->GetPointData()->GetTensors();
+#else
   inTensors = this->GetInput()->GetPointData()->GetTensors();
-
+#endif
 
   tExt = inData[1]->GetExtent();
   if (tExt[0] > outExt[0] || tExt[1] < outExt[1] || 

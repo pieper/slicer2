@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.cxx,v $
-  Date:      $Date: 2006/01/10 20:50:20 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2006/01/12 15:36:56 $
+  Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 #include "vtkHyperStreamlineDTMRI.h"
@@ -26,7 +26,7 @@
 #include "vtkHyperPointandArray.cxx"
 #endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.16 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.17 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 // Construct object with initial starting position (0,0,0); integration step 
@@ -132,7 +132,11 @@ static void FixVectors(vtkFloatingPointType **prev, vtkFloatingPointType **curre
 
 void vtkHyperStreamlineDTMRI::Execute()
 {
+#if (VTK_MAJOR_VERSION >= 5)
+  vtkDataSet *input = this->GetPolyDataInput(0);
+#else
   vtkDataSet *input = this->GetInput();
+#endif
   vtkPointData *pd=input->GetPointData();
   vtkDataArray *inScalars;
   vtkDataArray *inTensors;
@@ -537,7 +541,11 @@ void vtkHyperStreamlineDTMRI::BuildLines()
   vtkPoints *newPoints;
   vtkCellArray *newLines;
   vtkFloatArray *newScalars=NULL;
+#if (VTK_MAJOR_VERSION >= 5)
+  vtkDataSet *input = this->GetPolyDataInput(0);
+#else
   vtkDataSet *input = this->GetInput();
+#endif
   vtkPolyData *output = this->GetOutput();
   vtkPointData *outPD = output->GetPointData();
 

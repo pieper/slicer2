@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricTensorGlyph.cxx,v $
-  Date:      $Date: 2006/01/06 17:58:06 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/01/12 15:36:56 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 #include "vtkSuperquadricTensorGlyph.h"
@@ -143,7 +143,11 @@ void vtkSuperquadricTensorGlyph::Execute()
   vtkFloatingPointType xv[3], yv[3], zv[3];
   vtkFloatingPointType maxScale;
   vtkPointData *pd, *outPD;
+#if (VTK_MAJOR_VERSION >= 5)
+  vtkDataSet *input = this->GetPolyDataInput(0);
+#else
   vtkDataSet *input = this->GetInput();
+#endif
   vtkPolyData *output = this->GetOutput();
 
   if (this->GetSource() == NULL)
