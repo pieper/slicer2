@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterNode.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:33 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/01/13 16:36:46 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 //#include <stdio.h>
@@ -69,7 +69,7 @@ void vtkMrmlSegmenterNode::Copy(vtkMrmlNode *anode)
 //----------------------------------------------------------------------------
 void vtkMrmlSegmenterNode::PrintSelf(ostream& os, vtkIndent indent)
 {
-  this->vtkMrmlSegmenterNode::PrintSelf(os, indent);
+  this->vtkMrmlSegmenterAtlasNode::PrintSelf(os, indent);
   os << indent << "DisplayProb: "               << this->DisplayProb <<  "\n"; 
   os << indent << "RegistrationInterpolationType: " << this->RegistrationInterpolationType << "\n"; 
   os << indent << "DisableMultiThreading: "; 

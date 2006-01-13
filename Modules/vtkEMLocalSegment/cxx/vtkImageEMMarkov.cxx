@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMMarkov.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:32 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/01/13 16:36:46 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 #include "vtkImageEMMarkov.h"
@@ -414,7 +414,7 @@ void vtkImageEMMarkov::TrainMarkovMatrix(int ***Image, int Ydim, int Xdim, float
 // Special Vector and Matrix functions
 
 void vtkImageEMMarkov::DeleteVariables() {
-  int z,y;
+  int y;
   if (this->NumClasses > 0 ){
     for (y=0; y < this->NumClasses; y++) {
       if (this->Label[y]) delete[] this->Label[y]; 

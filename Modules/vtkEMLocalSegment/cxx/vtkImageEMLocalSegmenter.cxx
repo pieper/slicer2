@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMLocalSegmenter.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:32 $
-  Version:   $Revision: 1.23 $
+  Date:      $Date: 2006/01/13 16:36:46 $
+  Version:   $Revision: 1.24 $
 
 =========================================================================auto=*/
 // Since 22-Apr-02 vtkImageEMLocal3DSegmenter is called vtkImageEMLocalSegmenter - Kilian
@@ -206,7 +206,7 @@ static void vtkImageEMLocalSegmenterReadInputChannel(vtkImageEMLocalSegmenter *s
   int ImageMaxX = self->GetDimensionX();
 
   int index = 0; 
-  double IntensityCorrection;
+  double IntensityCorrection = 0.0;
 
   // Get increments to march through data 
   in1Data->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
