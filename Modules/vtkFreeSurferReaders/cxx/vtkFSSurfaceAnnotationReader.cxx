@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSSurfaceAnnotationReader.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:41 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/01/13 16:28:45 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
 Program:   Visualization Toolkit
 Module:    $RCSfile: vtkFSSurfaceAnnotationReader.cxx,v $
 Language:  C++
-Date:      $Date: 2006/01/06 17:57:41 $
-Version:   $Revision: 1.9 $
+Date:      $Date: 2006/01/13 16:28:45 $
+Version:   $Revision: 1.10 $
 
 =========================================================================*/
 #include <stdio.h>
@@ -480,9 +480,7 @@ int vtkFSSurfaceAnnotationReader::ReadEmbeddedColorTable (FILE* annotFile,
                               char*** onames)
 {
   int read;
-  int label;
   int tag;
-  int error;
   int numColorTableEntries;
   int nameLength;
   char tableName[FS_COLOR_TABLE_NAME_LENGTH];

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkBVolumeReader.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:40 $
-  Version:   $Revision: 1.10 $
+  Date:      $Date: 2006/01/13 16:28:45 $
+  Version:   $Revision: 1.11 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkBVolumeReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2006/01/06 17:57:40 $
-  Version:   $Revision: 1.10 $
+  Date:      $Date: 2006/01/13 16:28:45 $
+  Version:   $Revision: 1.11 $
 
 =========================================================================*/
 #include <sys/types.h>
@@ -251,10 +251,8 @@ vtkDataArray *vtkBVolumeReader::ReadVolumeData()
   int numReadTotal;
   int numReadSlice;
   int tupleNum;
-  int slice;
   int elementSize;
   short s;
-  int i;
   float f;
 
     vtkDebugMacro(<<"\n\n\n\n\n\n\n\n\n\n***************\nvtkBvolumeReader: ReadVolumeData\n");
@@ -441,12 +439,7 @@ vtkDataArray *vtkBVolumeReader::ReadVolumeData()
 int vtkBVolumeReader::ReadVolumeHeader()
 {
   FILE *fp;
-  int numTimePoints;
-  int numFiles;
-  int xDimension;
-  int yDimension;
   char fileName[1024];
-  char extension[1024];
   char headerFileName[1024];
   char input[1024];
   char* line;

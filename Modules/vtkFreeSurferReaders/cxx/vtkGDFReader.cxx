@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkGDFReader.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:41 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/01/13 16:28:45 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 #include <sys/types.h>
@@ -486,9 +486,9 @@ char *vtkGDFReader::GetNthSubjectNthValue(int n1, int n2)
 {
     vtkDebugMacro(<< "GetNthSubjectNthValue\n");
     int nthIndex = n2 + 2;
-    if (n1 < this->SubjectsVec.size())
+    if ((unsigned int)n1 < this->SubjectsVec.size())
     {
-        if (nthIndex < this->SubjectsVec[n1].size())
+        if ((unsigned int)nthIndex < this->SubjectsVec[n1].size())
         {
             return (char*)this->SubjectsVec[n1][nthIndex].c_str();
         }
