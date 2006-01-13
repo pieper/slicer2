@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.cxx,v $
-  Date:      $Date: 2006/01/12 15:36:56 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/01/13 15:51:22 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 #include "vtkHyperStreamlineDTMRI.h"
@@ -21,12 +21,12 @@
 #include "vtkPointData.h"
 #include "vtkPolyData.h"
 // the superclass had these classes in the vtkHyperStreamline.cxx
-// file:
+// file: being compiled via CMakeListsLocal.txt
 #if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 3)
-#include "vtkHyperPointandArray.cxx"
+//#include "vtkHyperPointandArray.cxx"
 #endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.17 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.18 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 // Construct object with initial starting position (0,0,0); integration step 
@@ -537,7 +537,7 @@ void vtkHyperStreamlineDTMRI::Execute()
 
 void vtkHyperStreamlineDTMRI::BuildLines()
 {
-  vtkHyperPoint *sPrev, *sPtr;
+  vtkHyperPoint *sPtr;
   vtkPoints *newPoints;
   vtkCellArray *newLines;
   vtkFloatArray *newScalars=NULL;
