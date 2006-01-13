@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkRigidTransformInterpolate.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:51 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/01/13 16:23:08 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 // .NAME vtkRigidTransformInterpolate - Reads Nearly Raw Raster Data files
@@ -27,7 +27,7 @@
 #include "vtkMatrix4x4.h"
 #include "vtkMath.h"
 
-vtkCxxRevisionMacro(vtkRigidTransformInterpolate, "$Revision: 1.5 $");
+vtkCxxRevisionMacro(vtkRigidTransformInterpolate, "$Revision: 1.6 $");
 vtkStandardNewMacro(vtkRigidTransformInterpolate);
 
 /*
@@ -126,7 +126,7 @@ void vtkRigidTransformInterpolate::Interpolate()
         return;
     }
 
-    vtkFloatingPointType T0[3], T1[3], TT[3];
+    vtkFloatingPointType T0[3], T1[3];
     vtkFloatingPointType A0[3][3], A1[3][3], AT[3][3];
     vtkFloatingPointType Q0[4], Q1[4], QT[4];
     int i,j;

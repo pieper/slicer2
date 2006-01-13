@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkVoxelTimeCourseExtractor.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:51 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/01/13 16:23:08 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 #include "vtkVoxelTimeCourseExtractor.h"
@@ -24,9 +24,6 @@ vtkStandardNewMacro(vtkVoxelTimeCourseExtractor);
 
 vtkVoxelTimeCourseExtractor::vtkVoxelTimeCourseExtractor()
 {
-    float outputMax;
-    float outputMin;
-    float outputRange;
     this->outputMax = 0.0;
     this->outputMin = 10000000.0;
     this->outputRange = this->outputMin - this->outputMax;
