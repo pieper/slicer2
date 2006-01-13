@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTractShapeFeatures.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:27 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/01/13 16:44:43 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 // for vtk objects we use here
@@ -36,7 +36,7 @@
 
 
 
-vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.12 $");
+vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.13 $");
 vtkStandardNewMacro(vtkTractShapeFeatures);
 
 vtkCxxSetObjectMacro(vtkTractShapeFeatures, InputStreamlines, vtkCollection);
@@ -114,8 +114,7 @@ vtkImageData * vtkTractShapeFeatures::ConvertVNLMatrixToVTKImage(OutputType *mat
 void vtkTractShapeFeatures::GetPointsFromHyperStreamlinePointsSubclass(TractPointsListType::Pointer sample, vtkHyperStreamlinePoints *currStreamline)
 {
   XYZVectorType mv;
-  vtkPoints *hs0, *hs1;
-  vtkFloatArray *scalars;
+  vtkPoints *hs0;
   int ptidx, numPts;
   double point[3];
 

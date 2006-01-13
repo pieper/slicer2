@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkLSDIreconTensor.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:25 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/01/13 16:44:43 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 #include "vtkLSDIreconTensor.h"
@@ -195,7 +195,7 @@ static void vtkLSDIreconTensorExecute(vtkLSDIreconTensor *self,
   int outIncX, outIncY, outIncZ;
   unsigned long count = 0;
   unsigned long target;
-  double So, Sk, fk;
+  double Sk, fk;
   int numInputs, k,i,j,idx, gradientIdx;
   float val, inputScaling;
   double **G;

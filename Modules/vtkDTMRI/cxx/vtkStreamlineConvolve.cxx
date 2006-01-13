@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkStreamlineConvolve.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:27 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/01/13 16:44:43 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -36,7 +36,7 @@
 #include "vtkPolyData.h"
 #include "math.h"
 
-vtkCxxRevisionMacro(vtkStreamlineConvolve, "$Revision: 1.5 $");
+vtkCxxRevisionMacro(vtkStreamlineConvolve, "$Revision: 1.6 $");
 vtkStandardNewMacro(vtkStreamlineConvolve);
 
 // Construct with lower threshold=0, upper threshold=1, and threshold 
@@ -181,13 +181,12 @@ void vtkStreamlineConvolveExecute(vtkStreamlineConvolve *self,
   int *kernelSize;
   int kernelMiddle[3];
 
-  vtkIdType ptId, numPts;
+  vtkIdType numPts;
   vtkPolyData *output = self->GetOutput();
   vtkPolyData *streamlines = self->GetStreamlines();
 
   // For looping though output (and input) pixels.
   int inInc0, inInc1, inInc2;
-  T *inPtr0, *inPtr1, *inPtr2;
 
   // For looping through hood pixels
   int hoodMin0, hoodMax0, hoodMin1, hoodMax1, hoodMin2, hoodMax2;
@@ -212,7 +211,6 @@ void vtkStreamlineConvolveExecute(vtkStreamlineConvolve *self,
 
   // to compute the range
   unsigned long count = 0;
-  unsigned long target;
 
      
   numPts = streamlines->GetNumberOfPoints();

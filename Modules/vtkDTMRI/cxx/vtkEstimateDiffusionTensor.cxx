@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkEstimateDiffusionTensor.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:25 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2006/01/13 16:44:43 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 #include "vtkEstimateDiffusionTensor.h"
@@ -273,7 +273,7 @@ static void vtkEstimateDiffusionTensorExecute(vtkEstimateDiffusionTensor *self,
   int outIncX, outIncY, outIncZ;
   unsigned long count = 0;
   unsigned long target;
-  int numInputs, k,i,j,idx, gradientIdx;
+  int numInputs, k,i,j;
   double *dwi;
   double **PinvA;
   double **A;

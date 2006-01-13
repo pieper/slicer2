@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDisplayTracts.cxx,v $
-  Date:      $Date: 2005/12/22 15:13:18 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/01/13 16:44:43 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 #include "vtkDisplayTracts.h"
@@ -413,7 +413,6 @@ void vtkDisplayTracts::DeleteStreamline(int index)
   vtkPolyDataMapper *currMapper;
   vtkTransformPolyDataFilter *currTransFilter;
   vtkTubeFilter *currTubeFilter;
-  vtkHyperStreamline *currStreamline;
   vtkActor *currActor;
 
   vtkDebugMacro( << "Deleting actor " << index);

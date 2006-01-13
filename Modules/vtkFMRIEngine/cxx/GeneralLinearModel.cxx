@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: GeneralLinearModel.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:35 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/01/13 16:45:54 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 
@@ -26,7 +26,6 @@ int *GeneralLinearModel::whitening = NULL;
 int GeneralLinearModel::FitModel(float *timeCourse, float *beta, float *chisq)
 {
     int i, j;
-    double ssr;
     
     if ( AR1DesignMatrix == NULL && *whitening == 1 ) {
         cout << "AR(1) Design matrix has not been set.\n";
