@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageResliceST.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:10 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/01/13 17:01:15 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 #include "vtkImageResliceST.h"
@@ -965,22 +965,7 @@ static void vtkImageResliceSTExecute(vtkImageResliceST *self,
   float U[3][3];
   float w[3];
   float VT[3][3];
-  float D[3][3];
-  float n1[3]; float n2[3];
-  float e1[3]; float e2[3];
-  float e[3][3]; 
-  float n[3][3];
-  float t[3]; float ew[3];
-  float omega[3][3]; float omega2[3][3];
-  float theta;
-  float R1[3][3]; float R2[3][3]; float R[3][3];
-  float R1e1[3]; float R1e2[3];
-  float *DTemp[4];
-  float *eTemp[4];
-  float *tTemp;
-  float s; float c;
-  float Pn2[3];
-//  float test[6];
+
   // Loop through output pixels
   for (idZ = outExt[4]; idZ <= outExt[5]; idZ++)
     {
