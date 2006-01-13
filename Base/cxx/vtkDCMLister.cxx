@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDCMLister.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:37 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/01/13 15:39:23 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 
@@ -250,7 +250,7 @@ void vtkDCMLister::ListElement(unsigned short Group,
   if((strcmp(VR, "OB") != 0) &&
      (strcmp(VR, "OW") != 0) &&
      (strcmp(VR, "OX") != 0))
-    if(((length + 1) > buff_maxlen) && (length != 0xffffffff))
+    if(((length + 1) > (unsigned long)buff_maxlen) && (length != 0xffffffff))
     {
         delete [] buff;
         buff_maxlen = length + 1;

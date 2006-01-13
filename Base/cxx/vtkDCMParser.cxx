@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDCMParser.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:37 $
-  Version:   $Revision: 1.18 $
+  Date:      $Date: 2006/01/13 15:39:24 $
+  Version:   $Revision: 1.19 $
 
 =========================================================================auto=*/
 
@@ -303,7 +303,7 @@ float vtkDCMParser::ReadFloatAsciiNumeric(unsigned int NextBlock)
     {
       i=0;
       flag=1;
-      while(flag && i<19 && ftell(file_in)<NextBlock)
+      while(flag && i<19 && (unsigned int)ftell(file_in)<NextBlock)
       {
         ch=getc(file_in);
         if(ch=='\\') flag=0;
@@ -328,7 +328,7 @@ int vtkDCMParser::ReadIntAsciiNumeric(unsigned int NextBlock)
     {
       i=0;
       flag=1;
-      while(flag && i<19 && ftell(file_in)<NextBlock)
+      while(flag && i<19 && (unsigned int)ftell(file_in)<NextBlock)
     {
       ch=getc(file_in);
       if(ch=='\\') flag=0;
