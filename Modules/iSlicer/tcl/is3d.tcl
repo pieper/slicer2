@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: is3d.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:07 $
-#   Version:   $Revision: 1.14 $
+#   Date:      $Date: 2006/01/13 01:25:55 $
+#   Version:   $Revision: 1.15 $
 # 
 #===============================================================================
 # FILE:        is3d.tcl
@@ -747,15 +747,15 @@ proc is3d_demo_kw { } {
 
     catch "win Delete"
     vtkKWWindow win
-    win SetSecondaryPanelVisibility 0
-    win Create app ""
     app AddWindow win
+    win SetSecondaryPanelVisibility 0
+    win Create
 
     catch "vol_panel Delete"
     vtkKWUserInterfacePanel vol_panel
     vol_panel SetName "Volume Interface"
     vol_panel SetUserInterfaceManager [win GetMainUserInterfaceManager]
-    vol_panel Create app
+    vol_panel Create
 
     vol_panel AddPage "Properties" "Volume Properties" ""
     set page_widget [vol_panel GetPageWidget "Properties"]
@@ -768,16 +768,16 @@ proc is3d_demo_kw { } {
     catch "vpw Delete"
     vtkKWVolumePropertyWidget vpw
     vpw SetParent $page_widget
-    vpw Create app ""
+    vpw Create
     
     pack [vpw GetWidgetName] -side left -anchor nw -expand y -padx 2 -pady 2
 
     catch "vsplit Delete"
     vtkKWSplitFrame vsplit
     vsplit SetParent [win GetViewPanelFrame]
-    vsplit SetExpandFrameToBothFrames
+    vsplit SetExpandableFrameToBothFrames
     vsplit SetOrientationToHorizontal
-    vsplit Create app
+    vsplit Create
 
     pack [vsplit GetWidgetName] -expand true -fill both -padx 0 -pady 0
 
