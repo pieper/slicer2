@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImagePropagateDist.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:54 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/01/13 16:04:04 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 /*  ==================================================
@@ -231,7 +231,7 @@ void vtkImagePropagateDist::PropagateDanielsson2D( )
     register int       ny[8];
     register int       l;
     register int       tp;
-    register int       p,k,pn,size;
+    register int       p,k,pn;
 
     int                x0,y0,x1,y1;
     int                xpn0,ypn0,tpn;
