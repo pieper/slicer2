@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkCardManager.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:59 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/01/13 15:55:01 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 /*===========================================================
@@ -72,7 +72,7 @@ Authors: Michael McKenna, David Small, Steve Pieper.
 #include "vtkCard.h"
 
 
-vtkCxxRevisionMacro(vtkCardManager, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkCardManager, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkCardManager);
 
 
@@ -190,9 +190,14 @@ void vtkCardManager::LoadSet() {
 
 void vtkCardManager::SetVisibility(int v) {
     int i;
+    bool vb = true;
+    if (v == 0) 
+    {
+        vb = false;
+    }
     for (i = 0; i < this->Cards->GetNumberOfItems(); i++) {
         vtkCard *card = (vtkCard *)(this->Cards->GetItemAsObject(i));
-        card->SetVisibility((bool)v);
+        card->SetVisibility(vb);
     }
 }
 
