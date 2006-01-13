@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.cxx,v $
-  Date:      $Date: 2006/01/06 17:58:06 $
-  Version:   $Revision: 1.27 $
+  Date:      $Date: 2006/01/13 15:51:54 $
+  Version:   $Revision: 1.28 $
 
 =========================================================================auto=*/
 
@@ -311,7 +311,7 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
   m[0] = m0; m[1] = m1; m[2] = m2; 
   v[0] = v0; v[1] = v1; v[2] = v2;
   int i, j;
-  vtkFloatingPointType trace, norm, mean, fa, mode, r, g, b;
+  vtkFloatingPointType r, g, b;
   int extractEigenvalues;
   vtkFloatingPointType cl;
   // scaling
