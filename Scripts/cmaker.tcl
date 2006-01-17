@@ -87,6 +87,12 @@ switch $tcl_platform(os) {
     "Darwin" {
         set VTK_ARG3 "-DVTK_WRAP_HINTS:FILEPATH=$VTK_SRC_DIR/Wrapping/hints"
     }
+    "Linux" {
+    }
+    default {
+        # increase the default heap size (Zm), other flags are from VTK
+        set VTK_ARG3 "-DCMAKE_CXX_FLAGS:STRING=/Zm2000 /W3 /GX /GR"
+    }
 }
 
 # assign SLICER_HOME variable to ctest
