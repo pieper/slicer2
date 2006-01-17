@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: VolGeneric.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:49 $
-#   Version:   $Revision: 1.20 $
+#   Date:      $Date: 2006/01/17 20:31:11 $
+#   Version:   $Revision: 1.21 $
 # 
 #===============================================================================
 # FILE:        VolGeneric.tcl
@@ -339,7 +339,7 @@ proc VolGenericApply {} {
     set Volume(sliceThickness) [lindex $spc 2]
 
     set Volume(gantryDetectorTilt) 0
-    set Volume(numScalars) 1
+    set Volume(numScalars) [$imdata GetNumberOfScalarComponents]
     set scalarType [$imdata GetScalarTypeAsString]
     set Volume(scalarType) [VolumesVtkToSlicerScalarType $scalarType]
     set Volume(readHeaders) 0
@@ -425,7 +425,9 @@ proc VolGenericApply {} {
     }
 
     # set active volume on all menus
-    MainVolumesSetActive $i
+    if {[Volume($i,node) GetNumScalars] == 1} {
+        MainVolumesSetActive $i
+    }
 
     # if we are successful set the FOV for correct display of this volume
     set dim     [lindex [Volume($i,node) GetDimensions] 0]
@@ -440,7 +442,9 @@ proc VolGenericApply {} {
     if {[Volume($i,node) GetLabelMap] == 1} {
         MainSlicesSetVolumeAll Label $i
     } else {
-        MainSlicesSetVolumeAll Back $i
+        if {[Volume($i,node) GetNumScalars] == 1} {
+            MainSlicesSetVolumeAll Back $i
+        }
     }
 
     return $i

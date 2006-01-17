@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKImageWriter.cxx,v $
-  Date:      $Date: 2006/01/15 18:33:49 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/01/17 20:31:11 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 #include "vtkITKImageWriter.h"
@@ -356,6 +356,10 @@ void vtkITKImageWriter::Write()
         return; 
       }
   } // vector
+  else {
+    vtkErrorMacro(<< "Can only export 1 or 3 component images");
+    return; 
+  }
 }
 
 
