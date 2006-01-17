@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: isvolume.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:08 $
-#   Version:   $Revision: 1.40 $
+#   Date:      $Date: 2006/01/17 20:36:06 $
+#   Version:   $Revision: 1.41 $
 # 
 #===============================================================================
 # FILE:        isvolume.tcl
@@ -834,9 +834,16 @@ itcl::body isvolume::transform_update {} {
     # concatenate with displacement field transform
     if { [info exists ::Volume] } {
         if {$_warpVolId != "" && $_warpVolId != $::Volume(idNone)} {
+            catch "centerImage Delete"
+            vtkImageChangeInformation centerImage
+            centerImage SetInput [::Volume($_warpVolId,vol) GetOutput]
+            centerImage CenterImageOn
+            centerImage Update
+
             catch "dispXform Delete"
             vtkGridTransform dispXform 
-            dispXform SetDisplacementGrid [::Volume($_warpVolId,vol) GetOutput]
+            dispXform SetDisplacementGrid [centerImage GetOutput]
+            
             #$_xform PostMultiply 
             #dispXform Inverse
             $_xform Concatenate dispXform
