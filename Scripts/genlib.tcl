@@ -431,6 +431,16 @@ if { ![file exists $::BLT_TEST_FILE] } {
         runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
         catch "eval runcmd $::MAKE"
         catch "eval runcmd $::MAKE install"
+        foreach f [glob $SLICER_LIB/tcl/blt/library/*.tcl] { 
+            file copy -force $f $SLICER_LIB//tcl-build/lib/blt2.4
+        }
+        foreach g [glob $SLICER_LIB/tcl/blt/library/*.pro] { 
+            file copy -force $g $SLICER_LIB//tcl-build/lib/blt2.4
+        }
+        foreach h [glob $SLICER_LIB/tcl/blt/library/*.xbm] { 
+            file copy -force $h $SLICER_LIB//tcl-build/lib/blt2.4
+        }
+        file rename $SLICER_LIB/tcl-build/lib/libBLTlite24.so $SLICER_LIB//tcl-build/lib/libBLTlite24.dylib
     } else {
         cd $SLICER_LIB/tcl/blt
         runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
