@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDisplayTracts.h,v $
-  Date:      $Date: 2005/12/22 15:13:18 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/01/18 19:11:31 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 // .NAME vtkDisplayTracts - 
@@ -152,7 +152,15 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
   // functions not accessible to the user
   void CreateGraphicsObjects();
   void ApplyUserSettingsToGraphicsObject(int index);
-  vtkPolyDataSource *ClipStreamline(vtkHyperStreamline *streamline);
+//BTX
+#if (VTK_MAJOR_VERSION >= 5)
+  vtkPolyDataAlgorithm *
+#else
+  vtkPolyDataSource *
+#endif
+  ClipStreamline(vtkHyperStreamline *streamline);
+//ETX
+
 
   vtkTransform *WorldToTensorScaledIJK;
 

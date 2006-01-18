@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDisplayTracts.cxx,v $
-  Date:      $Date: 2006/01/13 16:44:43 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/01/18 19:11:31 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 #include "vtkDisplayTracts.h"
@@ -116,7 +116,11 @@ void vtkDisplayTracts::SetClipping(int value)
 {
   vtkHyperStreamline *currStreamline;
   vtkTubeFilter *currTubeFilter;
+#if (VTK_MAJOR_VERSION >= 5)
+   vtkPolyDataAlgorithm *clippedStreamline;
+#else
   vtkPolyDataSource *clippedStreamline;
+#endif
   
   // test if we are changing the value before looping through all streamlines
   if (this->Clipping != value)
@@ -168,7 +172,14 @@ void vtkDisplayTracts::SetClipping(int value)
 
 // Handle clipping/not clipping a single streamline
 //----------------------------------------------------------------------------
-vtkPolyDataSource * vtkDisplayTracts::ClipStreamline(vtkHyperStreamline *currStreamline) 
+//BTX
+#if (VTK_MAJOR_VERSION >= 5)
+vtkPolyDataAlgorithm *
+#else
+vtkPolyDataSource *
+#endif
+vtkDisplayTracts::ClipStreamline(vtkHyperStreamline *currStreamline)
+//ETX
 {
 
   if (this->Clipping) 
@@ -258,9 +269,11 @@ void vtkDisplayTracts::UpdateAllTubeFiltersWithCurrentSettings()
 void vtkDisplayTracts::CreateGraphicsObjects()
 {
   int numStreamlines, numActorsCreated;
-  // for next vtk version:
-  //vtkPolyDataAlgorithm *currStreamline;
+#if (VTK_MAJOR_VERSION >= 5)
+  vtkPolyDataAlgorithm *currStreamline;
+#else
   vtkPolyDataSource *currStreamline;
+#endif
   vtkPolyDataMapper *currMapper;
   vtkActor *currActor;
   vtkTransform *currTransform;

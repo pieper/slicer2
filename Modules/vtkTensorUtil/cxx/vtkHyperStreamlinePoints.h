@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlinePoints.h,v $
-  Date:      $Date: 2006/01/06 17:58:05 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/01/18 19:11:04 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 #ifndef __vtkHyperStreamlinePoints_h
@@ -17,6 +17,7 @@
 #include "vtkTensorUtilConfigure.h"
 #include "vtkHyperStreamlineDTMRI.h"
 #include "vtkPoints.h"
+#include "vtkHyperPointandArray.h"
 
 //class VTK_TENSORUTIL_EXPORT vtkHyperStreamlinePoints : public vtkHyperStreamline
 class VTK_TENSORUTIL_EXPORT vtkHyperStreamlinePoints : public vtkHyperStreamlineDTMRI
