@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.cxx,v $
-  Date:      $Date: 2006/01/13 15:51:22 $
-  Version:   $Revision: 1.18 $
+  Date:      $Date: 2006/01/20 03:05:02 $
+  Version:   $Revision: 1.19 $
 
 =========================================================================auto=*/
 #include "vtkHyperStreamlineDTMRI.h"
@@ -26,7 +26,7 @@
 //#include "vtkHyperPointandArray.cxx"
 #endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.18 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.19 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 // Construct object with initial starting position (0,0,0); integration step 
@@ -54,11 +54,6 @@ vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()
   this->LogScaling = 0;
   this->IntegrationEigenvector = VTK_INTEGRATE_MAJOR_EIGENVECTOR;
 
-  this->FractionalAnisotropy0 = vtkFloatArray::New();
-  this->FractionalAnisotropy1 = vtkFloatArray::New();
-  this->FractionalAnisotropy[0] = this->FractionalAnisotropy0;
-  this->FractionalAnisotropy[1] = this->FractionalAnisotropy1;
-
   this->SetStoppingModeToLinearMeasure();
   this->StoppingThreshold=0.07;
 
@@ -66,8 +61,6 @@ vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()
 
 vtkHyperStreamlineDTMRI::~vtkHyperStreamlineDTMRI()
 {
-  this->FractionalAnisotropy0->Delete();
-  this->FractionalAnisotropy1->Delete();
 }
 
 // copied from superclass
@@ -267,11 +260,6 @@ void vtkHyperStreamlineDTMRI::Execute()
 
     // compute invariants                                                               
     meanEV=(sPtr->W[0]+sPtr->W[1]+sPtr->W[2])/3;
-    this->FractionalAnisotropy[0]->InsertNextValue(sqrt3halves*sqrt(((sPtr->W[0]-meanEV)*(sPtr->W[0]-meanEV)+(sPtr->W[1]-meanEV)*(sPtr->W[1]-meanEV)+(sPtr->W[2]-meanEV)*(sPtr->W[2]-meanEV))/(sPtr->W[0]*sPtr->W[0]+sPtr->W[1]*sPtr->W[1]+sPtr->W[2]*sPtr->W[2])));
-    if ( this->IntegrationDirection == VTK_INTEGRATE_BOTH_DIRECTIONS )
-      {
-        this->FractionalAnisotropy[1]->InsertNextValue(sqrt3halves*sqrt(((sPtr->W[0]-meanEV)*(sPtr->W[0]-meanEV)+(sPtr->W[1]-meanEV)*(sPtr->W[1]-meanEV)+(sPtr->W[2]-meanEV)*(sPtr->W[2]-meanEV))/(sPtr->W[0]*sPtr->W[0]+sPtr->W[1]*sPtr->W[1]+sPtr->W[2]*sPtr->W[2])));
-      }
 
     if ( inScalars ) 
       {
@@ -482,10 +470,6 @@ void vtkHyperStreamlineDTMRI::Execute()
         FixVectors(sPtr->V, sNext->V, iv, ix, iy);
 
         // compute invariants at final position                                         
-        //meanEV=(sNext->W[0]+sNext->W[1]+sNext->W[2])/3;
-        //fa=sqrt3halves*sqrt(((sNext->W[0]-meanEV)*(sNext->W[0]-meanEV)+(sNext->W[1]-meanEV)*(sNext->W[1]-meanEV)+(sNext->W[2]-meanEV)*(sNext->W[2]-meanEV))/(sNext->W[0]*sNext->W[0]+sNext->W[1]*sNext->W[1]+sNext->W[2]*sNext->W[2]));
-        //this->FractionalAnisotropy[ptId]->InsertNextValue(fa);
-    
         switch (this->GetStoppingMode()) {
       case VTK_TENS_FRACTIONAL_ANISOTROPY:
           stop = vtkTensorMathematics::FractionalAnisotropy(sNext->W);

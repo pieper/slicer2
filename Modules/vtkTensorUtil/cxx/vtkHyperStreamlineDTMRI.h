@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.h,v $
-  Date:      $Date: 2006/01/06 17:58:05 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/01/20 03:05:02 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 // .NAME vtkHyperStreamlineDTMRI - generate hyperstreamline in arbitrary dataset
@@ -82,14 +82,10 @@ public:
     {this->SetStoppingMode(VTK_TENS_SPHERICAL_MEASURE);};
 
 
-  // If FA becomes smaller than this number, tracking stops.       
+  // If StoppingMode criterion becomes smaller than this number, 
+  // tracking stops.       
   vtkGetMacro(StoppingThreshold,vtkFloatingPointType);
   vtkSetMacro(StoppingThreshold,vtkFloatingPointType);
-
-  // Description:                                                             
-  // FA at points along the line (wherever the tensor was interpolated)    
-  vtkGetObjectMacro(FractionalAnisotropy0,vtkFloatArray);
-  vtkGetObjectMacro(FractionalAnisotropy1,vtkFloatArray);
 
 protected:
   vtkHyperStreamlineDTMRI();
@@ -102,10 +98,6 @@ protected:
   vtkFloatingPointType MaxCurvature;
   int StoppingMode;
   vtkFloatingPointType StoppingThreshold;
-
-  vtkFloatArray *FractionalAnisotropy[2];
-  vtkFloatArray *FractionalAnisotropy0;
-  vtkFloatArray *FractionalAnisotropy1;
 
 private:
   vtkHyperStreamlineDTMRI(const vtkHyperStreamlineDTMRI&);  // Not implemented.
