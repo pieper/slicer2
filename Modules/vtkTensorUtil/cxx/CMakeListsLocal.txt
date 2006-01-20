@@ -21,7 +21,6 @@ ENDIF(USE_ITK_FILE)
 
 # note: - SET replaced SOURCE_FILES for cmake 1.6
 SET(LOCAL_MODULE_SRCS
-vtkHyperStreamlinePoints.cxx
 vtkPreciseHyperStreamlinePoints.cxx
 vtkPreciseHyperStreamline.cxx
 vtkTensorImplicitFunctionToFunctionSet.cxx
