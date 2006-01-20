@@ -30,7 +30,7 @@ set __comment__ {
     for windows visual studio 7, the following files are needed for a debug build:
         msvci70d.dll msvcp70d.dll msvcr70d.dll
     for linux redhat7.3
-        ld-2.2.5.so libpthread-0.9.so libstdc++-3-libc6.2-2-2.10.0.so libstdc++.so.5  
+        ld-2.2.5.so libpthread-0.9.so libstdc++-3-libc6.2-2-2.10.0.so libstdc++.so.5  libgcc_s.so.1
     for solaris
         libgcc_s.so.1 libstdc++.so.3  
     for darwin
@@ -315,9 +315,9 @@ puts "uploadFlag = $uploadFlag"
       }
       "Linux" {
 #         set sharedLibs [list ld-2.2.5.so libpthread-0.9.so libstdc++-3-libc6.2-2-2.10.0.so]
-          set sharedLibs [GetLinkedLibs [list libstdc]]
+          set sharedLibs [GetLinkedLibs [list libstdc libgcc_s]]
           if {$sharedLibs == ""} {
-              set sharedLibs [list libstdc++-libc6.2-2.so.3 libstdc++.so.5]
+              set sharedLibs [list libstdc++-libc6.2-2.so.3 libstdc++.so.5 libgcc_s.so.1]
               set sharedSearchPath [split $::env(LD_LIBRARY_PATH) ":"]
           } else {
               set sharedSearchPath ""
