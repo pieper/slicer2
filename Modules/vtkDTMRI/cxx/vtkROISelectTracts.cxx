@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkROISelectTracts.cxx,v $
-  Date:      $Date: 2005/12/27 22:29:23 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2006/01/20 03:42:47 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
 
@@ -19,7 +19,7 @@
 #include "vtkActor.h"
 #include "vtkProperty.h"
 
-#include "vtkHyperStreamlinePoints.h"
+#include "vtkHyperStreamlineDTMRI.h"
 
 
 //------------------------------------------------------------------------------
@@ -86,7 +86,7 @@ void vtkROISelectTracts::ConvertStreamlinesToPolyLines()
   vtkPoints *newPoints = vtkPoints::New();
   vtkCellArray *newLines = vtkCellArray::New(); 
   vtkPoints *strPoints;
-  vtkHyperStreamlinePoints *currStreamline = NULL;
+  vtkHyperStreamlineDTMRI *currStreamline = NULL;
   int npts = 0;
   
   if (this->Streamlines == 0) 
@@ -100,11 +100,13 @@ void vtkROISelectTracts::ConvertStreamlinesToPolyLines()
   this->Streamlines->InitTraversal();
   for(int i=0 ; i<numStreamlines; i++)
     {
-      currStreamline= dynamic_cast<vtkHyperStreamlinePoints *> (this->Streamlines->GetNextItemAsObject());
+      currStreamline= dynamic_cast<vtkHyperStreamlineDTMRI *> (this->Streamlines->GetNextItemAsObject());
     
-      strPoints = currStreamline->GetHyperStreamline0();
+      //strPoints = currStreamline->GetHyperStreamline0();
+      strPoints = currStreamline->GetOutput()->GetCell(0)->GetPoints();
       npts += strPoints->GetNumberOfPoints();
-      strPoints = currStreamline->GetHyperStreamline1();
+      //strPoints = currStreamline->GetHyperStreamline1();
+      strPoints = currStreamline->GetOutput()->GetCell(1)->GetPoints();
       npts += strPoints->GetNumberOfPoints();
     }
   
@@ -115,9 +117,10 @@ void vtkROISelectTracts::ConvertStreamlinesToPolyLines()
   this->Streamlines->InitTraversal();
   for(int i=0 ; i<numStreamlines; i++)
     {
-      currStreamline= dynamic_cast<vtkHyperStreamlinePoints *> (this->Streamlines->GetNextItemAsObject());
+      currStreamline= dynamic_cast<vtkHyperStreamlineDTMRI *> (this->Streamlines->GetNextItemAsObject());
     
-      strPoints = currStreamline->GetHyperStreamline0();
+      //strPoints = currStreamline->GetHyperStreamline0();
+      strPoints = currStreamline->GetOutput()->GetCell(0)->GetPoints();
       newLines->InsertNextCell(strPoints->GetNumberOfPoints());
       for(int j=0; j<strPoints->GetNumberOfPoints();j++)
         {
@@ -126,7 +129,8 @@ void vtkROISelectTracts::ConvertStreamlinesToPolyLines()
           strIdx++;
         }
       
-      strPoints = currStreamline->GetHyperStreamline1();
+      //strPoints = currStreamline->GetHyperStreamline1();
+      strPoints = currStreamline->GetOutput()->GetCell(1)->GetPoints();
       newLines->InsertNextCell(strPoints->GetNumberOfPoints());
       for(int j=0; j<strPoints->GetNumberOfPoints();j++)
         {
