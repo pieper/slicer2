@@ -230,8 +230,15 @@ puts "uploadFlag = $uploadFlag"
     file copy -force $::env(TCL_BIN_DIR) $archivedir/Lib/$::env(BUILD)/tcl-build/bin
 
     puts " -- copying teem files"
-    file mkdir $archivedir/Lib/$::env(BUILD)/teem-build
-    file copy -force $::env(TEEM_BIN_DIR) $archivedir/Lib/$::env(BUILD)/teem-build
+    if { $::env(BUILD) == "win32" } {
+    # special case due to the teem-build dir structure on windows
+    # - env(TEEM_BIN_DIR) ends in bin/$::env(VTK_BUILD_TYPE) on win32 and just bin on unix
+        file mkdir $archivedir/Lib/$::env(BUILD)/teem-build/bin
+        file copy -force $::env(TEEM_BIN_DIR) $archivedir/Lib/$::env(BUILD)/teem-build/bin
+    } else {
+        file mkdir $archivedir/Lib/$::env(BUILD)/teem-build
+        file copy -force $::env(TEEM_BIN_DIR) $archivedir/Lib/$::env(BUILD)/teem-build
+    }
 
     puts " -- copying sandbox files"
     file mkdir $archivedir/Lib/$::env(BUILD)/NAMICSandBox-build
