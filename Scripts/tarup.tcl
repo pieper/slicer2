@@ -230,7 +230,7 @@ puts "uploadFlag = $uploadFlag"
     file copy -force $::env(TCL_BIN_DIR) $archivedir/Lib/$::env(BUILD)/tcl-build/bin
 
     puts " -- copying teem files"
-    file mkdir $archivedir/Lib/$::env(BUILD)/teem-build/bin
+    file mkdir $archivedir/Lib/$::env(BUILD)/teem-build
     file copy -force $::env(TEEM_BIN_DIR) $archivedir/Lib/$::env(BUILD)/teem-build
 
     puts " -- copying sandbox files"
