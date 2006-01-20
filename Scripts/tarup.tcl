@@ -236,6 +236,12 @@ puts "uploadFlag = $uploadFlag"
     puts " -- copying sandbox files"
     file mkdir $archivedir/Lib/$::env(BUILD)/NAMICSandBox-build
     file copy -force $::env(SANDBOX_BIN_DIR) $archivedir/Lib/$::env(BUILD)/NAMICSandBox-build
+    if { $::tcl_platform(os) == "Linux" && 
+            $::tcl_platform(machine) == "x86_64" } {
+        # special case to handle shared build on 64 bit
+        file copy -force $::env(SANDBOX_BIN_DIR)/../Distributions/bin/libDistributions.so $archivedir/Lib/$::env(BUILD)/NAMICSandBox-build/bin
+    }
+
 
     #
     # grab the vtk libraries and binaries
