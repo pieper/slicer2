@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMultipleStreamlineController.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:26 $
-  Version:   $Revision: 1.66 $
+  Date:      $Date: 2006/01/20 03:50:58 $
+  Version:   $Revision: 1.67 $
 
 =========================================================================auto=*/
 #include "vtkMultipleStreamlineController.h"
@@ -18,8 +18,6 @@
 #include "vtkPointData.h"
 
 #include "vtkHyperStreamline.h"
-#include "vtkHyperStreamlinePoints.h"
-#include "vtkPreciseHyperStreamlinePoints.h"
 
 #include <sstream>
 

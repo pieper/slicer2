@@ -7,14 +7,14 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTractShapeFeatures.h,v $
-  Date:      $Date: 2006/01/06 17:57:27 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/01/20 03:50:59 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 // .NAME vtkTractShapeFeatures - Compute tract similarity matrix for clustering
 
 // .SECTION Description
-// Takes as input a collection of N tracts (vtkHyperStreamlinePoints objects). 
+// Takes as input a collection of N tracts (vtkHyperStreamlineDTMRI objects). 
 // Compares them, and outputs an NxN weight matrix for clustering.
 // The same matrix is output also as an image for visualization.
 
@@ -33,7 +33,7 @@
 // Goes along with use of new vtkCxxSetObjectMacro
 class vtkCollection;
 class vtkImageData;
-class vtkHyperStreamlinePoints;
+class vtkHyperStreamlineDTMRI;
 
 class VTK_DTMRI_EXPORT vtkTractShapeFeatures : public vtkObject
 {
@@ -145,7 +145,7 @@ class VTK_DTMRI_EXPORT vtkTractShapeFeatures : public vtkObject
   OutputType m_InterTractDistanceMatrix;
   OutputType m_InterTractSimilarityMatrix;
 
-  void GetPointsFromHyperStreamlinePointsSubclass(TractPointsListType::Pointer sample, vtkHyperStreamlinePoints *currStreamline);
+  void GetPointsFromHyperStreamlinePointsSubclass(TractPointsListType::Pointer sample, vtkHyperStreamlineDTMRI *currStreamline);
   //ETX
 
  private:

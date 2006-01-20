@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSaveTracts.cxx,v $
-  Date:      $Date: 2005/12/22 15:13:27 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/01/20 03:50:58 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 #include "vtkSaveTracts.h"
@@ -27,11 +27,11 @@
 #include "vtkActor.h"
 #include "vtkProperty.h"
 
+#include "vtkFloatArray.h"
+
 #include <sstream>
 
 #include "vtkHyperStreamline.h"
-#include "vtkHyperStreamlinePoints.h"
-#include "vtkPreciseHyperStreamlinePoints.h"
 
 //#include "vtkImageWriter.h"
 

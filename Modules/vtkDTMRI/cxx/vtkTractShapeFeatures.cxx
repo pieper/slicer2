@@ -7,12 +7,12 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTractShapeFeatures.cxx,v $
-  Date:      $Date: 2006/01/13 16:44:43 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/01/20 03:50:59 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 // for vtk objects we use here
-#include "vtkHyperStreamlinePoints.h"
+#include "vtkHyperStreamlineDTMRI.h"
 #include "vtkCollection.h"
 #include "vtkObjectFactory.h"
 #include "vtkPolyData.h"
@@ -36,7 +36,7 @@
 
 
 
-vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.13 $");
+vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.14 $");
 vtkStandardNewMacro(vtkTractShapeFeatures);
 
 vtkCxxSetObjectMacro(vtkTractShapeFeatures, InputStreamlines, vtkCollection);
@@ -111,7 +111,7 @@ vtkImageData * vtkTractShapeFeatures::ConvertVNLMatrixToVTKImage(OutputType *mat
 
 }
 
-void vtkTractShapeFeatures::GetPointsFromHyperStreamlinePointsSubclass(TractPointsListType::Pointer sample, vtkHyperStreamlinePoints *currStreamline)
+void vtkTractShapeFeatures::GetPointsFromHyperStreamlinePointsSubclass(TractPointsListType::Pointer sample, vtkHyperStreamlineDTMRI *currStreamline)
 {
   XYZVectorType mv;
   vtkPoints *hs0;
@@ -188,7 +188,7 @@ void vtkTractShapeFeatures::ComputeFeatures()
 
 void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
 {
-  vtkHyperStreamlinePoints *currStreamline1, *currStreamline2;
+  vtkHyperStreamlineDTMRI *currStreamline1, *currStreamline2;
   XYZVectorType mv1, mv2;
 
   int numberOfStreamlines = this->InputStreamlines->GetNumberOfItems();
@@ -207,7 +207,7 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
   
   this->InputStreamlines->InitTraversal();
   // TO DO: make sure this is a vtkHyperStreamlinePoints object
-  currStreamline1= (vtkHyperStreamlinePoints *)this->InputStreamlines->GetNextItemAsObject();
+  currStreamline1= (vtkHyperStreamlineDTMRI *)this->InputStreamlines->GetNextItemAsObject();
   
   // test we have streamlines
   if (currStreamline1 == NULL)
@@ -229,7 +229,7 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
   for (int i = 0; i < numberOfStreamlines; i++)
     {
       vtkDebugMacro( "Current Streamline: " << i);
-      currStreamline1= (vtkHyperStreamlinePoints *)
+      currStreamline1= (vtkHyperStreamlineDTMRI *)
         this->InputStreamlines->GetItemAsObject(i);
 
       // Get the tract path's points on an itk list sample object
@@ -237,7 +237,7 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
                                                        currStreamline1);
       for (int j = 0; j < numberOfStreamlines; j++)
         {
-          currStreamline2= (vtkHyperStreamlinePoints *)
+          currStreamline2= (vtkHyperStreamlineDTMRI *)
             this->InputStreamlines->GetItemAsObject(j);
 
           // Get the tract path's points on an itk list sample object
@@ -329,7 +329,7 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
 
 void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
 {
-  vtkHyperStreamlinePoints *currStreamline;
+  vtkHyperStreamlineDTMRI *currStreamline;
 
   // to calculate covariance of the points
   typedef itk::Statistics::CovarianceCalculator< TractPointsListType > 
@@ -350,7 +350,7 @@ void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
   // get ready to traverse streamline collection.
   this->InputStreamlines->InitTraversal();
   // TO DO: make sure this is a vtkHyperStreamlinePoints object
-  currStreamline= (vtkHyperStreamlinePoints *)this->InputStreamlines->GetNextItemAsObject();
+  currStreamline= (vtkHyperStreamlineDTMRI *)this->InputStreamlines->GetNextItemAsObject();
   
   // test we have streamlines
   if (currStreamline == NULL)
@@ -482,7 +482,7 @@ void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
       features->PushBack( fv );
 
       // get next object in collection
-      currStreamline= (vtkHyperStreamlinePoints *)
+      currStreamline= (vtkHyperStreamlineDTMRI *)
         this->InputStreamlines->GetNextItemAsObject();
     }
 
@@ -546,7 +546,7 @@ void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
 
 void vtkTractShapeFeatures::ComputeFeaturesEndPoints()
 {
-  vtkHyperStreamlinePoints *currStreamline;
+  vtkHyperStreamlineDTMRI *currStreamline;
 
   // the features are endpoints (3 values)
   typedef itk::Vector< double, 3 > FeatureVectorType;
@@ -558,7 +558,7 @@ void vtkTractShapeFeatures::ComputeFeaturesEndPoints()
   // Ready the input for access
   this->InputStreamlines->InitTraversal();
   // TO DO: make sure this is a vtkHyperStreamlinePoints object
-  currStreamline= (vtkHyperStreamlinePoints *)this->InputStreamlines->GetNextItemAsObject();
+  currStreamline= (vtkHyperStreamlineDTMRI *)this->InputStreamlines->GetNextItemAsObject();
   
   // test we have streamlines
   if (currStreamline == NULL)
@@ -592,7 +592,7 @@ void vtkTractShapeFeatures::ComputeFeaturesEndPoints()
       endpoint->PushBack( fv );
 
       // get next object in collection
-      currStreamline= (vtkHyperStreamlinePoints *)
+      currStreamline= (vtkHyperStreamlineDTMRI *)
         this->InputStreamlines->GetNextItemAsObject();
     }
 
