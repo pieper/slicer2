@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKImageWriter.cxx,v $
-  Date:      $Date: 2006/01/17 20:31:11 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/01/23 16:22:49 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 #include "vtkITKImageWriter.h"
@@ -297,40 +297,6 @@ void vtkITKImageWriter::Write()
           ITKWriteVTKImage(this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
         }
         break;
-      case VTK_LONG:
-        {
-          typedef itk::Vector<long, 3>    VectorPixelType;
-          VectorPixelType pixelType;
-          ITKWriteVTKImage(this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
-        }
-        break;
-      case VTK_UNSIGNED_LONG:
-        {
-          typedef itk::Vector<unsigned long, 3>    VectorPixelType;
-          VectorPixelType pixelType;
-          ITKWriteVTKImage(this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
-        }
-        break;
-      case VTK_INT:
-        {
-          typedef itk::Vector<int, 3>    VectorPixelType;
-          VectorPixelType pixelType;
-          ITKWriteVTKImage(this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
-        }
-        break;
-      case VTK_UNSIGNED_INT:
-        {
-          typedef itk::Vector<unsigned int, 3>    VectorPixelType;
-          VectorPixelType pixelType;
-          ITKWriteVTKImage(this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
-        }
-        break;
-      case VTK_SHORT:
-        {
-          typedef itk::Vector<short, 3>    VectorPixelType;
-          VectorPixelType pixelType;
-          ITKWriteVTKImage(this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
-        }
       case VTK_UNSIGNED_SHORT:
         {
           typedef itk::Vector<unsigned short, 3>    VectorPixelType;
@@ -338,12 +304,6 @@ void vtkITKImageWriter::Write()
           ITKWriteVTKImage(this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
         }
         break;
-      case VTK_CHAR:
-        {
-          typedef itk::Vector<char, 3>    VectorPixelType;
-          VectorPixelType pixelType;
-          ITKWriteVTKImage(this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
-        }
       case VTK_UNSIGNED_CHAR:
         {
           typedef itk::Vector<unsigned char, 3>    VectorPixelType;
