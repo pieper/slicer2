@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageRealtimeScan.h,v $
-  Date:      $Date: 2005/12/20 22:44:18 $
-  Version:   $Revision: 1.15.12.1 $
+  Date:      $Date: 2006/01/24 19:53:50 $
+  Version:   $Revision: 1.15.12.2 $
 
 =========================================================================auto=*/
 // .NAME vtkImageRealtimeScan - Get a realtime image from the scanner.
@@ -87,7 +87,7 @@ public:
     void SetRefreshImage(int refresh);
     int GetRefreshImage() {return RefreshImage;}
 
-    vtkGetMacro(LocatorStatus, int);
+    vtkGetMacro(LocatorStatus, short);
     vtkGetMacro(NewLocator, short);
     vtkGetMacro(NewImage, short);
     vtkGetMacro(PatientPosition, short);
@@ -101,6 +101,9 @@ public:
     vtkGetMacro(Test, int);
     vtkSetMacro(Test, int);
 
+    vtkGetMacro(OperatingSystem, int);
+    vtkSetMacro(OperatingSystem, int);
+
     vtkSetStringMacro(TestPrefix);
 
     int SetPosition(short tblPos, short patEntry, short patPos);
@@ -108,8 +111,10 @@ public:
 protected:
     vtkImageRealtimeScan();
     ~vtkImageRealtimeScan();
+
     long SendServer(int cmd);
     void Execute(vtkImageData *data);
+    void SwapByte(unsigned char *b, int n);
 
     /* Modified is automatically set for NewImage, but not NewLocator. */
 
@@ -129,6 +134,14 @@ protected:
     char *TestPrefix;
     vtkMatrix4x4 *LocatorMatrix;
     vtkMatrix4x4 *ImageMatrix;
+
+    // Socket connection is platform dependent:
+    // -1 - unknown
+    // 1  - solaris 
+    // 2  - linux
+    // 3  - darwin
+    // 4  - windows
+    int OperatingSystem;
 };
 
 
