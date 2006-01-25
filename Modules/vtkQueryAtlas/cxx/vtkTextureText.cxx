@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTextureText.cxx,v $
-  Date:      $Date: 2006/01/06 17:58:01 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/01/25 22:58:50 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 /*===========================================================
@@ -99,7 +99,7 @@ characterPosition::characterPosition(unsigned char c)
 
 
 
-vtkCxxRevisionMacro(vtkTextureText, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkTextureText, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkTextureText);
 
 
@@ -241,13 +241,13 @@ void vtkTextureText::SetText(char *string)
     int i = 0;
     for(str = this->Text; str[i] != '\0'; i++) { 
         c = (int)str[i];
-        if ((c > 32) && (c <= 127)) {
+        if (c > 32 && c <= 127) {
             // normal character
             characterPosition *cl = new characterPosition(c);
             mCharacterPositions.push_back(cl);
             mCharCount++;
         }
-        else if ((c > 127) && (c <= 255)) {  
+        else if (c > 127 /*&& c <= 255*/) {
             // printf("Special char %d\n", c);
             characterPosition *cl = new characterPosition(c);
             mCharacterPositions.push_back(cl);
