@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageRealtimeScan.cxx,v $
-  Date:      $Date: 2006/01/24 19:53:58 $
-  Version:   $Revision: 1.15.8.2 $
+  Date:      $Date: 2006/01/26 16:26:27 $
+  Version:   $Revision: 1.15.8.3 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -33,6 +33,7 @@
 #include "vtkImageRealtimeScan.h"
 #include "vtkObjectFactory.h"
 
+// convert big-endian to little-endian
 #define DoByteSwap(x) SwapByte((unsigned char *) &x,sizeof(x))
 
 static int Read16BitImage (char *filePrefix, char *filePattern, 
@@ -55,6 +56,11 @@ vtkImageRealtimeScan::vtkImageRealtimeScan()
     MinValue = MaxValue = 0;
     Recon = 0;
     ImageNum = 0;
+
+    // test byte order
+    short int word = 0x0001;
+    char *byte = (char *) &word;
+    ByteOrder = (byte[0] ? 1 : 0);
 }
 
 //----------------------------------------------------------------------------
@@ -414,7 +420,7 @@ int vtkImageRealtimeScan::PollRealtime()
     
 #ifndef _WIN32
     long len, n, nbytes;
-    vtkFloatingPointType matrix[16];
+    float matrix[16];
     int i, j;
     
     // Request the update info
@@ -442,12 +448,13 @@ int vtkImageRealtimeScan::PollRealtime()
         bcopy(&buf[OFFSET_LOC_STATUS], &LocatorStatus, LEN_LOC_STATUS);
         LocatorStatus = ntohs(LocatorStatus);
 
-        cout << "locatorStatus = " << LocatorStatus << endl;
-
         bcopy(&buf[OFFSET_LOC_MATRIX], matrix, LEN_LOC_MATRIX);
-        for (int ii = 0; ii < 16; ii++)
+        if (ByteOrder)  // little endian 
         {
-            DoByteSwap(matrix[ii]);
+            for (int ii = 0; ii < 16; ii++)
+            {
+                DoByteSwap(matrix[ii]);
+            }
         }
 
         for (i=0; i<4; i++) {
@@ -531,15 +538,17 @@ void vtkImageRealtimeScan::ExecuteInformation()
             dim[ii] = ntohs(dim[ii]);
         }
         bcopy(&buf[OFFSET_IMG_SPACING], spacing, LEN_IMG_SPACING);
-        for (int ii = 0; ii < 3; ii++)
-        {
-            DoByteSwap(spacing[ii]);
-        }
-
         bcopy(&buf[OFFSET_IMG_MATRIX ], matrix,  LEN_IMG_MATRIX);    
-        for (int ii = 0; ii < 16; ii++)
+        if (ByteOrder)  // little endian 
         {
-            DoByteSwap(matrix[ii]);
+            for (int ii = 0; ii < 3; ii++)
+            {
+                DoByteSwap(spacing[ii]);
+            }
+            for (int ii = 0; ii < 16; ii++)
+            {
+                DoByteSwap(matrix[ii]);
+            }
         }
     
         // Decode patPos into a position and entry value
@@ -704,7 +713,7 @@ static int Read16BitImage (char *filePrefix, char *filePattern,
     return 0;
 }
 
-// from big-endian to little-endian
+// convert big-endian to little-endian
 void vtkImageRealtimeScan::SwapByte(unsigned char *b, int n)
 {
     register int i = 0;
