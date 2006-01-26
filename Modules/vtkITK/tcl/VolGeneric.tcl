@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: VolGeneric.tcl,v $
-#   Date:      $Date: 2005/12/20 22:55:55 $
-#   Version:   $Revision: 1.19.2.1 $
+#   Date:      $Date: 2006/01/26 14:20:53 $
+#   Version:   $Revision: 1.19.2.2 $
 # 
 #===============================================================================
 # FILE:        VolGeneric.tcl
@@ -513,6 +513,10 @@ proc VolGenericReaderProc {v} {
     flip Update
 
     Volume($v,vol) SetImageData [flip GetOutput]
+
+    ## copy spacing value from node to image data (to handle case where 
+    ## user manually set the spacings). 
+    eval [Volume($v,vol) GetOutput] SetSpacing [Volume($v,node) GetSpacing]
 
     flip Delete
     genreader Delete
