@@ -67,6 +67,8 @@ vtkImageEMLocalSegmenter::vtkImageEMLocalSegmenter()
   this->activeClassType  = SUPERCLASS;
  
   this->RegistrationInterpolationType = 0;
+
+  this->DebugImage = NULL;
 }
 
 //------------------------------------------------------------------------------
