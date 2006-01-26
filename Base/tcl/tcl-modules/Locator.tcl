@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:35 $
-#   Version:   $Revision: 1.38.12.1 $
+#   Date:      $Date: 2006/01/26 18:21:32 $
+#   Version:   $Revision: 1.38.12.2 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -89,7 +89,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.1 $} {$Date: 2005/12/20 22:54:35 $}]
+        {$Revision: 1.38.12.2 $} {$Date: 2006/01/26 18:21:32 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -153,7 +153,7 @@ proc LocatorInit {} {
     # Flashpoint
     set Locator(Flashpoint,msPoll) 100
     set Locator(Flashpoint,port)   10000
-    set Locator(Flashpoint,host)   mrtws
+    set Locator(Flashpoint,host)   mrtws 
     # Images
     set Locator(Images,msPoll)   1000
     set Locator(Images,prefix)   ""
@@ -211,13 +211,22 @@ proc LocatorUpdateMRML {} {
 # .END
 #-------------------------------------------------------------------------------
 proc LocatorBuildVTK {} {
-    global Gui Locator View Slice Target Volume Lut
+    global Gui Locator View Slice Target Volume Lut 
 
     #------------------------#
     # Realtime image source
     #------------------------#
     # Flashpoint
+    set os -1
+    switch $::tcl_platform(os) {
+        "SunOS"  {set os 1}
+        "Linux"  {set os 2}
+        "Darwin" {set os 3}
+        default  {set os 4}
+    }
     vtkImageRealtimeScan Locator(Flashpoint,src)
+    Locator(Flashpoint,src) SetOperatingSystem $os
+
 #    Locator(Flashpoint,src) SetTest 1
 
     # Images
@@ -1785,6 +1794,7 @@ proc LocatorLoopFlashpoint {} {
     }
 
     set status [Locator(Flashpoint,src) PollRealtime]
+
     if {$status == -1} {
         puts "ERROR: PollRealtime"
         LocatorConnect 0
