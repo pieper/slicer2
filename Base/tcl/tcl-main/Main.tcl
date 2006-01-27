@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Main.tcl,v $
-#   Date:      $Date: 2006/01/27 20:31:38 $
-#   Version:   $Revision: 1.128.2.5 $
+#   Date:      $Date: 2006/01/27 20:44:47 $
+#   Version:   $Revision: 1.128.2.6 $
 # 
 #===============================================================================
 # FILE:        Main.tcl
@@ -441,7 +441,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.128.2.5 $} {$Date: 2006/01/27 20:31:38 $}]
+        {$Revision: 1.128.2.6 $} {$Date: 2006/01/27 20:44:47 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -1851,9 +1851,9 @@ $volumes\n\nDo you wish to exit anyway?\n"
     if {$models != ""} {
          set msg "\
 The polygon data for the following surface models are unsaved:\n\
-$models\n\nDo you wish to save them before exiting?"
+$models\n\nDo you wish to exit anyway?"
         set retval [DevYesNo $msg]
-        if {$retval == "yes"} {
+        if {$retval == "no"} {
             Tab ModelMaker row1 Save
             return
         }
@@ -1875,45 +1875,15 @@ $models\n\nDo you wish to save them before exiting?"
     if {$tetmesh != ""} {
        set msg "\
 The Volume Meshes for the following tetrahedral mesh are unsaved:\n\
-$tetmesh\n\nDo you wish to save them before exiting?" 
+$tetmesh\n\nDo you wish to exit anyway?" 
         set retval [DevYesNo $msg]
-        if {$retval == "yes"} {
+        if {$retval == "no"} {
             Tab TetraMesh row1 Read
             return
         }
     }
 
     MainExitProgram
-    if {0} {
-    if {[llength "$tetmesh $models $volumes"] == 0} {
-        MainExitProgram
-    }
-
-        set msg "";
-    if {$volumes != ""} {
-        set msg "\
-$msg The image data for the following volumes are unsaved:\n\
-$volumes\n\n"
-    }
-    if {$models != ""} {
-        set msg "\
-$msg The polygon data for the following surface models are unsaved:\n\
-$models\n\n"
-    }
-    if {$tetmesh != ""} {
-        set msg "\
-$msg The Volume Meshes for the following tetrahedral mesh are unsaved:\n\
-$tetmesh\n\n"
-    }
-
-    set msg "${msg}Exit anyway?" 
-
-#    set x 0
-#    set y [expr [winfo rooty $Gui(bExit)] - 60]
-    set x 20
-    set y 50
-    YesNoPopup Exit $x $y $msg MainExitProgram 
-    }
 }
 
 #-------------------------------------------------------------------------------
