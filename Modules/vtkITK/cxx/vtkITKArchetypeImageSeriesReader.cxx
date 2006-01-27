@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
-  Date:      $Date: 2006/01/17 20:31:10 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2006/01/27 22:20:33 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2006/01/17 20:31:10 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2006/01/27 22:20:33 $
+  Version:   $Revision: 1.12 $
 
   Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -74,7 +74,7 @@
 #include "itkGDCMImageIO.h"
 #include <itksys/SystemTools.hxx>
 
-vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.11 $");
+vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.12 $");
 vtkStandardNewMacro(vtkITKArchetypeImageSeriesReader);
 
 //----------------------------------------------------------------------------
@@ -477,7 +477,15 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
       this->SetOutputScalarType(VTK_DOUBLE);
       }
     }
-  this->SetNumberOfComponents(imageIO->GetNumberOfComponents());
+
+  if (imageIO.GetPointer() == NULL) 
+    {
+    this->SetNumberOfComponents(1);
+    }
+  else
+    {
+    this->SetNumberOfComponents(imageIO->GetNumberOfComponents());
+    }
 
   output->SetScalarType(this->OutputScalarType);
   output->SetNumberOfScalarComponents(this->GetNumberOfComponents());
