@@ -169,7 +169,7 @@ switch $::tcl_platform(os) {
         set ::COMPILER_PATH "/local/os/bin"
         set ::COMPILER "g++"
         set ::CMAKE $::CMAKE_PATH/bin/cmake
-        set ::MAKE "gmake -j15"
+        set ::MAKE "gmake"
         set ::SERIAL_MAKE "gmake"
     }
     "Linux" {
