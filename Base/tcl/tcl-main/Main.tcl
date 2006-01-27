@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Main.tcl,v $
-#   Date:      $Date: 2005/12/30 19:10:50 $
-#   Version:   $Revision: 1.128.2.4 $
+#   Date:      $Date: 2006/01/27 20:31:38 $
+#   Version:   $Revision: 1.128.2.5 $
 # 
 #===============================================================================
 # FILE:        Main.tcl
@@ -441,7 +441,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.128.2.4 $} {$Date: 2005/12/30 19:10:50 $}]
+        {$Revision: 1.128.2.5 $} {$Date: 2006/01/27 20:31:38 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -1827,9 +1827,9 @@ proc MainExitQuery { } {
     if {$volumes != ""} {
          set msg "\
 The image data for the following volumes are unsaved:\n\
-$volumes\n\nDo you wish to save them before exiting?\n"
+$volumes\n\nDo you wish to exit anyway?\n"
         set retval [DevYesNo $msg]
-        if {$retval == "yes"} {
+        if {$retval == "no"} {
             Tab Editor row1 Volumes
             TabbedFrameInvoke $::Module(Editor,fVolumes) File
             return
