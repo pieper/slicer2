@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLScene.cxx,v $
-Date:      $Date: 2006/01/30 19:34:17 $
-Version:   $Revision: 1.1 $
+Date:      $Date: 2006/01/30 20:51:50 $
+Version:   $Revision: 1.2 $
 
 =========================================================================auto=*/
 #include "vtkMRMLScene.h"
@@ -31,7 +31,11 @@ vtkMRMLScene* vtkMRMLScene::New()
 //------------------------------------------------------------------------------
 int vtkMRMLScene::Connect()
 {
-  vtkErrorMacro("NOT IMPLEMENTED YET");
+  
+  if (url == NULL) {
+    vtkErrorMacro("Need URL specified");
+  }
+  
   return 1;
 }
 
