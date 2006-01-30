@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: ModelHierarchy.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:00 $
-#   Version:   $Revision: 1.19 $
+#   Date:      $Date: 2006/01/30 22:11:52 $
+#   Version:   $Revision: 1.20 $
 # 
 #===============================================================================
 # FILE:        ModelHierarchy.tcl
@@ -133,7 +133,7 @@ proc ModelHierarchyInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.19 $} {$Date: 2006/01/06 17:57:00 $}]
+        {$Revision: 1.20 $} {$Date: 2006/01/30 22:11:52 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -284,7 +284,10 @@ proc ModelHierarchyEnter {} {
     global Mrml(dataTree)
         
     set HierarchyLevel 0
-    set numLines 0
+    set numModelLines 0
+    set modelLineHeight 0
+    set numGroupLines 0
+    set groupLineHeight 0
 
     Mrml(dataTree) InitTraversal
     set node [Mrml(dataTree) GetNextItem]
@@ -345,7 +348,13 @@ proc ModelHierarchyEnter {} {
             pack $f.f1g_[$node GetID] -side top -expand true -fill x
             pack $l1_command $f.lg[$node GetID] -in $f.f1g_[$node GetID] -side left
             lower $f.f1g_[$node GetID]
-            incr numLines
+            incr numGroupLines
+            if {$groupLineHeight == 0} {
+                set groupLineHeight [expr {[winfo reqheight $f.lg[$node GetID]]}]
+                if {$::Module(verbose)} {
+                    puts "ModelHierarchyEnter: calculated height for group labels: $groupLineHeight"
+                }
+            }
         }
         if {[string compare -length 13 $node "EndModelGroup"] == 0} {
             incr HierarchyLevel -1
@@ -354,6 +363,9 @@ proc ModelHierarchyEnter {} {
             if {$success==0} {
                 set success 1
                 ModelHierarchyCreateRootEntry $f
+                # add a line for the root entry
+                incr numModelLines
+                
             }
             set CurrentModelID [SharedModelLookup [$node GetModelRefID]]
             if {$CurrentModelID != -1} {
@@ -368,7 +380,14 @@ proc ModelHierarchyEnter {} {
                     pack $f.f1_$CurrentModelID -side top -expand true -fill x
                     pack $l1_command $f.l$CurrentModelID -in $f.f1_$CurrentModelID -side left
                     lower $f.f1_$CurrentModelID
-                    incr numLines
+                    incr numModelLines
+                    if {$modelLineHeight == 0} {
+                        # calc the label height
+                        set modelLineHeight [expr {[winfo reqheight  $f.l$CurrentModelID]}]
+                        if {$::Module(verbose)} {
+                            puts "ModelHierarchyEnter: calculated height for model labels: $modelLineHeight"
+                        }
+                    }
                 } else {
                     DevErrorWindow "Duplicate model reference number [$node GetModelRefID], cannot create interface"
                 }
@@ -381,13 +400,17 @@ proc ModelHierarchyEnter {} {
     
     if {$success > 0} {
         # Find the height of a single label
-        set lastLabel $f.l$CurrentModelID
+        #set lastLabel $f.l$CurrentModelID
         # Find the height of a line
-        set incr [expr {[winfo reqheight $lastLabel]}]
+        #set incr [expr {[winfo reqheight $lastLabel]}]
         # Find the total height that should scroll and add some "safety space"
-        set height [expr {$numLines * $incr + 10}]
+        # set height [expr {$numLines * $incr + 10}]
+        set height [expr {$numGroupLines * $groupLineHeight + $numModelLines * $modelLineHeight + 10}]
+        if {$::Module(verbose)} {
+            puts "ModelHierarchyEnter: $numGroupLines * $groupLineHeight + $numModelLines * $modelLineHeight + 10 = $height"
+        }
         $ModelHierarchy(ModelCanvas) config -scrollregion "0 0 1 $height"
-        $ModelHierarchy(ModelCanvas) config -yscrollincrement $incr -confine true
+        $ModelHierarchy(ModelCanvas) config -yscrollincrement $groupLineHeight -confine true
         $fb.bCreate config -state disabled
         $fb.bDelete config -state normal
         $fb.bCreateGroup config -state normal
@@ -413,17 +436,17 @@ proc ModelHierarchyEnter {} {
 # .END
 #-------------------------------------------------------------------------------
 proc ModelHierarchyExit {{param 1}} {
-        global ModelHierarchy Gui
-    
-        # destroy frame and create it again to delete all labels and buttons
-    
-        set f $ModelHierarchy(ModelCanvas)
+    global ModelHierarchy Gui
 
-        destroy $f.fModels
-        frame $f.fModels -bd 0 -bg $Gui(activeWorkspace)
-        $f create window 0 0 -anchor nw -window $f.fModels
-    
-        # update the hierarchy in the models tab
+    # destroy frame and create it again to delete all labels and buttons
+
+    set f $ModelHierarchy(ModelCanvas)
+
+    destroy $f.fModels
+    frame $f.fModels -bd 0 -bg $Gui(activeWorkspace)
+    $f create window 0 0 -anchor nw -window $f.fModels
+
+    # update the hierarchy in the models tab
 
     if {$param == 1} {
         MainModelsDestroyGUI
@@ -792,6 +815,7 @@ proc ModelHierarchyMoveModel {id targetGroup src_modelgroup {trg_modelgroup 1}} 
         # first step: copy the entire model group to a temporary mrml tree
         # and delete it from the original tree
         
+        catch "tempTree Delete"
         vtkMrmlTree tempTree
         
         Mrml(dataTree) InitTraversal
@@ -875,7 +899,10 @@ proc ModelHierarchyMoveModel {id targetGroup src_modelgroup {trg_modelgroup 1}} 
             }
             set node [Mrml(dataTree) GetNextItem]
         }
-        
+        if {!$success} {
+            DevWarningWindow "Can't move node here"
+            return
+        }
         # third step: insert the contents of the temporary tree at
         # the desired location of the actual mrml tree
         
