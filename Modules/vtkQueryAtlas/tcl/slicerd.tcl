@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: slicerd.tcl,v $
-#   Date:      $Date: 2006/01/06 17:58:01 $
-#   Version:   $Revision: 1.9 $
+#   Date:      $Date: 2006/01/30 20:47:46 $
+#   Version:   $Revision: 1.10 $
 # 
 #===============================================================================
 # FILE:        slicerd.tcl
@@ -22,12 +22,12 @@
 # 
 #  Program:   3D Slicer
 #  Module:    $RCSfile: slicerd.tcl,v $
-#  Date:      $Date: 2006/01/06 17:58:01 $
-#  Version:   $Revision: 1.9 $
+#  Date:      $Date: 2006/01/30 20:47:46 $
+#  Version:   $Revision: 1.10 $
 #===============================================================================
 
 #
-# experimental slicer daemon - sp 2005-09-23
+# experimental slicer daemon - sp 2005-09-23 
 # - meant to be as simple as possible
 # - only one server socket listening at a time
 # - checks with the user on first connection to see if it's okay to accept connections
