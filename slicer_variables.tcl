@@ -59,7 +59,6 @@ puts stderr "SLICER_HOME is $::SLICER_HOME"
 set ::CMAKE_TAG "CMake-2-0-6"
 set ::TEEM_TAG "Teem-1-9-0-patches"
 set ::VTK_TAG "Slicer-2-6"
-# get the latest ITK from CVS using HEAD
 set ::ITK_TAG "Slicer-2-6"
 set ::TCL_TAG "core-8-4-6"
 set ::TK_TAG "core-8-4-6"
