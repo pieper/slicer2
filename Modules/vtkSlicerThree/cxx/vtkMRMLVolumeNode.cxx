@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLVolumeNode.cxx,v $
-  Date:      $Date: 2006/01/30 19:34:17 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2006/01/31 12:34:01 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================auto=*/
 
@@ -126,7 +126,7 @@ void vtkMRMLVolumeNode::WriteXML(ostream& of, int nIndent)
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLVolumeNode::ReadXMLAttributes(vtkXMLDataElement *elm)
+void vtkMRMLVolumeNode::ReadXMLAttributes(const char** atts)
 {
   vtkErrorMacro("NOT IMPLEMENTED YET");
 }

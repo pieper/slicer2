@@ -74,13 +74,16 @@ public:
   int Commit(const char* url=NULL);
   
   // Create node with a given class
-  static vtkMRMLNode* CreateNodeByClass(char* className) {
-    vtkObject* ret = vtkObjectFactory::CreateInstance(className); 
-    if(ret) {
-      return static_cast<vtkMRMLNode *>(ret);
-    }
+  static vtkMRMLNode* CreateNodeByClass(const char* className) {
+    if (0) {}
     else {
-      return NULL;
+      vtkObject* ret = vtkObjectFactory::CreateInstance(className); 
+      if(ret) {
+        return static_cast<vtkMRMLNode *>(ret);
+      }
+      else {
+        return NULL;
+      }
     }
   };
   
@@ -138,7 +141,7 @@ public:
                                  vtkTransform *xform );
   
 protected:
-  vtkMRMLScene() {};
+  vtkMRMLScene() {URL=NULL;};
   ~vtkMRMLScene() {};
   vtkMRMLScene(const vtkMRMLScene&) {};
   void operator=(const vtkMRMLScene&) {};
