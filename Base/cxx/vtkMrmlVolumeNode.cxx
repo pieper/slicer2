@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlVolumeNode.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:32 $
-  Version:   $Revision: 1.62.2.1 $
+  Date:      $Date: 2006/01/31 21:46:51 $
+  Version:   $Revision: 1.62.2.2 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -521,9 +521,19 @@ void vtkMrmlVolumeNode::SetScanOrder(char *s)
   { 
     if (this->ScanOrder)
     {
-      delete [] this->ScanOrder; 
+        if (strlen(this->ScanOrder) != strlen(s))
+        {
+            // only delete if it's a different size, so can
+            // make a copy of a volume in place w/o losing
+            // the scan order
+            delete [] this->ScanOrder;
+            this->ScanOrder = new char[strlen(s)+1];
+        }
     }
-    this->ScanOrder = new char[strlen(s)+1];
+    else
+    {
+        this->ScanOrder = new char[strlen(s)+1];
+    }
     strcpy(this->ScanOrder, s);
     this->Modified();
   }
