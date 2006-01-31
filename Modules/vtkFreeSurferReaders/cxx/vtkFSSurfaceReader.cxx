@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSSurfaceReader.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:41 $
-  Version:   $Revision: 1.10 $
+  Date:      $Date: 2006/01/31 17:52:54 $
+  Version:   $Revision: 1.11 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2006/01/06 17:57:41 $
-  Version:   $Revision: 1.10 $
+  Date:      $Date: 2006/01/31 17:52:54 $
+  Version:   $Revision: 1.11 $
 
 =========================================================================*/
 #include "vtkFSSurfaceReader.h"
@@ -25,6 +25,12 @@
 #include "vtkByteSwap.h"
 #include "vtkFloatArray.h"
 #include "vtkFSIO.h"
+#include "vtkPolyData.h"
+#include "vtkCellArray.h"
+#if (VTK_MAJOR_VERSION >= 5)
+#include "vtkStreamingDemandDrivenPipeline.h"
+#include "vtkInformation.h"
+#endif
 
 //-------------------------------------------------------------------------
 vtkFSSurfaceReader* vtkFSSurfaceReader::New()
@@ -41,11 +47,12 @@ vtkFSSurfaceReader* vtkFSSurfaceReader::New()
 
 vtkFSSurfaceReader::vtkFSSurfaceReader()
 {
-  this->vtkSource::SetNthOutput(0, vtkPolyData::New());
+  vtkPolyData *output = vtkPolyData::New();
+  this->SetOutput(output);
   // Releasing data for pipeline parallism.
   // Filters will know it is empty. 
-  this->Outputs[0]->ReleaseData();
-  this->Outputs[0]->Delete();
+  output->ReleaseData();
+  output->Delete();
   this->ExecutePiece = this->ExecuteNumberOfPieces = 0;
   this->ExecuteGhostLevel = 0;
 }
@@ -57,22 +64,48 @@ vtkFSSurfaceReader::~vtkFSSurfaceReader()
 //----------------------------------------------------------------------------
 vtkPolyData *vtkFSSurfaceReader::GetOutput()
 {
-  if (this->NumberOfOutputs < 1)
+  int numberOfOutputs;
+#if (VTK_MAJOR_VERSION >= 5)
+    numberOfOutputs = this->GetNumberOfOutputPorts();
+#else
+    numberOfInputs = this->NumberOfInputs;
+#endif
+
+  if (numberOfOutputs < 1)
     {
     return NULL;
     }
   
+#if (VTK_MAJOR_VERSION >= 5)
+  return (vtkPolyData *)(this->GetOutput(0));
+#else
   return (vtkPolyData *)(this->Outputs[0]);
+#endif
+}
+
+//----------------------------------------------------------------------------
+vtkPolyData *vtkFSSurfaceReader::GetOutput(int idx)
+{
+#if (VTK_MAJOR_VERSION >= 5)
+  return (vtkPolyData*)( this->GetOutputDataObject(idx) );
+#else
+  return (vtkPolyData*)( this->vtkSource::GetOutput(idx) );
+#endif
 }
 
 //----------------------------------------------------------------------------
 void vtkFSSurfaceReader::SetOutput(vtkPolyData *output)
 {
+#if (VTK_MAJOR_VERSION >= 5)
+  this->GetExecutive()->SetOutputData(0, output);
+#else
   this->vtkSource::SetNthOutput(0, output);
+#endif
 }
 
 
 //----------------------------------------------------------------------------
+#if !(VTK_MAJOR_VERSION >= 5)
 void vtkFSSurfaceReader::ComputeInputUpdateExtents(vtkDataObject *data)
 {
   int piece, numPieces, ghostLevel;
@@ -107,6 +140,7 @@ void vtkFSSurfaceReader::ComputeInputUpdateExtents(vtkDataObject *data)
   
   this->ExecuteGhostLevel = ghostLevel;
 }
+#endif
 
 void vtkFSSurfaceReader::Execute()
 {
@@ -494,8 +528,18 @@ void vtkFSSurfaceReader::Execute()
   output->SetPolys(outputFaces);
   outputFaces->Delete();
 }
+//----------------------------------------------------------------------------
+#if (VTK_MAJOR_VERSION >= 5)
+int vtkFSSurfaceReader::FillOutputPortInformation(int,
+                                                 vtkInformation* info)
+{
+  info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkPolyData");
+  return 1;
+}
+#endif
 
+//----------------------------------------------------------------------------
 void vtkFSSurfaceReader::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkDataReader::PrintSelf(os,indent);
+  this->Superclass::PrintSelf(os,indent);
 }

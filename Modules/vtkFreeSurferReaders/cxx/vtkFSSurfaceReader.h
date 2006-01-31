@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSSurfaceReader.h,v $
-  Date:      $Date: 2006/01/06 17:57:41 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/01/31 17:52:54 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceReader.h,v $
   Language:  C++
-  Date:      $Date: 2006/01/06 17:57:41 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/01/31 17:52:54 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================*/
 // .NAME vtkFSSurfaceReader - read a surface file from Freesurfer tools
@@ -30,8 +30,6 @@
 
 #include <vtkFreeSurferReadersConfigure.h>
 #include "vtkDataReader.h"
-#include "vtkCellArray.h"
-#include "vtkPolyData.h"
 
 // Prints debugging info.
 #define FS_DEBUG 0
@@ -49,6 +47,8 @@ const int FS_NUM_VERTS_IN_QUAD_FACE = 4; // dealing with quads
 const int FS_NUM_VERTS_IN_TRI_FACE = 3; // dealing with tris
 const int FS_MAX_NUM_FACES_PER_VERTEX = 10; // kinda arbitrary
 
+class vtkPolyData;
+class vtkInformation;
 class VTK_FREESURFERREADERS_EXPORT vtkFSSurfaceReader : public vtkDataReader
 {
 public:
@@ -59,8 +59,7 @@ public:
   // Description:
   // Get the output of this reader.
   vtkPolyData *GetOutput();
-  vtkPolyData *GetOutput(int idx)
-    {return (vtkPolyData *) this->vtkSource::GetOutput(idx); };
+  vtkPolyData *GetOutput(int idx);
   void SetOutput(vtkPolyData *output);
 
 protected:
@@ -72,7 +71,11 @@ protected:
   // Update extent of PolyData is specified in pieces.  
   // Since all DataObjects should be able to set UpdateExent as pieces,
   // just copy output->UpdateExtent  all Inputs.
+#if (VTK_MAJOR_VERSION >= 5)
+  virtual int FillOutputPortInformation(int, vtkInformation*);
+#else
   void ComputeInputUpdateExtents(vtkDataObject *output);
+#endif
   
   // Used by streaming: The extent of the output being processed by
   // the execute method. Set in the ComputeInputUpdateExtents method.
