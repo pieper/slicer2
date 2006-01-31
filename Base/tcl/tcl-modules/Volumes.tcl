@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Volumes.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:40 $
-#   Version:   $Revision: 1.127.2.1 $
+#   Date:      $Date: 2006/01/31 22:44:41 $
+#   Version:   $Revision: 1.127.2.2 $
 # 
 #===============================================================================
 # FILE:        Volumes.tcl
@@ -101,7 +101,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-             {$Revision: 1.127.2.1 $} {$Date: 2005/12/20 22:54:40 $}]
+             {$Revision: 1.127.2.2 $} {$Date: 2006/01/31 22:44:41 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -134,7 +134,7 @@ proc VolumesInit {} {
     set Volumes(exportFileType) Radiological
     set Volumes(exportFileTypeList) {Radiological Neurological}
     set Volumes(exportFileTypeList,tooltips) {"File contains radiological convention images" "File contains a neurological convention images"}
-
+    set Volume(UseCompression) 1
 
     # Submodules for reading various volume types
     #---------------------------------------------
@@ -713,9 +713,13 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     frame $f.fActive -bg $Gui(backdrop) -relief sunken -bd 2
     frame $f.fCORFile -bg $Gui(activeWorkspace) -relief groove -bd 3
     frame $f.fGenericFile -bg $Gui(activeWorkspace) -relief groove -bd 3
+    frame $f.fGenericFile.fType -bg $Gui(activeWorkspace) -relief flat
+    frame $f.fGenericFile.fCompression -bg $Gui(activeWorkspace) -relief flat
 
     pack $f.fActive -side top -pady $Gui(pad) -padx $Gui(pad)
-    pack $f.fGenericFile  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+    pack $f.fGenericFile  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x -expand true
+    pack $f.fGenericFile.fType  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x -expand true
+    pack $f.fGenericFile.fCompression  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x -expand true
     pack $f.fCORFile  -side top -pady $Gui(pad) -padx $Gui(pad) -fill x   
     eval {label $fExport.ll -text "Export COR Format\nWarning: only 1mm 256 cubed\n8 bit images supported"} $Gui(WLA)   
     pack  $fExport.ll -side top -padx $Gui(pad) 
@@ -748,7 +752,25 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     pack  $f.bWrite -side bottom -padx $Gui(pad)    
 
     DevAddFileBrowse $f Volumes "prefixGenericSave" "Select Export File:" "" "\$Volumes(extentionGenericSave)" "\$Volume(DefaultDir)" "Save" "Browse for a file location (will save image file and .nhdr file to directory)" "Absolute"
+    ## compression option (hint)
 
+    set f $fExport.fGenericFile.fCompression
+
+    eval {label $f.lcomp -text "Use Compression"} $Gui(BLA)
+    pack $f.lcomp -side left -padx $Gui(pad) -pady 0
+    foreach value "1 0" text "On Off" width "2 3" {
+        eval {radiobutton $f.rComp$value -width $width -indicatoron 0\
+            -text "$text" -value "$value" -variable Volume(UseCompression) \
+            } $Gui(WCA)
+        pack $f.rComp$value -side left -fill x
+    }
+    TooltipAdd $f.rComp1 \
+            "Suggest to the Writer to compress the file if the format supports it."
+    TooltipAdd $f.rComp0 \
+            "Don't compress the file, even if the format supports it."
+
+
+    set f $fExport.fGenericFile.fType
     eval {label $f.l -text "Select File Type"} $Gui(BLA)
     pack $f.l -side left -padx $Gui(pad) -pady 0
 
@@ -2282,6 +2304,7 @@ proc VolumesGenericExport {} {
     export_iwriter SetInput [Volume($v,vol) GetOutput]
     export_iwriter SetFileName $Volumes(prefixGenericSave)
     export_iwriter SetRasToIJKMatrix export_matrix
+    export_iwriter SetUseCompression $Volume(UseCompression)
     export_iwriter Write
 
     export_iwriter Delete

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKImageWriter.h,v $
-  Date:      $Date: 2005/12/20 22:55:49 $
-  Version:   $Revision: 1.2.2.1 $
+  Date:      $Date: 2006/01/31 22:44:42 $
+  Version:   $Revision: 1.2.2.2 $
 
 =========================================================================auto=*/
 // .NAME vtkITKImageToImageFilter - Abstract base class for connecting ITK and VTK
@@ -42,6 +42,11 @@ public:
   }
 
   // Description:
+  // use compression if possible
+  vtkGetMacro (UseCompression, int);
+  vtkSetMacro (UseCompression, int);
+
+  // Description:
   // Set/Get the input object from the image pipeline.
   void SetInput(vtkImageData *input);
 
@@ -62,13 +67,14 @@ protected:
 
   char *FileName;
   vtkMatrix4x4* RasToIJKMatrix;
+  int UseCompression;
 
 private:
   vtkITKImageWriter(const vtkITKImageWriter&);  // Not implemented.
   void operator=(const vtkITKImageWriter&);  // Not implemented.
 };
 
-vtkCxxRevisionMacro(vtkITKImageWriter, "$Revision: 1.2.2.1 $")
+vtkCxxRevisionMacro(vtkITKImageWriter, "$Revision: 1.2.2.2 $")
 vtkStandardNewMacro(vtkITKImageWriter)
 
 #endif
