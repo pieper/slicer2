@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageResliceST.cxx,v $
-  Date:      $Date: 2006/01/13 17:01:15 $
-  Version:   $Revision: 1.10 $
+  Date:      $Date: 2006/01/31 17:02:27 $
+  Version:   $Revision: 1.11 $
 
 =========================================================================auto=*/
 #include "vtkImageResliceST.h"
@@ -19,7 +19,6 @@
 #include "vtkAbstractTransform.h"
 
 #include <vtkStructuredPointsWriter.h>
-using namespace std;
 
 static void Write(vtkImageData* image,const char* filename)
 {
@@ -63,7 +62,7 @@ void vtkImageResliceST::PrintSelf(ostream& os, vtkIndent indent)
 //----------------------------------------------------------------------------
 // Absolute value calculation of floats
 
-static inline float fastabs(const float f)
+inline float fastabs(const float f)
 {int i=((*(int*)&f)&0x7fffffff);return (*(float*)&i);}
 
 
@@ -72,7 +71,7 @@ static inline float fastabs(const float f)
 // (the floor() implementation on some computers is much slower than this,
 // because they require some 'exact' behaviour that we don't).
 
-static inline int vtkResliceFloor(float x, float &f)
+inline int vtkResliceFloor(float x, float &f)
 {
   int ix = int(x);
   f = x-ix;
@@ -81,7 +80,7 @@ static inline int vtkResliceFloor(float x, float &f)
   return ix;
 }
 
-static inline int vtkResliceFloor(float x)
+inline int vtkResliceFloor(float x)
 {
   int ix = int(x);
   if (x-ix < 0) { ix--; }
@@ -89,7 +88,7 @@ static inline int vtkResliceFloor(float x)
   return ix;
 }
 
-static inline int vtkResliceCeil(float x)
+inline int vtkResliceCeil(float x)
 {
   int ix = int(x);
   if (x-ix > 0) { ix++; }
@@ -107,52 +106,70 @@ static inline int vtkResliceCeil(float x)
 
 // in the case of a tie between integers, the larger integer wins.
 
-static inline void vtkResliceRound(float val, char& rnd)
+inline void vtkResliceRound(float val, signed char& rnd)
 {
   rnd = (char)((int)(val+256.5f)-256);
 }
 
-static inline void vtkResliceRound(float val, unsigned char& rnd)
+inline void vtkResliceRound(float val, char& rnd)
+{
+  rnd = (char)((int)(val+256.5f)-256);
+}
+
+inline void vtkResliceRound(float val, unsigned char& rnd)
 {
   rnd = (unsigned char)(val+0.5f);
 }
 
-static inline void vtkResliceRound(float val, short& rnd)
+inline void vtkResliceRound(float val, short& rnd)
 {
   rnd = (short)((int)(val+32768.5f)-32768);
 }
 
-static inline void vtkResliceRound(float val, unsigned short& rnd)
+inline void vtkResliceRound(float val, unsigned short& rnd)
 {
   rnd = (unsigned short)(val+0.5f);
 }
 
-static inline void vtkResliceRound(float val, int& rnd)
+inline void vtkResliceRound(float val, int& rnd)
 {
   rnd = (int)(floor(val+0.5f));
 }
 
-static inline void vtkResliceRound(float val, unsigned int& rnd)
+inline void vtkResliceRound(float val, unsigned int& rnd)
 {
   rnd = (unsigned int)(floor(val+0.5f));
 }
 
-static inline void vtkResliceRound(float val, long& rnd)
+inline void vtkResliceRound(float val, long& rnd)
 {
   rnd = (long)(floor(val+0.5f));
 }
 
-static inline void vtkResliceRound(float val, unsigned long& rnd)
+
+inline void vtkResliceRound(float val, unsigned long& rnd)
 {
   rnd = (unsigned long)(floor(val+0.5f));
 }
 
-static inline void vtkResliceRound(float val, float& rnd)
+#ifdef VTK_TYPE_USE_LONG_LONG
+inline void vtkResliceRound(float val, long long& rnd)
+{
+  rnd = (long long)(floor(val+0.5f));
+}
+
+inline void vtkResliceRound(float val, unsigned long long& rnd)
+{
+  rnd = (unsigned long long)(floor(val+0.5f));
+}
+#endif
+
+inline void vtkResliceRound(float val, float& rnd)
 {
   rnd = (float)(val);
 }
 
-static inline void vtkResliceRound(float val, double& rnd)
+inline void vtkResliceRound(float val, double& rnd)
 {
   rnd = (double)(val);
 }
@@ -160,7 +177,22 @@ static inline void vtkResliceRound(float val, double& rnd)
 //----------------------------------------------------------------------------
 // clamping functions for each type
 
-static inline void vtkResliceClamp(float val, char& clamp)
+template<class F>
+inline void vtkResliceClamp(F val, signed char& clamp)
+{
+  if (val < VTK_SIGNED_CHAR_MIN)
+    { 
+    val = VTK_SIGNED_CHAR_MIN;
+    }
+  if (val > VTK_SIGNED_CHAR_MAX)
+    { 
+    val = VTK_SIGNED_CHAR_MAX;
+    }
+  vtkResliceRound(val,clamp);
+}
+
+template<class F>
+inline void vtkResliceClamp(F val, char& clamp)
 {
   if (val < VTK_CHAR_MIN)
     { 
@@ -173,7 +205,8 @@ static inline void vtkResliceClamp(float val, char& clamp)
   vtkResliceRound(val,clamp);
 }
 
-static inline void vtkResliceClamp(float val, unsigned char& clamp)
+template<class F>
+inline void vtkResliceClamp(F val, unsigned char& clamp)
 {
   if (val < VTK_UNSIGNED_CHAR_MIN)
     { 
@@ -186,7 +219,8 @@ static inline void vtkResliceClamp(float val, unsigned char& clamp)
   vtkResliceRound(val,clamp);
 }
 
-static inline void vtkResliceClamp(float val, short& clamp)
+template <class F>
+inline void vtkResliceClamp(F val, short& clamp)
 {
   if (val < VTK_SHORT_MIN)
     { 
@@ -199,7 +233,8 @@ static inline void vtkResliceClamp(float val, short& clamp)
   vtkResliceRound(val,clamp);
 }
 
-static inline void vtkResliceClamp(float val, unsigned short& clamp)
+template <class F>
+inline void vtkResliceClamp(F val, unsigned short& clamp)
 {
   if (val < VTK_UNSIGNED_SHORT_MIN)
     { 
@@ -212,7 +247,8 @@ static inline void vtkResliceClamp(float val, unsigned short& clamp)
   vtkResliceRound(val,clamp);
 }
 
-static inline void vtkResliceClamp(float val, int& clamp)
+template <class F>
+inline void vtkResliceClamp(F val, int& clamp)
 {
   if (val < VTK_INT_MIN) 
     {
@@ -225,7 +261,8 @@ static inline void vtkResliceClamp(float val, int& clamp)
   vtkResliceRound(val,clamp);
 }
 
-static inline void vtkResliceClamp(float val, unsigned int& clamp)
+template <class F>
+inline void vtkResliceClamp(F val, unsigned int& clamp)
 {
   if (val < VTK_UNSIGNED_INT_MIN)
     { 
@@ -238,7 +275,8 @@ static inline void vtkResliceClamp(float val, unsigned int& clamp)
   vtkResliceRound(val,clamp);
 }
 
-static inline void vtkResliceClamp(float val, long& clamp)
+template <class F>
+inline void vtkResliceClamp(F val, long& clamp)
 {
   if (val < VTK_LONG_MIN) 
     {
@@ -251,7 +289,8 @@ static inline void vtkResliceClamp(float val, long& clamp)
   vtkResliceRound(val,clamp);
 }
 
-static inline void vtkResliceClamp(float val, unsigned long& clamp)
+template <class F>
+inline void vtkResliceClamp(F val, unsigned long& clamp)
 {
   if (val < VTK_UNSIGNED_LONG_MIN)
     { 
@@ -264,7 +303,38 @@ static inline void vtkResliceClamp(float val, unsigned long& clamp)
   vtkResliceRound(val,clamp);
 }
 
-static inline void vtkResliceClamp(float val, float& clamp)
+#ifdef VTK_TYPE_USE_LONG_LONG
+template <class F>
+inline void vtkResliceClamp(F val, long long& clamp)
+{
+  if (val < VTK_LONG_LONG_MIN)
+    { 
+    val = VTK_LONG_LONG_MIN;
+    }
+  if (val > VTK_LONG_LONG_MAX)
+    { 
+    val = VTK_LONG_LONG_MAX;
+    }
+  vtkResliceRound(val,clamp);
+}
+
+template <class F>
+inline void vtkResliceClamp(F val, unsigned long long& clamp)
+{
+  if (val < VTK_UNSIGNED_LONG_LONG_MIN)
+    { 
+    val = VTK_UNSIGNED_LONG_LONG_MIN;
+    }
+  if (val > VTK_UNSIGNED_LONG_LONG_MAX)
+    { 
+    val = VTK_UNSIGNED_LONG_LONG_MAX;
+    }
+  vtkResliceRound(val,clamp);
+}
+#endif
+
+template <class F>
+inline void vtkResliceClamp(F val, float& clamp)
 {
   if (val < VTK_FLOAT_MIN)
     { 
@@ -277,7 +347,8 @@ static inline void vtkResliceClamp(float val, float& clamp)
   vtkResliceRound(val,clamp);
 }
 
-static inline void vtkResliceClamp(float val, double& clamp)
+template <class F>
+inline void vtkResliceClamp(F val, double& clamp)
 {
   if (val < VTK_FLOAT_MIN)
     { 
@@ -294,7 +365,7 @@ static inline void vtkResliceClamp(float val, double& clamp)
 // copy a pixel, advance the output pointer but not the input pointer
 
 template<class T>
-static inline void vtkCopyPixel(T *&out, T *in, int numscalars)
+inline void vtkCopyPixel(T *&out, T *in, int numscalars)
 {
   do
     {
@@ -307,7 +378,7 @@ static inline void vtkCopyPixel(T *&out, T *in, int numscalars)
 // Perform a wrap to limit an index to [0,range).
 // Ensures correct behaviour when the index is negative.
  
-static inline int vtkInterpolateWrap(int num, int range)
+inline int vtkInterpolateWrap(int num, int range)
 {
   if ((num %= range) < 0)
     {
@@ -319,7 +390,7 @@ static inline int vtkInterpolateWrap(int num, int range)
 //----------------------------------------------------------------------------
 // Perform a mirror to limit an index to [0,range).
  
-static inline int vtkInterpolateMirror(int num, int range)
+inline int vtkInterpolateMirror(int num, int range)
 {
   if (num < 0)
     {
@@ -341,7 +412,7 @@ static inline int vtkInterpolateMirror(int num, int range)
 // the background color 'background'.  
 // The number of scalar components in the data is 'numscalars'
 template <class T>
-static int vtkTrilinearInterpolation(float *point, T *inPtr, T *outPtr,
+int vtkTrilinearInterpolation(float *point, T *inPtr, T *outPtr,
                      T *background, int numscalars, 
                      int inExt[6], int inInc[3])
 {
@@ -413,7 +484,7 @@ static int vtkTrilinearInterpolation(float *point, T *inPtr, T *outPtr,
 
 // trilinear interpolation with wrap-around behaviour
 template <class T>
-static int vtkTrilinearInterpolationRepeat(float *point, T *inPtr, T *outPtr,
+int vtkTrilinearInterpolationRepeat(float *point, T *inPtr, T *outPtr,
                        T *mirror, int numscalars, 
                        int inExt[6], int inInc[3])
 {
@@ -493,7 +564,7 @@ static int vtkTrilinearInterpolationRepeat(float *point, T *inPtr, T *outPtr,
 // The number of scalar components in the data is 'numscalars'
 
 template <class T>
-static int vtkNearestNeighborInterpolation(float *point, T *inPtr, T *outPtr,
+int vtkNearestNeighborInterpolation(float *point, T *inPtr, T *outPtr,
                                            T *background, int numscalars, 
                                            int inExt[6], int inInc[3])
 {
@@ -522,7 +593,7 @@ static int vtkNearestNeighborInterpolation(float *point, T *inPtr, T *outPtr,
 
 // nearest-neighbor interpolation with wrap-around behaviour
 template <class T>
-static int vtkNearestNeighborInterpolationRepeat(float *point, T *inPtr, 
+int vtkNearestNeighborInterpolationRepeat(float *point, T *inPtr, 
                          T *outPtr,
                          T *mirror, int numscalars, 
                          int inExt[6], int inInc[3])
@@ -617,7 +688,7 @@ void vtkImageResliceSetInterpCoeffs(float F[4],int *l, int *m, float f,
 
 // tricubic interpolation
 template <class T>
-static int vtkTricubicInterpolation(float *point, T *inPtr, T *outPtr,
+int vtkTricubicInterpolation(float *point, T *inPtr, T *outPtr,
                     T *background, int numscalars, 
                     int inExt[6], int inInc[3])
 {
@@ -728,7 +799,7 @@ static int vtkTricubicInterpolation(float *point, T *inPtr, T *outPtr,
 
 // tricubic interpolation with wrap-around behaviour
 template <class T>
-static int vtkTricubicInterpolationRepeat(float *point, T *inPtr, T *outPtr,
+int vtkTricubicInterpolationRepeat(float *point, T *inPtr, T *outPtr,
                       T *mirror, int numscalars, 
                       int inExt[6], int inInc[3])
 {

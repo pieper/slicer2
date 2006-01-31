@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageHistogramNormalization.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:10 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2006/01/31 17:02:27 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 #include "vtkImageHistogramNormalization.h"
@@ -44,7 +44,7 @@ void vtkImageHistogramNormalization::PrintSelf(ostream& os, vtkIndent indent)
 void vtkImageHistogramNormalization::ExecuteData(vtkDataObject* out)
 {
   vtkDebugMacro("Execute to find shift/scale parameters");
-  vtkImageData* inData = this->GetInput();
+  vtkImageData* inData = vtkImageData::SafeDownCast(this->GetInput());
   vtkImageData* outData = this->AllocateOutputData(out);
 
    
