@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMultipleInputsImageFilter.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:36 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2006/01/31 17:48:00 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 
@@ -20,17 +20,31 @@
 
 void vtkMultipleInputsImageFilter::AddInput(vtkImageData *image)
 {
+#if (VTK_MAJOR_VERSION >= 5)
+    this->vtkImageAlgorithm::AddInput(image);
+#else
     this->vtkProcessObject::AddInput(image);
+#endif
 }
 
 
 vtkImageData *vtkMultipleInputsImageFilter::GetInput(int index)
 {
-    if (this->NumberOfInputs <= index)
+    int numberOfInputs;
+#if (VTK_MAJOR_VERSION >= 5)
+    numberOfInputs = this->GetNumberOfInputConnections(0);
+#else
+    numberOfInputs = this->NumberOfInputs;
+#endif
+    if (numberOfInputs <= index)
     {
         return NULL;
     }
 
+#if (VTK_MAJOR_VERSION >= 5)
+    return (vtkImageData*)(this->Superclass::GetInput(index));
+#else
     return (vtkImageData*)(this->Inputs[index]);
+#endif
 }
 

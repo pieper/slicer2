@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkGLMEstimator.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:36 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/01/31 17:47:59 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 
@@ -68,8 +68,14 @@ vtkGLMEstimator::~vtkGLMEstimator()
 
 vtkFloatArray *vtkGLMEstimator::GetRegionTimeCourse()
 {
+    int numberOfInputs;
+#if (VTK_MAJOR_VERSION >= 5)
+    numberOfInputs = this->GetNumberOfInputConnections(0);
+#else
+    numberOfInputs = this->NumberOfInputs;
+#endif
     // Checks the input list
-    if (this->NumberOfInputs == 0 || this->GetInput(0) == NULL)
+    if (numberOfInputs == 0 || this->GetInput(0) == NULL)
     {
         vtkErrorMacro( <<"No input image data in this filter.");
         return NULL;
@@ -86,13 +92,13 @@ vtkFloatArray *vtkGLMEstimator::GetRegionTimeCourse()
         this->RegionTimeCourse->Delete();
     }
     this->RegionTimeCourse = vtkFloatArray::New();
-    this->RegionTimeCourse->SetNumberOfTuples(this->NumberOfInputs);
+    this->RegionTimeCourse->SetNumberOfTuples(numberOfInputs);
     this->RegionTimeCourse->SetNumberOfComponents(1);
 
     short *val;
     int size = this->RegionVoxels->GetNumberOfTuples();
 
-    for (int ii = 0; ii < this->NumberOfInputs; ii++)
+    for (int ii = 0; ii < numberOfInputs; ii++)
     {
         int total = 0;
         for (int jj = 0; jj < size; jj++)
@@ -114,8 +120,14 @@ vtkFloatArray *vtkGLMEstimator::GetRegionTimeCourse()
 
 vtkFloatArray *vtkGLMEstimator::GetTimeCourse(int i, int j, int k)
 {
+    int numberOfInputs;
+#if (VTK_MAJOR_VERSION >= 5)
+    numberOfInputs = this->GetNumberOfInputConnections(0);
+#else
+    numberOfInputs = this->NumberOfInputs;
+#endif
     // Checks the input list
-    if (this->NumberOfInputs == 0 || this->GetInput(0) == NULL)
+    if (numberOfInputs == 0 || this->GetInput(0) == NULL)
     {
         vtkErrorMacro( <<"No input image data in this filter.");
         return NULL;
@@ -126,11 +138,11 @@ vtkFloatArray *vtkGLMEstimator::GetTimeCourse(int i, int j, int k)
         this->TimeCourse->Delete();
     }
     this->TimeCourse = vtkFloatArray::New();
-    this->TimeCourse->SetNumberOfTuples(this->NumberOfInputs);
+    this->TimeCourse->SetNumberOfTuples(numberOfInputs);
     this->TimeCourse->SetNumberOfComponents(1);
 
     short *val;
-    for (int ii = 0; ii < this->NumberOfInputs; ii++)
+    for (int ii = 0; ii < numberOfInputs; ii++)
     {
         val = (short *)this->GetInput(ii)->GetScalarPointer(i, j, k); 
         this->TimeCourse->SetComponent(ii, 0, *val); 
@@ -148,12 +160,18 @@ vtkFloatArray *vtkGLMEstimator::GetTimeCourse(int i, int j, int k)
 
 void vtkGLMEstimator::PerformHighPassFiltering()
 {
+    int numberOfInputs;
+#if (VTK_MAJOR_VERSION >= 5)
+    numberOfInputs = this->GetNumberOfInputConnections(0);
+#else
+    numberOfInputs = this->NumberOfInputs;
+#endif
     // We are going to perform high pass filtering on the time course 
     // of a specific voxel. First, we convert the time course from
     // a vtkFloatArray to vtkImageData.
     vtkImageData *img = vtkImageData::New();
     img->GetPointData()->SetScalars(this->TimeCourse);
-    img->SetDimensions(this->NumberOfInputs, 1, 1);
+    img->SetDimensions(numberOfInputs, 1, 1);
     img->SetScalarType(VTK_FLOAT);
     img->SetSpacing(1.0, 1.0, 1.0);
     img->SetOrigin(0.0, 0.0, 0.0);
@@ -182,7 +200,7 @@ void vtkGLMEstimator::PerformHighPassFiltering()
 
     // Update the vtkFloatArray of the time course
     vtkDataArray *arr = real->GetOutput()->GetPointData()->GetScalars();
-    for (int i = 0; i < this->NumberOfInputs; i++) 
+    for (int i = 0; i < numberOfInputs; i++) 
     {
         float x = (float) arr->GetComponent(i, 0);
         this->TimeCourse->SetComponent(i, 0, x);
@@ -199,11 +217,17 @@ void vtkGLMEstimator::PerformHighPassFiltering()
 
 void vtkGLMEstimator::ComputeMeans()
 {
+    int numberOfInputs;
+#if (VTK_MAJOR_VERSION >= 5)
+    numberOfInputs = this->GetNumberOfInputConnections(0);
+#else
+    numberOfInputs = this->NumberOfInputs;
+#endif
     if (this->GlobalMeans != NULL)
     {
         delete [] this->GlobalMeans;
     }
-    this->GlobalMeans = new float [this->NumberOfInputs];
+    this->GlobalMeans = new float [numberOfInputs];
 
     // this class is for single volume stats; here we use
     // it to get voxel intensity mean for the entire volume.
@@ -222,10 +246,10 @@ void vtkGLMEstimator::ComputeMeans()
     
     // for progress update (bar)
     unsigned long count = 0;
-    unsigned long target = (unsigned long)(this->NumberOfInputs * dim / 100.0);
+    unsigned long target = (unsigned long)(numberOfInputs * dim / 100.0);
     target++;
 
-    for (int i = 0; i < this->NumberOfInputs; i++)
+    for (int i = 0; i < numberOfInputs; i++)
     {
         // get original mean for each volume
         ia->SetInput(this->GetInput(i));
@@ -260,13 +284,19 @@ void vtkGLMEstimator::ComputeMeans()
     ia->Delete();
 
     // grand mean
-    this->GrandMean = gt / this->NumberOfInputs;
+    this->GrandMean = gt / numberOfInputs;
 }
  
 
 void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
 {
-    if (this->NumberOfInputs == 0 || this->GetInput(0) == NULL)
+    int numberOfInputs;
+#if (VTK_MAJOR_VERSION >= 5)
+    numberOfInputs = this->GetNumberOfInputConnections(0);
+#else
+    numberOfInputs = this->NumberOfInputs;
+#endif
+    if (numberOfInputs == 0 || this->GetInput(0) == NULL)
     {
         vtkErrorMacro( << "No input image data in this filter.");
         return;
@@ -298,7 +328,7 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
    
     // Array holding time course of a voxel
     vtkFloatArray *tc = vtkFloatArray::New();
-    tc->SetNumberOfTuples(this->NumberOfInputs);
+    tc->SetNumberOfTuples(numberOfInputs);
     tc->SetNumberOfComponents(1);
 
     // for progress update (bar)
@@ -325,7 +355,7 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
                 // Gets time course for this voxel
                 float total = 0.0;
                 float scaledTotal = 0.0;
-                for (int i = 0; i < this->NumberOfInputs; i++)
+                for (int i = 0; i < numberOfInputs; i++)
                 {
                     short *value 
                         = (short *)this->GetInput(i)->GetScalarPointer(ii, jj, kk);
@@ -352,7 +382,7 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
                 }   
 
                 float chisq, p;
-                if ((total/this->NumberOfInputs) > this->LowerThreshold)
+                if ((total/numberOfInputs) > this->LowerThreshold)
                 {
                     // first pass parameter estimates without modeling autocorrelation structure.
                     ((vtkGLMDetector *)this->Detector)->DisableAR1Modeling ( );
@@ -370,7 +400,7 @@ void vtkGLMEstimator::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
                      // now have all we need to compute inferences
 
                     // compute % signal changes for all betas
-                    float mean = scaledTotal / this->NumberOfInputs;
+                    float mean = scaledTotal / numberOfInputs;
                     for (int dd = 0; dd < noOfRegressors; dd++)
                     {
                         pSigChanges[dd] = 100 * beta[dd] / mean;

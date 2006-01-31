@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkGLMVolumeGenerator.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:36 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/01/31 17:48:00 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 
@@ -234,7 +234,7 @@ void vtkGLMVolumeGenerator::SimpleExecute(vtkImageData *input, vtkImageData* out
     // and the degrees of freedom are (timepoints - residuals). If the design is overspecified,
     // then these assumptions may not be correct.
 
-    if (this->GetInput() == NULL)
+    if (input == NULL)
     {
         vtkErrorMacro( << "No input image data in this filter.");
         return;
@@ -247,10 +247,10 @@ void vtkGLMVolumeGenerator::SimpleExecute(vtkImageData *input, vtkImageData* out
 
     // Sets up properties for output vtkImageData
     int imgDim[3];  
-    this->GetInput()->GetDimensions(imgDim);
+    input->GetDimensions(imgDim);
     output->SetScalarType(VTK_FLOAT);
-    output->SetOrigin(this->GetInput()->GetOrigin());
-    output->SetSpacing(this->GetInput()->GetSpacing());
+    output->SetOrigin(input->GetOrigin());
+    output->SetSpacing(input->GetSpacing());
     output->SetNumberOfScalarComponents(1);
     output->SetDimensions(imgDim[0], imgDim[1], imgDim[2]);
     output->AllocateScalars();
@@ -260,7 +260,7 @@ void vtkGLMVolumeGenerator::SimpleExecute(vtkImageData *input, vtkImageData* out
 
     int indx = 0;
     vtkDataArray *scalarsOutput = output->GetPointData()->GetScalars();
-    vtkDataArray *scalarsInput = this->GetInput()->GetPointData()->GetScalars();
+    vtkDataArray *scalarsInput = input->GetPointData()->GetScalars();
 
     // Voxel iteration through the entire image volume
     for (int kk = 0; kk < imgDim[2]; kk++)

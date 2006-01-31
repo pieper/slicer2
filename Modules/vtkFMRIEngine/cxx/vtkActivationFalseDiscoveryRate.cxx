@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkActivationFalseDiscoveryRate.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:35 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2006/01/31 17:47:59 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
 
@@ -39,7 +39,13 @@ vtkActivationFalseDiscoveryRate::~vtkActivationFalseDiscoveryRate()
 
 void vtkActivationFalseDiscoveryRate::SimpleExecute(vtkImageData *input, vtkImageData* output)
 {
-    if (this->NumberOfInputs == 0)
+    int numberOfInputs;
+#if (VTK_MAJOR_VERSION >= 5)
+    numberOfInputs = this->GetNumberOfInputConnections(0);
+#else
+    numberOfInputs = this->NumberOfInputs;
+#endif
+    if (numberOfInputs == 0)
     {
         vtkErrorMacro( << "This filter needs one input of image data.");
         return;

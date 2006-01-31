@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkActivationRegionStats.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:35 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/01/31 17:47:59 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 
@@ -48,7 +48,13 @@ vtkActivationRegionStats::~vtkActivationRegionStats()
 
 void vtkActivationRegionStats::SimpleExecute(vtkImageData *inputs, vtkImageData* output)
 {
-    if (this->NumberOfInputs != 3)
+    int numberOfInputs;
+#if (VTK_MAJOR_VERSION >= 5)
+    numberOfInputs = this->GetNumberOfInputConnections(0);
+#else
+    numberOfInputs = this->NumberOfInputs;
+#endif
+    if (numberOfInputs != 3)
     {
         vtkErrorMacro( << "This filter can only accept three input images.");
         return;
@@ -171,9 +177,14 @@ void vtkActivationRegionStats::SimpleExecute(vtkImageData *inputs, vtkImageData*
 // we need to explicitly define the ExecuteInformation() method
 void vtkActivationRegionStats::ExecuteInformation(vtkImageData *input, vtkImageData *output)
 {
-    this->vtkSimpleImageToImageFilter::ExecuteInformation();
+    int numberOfInputs;
+#if (VTK_MAJOR_VERSION >= 5)
+    numberOfInputs = this->GetNumberOfInputConnections(0);
+#else
+    numberOfInputs = this->NumberOfInputs;
+#endif
 
-    if (this->NumberOfInputs == 3 && this->Count > 0)
+    if (numberOfInputs == 3 && this->Count > 0)
     {
         int dim[3];  
         dim[0] = this->Count;
