@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSSurfaceReader.cxx,v $
-  Date:      $Date: 2006/01/31 17:52:54 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2006/01/31 22:53:27 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSSurfaceReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2006/01/31 17:52:54 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2006/01/31 22:53:27 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================*/
 #include "vtkFSSurfaceReader.h"
@@ -68,7 +68,7 @@ vtkPolyData *vtkFSSurfaceReader::GetOutput()
 #if (VTK_MAJOR_VERSION >= 5)
     numberOfOutputs = this->GetNumberOfOutputPorts();
 #else
-    numberOfInputs = this->NumberOfInputs;
+    numberOfOutputs = this->NumberOfOutputs;
 #endif
 
   if (numberOfOutputs < 1)
