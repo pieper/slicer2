@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditorEffects.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:14 $
-  Version:   $Revision: 1.13.2.1 $
+  Date:      $Date: 2006/01/31 17:01:20 $
+  Version:   $Revision: 1.13.2.2 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -58,6 +58,7 @@ void vtkImageEditorEffects::Threshold(float min, float max,
   thresh->SetReplaceOut(replaceOut);
   thresh->SetInValue(in);
   thresh->SetOutValue(out);
+  thresh->SetOutputScalarTypeToShort(); // needed for later drawing
 
   // TODO - fix this
 #ifdef SLICER_VTK5
