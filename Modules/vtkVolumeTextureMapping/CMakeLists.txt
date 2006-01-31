@@ -8,6 +8,13 @@
 
 PROJECT (VTKVOLUMETEXTUREMAPPING)
 
+
+#
+# Load CMake commands that you probably should not modify.
+#
+
+INCLUDE (${VTKVOLUMETEXTUREMAPPING_SOURCE_DIR}/CMakeOptions.cmake)
+
 #
 # Assume everything is set up correctly for build.
 #
@@ -22,12 +29,6 @@ ELSE("${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}" GREATER 5.0)
   SET (VTKVOLUMETEXTUREMAPPING_CAN_BUILD 1)
 ENDIF("${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}" GREATER 5.0)
 
-
-#
-# Load CMake commands that you probably should not modify.
-#
-
-INCLUDE (${VTKVOLUMETEXTUREMAPPING_SOURCE_DIR}/CMakeOptions.cmake)
 
 #
 # If everything is OK, then go into the sub directories and build.
