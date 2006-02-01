@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
-  Date:      $Date: 2006/02/01 21:58:20 $
-  Version:   $Revision: 1.8.2.3 $
+  Date:      $Date: 2006/02/01 23:21:25 $
+  Version:   $Revision: 1.8.2.4 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2006/02/01 21:58:20 $
-  Version:   $Revision: 1.8.2.3 $
+  Date:      $Date: 2006/02/01 23:21:25 $
+  Version:   $Revision: 1.8.2.4 $
 
   Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -72,7 +72,7 @@
 #include "itkGDCMImageIO.h"
 #include <itksys/SystemTools.hxx>
 
-vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.8.2.3 $");
+vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.8.2.4 $");
 vtkStandardNewMacro(vtkITKArchetypeImageSeriesReader);
 
 //----------------------------------------------------------------------------
@@ -353,7 +353,7 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
           if (imageIO.GetPointer() == NULL) 
             {
             vtkErrorMacro (<< "\nCould not load file \"" << this->Archetype << "\"\n\nIf there is a numerical series of files in this directory, please move the desired file to a directory by itself for reading.");
-            itkGenericExceptionMacro ("\nCould not load file.\nIf there is a numerical series of files in this directory, please move the desired file to a directory by itself for reading.");
+            itkGenericExceptionMacro ("\n\nCould not load file, may be unsupported format.\n\nIf there is a numerical series of volume files in this directory, please move the desired file to a directory by itself for reading.\n");
             return;
             
             }
