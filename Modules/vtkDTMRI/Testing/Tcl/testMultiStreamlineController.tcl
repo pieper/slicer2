@@ -41,7 +41,7 @@ streamControl SetInputRenderers renderers
 #-----------------------------------
 set seedTracts [streamControl GetSeedTracts]
 $seedTracts UseVtkHyperStreamlinePoints
-vtkHyperStreamlinePoints exampleObject
+vtkHyperStreamlineDTMRI exampleObject
 exampleObject  IntegrateMinorEigenvector
 exampleObject SetMaximumPropagationDistance 18.0
 exampleObject SetIntegrationStepLength 0.1
@@ -51,7 +51,8 @@ exampleObject SetNumberOfSides 18
 # Less picky anisotropy and curvature settings than default.
 # The defaults for brain will cut off these streamlines near the
 # botttom of the cube.
-exampleObject SetMinFractionalAnisotropy 0
+exampleObject SetStoppingThreshold 0
+exampleObject SetStoppingModeToLinearMeasure
 exampleObject SetMaxCurvature 10
 # Give the $seedTracts this object to copy new ones from
 $seedTracts SetVtkHyperStreamlinePointsSettings exampleObject
