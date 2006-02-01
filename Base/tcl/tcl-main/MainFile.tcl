@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainFile.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:27 $
-#   Version:   $Revision: 1.67.2.2 $
+#   Date:      $Date: 2006/02/01 22:32:31 $
+#   Version:   $Revision: 1.67.2.3 $
 # 
 #===============================================================================
 # FILE:        MainFile.tcl
@@ -65,7 +65,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.67.2.2 $} {$Date: 2005/12/20 22:54:27 $}]
+        {$Revision: 1.67.2.3 $} {$Date: 2006/02/01 22:32:31 $}]
 
     set File(filePrefix) data
 }
@@ -667,6 +667,7 @@ To save a volume, it must already exist in the 3D Slicer."
     # Show popup initialized to "prefix"
     set filename [file join $Mrml(dir) $prefix]
     set dir [file dirname $filename]
+    set filename [file tail $filename]
     set typelist {
         {"All Files" {*}}
     }
