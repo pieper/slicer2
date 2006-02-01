@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Volumes.tcl,v $
-#   Date:      $Date: 2006/01/31 22:44:41 $
-#   Version:   $Revision: 1.127.2.2 $
+#   Date:      $Date: 2006/02/01 22:35:56 $
+#   Version:   $Revision: 1.127.2.3 $
 # 
 #===============================================================================
 # FILE:        Volumes.tcl
@@ -101,7 +101,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-             {$Revision: 1.127.2.2 $} {$Date: 2006/01/31 22:44:41 $}]
+             {$Revision: 1.127.2.3 $} {$Date: 2006/02/01 22:35:56 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -1026,7 +1026,7 @@ proc VolumesAutomaticSetPropertyType {n} {
     if {$errmsg == "-1"} {
         set msg "No header information found. Please enter header info manually."
         puts $msg
-        tk_messageBox -message $msg
+        DevErrorWindow $msg
         # set readHeaders to manual
         set Volume(readHeaders) 0
         # switch to vols->props->header frame
@@ -1037,7 +1037,7 @@ proc VolumesAutomaticSetPropertyType {n} {
     } elseif {$errmsg != ""} {
         # File not found, most likely
         puts $errmsg
-        tk_messageBox -message $errmsg
+        DevErrorWindow $errmsg
         # Remove node
         MainMrmlUndoAddNode Volume $n
         return 0
@@ -1090,65 +1090,65 @@ proc VolumesPropsApply {} {
         
     # Validate name
     if {$Volume(name) == ""} {
-        tk_messageBox -message "Please enter a name that will allow you to distinguish this volume."
+        DevErrorWindow "Please enter a name that will allow you to distinguish this volume."
         return
     }
     if {[ValidateName $Volume(name)] == 0} {
-        tk_messageBox -message "The name can consist of letters, digits, dashes, or underscores.\nName \"$Volume(name)\" not valid."
+        DevErrorWindow "The name can consist of letters, digits, dashes, or underscores.\nName \"$Volume(name)\" not valid."
         return
     }
 
     # first file
     # Generic reader does not need first file, it uses FilePrefix 
     if {[file exists $Volume(firstFile)] == 0 &&  $m != "NEW" && [Volume($m,node) GetFileType] != "Generic" } {
-        tk_messageBox -message "The first file $Volume(firstFile) must exist, if you haven't saved a newly created volume, please press cancel and then go to the Editor Module, Volumes tab, Save button"
+        DevErrorWindow "The first file $Volume(firstFile) must exist, if you haven't saved a newly created volume, please press cancel and then go to the Editor Module, Volumes tab, Save button"
         return
     }
 
     # lastNum
     if { $Volume(isDICOM) == 0 } {
         if {[ValidateInt $Volume(lastNum)] == 0} {
-            tk_messageBox -message "The last number must be an integer."
+            DevErrorWindow "The last number must be an integer."
             return
         }
     }
     # resolution
     if {[ValidateInt $Volume(width)] == 0} {
-        tk_messageBox -message "The width must be an integer."
+        DevErrorWindow "The width must be an integer."
         return
     }
     if {[ValidateInt $Volume(height)] == 0} {
-        tk_messageBox -message "The height must be an integer."
+        DevErrorWindow "The height must be an integer."
         return
     }
     # pixel size
     if {[ValidateFloat $Volume(pixelWidth)] == 0} {
-        tk_messageBox -message "The pixel size must be a number."
+        DevErrorWindow "The pixel size must be a number."
         return
     }
     if {[ValidateFloat $Volume(pixelHeight)] == 0} {
-        tk_messageBox -message "The pixel size must be a number."
+        DevErrorWindow "The pixel size must be a number."
         return
     }
 
     # slice thickness
     if {[ValidateFloat $Volume(sliceThickness)] == 0} {
-        tk_messageBox -message "The slice thickness must be a number."
+        DevErrorWindow "The slice thickness must be a number."
         return
     }
     # slice spacing
     if {[ValidateFloat $Volume(sliceSpacing)] == 0} {
-        tk_messageBox -message "The slice spacing must be a number."
+        DevErrorWindow "The slice spacing must be a number."
         return
     }
     # tilt
     if {[ValidateFloat $Volume(gantryDetectorTilt)] == 0} {
-        tk_messageBox -message "The tilt must be a number."
+        DevErrorWindow "The tilt must be a number."
         return
     }
     # num scalars
     if {[ValidateInt $Volume(numScalars)] == 0} {
-        tk_messageBox -message "The number of scalars must be an integer."
+        DevErrorWindow "The number of scalars must be an integer."
         return
     }
 
@@ -1619,7 +1619,7 @@ proc VolumesReformatSlicePlane {orientation} {
 
     # first check that we are reading the right orientation
     if {$orientation != "ReformatAxial" && $orientation != "ReformatSagittal" && $orientation != "ReformatCoronal" && $orientation != "NewOrient"} {
-        tk_messageBox -message "The orientation $orientation is not a valid one"
+        DevErrorWindow "The orientation $orientation is not a valid one"
         return;
     }
     
@@ -1627,11 +1627,11 @@ proc VolumesReformatSlicePlane {orientation} {
     set list [FiducialsGetAllSelectedPointIdList]
     if { [llength $list] < 3 } {
         # give warning and exit
-        tk_messageBox -message "You have to create (p) and select (q) 3 fiducials.\nSelected fiducials are red."
+        DevErrorWindow "You have to create (p) and select (q) 3 fiducials.\nSelected fiducials are red."
         return
     } elseif { [llength $list] > 3 } {
         # give warning and exit
-        tk_messageBox -message "Please select only 3 fiducials"
+        DevErrorWindow "Please select only 3 fiducials"
         return
     } else {
         # get the 3 selected fiducial points coordinates
@@ -1770,11 +1770,11 @@ proc VolumesRotateSlicePlane {orientation} {
     set list [FiducialsGetAllSelectedPointIdList]
     if { [llength $list] < 2 } {
         # give warning and exit
-        tk_messageBox -message "You have to create and select 2 fiducials (they do not necessarily have to be on the reformated plane)"        
+        DevErrorWindow "You have to create and select 2 fiducials (they do not necessarily have to be on the reformated plane)"        
         return
     } elseif { [llength $list] > 2 } {
         # give warning and exit
-        tk_messageBox -message "Please select only 2 fiducials"
+        DevErrorWindow "Please select only 2 fiducials"
         return
     } else {
         # get the 2 points coordinates
