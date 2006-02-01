@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Volumes.tcl,v $
-#   Date:      $Date: 2006/02/01 22:35:56 $
-#   Version:   $Revision: 1.127.2.3 $
+#   Date:      $Date: 2006/02/01 23:22:18 $
+#   Version:   $Revision: 1.127.2.4 $
 # 
 #===============================================================================
 # FILE:        Volumes.tcl
@@ -101,7 +101,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-             {$Revision: 1.127.2.3 $} {$Date: 2006/02/01 22:35:56 $}]
+             {$Revision: 1.127.2.4 $} {$Date: 2006/02/01 23:22:18 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -1370,7 +1370,9 @@ proc VolumesSetFirst {} {
     }
     # check to see if user cancelled and set filename to empty string
     if {$Volume(firstFile) == {} || $Volume(firstFile) == ""} {
-        puts "VolumesSetFirst: firstFile not set"
+        if { $::Module(verbose) } {
+            puts "VolumesSetFirst: firstFile not set"
+        }
         return
     }
     # check to see if user entered a non existant first file
@@ -1382,8 +1384,10 @@ proc VolumesSetFirst {} {
     set Volume(name)  [file root [file tail $Volume(firstFile)]]
     set Volume(DefaultDir) [file dirname [file join $Mrml(dir) $Volume(firstFile)]]
     # lastNum is an image number
-    set Volume(lastNum)  [MainFileFindImageNumber Last \
-        [file join $Mrml(dir) $Volume(firstFile)]]
+    if { $::Volume(propertyType) == "VolBasic" } {
+        set Volume(lastNum)  [MainFileFindImageNumber Last \
+            [file join $Mrml(dir) $Volume(firstFile)]]
+    }
 }
 
 #-------------------------------------------------------------------------------
