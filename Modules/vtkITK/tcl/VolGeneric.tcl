@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: VolGeneric.tcl,v $
-#   Date:      $Date: 2006/01/26 14:20:53 $
-#   Version:   $Revision: 1.19.2.2 $
+#   Date:      $Date: 2006/02/01 21:58:53 $
+#   Version:   $Revision: 1.19.2.3 $
 # 
 #===============================================================================
 # FILE:        VolGeneric.tcl
@@ -282,8 +282,8 @@ proc VolGenericApply {} {
         return
     }
 
-    if {[catch "genreader UpdateInformation"]} {
-        DevErrorWindow "Cannot read information for file $Volume(VolGeneric,FileName)"
+    if {[catch "genreader UpdateInformation" res]} {
+        DevErrorWindow "Cannot read information for file $Volume(VolGeneric,FileName)\n\n$res"
         VolGenericMainFileCloseUpdate
         MainMrmlDeleteNode Volume $i
         return;
