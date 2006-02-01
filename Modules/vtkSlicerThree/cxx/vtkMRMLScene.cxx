@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLScene.cxx,v $
-Date:      $Date: 2006/01/31 12:34:01 $
-Version:   $Revision: 1.3 $
+Date:      $Date: 2006/02/01 16:23:52 $
+Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 #include "vtkMRMLScene.h"
@@ -16,6 +16,12 @@ Version:   $Revision: 1.3 $
 #include "vtkObjectFactory.h"
 #include "vtkErrorCode.h"
 
+vtkMRMLScene::vtkMRMLScene() 
+{
+  URL=NULL;
+  RegisteredNodeClasses.clear();
+  UniqueIdByClass.clear();
+}
 
 //------------------------------------------------------------------------------
 vtkMRMLScene* vtkMRMLScene::New()
@@ -30,6 +36,26 @@ vtkMRMLScene* vtkMRMLScene::New()
 }
 
 //------------------------------------------------------------------------------
+vtkMRMLNode* vtkMRMLScene::CreateNodeByClass(const char* className) 
+{
+  vtkMRMLNode* node = NULL;
+  for (int i=0; i<RegisteredNodeClasses.size(); i++) {
+    if (RegisteredNodeClasses[i]->IsA(className)) {
+      node = RegisteredNodeClasses[i]->CreateNodeInstance();
+      break;
+    }
+  }
+  // non-registered nodes can have a registered factory
+  if (node == NULL) {
+    vtkObject* ret = vtkObjectFactory::CreateInstance(className); 
+    if(ret) {
+      node = static_cast<vtkMRMLNode *>(ret);
+    }
+  }
+  return node;
+}
+
+//------------------------------------------------------------------------------
 int vtkMRMLScene::Connect()
 {
   
@@ -38,6 +64,7 @@ int vtkMRMLScene::Connect()
     return 0;
   }
   vtkMRMLParser* parser = vtkMRMLParser::New();
+  parser->SetMRMLScene(this);
   parser->SetFileName(URL);
   parser->Parse();
   parser->Delete();

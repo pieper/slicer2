@@ -49,6 +49,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include <list>
 #include <map>
+#include <vector>
 #include <string>
 
 #include "vtkCollection.h"
@@ -74,18 +75,12 @@ public:
   int Commit(const char* url=NULL);
   
   // Create node with a given class
-  static vtkMRMLNode* CreateNodeByClass(const char* className) {
-    if (0) {}
-    else {
-      vtkObject* ret = vtkObjectFactory::CreateInstance(className); 
-      if(ret) {
-        return static_cast<vtkMRMLNode *>(ret);
-      }
-      else {
-        return NULL;
-      }
-    }
-  };
+  vtkMRMLNode* CreateNodeByClass(const char* className) ;
+
+  // Register node class with the Scene so that it can create it from
+  // a class name
+  void RegisterNodeClass(vtkMRMLNode* node) {
+    this->RegisteredNodeClasses.push_back(node); };
   
   // Description:
   // Add a path to the list.
@@ -141,7 +136,7 @@ public:
                                  vtkTransform *xform );
   
 protected:
-  vtkMRMLScene() {URL=NULL;};
+  vtkMRMLScene();
   ~vtkMRMLScene() {};
   vtkMRMLScene(const vtkMRMLScene&) {};
   void operator=(const vtkMRMLScene&) {};
@@ -150,6 +145,7 @@ protected:
   
   //BTX
   std::map< std::string, int> UniqueIdByClass;
+  std::vector< vtkMRMLNode* > RegisteredNodeClasses;
   //ETX
   
   vtkMRMLNode* InitTraversalByClass(const char *className);

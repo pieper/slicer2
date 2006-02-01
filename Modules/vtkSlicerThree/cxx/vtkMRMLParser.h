@@ -58,7 +58,7 @@ public:
   vtkSetObjectMacro(MRMLScene, vtkMRMLScene);
 
 protected:
-  vtkMRMLParser() {};
+  vtkMRMLParser() {MRMLScene=NULL;};
   ~vtkMRMLParser() {};
   vtkMRMLParser(const vtkMRMLParser&) {};
   void operator=(const vtkMRMLParser&) {};

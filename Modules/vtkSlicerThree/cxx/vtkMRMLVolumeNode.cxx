@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLVolumeNode.cxx,v $
-  Date:      $Date: 2006/01/31 12:34:01 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/02/01 16:23:52 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 
@@ -25,6 +25,20 @@
 
 //------------------------------------------------------------------------------
 vtkMRMLVolumeNode* vtkMRMLVolumeNode::New()
+{
+  // First try to create the object from the vtkObjectFactory
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLVolumeNode");
+  if(ret)
+  {
+    return (vtkMRMLVolumeNode*)ret;
+  }
+  // If the factory was unable to create the object, then create it here.
+  return new vtkMRMLVolumeNode;
+}
+
+//----------------------------------------------------------------------------
+
+vtkMRMLNode* vtkMRMLVolumeNode::CreateNodeInstance()
 {
   // First try to create the object from the vtkObjectFactory
   vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLVolumeNode");

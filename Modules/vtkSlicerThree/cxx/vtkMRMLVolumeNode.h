@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLVolumeNode.h,v $
-  Date:      $Date: 2006/01/31 12:34:01 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/02/01 16:23:52 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLVolumeNode - MRML node for representing a volume (image stack).
@@ -38,6 +38,8 @@ class VTK_EXPORT vtkMRMLVolumeNode : public vtkMRMLNode
   static vtkMRMLVolumeNode *New();
   vtkTypeMacro(vtkMRMLVolumeNode,vtkMRMLNode);
   void PrintSelf(ostream& os, vtkIndent indent);
+
+  virtual vtkMRMLNode* CreateNodeInstance();
 
   // Description:
   // Set node attributes

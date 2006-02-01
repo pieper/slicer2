@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLNode.h,v $
-  Date:      $Date: 2006/01/31 12:34:01 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/02/01 16:23:52 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLNode - Abstract Superclass for all specific types of MRML nodes.
@@ -29,6 +29,8 @@ public:
   vtkTypeMacro(vtkMRMLNode,vtkObject);
   void PrintSelf(ostream& os, vtkIndent indent);
   
+  virtual vtkMRMLNode* CreateNodeInstance() = 0;
+
   // Description:
   // Copy everything from another node of the same type.
   // Instances of vtkMRMLNode must define the Copy function.
