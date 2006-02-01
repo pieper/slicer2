@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageResliceST.cxx,v $
-  Date:      $Date: 2006/02/01 15:28:53 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/02/01 15:36:50 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 #include "vtkImageResliceST.h"
@@ -106,7 +106,7 @@ inline int vtkResliceCeil(float x)
 
 // in the case of a tie between integers, the larger integer wins.
 
-#if VTK_TYPE_CHAR_IS_SIGNED
+#ifdef VTK_SIGNED_CHAR
 inline void vtkResliceRound(float val, signed char& rnd)
 {
   rnd = (char)((int)(val+256.5f)-256);
@@ -179,7 +179,7 @@ inline void vtkResliceRound(float val, double& rnd)
 //----------------------------------------------------------------------------
 // clamping functions for each type
 
-#if VTK_TYPE_CHAR_IS_SIGNED
+#ifdef VTK_SIGNED_CHAR
 template<class F>
 inline void vtkResliceClamp(F val, signed char& clamp)
 {
