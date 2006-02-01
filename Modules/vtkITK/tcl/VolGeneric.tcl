@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: VolGeneric.tcl,v $
-#   Date:      $Date: 2006/02/01 21:58:53 $
-#   Version:   $Revision: 1.19.2.3 $
+#   Date:      $Date: 2006/02/01 23:22:48 $
+#   Version:   $Revision: 1.19.2.4 $
 # 
 #===============================================================================
 # FILE:        VolGeneric.tcl
@@ -459,7 +459,9 @@ proc VolGenericMainFileCloseUpdate {} {
         puts "VolGenericMainFileCloseUpdate"
     }
     foreach f $Volume(idList) {
-        puts "VolGenericMainFileCloseUpdate: Checking volume $f"
+        if { $::Module(verbose) } {
+            puts "VolGenericMainFileCloseUpdate: Checking volume $f"
+        }
         
         if {[info exists Volume(VolGeneric,$f,curveactor)] == 1} {
             if {$Module(verbose) == 1} {

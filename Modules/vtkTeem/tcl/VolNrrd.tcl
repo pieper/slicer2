@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: VolNrrd.tcl,v $
-#   Date:      $Date: 2005/12/20 22:56:23 $
-#   Version:   $Revision: 1.1.2.2 $
+#   Date:      $Date: 2006/02/01 23:23:06 $
+#   Version:   $Revision: 1.1.2.3 $
 # 
 #===============================================================================
 # FILE:        VolNrrd.tcl
@@ -463,7 +463,9 @@ proc VolNrrdReaderProc {v} {
     readerProc_nrrdReader1 SetFileName [Volume($v,node) GetFullPrefix]
 
     readerProc_nrrdReader1 Update
-    puts "[[readerProc_nrrdReader1 GetOutput] Print]"
+    if { $::Module(verbose) } {
+        puts "[[readerProc_nrrdReader1 GetOutput] Print]"
+    }
     
     #Check if we need to create Volume node or Tensor node
     
