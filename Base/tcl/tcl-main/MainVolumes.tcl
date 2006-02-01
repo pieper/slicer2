@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainVolumes.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:30 $
-#   Version:   $Revision: 1.91.2.2 $
+#   Date:      $Date: 2006/02/01 22:33:39 $
+#   Version:   $Revision: 1.91.2.3 $
 # 
 #===============================================================================
 # FILE:        MainVolumes.tcl
@@ -54,7 +54,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.91.2.2 $} {$Date: 2005/12/20 22:54:30 $}]
+    {$Revision: 1.91.2.3 $} {$Date: 2006/02/01 22:33:39 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -1037,7 +1037,7 @@ proc MainVolumesSetActive {v} {
             scan [Volume($v,node) GetImageRange] "%d %d" lo hi
             set Volume(lastNum) $hi
             set Volume(firstFile) [format $Volume(filePattern) \
-                [Volume($v,node) GetFilePrefix] $lo]
+                [Volume($v,node) GetFullPrefix] $lo]
 
             scan [Volume($v,node) GetSpacing] "%f %f %f" pixw pixh thick
             set Volume(pixelWidth) $pixw
