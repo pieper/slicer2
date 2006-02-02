@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.cxx,v $
-  Date:      $Date: 2006/01/20 03:50:58 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2006/02/02 03:40:13 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
 
@@ -221,10 +221,10 @@ void vtkSeedTracts::UpdateAllHyperStreamlineSettings()
 
   while(currStreamline)
     {
-      std::cout << currStreamline->GetClassName() << endl;
+      vtkDebugMacro( << currStreamline->GetClassName() );
       if (strcmp(currStreamline->GetClassName(),"vtkHyperStreamlineDTMRI") == 0)
         {
-          std::cout << " match" <<endl;
+          vtkDebugMacro( << " match" );
           currHSP = (vtkHyperStreamlineDTMRI *) currStreamline;
           this->UpdateHyperStreamlinePointsSettings(currHSP);
           currHSP->Update();
