@@ -415,25 +415,25 @@ if { ![file exists $::BLT_TEST_FILE] } {
     } elseif { $isDarwin } {
         if { ![file exists $SLICER_HOME/isPatchedBLT] } {
             puts "Patching..."
-            runcmd curl -k -O https://share.spl.harvard.edu/share/birn/public/software/External/Patches/bltPatch.diff
+            runcmd curl -k -O https://share.spl.harvard.edu/share/birn/public/software/External/Patches/bltpatch
             cd $SLICER_LIB/tcl/blt
-            runcmd patch -p 1 < ../bltPatch.diff
+            runcmd patch -p2 < ../bltpatch
             
             # create a file to make sure BLT isn't patched twice
             runcmd touch $SLICER_HOME/isPatchedBLT
-            file delete $SLICER_LIB/tcl/bltPatch.diff
+            file delete $SLICER_LIB/tcl/bltpatch
         } else {
             puts "BLT already patched."
         }
-        
-        # this fails, but gets blt far enough along to build what is needed 
+
         cd $SLICER_LIB/tcl/blt
-        runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
-        catch "eval runcmd $::MAKE"
-        catch "eval runcmd $::MAKE install"
+        runcmd ./configure --with-tcl=$SLICER_LIB/tcl/tcl/unix --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build --enable-shared --x-includes=/usr/X11R6/include --with-cflags=-fno-common
+        
+    eval runcmd $::MAKE
+        eval runcmd $::MAKE install
     } else {
         cd $SLICER_LIB/tcl/blt
-        runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
+        runcmd ./configure --with-tcl=$SLICER_LIB/tcl/tcl/unix --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
         eval runcmd $::SERIAL_MAKE
         eval runcmd $::SERIAL_MAKE install
     }
