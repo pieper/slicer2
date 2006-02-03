@@ -415,32 +415,22 @@ if { ![file exists $::BLT_TEST_FILE] } {
     } elseif { $isDarwin } {
         if { ![file exists $SLICER_HOME/isPatchedBLT] } {
             puts "Patching..."
-            runcmd curl -k -O https://share.spl.harvard.edu/share/birn/public/software/External/Patches/bltPatch.diff
+            runcmd curl -k -O https://share.spl.harvard.edu/share/birn/public/software/External/Patches/bltpatch
             cd $SLICER_LIB/tcl/blt
-            runcmd patch -p 1 < ../bltPatch.diff
+            runcmd patch -p2 < ../bltpatch
             
             # create a file to make sure BLT isn't patched twice
             runcmd touch $SLICER_HOME/isPatchedBLT
-            file delete $SLICER_LIB/tcl/bltPatch.diff
+            file delete $SLICER_LIB/tcl/bltpatch
         } else {
             puts "BLT already patched."
         }
-        
-        # this fails, but gets blt far enough along to build what is needed 
+
         cd $SLICER_LIB/tcl/blt
-        runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
-        catch "eval runcmd $::MAKE"
-        catch "eval runcmd $::MAKE install"
-        foreach f [glob $SLICER_LIB/tcl/blt/library/*.tcl] { 
-            file copy -force $f $SLICER_LIB//tcl-build/lib/blt2.4
-        }
-        foreach g [glob $SLICER_LIB/tcl/blt/library/*.pro] { 
-            file copy -force $g $SLICER_LIB//tcl-build/lib/blt2.4
-        }
-        foreach h [glob $SLICER_LIB/tcl/blt/library/*.xbm] { 
-            file copy -force $h $SLICER_LIB//tcl-build/lib/blt2.4
-        }
-        file rename $SLICER_LIB/tcl-build/lib/libBLTlite24.so $SLICER_LIB//tcl-build/lib/libBLTlite24.dylib
+        runcmd ./configure --with-tcl=$SLICER_LIB/tcl/tcl/unix --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build --enable-shared --x-includes=/usr/X11R6/include --with-cflags=-fno-common
+        
+    eval runcmd $::MAKE
+        eval runcmd $::MAKE install
     } else {
         cd $SLICER_LIB/tcl/blt
         runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
