@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPrincipalAxesAlign.h,v $
-  Date:      $Date: 2005/12/20 22:56:18 $
-  Version:   $Revision: 1.1.2.1 $
+  Date:      $Date: 2006/02/03 21:02:57 $
+  Version:   $Revision: 1.1.2.2 $
 
 =========================================================================auto=*/
 #ifndef __vtk_principal_axes_align_h
@@ -28,7 +28,6 @@ class VTK_REALIGNRESAMPLE_EXPORT vtkPrincipalAxesAlign : public vtkPolyDataToPol
 {
  public:
   static vtkPrincipalAxesAlign* New();
-  void Delete();
   vtkTypeMacro(vtkPrincipalAxesAlign,vtkPolyDataToPolyDataFilter);
 
   vtkGetVector3Macro(Center,vtkFloatingPointType);

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPrincipalAxesAlign.cxx,v $
-  Date:      $Date: 2005/12/20 22:56:18 $
-  Version:   $Revision: 1.1.2.1 $
+  Date:      $Date: 2006/02/03 21:02:57 $
+  Version:   $Revision: 1.1.2.2 $
 
 =========================================================================auto=*/
 #include "vtkPrincipalAxesAlign.h"
@@ -103,11 +103,6 @@ vtkPrincipalAxesAlign* vtkPrincipalAxesAlign::New()
   return new vtkPrincipalAxesAlign;
 }
 
-void vtkPrincipalAxesAlign::Delete()
-{
-  delete this;
-
-}
 void vtkPrincipalAxesAlign::PrintSelf()
 {
 
@@ -158,6 +153,7 @@ vtkPrincipalAxesAlign::~vtkPrincipalAxesAlign()
   free(XAxis);
   free(YAxis);
   free(ZAxis);
+  
   for(int i = 0;i<3;i++)
     {
       free(eigenvalueProblem[i]);
