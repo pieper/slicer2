@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPrincipalAxesAlign.h,v $
-  Date:      $Date: 2006/02/03 21:02:57 $
-  Version:   $Revision: 1.1.2.2 $
+  Date:      $Date: 2006/02/03 23:21:13 $
+  Version:   $Revision: 1.1.2.3 $
 
 =========================================================================auto=*/
 #ifndef __vtk_principal_axes_align_h
@@ -35,7 +35,7 @@ class VTK_REALIGNRESAMPLE_EXPORT vtkPrincipalAxesAlign : public vtkPolyDataToPol
   vtkGetVector3Macro(YAxis,vtkFloatingPointType);
   vtkGetVector3Macro(ZAxis,vtkFloatingPointType);
   void Execute();
-  void PrintSelf();
+  void PrintSelf(ostream& os, vtkIndent indent);
  protected:
   vtkPrincipalAxesAlign();
   ~vtkPrincipalAxesAlign();

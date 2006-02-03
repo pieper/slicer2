@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPrincipalAxesAlign.cxx,v $
-  Date:      $Date: 2006/02/03 21:02:57 $
-  Version:   $Revision: 1.1.2.2 $
+  Date:      $Date: 2006/02/03 23:21:12 $
+  Version:   $Revision: 1.1.2.3 $
 
 =========================================================================auto=*/
 #include "vtkPrincipalAxesAlign.h"
@@ -102,12 +102,7 @@ vtkPrincipalAxesAlign* vtkPrincipalAxesAlign::New()
   // If the factory was unable to create the object, then create it here.
   return new vtkPrincipalAxesAlign;
 }
-
-void vtkPrincipalAxesAlign::PrintSelf()
-{
-
-}
-
+                                      
 vtkPrincipalAxesAlign::vtkPrincipalAxesAlign()
 {
   Center = (vtkFloatingPointType*) malloc(3*sizeof(vtkFloatingPointType));
@@ -133,18 +128,25 @@ vtkPrincipalAxesAlign::vtkPrincipalAxesAlign()
   eigenvalueProblem = (double**)malloc(sizeof(double*)*3);
   int i;
   for(i = 0;i<3;i++)
+  {
     eigenvalueProblem[i] = (double*) malloc(3*sizeof(double));
-
+    eigenvalueProblem[i][0] = eigenvalueProblem[i][1] = eigenvalueProblem[i][2] = 0.0;
+  }
+  
   eigenvalueProblemDiag = (double**)malloc(sizeof(double*)*3);
   for(i = 0;i<3;i++)
+  {
     eigenvalueProblemDiag[i] = (double*) malloc(3*sizeof(double));
-  
+    eigenvalueProblemDiag[i][0] = eigenvalueProblemDiag[i][1] = eigenvalueProblemDiag[i][2] = 0.0;
+  }
   eigenvectors = (double**)malloc(sizeof(double*)*3);
   for(i = 0;i<3;i++)
+  {
     eigenvectors[i] = (double*) malloc(3*sizeof(double));
-
+    eigenvectors[i][0] = eigenvectors[i][1] = eigenvectors[i][2] = 0.0;
+  }
   eigenvalues = (double*)malloc(sizeof(double)*3);
-
+  eigenvalues[0] = eigenvalues[1] = eigenvalues[2] = 0.0;
 }
 
 vtkPrincipalAxesAlign::~vtkPrincipalAxesAlign()
@@ -174,4 +176,77 @@ vtkPrincipalAxesAlign::vtkPrincipalAxesAlign(vtkPrincipalAxesAlign&)
 void vtkPrincipalAxesAlign::operator=(const vtkPrincipalAxesAlign)
 {
 
+}
+
+void vtkPrincipalAxesAlign::PrintSelf(ostream& os, vtkIndent indent)
+{
+    int i;
+    
+    this->Superclass::PrintSelf(os,indent);
+
+    os << indent << "Center: " << endl;
+    if (this->Center)
+    {
+        os << indent << this->Center[0] << " " << this->Center[1] << " " << this->Center[2] << endl;
+    } 
+
+    os << indent << "XAxis: " << endl;
+    if (this->XAxis)
+    {
+        os << indent << this->XAxis[0] << " " << this->XAxis[1] << " " << this->XAxis[2] << endl;
+    } 
+
+    os << indent << "YAxis: " << endl;
+    if (this->YAxis)
+    {
+        os << indent << this->YAxis[0] << " " << this->YAxis[1] << " " << this->YAxis[2] << endl;
+    } 
+
+    os << indent << "ZAxis: " << endl;
+    if (this->ZAxis)
+    {
+        os << indent <<  this->ZAxis[0] << " " << this->ZAxis[1] << " " << this->ZAxis[2] << endl;
+    } 
+
+    os << indent << "eigenvalueProblem: " << endl;
+    if (this->eigenvalueProblem)
+    {
+        for (i = 0; i<3; i++)
+        {
+            if (this->eigenvalueProblem[i])
+            {
+                os << indent << indent << i << ": " << this->eigenvalueProblem[i][0] << " " << this->eigenvalueProblem[i][1] << " " << this->eigenvalueProblem[i][2] << endl;
+            }
+        }
+    } 
+
+    os << indent << "eigenvalueProblemDiag: " << endl;
+    if (this->eigenvalueProblemDiag)
+    {
+        for (i = 0; i<3; i++)
+        {
+            if (this->eigenvalueProblemDiag[i])
+            {
+                os << indent << indent << i << ": " << this->eigenvalueProblemDiag[i][0] << " " << this->eigenvalueProblemDiag[i][1] << " " << this->eigenvalueProblemDiag[i][2] << endl;
+            }
+        }
+    } 
+
+    os << indent << "eigenvectors: " << endl;
+    if (this->eigenvectors)
+    {
+        for (i = 0; i<3; i++)
+        {
+            if (this->eigenvectors[i])
+            {
+                os << indent << indent << i << ": " << this->eigenvectors[i][0] << " " << this->eigenvectors[i][1] << " " << this->eigenvectors[i][2] << endl;
+            }
+        }
+    } 
+
+    os << indent << "eigenvalues: " << endl;
+    if (this->eigenvalues)
+    {
+        os << indent << this->eigenvalues[0] << " " << this->eigenvalues[1] << " " << this->eigenvalues[2] << endl;
+    } 
 }
