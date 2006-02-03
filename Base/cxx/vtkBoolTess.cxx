@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkBoolTess.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:08 $
-  Version:   $Revision: 1.12.12.1 $
+  Date:      $Date: 2006/02/03 23:20:36 $
+  Version:   $Revision: 1.12.12.2 $
 
 =========================================================================auto=*/
 #include <math.h>
@@ -24,29 +24,54 @@
 // along the axis closest to the normal vector. Sort points along
 // the axis of greatest extent.
 vtkBoolTess::vtkBoolTess()
-  {
-  this->NumContours = this->NumInputEdges = 0;
+{
+  this->NumContours = 0;
+  this->NumInputEdges = 0;
+  this->NumNewEdges = 0;
+  this->NumTriangles = 0;
   this->PrevNumInputEdges = 0;
+
+  this->ProjAxis = 0;
+  this->SortAxis = 0;
+  this->YAxis = 0;
+  this->Orient = 0;
+  
   this->InputEdges = NULL;
   this->NewEdges = NULL;
   this->Vertices = NULL;
   this->SortArray = NULL;
   this->ActivePairs = NULL;
   this->Triangles = NULL;
+
   }
 
 vtkBoolTess::~vtkBoolTess()
+{
+  if (this->InputEdges)
   {
-  if ( PrevNumInputEdges > 0 )
-    {
     delete [] this->InputEdges;
-    delete [] this->NewEdges;
-    delete [] this->Vertices;
-    delete [] this->SortArray;
-    delete [] this->ActivePairs;
-    delete [] this->Triangles;
-    }
   }
+  if (this->NewEdges)
+  {
+    delete [] this->NewEdges;
+  }
+  if (this->Vertices)
+  {
+    delete [] this->Vertices;
+  }
+  if (this->SortArray)
+  {
+    delete [] this->SortArray;
+  }
+  if (this->ActivePairs)
+  {
+    delete [] this->ActivePairs;
+  }
+  if (this->Triangles)
+  {
+    delete [] this->Triangles;
+  }
+}
 
 vtkBoolTess *tess;
 
@@ -550,3 +575,20 @@ int vtkBoolTess::SortCompare(const void *arg1, const void *arg2 )
   else
     return 0;
   }
+
+void vtkBoolTess::PrintSelf(ostream& os, vtkIndent indent)
+{
+    this->Superclass::PrintSelf(os,indent);
+
+    os << indent << "NumContours: " << this->NumContours << endl;
+    os << indent << "NumInputEdges: " << this->NumInputEdges << endl;
+    os << indent << "NumNewEdges: " << this->NumNewEdges << endl;
+    os << indent << "NumTriangles: " << this->NumTriangles << endl;
+    os << indent << "PrevNumInputEdges: " << this->PrevNumInputEdges << endl;
+    
+    os << indent << "ProjAxis: " << this->ProjAxis << endl;
+    os << indent << "SortAxis: " << this->SortAxis << endl;
+    os << indent << "YAxis: " << this->YAxis << endl;
+    os << indent << "Orient: " << this->Orient << endl;
+
+}

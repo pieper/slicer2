@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkBoolTess.h,v $
-  Date:      $Date: 2005/12/20 22:44:08 $
-  Version:   $Revision: 1.11.12.1 $
+  Date:      $Date: 2006/02/03 23:20:36 $
+  Version:   $Revision: 1.11.12.2 $
 
 =========================================================================auto=*/
 #ifndef __vtkBoolTess_h
@@ -53,18 +53,18 @@ typedef struct booltesspair {
 //ETX - end tcl exclude
 //
 
-class VTK_SLICER_BASE_EXPORT vtkBoolTess { //; prevent man page generation
+class VTK_SLICER_BASE_EXPORT vtkBoolTess : public vtkObject { //; prevent man page generation
 public:
   vtkBoolTess();
   ~vtkBoolTess();
 
   /*  inline */ static vtkBoolTess *New() {return (new vtkBoolTess);}
-  /*  inline */ void Delete() { delete this; }
   void SetPoints( vtkFloatingPointType *points );
   int AddContour( vtkIdType nPts, vtkIdType *ptIds );
   void Reset();
   int Triangulate( vtkIdType **tris );
 
+    void PrintSelf(ostream& os, vtkIndent indent);
 protected:
   int GenerateTriangles();
   static int SortCompare(const void *arg1, const void *arg2 );
