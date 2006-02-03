@@ -201,6 +201,9 @@ if { $GENLIB(clean) } {
         if { [file exists $SLICER_HOME/isPatched] } {
             runcmd rm $SLICER_HOME/isPatched
         }
+        if { [file exists $SLICER_HOME/isPatchedBLT] } {
+            runcmd rm $SLICER_HOME/isPatchedBLT
+        }
     } else {
         file delete -force $SLICER_LIB
     }
