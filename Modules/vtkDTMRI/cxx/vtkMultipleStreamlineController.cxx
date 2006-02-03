@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMultipleStreamlineController.cxx,v $
-  Date:      $Date: 2006/01/20 03:50:58 $
-  Version:   $Revision: 1.67 $
+  Date:      $Date: 2006/02/03 19:41:10 $
+  Version:   $Revision: 1.68 $
 
 =========================================================================auto=*/
 #include "vtkMultipleStreamlineController.h"
@@ -87,6 +87,8 @@ vtkMultipleStreamlineController::~vtkMultipleStreamlineController()
 {
   this->DeleteAllStreamlines();
 
+  this->Streamlines->Delete();
+
   this->WorldToTensorScaledIJK->Delete();
   if (this->InputTensorField) this->InputTensorField->Delete();
 
@@ -96,6 +98,7 @@ vtkMultipleStreamlineController::~vtkMultipleStreamlineController()
   this->TractClusterer->Delete();
   this->SaveTracts->Delete();  
   this->SeedTracts->Delete();  
+  this->DisplayTracts->Delete();  
   this->ColorROIFromTracts->Delete(); 
 }
 

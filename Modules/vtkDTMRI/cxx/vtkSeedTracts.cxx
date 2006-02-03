@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.cxx,v $
-  Date:      $Date: 2006/02/02 03:40:13 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/02/03 19:41:10 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 
@@ -85,6 +85,16 @@ vtkSeedTracts::~vtkSeedTracts()
   if (this->InputROI) this->InputROI->Delete();
   if (this->InputROI2) this->InputROI->Delete();
 
+  // settings
+  if (this->VtkHyperStreamlineSettings) 
+    this->VtkHyperStreamlineSettings->Delete();
+  if (this->VtkHyperStreamlinePointsSettings) 
+    this->VtkHyperStreamlinePointsSettings->Delete();
+  if (this->VtkPreciseHyperStreamlinePointsSettings) 
+    this->VtkPreciseHyperStreamlinePointsSettings->Delete();
+
+  // collection
+  if (this->Streamlines) this->Streamlines->Delete();
 }
 
 
@@ -290,7 +300,7 @@ int vtkSeedTracts::PointWithinTensorData(double *point, double *pointw)
 
   if (inbounds ==0)
     {
-      cout << "point " << pointw[0] << " " << pointw[1] << " " << pointw[2] << " outside of tensor dataset" << endl;
+      std::cout << "point " << pointw[0] << " " << pointw[1] << " " << pointw[2] << " outside of tensor dataset" << endl;
     }
 
   return(inbounds);
@@ -396,6 +406,10 @@ void vtkSeedTracts::SeedStreamlinesInROI()
   short *inPtr;
   vtkHyperStreamline *newStreamline;
 
+  // time
+  clock_t tStart=0;
+  tStart = clock();
+
   // test we have input
   if (this->InputROI == NULL)
     {
@@ -491,6 +505,9 @@ void vtkSeedTracts::SeedStreamlinesInROI()
         }
       inPtr += inIncZ;
     }
+  
+  std::cout << "Tractography in ROI time: " << clock() - tStart << endl;
+
 }
 
 // seed in each voxel in the ROI, only keep paths that intersect the
@@ -508,6 +525,10 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
   //unsigned long target;
   short *inPtr;
   vtkHyperStreamlineDTMRI *newStreamline;
+
+  // time
+  clock_t tStart=0;
+  tStart = clock();
 
   // test we have input
   if (this->InputROI == NULL)
@@ -701,6 +722,7 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
       inPtr += inIncZ;
     }
 
+  std::cout << "Tractography in ROI time: " << clock() - tStart << endl;
 }
 
 
@@ -728,6 +750,10 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   std::stringstream fileNameStr;
   int idx;
   ofstream filePoints, fileCoordinateSystemInfo;
+
+  // time
+  clock_t tStart=0;
+  tStart = clock();
 
   // test we have input
   if (this->InputROI == NULL)
@@ -843,7 +869,7 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
               //cout << (count/(50.0*target) + (maxZ+1)*(maxY+1)) << endl;
               //cout << "progress: " << count << endl;
               // just output numbers from 1 to 50.
-              cout << count2 << endl;
+              std::cout << count2 << endl;
               count2++;
             }
           count++;
@@ -923,12 +949,13 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   filePoints.close();
   
   // Tell user how many we wrote
-  cout << "Wrote " << idx << "model files." << endl;
+  std::cout << "Wrote " << idx << "model files." << endl;
 
   fileCoordinateSystemInfo << "Model files written:" << endl;
   fileCoordinateSystemInfo << idx << endl;
   fileCoordinateSystemInfo.close();
 
+  std::cout << "Tractography in ROI time: " << clock() - tStart << endl;
 }
 
 // Save only one streamline. Called from within functions that save 

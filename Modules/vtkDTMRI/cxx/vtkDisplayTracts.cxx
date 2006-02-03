@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDisplayTracts.cxx,v $
-  Date:      $Date: 2006/01/18 19:11:31 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/02/03 19:41:10 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 #include "vtkDisplayTracts.h"
@@ -80,13 +80,16 @@ vtkDisplayTracts::~vtkDisplayTracts()
   this->DeleteAllStreamlines();
 
   this->Renderers->Delete();
-  this->Streamlines->Delete();
+  if (this->Streamlines != NULL)
+    this->Streamlines->Delete();
   this->ClippedStreamlines->Delete();
   this->Mappers->Delete();
   this->Actors->Delete();
   this->TubeFilters->Delete();
+  this->TransformFilters->Delete();
 
   this->StreamlineLookupTable->Delete();
+  this->StreamlineProperty->Delete();
 }
 
 //----------------------------------------------------------------------------
@@ -345,6 +348,8 @@ void vtkDisplayTracts::CreateGraphicsObjects()
     }
 
 
+  currTransform->Delete();
+
   // For debugging print this info again
   // Find out how many streamlines we have, and if they all have actors
   numStreamlines = this->Streamlines->GetNumberOfItems();
@@ -450,8 +455,8 @@ void vtkDisplayTracts::DeleteStreamline(int index)
 
   vtkDebugMacro( << "Delete stream" );
   // Remove from collection.
-  // If we are clipping this should delete it.
-  // Otherwise it removes a reference to the one still 
+  // If we are clipping this should delete the clipper object.
+  // Otherwise it removes a reference to the streamline object still 
   // on the Streamlines collection.
   this->ClippedStreamlines->RemoveItem(index);
 
