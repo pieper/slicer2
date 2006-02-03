@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.cxx,v $
-  Date:      $Date: 2006/02/03 19:41:10 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/02/03 21:47:32 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 
@@ -20,6 +20,7 @@
 
 #include "vtkTransformPolyDataFilter.h"
 #include "vtkPolyDataWriter.h"
+#include "vtkTimerLog.h"
 
 #include <sstream>
 #include <string>
@@ -407,8 +408,8 @@ void vtkSeedTracts::SeedStreamlinesInROI()
   vtkHyperStreamline *newStreamline;
 
   // time
-  clock_t tStart=0;
-  tStart = clock();
+  vtkTimerLog *timer = vtkTimerLog::New();
+  timer->StartTimer();
 
   // test we have input
   if (this->InputROI == NULL)
@@ -505,8 +506,9 @@ void vtkSeedTracts::SeedStreamlinesInROI()
         }
       inPtr += inIncZ;
     }
-  
-  std::cout << "Tractography in ROI time: " << clock() - tStart << endl;
+
+  timer->StopTimer();
+  std::cout << "Tractography in ROI time: " << timer->GetElapsedTime() << endl;
 
 }
 
@@ -527,8 +529,8 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
   vtkHyperStreamlineDTMRI *newStreamline;
 
   // time
-  clock_t tStart=0;
-  tStart = clock();
+  vtkTimerLog *timer = vtkTimerLog::New();
+  timer->StartTimer();
 
   // test we have input
   if (this->InputROI == NULL)
@@ -722,7 +724,8 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
       inPtr += inIncZ;
     }
 
-  std::cout << "Tractography in ROI time: " << clock() - tStart << endl;
+  timer->StopTimer();
+  std::cout << "Tractography in ROI time: " << timer->GetElapsedTime() << endl;
 }
 
 
@@ -752,8 +755,8 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   ofstream filePoints, fileCoordinateSystemInfo;
 
   // time
-  clock_t tStart=0;
-  tStart = clock();
+  vtkTimerLog *timer = vtkTimerLog::New();
+  timer->StartTimer();
 
   // test we have input
   if (this->InputROI == NULL)
@@ -955,7 +958,8 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   fileCoordinateSystemInfo << idx << endl;
   fileCoordinateSystemInfo.close();
 
-  std::cout << "Tractography in ROI time: " << clock() - tStart << endl;
+  timer->StopTimer();
+  std::cout << "Tractography in ROI time: " << timer->GetElapsedTime() << endl;
 }
 
 // Save only one streamline. Called from within functions that save 
