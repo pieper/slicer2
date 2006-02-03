@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageReformatIJK.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:19 $
-  Version:   $Revision: 1.14.16.1 $
+  Date:      $Date: 2006/02/03 23:41:03 $
+  Version:   $Revision: 1.14.16.2 $
 
 =========================================================================auto=*/
 #include "vtkImageReformatIJK.h"
@@ -58,8 +58,11 @@ vtkImageReformatIJK::vtkImageReformatIJK()
 vtkImageReformatIJK::~vtkImageReformatIJK()
 {
     this->Indices->Delete();
-  this->tran->Delete();
-
+    if (this->tran)
+    {
+        this->tran->Delete();
+    }
+    
   // We must UnRegister any object that has a vtkSetObjectMacro
   if (this->WldToIjkMatrix != NULL) 
   {
