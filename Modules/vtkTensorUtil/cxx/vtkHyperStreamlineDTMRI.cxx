@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.cxx,v $
-  Date:      $Date: 2006/01/20 03:05:02 $
-  Version:   $Revision: 1.19 $
+  Date:      $Date: 2006/02/03 19:38:25 $
+  Version:   $Revision: 1.20 $
 
 =========================================================================auto=*/
 #include "vtkHyperStreamlineDTMRI.h"
@@ -26,7 +26,7 @@
 //#include "vtkHyperPointandArray.cxx"
 #endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.19 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.20 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 // Construct object with initial starting position (0,0,0); integration step 
@@ -54,7 +54,7 @@ vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()
   this->LogScaling = 0;
   this->IntegrationEigenvector = VTK_INTEGRATE_MAJOR_EIGENVECTOR;
 
-  this->SetStoppingModeToLinearMeasure();
+  this->StoppingMode = VTK_TENS_LINEAR_MEASURE;
   this->StoppingThreshold=0.07;
 
 }
@@ -517,6 +517,10 @@ void vtkHyperStreamlineDTMRI::Execute()
   delete [] w;
   cellTensors->Delete();
   cellScalars->Delete();  
+
+  // note: these two lines fix memory leak in code copied from vtk
+  delete [] this->Streamers;
+  this->Streamers = NULL;
 }
 
 void vtkHyperStreamlineDTMRI::BuildLines()
