@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainColors.tcl,v $
-#   Date:      $Date: 2006/01/06 17:56:53 $
-#   Version:   $Revision: 1.20 $
+#   Date:      $Date: 2006/02/03 23:42:07 $
+#   Version:   $Revision: 1.21 $
 # 
 #===============================================================================
 # FILE:        MainColors.tcl
@@ -33,7 +33,7 @@ proc MainColorsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainColors \
-        {$Revision: 1.20 $} {$Date: 2006/01/06 17:56:53 $}]
+        {$Revision: 1.21 $} {$Date: 2006/02/03 23:42:07 $}]
 
     set Color(activeID) ""
     set Color(name) ""
@@ -269,3 +269,22 @@ proc MainColorsGetColorFromLabel {label} {
     return ""
 }
 
+proc MainColorsGetLabelFromColorName {colorName} {
+    global Color Mrml
+
+    set tree Mrml(colorTree) 
+    set node [$tree InitColorTraversal]
+    while {$node != ""} {
+        set name [$node GetName]
+        
+        if {$name == $colorName} {
+
+            # return list of labels that correspond to this color
+            return [$node GetLabels]
+            
+            }
+
+        set node [$tree GetNextColor]
+    }
+    return ""
+}
