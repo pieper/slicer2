@@ -39,6 +39,7 @@ vtkSaveTracts.cxx
 vtkROISelectTracts.cxx
 vtkColorROIFromTracts.cxx
 vtkEstimateDiffusionTensor.cxx
+vtkColorROIFromPolyLines.cxx
 )
 
 ## classes that one does not want tcl wrapped
