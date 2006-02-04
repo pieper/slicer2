@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLVolumeNode.cxx,v $
-  Date:      $Date: 2006/02/04 22:38:16 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2006/02/04 22:41:01 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
 
@@ -279,6 +279,7 @@ void vtkMRMLVolumeNode::PrintSelf(ostream& os, vtkIndent indent)
   this->IjkToRasMatrix->PrintSelf(os, indent.GetNextIndent());  
   
   if (this->ImageData != NULL) {
+    os << indent << "ImageData:\n";
     this->ImageData->PrintSelf(os, indent.GetNextIndent()); 
   }
 }
