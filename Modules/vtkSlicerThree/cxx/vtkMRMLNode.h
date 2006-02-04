@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLNode.h,v $
-  Date:      $Date: 2006/02/01 16:23:52 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2006/02/04 22:38:16 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLNode - Abstract Superclass for all specific types of MRML nodes.
@@ -61,14 +61,17 @@ public:
   
   // Description:
   // Set node attributes
-  virtual void ReadXMLAttributes(const char** atts) = 0;
+  virtual void ReadXMLAttributes(const char** atts);
+
+  // Read data for the node
+  virtual void ReadData() = 0;
   
   // Description:
   // Write this node's information to a MRML file in XML format.
   // Only write attributes that differ from the default values,
   // which are set in the node's constructor.
   // This is a virtual function that all subclasses must overload.
-  virtual void WriteXML(ostream& of, int indent) = 0;
+  virtual void WriteXML(ostream& of, int indent);
   
   // Description:
   // Node's effect on indentation when displaying the

@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLScene.cxx,v $
-Date:      $Date: 2006/02/01 16:23:52 $
-Version:   $Revision: 1.4 $
+Date:      $Date: 2006/02/04 22:38:16 $
+Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
 #include "vtkMRMLScene.h"
@@ -19,6 +19,7 @@ Version:   $Revision: 1.4 $
 vtkMRMLScene::vtkMRMLScene() 
 {
   URL=NULL;
+  ClassNameList= NULL;
   RegisteredNodeClasses.clear();
   UniqueIdByClass.clear();
 }
@@ -39,7 +40,7 @@ vtkMRMLScene* vtkMRMLScene::New()
 vtkMRMLNode* vtkMRMLScene::CreateNodeByClass(const char* className) 
 {
   vtkMRMLNode* node = NULL;
-  for (int i=0; i<RegisteredNodeClasses.size(); i++) {
+  for (unsigned int i=0; i<RegisteredNodeClasses.size(); i++) {
     if (RegisteredNodeClasses[i]->IsA(className)) {
       node = RegisteredNodeClasses[i]->CreateNodeInstance();
       break;
@@ -173,7 +174,8 @@ const char* vtkMRMLScene::GetNodeClasses()
     }
     classList.append(*iter);
   }
-  return classList.c_str();
+  SetClassNameList(classList.c_str());
+  return this->ClassNameList;
 }
 
 

@@ -1,1 +1,3 @@
-<vtkMRMLVolumeNode name="foo"></vtkMRMLVolumeNode>
+<vtkMRMLVolumeNode
+FileArcheType='C:/Data/BurnNamic/HUVA00024864/HUVA00024864_spgr.nhdr'
+Name="head" Description="somebody's"></vtkMRMLVolumeNode>

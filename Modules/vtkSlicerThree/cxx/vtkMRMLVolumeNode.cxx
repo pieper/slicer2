@@ -7,13 +7,14 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLVolumeNode.cxx,v $
-  Date:      $Date: 2006/02/01 16:23:52 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2006/02/04 22:38:16 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 
 #include <string>
 #include <ostream>
+#include <sstream>
 
 #include "vtkObjectFactory.h"
 #include "vtkMRMLVolumeNode.h"
@@ -60,7 +61,7 @@ vtkMRMLVolumeNode::vtkMRMLVolumeNode()
 
   // Numbers
   this->FileScalarType = VTK_SHORT;
-  this->FileNumberOfScalarComponents = 1;
+  this->FileNumberOfScalarComponents = 0;
   this->LabelMap = 0;
   this->Interpolate = 1;
   this->FileLittleEndian = 0;
@@ -78,15 +79,19 @@ vtkMRMLVolumeNode::vtkMRMLVolumeNode()
 
   // ScanOrder can never be NULL
   this->ScanOrder = new char[3];
-  strcpy(this->ScanOrder, "LR");
+  strcpy(this->ScanOrder, "Unknown");
 
   // Matrices
   this->IjkToRasMatrix = vtkMatrix4x4::New();
+  this->IjkToRasMatrix->Identity();
 
   // Initialize 
-  this->SetFileDimensions(256, 256, 256);
-  this->SetFileSpacing(0.9375, 0.9375, 1.5);
+  this->SetFileDimensions(0, 0, 0);
+  this->SetFileSpacing(0, 0, 0);
 
+  // Data
+  this->ImageData = NULL;
+  this->ImageReader = vtkITKArchetypeImageSeriesReader::New();
 }
 
 //----------------------------------------------------------------------------
@@ -110,6 +115,7 @@ vtkMRMLVolumeNode::~vtkMRMLVolumeNode()
     this->ScanOrder = NULL;
   }
 
+  this->ImageReader->Delete();
 }
 
 //----------------------------------------------------------------------------
@@ -142,8 +148,57 @@ void vtkMRMLVolumeNode::WriteXML(ostream& of, int nIndent)
 //----------------------------------------------------------------------------
 void vtkMRMLVolumeNode::ReadXMLAttributes(const char** atts)
 {
-  vtkErrorMacro("NOT IMPLEMENTED YET");
+
+  vtkMRMLNode::ReadXMLAttributes(atts);
+
+  char* attName;
+  char* attValue;
+  while (*atts != NULL) {
+    attName = (char *)(*(atts++));
+    attValue = (char *)(*(atts++));
+    if (!strcmp(attName, "FileArcheType")) {
+      this->SetFileArcheType(attValue);
+    }
+    else if (!strcmp(attName, "FileDimensions")) {
+      std::stringstream ss;
+      ss << attValue;
+      ss >> FileDimensions[0];
+      ss >> FileDimensions[1];
+      ss >> FileDimensions[2];
+    }
+    else if (!strcmp(attName, "FileSpacing")) {
+      std::stringstream ss;
+      ss << attValue;
+      ss >> FileSpacing[0];
+      ss >> FileSpacing[1];
+      ss >> FileSpacing[2];
+    }
+    else if (!strcmp(attName, "FileNumberOfScalarComponents")) {
+      std::stringstream ss;
+      ss << attValue;
+      ss >> FileNumberOfScalarComponents;
+    }
+    else if (!strcmp(attName, "FileScalarType")) {
+      std::stringstream ss;
+      ss << attValue;
+      ss >> FileScalarType;
+    }
+    else if (!strcmp(attName, "FileLittleEndian")) {
+      std::stringstream ss;
+      ss << attValue;
+      ss >> FileLittleEndian;
+    }
+  }  
 }
+
+//----------------------------------------------------------------------------
+void vtkMRMLVolumeNode::ReadData()
+{
+  this->ImageReader->SetArchetype(this->GetFileArcheType());
+  this->ImageReader->Update();
+  this->ImageData = this->ImageReader->GetOutput();
+}
+
 
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
@@ -208,23 +263,24 @@ void vtkMRMLVolumeNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Interpolate:       " << this->Interpolate << "\n";
 
   os << "FileSpacing:\n";
-  for (idx = 0; idx < 3; ++idx)
-  {
+  for (idx = 0; idx < 3; ++idx) {
     os << indent << ", " << this->FileSpacing[idx];
   }
   os << ")\n";
-
+  
   os << "FileDimensions:\n";
-  for (idx = 0; idx < 3; ++idx)
-  {
+  for (idx = 0; idx < 3; ++idx) {
     os << indent << ", " << this->FileDimensions[idx];
   }
   os << ")\n";
-
+  
   // Matrices
   os << indent << "IjkToRasMatrix:\n";
-    this->IjkToRasMatrix->PrintSelf(os, indent.GetNextIndent());  
-
+  this->IjkToRasMatrix->PrintSelf(os, indent.GetNextIndent());  
+  
+  if (this->ImageData != NULL) {
+    this->ImageData->PrintSelf(os, indent.GetNextIndent()); 
+  }
 }
 
 //----------------------------------------------------------------------------

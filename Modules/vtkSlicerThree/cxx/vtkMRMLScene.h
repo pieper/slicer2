@@ -152,6 +152,9 @@ protected:
   
   vtkSetMacro(ErrorCode,unsigned long);
   vtkGetMacro(ErrorCode,unsigned long);
+
+  vtkSetStringMacro(ClassNameList);
+  vtkGetStringMacro(ClassNameList);
   
 private:
   // hide the standard AddItem from the user and the compiler.
@@ -161,6 +164,8 @@ private:
   int  IsItemPresent(vtkObject *o) { return this->vtkCollection::IsItemPresent(o);};
   
   unsigned long ErrorCode;
+
+  char* ClassNameList;
 };
 
 #endif

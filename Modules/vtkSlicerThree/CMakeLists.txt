@@ -44,6 +44,19 @@ SET (VTKSLICERBASE_BUILD_LIB CACHE PATH
 )
 
 
+# Path to Module vtkITK that we have to link against this.
+SET (VTKITK_SOURCE_DIR CACHE PATH
+    "should end with Modules/vtkITK"
+)
+SET (VTKITK_BUILD_DIR CACHE PATH
+    "should end with vtkITK/builds/xxx where xxx is the same build name you are making here"
+)
+SET (VTKITK_BUILD_LIB CACHE PATH
+    "name of the vtkITK lib file (.lib or .a)"
+)
+SET (VTKITK_BUILD_TCL_LIB CACHE PATH
+    "name of the vtkITKTCL lib file (.lib or .a)"
+)
 #
 # If everything is OK, then go into the sub directories and build.
 #

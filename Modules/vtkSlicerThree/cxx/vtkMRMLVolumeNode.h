@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLVolumeNode.h,v $
-  Date:      $Date: 2006/02/01 16:23:52 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2006/02/04 22:38:16 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLVolumeNode - MRML node for representing a volume (image stack).
@@ -29,6 +29,7 @@
 #include "vtkMatrix4x4.h"
 #include "vtkTransform.h"
 #include "vtkImageData.h"
+#include "vtkITKArchetypeImageSeriesReader.h"
 
 class vtkImageData;
 
@@ -44,6 +45,9 @@ class VTK_EXPORT vtkMRMLVolumeNode : public vtkMRMLNode
   // Description:
   // Set node attributes
   virtual void ReadXMLAttributes( const char** atts);
+
+  // Read data for the node
+  virtual void ReadData();
 
   // Description:
   // Write this node's information to a MRML file in XML format.
@@ -215,6 +219,7 @@ protected:
   vtkMRMLVolumeNode(const vtkMRMLVolumeNode&) {};
   void operator=(const vtkMRMLVolumeNode&) {};
 
+
   // Strings
   char *FileArcheType;
   char *LUTName;
@@ -241,6 +246,8 @@ protected:
 
   vtkMatrix4x4 *IjkToRasMatrix;
   vtkImageData *ImageData;
+
+  vtkITKArchetypeImageSeriesReader* ImageReader;
 };
 
 #endif
