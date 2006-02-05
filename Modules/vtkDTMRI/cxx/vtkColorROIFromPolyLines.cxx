@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkColorROIFromPolyLines.cxx,v $
-Date:      $Date: 2006/02/03 23:47:38 $
-Version:   $Revision: 1.1 $
+Date:      $Date: 2006/02/05 18:04:43 $
+Version:   $Revision: 1.2 $
 
 =========================================================================auto=*/
 
@@ -179,7 +179,7 @@ void vtkColorROIFromPolyLines::ColorROIFromStreamlines()
               // the seed point is the first point on each pair of paths,
               // don't count it twice.
               int ptidx=0;
-              if (fmod(pathIdx,2) == 0) 
+              if (fmod(pathIdx,2.0) == 0) 
                 ptidx = 1;
                   
               int pt[3];
