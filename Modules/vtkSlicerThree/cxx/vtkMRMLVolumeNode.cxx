@@ -1,14 +1,14 @@
 /*=auto=========================================================================
 
-  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 
-  See Doc/copyright/copyright.txt
-  or http://www.slicer.org/copyright/copyright.txt for details.
+See Doc/copyright/copyright.txt
+or http://www.slicer.org/copyright/copyright.txt for details.
 
-  Program:   3D Slicer
-  Module:    $RCSfile: vtkMRMLVolumeNode.cxx,v $
-  Date:      $Date: 2006/02/04 22:41:01 $
-  Version:   $Revision: 1.5 $
+Program:   3D Slicer
+Module:    $RCSfile: vtkMRMLVolumeNode.cxx,v $
+Date:      $Date: 2006/02/06 16:20:01 $
+Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 
@@ -20,8 +20,8 @@
 #include "vtkMRMLVolumeNode.h"
 
 // Initialize static member that controls resampling -- 
-  // old comment: "This offset will be changed to 0.5 from 0.0 per 2/8/2002 Slicer 
-  // development meeting, to move ijk coordinates to voxel centers."
+// old comment: "This offset will be changed to 0.5 from 0.0 per 2/8/2002 Slicer 
+// development meeting, to move ijk coordinates to voxel centers."
 
 
 //------------------------------------------------------------------------------
@@ -30,9 +30,9 @@ vtkMRMLVolumeNode* vtkMRMLVolumeNode::New()
   // First try to create the object from the vtkObjectFactory
   vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLVolumeNode");
   if(ret)
-  {
-    return (vtkMRMLVolumeNode*)ret;
-  }
+    {
+      return (vtkMRMLVolumeNode*)ret;
+    }
   // If the factory was unable to create the object, then create it here.
   return new vtkMRMLVolumeNode;
 }
@@ -44,9 +44,9 @@ vtkMRMLNode* vtkMRMLVolumeNode::CreateNodeInstance()
   // First try to create the object from the vtkObjectFactory
   vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLVolumeNode");
   if(ret)
-  {
-    return (vtkMRMLVolumeNode*)ret;
-  }
+    {
+      return (vtkMRMLVolumeNode*)ret;
+    }
   // If the factory was unable to create the object, then create it here.
   return new vtkMRMLVolumeNode;
 }
@@ -79,7 +79,7 @@ vtkMRMLVolumeNode::vtkMRMLVolumeNode()
 
   // ScanOrder can never be NULL
   this->ScanOrder = new char[3];
-  strcpy(this->ScanOrder, "Unknown");
+  strcpy(this->ScanOrder, "");
 
   // Matrices
   this->IjkToRasMatrix = vtkMatrix4x4::New();
@@ -100,20 +100,20 @@ vtkMRMLVolumeNode::~vtkMRMLVolumeNode()
   this->IjkToRasMatrix->Delete();
 
   if (this->FileArcheType)
-  {
-    delete [] this->FileArcheType;
-    this->FileArcheType = NULL;
-  }
+    {
+      delete [] this->FileArcheType;
+      this->FileArcheType = NULL;
+    }
   if (this->LUTName)
-  {
-    delete [] this->LUTName;
-    this->LUTName = NULL;
-  }
+    {
+      delete [] this->LUTName;
+      this->LUTName = NULL;
+    }
   if (this->ScanOrder)
-  {
-    delete [] this->ScanOrder;
-    this->ScanOrder = NULL;
-  }
+    {
+      delete [] this->ScanOrder;
+      this->ScanOrder = NULL;
+    }
 
   this->ImageReader->Delete();
 }
@@ -122,20 +122,20 @@ vtkMRMLVolumeNode::~vtkMRMLVolumeNode()
 char* vtkMRMLVolumeNode::GetFileScalarTypeAsString()
 {
   switch (this->FileScalarType)
-  {
-  case VTK_VOID:           return "Void"; break;
-  case VTK_BIT:            return "Bit"; break;
-  case VTK_CHAR:           return "Char"; break;
-  case VTK_UNSIGNED_CHAR:  return "UnsignedChar"; break;
-  case VTK_SHORT:          return "Short"; break;
-  case VTK_UNSIGNED_SHORT: return "UnsignedShort"; break;
-  case VTK_INT:            return "Int"; break;
-  case VTK_UNSIGNED_INT:   return "UnsignedInt"; break;
-  case VTK_LONG:           return "Long"; break;
-  case VTK_UNSIGNED_LONG:  return "UnsignedLong"; break;
-  case VTK_FLOAT:          return "Float"; break;
-  case VTK_DOUBLE:         return "Double"; break;
-  }
+    {
+    case VTK_VOID:           return "Void"; break;
+    case VTK_BIT:            return "Bit"; break;
+    case VTK_CHAR:           return "Char"; break;
+    case VTK_UNSIGNED_CHAR:  return "UnsignedChar"; break;
+    case VTK_SHORT:          return "Short"; break;
+    case VTK_UNSIGNED_SHORT: return "UnsignedShort"; break;
+    case VTK_INT:            return "Int"; break;
+    case VTK_UNSIGNED_INT:   return "UnsignedInt"; break;
+    case VTK_LONG:           return "Long"; break;
+    case VTK_UNSIGNED_LONG:  return "UnsignedLong"; break;
+    case VTK_FLOAT:          return "Float"; break;
+    case VTK_DOUBLE:         return "Double"; break;
+    }
   return "Short";
 }
 
@@ -197,6 +197,15 @@ void vtkMRMLVolumeNode::ReadData()
   this->ImageReader->SetArchetype(this->GetFileArcheType());
   this->ImageReader->Update();
   this->ImageData = this->ImageReader->GetOutput();
+
+  // set volume attributes
+  this->SetIjkToRasMatrix(this->ImageReader->GetRasToIjkMatrix());
+  this->IjkToRasMatrix->Invert();
+
+  if (!(this->FileSpacing[0] == 0 && this->FileSpacing[1] == 0 && this->FileSpacing[2] == 0) ) {
+    this->ImageData->SetSpacing(FileSpacing[0], FileSpacing[1], FileSpacing[2]);
+  }
+
 }
 
 
@@ -301,37 +310,37 @@ char* vtkMRMLVolumeNode::ComputeScanOrderFromIjkToRas(vtkMatrix4x4 *ijkToRas)
   
   for (int i=1; i<3; i++) {
     if (fabs(kvec[i]) > max) {
-        max = fabs(kvec[i]);
-        max_comp=i;
-     }   
+      max = fabs(kvec[i]);
+      max_comp=i;
+    }   
   }
   
   switch(max_comp) {
-     case 0:
-        if (kvec[max_comp] > 0 ) {
-           return "LR";
-        } else {
-           return "RL";
-        }
-           break;
-      case 1:     
-         if (kvec[max_comp] > 0 ) {
-            return "PA";
-         } else {
-            return "AP";
-         }
-         break;
-      case 2:
-         if (kvec[max_comp] > 0 ) {
-            return "IS";
-         } else {
-            return "SI";
-         }
-         break;
+  case 0:
+    if (kvec[max_comp] > 0 ) {
+      return "LR";
+    } else {
+      return "RL";
+    }
+    break;
+  case 1:     
+    if (kvec[max_comp] > 0 ) {
+      return "PA";
+    } else {
+      return "AP";
+    }
+    break;
+  case 2:
+    if (kvec[max_comp] > 0 ) {
+      return "IS";
+    } else {
+      return "SI";
+    }
+    break;
   default:
-      cerr << "vtkMRMLVolumeNode::ComputeScanOrderFromRasToIjk:\n\tMax components "<< max_comp << " not in valid range 0,1,2\n";
-      return "";
-   }        
+    cerr << "vtkMRMLVolumeNode::ComputeScanOrderFromRasToIjk:\n\tMax components "<< max_comp << " not in valid range 0,1,2\n";
+    return "";
+  }        
  
 }
 

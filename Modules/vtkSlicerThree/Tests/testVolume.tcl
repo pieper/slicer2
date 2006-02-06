@@ -11,7 +11,13 @@ sc Connect
 puts "GetNumberOfNodesByClass [sc GetNumberOfNodesByClass vtkMRMLVolumeNode]"
 puts "GetNodeClasses [sc GetNodeClasses]"
 puts "GetNthNode"
-sc GetNthNode 0
+
 set vn [sc GetNthNode 0]
 puts "Print volume node 0"
 $vn Print
+
+set vn [sc GetNthNode 1]
+puts "Print volume node 1"
+$vn Print
+
+

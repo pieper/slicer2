@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLParser.cxx,v $
-Date:      $Date: 2006/02/04 22:38:16 $
-Version:   $Revision: 1.3 $
+Date:      $Date: 2006/02/06 16:20:01 $
+Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 #include "vtkObjectFactory.h"
@@ -30,7 +30,10 @@ vtkMRMLParser* vtkMRMLParser::New()
 
 void vtkMRMLParser::StartElement(const char* name, const char** atts)
 {
-  vtkMRMLNode* node = this->MRMLScene->CreateNodeByClass( name );
+  if (!strcmp(name, "MRML")) {
+    return;
+ }
+ vtkMRMLNode* node = this->MRMLScene->CreateNodeByClass( name );
 
   node->SetID(this->MRMLScene->GetUniqueIdByClass(name));
 
