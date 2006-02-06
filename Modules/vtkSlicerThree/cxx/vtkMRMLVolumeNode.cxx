@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLVolumeNode.cxx,v $
-Date:      $Date: 2006/02/06 16:20:01 $
-Version:   $Revision: 1.6 $
+Date:      $Date: 2006/02/06 21:29:48 $
+Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 
@@ -81,10 +81,6 @@ vtkMRMLVolumeNode::vtkMRMLVolumeNode()
   this->ScanOrder = new char[3];
   strcpy(this->ScanOrder, "");
 
-  // Matrices
-  this->IjkToRasMatrix = vtkMatrix4x4::New();
-  this->IjkToRasMatrix->Identity();
-
   // Initialize 
   this->SetFileDimensions(0, 0, 0);
   this->SetFileSpacing(0, 0, 0);
@@ -97,8 +93,6 @@ vtkMRMLVolumeNode::vtkMRMLVolumeNode()
 //----------------------------------------------------------------------------
 vtkMRMLVolumeNode::~vtkMRMLVolumeNode()
 {
-  this->IjkToRasMatrix->Delete();
-
   if (this->FileArcheType)
     {
       delete [] this->FileArcheType;
@@ -188,19 +182,48 @@ void vtkMRMLVolumeNode::ReadXMLAttributes(const char** atts)
       ss << attValue;
       ss >> FileLittleEndian;
     }
+    else if (!strcmp(attName, "IjkToRasDirections")) {
+      std::stringstream ss;
+      double val;
+      ss << attValue;
+      for (int i=0; i<9; i++) {
+        ss >> val;
+        this->IjkToRasDirections[i] = val;
+      }
+    }
   }  
 }
 
 //----------------------------------------------------------------------------
 void vtkMRMLVolumeNode::ReadData()
 {
-  this->ImageReader->SetArchetype(this->GetFileArcheType());
+  char *fullName;
+  if (this->SceneRootDir != NULL) {
+    fullName = strcat(this->SceneRootDir, this->GetFileArcheType());
+  }
+  else {
+    fullName = this->GetFileArcheType();
+  }
+  this->ImageReader->SetArchetype(fullName);
   this->ImageReader->Update();
   this->ImageData = this->ImageReader->GetOutput();
 
   // set volume attributes
-  this->SetIjkToRasMatrix(this->ImageReader->GetRasToIjkMatrix());
-  this->IjkToRasMatrix->Invert();
+  vtkMatrix4x4* mat = this->ImageReader->GetRasToIjkMatrix();
+  mat->Invert();
+
+  // normalize direction vectors
+  for (int row=0; row<3; row++) {
+    double len =0;
+    for (int col=0; col<3; col++) {
+      len += mat->GetElement(row, col) * mat->GetElement(row, col);
+    }
+    len = sqrt(len);
+    for (col=0; col<3; col++) {
+      mat->SetElement(row, col,  mat->GetElement(row, col)/len);
+    }
+  }
+  this->SetIjkToRasMatrix(mat);
 
   if (!(this->FileSpacing[0] == 0 && this->FileSpacing[1] == 0 && this->FileSpacing[2] == 0) ) {
     this->ImageData->SetSpacing(FileSpacing[0], FileSpacing[1], FileSpacing[2]);
@@ -241,7 +264,9 @@ void vtkMRMLVolumeNode::Copy(vtkMRMLNode *anode)
   this->SetInterpolate(node->Interpolate);
 
   // Matrices
-  this->IjkToRasMatrix->DeepCopy(node->IjkToRasMatrix);
+  for(int i=0; i<9; i++) {
+    this->IjkToRasDirections[i] = node->IjkToRasDirections[i];
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -284,12 +309,135 @@ void vtkMRMLVolumeNode::PrintSelf(ostream& os, vtkIndent indent)
   os << ")\n";
   
   // Matrices
-  os << indent << "IjkToRasMatrix:\n";
-  this->IjkToRasMatrix->PrintSelf(os, indent.GetNextIndent());  
-  
+  os << "IjkToRasDirections:\n";
+  for (idx = 0; idx < 9; ++idx) {
+    os << indent << ", " << this->IjkToRasDirections[idx];
+  }
+  os << ")\n";
+
   if (this->ImageData != NULL) {
     os << indent << "ImageData:\n";
     this->ImageData->PrintSelf(os, indent.GetNextIndent()); 
+  }
+}
+
+//----------------------------------------------------------------------------
+void vtkMRMLVolumeNode::SetIjkToRasDirections(double dirs[9])
+{
+  for (int i=0; i<9; i++) {
+    IjkToRasDirections[i] = dirs[i];
+  }
+}
+
+//----------------------------------------------------------------------------
+
+void vtkMRMLVolumeNode::SetIjkToRasDirections(double ir, double ia, double is,
+                                              double jr, double ja, double js,
+                                              double kr, double ka, double ks)
+{
+  IjkToRasDirections[0] = ir;
+  IjkToRasDirections[1] = ia;
+  IjkToRasDirections[2] = is;
+  IjkToRasDirections[3] = jr;
+  IjkToRasDirections[4] = ja;
+  IjkToRasDirections[5] = js;
+  IjkToRasDirections[6] = kr;
+  IjkToRasDirections[7] = ka;
+  IjkToRasDirections[8] = ks;
+}
+
+//----------------------------------------------------------------------------
+
+void vtkMRMLVolumeNode::SetIToRasDirection(double ir, double ia, double is)
+{
+  IjkToRasDirections[0] = ir;
+  IjkToRasDirections[1] = ia;
+  IjkToRasDirections[2] = is;
+}
+
+//----------------------------------------------------------------------------
+
+void vtkMRMLVolumeNode::SetJToRasDirection(double jr, double ja, double js)
+{
+  IjkToRasDirections[3] = jr;
+  IjkToRasDirections[4] = ja;
+  IjkToRasDirections[5] = js;
+}
+
+//----------------------------------------------------------------------------
+
+void vtkMRMLVolumeNode::SetKToRasDirection(double kr, double ka, double ks)
+{
+  IjkToRasDirections[6] = kr;
+  IjkToRasDirections[7] = ka;
+  IjkToRasDirections[8] = ks;
+}
+
+//----------------------------------------------------------------------------
+
+void vtkMRMLVolumeNode::GetIjkToRasDirections(double dirs[9])
+{
+  for (int i=0; i<9; i++) {
+    dirs[i] = IjkToRasDirections[i];
+  }
+}
+
+//----------------------------------------------------------------------------
+
+void vtkMRMLVolumeNode::GetIToRasDirection(double dirs[3])
+{
+  for (int i=0; i<3; i++) {
+    dirs[i] = IjkToRasDirections[i];
+  }
+}
+
+//----------------------------------------------------------------------------
+
+void vtkMRMLVolumeNode::GetJToRasDirection(double dirs[3])
+{
+  for (int i=0; i<3; i++) {
+    dirs[i] = IjkToRasDirections[3+i];
+  }
+}
+
+//----------------------------------------------------------------------------
+
+void vtkMRMLVolumeNode::GetKToRasDirection(double dirs[3])
+{
+  for (int i=0; i<3; i++) {
+    dirs[i] = IjkToRasDirections[6+i];
+  }
+}
+
+//----------------------------------------------------------------------------
+
+double* vtkMRMLVolumeNode::GetIjkToRasDirections()
+{
+  return IjkToRasDirections;
+}
+
+//----------------------------------------------------------------------------
+
+void vtkMRMLVolumeNode::GetIjkToRasMatrix(vtkMatrix4x4* mat)
+{
+  mat->Identity();
+  int i=0;
+  for (int row=0; row<3; row++) {
+    for (int col=0; col<3; col++) {
+      mat->SetElement(row, col, IjkToRasDirections[i++]);
+    }
+  }
+}
+
+//----------------------------------------------------------------------------
+
+void vtkMRMLVolumeNode::SetIjkToRasMatrix(vtkMatrix4x4* mat)
+{
+  int i=0;
+  for (int row=0; row<3; row++) {
+    for (int col=0; col<3; col++) {
+      IjkToRasDirections[i++] = mat->GetElement(row, col);
+    }
   }
 }
 

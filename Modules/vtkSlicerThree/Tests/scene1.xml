@@ -1,8 +1,8 @@
 <MRML>
-<vtkMRMLVolumeNode
+<Volume
 FileArcheType='Testing/TestData/imagetest/nrrd/fixed.nrrd' Name='head1'
-Description='somebodys1'></vtkMRMLVolumeNode>
-<vtkMRMLVolumeNode
+Description='somebodys1'></Volume>
+<Volume
 FileArcheType='Testing/TestData/imagetest/nrrd/moving.nrrd' Name='head2'
-Description='somebodys2'></vtkMRMLVolumeNode>
+Description='somebodys2'></Volume>
 </MRML>

@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLScene.cxx,v $
-Date:      $Date: 2006/02/04 22:38:16 $
-Version:   $Revision: 1.5 $
+Date:      $Date: 2006/02/06 21:29:48 $
+Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 #include "vtkMRMLScene.h"
@@ -41,7 +41,7 @@ vtkMRMLNode* vtkMRMLScene::CreateNodeByClass(const char* className)
 {
   vtkMRMLNode* node = NULL;
   for (unsigned int i=0; i<RegisteredNodeClasses.size(); i++) {
-    if (RegisteredNodeClasses[i]->IsA(className)) {
+    if (!strcmp(RegisteredNodeClasses[i]->GetClassName(), className)) {
       node = RegisteredNodeClasses[i]->CreateNodeInstance();
       break;
     }
@@ -54,6 +54,24 @@ vtkMRMLNode* vtkMRMLScene::CreateNodeByClass(const char* className)
     }
   }
   return node;
+}
+
+//------------------------------------------------------------------------------
+void vtkMRMLScene::RegisterNodeClass(vtkMRMLNode* node, char *tagName) 
+{
+    this->RegisteredNodeClasses.push_back(node);
+    this->RegisteredNodeTags.push_back(std::string(tagName));
+}
+
+//------------------------------------------------------------------------------
+const char* vtkMRMLScene::GetClassNameByTag(const char *tagName)
+{
+  for (unsigned int i=0; i<RegisteredNodeTags.size(); i++) {
+    if (!strcmp(RegisteredNodeTags[i].c_str(), tagName)) {
+      return (RegisteredNodeClasses[i])->GetClassName();
+    }
+  }
+  return NULL;
 }
 
 //------------------------------------------------------------------------------

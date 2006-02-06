@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLVolumeNode.h,v $
-  Date:      $Date: 2006/02/04 22:38:16 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2006/02/06 21:29:48 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLVolumeNode - MRML node for representing a volume (image stack).
@@ -205,9 +205,22 @@ class VTK_EXPORT vtkMRMLVolumeNode : public vtkMRMLNode
   vtkGetStringMacro(ScanOrder);
   vtkSetStringMacro(ScanOrder);
 
+  void SetIjkToRasDirections(double dirs[9]);
+  void SetIjkToRasDirections(double ir, double ia, double is,
+                             double jr, double ja, double js,
+                             double kr, double ka, double ks);
+  void SetIToRasDirection(double ir, double ia, double is);
+  void SetJToRasDirection(double jr, double ja, double ijs);
+  void SetKToRasDirection(double kr, double ka, double ks);
 
-  vtkGetObjectMacro(IjkToRasMatrix, vtkMatrix4x4);
-  vtkSetObjectMacro(IjkToRasMatrix, vtkMatrix4x4);
+  void GetIjkToRasDirections(double dirs[9]);
+  void GetIToRasDirection(double dirs[3]);
+  void GetJToRasDirection(double dirs[3]);
+  void GetKToRasDirection(double dirs[3]);
+  double* GetIjkToRasDirections();
+
+  void GetIjkToRasMatrix(vtkMatrix4x4* mat);
+  void SetIjkToRasMatrix(vtkMatrix4x4* mat);
 
   vtkGetObjectMacro(ImageData, vtkImageData);
   vtkSetObjectMacro(ImageData, vtkImageData);
@@ -244,7 +257,11 @@ protected:
   int ApplyThreshold;
   int AutoThreshold;
 
-  vtkMatrix4x4 *IjkToRasMatrix;
+  double IjkToRasDirections[9];
+  double IToRasDirections[3];
+  double JToRasDirections[3];
+  double KToRasDirections[3];
+
   vtkImageData *ImageData;
 
   vtkITKArchetypeImageSeriesReader* ImageReader;

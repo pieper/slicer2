@@ -79,12 +79,15 @@ public:
 
   // Register node class with the Scene so that it can create it from
   // a class name
-  void RegisterNodeClass(vtkMRMLNode* node) {
-    this->RegisteredNodeClasses.push_back(node); };
+  void RegisterNodeClass(vtkMRMLNode* node, char *tagName);
   
+  const char* GetClassNameByTag(const char *tagName);
+
   // Description:
   // Add a path to the list.
   void AddNode(vtkMRMLNode *n) {
+    //TODO convert URL to Root directory
+    n->SetSceneRootDir("");
     this->vtkCollection::AddItem((vtkObject *)n);};
   
   // Description:
@@ -146,6 +149,7 @@ protected:
   //BTX
   std::map< std::string, int> UniqueIdByClass;
   std::vector< vtkMRMLNode* > RegisteredNodeClasses;
+  std::vector< std::string > RegisteredNodeTags;
   //ETX
   
   vtkMRMLNode* InitTraversalByClass(const char *className);

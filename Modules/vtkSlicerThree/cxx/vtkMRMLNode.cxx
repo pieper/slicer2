@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLNode.cxx,v $
-Date:      $Date: 2006/02/04 22:38:16 $
-Version:   $Revision: 1.2 $
+Date:      $Date: 2006/02/06 21:29:48 $
+Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -48,6 +48,7 @@ vtkMRMLNode::vtkMRMLNode()
   this->SetName("");
 
   this->SpaceName = NULL;
+  this->SceneRootDir = NULL;
 }
 
 //----------------------------------------------------------------------------
