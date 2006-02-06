@@ -6,9 +6,11 @@ set flist [glob $::env(SLICER_HOME)/Base/cxx/*.h]
 set numFailedDeclare 0
 set numFailedDelete 0
 set numSuccess 0
+set numSkipped 0
 set successList {}
 set failDeclareList {}
 set failDeleteList {}
+set skippedList {}
 set exitCode 0
 
 foreach f $flist {
@@ -17,13 +19,25 @@ foreach f $flist {
 
     # is it a vtk class?
     if {[regexp "^vtk.*" $classname matchvar] == 1 &&
-        [regexp ".*Macro$" $classname matchvar] == 0} {
+        [regexp ".*Macro$" $classname matchvar] == 0 &&
+        [regexp ".*Header$" $classname matchvar] == 0 &&
+        [regexp "^vtkMrmlData$" $classname matchvar] == 0 &&
+        [regexp "^vtkMrmlNode$" $classname matchvar] == 0 &&
+        [regexp "^vtkSlicer$" $classname matchvar] == 0} {
         puts "Testing $classname"
         if {[catch "$classname myclass" errmsg] == 1} {
             puts "$errmsg"
-            incr numFailedDeclare
-            lappend failDeclareList $classname
+            if {[regexp "^invalid command name" $errmsg] == 0} {
+                incr numFailedDeclare
+                lappend failDeclareList $classname
+            } else {
+                # it wasn't built, commented out in CMakeLists.txt most likely
+                puts "\tskipping, not built"
+                incr numSkipped
+                lappend skippedList $classname
+            }
         } else {
+            puts "\tdeclaration passed, deleting"
             if {[catch "myclass Delete" errmsg] == 1} {
                 puts "Delete failed: $errmsg"
                 incr numFailedDelete
@@ -33,6 +47,10 @@ foreach f $flist {
                 lappend sucessList $classname
             }
         }
+    } else { 
+        puts "Skipping $classname" 
+        incr numSkipped
+        lappend skippedList $classname
     }
 }
 
@@ -48,8 +66,16 @@ if {$numFailedDelete > 0} {
         puts "\t$d"
     }
 }
-puts "$numSuccess classes passed, $numFailedDeclare failed on declaratrion, $numFailedDelete failed on delete"
+if {$numSkipped > 0} {
+    puts "Skipped:"
+    foreach s $skippedList {
+        puts "\t$s"
+    }
+}
+
 
 set exitCode [expr $numFailedDeclare + $numFailedDelete]
+
+puts "$numSuccess classes passed, $numFailedDeclare failed on declaration, $numFailedDelete failed on delete (skipped $numSkipped).\nExiting with code $exitCode"
 
 exit $exitCode
