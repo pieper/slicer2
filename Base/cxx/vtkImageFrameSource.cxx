@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageFrameSource.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:15 $
-  Version:   $Revision: 1.12.12.1 $
+  Date:      $Date: 2006/02/06 18:18:47 $
+  Version:   $Revision: 1.12.12.2 $
 
 =========================================================================auto=*/
 #include <stdlib.h>
@@ -40,7 +40,7 @@ vtkImageFrameSource::vtkImageFrameSource()
 //----------------------------------------------------------------------------
 vtkImageFrameSource::~vtkImageFrameSource()
 {
-    vtkErrorMacro(<<"this->RenderWindow = " << this->RenderWindow << ", if != NULL, will UnRegister it\n");
+    vtkDebugMacro(<<"this->RenderWindow = " << this->RenderWindow << ", if != NULL, will UnRegister it\n");
   // We must UnRegister any object that has a vtkSetObjectMacro
   if (this->RenderWindow != NULL) 
   {
