@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLScene.cxx,v $
-Date:      $Date: 2006/02/06 21:29:48 $
-Version:   $Revision: 1.6 $
+Date:      $Date: 2006/02/06 22:44:01 $
+Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 #include "vtkMRMLScene.h"
@@ -82,6 +82,7 @@ int vtkMRMLScene::Connect()
     vtkErrorMacro("Need URL specified");
     return 0;
   }
+  this->RemoveAllItems();
   vtkMRMLParser* parser = vtkMRMLParser::New();
   parser->SetMRMLScene(this);
   parser->SetFileName(URL);
