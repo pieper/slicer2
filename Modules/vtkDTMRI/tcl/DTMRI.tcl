@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRI.tcl,v $
-#   Date:      $Date: 2006/01/05 18:42:54 $
-#   Version:   $Revision: 1.120.2.4 $
+#   Date:      $Date: 2006/02/06 17:11:25 $
+#   Version:   $Revision: 1.120.2.5 $
 # 
 #===============================================================================
 # FILE:        DTMRI.tcl
@@ -481,7 +481,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.120.2.4 $} {$Date: 2006/01/05 18:42:54 $}]
+                  {$Revision: 1.120.2.5 $} {$Date: 2006/02/06 17:11:25 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -601,8 +601,6 @@ proc DTMRIUpdateMRML {} {
             [transform GetMatrix]
         transform Delete
 
-        # remove glyphs and tracts
-        DTMRIRemoveAllActors 
     }
     
      # Do MRML update of Tensor nodes.
@@ -1704,10 +1702,13 @@ proc DTMRISetActive {t} {
     DTMRI(vtk,streamline,merge) SetVectors [Tensor($t,data) GetOutput]
     DTMRI(vtk,streamline,merge) SetNormals [Tensor($t,data) GetOutput]
     DTMRI(vtk,streamline,merge) SetTCoords [Tensor($t,data) GetOutput]
+    
     DTMRI(vtk,streamline,merge) Update
     DTMRI(vtk,streamlineControl) SetInputTensorField \
         [DTMRI(vtk,streamline,merge) GetOutput] 
- 
+    #DTMRI(vtk,streamlineControl) SetInputTensorField [Tensor($t,data) GetOutput]
+    
+    
     # set correct transformation from World coords to scaledIJK of the tensors
     vtkTransform transform
     # special trick to avoid warnings about legacy hack
