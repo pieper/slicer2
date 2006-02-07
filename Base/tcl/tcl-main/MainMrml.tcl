@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainMrml.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:28 $
-#   Version:   $Revision: 1.111.2.4 $
+#   Date:      $Date: 2006/02/07 01:51:23 $
+#   Version:   $Revision: 1.111.2.5 $
 # 
 #===============================================================================
 # FILE:        MainMrml.tcl
@@ -77,7 +77,7 @@ proc MainMrmlInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainMrml \
-    {$Revision: 1.111.2.4 $} {$Date: 2005/12/20 22:54:28 $}]
+    {$Revision: 1.111.2.5 $} {$Date: 2006/02/07 01:51:23 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -733,7 +733,6 @@ proc MainMrmlImport {filename} {
                     }
                     switch [string tolower $key] {
                         "fileprefix"      {
-                            
                             set mrmlpath [file split $Mrml(dir)]
                             set filepath [lrange [file split [file dir $filename]] 1 end]
                             set dots ""
@@ -748,6 +747,9 @@ proc MainMrmlImport {filename} {
                                 puts "\tsetting file prefix: Mrml(dir) = $Mrml(dir), filename = $filename, fileprefix = [eval file join $dots $filepath $val]"
                             }
                         }
+                        "options" {
+                            # do nothing
+                        }
                         default {
                             lappend outattr [eval list $key $val]
                         }
@@ -756,16 +758,27 @@ proc MainMrmlImport {filename} {
             }
             default {
             # TODO - fix paths on different Node types (Models, etc)
-                set outattr $attr
+                lappend outattr $attr
+                foreach a $attr {
+                    set key [lindex $a 0]
+                    set val [lreplace $a 0 0]
+                    if {$::Module(verbose)} {
+                        puts "\tkey = $key\n\tval = $val"
+                    }
+                    switch [string tolower $key] {
+                        "options" {
+                            # do nothing
+                        }
+                        default {
+                            lappend outattr [eval list $key $val]
+                        }
+                    }
+                }
             }
         }
-        eval lappend outtags $tag $outattr
+        MainMrmlBuildTreesVersion2.0 [list [eval list $tag $outattr]]
+        MainUpdateMRML
     }
-    if {$::Module(verbose)} {
-        puts "MainMrmlImport: outtags = $outtags"
-    }
-    MainMrmlBuildTreesVersion2.0 [list $outtags]
-    MainUpdateMRML
 }
 
 
@@ -787,7 +800,6 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
     foreach pair $tags {
         set tag  [lindex $pair 0]
         set attr [lreplace $pair 0 0]
-
         switch $tag {
             
             "Transform" {
@@ -922,6 +934,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
             "Volume" {
                 if {$::Module(verbose)} {
                     puts "Volume:"
+                    puts "attr: $attr"
                 }
                 set n [MainMrmlAddNode Volume]
                 foreach a $attr {
