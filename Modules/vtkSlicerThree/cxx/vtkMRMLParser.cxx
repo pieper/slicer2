@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLParser.cxx,v $
-Date:      $Date: 2006/02/06 21:29:48 $
-Version:   $Revision: 1.5 $
+Date:      $Date: 2006/02/07 19:29:34 $
+Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 #include "vtkObjectFactory.h"
@@ -28,6 +28,7 @@ vtkMRMLParser* vtkMRMLParser::New()
 }
 
 
+//------------------------------------------------------------------------------
 void vtkMRMLParser::StartElement(const char* tagName, const char** atts)
 {
   if (!strcmp(tagName, "MRML")) {

@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLVolumeNode.cxx,v $
-Date:      $Date: 2006/02/07 19:09:49 $
-Version:   $Revision: 1.8 $
+Date:      $Date: 2006/02/07 19:29:34 $
+Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 
@@ -146,11 +146,11 @@ void vtkMRMLVolumeNode::ReadXMLAttributes(const char** atts)
 
   vtkMRMLNode::ReadXMLAttributes(atts);
 
-  char* attName;
-  char* attValue;
+  const char* attName;
+  const char* attValue;
   while (*atts != NULL) {
-    attName = (char *)(*(atts++));
-    attValue = (char *)(*(atts++));
+    attName = *(atts++);
+    attValue = *(atts++);
     if (!strcmp(attName, "FileArcheType")) {
       this->SetFileArcheType(attValue);
     }

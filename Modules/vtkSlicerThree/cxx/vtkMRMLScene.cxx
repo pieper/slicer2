@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLScene.cxx,v $
-Date:      $Date: 2006/02/07 19:19:35 $
-Version:   $Revision: 1.8 $
+Date:      $Date: 2006/02/07 19:29:34 $
+Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 #include "vtkMRMLScene.h"
@@ -16,12 +16,13 @@ Version:   $Revision: 1.8 $
 #include "vtkObjectFactory.h"
 #include "vtkErrorCode.h"
 
+//------------------------------------------------------------------------------
 vtkMRMLScene::vtkMRMLScene() 
 {
-  URL=NULL;
-  ClassNameList= NULL;
-  RegisteredNodeClasses.clear();
-  UniqueIdByClass.clear();
+  this->URL = NULL;
+  this->ClassNameList = NULL;
+  this->RegisteredNodeClasses.clear();
+  this->UniqueIdByClass.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -59,8 +60,8 @@ vtkMRMLNode* vtkMRMLScene::CreateNodeByClass(const char* className)
 //------------------------------------------------------------------------------
 void vtkMRMLScene::RegisterNodeClass(vtkMRMLNode* node, char *tagName) 
 {
-    this->RegisteredNodeClasses.push_back(node);
-    this->RegisteredNodeTags.push_back(std::string(tagName));
+  this->RegisteredNodeClasses.push_back(node);
+  this->RegisteredNodeTags.push_back(std::string(tagName));
 }
 
 //------------------------------------------------------------------------------
@@ -77,8 +78,7 @@ const char* vtkMRMLScene::GetClassNameByTag(const char *tagName)
 //------------------------------------------------------------------------------
 int vtkMRMLScene::Connect()
 {
-  
-  if (URL == NULL) {
+  if (this->URL == NULL) {
     vtkErrorMacro("Need URL specified");
     return 0;
   }
@@ -98,7 +98,7 @@ int vtkMRMLScene::Commit(const char* url)
     url = URL;
   }
 
-  vtkCollectionElement *elem=this->Top;
+  vtkCollectionElement *elem = this->Top;
   vtkMRMLNode *node;
   ofstream file;
   int indent=0, deltaIndent;
@@ -419,6 +419,7 @@ void vtkMRMLScene::InsertBeforeNode(vtkMRMLNode *item, vtkMRMLNode *n)
   }
 }
 
+//------------------------------------------------------------------------------
 void vtkMRMLScene::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkCollection::PrintSelf(os,indent);
@@ -432,6 +433,7 @@ void vtkMRMLScene::PrintSelf(ostream& os, vtkIndent indent)
   }
 }
 
+//------------------------------------------------------------------------------
 int vtkMRMLScene::GetUniqueIdByClass(const char* className)
 {
   int id = 0;
