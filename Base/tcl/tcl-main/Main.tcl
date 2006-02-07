@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Main.tcl,v $
-#   Date:      $Date: 2006/01/27 20:44:47 $
-#   Version:   $Revision: 1.128.2.6 $
+#   Date:      $Date: 2006/02/07 19:35:03 $
+#   Version:   $Revision: 1.128.2.7 $
 # 
 #===============================================================================
 # FILE:        Main.tcl
@@ -411,7 +411,7 @@ proc MainInit {} {
     # In each module's Init procedure, set Module(moduleName,category) to one of these strings.
     # If you use lindex, larger indices will indicate less tested modules.
     # set Module(categories) {Core Beta Experimental Example Unfiled}
-    set Module(categories) {Favourites Settings IO Application Filtering Segmentation Registration Measurement Visualisation Example Unfiled}
+    set Module(categories) {Favourites Settings IO Application Filtering Segmentation Registration Measurement Visualisation Example Unfiled All}
     # set Module(categories) {Data Processing Settings Other Unfiled}
     foreach m $Module(idList) {
         set Module($m,more) 0
@@ -441,7 +441,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.128.2.6 $} {$Date: 2006/01/27 20:44:47 $}]
+        {$Revision: 1.128.2.7 $} {$Date: 2006/02/07 19:35:03 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -2152,6 +2152,7 @@ proc FormatModuleCategories {} {
 # the variable Module($module,category), and if so, adds the module id to the list being built in
 # Module(idList,$category). Also appends Module(categories) with any missing categories.
 # Also alphabetises the modules lists, except for the Core one.
+# Also builds a sorted list of all modules in the All category.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -2174,6 +2175,7 @@ proc MainBuildCategoryIDLists {} {
         } else {
             lappend Module(idList,Unfiled) $mod
         }
+        lappend Module(idList,All) $mod
     }
     
     # build a list of current categories
@@ -2222,13 +2224,18 @@ proc MainBuildCategoryMenu {} {
             foreach module $Module(idList,$category) {
                 # for now, just switch to the tab for this module, if it has a gui
                 if { [info exists Module($module,procGUI)] } {
+                    # are there too many entries, so we should have a column break?
+                    set colbreak [MainVolumesBreakVolumeMenu $Gui(mModules).m$category]
                     if {$Module(more) == 1} {
                         $Gui(mModules).m$category add command -label "$module" \
-                            -command "set Module(btn) More; Tab $module; $Module(rMore) config -text $module"
+                            -command "set Module(btn) More; Tab $module; $Module(rMore) config -text $module" \
+                            -columnbreak $colbreak
                     } else {
                         # just tab to the module, don't have to reset the Module(rMore) text 
                         # because no More button exists
-                        $Gui(mModules).m$category add command -label "$module" -command "Tab $module"
+                        $Gui(mModules).m$category add command -label "$module" \
+                            -command "Tab $module" \
+                            -columnbreak $colbreak
                     }
                 }
             }
