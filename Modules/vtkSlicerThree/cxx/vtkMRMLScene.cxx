@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLScene.cxx,v $
-Date:      $Date: 2006/02/06 22:44:01 $
-Version:   $Revision: 1.7 $
+Date:      $Date: 2006/02/07 19:19:35 $
+Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 #include "vtkMRMLScene.h"
@@ -280,7 +280,6 @@ vtkCollection* vtkMRMLScene::GetNodesByName(const char* name)
   vtkCollection* nodes = vtkCollection::New();
   
   vtkCollectionElement *elem=this->Top;
-  int num=0;
   vtkMRMLNode* node;
   while (elem != NULL) {
     node = (vtkMRMLNode*)elem->Item;
@@ -299,7 +298,6 @@ vtkCollection* vtkMRMLScene::GetNodesByClassByName(const char* className, const 
   vtkCollection* nodes = vtkCollection::New();
   
   vtkCollectionElement *elem=this->Top;
-  int num=0;
   vtkMRMLNode* node;
   
   while (elem != NULL) {
@@ -316,10 +314,7 @@ vtkCollection* vtkMRMLScene::GetNodesByClassByName(const char* className, const 
 //------------------------------------------------------------------------------
 vtkMRMLNode* vtkMRMLScene::GetNodeByClassById(const char* className, unsigned long id)
 {
-  vtkCollection* nodes = vtkCollection::New();
-
-  vtkCollectionElement *elem=this->Top;
-  int num=0;
+  vtkCollectionElement *elem = this->Top;
   vtkMRMLNode* node;
 
   while (elem != NULL) {
@@ -342,6 +337,7 @@ int  vtkMRMLScene::GetTransformBetweenNodes(vtkMRMLNode *node1,
   return 1;
 }
 
+//------------------------------------------------------------------------------
 int vtkMRMLScene::GetTransformBetweenSpaces( const char *space1, 
                                              const char *space2, 
                                              vtkTransform *xform )

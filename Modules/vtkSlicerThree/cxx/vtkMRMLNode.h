@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLNode.h,v $
-  Date:      $Date: 2006/02/07 19:09:48 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/02/07 19:19:35 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLNode - Abstract Superclass for all specific types of MRML nodes.
@@ -40,8 +40,8 @@ public:
   // Description:
   // Set/Get a numerical ID for the calling program to use to keep track
   // of its various node objects.
-  vtkSetMacro(ID, int);
-  vtkGetMacro(ID, int);
+  vtkSetMacro(ID, unsigned int);
+  vtkGetMacro(ID, unsigned int);
   
   // Description:
   // Text description of this node, to be set by the user
@@ -93,7 +93,7 @@ protected:
   
   vtkSetMacro(Indent, int);
   
-  int ID;
+  unsigned int ID;
   char *Description;
   char *SceneRootDir;
   char *Name;

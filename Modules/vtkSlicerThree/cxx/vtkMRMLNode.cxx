@@ -7,13 +7,10 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLNode.cxx,v $
-Date:      $Date: 2006/02/06 21:29:48 $
-Version:   $Revision: 1.3 $
+Date:      $Date: 2006/02/07 19:19:35 $
+Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
 #include "vtkMRMLNode.h"
 #include "vtkObjectFactory.h"
 
@@ -54,23 +51,9 @@ vtkMRMLNode::vtkMRMLNode()
 //----------------------------------------------------------------------------
 vtkMRMLNode::~vtkMRMLNode()
 {
-  if (this->Description)
-    {
-      delete [] this->Description;
-      this->Description = NULL;
-    }
-  
-  if (this->SpaceName)
-    {
-      delete [] this->SpaceName;
-      this->SpaceName = NULL;
-    }
-  
-  if (this->Name)
-    {
-      delete [] this->Name;
-      this->Name = NULL;
-    }
+  this->SetDescription(NULL);
+  this->SetSpaceName(NULL);
+  this->SetName(NULL);
 }
 
 //----------------------------------------------------------------------------
@@ -107,11 +90,11 @@ void vtkMRMLNode::WriteXML(ostream& of, int nIndent)
 //----------------------------------------------------------------------------
 void vtkMRMLNode::ReadXMLAttributes(const char** atts)
 {
-  char* attName;
-  char* attValue;
+  const char* attName;
+  const char* attValue;
   while (*atts != NULL) {
-    attName = (char *)(*(atts++));
-    attValue = (char *)(*(atts++));
+    attName = *(atts++);
+    attValue = *(atts++);
     if (!strcmp(attName, "Name")) {
       this->SetName(attValue);
     }
