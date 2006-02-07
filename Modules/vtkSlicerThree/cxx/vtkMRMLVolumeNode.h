@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLVolumeNode.h,v $
-  Date:      $Date: 2006/02/06 21:29:48 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/02/07 19:09:49 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLVolumeNode - MRML node for representing a volume (image stack).
@@ -108,7 +108,7 @@ class VTK_EXPORT vtkMRMLVolumeNode : public vtkMRMLNode
   void SetFileScalarTypeToDouble() {
     this->SetFileScalarType(VTK_DOUBLE);};
 
-  char* GetFileScalarTypeAsString();
+  const char* GetFileScalarTypeAsString();
   
   // Description:
   // The number of scalar components for each voxel. 
@@ -200,7 +200,7 @@ class VTK_EXPORT vtkMRMLVolumeNode : public vtkMRMLNode
   // scanOrder.
   static void ComputeIjkToRasFromScanOrder(char *order, vtkMatrix4x4 *IjkToRas);
 
-  static char* ComputeScanOrderFromIjkToRas(vtkMatrix4x4 *IjkToRas);
+  static const char* ComputeScanOrderFromIjkToRas(vtkMatrix4x4 *IjkToRas);
 
   vtkGetStringMacro(ScanOrder);
   vtkSetStringMacro(ScanOrder);
@@ -229,8 +229,8 @@ class VTK_EXPORT vtkMRMLVolumeNode : public vtkMRMLNode
 protected:
   vtkMRMLVolumeNode();
   ~vtkMRMLVolumeNode();
-  vtkMRMLVolumeNode(const vtkMRMLVolumeNode&) {};
-  void operator=(const vtkMRMLVolumeNode&) {};
+  vtkMRMLVolumeNode(const vtkMRMLVolumeNode&);
+  void operator=(const vtkMRMLVolumeNode&);
 
 
   // Strings

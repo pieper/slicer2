@@ -141,8 +141,8 @@ public:
 protected:
   vtkMRMLScene();
   ~vtkMRMLScene() {};
-  vtkMRMLScene(const vtkMRMLScene&) {};
-  void operator=(const vtkMRMLScene&) {};
+  vtkMRMLScene(const vtkMRMLScene&);
+  void operator=(const vtkMRMLScene&);
   
   char *URL;
   

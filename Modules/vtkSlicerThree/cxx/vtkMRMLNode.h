@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLNode.h,v $
-  Date:      $Date: 2006/02/06 21:29:48 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/02/07 19:09:48 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLNode - Abstract Superclass for all specific types of MRML nodes.
@@ -86,10 +86,10 @@ public:
 protected:
   
   vtkMRMLNode();
-  // critical to have a virtual descructor!
+  // critical to have a virtual destructor!
   virtual ~vtkMRMLNode();
-  vtkMRMLNode(const vtkMRMLNode&) {};
-  void operator=(const vtkMRMLNode&) {};
+  vtkMRMLNode(const vtkMRMLNode&);
+  void operator=(const vtkMRMLNode&);
   
   vtkSetMacro(Indent, int);
   

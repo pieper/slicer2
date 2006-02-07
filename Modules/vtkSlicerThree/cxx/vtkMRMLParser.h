@@ -60,8 +60,8 @@ public:
 protected:
   vtkMRMLParser() {MRMLScene=NULL;};
   ~vtkMRMLParser() {};
-  vtkMRMLParser(const vtkMRMLParser&) {};
-  void operator=(const vtkMRMLParser&) {};
+  vtkMRMLParser(const vtkMRMLParser&);
+  void operator=(const vtkMRMLParser&);
   
  virtual void StartElement(const char* name, const char** atts);
 

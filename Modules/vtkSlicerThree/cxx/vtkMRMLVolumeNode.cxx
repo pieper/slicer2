@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLVolumeNode.cxx,v $
-Date:      $Date: 2006/02/06 21:29:48 $
-Version:   $Revision: 1.7 $
+Date:      $Date: 2006/02/07 19:09:49 $
+Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 
@@ -113,7 +113,7 @@ vtkMRMLVolumeNode::~vtkMRMLVolumeNode()
 }
 
 //----------------------------------------------------------------------------
-char* vtkMRMLVolumeNode::GetFileScalarTypeAsString()
+const char* vtkMRMLVolumeNode::GetFileScalarTypeAsString()
 {
   switch (this->FileScalarType)
     {
@@ -137,6 +137,7 @@ char* vtkMRMLVolumeNode::GetFileScalarTypeAsString()
 void vtkMRMLVolumeNode::WriteXML(ostream& of, int nIndent)
 {
   vtkErrorMacro("NOT IMPLEMENTED YET");
+  (void)of; (void)nIndent;
 }
 
 //----------------------------------------------------------------------------
@@ -215,7 +216,8 @@ void vtkMRMLVolumeNode::ReadData()
   // normalize direction vectors
   for (int row=0; row<3; row++) {
     double len =0;
-    for (int col=0; col<3; col++) {
+    int col;
+    for (col=0; col<3; col++) {
       len += mat->GetElement(row, col) * mat->GetElement(row, col);
     }
     len = sqrt(len);
@@ -445,9 +447,11 @@ void vtkMRMLVolumeNode::SetIjkToRasMatrix(vtkMatrix4x4* mat)
 void vtkMRMLVolumeNode::ComputeIjkToRasFromScanOrder(char *order, vtkMatrix4x4 *IjkToRas)
 {
   std::cerr << "NOT IMPLEMENTED YET" << std::endl;
+  (void)order; (void)IjkToRas;
 }
 
-char* vtkMRMLVolumeNode::ComputeScanOrderFromIjkToRas(vtkMatrix4x4 *ijkToRas)
+//----------------------------------------------------------------------------
+const char* vtkMRMLVolumeNode::ComputeScanOrderFromIjkToRas(vtkMatrix4x4 *ijkToRas)
 {
   vtkFloatingPointType dir[4]={0,0,1,0};
   vtkFloatingPointType kvec[4];
