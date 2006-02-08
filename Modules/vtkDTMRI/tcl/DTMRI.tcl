@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRI.tcl,v $
-#   Date:      $Date: 2006/02/08 20:01:05 $
-#   Version:   $Revision: 1.126 $
+#   Date:      $Date: 2006/02/08 22:49:00 $
+#   Version:   $Revision: 1.127 $
 # 
 #===============================================================================
 # FILE:        DTMRI.tcl
@@ -481,7 +481,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.126 $} {$Date: 2006/02/08 20:01:05 $}]
+                  {$Revision: 1.127 $} {$Date: 2006/02/08 22:49:00 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -1345,7 +1345,7 @@ proc DTMRIBuildVTK {} {
     # these are example objects used in creation of hyperstreamlines
     set streamline "streamlineControl,vtkHyperStreamlinePoints"
     set seedTracts [DTMRI(vtk,streamlineControl) GetSeedTracts]
-    vtkHyperStreamlinePoints DTMRI(vtk,$streamline) 
+    vtkHyperStreamlineDTMRI DTMRI(vtk,$streamline) 
     $seedTracts SetVtkHyperStreamlinePointsSettings \
         DTMRI(vtk,$streamline)
     set streamline "streamlineControl,vtkPreciseHyperStreamlinePoints"
