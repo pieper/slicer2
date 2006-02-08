@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.h,v $
-  Date:      $Date: 2006/01/20 03:50:59 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/02/08 22:10:05 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 // .NAME vtkSeedTracts - 
@@ -183,7 +183,7 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   ~vtkSeedTracts();
 
   void SaveStreamlineAsTextFile(ofstream &filePoints,
-                                vtkHyperStreamlineDTMRI *currStreamline);
+                                vtkPolyData *currStreamline);
 
   vtkHyperStreamline *CreateHyperStreamline();
 

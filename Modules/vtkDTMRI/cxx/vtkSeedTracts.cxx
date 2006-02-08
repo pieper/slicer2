@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.cxx,v $
-  Date:      $Date: 2006/02/03 21:47:32 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/02/08 22:10:05 $
+  Version:   $Revision: 1.15 $
 
 =========================================================================auto=*/
 
@@ -909,7 +909,7 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
                       newStreamline->Update();
 
                       // See if we like it enough to write
-                      if (newStreamline->GetOutput()->GetNumberOfPoints() > 40)
+                      if (newStreamline->GetOutput()->GetNumberOfPoints() > 30)
                         {
                           
                           // transform model
@@ -926,7 +926,7 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
                           writer->Write();
                           
                           // Save the center points to disk
-                          this->SaveStreamlineAsTextFile(filePoints,newStreamline);
+                          this->SaveStreamlineAsTextFile(filePoints,transformer->GetOutput());
 
                           idx++;
                         }
@@ -967,7 +967,7 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
 // Current format is x1,y1,z1 x2,y2,z2 x3,y3,z3 \n
 //----------------------------------------------------------------------------
 void vtkSeedTracts::SaveStreamlineAsTextFile(ofstream &filePoints,
-                                             vtkHyperStreamlineDTMRI *currStreamline)
+                                             vtkPolyData *currStreamline)
 {
   vtkPoints *hs0, *hs1;
   int ptidx, numPts;
@@ -975,7 +975,7 @@ void vtkSeedTracts::SaveStreamlineAsTextFile(ofstream &filePoints,
 
   
   //GetHyperStreamline0/1 and write their points.
-  hs0=currStreamline->GetOutput()->GetCell(0)->GetPoints();
+  hs0=currStreamline->GetCell(0)->GetPoints();
 
   // Write the first one in reverse order since both lines
   // travel outward from the initial point.
@@ -990,7 +990,7 @@ void vtkSeedTracts::SaveStreamlineAsTextFile(ofstream &filePoints,
       ptidx--;
     }
 
-  hs1=currStreamline->GetOutput()->GetCell(1)->GetPoints();
+  hs1=currStreamline->GetCell(1)->GetPoints();
   numPts=hs1->GetNumberOfPoints();
   ptidx=1;
   while (ptidx < numPts)
