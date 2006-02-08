@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: VolGeneric.tcl,v $
-#   Date:      $Date: 2006/01/17 20:31:11 $
-#   Version:   $Revision: 1.21 $
+#   Date:      $Date: 2006/02/08 17:40:23 $
+#   Version:   $Revision: 1.22 $
 # 
 #===============================================================================
 # FILE:        VolGeneric.tcl
@@ -49,6 +49,9 @@ proc VolGenericInit {} {
     set Volume(imageCentered) 1
     # register the procedures in this file that will read in volumes
     set Module(Volumes,readerProc,Generic) VolGenericReaderProc
+
+    # set the vector flag to zero as default, assume scalar volumes
+    set Volume(VolGeneric,VectorFlag) 0
 }
 
 
@@ -81,6 +84,8 @@ proc VolGenericBuildGUI {parentFrame} {
 
     DevAddFileBrowse $f Volume firstFile "First Image File:" "VolumesSetFirst" "" "\$Volume(DefaultDir)" "Open" "Browse for the first Image file" "Browse to the first file in the volume" "Absolute"
 
+    frame $f.fVector -bg $Gui(activeWorkspace)
+
     frame $f.fLabelMap -bg $Gui(activeWorkspace)
 
     frame $f.fImageCenter -bg $Gui(activeWorkspace)
@@ -92,6 +97,7 @@ proc VolGenericBuildGUI {parentFrame} {
     frame $f.fscalarType -bg $Gui(activeWorkspace)
     
 
+    pack $f.fVector -side top -padx  $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fLabelMap -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fImageCenter -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     pack $f.fDesc -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
@@ -130,6 +136,23 @@ proc VolGenericBuildGUI {parentFrame} {
     #pack $f.lscalarType -side left -padx $Gui(pad) -fill x -anchor w
     #pack $f.mbscalarType -side left -padx $Gui(pad) -expand 1 -fill x 
     
+    # Vector flag frame
+    set f $parentFrame.fVolume.fVector
+    frame $f.fTitle -bg $Gui(activeWorkspace)
+    frame $f.fBtns -bg $Gui(activeWorkspace)
+    pack $f.fTitle $f.fBtns -side left -pady 5
+
+    DevAddLabel $f.fTitle.l "Data Components:"
+    pack $f.fTitle.l -side left -padx $Gui(pad) -pady 0
+    foreach text "{Scalar} {Vector}" \
+        value "0 1" \
+        width "9 9 " {
+        eval {radiobutton $f.fBtns.rMode$value -width $width \
+            -text "$text" -value "$value" -variable Volume(VolGeneric,VectorFlag) \
+            -indicatoron 0 } $Gui(WCA)
+        pack $f.fBtns.rMode$value -side left -padx 0 -pady 0
+    }
+    TooltipAdd $f.fTitle.l "Does this volume contain 3 component vector data, or 1 component scalar data?"
 
     # LabelMap
     set f $parentFrame.fVolume.fLabelMap
@@ -273,7 +296,12 @@ proc VolGenericApply {} {
     }
 
     catch "genreader Delete"
-    vtkITKArchetypeImageSeriesReader genreader
+    # vtkITKArchetypeImageSeriesReader genreader
+    if {$Volume(VolGeneric,VectorFlag)} {
+    vtkITKArchetypeImageSeriesVectorReader genreader
+    } else {
+    vtkITKArchetypeImageSeriesScalarReader genreader
+    }
     genreader SetArchetype $Volume(VolGeneric,FileName)
 
     if {![genreader CanReadFile $Volume(VolGeneric,FileName)]} {
@@ -504,7 +532,12 @@ proc VolGenericReaderProc {v} {
         return -1
     }
     catch "genreader Delete"
-    vtkITKArchetypeImageSeriesReader genreader
+    # vtkITKArchetypeImageSeriesReader genreader
+    if {$Volume(VolGeneric,VectorFlag)} {
+    vtkITKArchetypeImageSeriesVectorReader genreader
+    } else {
+    vtkITKArchetypeImageSeriesScalarReader genreader
+    }
     genreader SetArchetype [Volume($v,node) GetFullPrefix]
     genreader SetOutputScalarType [Volume($v,node) GetScalarType]
     genreader SetOutputScalarTypeToNative

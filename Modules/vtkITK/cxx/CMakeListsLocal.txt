@@ -23,6 +23,8 @@ vtkITKDemonsTransformRegistrationFilter.cxx
 vtkITKDeformableRegistrationFilter.cxx
 vtkITKAntiAliasBinaryImageFilter.h
 vtkITKArchetypeImageSeriesReader.cxx
+vtkITKArchetypeImageSeriesScalarReader.cxx
+vtkITKArchetypeImageSeriesVectorReader.cxx
 vtkITKBilateralImageFilter.h
 vtkITKBSplineMattesMIRegistrationFilter.cxx
 vtkITKBSplineImageFilter.cxx

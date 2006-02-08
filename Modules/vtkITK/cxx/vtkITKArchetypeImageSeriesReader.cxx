@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
-  Date:      $Date: 2006/01/27 22:20:33 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/02/08 17:40:22 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2006/01/27 22:20:33 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/02/08 17:40:22 $
+  Version:   $Revision: 1.13 $
 
   Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -74,7 +74,7 @@
 #include "itkGDCMImageIO.h"
 #include <itksys/SystemTools.hxx>
 
-vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.12 $");
+vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.13 $");
 vtkStandardNewMacro(vtkITKArchetypeImageSeriesReader);
 
 //----------------------------------------------------------------------------
@@ -494,241 +494,8 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
 //----------------------------------------------------------------------------
 // This function reads a data from a file.  The datas extent/axes
 // are assumed to be the same as the file extent/order.
+// implemented in the Scalar and Vector subclasses
 void vtkITKArchetypeImageSeriesReader::ExecuteData(vtkDataObject *output)
 {
-  if (!this->Archetype)
-    {
-    vtkErrorMacro("An Archetype must be specified.");
-    return;
-    }
-
-  vtkImageData *data = vtkImageData::SafeDownCast(output);
-  data->UpdateInformation();
-  data->SetExtent(0,0,0,0,0,0);
-  data->AllocateScalars();
-  data->SetExtent(data->GetWholeExtent());
-
-  /// SCALR MACRO
-#define vtkITKExecuteDataFromSeries(typeN, type) \
-    case typeN: \
-    {\
-      typedef itk::Image<type,3> image##typeN;\
-      typedef itk::ImageSource<image##typeN> FilterType; \
-      FilterType::Pointer filter; \
-      itk::ImageSeriesReader<image##typeN>::Pointer reader##typeN = \
-            itk::ImageSeriesReader<image##typeN>::New(); \
-      reader##typeN->SetFileNames(this->FileNames); \
-      reader##typeN->ReleaseDataFlagOn(); \
-      if (this->UseNativeCoordinateOrientation) \
-        { \
-        filter = reader##typeN; \
-        } \
-      else \
-        { \
-        itk::OrientImageFilter<image##typeN,image##typeN>::Pointer orient##typeN = \
-            itk::OrientImageFilter<image##typeN,image##typeN>::New(); \
-        if (this->Debug) {orient##typeN->DebugOn();} \
-        orient##typeN->SetInput(reader##typeN->GetOutput()); \
-        orient##typeN->UseImageDirectionOn(); \
-        orient##typeN->SetDesiredCoordinateOrientation(this->DesiredCoordinateOrientation); \
-        filter = orient##typeN; \
-        }\
-      filter->UpdateLargestPossibleRegion(); \
-      itk::ImportImageContainer<unsigned long, type>::Pointer PixelContainer##typeN;\
-      PixelContainer##typeN = filter->GetOutput()->GetPixelContainer();\
-      void *ptr = static_cast<void *> (PixelContainer##typeN->GetBufferPointer());\
-      (dynamic_cast<vtkImageData *>( output))->GetPointData()->GetScalars()->SetVoidArray(ptr, PixelContainer##typeN->Size(), 0);\
-      PixelContainer##typeN->ContainerManageMemoryOff();\
-    }\
-    break
-
-#define vtkITKExecuteDataFromFile(typeN, type) \
-    case typeN: \
-    {\
-      typedef itk::Image<type,3> image2##typeN;\
-      typedef itk::ImageSource<image2##typeN> FilterType; \
-      FilterType::Pointer filter; \
-      itk::ImageFileReader<image2##typeN>::Pointer reader2##typeN = \
-            itk::ImageFileReader<image2##typeN>::New(); \
-      reader2##typeN->SetFileName(this->FileNames[0].c_str()); \
-      if (this->UseNativeCoordinateOrientation) \
-        { \
-        filter = reader2##typeN; \
-        } \
-      else \
-        { \
-        itk::OrientImageFilter<image2##typeN,image2##typeN>::Pointer orient2##typeN = \
-              itk::OrientImageFilter<image2##typeN,image2##typeN>::New(); \
-        if (this->Debug) {orient2##typeN->DebugOn();} \
-        orient2##typeN->SetInput(reader2##typeN->GetOutput()); \
-        orient2##typeN->UseImageDirectionOn(); \
-        orient2##typeN->SetDesiredCoordinateOrientation(this->DesiredCoordinateOrientation); \
-        filter = orient2##typeN; \
-        } \
-       filter->UpdateLargestPossibleRegion();\
-      itk::ImportImageContainer<unsigned long, type>::Pointer PixelContainer2##typeN;\
-      PixelContainer2##typeN = filter->GetOutput()->GetPixelContainer();\
-      void *ptr = static_cast<void *> (PixelContainer2##typeN->GetBufferPointer());\
-      (dynamic_cast<vtkImageData *>( output))->GetPointData()->GetScalars()->SetVoidArray(ptr, PixelContainer2##typeN->Size(), 0);\
-      PixelContainer2##typeN->ContainerManageMemoryOff();\
-    }\
-    break
-  /// END SCALAR MACRO
-
-  /// VECTOR MACRO
-#define vtkITKExecuteDataFromSeriesVector(typeN, type) \
-    case typeN: \
-    {\
-      typedef itk::Vector<type, 3>    VectorPixelType;\
-      typedef itk::Image<VectorPixelType,3> image##typeN;\
-      typedef itk::ImageSource<image##typeN> FilterType; \
-      FilterType::Pointer filter; \
-      itk::ImageSeriesReader<image##typeN>::Pointer reader##typeN = \
-            itk::ImageSeriesReader<image##typeN>::New(); \
-      reader##typeN->SetFileNames(this->FileNames); \
-      reader##typeN->ReleaseDataFlagOn(); \
-      if (this->UseNativeCoordinateOrientation) \
-        { \
-        filter = reader##typeN; \
-        } \
-      else \
-        { \
-        itk::OrientImageFilter<image##typeN,image##typeN>::Pointer orient##typeN = \
-            itk::OrientImageFilter<image##typeN,image##typeN>::New(); \
-        if (this->Debug) {orient##typeN->DebugOn();} \
-        orient##typeN->SetInput(reader##typeN->GetOutput()); \
-        orient##typeN->UseImageDirectionOn(); \
-        orient##typeN->SetDesiredCoordinateOrientation(this->DesiredCoordinateOrientation); \
-        filter = orient##typeN; \
-        }\
-      filter->UpdateLargestPossibleRegion(); \
-      itk::ImportImageContainer<unsigned long, VectorPixelType>::Pointer PixelContainer##typeN;\
-      PixelContainer##typeN = filter->GetOutput()->GetPixelContainer();\
-      void *ptr = static_cast<void *> (PixelContainer##typeN->GetBufferPointer());\
-      (dynamic_cast<vtkImageData *>( output))->GetPointData()->GetScalars()->SetVoidArray(ptr, PixelContainer##typeN->Size(), 0);\
-      PixelContainer##typeN->ContainerManageMemoryOff();\
-    }\
-    break
-
-#define vtkITKExecuteDataFromFileVector(typeN, type) \
-    case typeN: \
-    {\
-      typedef itk::Vector<type, 3>    VectorPixelType;\
-      typedef itk::Image<VectorPixelType,3> image2##typeN;\
-      typedef itk::ImageSource<image2##typeN> FilterType; \
-      FilterType::Pointer filter; \
-      itk::ImageFileReader<image2##typeN>::Pointer reader2##typeN = \
-            itk::ImageFileReader<image2##typeN>::New(); \
-      reader2##typeN->SetFileName(this->FileNames[0].c_str()); \
-      if (this->UseNativeCoordinateOrientation) \
-        { \
-        filter = reader2##typeN; \
-        } \
-      else \
-        { \
-        itk::OrientImageFilter<image2##typeN,image2##typeN>::Pointer orient2##typeN = \
-              itk::OrientImageFilter<image2##typeN,image2##typeN>::New(); \
-        if (this->Debug) {orient2##typeN->DebugOn();} \
-        orient2##typeN->SetInput(reader2##typeN->GetOutput()); \
-        orient2##typeN->UseImageDirectionOn(); \
-        orient2##typeN->SetDesiredCoordinateOrientation(this->DesiredCoordinateOrientation); \
-        filter = orient2##typeN; \
-        } \
-       filter->UpdateLargestPossibleRegion();\
-      itk::ImportImageContainer<unsigned long, VectorPixelType>::Pointer PixelContainer2##typeN;\
-      PixelContainer2##typeN = filter->GetOutput()->GetPixelContainer();\
-      void *ptr = static_cast<void *> (PixelContainer2##typeN->GetBufferPointer());\
-      (dynamic_cast<vtkImageData *>( output))->GetPointData()->GetScalars()->SetVoidArray(ptr, PixelContainer2##typeN->Size(), 0);\
-      PixelContainer2##typeN->ContainerManageMemoryOff();\
-    }\
-    break
-  // END VECTOR MACRO
-
-  // If there is only one file in the series, just use an image file reader
-  if (this->FileNames.size() == 1)
-    {
-    if (this->GetNumberOfComponents() == 1) 
-      {
-      switch (this->OutputScalarType)
-        {
-          vtkITKExecuteDataFromFile(VTK_DOUBLE, double);
-          vtkITKExecuteDataFromFile(VTK_FLOAT, float);
-          vtkITKExecuteDataFromFile(VTK_LONG, long);
-          vtkITKExecuteDataFromFile(VTK_UNSIGNED_LONG, unsigned long);
-          vtkITKExecuteDataFromFile(VTK_INT, int);
-          vtkITKExecuteDataFromFile(VTK_UNSIGNED_INT, unsigned int);
-          vtkITKExecuteDataFromFile(VTK_SHORT, short);
-          vtkITKExecuteDataFromFile(VTK_UNSIGNED_SHORT, unsigned short);
-          vtkITKExecuteDataFromFile(VTK_CHAR, char);
-          vtkITKExecuteDataFromFile(VTK_UNSIGNED_CHAR, unsigned char);
-        default:
-          vtkErrorMacro(<< "UpdateFromFile: Unknown data type");
-        }
-      }
-    else if (this->GetNumberOfComponents() == 3) 
-      {
-      switch (this->OutputScalarType)
-        {
-          vtkITKExecuteDataFromFileVector(VTK_DOUBLE, double);
-          vtkITKExecuteDataFromFileVector(VTK_FLOAT, float);
-          vtkITKExecuteDataFromFileVector(VTK_LONG, long);
-          vtkITKExecuteDataFromFileVector(VTK_UNSIGNED_LONG, unsigned long);
-          vtkITKExecuteDataFromFileVector(VTK_INT, int);
-          vtkITKExecuteDataFromFileVector(VTK_UNSIGNED_INT, unsigned int);
-          vtkITKExecuteDataFromFileVector(VTK_SHORT, short);
-          vtkITKExecuteDataFromFileVector(VTK_UNSIGNED_SHORT, unsigned short);
-          vtkITKExecuteDataFromFileVector(VTK_CHAR, char);
-          vtkITKExecuteDataFromFileVector(VTK_UNSIGNED_CHAR, unsigned char);
-        default:
-          vtkErrorMacro(<< "UpdateFromFile: Unknown data type");
-        }
-      }
-    else 
-      {
-        vtkErrorMacro(<< "UpdateFromFile: Unsupported Number Of Components");
-      }
-    }
-  else
-    {
-    if (this->GetNumberOfComponents() == 1) 
-      {
-      switch (this->OutputScalarType)
-        {
-          vtkITKExecuteDataFromSeries(VTK_DOUBLE, double);
-          vtkITKExecuteDataFromSeries(VTK_FLOAT, float);
-          vtkITKExecuteDataFromSeries(VTK_LONG, long);
-          vtkITKExecuteDataFromSeries(VTK_UNSIGNED_LONG, unsigned long);
-          vtkITKExecuteDataFromSeries(VTK_INT, int);
-          vtkITKExecuteDataFromSeries(VTK_UNSIGNED_INT, unsigned int);
-          vtkITKExecuteDataFromSeries(VTK_SHORT, short);
-          vtkITKExecuteDataFromSeries(VTK_UNSIGNED_SHORT, unsigned short);
-          vtkITKExecuteDataFromSeries(VTK_CHAR, char);
-          vtkITKExecuteDataFromSeries(VTK_UNSIGNED_CHAR, unsigned char);
-        default:
-          vtkErrorMacro(<< "UpdateFromFile: Unknown data type");
-        }
-      }
-    else if (this->GetNumberOfComponents() == 3) 
-      {
-      switch (this->OutputScalarType)
-        {
-          vtkITKExecuteDataFromSeriesVector(VTK_DOUBLE, double);
-          vtkITKExecuteDataFromSeriesVector(VTK_FLOAT, float);
-          vtkITKExecuteDataFromSeriesVector(VTK_LONG, long);
-          vtkITKExecuteDataFromSeriesVector(VTK_UNSIGNED_LONG, unsigned long);
-          vtkITKExecuteDataFromSeriesVector(VTK_INT, int);
-          vtkITKExecuteDataFromSeriesVector(VTK_UNSIGNED_INT, unsigned int);
-          vtkITKExecuteDataFromSeriesVector(VTK_SHORT, short);
-          vtkITKExecuteDataFromSeriesVector(VTK_UNSIGNED_SHORT, unsigned short);
-          vtkITKExecuteDataFromSeriesVector(VTK_CHAR, char);
-          vtkITKExecuteDataFromSeriesVector(VTK_UNSIGNED_CHAR, unsigned char);
-        default:
-          vtkErrorMacro(<< "UpdateFromFile: Unknown data type");
-        }
-      }
-    else 
-      {
-        vtkErrorMacro(<< "UpdateFromFile: Unsupported Number Of Components");
-      }
-    }
+  vtkErrorMacro(<<"The subclass has not defined anything for ExecuteData!\n");
 }

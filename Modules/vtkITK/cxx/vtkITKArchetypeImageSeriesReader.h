@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.h,v $
-  Date:      $Date: 2006/01/17 20:31:10 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/02/08 17:40:22 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -244,6 +244,7 @@ protected:
   CoordinateOrientationCode DesiredCoordinateOrientation;
 //ETX
   virtual void ExecuteInformation();
+  // defined in the subclasses
   virtual void ExecuteData(vtkDataObject *data);
 
 private:
