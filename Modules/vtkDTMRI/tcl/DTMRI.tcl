@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRI.tcl,v $
-#   Date:      $Date: 2006/02/06 17:11:25 $
-#   Version:   $Revision: 1.120.2.5 $
+#   Date:      $Date: 2006/02/08 19:58:08 $
+#   Version:   $Revision: 1.120.2.6 $
 # 
 #===============================================================================
 # FILE:        DTMRI.tcl
@@ -481,7 +481,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.120.2.5 $} {$Date: 2006/02/06 17:11:25 $}]
+                  {$Revision: 1.120.2.6 $} {$Date: 2006/02/08 19:58:08 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -540,11 +540,11 @@ proc DTMRIInit {} {
 
     # Id of active Tensor volume (one active per tab)
     set DTMRI(Active) ""
-    set DTMRI(ActiveGlyph) ""
-    set DTMRI(ActiveTract) ""
-    set DTMRI(ActiveMask) ""
-    set DTMRI(ActiveScalars) ""
-    set DTMRI(ActiveSave) ""
+    #List of active tensor volumes. This volumes are all sync to have the same id.
+    set DTMRI(ActiveList) "ActiveGlyph ActiveTract ActiveMask ActiveScalars ActiveSave"
+    foreach active $DTMRI(ActiveList) {
+        set DTMRI($active) ""
+    }       
 
     #------------------------------------
     # Source and Init all submodules
@@ -1671,6 +1671,12 @@ proc DTMRISetActive {t} {
     global DTMRI
 
     set DTMRI(Active) $t
+    
+    #Sync the list of actives DTMRI
+    foreach active $DTMRI(ActiveList) {
+        set DTMRI($active) $t
+       $DTMRI(mb$active) configure -text [Tensor($t,node) GetName]
+    }       
 
     #set up the mask if exists
     if {[info exists DTMRI(maskTable,$t)] == 1} {
@@ -1706,6 +1712,7 @@ proc DTMRISetActive {t} {
     DTMRI(vtk,streamline,merge) Update
     DTMRI(vtk,streamlineControl) SetInputTensorField \
         [DTMRI(vtk,streamline,merge) GetOutput] 
+    
     #DTMRI(vtk,streamlineControl) SetInputTensorField [Tensor($t,data) GetOutput]
     
     
