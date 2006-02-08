@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.cxx,v $
-  Date:      $Date: 2006/01/13 15:51:54 $
-  Version:   $Revision: 1.28 $
+  Date:      $Date: 2006/02/08 22:49:33 $
+  Version:   $Revision: 1.29 $
 
 =========================================================================auto=*/
 
@@ -180,9 +180,11 @@ static void vtkTensorMathematicsExecute1(vtkTensorMathematics *self,
   
   int doMasking = 0;
   vtkDataArray *inMask = NULL;
+  short * inMaskptr = NULL;
   if (self->GetScalarMask())
     {
       inMask = self->GetScalarMask()->GetPointData()->GetScalars();
+      inMaskptr = (short *) inMask->GetVoidPointer(0);
     }
 
   if (self->GetMaskWithScalars())
@@ -212,7 +214,8 @@ static void vtkTensorMathematicsExecute1(vtkTensorMathematics *self,
 
       for (idxR = 0; idxR < rowLength; idxR++)
         {
-          if (doMasking && inMask->GetTuple1(inPtId)==0) {
+        
+          if (doMasking && *(inMaskptr+inPtId) == 0) {  
             *outPtr = 0;
           }
           else {   
