@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDisplayTracts.cxx,v $
-  Date:      $Date: 2006/02/03 19:41:10 $
-  Version:   $Revision: 1.10 $
+  Date:      $Date: 2006/02/08 23:52:49 $
+  Version:   $Revision: 1.11 $
 
 =========================================================================auto=*/
 #include "vtkDisplayTracts.h"
@@ -437,8 +437,10 @@ void vtkDisplayTracts::DeleteStreamline(int index)
   currActor = (vtkActor *) this->Actors->GetItemAsObject(index);
   if (currActor != NULL)
     {
-      currActor->VisibilityOff();
-      this->NumberOfVisibleActors--;
+      if (currActor->GetVisibility()) {
+          currActor->VisibilityOff();
+          this->NumberOfVisibleActors--;
+      }
       // Remove from the scene (from each renderer)
       // Just like MainRemoveActor in Main.tcl.
       this->Renderers->InitTraversal();
