@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRI.tcl,v $
-#   Date:      $Date: 2006/02/09 17:22:37 $
-#   Version:   $Revision: 1.128 $
+#   Date:      $Date: 2006/02/09 19:16:42 $
+#   Version:   $Revision: 1.129 $
 # 
 #===============================================================================
 # FILE:        DTMRI.tcl
@@ -481,7 +481,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.128 $} {$Date: 2006/02/09 17:22:37 $}]
+                  {$Revision: 1.129 $} {$Date: 2006/02/09 19:16:42 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -1189,8 +1189,12 @@ proc DTMRIBuildVTK {} {
     # User interaction objects
     #------------------------------------
     set object picker
-    #DTMRIMakeVTKObject vtkCellPicker $object
-    DTMRIMakeVTKObject vtkFastCellPicker $object
+    DTMRIMakeVTKObject vtkCellPicker $object
+    # Making this change causes incorrect location to be 
+    # chosen in 3D. Needs more investigation into SelectPick function
+    # in Select.tcl, which we are using.  To be done later, in conjunction
+    # with having fewer actors.
+    #DTMRIMakeVTKObject vtkFastCellPicker $object
     DTMRIAddObjectProperty $object Tolerance 0.001 float {Pick Tolerance}
 
     # objects for creation of polydata glyphs
