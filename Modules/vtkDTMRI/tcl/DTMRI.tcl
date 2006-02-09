@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRI.tcl,v $
-#   Date:      $Date: 2006/02/09 19:16:42 $
-#   Version:   $Revision: 1.129 $
+#   Date:      $Date: 2006/02/09 21:20:26 $
+#   Version:   $Revision: 1.130 $
 # 
 #===============================================================================
 # FILE:        DTMRI.tcl
@@ -481,7 +481,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.129 $} {$Date: 2006/02/09 19:16:42 $}]
+                  {$Revision: 1.130 $} {$Date: 2006/02/09 21:20:26 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -1222,13 +1222,12 @@ proc DTMRIBuildVTK {} {
     DTMRI(vtk,$object) SetPoint1 -1 0 0
     DTMRI(vtk,$object) SetPoint2 1 0 0
     
-    # too slow: maybe useful for nice photos
-    #set object glyphs,tubeLine
-    #DTMRIMakeVTKObject vtkTubeFilter $object
-    #DTMRI(vtk,$object) SetInput [DTMRI(vtk,glyphs,line) GetOutput]
-    #DTMRIAddObjectProperty $object Radius 0.1 float {Radius}
-    #DTMRIAddObjectProperty $object NumberOfSides 6 int \
-    #    {Number Of Sides}
+    set object glyphs,tube
+    DTMRIMakeVTKObject vtkTubeFilter $object
+    DTMRI(vtk,$object) SetInput [DTMRI(vtk,glyphs,line) GetOutput]
+    DTMRIAddObjectProperty $object Radius 0.1 float {Radius}
+    DTMRIAddObjectProperty $object NumberOfSides 6 int \
+        {Number Of Sides}
 
     # Ellipsoids
     set object glyphs,sphere
@@ -1241,6 +1240,10 @@ proc DTMRIBuildVTK {} {
     # Boxes
     set object glyphs,box
     DTMRIMakeVTKObject vtkCubeSource  $object
+
+    # stripping
+    set object glyphs,stripper
+    DTMRIMakeVTKObject vtkStripper $object
 
     # objects for placement of Standard glyphs in dataset
     #------------------------------------
