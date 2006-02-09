@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Document.tcl,v $
-#   Date:      $Date: 2006/01/06 17:56:52 $
-#   Version:   $Revision: 1.28 $
+#   Date:      $Date: 2006/02/09 16:56:32 $
+#   Version:   $Revision: 1.29 $
 # 
 #===============================================================================
 # FILE:        Document.tcl
@@ -156,10 +156,10 @@ $desc
 # .PROC DocumentFile
 # 
 # .ARGS
-# docdir the top level of the documentation directory
-# dir  the subdir to put this documentation into
-# filename the name of the file to produce documentation for
-# level if level is one, look for the default style in ../../style.css
+# path docdir the top level of the documentation directory
+# path dir  the subdir to put this documentation into
+# str filename the name of the file to produce documentation for
+# int level if level is one, look for the default style in ../../style.css
 # .END
 #-------------------------------------------------------------------------------
 proc DocumentFile {docdir dir filename {level "1"}} {
@@ -177,11 +177,18 @@ proc DocumentFile {docdir dir filename {level "1"}} {
 
     # if directory level is deeper than 1, need to look higher for
     # the style file than the default ../../style.css
-    set default "../../style.css"
+
+    # special case for the Base/tcl files, level is 0
+    if {$level == 0} {
+        set default "../style.css"
+    } else {
+        set default "../../style.css"
+    }
     set styleFile $default
     for {set i "1"} { $i < $level} { incr i} {
         set styleFile "../$styleFile" 
     }
+    
     HtmlHead $fid $name $styleFile
 
     # List procecures
@@ -213,7 +220,7 @@ proc DocumentFile {docdir dir filename {level "1"}} {
 # .PROC DocumentIndex
 # 
 # .ARGS
-# docdir the top level documentation directory in which to build an index.html
+# path docdir the top level documentation directory in which to build an index.html
 # .END
 #-------------------------------------------------------------------------------
 proc DocumentIndex {docdir} {
@@ -523,10 +530,10 @@ proc DocumentAll {prog {outputdir ""} {what "doc tcl"} {moduleName ""}} {
         }
         # Document each file
         set Index(dirList) ""
-        set dirs "tcl-main tcl-modules tcl-shared tcl-modules/Editor tcl-modules/Volumes" 
+        set dirs ". tcl-main tcl-modules tcl-shared tcl-modules/Editor tcl-modules/Volumes" 
         # levels we are deep in the directory structure, 
         # relative to slicer/Base
-        set levels " 1 1 1 2 2"
+        set levels " 0 1 1 1 2 2"
 
         foreach dir $dirs level $levels {
             puts $dir
