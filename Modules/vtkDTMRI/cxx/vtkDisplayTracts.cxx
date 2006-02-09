@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDisplayTracts.cxx,v $
-  Date:      $Date: 2006/02/08 23:52:49 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2006/02/09 00:38:34 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
 #include "vtkDisplayTracts.h"
@@ -422,7 +422,7 @@ void vtkDisplayTracts::DeleteAllStreamlines()
   
 }
 
-// Delete one streamline and all of its associated objects.
+// Delete all of the DISPLAY objects created for one streamline 
 //----------------------------------------------------------------------------
 void vtkDisplayTracts::DeleteStreamline(int index)
 {
@@ -443,6 +443,7 @@ void vtkDisplayTracts::DeleteStreamline(int index)
       }
       // Remove from the scene (from each renderer)
       // Just like MainRemoveActor in Main.tcl.
+      // Don't delete the renderers since they are input.
       this->Renderers->InitTraversal();
       currRenderer= (vtkRenderer *)this->Renderers->GetNextItemAsObject();
       while(currRenderer)
@@ -451,6 +452,8 @@ void vtkDisplayTracts::DeleteStreamline(int index)
           currRenderer->RemoveActor(currActor);
           currRenderer= (vtkRenderer *)this->Renderers->GetNextItemAsObject();
         }
+
+      // Delete the actors, this class created them
       this->Actors->RemoveItem(index);
       currActor->Delete();
     }
