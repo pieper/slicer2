@@ -7,6 +7,8 @@
 # variables rather than being hard coded to the build directory
 #
 
+set kitList {Common Filtering IO Imaging Graphics Rendering Hybrid Patented}
+
 package ifneeded vtkinit {4.4} {
   namespace eval ::vtk::init {
     proc load_library_package {libName libPath {libPrefix {}}} {
@@ -28,18 +30,14 @@ package ifneeded vtkinit {4.4} {
     }
     set version {4.4}
     set kits {}
-    foreach kit { base Common Filtering IO Imaging Graphics
-                  Rendering Hybrid 
-                  Patented  } {
-      lappend kits [string tolower "${kit}"]
-    }
+      foreach kit "base $kitList" {
+          lappend kits [string tolower "${kit}"]
+      }
   }
   package provide vtkinit {4.4}
 }
 
-foreach kit { Common Filtering IO Imaging Graphics
-              Rendering Hybrid 
-              Patented  } {
+foreach kit "$kitList" {
     if { $::tcl_platform(platform) == "windows" } {
       package ifneeded "vtk${kit}TCL" {4.4} "
         package require -exact vtkinit {4.4}
