@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMultipleStreamlineController.cxx,v $
-  Date:      $Date: 2006/02/03 19:41:10 $
-  Version:   $Revision: 1.68 $
+  Date:      $Date: 2006/02/10 00:15:59 $
+  Version:   $Revision: 1.69 $
 
 =========================================================================auto=*/
 #include "vtkMultipleStreamlineController.h"
@@ -213,6 +213,9 @@ void vtkMultipleStreamlineController::DeleteAllStreamlines()
 }
 
 // Delete one streamline and all of its associated objects.
+// Here we delete the actual vtkHyperStreamline subclass object.
+// We call helper class DeleteStreamline functions in order
+// to get rid of (for example) graphics display objects.
 //----------------------------------------------------------------------------
 void vtkMultipleStreamlineController::DeleteStreamline(int index)
 {
@@ -224,6 +227,7 @@ void vtkMultipleStreamlineController::DeleteStreamline(int index)
   this->DisplayTracts->DeleteStreamline(index);
 
 
+  // Delete actual streamline
   vtkDebugMacro( << "Delete stream" );
   currStreamline = (vtkHyperStreamline *)
     this->Streamlines->GetItemAsObject(index);
