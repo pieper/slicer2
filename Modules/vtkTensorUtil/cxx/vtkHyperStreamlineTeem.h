@@ -8,8 +8,8 @@
 #include "vtkTensorMathematics.h"
 #include "vtkFloatArray.h"
 
-#include "teem\ten.h"
-#include "teem\nrrd.h"
+#include "teem/ten.h"
+#include "teem/nrrd.h"
 
 class VTK_TENSORUTIL_EXPORT vtkHyperStreamlineTeem : public vtkHyperStreamlineDTMRI
 {
