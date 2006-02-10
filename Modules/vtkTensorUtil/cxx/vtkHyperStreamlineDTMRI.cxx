@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.cxx,v $
-  Date:      $Date: 2006/02/10 02:26:37 $
-  Version:   $Revision: 1.22 $
+  Date:      $Date: 2006/02/10 22:49:59 $
+  Version:   $Revision: 1.23 $
 
 =========================================================================auto=*/
 #include "vtkHyperStreamlineDTMRI.h"
@@ -26,7 +26,7 @@
 //#include "vtkHyperPointandArray.cxx"
 #endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.22 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.23 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()
@@ -633,6 +633,11 @@ void vtkHyperStreamlineDTMRI::BuildLines()
 void vtkHyperStreamlineDTMRI::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
+ 
+  os << indent << "Radius of Curvature "
+     << this->RadiusOfCurvature << "\n";
+
+ 
 }
 
 
