@@ -15,6 +15,9 @@ class VTK_TENSORUTIL_EXPORT vtkHyperStreamlineTeem : public vtkHyperStreamlineDT
 {
 
  public:
+  vtkTypeRevisionMacro(vtkHyperStreamlineTeem,vtkHyperStreamlineDTMRI);
+  void PrintSelf(ostream& os, vtkIndent indent);
+
   static vtkHyperStreamlineTeem *New();
 
  protected:

@@ -10,6 +10,7 @@
 #include "vtkImageData.h"
 
 
+vtkCxxRevisionMacro(vtkHyperStreamlineTeem, "$Revision: 1.2 $");
 vtkStandardNewMacro(vtkHyperStreamlineTeem);
 
 
@@ -220,4 +221,10 @@ bool vtkHyperStreamlineTeem::DatasetOrSettingsChanged()
   return false; // TODO: implement this in a meaningfull manner!
 }
 
+
+
+void vtkHyperStreamlineTeem::PrintSelf(ostream& os, vtkIndent indent)
+{
+  this->Superclass::PrintSelf(os,indent);
+}
 
