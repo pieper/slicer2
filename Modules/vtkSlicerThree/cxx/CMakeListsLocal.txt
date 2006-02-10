@@ -12,6 +12,7 @@ vtkMRMLScene.cxx
 vtkMRMLParser.cxx
 vtkMRMLNode.cxx
 vtkMRMLVolumeNode.cxx
+vtkMRMLModelNode.cxx
 )
 
 ## classes that one does not want tcl wrapped

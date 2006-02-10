@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLVolumeNode.cxx,v $
-Date:      $Date: 2006/02/07 19:29:34 $
-Version:   $Revision: 1.9 $
+Date:      $Date: 2006/02/10 20:06:20 $
+Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 
@@ -233,6 +233,10 @@ void vtkMRMLVolumeNode::ReadData()
 
 }
 
+void vtkMRMLVolumeNode::WriteData()
+{
+  vtkErrorMacro("NOT IMPLEMENTED YET");
+}
 
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.

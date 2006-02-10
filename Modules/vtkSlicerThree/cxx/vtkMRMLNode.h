@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLNode.h,v $
-  Date:      $Date: 2006/02/07 19:19:35 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/02/10 20:06:20 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLNode - Abstract Superclass for all specific types of MRML nodes.
@@ -68,9 +68,6 @@ public:
   // Set node attributes
   virtual void ReadXMLAttributes(const char** atts);
 
-  // Read data for the node
-  virtual void ReadData() = 0;
-  
   // Description:
   // Write this node's information to a MRML file in XML format.
   // Only write attributes that differ from the default values,
@@ -83,6 +80,12 @@ public:
   // contents of a MRML file. (0, +1, -1)
   vtkGetMacro(Indent, int);
   
+  // Read data for the node
+  virtual void ReadData() = 0;
+  
+  // Write data for the node
+  virtual void WriteData() = 0;
+
 protected:
   
   vtkMRMLNode();
