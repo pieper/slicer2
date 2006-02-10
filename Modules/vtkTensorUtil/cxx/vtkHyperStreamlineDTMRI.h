@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.h,v $
-  Date:      $Date: 2006/01/20 03:05:02 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/02/10 00:14:04 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 // .NAME vtkHyperStreamlineDTMRI - generate hyperstreamline in arbitrary dataset
@@ -27,17 +27,9 @@
 //
 // The integration of the hyperstreamline occurs through the major eigenvector 
 // field. IntegrationStepLength controls the step length within each cell 
-// (i.e., this is the fraction of the cell length). The length of the 
+// (this is in mm). The length of the 
 // hyperstreamline is controlled by MaximumPropagationDistance. This parameter
-// is the length of the hyperstreamline in units of distance. The tube itself 
-// is composed of many small sub-tubes - NumberOfSides controls the number of 
-// sides in the tube, and StepLength controls the length of the sub-tubes.
-//
-// Because hyperstreamlines are often created near regions of singularities, it
-// is possible to control the scaling of the tube cross section by using a 
-// logarithmic scale. Use LogScalingOn to turn this capability on. The Radius 
-// value controls the initial radius of the tube.
-
+// is the length of the hyperstreamline in units of distance. 
 // .SECTION See Also
 // vtkTensorGlyph vtkStreamer
 
@@ -59,15 +51,17 @@ public:
 
   // Description:
   // Construct object with initial starting position (0,0,0); integration
-  // step length 0.2; step length 0.01; forward integration; terminal
-  // eigenvalue 0.0; number of sides 6; radius 0.5; and logarithmic scaling
-  // off.
+  // step length 0.5; both directions of integration; terminal
+  // eigenvalue 0.0
   static vtkHyperStreamlineDTMRI *New();
 
   // Description:
-  // If degree curvature becomes larger than this number, tracking stops.
-  vtkGetMacro(MaxCurvature,vtkFloatingPointType);
-  vtkSetMacro(MaxCurvature,vtkFloatingPointType);
+  // If radius of curvature becomes smaller than this number, tracking stops.
+  // This is how tight of a turn is allowed.
+  // The units are degrees per mm. (Actually per units of measurement
+  // in your data).
+  vtkGetMacro(RadiusOfCurvature,vtkFloatingPointType);
+  vtkSetMacro(RadiusOfCurvature,vtkFloatingPointType);
 
 
   vtkGetMacro(StoppingMode,int);
@@ -95,7 +89,7 @@ protected:
   void Execute();
   void BuildLines();
 
-  vtkFloatingPointType MaxCurvature;
+  vtkFloatingPointType RadiusOfCurvature;
   int StoppingMode;
   vtkFloatingPointType StoppingThreshold;
 

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.cxx,v $
-  Date:      $Date: 2006/02/03 19:38:25 $
-  Version:   $Revision: 1.20 $
+  Date:      $Date: 2006/02/10 00:14:03 $
+  Version:   $Revision: 1.21 $
 
 =========================================================================auto=*/
 #include "vtkHyperStreamlineDTMRI.h"
@@ -26,7 +26,7 @@
 //#include "vtkHyperPointandArray.cxx"
 #endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.20 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.21 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 // Construct object with initial starting position (0,0,0); integration step 
@@ -45,11 +45,11 @@ vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()
   this->Streamers = NULL;
 
   this->MaximumPropagationDistance = 100.0;
-  this->IntegrationStepLength = 0.2;
+  // in mm.
+  this->IntegrationStepLength = 0.5;
   this->StepLength = 0.01;
   this->IntegrationDirection = VTK_INTEGRATE_FORWARD;
   this->TerminalEigenvalue = 0.0;
-  this->NumberOfSides = 6;
   this->Radius = 0.5;
   this->LogScaling = 0;
   this->IntegrationEigenvector = VTK_INTEGRATE_MAJOR_EIGENVECTOR;
@@ -299,7 +299,7 @@ void vtkHyperStreamlineDTMRI::Execute()
     dir = this->Streamers[ptId].Direction;
     cell = input->GetCell(sPtr->CellId);
     cell->EvaluateLocation(sPtr->SubId, sPtr->P, xNext, w);
-    step = this->IntegrationStepLength * sqrt((double)cell->GetLength2());
+    step = this->IntegrationStepLength;
     inTensors->GetTuples(cell->PointIds, cellTensors);
     if ( inScalars ) {inScalars->GetTuples(cell->PointIds, cellScalars);}
 
@@ -360,12 +360,14 @@ void vtkHyperStreamlineDTMRI::Execute()
               }
             K=sqrt(K);
             // units are radians per mm.
-            //vtkDebugMacro(<<K);
-            //cout << pointCount << "    " << K << endl;
-
-            if (K > this->MaxCurvature) 
+            // Convert to radius of curvature (in mm) 
+            // and compare to allowed radius.
+            if (K != 0)
               {
-                keepIntegrating=0;
+                if ((1/K) < this->RadiusOfCurvature) 
+                  {
+                    keepIntegrating=0;
+                  }
               }
           }
         else 
@@ -439,7 +441,7 @@ void vtkHyperStreamlineDTMRI::Execute()
           cell = input->GetCell(sNext->CellId);
           inTensors->GetTuples(cell->PointIds, cellTensors);
           if (inScalars){inScalars->GetTuples(cell->PointIds, cellScalars);}
-          step = this->IntegrationStepLength * sqrt((double)cell->GetLength2());
+          step = this->IntegrationStepLength;
           }
         }
 
