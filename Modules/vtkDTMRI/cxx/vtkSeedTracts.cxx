@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.cxx,v $
-  Date:      $Date: 2006/02/10 02:29:21 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2006/02/10 22:51:31 $
+  Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 
@@ -60,6 +60,7 @@ vtkSeedTracts::vtkSeedTracts()
   this->VtkHyperStreamlineSettings=NULL;
   this->VtkHyperStreamlinePointsSettings=NULL;
   this->VtkPreciseHyperStreamlinePointsSettings=NULL;
+  this->VtkHyperStreamlineTeemSettings=NULL;
 
   // default to vtkHyperStreamline class creation
   this->UseVtkHyperStreamline();
@@ -93,6 +94,8 @@ vtkSeedTracts::~vtkSeedTracts()
     this->VtkHyperStreamlinePointsSettings->Delete();
   if (this->VtkPreciseHyperStreamlinePointsSettings) 
     this->VtkPreciseHyperStreamlinePointsSettings->Delete();
+  if (this->VtkHyperStreamlineTeemSettings) 
+    this->VtkHyperStreamlineTeemSettings->Delete();
 
   // collection
   if (this->Streamlines) this->Streamlines->Delete();
@@ -111,9 +114,11 @@ vtkHyperStreamline * vtkSeedTracts::CreateHyperStreamline()
   vtkHyperStreamline *currHS;
   vtkHyperStreamlineDTMRI *currHSP;
   vtkPreciseHyperStreamlinePoints *currPHSP;
+  vtkHyperStreamlineTeem *currHST;
 
   vtkDebugMacro(<< "in create HyperStreamline, type " << this->TypeOfHyperStreamline);
 
+  
   switch (this->TypeOfHyperStreamline)
     {
     case USE_VTK_HYPERSTREAMLINE:
@@ -125,6 +130,27 @@ vtkHyperStreamline * vtkSeedTracts::CreateHyperStreamline()
       else
         {
           return(vtkHyperStreamline::New());
+        }
+      break;
+    case USE_VTK_HYPERSTREAMLINE_TEEM:
+      if (this->VtkHyperStreamlineTeemSettings) 
+        {
+          // create object
+          std::cout << "Creatng HST" << endl;
+          currHST=vtkHyperStreamlineTeem::New();
+
+          std::cout << "settings for HST" << endl;
+
+          this->UpdateHyperStreamlineTeemSettings(currHST);
+
+
+          std::cout << "returning HST" << endl;
+
+          return((vtkHyperStreamline *)currHST);
+        }
+      else
+        {
+          return((vtkHyperStreamline *) vtkHyperStreamlineTeem::New());
         }
       break;
     case USE_VTK_HYPERSTREAMLINE_POINTS:
@@ -224,6 +250,7 @@ void vtkSeedTracts::UpdateAllHyperStreamlineSettings()
 {
   vtkObject *currStreamline;
   vtkHyperStreamlineDTMRI *currHSP;
+  vtkHyperStreamlineTeem *currHST;
 
   // traverse streamline collection
   this->Streamlines->InitTraversal();
@@ -239,6 +266,13 @@ void vtkSeedTracts::UpdateAllHyperStreamlineSettings()
           currHSP = (vtkHyperStreamlineDTMRI *) currStreamline;
           this->UpdateHyperStreamlinePointsSettings(currHSP);
           currHSP->Update();
+        }
+      if (strcmp(currStreamline->GetClassName(),"vtkHyperStreamlineTeem") == 0)
+        {
+          vtkDebugMacro( << " match" );
+          currHST = (vtkHyperStreamlineTeem *) currStreamline;
+          this->UpdateHyperStreamlineTeemSettings(currHST);
+          currHST->Update();
         }
 
       currStreamline= (vtkObject *)this->Streamlines->GetNextItemAsObject();
@@ -272,6 +306,43 @@ void vtkSeedTracts::UpdateHyperStreamlinePointsSettings( vtkHyperStreamlineDTMRI
   // IntegrationDirection (set in this class, default both ways)
   currHSP->SetIntegrationDirection(this->IntegrationDirection);
 
+}
+
+// Update settings of one hyper streamline:
+// This is where teem hyperstreamlines have their settings updated
+// from the user interface.
+//----------------------------------------------------------------------------
+void vtkSeedTracts::UpdateHyperStreamlineTeemSettings( vtkHyperStreamlineTeem *currHST)
+{
+
+  std::cout << "in settings  function HST" << endl;
+
+  // Potentially this should update the tendFiberContext class for the given volume,
+  // instead of updating all streamlines.
+  
+  // Copy user's settings into this object:
+  
+  // MaximumPropagationDistance 
+  currHST->SetMaximumPropagationDistance(this->VtkHyperStreamlineTeemSettings->GetMaximumPropagationDistance());
+  // IntegrationStepLength
+  currHST->SetIntegrationStepLength(this->VtkHyperStreamlineTeemSettings->GetIntegrationStepLength());
+  // RadiusOfCurvature
+  currHST->SetRadiusOfCurvature(this->VtkHyperStreamlineTeemSettings->GetRadiusOfCurvature());
+  
+  // Stopping threshold
+  currHST->SetStoppingThreshold(this->VtkHyperStreamlineTeemSettings->GetStoppingThreshold());
+  
+  // Stopping Mode
+  currHST->SetStoppingMode(this->VtkHyperStreamlineTeemSettings->GetStoppingMode());
+  
+  
+  // Eigenvector to integrate
+  currHST->SetIntegrationEigenvector(this->VtkHyperStreamlineTeemSettings->GetIntegrationEigenvector());
+  
+  // IntegrationDirection (set in this class, default both ways)
+  currHST->SetIntegrationDirection(this->IntegrationDirection);
+
+  std::cout << "DONE in settings  function HST" << endl;
 }
 
 
