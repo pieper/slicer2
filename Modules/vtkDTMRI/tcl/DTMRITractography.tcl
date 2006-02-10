@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITractography.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:28 $
-#   Version:   $Revision: 1.45 $
+#   Date:      $Date: 2006/02/10 00:15:27 $
+#   Version:   $Revision: 1.46 $
 # 
 #===============================================================================
 # FILE:        DTMRITractography.tcl
@@ -58,7 +58,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.45 $} {$Date: 2006/01/06 17:57:28 $}]
+                                 {$Revision: 1.46 $} {$Date: 2006/02/10 00:15:27 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -91,15 +91,13 @@ proc DTMRITractographyInit {} {
     # Max length (in number of steps?)
     set DTMRI(stream,MaximumPropagationDistance)  600.0
     set DTMRI(stream,MinimumPropagationDistance)  30.0
+
     # Terminal Eigenvalue
     set DTMRI(stream,TerminalEigenvalue)  0.0
-    # nominal integration step size (expressed as a fraction of the
-    # size of each cell)  0.2 is default
-    set DTMRI(stream,IntegrationStepLength)  0.1
-    # Set / get the length of a tube segment composing the
-    # hyperstreamline. The length is specified as a fraction of the
-    # diagonal length of the input bounding box.  0.01 is vtk default
-    set DTMRI(stream,StepLength)  0.005
+
+    # integration step size in millimiters
+    set DTMRI(stream,IntegrationStepLength)  0.5
+
     # radius of (polydata) tube that is displayed
     #set DTMRI(stream,Radius)  0.2 
     set DTMRI(stream,Radius)  0.4
@@ -113,28 +111,27 @@ proc DTMRITractographyInit {} {
     set DTMRI(stream,variableList) \
         [list \
              MaximumPropagationDistance IntegrationStepLength \
-             StepLength Radius  NumberOfSides MaxCurvature StoppingThreshold]
+             RadiusOfCurvature StoppingThreshold Radius  NumberOfSides ]
 
     set DTMRI(stream,variableList,text) \
         [list \
              "Max Length" "Step Size" \
-             "Smoothness (along)" "Radius"  "Smoothness (around)" "Curvature Threshold" "Stopping Threshold"]
+              "Min Radius of Curvature" "Stopping Threshold" "Tube Radius"  "Tube Smoothness"]
     set DTMRI(stream,variableList,tooltips) \
         [list \
-             "MaximumPropagationDistance: Tractography will stop after this distance" \
-             "IntegrationStepLength: step size when following path" \
-             "StepLength: Length of each displayed tube segment" \
-             "Radius: Initial radius (thickness) of displayed tube" \
-             "NumberOfSides: Number of sides of displayed tube" \
-             "Curvature Threshold: Max curvature allowed in tracking"\
-             "Stopping Threshold: If value falls below this value, tracking stops"]
+             "MaximumPropagationDistance (mm): Tractography will stop after this distance" \
+             "IntegrationStepLength (mm): step size when following path" \
+             "Radius of Curvature (mm): Minimum (tightest) turn allowed "\
+             "Stopping Threshold: If value falls below this value, tracking stops" \
+             "Radius (tube): Radius (thickness) of displayed tube" \
+             "NumberOfSides (tube): Number of sides of displayed tube" ]
     
     set DTMRI(stream,StoppingBy) LinearMeasure; # default must match the vtk class
     set DTMRI(stream,StoppingByList) {LinearMeasure PlanarMeasure SphericalMeasure FractionalAnisotropy}         
     
-    #set DTMRI(stream,MaxCurvature) 1.3
-    set DTMRI(stream,MaxCurvature) 1.15
-    set DTMRI(stream,StoppingThreshold) 0.07
+    #set DTMRI(stream,MaxCurvature) 1.15
+    set DTMRI(stream,RadiusOfCurvature) 0.87
+    set DTMRI(stream,StoppingThreshold) 0.15
     
 
     # B-spline tractography variables (lists are for GUI creation)
