@@ -36,6 +36,7 @@ vtkSuperquadricTensorGlyph.cxx
 vtkSuperquadricSource2.cxx
 vtkTensorFlip.cxx
 vtkHyperPointandArray.cxx
+vtkHyperStreamlineTeem.cxx
 )
 
 SET_SOURCE_FILES_PROPERTIES(
