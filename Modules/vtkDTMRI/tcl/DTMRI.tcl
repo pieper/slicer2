@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRI.tcl,v $
-#   Date:      $Date: 2006/02/09 21:20:26 $
-#   Version:   $Revision: 1.130 $
+#   Date:      $Date: 2006/02/10 22:53:11 $
+#   Version:   $Revision: 1.131 $
 # 
 #===============================================================================
 # FILE:        DTMRI.tcl
@@ -481,7 +481,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.130 $} {$Date: 2006/02/09 21:20:26 $}]
+                  {$Revision: 1.131 $} {$Date: 2006/02/10 22:53:11 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -1358,6 +1358,11 @@ proc DTMRIBuildVTK {} {
     set streamline "streamlineControl,vtkPreciseHyperStreamlinePoints"
     vtkPreciseHyperStreamlinePoints DTMRI(vtk,$streamline)
     $seedTracts SetVtkPreciseHyperStreamlinePointsSettings \
+        DTMRI(vtk,$streamline)
+
+    set streamline "streamlineControl,vtkHyperStreamlineTeem"
+    vtkHyperStreamlineTeem DTMRI(vtk,$streamline)
+    $seedTracts SetVtkHyperStreamlineTeemSettings \
         DTMRI(vtk,$streamline)
     
 

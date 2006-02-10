@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITractography.tcl,v $
-#   Date:      $Date: 2006/02/10 02:28:09 $
-#   Version:   $Revision: 1.48 $
+#   Date:      $Date: 2006/02/10 22:53:12 $
+#   Version:   $Revision: 1.49 $
 # 
 #===============================================================================
 # FILE:        DTMRITractography.tcl
@@ -58,7 +58,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.48 $} {$Date: 2006/02/10 02:28:09 $}]
+                                 {$Revision: 1.49 $} {$Date: 2006/02/10 22:53:12 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -81,15 +81,17 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set DTMRI(stream,tractingMethod) NoSpline
     # put the default last so its GUI is built on top.
-    set DTMRI(stream,tractingMethodList) {BSpline NoSpline}
+    set DTMRI(stream,tractingMethodList) {BSpline NoSpline Teem}
     set DTMRI(stream,tractingMethodList,tooltip) {Method for interpolating signal}
 
 
-    # vtkHyperStreamline tractography variables
+    #-------------------------------------------------------------------------------------
+    # vtkHyperStreamlineDTMRI tractography variables
     # Initialize here (some can be changed in the GUI).
     #------------------------------------
     # Max length (in number of steps?)
     set DTMRI(stream,MaximumPropagationDistance)  600.0
+
     set DTMRI(stream,MinimumPropagationDistance)  30.0
 
     # Terminal Eigenvalue
@@ -148,6 +150,69 @@ proc DTMRITractographyInit {} {
 
 
              
+
+    #-------------------------------------------------------------------------------------
+    # vtkHyperStreamlineTeem tractography variables
+    # Initialize here (some can be changed in the GUI).
+    #------------------------------------
+    # Max length (in number of steps?)
+    set DTMRI(teem,MaximumPropagationDistance)  600.0
+
+    # Terminal Eigenvalue
+    set DTMRI(teem,TerminalEigenvalue)  0.0
+
+    # integration step size in millimiters
+    set DTMRI(teem,IntegrationStepLength)  0.5
+
+    # radius of (polydata) tube that is displayed
+    #set DTMRI(teem,Radius)  0.2 
+    set DTMRI(teem,Radius)  0.4
+    # sides of tube
+    #set DTMRI(teem,NumberOfSides)  4
+    set DTMRI(teem,NumberOfSides)  6
+
+    # What type of value to use for a threshold
+    # default must match the vtk class
+    set DTMRI(teem,StoppingMode) LinearMeasure; 
+    set DTMRI(teem,StoppingMode,menu) {LinearMeasure PlanarMeasure SphericalMeasure FractionalAnisotropy}    
+    # threshold of above value
+    set DTMRI(teem,StoppingThreshold) 0.15
+
+    # Radius of curvature
+    #set DTMRI(teem,MaxCurvature) 1.15
+    # this is 1/1.15
+    set DTMRI(teem,RadiusOfCurvature) 0.87
+
+
+    # Teem tractography variables (lists are for GUI creation)
+    #------------------------------------
+    set DTMRI(teem,variableList) \
+        [list \
+             MaximumPropagationDistance IntegrationStepLength \
+             RadiusOfCurvature StoppingMode StoppingThreshold \
+             Radius  NumberOfSides ]
+
+    set DTMRI(teem,variableList,type) \
+         "entry entry entry menu entry entry entry"
+
+    set DTMRI(teem,variableList,text) \
+        [list \
+             "Max Length (each half)" "Step Size" \
+              "Radius of Curvature > " \
+             "Anisotropy Type" "Anisotropy Threshold " \
+             "Tube Radius"  "Tube Sides"]
+    set DTMRI(teem,variableList,tooltips) \
+        [list \
+             "MaximumPropagationDistance (mm): Tractography stops after this distance, in each direction from the start point." \
+             "IntegrationStepLength (mm): step size when following path" \
+             "Radius of Curvature (mm): Minimum (tightest) turn allowed "\
+             "Stopping by: If this shape measure falls below stopping threshold, tractography stops" \
+             "Stopping Threshold: If value falls below this value, tracking stops" \
+             "Radius (tube): Radius (thickness) of displayed tube" \
+             "NumberOfSides (tube): Number of sides of displayed tube" ]
+
+
+    #-------------------------------------------------------------------------------------
 
 
     # B-spline tractography variables (lists are for GUI creation)
@@ -310,6 +375,8 @@ proc DTMRITractographyBuildGUI {} {
     #                MethodVariables ...
     #                PreciseVariables ...
     #             NoSpline
+    #                Variables...
+    #             Teem
     #                Variables...
     #       Seeding
     #
@@ -635,6 +702,69 @@ proc DTMRITractographyBuildGUI {} {
     #-------------------------------------------
 
     set f $DTMRI(stream,tractingFrame,NoSpline)
+
+    eval {button $f.bApply -text "Apply to all tracts" \
+              -command "DTMRITractographyUpdateAllStreamlineSettings"} $Gui(WBA)
+    pack $f.bApply -padx $Gui(pad) -pady $Gui(pad) -side top
+
+
+    #-------------------------------------------
+    # Tract->Notebook->Settings->TractingVar->Teem->Variables frames
+    #-------------------------------------------
+
+    foreach entry $DTMRI(teem,variableList) \
+        text $DTMRI(teem,variableList,text) \
+        tip $DTMRI(teem,variableList,tooltips) \
+        type $DTMRI(teem,variableList,type) {
+
+            set f $DTMRI(stream,tractingFrame,Teem)
+
+            frame $f.f$entry -bg $Gui(activeWorkspace)
+            pack $f.f$entry -side top -padx 0 -pady 1 -fill x
+            set f $f.f$entry
+
+            eval {label $f.l$entry -text "$text:"} $Gui(WLA)
+            TooltipAdd $f.l$entry $tip
+            pack $f.l$entry -side left  -padx $Gui(pad)
+
+
+            if {$type == "entry"} {
+
+                eval {entry $f.e$entry -width 8 \
+                          -textvariable DTMRI(teem,$entry)} \
+                    $Gui(WEA)
+
+                TooltipAdd $f.e$entry $tip
+                pack $f.e$entry -side right  -padx $Gui(pad)
+
+            } elseif {$type == "menu"} {
+
+                eval {menubutton $f.mb$entry -text "$DTMRI(teem,$entry)" \
+                          -relief raised -bd 2 -width 20 \
+                          -menu $f.mb$entry.m} $Gui(WMBA)
+                eval {menu $f.mb$entry.m} $Gui(WMA)
+                pack $f.mb$entry -side right -padx $Gui(pad)
+
+                # save menubutton for config
+                set DTMRI(teem,mb$entry) $f.mb$entry
+                # Add a tooltip
+                TooltipAdd $f.mb$entry $tip
+
+                # add menu items
+                foreach item $DTMRI(teem,$entry,menu) {
+                    $f.mb$entry.m add command \
+                        -label $item \
+                        -command "set DTMRI(teem,$entry) $item; \
+                    $f.mb$entry config -text $item"
+                }
+            }
+        }
+
+    #-------------------------------------------
+    # Tract->Notebook->Settings->TractingVar->Teem
+    #-------------------------------------------
+
+    set f $DTMRI(stream,tractingFrame,Teem)
 
     eval {button $f.bApply -text "Apply to all tracts" \
               -command "DTMRITractographyUpdateAllStreamlineSettings"} $Gui(WBA)
@@ -1143,6 +1273,30 @@ proc DTMRIUpdateStreamlineSettings {} {
             }
             
         }
+
+       "Teem" {
+            # What type of streamline object to create
+            $seedTracts UseVtkHyperStreamlineTeem
+
+            # apply correct settings to example streamline object
+            set streamline "streamlineControl,vtkHyperStreamlineTeem"
+            foreach var $DTMRI(teem,variableList) \
+                type  $DTMRI(teem,variableList,type) {
+
+                    if {$type == "menu" } {
+
+                        DTMRI(vtk,$streamline) Set${var}To$DTMRI(teem,$var)
+
+                    } else {
+                        
+                        DTMRI(vtk,$streamline) Set$var $DTMRI(teem,$var)
+
+                    }
+            }
+            
+        }
+
+
     }
 
     # No matter what kind we are making, set the display parameters
@@ -1207,6 +1361,12 @@ proc DTMRIUpdateTractingMethod { TractingMethod } {
             "NoSpline" {
                 raise $DTMRI(stream,tractingFrame,NoSpline)
                 focus $DTMRI(stream,tractingFrame,NoSpline)
+                $DTMRI(gui,mbTractingMethod)    config -text $TractingMethod
+                
+            }
+            "Teem" {
+                raise $DTMRI(stream,tractingFrame,Teem)
+                focus $DTMRI(stream,tractingFrame,Teem)
                 $DTMRI(gui,mbTractingMethod)    config -text $TractingMethod
                 
             }
