@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTractShapeFeatures.cxx,v $
-  Date:      $Date: 2006/02/10 02:31:30 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/02/10 03:44:49 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 // for vtk objects we use here
@@ -36,7 +36,7 @@
 
 
 
-vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.15 $");
+vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.16 $");
 vtkStandardNewMacro(vtkTractShapeFeatures);
 
 vtkCxxSetObjectMacro(vtkTractShapeFeatures, InputStreamlines, vtkCollection);
@@ -183,6 +183,11 @@ void vtkTractShapeFeatures::ComputeFeatures()
         this->ComputeFeaturesEndPoints();
         break;
       }
+    case MEAN_CLOSEST_POINT:
+      {
+        this->ComputeFeaturesHausdorff();
+        break;
+      }
       
     }
 }
@@ -251,7 +256,7 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
           // vars for computing distance
           sumDist = 0;
           maxMinDist = 0;
-          sumSqDist = 0;
+          //sumSqDist = 0;
           countDist = 0;
 
           size1 = sample1->Size();
@@ -277,11 +282,15 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
 
                   count2+=increment;
                 }
-              // accumulate the min dist to this point
+
+              // accumulate the min dist to this point 
+              // (for mean closest point)
               sumDist = sumDist + minDist; 
-              sumSqDist = sumSqDist + minDist*minDist; 
+              // (for testing squared distances)
+              //sumSqDist = sumSqDist + minDist*minDist; 
 
               // find max of min dists so far
+              // (for standard hausdorff)
               if (minDist > maxMinDist) {maxMinDist = minDist;}
 
               countDist++;
@@ -290,43 +299,51 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
             }
 
           // Store distance for this pair of tracts.
-          // Save "average Hausdorff" (avg of min dists) in matrix.
-          // normal Hausdorff is the max of the min dists.
-          // Note this is a symmetric distance measure, we use the 
-          // average of dist(a->b) and (b->a):
-          // in a standard normal distribution, 80% of the distribution
-          // is to the left of 0.842 (CDF(0.842)=80%)
+          double currentDistance = 0; 
+          switch (this->FeatureType)
+            {
+            case HAUSDORFF:
+              {
+                // normal Hausdorff is the max of the min dists.
+                currentDistance = maxMinDist;
+                break;
+              }
+            case MEAN_CLOSEST_POINT:
+              {
+                // Save "average Hausdorff" (avg of min dists) in matrix.
+                currentDistance = sumDist/countDist;
+                break;
+              }
 
-          //double tmp = sumDist/countDist + 0.842*sqrt(sumSqDist);
+            }
 
-          // normal
-          double tmp = sumDist/countDist;
-          // for 90 %
-          //double tmp = sumDist + 1.28*sqrt(sumSqDist);
 
           switch (this->SymmetrizeMethod) 
             {
             case 1:
               {
                 // mean
-                m_InterTractDistanceMatrix(i,j) += tmp/2;
-                m_InterTractDistanceMatrix(j,i) += tmp/2;
+                // Symmetric distance measure, we use the 
+                // average of dist(a->b) and (b->a):
+                m_InterTractDistanceMatrix(i,j) += currentDistance/2;
+                m_InterTractDistanceMatrix(j,i) += currentDistance/2;
                 break;
               }
             case 2:
               {
                 // min
+                // min of dist(a->b) and (b->a):
                 if (m_InterTractDistanceMatrix(i,j) == 0) 
                   {
-                    m_InterTractDistanceMatrix(i,j) = tmp;
-                    m_InterTractDistanceMatrix(j,i) = tmp;
+                    m_InterTractDistanceMatrix(i,j) = currentDistance;
+                    m_InterTractDistanceMatrix(j,i) = currentDistance;
                   } 
                 else
                   {
-                    if (tmp < m_InterTractDistanceMatrix(i,j)) 
+                    if (currentDistance < m_InterTractDistanceMatrix(i,j)) 
                       {
-                        m_InterTractDistanceMatrix(i,j) = tmp;
-                        m_InterTractDistanceMatrix(j,i) = tmp;
+                        m_InterTractDistanceMatrix(i,j) = currentDistance;
+                        m_InterTractDistanceMatrix(j,i) = currentDistance;
                       }
                   }
                 break;
@@ -334,17 +351,18 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
             case 3:
               {
                 // max
+                // max of dist(a->b) and (b->a):
                 if (m_InterTractDistanceMatrix(i,j) == 0) 
                   {
-                    m_InterTractDistanceMatrix(i,j) = tmp;
-                    m_InterTractDistanceMatrix(j,i) = tmp;
+                    m_InterTractDistanceMatrix(i,j) = currentDistance;
+                    m_InterTractDistanceMatrix(j,i) = currentDistance;
                   } 
                 else
                   {
-                    if (tmp > m_InterTractDistanceMatrix(i,j)) 
+                    if (currentDistance > m_InterTractDistanceMatrix(i,j)) 
                       {
-                        m_InterTractDistanceMatrix(i,j) = tmp;
-                        m_InterTractDistanceMatrix(j,i) = tmp;
+                        m_InterTractDistanceMatrix(i,j) = currentDistance;
+                        m_InterTractDistanceMatrix(j,i) = currentDistance;
                       }
                   }
                 break;

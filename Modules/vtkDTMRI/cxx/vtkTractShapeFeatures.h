@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTractShapeFeatures.h,v $
-  Date:      $Date: 2006/02/10 02:31:30 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/02/10 03:44:49 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 // .NAME vtkTractShapeFeatures - Compute tract similarity matrix for clustering
@@ -61,7 +61,7 @@ class VTK_DTMRI_EXPORT vtkTractShapeFeatures : public vtkObject
   vtkGetMacro(Sigma,double);
 
   // Description
-  // For Hausdorff only.  Use every Nth point on the tract path for 
+  // For Hausdorff variants only.  Use every Nth point on the tract path for 
   // comparison. 
   vtkSetClampMacro(HausdorffN,int,1,100);
   vtkGetMacro(HausdorffN,int);
@@ -106,6 +106,10 @@ class VTK_DTMRI_EXPORT vtkTractShapeFeatures : public vtkObject
     {
       this->SetFeatureType(HAUSDORFF);
     };
+  void SetFeatureTypeToMeanClosestPoint()
+    {
+      this->SetFeatureType(MEAN_CLOSEST_POINT);
+    };
   void SetFeatureTypeToMeanAndCovariance()
     {
       this->SetFeatureType(MEAN_AND_COVARIANCE);
@@ -137,7 +141,7 @@ class VTK_DTMRI_EXPORT vtkTractShapeFeatures : public vtkObject
   void ComputeFeaturesEndPoints();
   
   //BTX
-  enum ShapeFeatureType { MEAN_AND_COVARIANCE, HAUSDORFF, ENDPOINTS } ;
+  enum ShapeFeatureType { MEAN_AND_COVARIANCE, HAUSDORFF, ENDPOINTS, MEAN_CLOSEST_POINT} ;
   //ETX
   int FeatureType;
   vtkSetMacro(FeatureType,int);

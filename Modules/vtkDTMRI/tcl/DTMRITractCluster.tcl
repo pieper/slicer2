@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITractCluster.tcl,v $
-#   Date:      $Date: 2006/02/10 02:31:30 $
-#   Version:   $Revision: 1.18 $
+#   Date:      $Date: 2006/02/10 03:44:49 $
+#   Version:   $Revision: 1.19 $
 # 
 #===============================================================================
 # FILE:        DTMRITractCluster.tcl
@@ -38,13 +38,13 @@ proc DTMRITractClusterInit {} {
     #------------------------------------
     set m "TractCluster"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.18 $} {$Date: 2006/02/10 02:31:30 $}]
+                                 {$Revision: 1.19 $} {$Date: 2006/02/10 03:44:49 $}]
 
-    set DTMRI(TractCluster,NumberOfClusters) 3
+    set DTMRI(TractCluster,NumberOfClusters) 5
     set DTMRI(TractCluster,Sigma) 20
     set DTMRI(TractCluster,HausdorffN) 15
-    set DTMRI(TractCluster,ShapeFeature) MeanAndCovariance
-    set DTMRI(TractCluster,ShapeFeature,menu) {MeanAndCovariance Hausdorff EndPoints}
+    set DTMRI(TractCluster,ShapeFeature) MeanClosestPoint
+    set DTMRI(TractCluster,ShapeFeature,menu) {MeanClosestPoint MeanAndCovariance Hausdorff EndPoints}
 
     set DTMRI(TractCluster,SymmetrizeMethod) Min
     set DTMRI(TractCluster,SymmetrizeMethod,menu) {Mean Min Max}
