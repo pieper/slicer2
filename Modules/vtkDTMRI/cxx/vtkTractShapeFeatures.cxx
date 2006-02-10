@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTractShapeFeatures.cxx,v $
-  Date:      $Date: 2006/01/20 03:50:59 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/02/10 02:31:30 $
+  Version:   $Revision: 1.15 $
 
 =========================================================================auto=*/
 // for vtk objects we use here
@@ -36,7 +36,7 @@
 
 
 
-vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.14 $");
+vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.15 $");
 vtkStandardNewMacro(vtkTractShapeFeatures);
 
 vtkCxxSetObjectMacro(vtkTractShapeFeatures, InputStreamlines, vtkCollection);
@@ -54,6 +54,7 @@ vtkTractShapeFeatures::vtkTractShapeFeatures()
 
   this->HausdorffN = 10;
 
+  this->SymmetrizeMethod = 1;
 }
 
 vtkTractShapeFeatures::~vtkTractShapeFeatures()
@@ -302,9 +303,54 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
           double tmp = sumDist/countDist;
           // for 90 %
           //double tmp = sumDist + 1.28*sqrt(sumSqDist);
-          m_InterTractDistanceMatrix(i,j) += tmp/2;
-          m_InterTractDistanceMatrix(j,i) += tmp/2;
-          //(*this->InterTractDistanceMatrix)[i][j] += i+j;
+
+          switch (this->SymmetrizeMethod) 
+            {
+            case 1:
+              {
+                // mean
+                m_InterTractDistanceMatrix(i,j) += tmp/2;
+                m_InterTractDistanceMatrix(j,i) += tmp/2;
+                break;
+              }
+            case 2:
+              {
+                // min
+                if (m_InterTractDistanceMatrix(i,j) == 0) 
+                  {
+                    m_InterTractDistanceMatrix(i,j) = tmp;
+                    m_InterTractDistanceMatrix(j,i) = tmp;
+                  } 
+                else
+                  {
+                    if (tmp < m_InterTractDistanceMatrix(i,j)) 
+                      {
+                        m_InterTractDistanceMatrix(i,j) = tmp;
+                        m_InterTractDistanceMatrix(j,i) = tmp;
+                      }
+                  }
+                break;
+              }
+            case 3:
+              {
+                // max
+                if (m_InterTractDistanceMatrix(i,j) == 0) 
+                  {
+                    m_InterTractDistanceMatrix(i,j) = tmp;
+                    m_InterTractDistanceMatrix(j,i) = tmp;
+                  } 
+                else
+                  {
+                    if (tmp > m_InterTractDistanceMatrix(i,j)) 
+                      {
+                        m_InterTractDistanceMatrix(i,j) = tmp;
+                        m_InterTractDistanceMatrix(j,i) = tmp;
+                      }
+                  }
+                break;
+              }
+            }
+
         }
     }
 

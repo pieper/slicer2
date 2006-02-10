@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTractShapeFeatures.h,v $
-  Date:      $Date: 2006/01/20 03:50:59 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/02/10 02:31:30 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 // .NAME vtkTractShapeFeatures - Compute tract similarity matrix for clustering
@@ -66,6 +66,13 @@ class VTK_DTMRI_EXPORT vtkTractShapeFeatures : public vtkObject
   vtkSetClampMacro(HausdorffN,int,1,100);
   vtkGetMacro(HausdorffN,int);
 
+  // Description
+  // How to symmetrize distances (Hausdorff-based): mas, mean, min
+  vtkSetMacro(SymmetrizeMethod,int);
+  vtkGetMacro(SymmetrizeMethod,int);
+  void SetSymmetrizeMethodToMean() {this->SetSymmetrizeMethod(1);}
+  void SetSymmetrizeMethodToMin() {this->SetSymmetrizeMethod(2);}
+  void SetSymmetrizeMethodToMax() {this->SetSymmetrizeMethod(3);}
   
   //BTX
   // (wrapping doesn't work here so exclude this with BTX)
@@ -120,6 +127,7 @@ class VTK_DTMRI_EXPORT vtkTractShapeFeatures : public vtkObject
   vtkCollection *InputStreamlines;
   double Sigma;
   int HausdorffN;
+  int SymmetrizeMethod;
 
   vtkImageData *InterTractDistanceMatrixImage;
   vtkImageData *InterTractSimilarityMatrixImage;

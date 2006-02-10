@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITractCluster.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:28 $
-#   Version:   $Revision: 1.17 $
+#   Date:      $Date: 2006/02/10 02:31:30 $
+#   Version:   $Revision: 1.18 $
 # 
 #===============================================================================
 # FILE:        DTMRITractCluster.tcl
@@ -38,21 +38,25 @@ proc DTMRITractClusterInit {} {
     #------------------------------------
     set m "TractCluster"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.17 $} {$Date: 2006/01/06 17:57:28 $}]
+                                 {$Revision: 1.18 $} {$Date: 2006/02/10 02:31:30 $}]
 
     set DTMRI(TractCluster,NumberOfClusters) 3
-    set DTMRI(TractCluster,Sigma) 25
-    set DTMRI(TractCluster,HausdorffN) 20
+    set DTMRI(TractCluster,Sigma) 20
+    set DTMRI(TractCluster,HausdorffN) 15
     set DTMRI(TractCluster,ShapeFeature) MeanAndCovariance
     set DTMRI(TractCluster,ShapeFeature,menu) {MeanAndCovariance Hausdorff EndPoints}
+
+    set DTMRI(TractCluster,SymmetrizeMethod) Min
+    set DTMRI(TractCluster,SymmetrizeMethod,menu) {Mean Min Max}
+
     set DTMRI(TractCluster,EmbeddingNormalization) RowSum
     set DTMRI(TractCluster,EmbeddingNormalization,menu) {RowSum LengthOne None}
     set DTMRI(TractCluster,NumberOfEigenvectors) 2
 
-    set DTMRI(TractCluster,SettingsList,Names) {{Number of Clusters} Sigma N ShapeFeature EmbedNormalization NumberOfEigenvectors}
-    set DTMRI(TractCluster,SettingsList,Variables) {NumberOfClusters Sigma HausdorffN ShapeFeature EmbeddingNormalization NumberOfEigenvectors}
-    set DTMRI(TractCluster,SettingsList,VariableTypes) {entry entry entry menu menu entry}
-    set DTMRI(TractCluster,SettingsList,Tooltips) {{Number of clusters (colors) when grouping tracts} {Similarity/distance tradeoff} {For Hausdorff shape feature, use every Nth point on the tract in computation.} {How to measure tract similarity} {How to normalize the vectors used in clustering} {Advanced: related to number of clusters inherent in the data}}
+    set DTMRI(TractCluster,SettingsList,Names) {{Number of Clusters} Sigma N ShapeFeature SymmetrizeMethod EmbedNormalization NumberOfEigenvectors}
+    set DTMRI(TractCluster,SettingsList,Variables) {NumberOfClusters Sigma HausdorffN ShapeFeature SymmetrizeMethod EmbeddingNormalization NumberOfEigenvectors}
+    set DTMRI(TractCluster,SettingsList,VariableTypes) {entry entry entry menu menu menu entry}
+    set DTMRI(TractCluster,SettingsList,Tooltips) {{Number of clusters (colors) when grouping tracts} {Similarity/distance tradeoff} {For Hausdorff shape feature, use every Nth point on the tract in computation.} {How to measure tract similarity} {How to make distances symmetric from paths A to B and B to A} {How to normalize the vectors used in clustering} {Advanced: related to number of clusters inherent in the data}}
 
     # for viewing matrices
     vtkImageMagnify DTMRI(TractCluster,vtk,imageMagnify)
@@ -203,6 +207,7 @@ proc DTMRITractClusterApplyUserSettings {} {
     $features SetSigma $DTMRI(TractCluster,Sigma)
     $features SetHausdorffN $DTMRI(TractCluster,HausdorffN)
     $features SetFeatureTypeTo$DTMRI(TractCluster,ShapeFeature)
+    $features SetSymmetrizeMethodTo$DTMRI(TractCluster,SymmetrizeMethod)
 
 }
 
