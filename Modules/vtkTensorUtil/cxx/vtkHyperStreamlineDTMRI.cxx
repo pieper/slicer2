@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.cxx,v $
-  Date:      $Date: 2006/02/10 00:14:03 $
-  Version:   $Revision: 1.21 $
+  Date:      $Date: 2006/02/10 02:26:37 $
+  Version:   $Revision: 1.22 $
 
 =========================================================================auto=*/
 #include "vtkHyperStreamlineDTMRI.h"
@@ -26,12 +26,9 @@
 //#include "vtkHyperPointandArray.cxx"
 #endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.21 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.22 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
-// Construct object with initial starting position (0,0,0); integration step 
-// length 0.2; step length 0.01; forward integration; terminal eigenvalue 0.0;
-// number of sides 6; radius 0.5; and logarithmic scaling off.
 vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()
 {
   // defaults copied from superclass for now:
@@ -45,13 +42,13 @@ vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()
   this->Streamers = NULL;
 
   this->MaximumPropagationDistance = 100.0;
+
   // in mm.
   this->IntegrationStepLength = 0.5;
-  this->StepLength = 0.01;
+
   this->IntegrationDirection = VTK_INTEGRATE_FORWARD;
   this->TerminalEigenvalue = 0.0;
-  this->Radius = 0.5;
-  this->LogScaling = 0;
+
   this->IntegrationEigenvector = VTK_INTEGRATE_MAJOR_EIGENVECTOR;
 
   this->StoppingMode = VTK_TENS_LINEAR_MEASURE;
