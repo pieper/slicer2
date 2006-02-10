@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainFile.tcl,v $
-#   Date:      $Date: 2006/01/06 17:56:53 $
-#   Version:   $Revision: 1.68 $
+#   Date:      $Date: 2006/02/10 16:51:59 $
+#   Version:   $Revision: 1.69 $
 # 
 #===============================================================================
 # FILE:        MainFile.tcl
@@ -65,7 +65,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.68 $} {$Date: 2006/01/06 17:56:53 $}]
+        {$Revision: 1.69 $} {$Date: 2006/02/10 16:51:59 $}]
 
     set File(filePrefix) data
 }
@@ -1097,7 +1097,7 @@ proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
             set ZerolessNum [string trimleft $num "0"]
             if {$ZerolessNum == ""} {set ZerolessNum 0}
         }
-        return "%s_%03d.bfloat $filePrefix $ZerolessNum"
+        return "%s_%03d${fext} $filePrefix $ZerolessNum"
     }
     if {$fext == ".pgi" || $fext == ".PGI" || $fext == ".mr" || $fext == ".MR"} {
         if {$::Module(verbose)} {
