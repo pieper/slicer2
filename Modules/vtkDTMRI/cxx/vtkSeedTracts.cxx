@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.cxx,v $
-  Date:      $Date: 2006/02/08 22:10:05 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/02/10 02:29:21 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 
@@ -256,14 +256,8 @@ void vtkSeedTracts::UpdateHyperStreamlinePointsSettings( vtkHyperStreamlineDTMRI
   currHSP->SetMaximumPropagationDistance(this->VtkHyperStreamlinePointsSettings->GetMaximumPropagationDistance());
   // IntegrationStepLength
   currHSP->SetIntegrationStepLength(this->VtkHyperStreamlinePointsSettings->GetIntegrationStepLength());
-  // StepLength
-  currHSP->SetStepLength(this->VtkHyperStreamlinePointsSettings->GetStepLength());
-  // Radius
-  currHSP->SetRadius(this->VtkHyperStreamlinePointsSettings->GetRadius());
-  // NumberOfSides
-  currHSP->SetNumberOfSides(this->VtkHyperStreamlinePointsSettings->GetNumberOfSides());
-  // MaxCurvature
-  currHSP->SetMaxCurvature(this->VtkHyperStreamlinePointsSettings->GetMaxCurvature());
+  // RadiusOfCurvature
+  currHSP->SetRadiusOfCurvature(this->VtkHyperStreamlinePointsSettings->GetRadiusOfCurvature());
   
   // Stopping threshold
   currHSP->SetStoppingThreshold(this->VtkHyperStreamlinePointsSettings->GetStoppingThreshold());
