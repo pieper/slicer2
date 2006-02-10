@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.h,v $
-  Date:      $Date: 2006/02/10 00:14:04 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/02/10 02:26:06 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 // .NAME vtkHyperStreamlineDTMRI - generate hyperstreamline in arbitrary dataset
@@ -63,7 +63,12 @@ public:
   vtkGetMacro(RadiusOfCurvature,vtkFloatingPointType);
   vtkSetMacro(RadiusOfCurvature,vtkFloatingPointType);
 
+  // Description:
+  // This is in mm, unlike superclass value which is a fraction of a cell.
+  vtkSetMacro(IntegrationStepLength,double);
 
+  // Description:
+  // Type of anisotropy used to stop tractography.
   vtkGetMacro(StoppingMode,int);
   vtkSetMacro(StoppingMode,int);
   void SetStoppingModeToFractionalAnisotropy() 
