@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITractography.tcl,v $
-#   Date:      $Date: 2006/02/10 01:22:52 $
-#   Version:   $Revision: 1.47 $
+#   Date:      $Date: 2006/02/10 02:28:09 $
+#   Version:   $Revision: 1.48 $
 # 
 #===============================================================================
 # FILE:        DTMRITractography.tcl
@@ -58,7 +58,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.47 $} {$Date: 2006/02/10 01:22:52 $}]
+                                 {$Revision: 1.48 $} {$Date: 2006/02/10 02:28:09 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -132,13 +132,13 @@ proc DTMRITractographyInit {} {
 
     set DTMRI(stream,variableList,text) \
         [list \
-             "Max Length" "Step Size" \
+             "Max Length (each half)" "Step Size" \
               "Radius of Curvature > " \
              "Anisotropy Type" "Anisotropy Threshold " \
              "Tube Radius"  "Tube Sides"]
     set DTMRI(stream,variableList,tooltips) \
         [list \
-             "MaximumPropagationDistance (mm): Tractography will stop after this distance" \
+             "MaximumPropagationDistance (mm): Tractography stops after this distance, in each direction from the start point." \
              "IntegrationStepLength (mm): step size when following path" \
              "Radius of Curvature (mm): Minimum (tightest) turn allowed "\
              "Stopping by: If this shape measure falls below stopping threshold, tractography stops" \
@@ -1141,8 +1141,6 @@ proc DTMRIUpdateStreamlineSettings {} {
 
                     }
             }
-        DTMRI(vtk,$streamline) SetStoppingModeTo$DTMRI(stream,StoppingMode)
-
             
         }
     }
