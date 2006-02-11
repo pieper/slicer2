@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLVolumeNode.cxx,v $
-Date:      $Date: 2006/02/10 20:06:20 $
-Version:   $Revision: 1.10 $
+Date:      $Date: 2006/02/11 17:20:11 $
+Version:   $Revision: 1.11 $
 
 =========================================================================auto=*/
 
@@ -110,6 +110,9 @@ vtkMRMLVolumeNode::~vtkMRMLVolumeNode()
     }
 
   this->ImageReader->Delete();
+  if (this->ImageData) {
+    this->ImageData->Delete();
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -198,6 +201,11 @@ void vtkMRMLVolumeNode::ReadXMLAttributes(const char** atts)
 //----------------------------------------------------------------------------
 void vtkMRMLVolumeNode::ReadData()
 {
+  if (this->ImageData) {
+    this->ImageData->Delete();
+    this->ImageData = NULL;
+  }
+
   char *fullName;
   if (this->SceneRootDir != NULL) {
     fullName = strcat(this->SceneRootDir, this->GetFileArcheType());
@@ -205,6 +213,11 @@ void vtkMRMLVolumeNode::ReadData()
   else {
     fullName = this->GetFileArcheType();
   }
+
+  if (fullName == NULL) {
+    vtkErrorMacro("vtkMRMLVolumeNode: File name not specified");
+  }
+
   this->ImageReader->SetArchetype(fullName);
   this->ImageReader->Update();
   this->ImageData = this->ImageReader->GetOutput();
@@ -272,6 +285,9 @@ void vtkMRMLVolumeNode::Copy(vtkMRMLNode *anode)
   // Matrices
   for(int i=0; i<9; i++) {
     this->IjkToRasDirections[i] = node->IjkToRasDirections[i];
+  }
+  if (this->ImageData) {
+    this->SetImageData(node->ImageData);
   }
 }
 

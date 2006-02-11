@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLModelNode.h,v $
-  Date:      $Date: 2006/02/10 20:06:20 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2006/02/11 17:20:11 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLModelNode - MRML node to represent a 3D surface model.
@@ -21,18 +21,11 @@
 #ifndef __vtkMRMLModelNode_h
 #define __vtkMRMLModelNode_h
 
-//#include <iostream.h>
-//#include <fstream.h>
-#include "vtkMRMLNode.h"
-
 #include <string>
 
-#ifdef _WIN32
-#include <vector>
-#define strncasecmp strnicmp
-#else
-#include <vector.h>
-#endif
+#include "vtkPolyData.h" 
+#include "vtkMRMLNode.h"
+
 
 class VTK_EXPORT vtkMRMLModelNode : public vtkMRMLNode
 {
@@ -59,15 +52,16 @@ public:
 
   // Description:
   // Write this node's information to a MRML file in XML format.
-  // Only write attributes that differ from the default values,
-  // which are set in the node's constructor.
-  // This is a virtual function that all subclasses must overload.
   virtual void WriteXML(ostream& of, int indent);
 
 
   // Description:
   // Copy the node's attributes to this object
   virtual void Copy(vtkMRMLNode *node);
+  
+  // Description:
+  // Get node XML tag name (like Volume, Model)
+  virtual char* GetNodeTagName() {return "Model";};
 
   // Description:
   // Path of the data file, relative to the MRML file
@@ -133,11 +127,17 @@ public:
   vtkSetMacro(LUTName,int);
 
     
+  vtkGetObjectMacro(PolyData, vtkPolyData);
+  vtkSetObjectMacro(PolyData, vtkPolyData);
+
 protected:
   vtkMRMLModelNode();
   ~vtkMRMLModelNode();
   vtkMRMLModelNode(const vtkMRMLModelNode&) {};
   void operator=(const vtkMRMLModelNode&) {};
+
+  // Data
+  vtkPolyData *PolyData;
 
   // Strings
   char *FileName;

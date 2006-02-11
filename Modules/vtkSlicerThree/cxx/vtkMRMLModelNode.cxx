@@ -7,13 +7,19 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLModelNode.cxx,v $
-  Date:      $Date: 2006/02/10 20:06:20 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2006/02/11 17:20:10 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================auto=*/
 #include <string>
 #include <ostream>
 #include <sstream>
+
+#include "vtkBYUReader.h" 
+#include "vtkPolyDataReader.h"
+#include "vtkSTLReader.h"
+//TODO: read in a free surfer file
+//#include "vtkFSSurfaceReader.h"
 
 #include "vtkObjectFactory.h"
 #include "vtkMRMLModelNode.h"
@@ -49,6 +55,9 @@ vtkMRMLNode* vtkMRMLModelNode::CreateNodeInstance()
 //----------------------------------------------------------------------------
 vtkMRMLModelNode::vtkMRMLModelNode()
 {
+
+  PolyData = NULL;
+
   // Strings
   this->FileName = NULL;
   this->Color = NULL;
@@ -74,15 +83,16 @@ vtkMRMLModelNode::vtkMRMLModelNode()
 //----------------------------------------------------------------------------
 vtkMRMLModelNode::~vtkMRMLModelNode()
 {
-  if (this->FileName)
-  {
+  if (this->FileName) {
     delete [] this->FileName;
     this->FileName = NULL;
   }
-  if (this->Color)
-  {
+  if (this->Color) {
     delete [] this->Color;
     this->Color = NULL;
+  }
+  if (this->PolyData) {
+    this->PolyData->Delete();
   }
 }
 
@@ -215,12 +225,56 @@ void vtkMRMLModelNode::ReadXMLAttributes(const char** atts)
 //----------------------------------------------------------------------------
 void vtkMRMLModelNode::ReadData()
 {
+  if (this->PolyData) {
+    this->PolyData->Delete();
+    this->PolyData = NULL;
+  }
+
   char *fullName;
   if (this->SceneRootDir != NULL) {
     fullName = strcat(this->SceneRootDir, this->GetFileName());
   }
   else {
     fullName = this->GetFileName();
+  }
+
+  if (fullName == NULL) {
+    vtkErrorMacro("vtkMRMLModelNode: File name not specified");
+  }
+  // compute file prefix
+  std::string name(fullName);
+  std::string::size_type loc = name.find(".");
+  if( loc == std::string::npos ) {
+    vtkErrorMacro("vtkMRMLModelNode: no file extention specified");
+  }
+  std::string extention = name.substr(loc);
+  
+  if ( extention == std::string(".g")) {
+    vtkBYUReader *reader = vtkBYUReader::New();
+    reader->SetGeometryFileName(fullName);
+    reader->Update();
+    this->SetPolyData(reader->GetOutput());
+  }
+  else if (extention == std::string(".vtk")) {
+    vtkPolyDataReader *reader = vtkPolyDataReader::New();
+    reader->SetFileName(fullName);
+    reader->Update();
+    this->SetPolyData(reader->GetOutput());
+  }  
+  else if ( extention == std::string(".orig") ||
+            extention == std::string(".inflated") || 
+            extention == std::string(".pial") ) {
+    //TODO: read in a free surfer file
+    //vtkFSSurfaceReader *reader = vtkFSSurfaceReader::New();
+    //reader->SetFileName(fullName);
+    //reader->Update();
+    //this->SetPolyData(reader->GetOutput());
+  }  
+  else if (extention == std::string(".stl")) {
+    vtkSTLReader *reader = vtkSTLReader::New();
+    reader->SetFileName(fullName);
+    this->SetPolyData(reader->GetOutput());
+    reader->Update();
   }
 }
 
@@ -252,6 +306,7 @@ void vtkMRMLModelNode::Copy(vtkMRMLNode *anode)
   this->SetScalarVisibility(node->ScalarVisibility);
   this->SetBackfaceCulling(node->BackfaceCulling);
   this->SetClipping(node->Clipping);
+  this->SetPolyData(node->PolyData);
 
 }
 
@@ -278,6 +333,9 @@ void vtkMRMLModelNode::PrintSelf(ostream& os, vtkIndent indent)
   {
     os << indent << ", " << this->ScalarRange[idx];
   }
-  os << ")\n";
+  os << "\nPoly Data:\n";
+  if (this->PolyData) {
+    this->PolyData->PrintSelf(os, indent.GetNextIndent());
+  }
 
 }

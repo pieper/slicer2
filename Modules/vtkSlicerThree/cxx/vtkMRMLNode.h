@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLNode.h,v $
-  Date:      $Date: 2006/02/10 20:06:20 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/02/11 17:20:11 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLNode - Abstract Superclass for all specific types of MRML nodes.
@@ -29,13 +29,41 @@ public:
   vtkTypeMacro(vtkMRMLNode,vtkObject);
   void PrintSelf(ostream& os, vtkIndent indent);
   
+  // Description:
+  // Create instance of the default node. Like New only virtual
+  // NOTE: Subclasses should implement this method
   virtual vtkMRMLNode* CreateNodeInstance() = 0;
 
   // Description:
+  // Set node attributes
+  // NOTE: Subclasses should implement this method
+  // NOTE: Call this method in the subclass impementation
+  virtual void ReadXMLAttributes(const char** atts);
+
+  // Description:
+  // Write this node's information to a MRML file in XML format.
+  // NOTE: Subclasses should implement this method
+  // NOTE: Call this method in the subclass impementation
+  virtual void WriteXML(ostream& of, int indent);
+  
+  // Read data for the node
+  // NOTE: Subclasses should implement this method
+  virtual void ReadData() = 0;
+  
+  // Write data for the node
+  // NOTE: Subclasses should implement this method
+  virtual void WriteData() = 0;
+
+  // Description:
   // Copy everything from another node of the same type.
-  // Instances of vtkMRMLNode must define the Copy function.
-  // Instances of vtkMRMLNode::Copy should call vtkMRMLNode::CopyMrmlNode
+  // NOTE: Subclasses should implement this method
+  // NOTE: Call this method in the subclass impementation
   virtual void Copy(vtkMRMLNode *node);
+
+  // Description:
+  // Get node XML tag name (like Volume, Model)
+  // NOTE: Subclasses should implement this method
+  virtual char* GetNodeTagName() = 0;
   
   // Description:
   // Set/Get a numerical ID for the calling program to use to keep track
@@ -65,27 +93,10 @@ public:
   vtkGetStringMacro(SpaceName);
   
   // Description:
-  // Set node attributes
-  virtual void ReadXMLAttributes(const char** atts);
-
-  // Description:
-  // Write this node's information to a MRML file in XML format.
-  // Only write attributes that differ from the default values,
-  // which are set in the node's constructor.
-  // This is a virtual function that all subclasses must overload.
-  virtual void WriteXML(ostream& of, int indent);
-  
-  // Description:
   // Node's effect on indentation when displaying the
   // contents of a MRML file. (0, +1, -1)
   vtkGetMacro(Indent, int);
   
-  // Read data for the node
-  virtual void ReadData() = 0;
-  
-  // Write data for the node
-  virtual void WriteData() = 0;
-
 protected:
   
   vtkMRMLNode();

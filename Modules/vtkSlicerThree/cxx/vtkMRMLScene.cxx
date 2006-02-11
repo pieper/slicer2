@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLScene.cxx,v $
-Date:      $Date: 2006/02/07 19:29:34 $
-Version:   $Revision: 1.9 $
+Date:      $Date: 2006/02/11 17:20:11 $
+Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 #include "vtkMRMLScene.h"
@@ -58,10 +58,10 @@ vtkMRMLNode* vtkMRMLScene::CreateNodeByClass(const char* className)
 }
 
 //------------------------------------------------------------------------------
-void vtkMRMLScene::RegisterNodeClass(vtkMRMLNode* node, char *tagName) 
+void vtkMRMLScene::RegisterNodeClass(vtkMRMLNode* node) 
 {
   this->RegisteredNodeClasses.push_back(node);
-  this->RegisteredNodeTags.push_back(std::string(tagName));
+  this->RegisteredNodeTags.push_back(std::string(node->GetNodeTagName()));
 }
 
 //------------------------------------------------------------------------------

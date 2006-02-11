@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLVolumeNode.h,v $
-  Date:      $Date: 2006/02/10 20:06:20 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/02/11 17:20:11 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLVolumeNode - MRML node for representing a volume (image stack).
@@ -54,20 +54,15 @@ class VTK_EXPORT vtkMRMLVolumeNode : public vtkMRMLNode
 
   // Description:
   // Write this node's information to a MRML file in XML format.
-  // Only write attributes that differ from the default values,
-  // which are set in the node's constructor.
-  // This is a virtual function that all subclasses must overload.
   virtual void WriteXML(ostream& of, int indent);
-
-
-  //--------------------------------------------------------------------------
-  // Utility Functions
-  //--------------------------------------------------------------------------
 
   // Description:
   // Copy the node's attributes to this object
   virtual void Copy(vtkMRMLNode *node);
 
+  // Description:
+  // Get node XML tag name (like Volume, Model)
+  virtual char* GetNodeTagName() {return "Volume";};
 
   // Description:
   // A file name or one name in a series

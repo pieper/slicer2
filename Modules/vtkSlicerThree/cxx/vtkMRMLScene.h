@@ -79,7 +79,7 @@ public:
 
   // Register node class with the Scene so that it can create it from
   // a class name
-  void RegisterNodeClass(vtkMRMLNode* node, char *tagName);
+  void RegisterNodeClass(vtkMRMLNode* node);
   
   const char* GetClassNameByTag(const char *tagName);
 

@@ -4,7 +4,7 @@ vtkMRMLScene sc
 catch "vn Delete"
 vtkMRMLVolumeNode vn
 
-sc RegisterNodeClass vn "Volume"
+sc RegisterNodeClass vn
 sc SetURL Modules/vtkSlicerThree/Tests/scene1.xml
 sc Connect
 
