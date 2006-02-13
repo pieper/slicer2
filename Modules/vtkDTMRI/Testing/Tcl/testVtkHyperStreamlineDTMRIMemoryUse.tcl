@@ -42,6 +42,9 @@ while { $count < $numberOfHyperStreamlines } {
 
 puts "Created $count hyperstreamlines."
 puts "Now check memory use via top or similar program."
+puts "Press any key to continue"
+gets stdin
+
 
 # Save the appended hyperstreamlines
 vtkPolyDataWriter w
@@ -55,3 +58,14 @@ w Write
 
 puts "Wrote hyperstreamlines in file $fileName."
 
+
+puts "Deleting objects"
+ptLoad Delete
+app Delete
+w Delete
+
+set count 1
+while { $count < $numberOfHyperStreamlines } {
+  s$count Delete
+  incr count
+}  
