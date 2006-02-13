@@ -4,7 +4,7 @@
 package require vtkDTMRI
 
 # generate input tensor data
-vtkPointLoad ptLoad
+catch "vtkPointLoad ptLoad"
     ptLoad SetLoadValue 100.0
     ptLoad SetSampleDimensions 20 20 20
     ptLoad ComputeEffectiveStressOn
@@ -18,22 +18,23 @@ ptLoad Update
 
 # Create the RenderWindow, Renderer and interactive renderer
 #
-vtkRenderer ren1
-vtkRenderWindow renWin
+catch "vtkRenderer ren1"
+catch "vtkRenderWindow renWin"
     renWin AddRenderer ren1
-vtkRenderWindowInteractor iren
+catch "vtkRenderWindowInteractor iren"
     iren SetRenderWindow renWin
 
 
 
 # Our class for managing streamlines
 #-----------------------------------
-vtkMultipleStreamlineController streamControl
-streamControl DebugOn
+catch "vtkMultipleStreamlineController streamControl"
+#streamControl DebugOn
 
 # Set input renderers for display
 #-----------------------------------
-vtkCollection renderers
+catch "vtkCollection renderers"
+renderers RemoveAllItems
 renderers AddItem ren1
 streamControl SetInputRenderers renderers
 
@@ -41,7 +42,7 @@ streamControl SetInputRenderers renderers
 #-----------------------------------
 set seedTracts [streamControl GetSeedTracts]
 $seedTracts UseVtkHyperStreamlinePoints
-vtkHyperStreamlineDTMRI exampleObject
+catch "vtkHyperStreamlineDTMRI exampleObject"
 exampleObject  IntegrateMinorEigenvector
 exampleObject SetMaximumPropagationDistance 18.0
 exampleObject SetIntegrationStepLength 0.1
@@ -53,7 +54,7 @@ exampleObject SetNumberOfSides 18
 # botttom of the cube.
 exampleObject SetStoppingThreshold 0
 exampleObject SetStoppingModeToLinearMeasure
-exampleObject SetMaxCurvature 10
+exampleObject SetRadiusOfCurvature 10
 # Give the $seedTracts this object to copy new ones from
 $seedTracts SetVtkHyperStreamlinePointsSettings exampleObject
 
@@ -79,14 +80,18 @@ while { $count < $numberOfHyperStreamlines } {
 }
 
 puts "Created $count hyperstreamlines."
-puts "Now check memory use via top or similar program."
+
 
 # Display
-streamControl DebugOn
+#streamControl DebugOn
 [streamControl GetDisplayTracts] AddStreamlinesToScene
 
 
-vtkCamera camera
+puts "Now check memory use via top or similar program."
+puts "Press any key to continue"
+gets stdin
+
+catch "vtkCamera camera"
     camera SetFocalPoint 0.113766 -1.13665 -1.01919
     camera SetPosition -29.4886 -63.1488 26.5807
     camera SetViewAngle 24.4617
@@ -111,4 +116,6 @@ streamControl DeleteStreamline \
 
 #streamControl DeleteStreamline 2
 
+puts "Delete Streamlines"
 streamControl DeleteAllStreamlines
+ 
