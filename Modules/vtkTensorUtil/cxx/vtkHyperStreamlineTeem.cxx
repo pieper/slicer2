@@ -10,7 +10,7 @@
 #include "vtkImageData.h"
 
 
-vtkCxxRevisionMacro(vtkHyperStreamlineTeem, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineTeem, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkHyperStreamlineTeem);
 
 
@@ -87,15 +87,15 @@ void vtkHyperStreamlineTeem::VisualizeFibers( const Nrrd *fibers )
   const int fibercount = fibers->axis[1].size;
   size_t pos[2];
   for( int fiber = 0; fiber < fibercount; fiber++ )
-    {
+  {
       pos[1] = fiber;
       vtkFloatingPointType indexPoints[3];
       
       for( int axis = 0; axis < 3; axis++ )
-    {
-      pos[0] = axis;
-      nrrdSample_nva( &indexPoints[axis], fibers, pos );
-    }
+      {
+          pos[0] = axis;
+          nrrdSample_nva( &indexPoints[axis], fibers, pos );
+      }
       
       vtkHyperPoint *point = Streamers[0].InsertNextHyperPoint();
       point->X[0] = indexPoints[0];
@@ -106,14 +106,19 @@ void vtkHyperStreamlineTeem::VisualizeFibers( const Nrrd *fibers )
       
       // Measure distance between points
       if( fiber > 1 )
-    {
-      vtkHyperPoint *prevPoint = Streamers[0].GetHyperPoint( fiber-2 );
-      point->D = prevPoint->D + vtkMath::Distance2BetweenPoints( point->X, prevPoint->X );
-    }
+      {
+          vtkHyperPoint *prevPoint = Streamers[0].GetHyperPoint( fiber-2 );
+          point->D = prevPoint->D + vtkMath::Distance2BetweenPoints( point->X, prevPoint->X );
+      }
       else
-    point->D = 0.0;
-      
-      point->CellId = this->GetInput()->FindPoint( point->X );
+      {
+          point->D = 0.0;
+#if (VTK_MAJOR_VERSION >= 5)
+          point->CellId = this->GetPolyDataInput(0)->FindPoint(point->X);
+#else
+          point->CellId = this->GetInput()->FindPoint( point->X );
+#endif
+      }
     }
   
   vtkDebugMacro( << "Building lines");
