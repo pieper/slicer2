@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDisplayTracts.cxx,v $
-  Date:      $Date: 2006/02/09 00:38:34 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/02/13 17:09:10 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 #include "vtkDisplayTracts.h"
@@ -419,6 +419,13 @@ void vtkDisplayTracts::DeleteAllStreamlines()
       this->DeleteStreamline(0);
       i++;
     }
+    
+  // Make sure the collection is empty
+  this->ClippedStreamlines->RemoveAllItems();
+  this->Mappers->RemoveAllItems();
+  this->TubeFilters->RemoveAllItems();
+  this->TransformFilters->RemoveAllItems();
+  this->Actors->RemoveAllItems();
   
 }
 
