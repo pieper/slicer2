@@ -3,6 +3,8 @@ package require vtkSlicerBase
 # get the list of header files in the Base
 set flist [glob $::env(SLICER_HOME)/Base/cxx/*.h]
 
+puts "Testing [llength $flist] classes..."
+
 set numFailedDeclare 0
 set numFailedDelete 0
 set numSuccess 0
@@ -12,6 +14,7 @@ set failDeclareList {}
 set failDeleteList {}
 set skippedList {}
 set exitCode 0
+set curClassNum 1
 
 foreach f $flist {
     # get a potential class name
@@ -24,7 +27,7 @@ foreach f $flist {
         [regexp "^vtkMrmlData$" $classname matchvar] == 0 &&
         [regexp "^vtkMrmlNode$" $classname matchvar] == 0 &&
         [regexp "^vtkSlicer$" $classname matchvar] == 0} {
-        puts "Testing $classname"
+        puts "$curClassNum: Testing $classname"
         if {[catch "$classname myclass" errmsg] == 1} {
             puts "$errmsg"
             if {[regexp "^invalid command name" $errmsg] == 0} {
@@ -48,10 +51,11 @@ foreach f $flist {
             }
         }
     } else { 
-        puts "Skipping $classname" 
+        puts "$curClassNum: Skipping $classname" 
         incr numSkipped
         lappend skippedList $classname
     }
+    incr curClassNum
 }
 
 if {$numFailedDeclare > 0} {
