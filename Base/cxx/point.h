@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: point.h,v $
-  Date:      $Date: 2006/01/06 17:56:37 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/02/14 22:11:24 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 #ifndef __point_h
@@ -41,10 +41,10 @@ public:
     Point *GetNext() {return this->next;}
     
    //Karl - June 2005
-    void Set3DCoord(float x,float y,float z) {
-      this->x0=x;
-      this->y0=y;
-      this->z0=z;
+    void Set3DCoord(float _x,float _y,float _z) {
+      this->x0=_x;
+      this->y0=_y;
+      this->z0=_z;
     }
 
 public:
