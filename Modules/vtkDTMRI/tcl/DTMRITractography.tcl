@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITractography.tcl,v $
-#   Date:      $Date: 2006/02/10 22:53:12 $
-#   Version:   $Revision: 1.49 $
+#   Date:      $Date: 2006/02/14 21:41:04 $
+#   Version:   $Revision: 1.50 $
 # 
 #===============================================================================
 # FILE:        DTMRITractography.tcl
@@ -58,7 +58,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.49 $} {$Date: 2006/02/10 22:53:12 $}]
+                                 {$Revision: 1.50 $} {$Date: 2006/02/14 21:41:04 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -343,9 +343,9 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set DTMRI(stream,ListANDLabels) ""
     set DTMRI(stream,ListNOTLabels) ""
-    set DTMRI(stream,threshhold) 1
-    set DTMRI(stream,threshold,max) 100
-    set DTMRI(stream,threshold,min) 1
+    set DTMRI(stream,threshhold) 0
+    set DTMRI(stream,threshold,max) 1
+    set DTMRI(stream,threshold,min) 0
 }
 
 
@@ -980,7 +980,7 @@ proc DTMRITractographyBuildGUI {} {
                      -to $DTMRI(stream,threshold,max)    \
           -variable  DTMRI(stream,threshold) \
           -orient vertical     \
-          -resolution 1      \
+          -resolution 0.01      \
           } $Gui(WSA)
       
     pack $f.l $f.e $f.s -side left
@@ -1139,8 +1139,8 @@ proc DTMRISelectRemoveHyperStreamline {x y z} {
 
     # see which actor was picked
     set actor [DTMRI(vtk,picker) GetActor]
-
     DTMRI(vtk,streamlineControl) DeleteStreamline $actor
+    
 }
 
 
@@ -1161,7 +1161,6 @@ proc DTMRISelectChooseHyperStreamline {x y z} {
 
     # see which actor was picked
     set actor [DTMRI(vtk,picker) GetActor]
-
     set DTMRI(activeStreamlineID) \
         [[DTMRI(vtk,streamlineControl) GetDisplayTracts] \
              GetStreamlineIndexFromActor $actor]

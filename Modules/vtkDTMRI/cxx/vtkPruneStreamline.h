@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPruneStreamline.h,v $
-  Date:      $Date: 2006/01/06 17:57:26 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/02/14 21:39:49 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -80,8 +80,11 @@ public:
   //Description:
   // Number of positives that we have to get before declaring that a
   // streamline passes through a given ROI.
-  vtkSetMacro(Threshold,int);
-  vtkGetMacro(Threshold,int);
+  // This threshold is given as a percentage:
+  // 0: fibers touch at least one voxel of ROIs
+  // 1: means that fiber touches all the voxels of ROIs. 
+  vtkSetMacro(Threshold,double);
+  vtkGetMacro(Threshold,double);
   
 protected:
   vtkPruneStreamline();
@@ -92,7 +95,9 @@ protected:
   vtkShortArray *ANDROIValues;
   vtkShortArray *NOTROIValues;
   vtkIntArray *StreamlineIdPassTest;
-  int Threshold;
+  double Threshold;
+  
+  int *MaxResponse;  //Array with Max fiber response per ROI.
   
   int TestForStreamline(int *streamlineANDTest,int nptsAND, int *streamlineNOTTest, int nptsNOT);
   
