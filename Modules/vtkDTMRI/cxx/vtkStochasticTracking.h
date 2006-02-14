@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkStochasticTracking.h,v $
-  Date:      $Date: 2006/01/06 17:57:27 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/02/14 20:57:41 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 // .NAME vtkStochasticTracking - 
@@ -176,8 +176,8 @@ class VTK_DTMRI_EXPORT vtkStochasticTracking : public vtkImageMultipleInputFilte
  protected:
   vtkStochasticTracking();
   ~vtkStochasticTracking();
-  vtkStochasticTracking(const vtkStochasticTracking&) {};
-  void operator=(const vtkStochasticTracking&) {};
+  vtkStochasticTracking(const vtkStochasticTracking&);
+  void operator=(const vtkStochasticTracking&);
   void PrintSelf(ostream& os, vtkIndent indent);
 
 

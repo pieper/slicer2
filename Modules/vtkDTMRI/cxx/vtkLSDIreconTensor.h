@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkLSDIreconTensor.h,v $
-  Date:      $Date: 2006/01/06 17:57:25 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2006/02/14 20:57:41 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
 // .NAME vtkLSDIreconTensor - 
@@ -97,8 +97,8 @@ class VTK_DTMRI_EXPORT vtkLSDIreconTensor : public vtkImageMultipleInputFilter
  protected:
   vtkLSDIreconTensor();
   ~vtkLSDIreconTensor();
-  vtkLSDIreconTensor(const vtkLSDIreconTensor&) {};
-  void operator=(const vtkLSDIreconTensor&) {};
+  vtkLSDIreconTensor(const vtkLSDIreconTensor&);
+  void operator=(const vtkLSDIreconTensor&);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   int NumberOfGradients;

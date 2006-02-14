@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlTractGroupNode.h,v $
-  Date:      $Date: 2006/01/06 17:57:25 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/02/14 20:57:41 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 
@@ -46,8 +46,8 @@ class VTK_DTMRI_EXPORT vtkMrmlTractGroupNode : public vtkMrmlNode
  protected:
   vtkMrmlTractGroupNode();
   ~vtkMrmlTractGroupNode();
-  vtkMrmlTractGroupNode(const vtkMrmlTractGroupNode&) {};
-  void operator=(const vtkMrmlTractGroupNode&) {};
+  vtkMrmlTractGroupNode(const vtkMrmlTractGroupNode&);
+  void operator=(const vtkMrmlTractGroupNode&);
 
 
   int TractGroupID;

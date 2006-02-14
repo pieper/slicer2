@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkODFGlyph.h,v $
-  Date:      $Date: 2006/01/06 17:57:26 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2006/02/14 20:57:41 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
 #ifndef __vtkODFGlyph_h
@@ -106,8 +106,8 @@ class VTK_DTMRI_EXPORT vtkODFGlyph : public vtkStructuredPointsToPolyDataFilter 
 protected:
   vtkODFGlyph();
   ~vtkODFGlyph();
-  vtkODFGlyph(const vtkODFGlyph&) {};  // Not implemented.
-  void operator=(const vtkODFGlyph&) {};  // Not implemented.
+  vtkODFGlyph(const vtkODFGlyph&);  // Not implemented.
+  void operator=(const vtkODFGlyph&);  // Not implemented.
 
   void Execute();
 
