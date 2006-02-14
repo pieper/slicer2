@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLModelNode.h,v $
-  Date:      $Date: 2006/02/11 17:20:11 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/02/14 21:24:27 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLModelNode - MRML node to represent a 3D surface model.
@@ -61,7 +61,7 @@ public:
   
   // Description:
   // Get node XML tag name (like Volume, Model)
-  virtual char* GetNodeTagName() {return "Model";};
+  virtual const char* GetNodeTagName() {return "Model";};
 
   // Description:
   // Path of the data file, relative to the MRML file
@@ -133,8 +133,8 @@ public:
 protected:
   vtkMRMLModelNode();
   ~vtkMRMLModelNode();
-  vtkMRMLModelNode(const vtkMRMLModelNode&) {};
-  void operator=(const vtkMRMLModelNode&) {};
+  vtkMRMLModelNode(const vtkMRMLModelNode&);
+  void operator=(const vtkMRMLModelNode&);
 
   // Data
   vtkPolyData *PolyData;

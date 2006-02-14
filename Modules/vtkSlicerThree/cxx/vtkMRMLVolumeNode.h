@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLVolumeNode.h,v $
-  Date:      $Date: 2006/02/11 17:20:11 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/02/14 21:24:28 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLVolumeNode - MRML node for representing a volume (image stack).
@@ -62,7 +62,7 @@ class VTK_EXPORT vtkMRMLVolumeNode : public vtkMRMLNode
 
   // Description:
   // Get node XML tag name (like Volume, Model)
-  virtual char* GetNodeTagName() {return "Volume";};
+  virtual const char* GetNodeTagName() {return "Volume";};
 
   // Description:
   // A file name or one name in a series

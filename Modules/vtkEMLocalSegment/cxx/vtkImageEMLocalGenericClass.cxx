@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMLocalGenericClass.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:31 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/02/14 21:24:26 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 #include "vtkImageEMLocalGenericClass.h"
@@ -82,54 +82,57 @@ void vtkImageEMLocalGenericClass::PrintSelf(ostream& os,vtkIndent indent) {
 void* vtkImageEMLocalGenericClass::GetDataPtr(vtkImageData* ImageData,int BoundaryType) {
   if (!ImageData) return NULL;
 
-  int Extent[6];
-  ImageData->GetWholeExtent(Extent);
+  int extent[6];
+  ImageData->GetWholeExtent(extent);
   //vtkIndent indent;
   //ImageData->PrintSelf(cout, indent);
   if (BoundaryType) {
     int DataIncX, DataIncY, DataIncZ;
-    ImageData->GetContinuousIncrements(Extent, DataIncX, DataIncY, DataIncZ);
+    ImageData->GetContinuousIncrements(extent, DataIncX, DataIncY, DataIncZ);
   
-    int LengthOfXDim = Extent[1] - Extent[0] + 1 + DataIncY;
-    int LengthOfYDim = LengthOfXDim*(Extent[3] - Extent[2] + 1) + DataIncZ;  
+    int LengthOfXDim = extent[1] - extent[0] + 1 + DataIncY;
+    int LengthOfYDim = LengthOfXDim*(extent[3] - extent[2] + 1) + DataIncZ;  
 
     int jump = (this->SegmentationBoundaryMin[0] - 1) + (this->SegmentationBoundaryMin[1] - 1) * LengthOfXDim
                + LengthOfYDim *(this->SegmentationBoundaryMin[2] - 1);
 
     switch (ImageData->GetScalarType()) { 
-      case VTK_DOUBLE:         return  (void*) (((double*)ImageData->GetScalarPointerForExtent(Extent)) + jump);
-      case VTK_FLOAT:          return  (void*) (((float*)ImageData->GetScalarPointerForExtent(Extent)) + jump);
-      case VTK_LONG:           return  (void*) (((long*)ImageData->GetScalarPointerForExtent(Extent)) + jump);
-      case VTK_UNSIGNED_LONG:  return  (void*) (((unsigned long*)ImageData->GetScalarPointerForExtent(Extent)) + jump); 
-      case VTK_INT:            return  (void*) (((int*)ImageData->GetScalarPointerForExtent(Extent)) + jump);
-      case VTK_UNSIGNED_INT:   return  (void*) (((unsigned int*)ImageData->GetScalarPointerForExtent(Extent)) + jump);
-      case VTK_SHORT:          return  (void*) (((short*)ImageData->GetScalarPointerForExtent(Extent)) + jump); 
-      case VTK_UNSIGNED_SHORT: return  (void*) (((unsigned short*)ImageData->GetScalarPointerForExtent(Extent)) + jump);
-      case VTK_CHAR:           return  (void*) (((char*)ImageData->GetScalarPointerForExtent(Extent)) + jump);
-      case VTK_UNSIGNED_CHAR:  return  (void*) (((unsigned char*)ImageData->GetScalarPointerForExtent(Extent)) + jump);
+      case VTK_DOUBLE:         return  (void*) (((double*)ImageData->GetScalarPointerForExtent(extent)) + jump);
+      case VTK_FLOAT:          return  (void*) (((float*)ImageData->GetScalarPointerForExtent(extent)) + jump);
+      case VTK_LONG:           return  (void*) (((long*)ImageData->GetScalarPointerForExtent(extent)) + jump);
+      case VTK_UNSIGNED_LONG:  return  (void*) (((unsigned long*)ImageData->GetScalarPointerForExtent(extent)) + jump); 
+      case VTK_INT:            return  (void*) (((int*)ImageData->GetScalarPointerForExtent(extent)) + jump);
+      case VTK_UNSIGNED_INT:   return  (void*) (((unsigned int*)ImageData->GetScalarPointerForExtent(extent)) + jump);
+      case VTK_SHORT:          return  (void*) (((short*)ImageData->GetScalarPointerForExtent(extent)) + jump); 
+      case VTK_UNSIGNED_SHORT: return  (void*) (((unsigned short*)ImageData->GetScalarPointerForExtent(extent)) + jump);
+      case VTK_CHAR:           return  (void*) (((char*)ImageData->GetScalarPointerForExtent(extent)) + jump);
+      case VTK_UNSIGNED_CHAR:  return  (void*) (((unsigned char*)ImageData->GetScalarPointerForExtent(extent)) + jump);
       default:
     cout << "vtkImageEMLocalSegmenter::HierarchicalSegmentation Unknown ScalarType" << endl;
       return NULL;
     }
   } else {
-    return ImageData->GetScalarPointerForExtent(Extent);
+    return ImageData->GetScalarPointerForExtent(extent);
   }
 }
 
 //----------------------------------------------------------------------------
 // If IncType = 0 => Returns DataIncY (BoundaryType = 0) or BoundaryDataIncY (BoundaryType = 1)
 // If IncType = 1 => Returns DataIncZ (BoundaryType = 0) or BoundaryDataIncZ (BoundaryType = 1)
-int vtkImageEMLocalGenericClass::GetImageDataInc(vtkImageData* ImageData, int BoundaryType, int IncType){
-  if (!ImageData) return 0;
-  int Extent[6];
-  ImageData->GetWholeExtent(Extent);
+int vtkImageEMLocalGenericClass::GetImageDataInc(vtkImageData* ImageData, int BoundaryType, int IncType)
+{
+  if (!ImageData) {
+    return 0;
+    }
+  int extent[6];
+  ImageData->GetWholeExtent(extent);
   int DataIncX, DataIncY, DataIncZ;
-  ImageData->GetContinuousIncrements(Extent, DataIncX, DataIncY, DataIncZ);
+  ImageData->GetContinuousIncrements(extent, DataIncX, DataIncY, DataIncZ);
   if (BoundaryType) {
-    int LengthOfXDim = Extent[1] - Extent[0] + 1 + DataIncY;
+    int LengthOfXDim = extent[1] - extent[0] + 1 + DataIncY;
 
     if (IncType) {
-      int LengthOfYDim = LengthOfXDim*(Extent[3] - Extent[2] + 1) + DataIncZ;  
+      int LengthOfYDim = LengthOfXDim*(extent[3] - extent[2] + 1) + DataIncZ;  
       return (LengthOfYDim - this->DataDim[1] *LengthOfXDim);
     } else {
       return (LengthOfXDim - this->DataDim[0]);

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterInputNode.h,v $
-  Date:      $Date: 2006/01/06 17:57:33 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/02/14 21:24:27 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSegmenterInputNode - MRML node to represent transformation matrices.
@@ -56,8 +56,9 @@ public:
 protected:
   vtkMrmlSegmenterInputNode(){};
   ~vtkMrmlSegmenterInputNode(){};
-  vtkMrmlSegmenterInputNode(const vtkMrmlSegmenterInputNode&) {};
-  void operator=(const vtkMrmlSegmenterInputNode&) {};
+private:
+  vtkMrmlSegmenterInputNode(const vtkMrmlSegmenterInputNode&);
+  void operator=(const vtkMrmlSegmenterInputNode&);
 };
 
 #endif

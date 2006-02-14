@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterPCAEigenNode.h,v $
-  Date:      $Date: 2006/01/06 17:57:34 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2006/02/14 21:24:27 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSegmenterPCAEigenNode - MRML node to represent transformation matrices.
@@ -70,13 +70,14 @@ public:
 protected:
   vtkMrmlSegmenterPCAEigenNode();
   ~vtkMrmlSegmenterPCAEigenNode();
-  vtkMrmlSegmenterPCAEigenNode(const vtkMrmlSegmenterPCAEigenNode&) {};
-  void operator=(const vtkMrmlSegmenterPCAEigenNode&) {};
 
   int    Number;
   double EigenValue;  
   char   *EigenVectorName;
  
+private:
+  vtkMrmlSegmenterPCAEigenNode(const vtkMrmlSegmenterPCAEigenNode&);
+  void operator=(const vtkMrmlSegmenterPCAEigenNode&);
 };
 
 #endif

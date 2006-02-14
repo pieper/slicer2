@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterSuperClassNode.h,v $
-  Date:      $Date: 2006/01/06 17:57:34 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/02/14 21:24:27 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSegmenterClassNode - MRML node to represent transformation matrices.
@@ -182,8 +182,6 @@ public:
 protected:
   vtkMrmlSegmenterSuperClassNode();
   ~vtkMrmlSegmenterSuperClassNode(){this->AtlasNode->Delete();};
-  vtkMrmlSegmenterSuperClassNode(const vtkMrmlSegmenterSuperClassNode&) {};
-  void operator=(const vtkMrmlSegmenterSuperClassNode&) {};
 
   vtkMrmlSegmenterAtlasSuperClassNode *AtlasNode;
 
@@ -198,6 +196,9 @@ protected:
   int GenerateBackgroundProbability;
   int PCAShapeModelType;
   int RegistrationIndependentSubClassFlag;
+private:
+  vtkMrmlSegmenterSuperClassNode(const vtkMrmlSegmenterSuperClassNode&);
+  void operator=(const vtkMrmlSegmenterSuperClassNode&);
 };
 
 #endif

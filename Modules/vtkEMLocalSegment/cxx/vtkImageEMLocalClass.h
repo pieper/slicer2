@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMLocalClass.h,v $
-  Date:      $Date: 2006/01/06 17:57:31 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/02/14 21:24:26 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 // .NAME vtkImageEMLocalClass
@@ -154,12 +154,12 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalClass : public vtkImageEMLocalGen
 
 protected:
   vtkImageEMLocalClass();
-  vtkImageEMLocalClass(const vtkImageEMLocalClass&) {};
   ~vtkImageEMLocalClass() {this->DeleteClassVariables();}
+  vtkImageEMLocalClass(const vtkImageEMLocalClass&);
+  void operator=(const vtkImageEMLocalClass&);
   void DeleteClassVariables();
   void DeletePCAParameters(); 
 
-  void operator=(const vtkImageEMLocalClass&) {};
   void ThreadedExecute(vtkImageData **inData, vtkImageData *outData,int outExt[6], int id) {};
   void ExecuteData(vtkDataObject *);   
 

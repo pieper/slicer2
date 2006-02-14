@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMGenericClass.h,v $
-  Date:      $Date: 2006/01/06 17:57:30 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2006/02/14 21:24:26 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
 // .NAME vtkImageEMGenericClass
@@ -192,7 +192,7 @@ class VTK_EMATLASBRAINCLASSIFIER_EXPORT vtkImageEMGenericClass : public vtkImage
 
   // Description:
   // Make sure older version get an error message
-  void SetInputIndex(vtkImageData *image, int index)  {
+  void SetInputIndex(vtkImageData *, int )  {
     vtkErrorMacro(<< "In the new version SetInputIndex is disabled! Please look into vtkImageEM*Class.h to find out how to set the given parameters !");
     return;
   }

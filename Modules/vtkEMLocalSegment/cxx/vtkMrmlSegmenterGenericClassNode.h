@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterGenericClassNode.h,v $
-  Date:      $Date: 2006/01/06 17:57:33 $
-  Version:   $Revision: 1.10 $
+  Date:      $Date: 2006/02/14 21:24:27 $
+  Version:   $Revision: 1.11 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSegmenterClassNode - MRML node to represent transformation matrices.
@@ -89,8 +89,6 @@ public:
 protected:
   vtkMrmlSegmenterGenericClassNode();
   ~vtkMrmlSegmenterGenericClassNode(){};
-  vtkMrmlSegmenterGenericClassNode(const vtkMrmlSegmenterGenericClassNode&) {};
-  void operator=(const vtkMrmlSegmenterGenericClassNode&) {};
 
   // Description:
   // Write the node's attributes to a MRML file in XML format
@@ -108,6 +106,9 @@ protected:
   int    RegistrationClassSpecificRegistrationFlag; 
   int    ExcludeFromIncompleteEStepFlag;
 
+private:
+  vtkMrmlSegmenterGenericClassNode(const vtkMrmlSegmenterGenericClassNode&);
+  void operator=(const vtkMrmlSegmenterGenericClassNode&);
 };
 
 #endif

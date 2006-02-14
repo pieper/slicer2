@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMLocalSuperClass.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:32 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/02/14 21:24:26 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 #include "vtkImageEMLocalSuperClass.h"
@@ -501,8 +501,15 @@ void vtkImageEMLocalSuperClass::PrintSelf(ostream& os,vtkIndent indent) {
   os << indent << "RegistrationIndependentSubClassFlag " << this->RegistrationIndependentSubClassFlag << endl; 
   os << indent << "PCAShapeModelType:             " << this->PCAShapeModelType  << endl;
 
-  char** Directions= new char*[6];
-  Directions[0] = "West "; Directions[1] = "North"; Directions[2] = "Up   "; Directions[3] = "East "; Directions[4] = "South"; Directions[5] = "Down ";
+  // No need of expensive call to new for a simple array
+  static const char * const Directions[] = {
+    "West ",
+    "North",
+    "Up   ",
+    "East ",
+    "South",
+    "Down "
+  };
   os << indent << "MrfParams:                    " << endl;
   for (int z=0; z < 6; z++) { 
     os << indent << "   " << Directions[z] << ":    ";   
@@ -512,9 +519,6 @@ void vtkImageEMLocalSuperClass::PrintSelf(ostream& os,vtkIndent indent) {
     }
     os << endl;
   }
-  // If you uncomment the following it gives you a seg fault 
-  // for (int z=0; z < 6; z++) delete[] Directions[z];
-  delete[] Directions; 
   for (int i =0; i < this->NumClasses; i++) {
     if (this->ClassListType[i] == CLASS) ((vtkImageEMLocalClass*)this->ClassList[i])->PrintSelf(os,indent.GetNextIndent());
     else ((vtkImageEMLocalSuperClass*)this->ClassList[i])->PrintSelf(os,indent.GetNextIndent());

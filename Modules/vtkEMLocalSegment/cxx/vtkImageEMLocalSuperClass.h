@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMLocalSuperClass.h,v $
-  Date:      $Date: 2006/01/06 17:57:32 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/02/14 21:24:26 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 // .NAME vtkImageEMLocalSuperClass
@@ -236,15 +236,13 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSuperClass : public vtkImageEMLoc
   // Do not maximize over the shape setting  - just use the current setting  
   void SetPCAShapeModelTypeToApply() {this->PCAShapeModelType = EMSEGMENT_PCASHAPE_APPLY;} 
  
-  vtkImageEMLocalSuperClass() {this->CreateVariables();}
-  ~vtkImageEMLocalSuperClass() {this->DeleteSuperClassVariables();}
 
 protected:
-  vtkImageEMLocalSuperClass(const vtkImageEMLocalSuperClass&) {};
+  vtkImageEMLocalSuperClass() {this->CreateVariables();}
+  ~vtkImageEMLocalSuperClass() {this->DeleteSuperClassVariables();}
   void DeleteSuperClassVariables();
   void CreateVariables();
 
-  void operator=(const vtkImageEMLocalSuperClass&) {};
   void ExecuteData(vtkDataObject *);   
 
   void AddSubClass(void* ClassData, classType initType, int index);
@@ -294,6 +292,9 @@ protected:
 
   // If all structures are defined by different PCA models that this flag has to be set. 
   int PCAShapeModelType; 
+private:
+  vtkImageEMLocalSuperClass(const vtkImageEMLocalSuperClass&);
+  void operator=(const vtkImageEMLocalSuperClass&);
 };
 #endif
 

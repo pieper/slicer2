@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterNode.h,v $
-  Date:      $Date: 2006/01/06 17:57:33 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/02/14 21:24:27 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSegmenterNode - MRML node to represent transformation matrices.
@@ -72,13 +72,14 @@ public:
 protected:
   vtkMrmlSegmenterNode();
   ~vtkMrmlSegmenterNode(){};
-  vtkMrmlSegmenterNode(const vtkMrmlSegmenterNode&) {};
-  void operator=(const vtkMrmlSegmenterNode&) {};
 
   int    DisplayProb;  // Should the probability displayed in the graph - left it in bc it is more work to take it out - should not be defined here but in GraphNode 
   int    RegistrationInterpolationType;
   int    DisableMultiThreading;
 
+private:
+  vtkMrmlSegmenterNode(const vtkMrmlSegmenterNode&);
+  void operator=(const vtkMrmlSegmenterNode&);
 };
 
 #endif

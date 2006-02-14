@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterClassNode.h,v $
-  Date:      $Date: 2006/01/06 17:57:33 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/02/14 21:24:27 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSegmenterClassNode - MRML node to represent transformation matrices.
@@ -88,8 +88,6 @@ public:
 protected:
   vtkMrmlSegmenterClassNode();
   ~vtkMrmlSegmenterClassNode();
-  vtkMrmlSegmenterClassNode(const vtkMrmlSegmenterClassNode&) {};
-  void operator=(const vtkMrmlSegmenterClassNode&) {};
 
   vtkMrmlSegmenterAtlasClassNode *AtlasClassNode;
 
@@ -99,6 +97,9 @@ protected:
   float PCALogisticMax;
   float PCALogisticBoundary;
   int   PrintPCA;            // Print out PCA Parameters at each step 
+private:
+  vtkMrmlSegmenterClassNode(const vtkMrmlSegmenterClassNode&);
+  void operator=(const vtkMrmlSegmenterClassNode&);
 };
 
 #endif

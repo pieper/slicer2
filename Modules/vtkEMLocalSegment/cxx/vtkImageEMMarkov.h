@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMMarkov.h,v $
-  Date:      $Date: 2006/01/06 17:57:32 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2006/02/14 21:24:27 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
 // .NAME vtkImageEMMarkov
@@ -16,16 +16,16 @@
 #ifndef __vtkImageEMMarkov_h
 #define __vtkImageEMMarkov_h
 
+#include "vtkEMLocalSegmentConfigure.h" 
+#include "vtkImageData.h"
+#include "vtkImageToImageFilter.h"
+#include "vtkSlicer.h"
 
 #include <stdio.h>
 #include <math.h>
 #include <ctype.h>
 #include <string.h>
 
-#include "vtkEMLocalSegmentConfigure.h" 
-#include "vtkImageData.h"
-#include "vtkImageToImageFilter.h"
-#include "vtkSlicer.h"
 
 // Error Definiton  
 // 1  = eveything correct
@@ -102,10 +102,8 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMMarkov : public vtkImageToImageFilter
 protected:
 
   vtkImageEMMarkov();
-  vtkImageEMMarkov(const vtkImageEMMarkov&) {};
   ~vtkImageEMMarkov();
 
-  void operator=(const vtkImageEMMarkov&) {};
   
   // When it works on parallel machines use : 
   //  void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,int outExt[6], int id);
@@ -148,6 +146,9 @@ protected:
   int **Label;            // Intensity distribution of the classes
   int *LabelNumber;            // Intensity distribution of the classes
   double *ClassProbability;  // Prior Probability of the classes
+private:
+  vtkImageEMMarkov(const vtkImageEMMarkov&);
+  void operator=(const vtkImageEMMarkov&);
 };
 #endif
 

@@ -7,23 +7,22 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMLocalGenericClass.h,v $
-  Date:      $Date: 2006/01/06 17:57:31 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/02/14 21:24:26 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 // .NAME vtkImageEMLocalGenericClass
 // Definnition of all variables owned by both vtkImageEMSuperClass and vtkImageEMClass
 //                                          vtkImageEMGenericClass
 //                                        /              \      \ ___________________________ 
-//                                       /                \                                  \
+//                                       /                \                                  \ 
 //                      vtkImageEMLocalGenericClass   vtkImageEMLocalSuperClass <- - - vtkImageEMLocalClass
-//                        /                  \  
+//                        /                    \
 //           vtkImageEMLocalSuperClass <- - - vtkImageEMLocalClass
 
 #ifndef __vtkImageEMLocalGenericClass_h
 #define __vtkImageEMLocalGenericClass_h 
   
-// #include "vtkSlicer.h"
 #include <vtkEMLocalSegmentConfigure.h> 
 #include "vtkImageEMGenericClass.h"
 #include "vtkImageData.h"
@@ -131,10 +130,9 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalGenericClass : public vtkImageEMG
 
 protected:
   vtkImageEMLocalGenericClass();
-  vtkImageEMLocalGenericClass(const vtkImageEMLocalGenericClass&) {};
   ~vtkImageEMLocalGenericClass(){this->ProbImageData = NULL;}
-
-  void operator=(const vtkImageEMLocalGenericClass&) {};
+  vtkImageEMLocalGenericClass(const vtkImageEMLocalGenericClass&);
+  void operator=(const vtkImageEMLocalGenericClass&);
  
   void  ExecuteData(vtkDataObject *) ;
 

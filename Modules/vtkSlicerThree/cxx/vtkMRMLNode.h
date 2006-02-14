@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLNode.h,v $
-  Date:      $Date: 2006/02/11 17:20:11 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/02/14 21:24:28 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLNode - Abstract Superclass for all specific types of MRML nodes.
@@ -63,7 +63,7 @@ public:
   // Description:
   // Get node XML tag name (like Volume, Model)
   // NOTE: Subclasses should implement this method
-  virtual char* GetNodeTagName() = 0;
+  virtual const char* GetNodeTagName() = 0;
   
   // Description:
   // Set/Get a numerical ID for the calling program to use to keep track
