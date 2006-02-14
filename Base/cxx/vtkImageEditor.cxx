@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditor.cxx,v $
-  Date:      $Date: 2006/02/14 21:46:17 $
-  Version:   $Revision: 1.20 $
+  Date:      $Date: 2006/02/14 21:54:34 $
+  Version:   $Revision: 1.21 $
 
 =========================================================================auto=*/
 #include "vtkImageEditor.h"
@@ -24,6 +24,7 @@
 #include "vtkImageReplaceRegion.h"
 #include "vtkImageReformatIJK.h"
 #include "vtkIntArray.h"
+#include <time.h>
 
 vtkCxxSetObjectMacro(vtkImageEditor, FirstFilter, vtkImageToImageFilter);
 vtkCxxSetObjectMacro(vtkImageEditor, LastFilter, vtkImageToImageFilter);
@@ -33,29 +34,14 @@ vtkCxxSetObjectMacro(vtkImageEditor, UndoOutput, vtkImageData);
 vtkCxxSetObjectMacro(vtkImageEditor, Region, vtkImageData);
 vtkCxxSetObjectMacro(vtkImageEditor, Indices, vtkIntArray);
 
-//------------------------------------------------------------------------------
-vtkImageEditor* vtkImageEditor::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkImageEditor");
-  if(ret)
-  {
-    return (vtkImageEditor*)ret;
-  }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkImageEditor;
-}
-
 //----------------------------------------------------------------------------
 vtkImageEditor::vtkImageEditor()
 {
-  int i;
-
   // SliceOrder can never be NULL
-  this->InputSliceOrder = new char[3];
-  strcpy(this->InputSliceOrder, "SI");
-  this->OutputSliceOrder = new char[3];
-  strcpy(this->OutputSliceOrder, "SI");
+  this->InputSliceOrder = 0;
+  this->SetInputSliceOrder( "SI" );
+  this->OutputSliceOrder = 0;
+  this->SetOutputSliceOrder( "SI" );
 
   this->UseInput = 1;
   this->Slice = 0;
@@ -68,7 +54,7 @@ vtkImageEditor::vtkImageEditor()
   // By setting to the largest possible extent, an error will be generated
   // to warn the user if they attempt to clip without specifying the extent.
   // So do change this to avoid an error message!
-  for (i=0; i<3; i++)
+  for (int i=0; i<3; i++)
   {
     this->ClipExtent[i*2]   = -VTK_LARGE_INTEGER;
     this->ClipExtent[i*2+1] =  VTK_LARGE_INTEGER;
@@ -91,42 +77,34 @@ vtkImageEditor::~vtkImageEditor()
 {
   this->ProgressObserver->Delete();
   // We must delete any objects we created
-  if (this->InputSliceOrder)
-  {
-    delete [] this->InputSliceOrder;
-    this->InputSliceOrder = NULL;
-  }
-  if (this->OutputSliceOrder)
-  {
-    delete [] this->OutputSliceOrder;
-    this->OutputSliceOrder = NULL;
-  }
+  this->SetInputSliceOrder( NULL );
+  this->SetOutputSliceOrder( NULL );
 
   // We must UnRegister any object that has a vtkSetObjectMacro
   if (this->FirstFilter != NULL) 
-  {
+    {
     this->FirstFilter->UnRegister(this);
-  }
+    }
   if (this->LastFilter != NULL) 
-  {
+    {
     this->LastFilter->UnRegister(this);
-  }
+    }
   if (this->Output != NULL) 
-  {
+    {
     this->Output->UnRegister(this);
-  }
+    }
   if (this->UndoOutput != NULL) 
-  {
+    {
     this->UndoOutput->UnRegister(this);
-  }
+    }
   if (this->Region != NULL) 
-  {
+    {
     this->Region->UnRegister(this);
-  }
+    }
   if (this->Indices != NULL) 
-  {
+    {
     this->Indices->UnRegister(this);
-  }
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -197,13 +175,13 @@ void vtkImageEditor::SetClipExtent(int extent[6])
 {
   int idx;
   for (idx = 0; idx < 6; ++idx)
-  {
-    if (this->ClipExtent[idx] != extent[idx])
     {
+    if (this->ClipExtent[idx] != extent[idx])
+      {
       this->ClipExtent[idx] = extent[idx];
       this->Modified();
-    }
-  }  
+      }
+    }  
 }
 
 //----------------------------------------------------------------------------
@@ -223,9 +201,9 @@ void vtkImageEditor::GetClipExtent(int extent[6])
 {
   int idx;
   for (idx = 0; idx < 6; ++idx)
-  {
+    {
     extent[idx] = this->ClipExtent[idx];
-  }
+    }
 }
 
 //----------------------------------------------------------------------------

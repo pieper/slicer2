@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditorEffects.h,v $
-  Date:      $Date: 2006/02/14 21:46:17 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/02/14 21:54:35 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 // .NAME vtkImageEditorEffects - Implementation of effects that 
@@ -30,7 +30,7 @@ class VTK_SLICER_BASE_EXPORT vtkImageEditorEffects : public vtkImageEditor
 {
 public:
   static vtkImageEditorEffects *New();
-  vtkTypeMacro(vtkImageEditorEffects,vtkImageEditor);
+  vtkTypeRevisionMacro(vtkImageEditorEffects,vtkImageEditor);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   void Clear();
