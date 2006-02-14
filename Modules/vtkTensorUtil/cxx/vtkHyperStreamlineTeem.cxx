@@ -10,7 +10,7 @@
 #include "vtkImageData.h"
 
 
-vtkCxxRevisionMacro(vtkHyperStreamlineTeem, "$Revision: 1.3 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineTeem, "$Revision: 1.4 $");
 vtkStandardNewMacro(vtkHyperStreamlineTeem);
 
 
@@ -35,7 +35,9 @@ void vtkHyperStreamlineTeem::Execute()
   static tenFiberContext *context = NULL;
   
   if( !context )
+  {
     context = ProduceFiberContext();
+  }
   else if( DatasetOrSettingsChanged() )
     {
       // TODO: Clean up after previous context here
@@ -70,9 +72,10 @@ void vtkHyperStreamlineTeem::StartFiberFrom( const vtkFloatingPointType position
   }
   vtkDebugMacro( << "Found "  << output->axis[1].size << " points in fiber" );
   
-  if( output->data )
+  if ( output->data )
+  {
     VisualizeFibers( output );
-  
+  }
   
   vtkDebugMacro( << "Cleaning up");
   nrrdNuke( output );
@@ -113,12 +116,12 @@ void vtkHyperStreamlineTeem::VisualizeFibers( const Nrrd *fibers )
       else
       {
           point->D = 0.0;
-#if (VTK_MAJOR_VERSION >= 5)
-          point->CellId = this->GetPolyDataInput(0)->FindPoint(point->X);
-#else
-          point->CellId = this->GetInput()->FindPoint( point->X );
-#endif
       }
+#if (VTK_MAJOR_VERSION >= 5)
+      point->CellId = this->GetPolyDataInput(0)->FindPoint(point->X);
+#else
+      point->CellId = this->GetInput()->FindPoint( point->X );
+#endif
     }
   
   vtkDebugMacro( << "Building lines");
