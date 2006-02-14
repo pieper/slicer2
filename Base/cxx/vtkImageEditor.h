@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditor.h,v $
-  Date:      $Date: 2006/02/14 20:40:11 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2006/02/14 21:46:17 $
+  Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 // .NAME vtkImageEditor - Applies editing effects to volumes.
@@ -28,15 +28,7 @@
 #ifndef __vtkImageEditor_h
 #define __vtkImageEditor_h
 
-//#include <iostream.h>
-//#include <fstream.h>
 #include "vtkProcessObject.h"
-#include "vtkImageData.h"
-#include "vtkImageToImageFilter.h"
-#include "vtkImageReplaceRegion.h"
-#include "vtkImageReformatIJK.h"
-#include "vtkImageCopy.h"
-#include "vtkIntArray.h"
 #include "vtkSlicer.h"
 
 //  Dimension
@@ -45,6 +37,12 @@
 #define EDITOR_DIM_3D     3
 
 class vtkCallbackCommand;
+class vtkImageData;
+class vtkImageToImageFilter;
+class vtkImageReplaceRegion;
+class vtkImageReformatIJK;
+class vtkImageCopy;
+class vtkIntArray;
 
 class VTK_SLICER_BASE_EXPORT vtkImageEditor : public vtkProcessObject
 {
@@ -120,9 +118,9 @@ public:
   void Apply();
   void Apply(vtkImageToImageFilter *firstFilter,
     vtkImageToImageFilter *lastFilter);
-  vtkSetObjectMacro(FirstFilter, vtkImageToImageFilter);
+  virtual void SetFirstFilter(vtkImageToImageFilter*);
   vtkGetObjectMacro(FirstFilter, vtkImageToImageFilter);
-  vtkSetObjectMacro(LastFilter, vtkImageToImageFilter);
+  virtual void SetLastFilter(vtkImageToImageFilter*);
   vtkGetObjectMacro(LastFilter, vtkImageToImageFilter);
 
   // Description:
@@ -142,8 +140,8 @@ public:
   // The UndoOutput data set exists for internal use of undoing 3D and
   // multi-slice effects.
   vtkGetObjectMacro(Output, vtkImageData);
-  vtkSetObjectMacro(Output, vtkImageData);
-  vtkSetObjectMacro(UndoOutput, vtkImageData);
+  virtual void SetOutput(vtkImageData*);
+  virtual void SetUndoOutput(vtkImageData*);
   vtkGetObjectMacro(UndoOutput, vtkImageData);
 
   // Description:
@@ -163,12 +161,12 @@ protected:
   // to "Region" before the effect is applied.  Then it can be restored
   // from Region to perform an Undo.
   vtkGetObjectMacro(Region, vtkImageData);
-  vtkSetObjectMacro(Region, vtkImageData);
+  virtual void SetRegion(vtkImageData*);
 
   // "Indices" stores the voxel index into the input volume for each
   // pixel in "Region"
   vtkGetObjectMacro(Indices, vtkIntArray);
-  vtkSetObjectMacro(Indices, vtkIntArray);
+  virtual void SetIndices(vtkIntArray*);
 
   // Swap the Output and UndoOutput pointers.
   // For example, this is how Undo is achieved after a 3D effect.

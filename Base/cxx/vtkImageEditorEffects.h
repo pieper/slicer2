@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditorEffects.h,v $
-  Date:      $Date: 2006/02/14 20:40:12 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2006/02/14 21:46:17 $
+  Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 // .NAME vtkImageEditorEffects - Implementation of effects that 
@@ -22,14 +22,10 @@
 #ifndef __vtkImageEditorEffects_h
 #define __vtkImageEditorEffects_h
 
-//#include <fstream.h>
-#include <stdlib.h>
-//#include <iostream.h>
-
 #include "vtkImageEditor.h"
-#include "vtkPoints.h"
 #include "vtkSlicer.h"
 
+class vtkPoints;
 class VTK_SLICER_BASE_EXPORT vtkImageEditorEffects : public vtkImageEditor
 {
 public:

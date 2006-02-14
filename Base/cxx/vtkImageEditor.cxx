@@ -7,23 +7,31 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditor.cxx,v $
-  Date:      $Date: 2006/02/14 20:40:11 $
-  Version:   $Revision: 1.19 $
+  Date:      $Date: 2006/02/14 21:46:17 $
+  Version:   $Revision: 1.20 $
 
 =========================================================================auto=*/
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
-#include <time.h>
-#include "vtkVersion.h"
+#include "vtkImageEditor.h"
+
+#include "vtkObjectFactory.h"
 #include "vtkCommand.h"
 #include "vtkCallbackCommand.h"
-#include "vtkImageEditor.h"
-#include "vtkObjectFactory.h"
 #include "vtkImageCanvasSource2D.h"
 #include "vtkImageCopy.h"
 #include "vtkImageClip.h"
 #include "vtkImageConstantPad.h"
+#include "vtkImageData.h"
+#include "vtkImageReplaceRegion.h"
+#include "vtkImageReformatIJK.h"
+#include "vtkIntArray.h"
+
+vtkCxxSetObjectMacro(vtkImageEditor, FirstFilter, vtkImageToImageFilter);
+vtkCxxSetObjectMacro(vtkImageEditor, LastFilter, vtkImageToImageFilter);
+
+vtkCxxSetObjectMacro(vtkImageEditor, Output, vtkImageData);
+vtkCxxSetObjectMacro(vtkImageEditor, UndoOutput, vtkImageData);
+vtkCxxSetObjectMacro(vtkImageEditor, Region, vtkImageData);
+vtkCxxSetObjectMacro(vtkImageEditor, Indices, vtkIntArray);
 
 //------------------------------------------------------------------------------
 vtkImageEditor* vtkImageEditor::New()
