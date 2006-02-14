@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageFrameSource.h,v $
-  Date:      $Date: 2006/01/06 17:56:41 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/02/14 20:47:09 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 // .NAME vtkImageFrameSource - Pulls data from a RenderWindow and outputs it.
@@ -40,8 +40,8 @@ public:
 protected:
     vtkImageFrameSource();
     ~vtkImageFrameSource();
-  vtkImageFrameSource(const vtkImageFrameSource&) {};
-  void operator=(const vtkImageFrameSource&) {};
+  vtkImageFrameSource(const vtkImageFrameSource&);
+  void operator=(const vtkImageFrameSource&);
 
     int WholeExtent[6];
     vtkRenderWindow *RenderWindow;

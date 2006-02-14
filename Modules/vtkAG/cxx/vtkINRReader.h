@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkINRReader.h,v $
-  Date:      $Date: 2006/01/06 17:57:09 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/02/14 20:51:33 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 #ifndef __vtkINRReader_h
@@ -28,8 +28,8 @@ public:
 protected:
   vtkINRReader() {};
   ~vtkINRReader() {};
-  vtkINRReader(const vtkINRReader&) {};
-  void operator=(const vtkINRReader&) {};
+  vtkINRReader(const vtkINRReader&);
+  void operator=(const vtkINRReader&);
   void ExecuteInformation();
 };
 

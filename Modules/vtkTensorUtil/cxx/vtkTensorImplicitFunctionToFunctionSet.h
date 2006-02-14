@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorImplicitFunctionToFunctionSet.h,v $
-  Date:      $Date: 2006/01/06 17:58:06 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/02/14 20:54:14 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkTensorImplicitFunctionToFunctionSet.h,v $
   Language:  C++
-  Date:      $Date: 2006/01/06 17:58:06 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/02/14 20:54:14 $
+  Version:   $Revision: 1.7 $
 */
 // .NAME vtkTensorImplicitFunctionToFunctionSet - Wrapper class around itk::BSplineInterpolateImageFuntion
 // .SECTION Description
@@ -44,7 +44,7 @@ class VTK_TENSORUTIL_EXPORT vtkTensorImplicitFunctionToFunctionSet : public vtkF
   virtual void PrintSelf(ostream& os, vtkIndent indent);
   virtual int FunctionValues(vtkFloatingPointType* x, vtkFloatingPointType* f);
   int GetTensor(vtkFloatingPointType *x, vtkFloatingPointType * f);
-  virtual void AddDataSet(vtkDataSet* dataset) {}
+  virtual void AddDataSet(vtkDataSet* ) {}
   void AddImplicitFunction(vtkImplicitFunction * func, int numcomp ) {
     if ( numcomp < 0 || numcomp > 5 )
       return;

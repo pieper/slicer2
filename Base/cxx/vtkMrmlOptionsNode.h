@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlOptionsNode.h,v $
-  Date:      $Date: 2006/01/06 17:56:48 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/02/14 20:47:10 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlOptionsNode - MRML node for storing browser-specific data.
@@ -67,8 +67,8 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlOptionsNode : public vtkMrmlNode
   protected:
   vtkMrmlOptionsNode();
   ~vtkMrmlOptionsNode();
-  vtkMrmlOptionsNode(const vtkMrmlOptionsNode&) {};
-  void operator=(const vtkMrmlOptionsNode&) {};
+  vtkMrmlOptionsNode(const vtkMrmlOptionsNode&);
+  void operator=(const vtkMrmlOptionsNode&);
 
   // Description:
   // Contains information for use by specified program

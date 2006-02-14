@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSceneOptionsNode.h,v $
-  Date:      $Date: 2006/01/06 17:56:48 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/02/14 20:47:10 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSceneOptionsNode - MRML node to represent the scene options
@@ -164,8 +164,8 @@ public:
 protected:
   vtkMrmlSceneOptionsNode();
   ~vtkMrmlSceneOptionsNode();
-  vtkMrmlSceneOptionsNode(const vtkMrmlSceneOptionsNode&) {};
-  void operator=(const vtkMrmlSceneOptionsNode&) {};
+  vtkMrmlSceneOptionsNode(const vtkMrmlSceneOptionsNode&);
+  void operator=(const vtkMrmlSceneOptionsNode&);
 
   // Strings
   char *ViewUp;

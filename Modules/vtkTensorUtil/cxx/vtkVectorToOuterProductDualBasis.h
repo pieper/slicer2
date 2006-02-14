@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkVectorToOuterProductDualBasis.h,v $
-  Date:      $Date: 2006/01/06 17:58:07 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/02/14 20:54:15 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 // .NAME vtkVectorToOuterProductDualBasis 
@@ -80,7 +80,8 @@ public:
 protected:
   vtkVectorToOuterProductDualBasis();
   ~vtkVectorToOuterProductDualBasis();
-  vtkVectorToOuterProductDualBasis(const vtkVectorToOuterProductDualBasis&) {};
+  vtkVectorToOuterProductDualBasis(const vtkVectorToOuterProductDualBasis&);
+  void operator=(const vtkVectorToOuterProductDualBasis&);
 
   int NumberOfInputVectors;
 
@@ -95,7 +96,6 @@ protected:
   void AllocateInternals();
   void DeallocateInternals();
 
-  void operator=(const vtkVectorToOuterProductDualBasis&) {};
 };
 
 #endif

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageLiveWireTester.h,v $
-  Date:      $Date: 2006/01/06 17:56:42 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/02/14 20:47:09 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 // .NAME vtkImageLiveWireTester - Wrapper around vtkImageLiveWire
@@ -69,8 +69,8 @@ class VTK_SLICER_BASE_EXPORT vtkImageLiveWireTester : public vtkImageToImageFilt
 protected:
   vtkImageLiveWireTester();
   ~vtkImageLiveWireTester();
-  vtkImageLiveWireTester(const vtkImageLiveWireTester&) {};
-  void operator=(const vtkImageLiveWireTester&) {};
+  vtkImageLiveWireTester(const vtkImageLiveWireTester&);
+  void operator=(const vtkImageLiveWireTester&);
 
   char *SettingsFileName;
 

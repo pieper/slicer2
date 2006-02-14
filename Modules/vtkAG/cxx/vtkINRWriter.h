@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkINRWriter.h,v $
-  Date:      $Date: 2006/01/06 17:57:09 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/02/14 20:51:33 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 #ifndef __vtkINRWriter_h
@@ -32,8 +32,8 @@ public:
 protected:
   vtkINRWriter();
   ~vtkINRWriter() {};
-  vtkINRWriter(const vtkINRWriter&) {};
-  void operator=(const vtkINRWriter&) {};
+  vtkINRWriter(const vtkINRWriter&);
+  void operator=(const vtkINRWriter&);
 
   virtual void WriteFileHeader(ofstream *, vtkImageData *);
 

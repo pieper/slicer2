@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlPathNode.h,v $
-  Date:      $Date: 2006/01/06 17:56:48 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/02/14 20:47:10 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlPathNode - MRML node to represent a path.
@@ -66,8 +66,8 @@ public:
 protected:
   vtkMrmlPathNode();
   ~vtkMrmlPathNode();
-  vtkMrmlPathNode(const vtkMrmlPathNode&) {};
-  void operator=(const vtkMrmlPathNode&) {};
+  vtkMrmlPathNode(const vtkMrmlPathNode&);
+  void operator=(const vtkMrmlPathNode&);
 
 //  char *cPathColor;
 //  char *fPathColor;

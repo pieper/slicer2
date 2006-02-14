@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageCloseUp2D.h,v $
-  Date:      $Date: 2006/01/06 17:56:39 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/02/14 20:47:09 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 // .NAME vtkImageCloseUp2D -  Creates a magnified 2D image
@@ -47,8 +47,8 @@ public:
 protected:
   vtkImageCloseUp2D();
   ~vtkImageCloseUp2D() {};
-  vtkImageCloseUp2D(const vtkImageCloseUp2D&) {};
-  void operator=(const vtkImageCloseUp2D&) {};
+  vtkImageCloseUp2D(const vtkImageCloseUp2D&);
+  void operator=(const vtkImageCloseUp2D&);
 
   void ExecuteInformation(vtkImageData *inData, 
                                 vtkImageData *outData);

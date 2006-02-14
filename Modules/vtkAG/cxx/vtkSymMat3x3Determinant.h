@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSymMat3x3Determinant.h,v $
-  Date:      $Date: 2006/01/06 17:57:12 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2006/02/14 20:51:35 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 // .NAME vtkSymMat3x3Determinant - 
@@ -34,8 +34,8 @@ public:
 protected:
   vtkSymMat3x3Determinant();
   ~vtkSymMat3x3Determinant();
-  vtkSymMat3x3Determinant(const vtkSymMat3x3Determinant&) {}
-  void operator=(const vtkSymMat3x3Determinant&) {}
+  vtkSymMat3x3Determinant(const vtkSymMat3x3Determinant&);
+  void operator=(const vtkSymMat3x3Determinant&);
   void ExecuteInformation(vtkImageData *inData,vtkImageData *outData);
   void ThreadedExecute(vtkImageData *inDatas, vtkImageData *outData,
                int extent[6], int id);

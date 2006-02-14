@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkInteractiveTensorGlyph.h,v $
-  Date:      $Date: 2006/01/06 17:58:05 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/02/14 20:54:14 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 // .NAME vtkInteractiveTensorGlyph - scale and orient glyph according to tensor eigenvalues and eigenvectors
@@ -166,8 +166,8 @@ public:
 protected:
   vtkInteractiveTensorGlyph();
   ~vtkInteractiveTensorGlyph();
-  vtkInteractiveTensorGlyph(const vtkInteractiveTensorGlyph&) {};
-  void operator=(const vtkInteractiveTensorGlyph&) {};
+  vtkInteractiveTensorGlyph(const vtkInteractiveTensorGlyph&);
+  void operator=(const vtkInteractiveTensorGlyph&);
 
   void Execute();
 
