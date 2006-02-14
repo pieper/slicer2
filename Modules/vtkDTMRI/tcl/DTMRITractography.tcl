@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITractography.tcl,v $
-#   Date:      $Date: 2006/02/14 21:41:04 $
-#   Version:   $Revision: 1.50 $
+#   Date:      $Date: 2006/02/14 22:06:34 $
+#   Version:   $Revision: 1.51 $
 # 
 #===============================================================================
 # FILE:        DTMRITractography.tcl
@@ -58,7 +58,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.50 $} {$Date: 2006/02/14 21:41:04 $}]
+                                 {$Revision: 1.51 $} {$Date: 2006/02/14 22:06:34 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -1646,6 +1646,7 @@ proc DTMRISeedStreamlinesInROI {} {
         # we have a selection ROI
         DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI
     }
+    Render3D
 
 }
 
