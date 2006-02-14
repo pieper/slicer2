@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlDataVolume.h,v $
-  Date:      $Date: 2006/01/06 17:56:45 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/02/14 20:40:13 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlDataVolume - Object used in the slicer to perform
@@ -67,7 +67,7 @@ public:
   // Use GetOutput to get the image data.
   vtkSetObjectMacro(ImageData, vtkImageData);
   vtkImageData* GetOutput();
-  char* GetOutputPointer(int zslice);
+  const char* GetOutputPointer(int zslice);
 
   // Description:
   // Read/Write image 
@@ -179,8 +179,8 @@ public:
 protected:
   vtkMrmlDataVolume();
   ~vtkMrmlDataVolume();
-  vtkMrmlDataVolume(const vtkMrmlDataVolume&) {};
-  void operator=(const vtkMrmlDataVolume&) {};
+  vtkMrmlDataVolume(const vtkMrmlDataVolume&);
+  void operator=(const vtkMrmlDataVolume&);
 
   // Description: 
   // If Data has not be created, create it.

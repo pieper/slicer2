@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkResliceImage.h,v $
-  Date:      $Date: 2006/01/06 17:56:51 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/02/14 20:40:16 $
+  Version:   $Revision: 1.15 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Samson Timoner TetraMesh Library
   Module:    $RCSfile: vtkResliceImage.h,v $
   Language:  C++
-  Date:      $Date: 2006/01/06 17:56:51 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/02/14 20:40:16 $
+  Version:   $Revision: 1.15 $
   
 Copyright (c) 2001 Samson Timoner
 
@@ -101,8 +101,8 @@ protected:
 
   vtkResliceImage();
   ~vtkResliceImage() {};
-  vtkResliceImage(const vtkResliceImage&) {};
-  void operator=(const vtkResliceImage&) {};
+  vtkResliceImage(const vtkResliceImage&);
+  void operator=(const vtkResliceImage&);
 
   vtkMatrix4x4     *TransformOutputToInput;
   vtkMatrix4x4     *IJKtoIJK;

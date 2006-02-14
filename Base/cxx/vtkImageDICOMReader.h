@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageDICOMReader.h,v $
-  Date:      $Date: 2006/01/06 17:56:39 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2006/02/14 20:40:11 $
+  Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 // .NAME vtkImageDICOMReader - Superclass of binary file readers.
@@ -151,7 +151,7 @@ public:
   void SetDataByteOrderToLittleEndian();
   int GetDataByteOrder();
   void SetDataByteOrder(int);
-  char *GetDataByteOrderAsString();
+  const char *GetDataByteOrderAsString();
 
   // Description:
   // Set/Get the byte swapping to explicitely swap the bytes of a file.
@@ -193,8 +193,8 @@ public:
 protected:
   vtkImageDICOMReader();
   ~vtkImageDICOMReader();
-  vtkImageDICOMReader(const vtkImageDICOMReader&) {};
-  void operator=(const vtkImageDICOMReader&) {};
+  vtkImageDICOMReader(const vtkImageDICOMReader&);
+  void operator=(const vtkImageDICOMReader&);
 
   char *InternalFileName;
   char *FileName;

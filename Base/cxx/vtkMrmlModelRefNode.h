@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlModelRefNode.h,v $
-  Date:      $Date: 2006/01/06 17:56:47 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/02/14 20:40:15 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlModelRefNode - MRML node to represent a reference to a model.
@@ -53,8 +53,8 @@ public:
 protected:
   vtkMrmlModelRefNode();
   ~vtkMrmlModelRefNode();
-  vtkMrmlModelRefNode(const vtkMrmlModelRefNode&) {};
-  void operator=(const vtkMrmlModelRefNode&) {};
+  vtkMrmlModelRefNode(const vtkMrmlModelRefNode&);
+  void operator=(const vtkMrmlModelRefNode&);
 
   // Strings
   char *ModelRefID;

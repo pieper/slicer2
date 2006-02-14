@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:48 $
-  Version:   $Revision: 1.58 $
+  Date:      $Date: 2006/02/14 20:40:15 $
+  Version:   $Revision: 1.59 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -1404,7 +1404,7 @@ void vtkMrmlSlicer::ComputeOffsetRangeIJK(int s)
   }
 }
 
-void vtkMrmlSlicer::InitOffset(int s, char *str, vtkFloatingPointType offset)
+void vtkMrmlSlicer::InitOffset(int s, const char *str, vtkFloatingPointType offset)
 {
   int orient = (int) ConvertStringToOrient(str);
   this->Offset[s][orient] = offset;
@@ -1462,7 +1462,7 @@ void vtkMrmlSlicer::SetOrientString(char *str)
        this->SetOrient(MRML_SLICER_ORIENT_AXISAGCOR);
 }
 
-char* vtkMrmlSlicer::GetOrientString(int s)
+const char* vtkMrmlSlicer::GetOrientString(int s)
 {
   return ConvertOrientToString(this->Orient[s]);
 }
@@ -1473,7 +1473,7 @@ void vtkMrmlSlicer::SetOrientString(int s, char *str)
   this->SetOrient(s, orient);
 }
 
-int vtkMrmlSlicer::ConvertStringToOrient(char *str)
+int vtkMrmlSlicer::ConvertStringToOrient(const char *str)
 {
   if      (strcmp(str, "Axial") == 0)
        return MRML_SLICER_ORIENT_AXIAL;
@@ -1510,7 +1510,7 @@ int vtkMrmlSlicer::ConvertStringToOrient(char *str)
        return MRML_SLICER_ORIENT_AXIAL;
 }
 
-char* vtkMrmlSlicer::ConvertOrientToString(int orient)
+const char* vtkMrmlSlicer::ConvertOrientToString(int orient)
 {
   switch (orient) 
     {
@@ -2805,7 +2805,7 @@ int vtkMrmlSlicer::GetCompilerVersion()
 // For Microsoft compiler, MSC
 // Else returns UNKNOWN
 
-char * vtkMrmlSlicer::GetCompilerName()
+const char * vtkMrmlSlicer::GetCompilerName()
 {
 
 #if defined(__GNUC__)
@@ -2821,7 +2821,7 @@ char * vtkMrmlSlicer::GetCompilerName()
 //----------------------------------------------------------------------------
 // Description:
 // Returns the version number of the vtk library this has been compiled with
-char * vtkMrmlSlicer::GetVTKVersion()
+const char * vtkMrmlSlicer::GetVTKVersion()
 {
     return VTK_VERSION;
 }

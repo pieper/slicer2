@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlEndPathNode.h,v $
-  Date:      $Date: 2006/01/06 17:56:46 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2006/02/14 20:40:14 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlEndPathNode - represents the end of a vtkMrmlPathNode.
@@ -47,8 +47,8 @@ public:
 protected:
   vtkMrmlEndPathNode();
   ~vtkMrmlEndPathNode();
-  vtkMrmlEndPathNode(const vtkMrmlEndPathNode&) {};
-  void operator=(const vtkMrmlEndPathNode&) {};
+  vtkMrmlEndPathNode(const vtkMrmlEndPathNode&);
+  void operator=(const vtkMrmlEndPathNode&);
 
 };
 

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlModelGroupNode.h,v $
-  Date:      $Date: 2006/01/06 17:56:47 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/02/14 20:40:14 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlModelGroupNode - MRML node to represent a model group.
@@ -74,8 +74,8 @@ public:
 protected:
   vtkMrmlModelGroupNode();
   ~vtkMrmlModelGroupNode();
-  vtkMrmlModelGroupNode(const vtkMrmlModelGroupNode&) {};
-  void operator=(const vtkMrmlModelGroupNode&) {};
+  vtkMrmlModelGroupNode(const vtkMrmlModelGroupNode&);
+  void operator=(const vtkMrmlModelGroupNode&);
 
   // Strings
   char *ModelGroupID;

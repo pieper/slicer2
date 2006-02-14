@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageLabelVOI.h,v $
-  Date:      $Date: 2006/01/06 17:56:41 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/02/14 20:40:12 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 // .NAME vtkImageLabelVOI -  Select label volume of interest
@@ -63,8 +63,8 @@ public:
 protected:
     vtkImageLabelVOI();
     ~vtkImageLabelVOI() {};
-    vtkImageLabelVOI(const vtkImageLabelVOI&) {};
-    void operator=(const vtkImageLabelVOI&) {};
+    vtkImageLabelVOI(const vtkImageLabelVOI&);
+    void operator=(const vtkImageLabelVOI&);
 
   int c1x;
   int c1y;

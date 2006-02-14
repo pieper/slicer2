@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageDijkstra.h,v $
-  Date:      $Date: 2006/01/06 17:56:40 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/02/14 20:40:11 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 
@@ -190,8 +190,8 @@ class VTK_SLICER_BASE_EXPORT vtkImageDijkstra : public vtkImageToImageFilter
 protected:
  vtkImageDijkstra();
  ~vtkImageDijkstra();
- vtkImageDijkstra(const vtkImageDijkstra&) {};
- void operator=(const vtkImageDijkstra&) {};
+ vtkImageDijkstra(const vtkImageDijkstra&);
+ void operator=(const vtkImageDijkstra&);
  
  //void Execute(vtkImageData *inData, vtkImageData *outData);
  void ExecuteData(vtkDataObject *);

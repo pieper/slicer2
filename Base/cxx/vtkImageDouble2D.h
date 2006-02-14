@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageDouble2D.h,v $
-  Date:      $Date: 2006/01/06 17:56:40 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/02/14 20:40:11 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 // .NAME vtkImageDouble2D -  Doubles size of input image
@@ -34,8 +34,8 @@ public:
 protected:
   vtkImageDouble2D();
   ~vtkImageDouble2D(){};
-  vtkImageDouble2D(const vtkImageDouble2D&) {};
-  void operator=(const vtkImageDouble2D&) {};
+  vtkImageDouble2D(const vtkImageDouble2D&);
+  void operator=(const vtkImageDouble2D&);
 
   // Override this function since inExt != outExt
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);

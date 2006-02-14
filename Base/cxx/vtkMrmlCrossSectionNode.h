@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlCrossSectionNode.h,v $
-  Date:      $Date: 2006/01/06 17:56:45 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/02/14 20:40:13 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlCrossSectionNode - MRML node to represent the properties of a cross section
@@ -112,8 +112,8 @@ public:
 protected:
   vtkMrmlCrossSectionNode();
   ~vtkMrmlCrossSectionNode();
-  vtkMrmlCrossSectionNode(const vtkMrmlCrossSectionNode&) {};
-  void operator=(const vtkMrmlCrossSectionNode&) {};
+  vtkMrmlCrossSectionNode(const vtkMrmlCrossSectionNode&);
+  void operator=(const vtkMrmlCrossSectionNode&);
 
   // Strings
   char *Direction;

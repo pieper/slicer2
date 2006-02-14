@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlFiducialsNode.h,v $
-  Date:      $Date: 2006/01/06 17:56:46 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2006/02/14 20:40:14 $
+  Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlFiducialsNode - MRML node for representing a
@@ -79,8 +79,8 @@ void SetTypeToDefault();
 protected:
   vtkMrmlFiducialsNode();
   ~vtkMrmlFiducialsNode();
-  vtkMrmlFiducialsNode(const vtkMrmlFiducialsNode&) {};
-  void operator=(const vtkMrmlFiducialsNode&) {};
+  vtkMrmlFiducialsNode(const vtkMrmlFiducialsNode&);
+  void operator=(const vtkMrmlFiducialsNode&);
 
 float SymbolSize;
 float TextSize;

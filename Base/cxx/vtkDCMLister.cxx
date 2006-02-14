@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDCMLister.cxx,v $
-  Date:      $Date: 2006/01/13 15:39:23 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/02/14 20:40:10 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 
@@ -245,7 +245,7 @@ char * vtkDCMLister::PrintList()
 
 void vtkDCMLister::ListElement(unsigned short Group,
           unsigned short Element, unsigned long length,
-          char *VR, char *Name)
+          const char *VR, const char *Name)
 {
   if((strcmp(VR, "OB") != 0) &&
      (strcmp(VR, "OW") != 0) &&
@@ -275,7 +275,7 @@ void vtkDCMLister::ListElement(unsigned short Group,
      )
     {
       ReadText(buff, length);
-      sprintf(aux_str, "(%04x,%04x) %s %s (%u): %s\n", Group, Element,
+      sprintf(aux_str, "(%04x,%04x) %s %s (%lu): %s\n", Group, Element,
          VR, Name, length, buff);
     }
   else if(strcmp(VR, "FL") == 0)
@@ -284,7 +284,7 @@ void vtkDCMLister::ListElement(unsigned short Group,
       float fl;
       long next_block = ftell(file_in) + length;
       int num = length / sizeof(float);
-      sprintf(aux_str, "(%04x,%04x) %s %s (%u): ", Group, Element,
+      sprintf(aux_str, "(%04x,%04x) %s %s (%lu): ", Group, Element,
          VR, Name, length);
       int j = strlen(aux_str);
       for(i = 0; i < num; i++)
@@ -302,7 +302,7 @@ void vtkDCMLister::ListElement(unsigned short Group,
       double fl;
       long next_block = ftell(file_in) + length;
       int num = length / sizeof(double);
-      sprintf(aux_str, "(%04x,%04x) %s %s (%u): ", Group, Element,
+      sprintf(aux_str, "(%04x,%04x) %s %s (%lu): ", Group, Element,
           VR, Name, length);
       int j = strlen(aux_str);
       for(i = 0; i < num; i++)
@@ -320,7 +320,7 @@ void vtkDCMLister::ListElement(unsigned short Group,
       UINT32 ui;
       long next_block = ftell(file_in) + length;
       int num = length / sizeof(UINT32);
-      sprintf(aux_str, "(%04x,%04x) %s %s (%u): ", Group, Element,
+      sprintf(aux_str, "(%04x,%04x) %s %s (%lu): ", Group, Element,
           VR, Name, length);
       int j = strlen(aux_str);
       for(i = 0; i < num; i++)
@@ -338,7 +338,7 @@ void vtkDCMLister::ListElement(unsigned short Group,
       INT32 ui;
       long next_block = ftell(file_in) + length;
       int num = length / sizeof(INT32);
-      sprintf(aux_str, "(%04x,%04x) %s %s (%u): ", Group, Element,
+      sprintf(aux_str, "(%04x,%04x) %s %s (%lu): ", Group, Element,
           VR, Name, length);
       int j = strlen(aux_str);
       for(i = 0; i < num; i++)
@@ -356,7 +356,7 @@ void vtkDCMLister::ListElement(unsigned short Group,
       UINT16 ui;
       long next_block = ftell(file_in) + length;
       int num = length / sizeof(UINT16);
-      sprintf(aux_str, "(%04x,%04x) %s %s (%u): ", Group, Element,
+      sprintf(aux_str, "(%04x,%04x) %s %s (%lu): ", Group, Element,
           VR, Name, length);
       int j = strlen(aux_str);
       for(i = 0; i < num; i++)
@@ -374,7 +374,7 @@ void vtkDCMLister::ListElement(unsigned short Group,
       INT16 ui;
       long next_block = ftell(file_in) + length;
       int num = length / sizeof(INT16);
-      sprintf(aux_str, "(%04x,%04x) %s %s (%u): ", Group, Element,
+      sprintf(aux_str, "(%04x,%04x) %s %s (%lu): ", Group, Element,
           VR, Name, length);
       int j = strlen(aux_str);
       for(i = 0; i < num; i++)
@@ -392,7 +392,7 @@ void vtkDCMLister::ListElement(unsigned short Group,
       UINT16 ui;
       long next_block = ftell(file_in) + length;
       int num = length / sizeof(UINT16);
-      sprintf(aux_str, "(%04x,%04x) %s %s (%u): ", Group, Element,
+      sprintf(aux_str, "(%04x,%04x) %s %s (%lu): ", Group, Element,
           VR, Name, length);
       int j = strlen(aux_str);
       for(i = 0; i < num; i++)
@@ -409,12 +409,12 @@ void vtkDCMLister::ListElement(unsigned short Group,
       (strcmp(VR, "OX") == 0)
       )
     {
-      sprintf(aux_str, "(%04x,%04x) %s %s (%u): Data starts at position %d\n", Group, Element,
+      sprintf(aux_str, "(%04x,%04x) %s %s (%lu): Data starts at position %ld\n", Group, Element,
           VR, Name, length, ftell(file_in));
     }
   else if(strcmp(VR, "SQ") == 0)
     {
-      sprintf(aux_str, "(%04x,%04x) %s %s (%d)\n", Group, Element, VR, Name, length);
+      sprintf(aux_str, "(%04x,%04x) %s %s (%ld)\n", Group, Element, VR, Name, length);
     }
   else
     {

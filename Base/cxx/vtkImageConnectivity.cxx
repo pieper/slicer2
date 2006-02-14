@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageConnectivity.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:39 $
-  Version:   $Revision: 1.10 $
+  Date:      $Date: 2006/02/14 20:40:11 $
+  Version:   $Revision: 1.11 $
 
 =========================================================================auto=*/
 #include "vtkImageConnectivity.h"
@@ -52,7 +52,7 @@ vtkImageConnectivity::vtkImageConnectivity()
   this->Seed[0] = this->Seed[1] = this->Seed[2] = 0;
 }
 
-char* vtkImageConnectivity::GetFunctionString()
+const char* vtkImageConnectivity::GetFunctionString()
 {
   switch (this->function) 
   {
@@ -137,7 +137,7 @@ int connect(
     axisv = 0;
     label++;
     while (1) {
-      while (stridev = stride[axisv]) {
+      while ( (stridev = stride[axisv]) ) {
         if ((*imagep & boundary_mask_start<<axisv) && (*(new_imagep = imagep + stridev) & component_mask)) {
           imagep = new_imagep;
           *imagep ^= component_mask;
@@ -821,7 +821,7 @@ void vtkImageConnectivity::ExecuteData(vtkDataObject *)
   outData->SetExtent(outData->GetWholeExtent());
   outData->AllocateScalars();
 
-  int outExt[6], id=0, s;
+  int outExt[6], s;
   outData->GetWholeExtent(outExt);
   void *inPtr = inData->GetScalarPointerForExtent(outExt);
   void *outPtr = outData->GetScalarPointerForExtent(outExt);

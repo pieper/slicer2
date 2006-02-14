@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlVolumeReadWriteNode.h,v $
-  Date:      $Date: 2006/01/06 17:56:50 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2006/02/14 20:40:16 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlVolumeReadWriteNode - 
@@ -61,8 +61,8 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlVolumeReadWriteNode : public vtkMrmlNode
 protected:
   vtkMrmlVolumeReadWriteNode();
   ~vtkMrmlVolumeReadWriteNode();
-  vtkMrmlVolumeReadWriteNode(const vtkMrmlVolumeReadWriteNode&) {};
-  void operator=(const vtkMrmlVolumeReadWriteNode&) {};
+  vtkMrmlVolumeReadWriteNode(const vtkMrmlVolumeReadWriteNode&);
+  void operator=(const vtkMrmlVolumeReadWriteNode&);
 
   vtkSetStringMacro(ReaderType);
   char *ReaderType;

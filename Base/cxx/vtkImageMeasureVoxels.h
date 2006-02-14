@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageMeasureVoxels.h,v $
-  Date:      $Date: 2006/01/06 17:56:42 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2006/02/14 20:40:12 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
 // .NAME vtkImageMeasureVoxels - This filter counts labeled voxels.
@@ -47,8 +47,8 @@ public:
 protected:
   vtkImageMeasureVoxels();
   ~vtkImageMeasureVoxels();
-  vtkImageMeasureVoxels(const vtkImageMeasureVoxels&) {};
-  void operator=(const vtkImageMeasureVoxels&) {};
+  vtkImageMeasureVoxels(const vtkImageMeasureVoxels&);
+  void operator=(const vtkImageMeasureVoxels&);
 
   char *FileName;
   vtkFloatArray *Result;

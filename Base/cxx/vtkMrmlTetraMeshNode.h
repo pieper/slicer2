@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlTetraMeshNode.h,v $
-  Date:      $Date: 2006/01/06 17:56:49 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/02/14 20:40:15 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlTetraMeshNode - MRML node for representing a TetraMesh.
@@ -126,8 +126,8 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlTetraMeshNode : public vtkMrmlNode
 protected:
   vtkMrmlTetraMeshNode();
   ~vtkMrmlTetraMeshNode();
-  vtkMrmlTetraMeshNode(const vtkMrmlTetraMeshNode&) {};
-  void operator=(const vtkMrmlTetraMeshNode&) {};
+  vtkMrmlTetraMeshNode(const vtkMrmlTetraMeshNode&);
+  void operator=(const vtkMrmlTetraMeshNode&);
 
   void ComputeRasToIjk(vtkMatrix4x4 *matRotate, 
     float ox, float oy, float oz);

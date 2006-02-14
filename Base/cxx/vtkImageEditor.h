@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditor.h,v $
-  Date:      $Date: 2006/01/06 17:56:40 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/02/14 20:40:11 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 // .NAME vtkImageEditor - Applies editing effects to volumes.
@@ -75,7 +75,7 @@ public:
   void SetDimensionToSingle() {this->SetDimension(EDITOR_DIM_SINGLE);};
   void SetDimensionToMulti()  {this->SetDimension(EDITOR_DIM_MULTI);};
   void SetDimensionTo3D()     {this->SetDimension(EDITOR_DIM_3D);};
-  char* GetDimensionString();
+  const char* GetDimensionString();
 
   // Description:
   // Specify which slice to edit when the Dimension is set to Single.
@@ -156,8 +156,8 @@ public:
 protected:
   vtkImageEditor();
   ~vtkImageEditor();
-  vtkImageEditor(const vtkImageEditor&) {};
-  void operator=(const vtkImageEditor&) {};
+  vtkImageEditor(const vtkImageEditor&);
+  void operator=(const vtkImageEditor&);
 
   // When "Dimension" is "Single", then the input slice is copied
   // to "Region" before the effect is applied.  Then it can be restored

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageCrossHair2D.h,v $
-  Date:      $Date: 2006/01/06 17:56:39 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/02/14 20:40:11 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 // .NAME vtkImageCrossHair2D -- draws CrossHair2Ds with tic marks on 2D window. 
@@ -96,8 +96,8 @@ protected:
     vtkImageCrossHair2D();
     ~vtkImageCrossHair2D() {};
 
-  vtkImageCrossHair2D(const vtkImageCrossHair2D&) {};
-  void operator=(const vtkImageCrossHair2D&) {};
+  vtkImageCrossHair2D(const vtkImageCrossHair2D&);
+  void operator=(const vtkImageCrossHair2D&);
 
     int ShowCursor;
     int NumHashes;

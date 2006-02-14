@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlModelStateNode.h,v $
-  Date:      $Date: 2006/01/06 17:56:48 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/02/14 20:40:15 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlModelStateNode - MRML node to represent the properties of a model.
@@ -90,8 +90,8 @@ public:
 protected:
   vtkMrmlModelStateNode();
   ~vtkMrmlModelStateNode();
-  vtkMrmlModelStateNode(const vtkMrmlModelStateNode&) {};
-  void operator=(const vtkMrmlModelStateNode&) {};
+  vtkMrmlModelStateNode(const vtkMrmlModelStateNode&);
+  void operator=(const vtkMrmlModelStateNode&);
 
   // Strings
   char *ModelRefID;

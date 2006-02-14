@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageLiveWire.h,v $
-  Date:      $Date: 2006/01/06 17:56:42 $
-  Version:   $Revision: 1.31 $
+  Date:      $Date: 2006/02/14 20:40:12 $
+  Version:   $Revision: 1.32 $
 
 =========================================================================auto=*/
 
@@ -311,8 +311,8 @@ public:
 protected:
   vtkImageLiveWire();
   ~vtkImageLiveWire();
-  vtkImageLiveWire(const vtkImageLiveWire&) {};
-  void operator=(const vtkImageLiveWire&) {};
+  vtkImageLiveWire(const vtkImageLiveWire&);
+  void operator=(const vtkImageLiveWire&);
 
   int StartPoint[2];
   int EndPoint[2];

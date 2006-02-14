@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlTree.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:49 $
-  Version:   $Revision: 1.22 $
+  Date:      $Date: 2006/02/14 20:40:15 $
+  Version:   $Revision: 1.23 $
 
 =========================================================================auto=*/
 #include "vtkMrmlTree.h"
@@ -88,7 +88,7 @@ void vtkMrmlTree::Write(char *filename)
 }
 
 //------------------------------------------------------------------------------
-int vtkMrmlTree::GetNumberOfItemsByClass(char *className)
+int vtkMrmlTree::GetNumberOfItemsByClass(const char *className)
 {
   vtkCollectionElement *elem=this->Top;
   int num=0;
@@ -105,7 +105,7 @@ int vtkMrmlTree::GetNumberOfItemsByClass(char *className)
 }
 
 //------------------------------------------------------------------------------
-vtkMrmlNode *vtkMrmlTree::GetNextItemByClass(char *className)
+vtkMrmlNode *vtkMrmlTree::GetNextItemByClass(const char *className)
 {
   vtkCollectionElement *elem=this->Current;
 
@@ -131,7 +131,7 @@ vtkMrmlNode *vtkMrmlTree::GetNextItemByClass(char *className)
 }
 
 //------------------------------------------------------------------------------
-vtkMrmlNode* vtkMrmlTree::InitTraversalByClass(char *className)
+vtkMrmlNode* vtkMrmlTree::InitTraversalByClass(const char *className)
 {
   vtkCollectionElement *elem=this->Top;
 
@@ -169,7 +169,7 @@ vtkMrmlNode* vtkMrmlTree::GetNthItem(int n)
 }
 
 //------------------------------------------------------------------------------
-vtkMrmlNode* vtkMrmlTree::GetNthItemByClass(int n, char *className)
+vtkMrmlNode* vtkMrmlTree::GetNthItemByClass(int n, const char *className)
 {
   vtkCollectionElement *elem;
   int j=0;

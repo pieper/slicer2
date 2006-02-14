@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlVolumeNode.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:49 $
-  Version:   $Revision: 1.64 $
+  Date:      $Date: 2006/02/14 20:40:15 $
+  Version:   $Revision: 1.65 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -196,7 +196,7 @@ float vtkMrmlVolumeNode::GetGlobalVoxelOffset()
 }
 
 //----------------------------------------------------------------------------
-char* vtkMrmlVolumeNode::GetScalarTypeAsString()
+const char* vtkMrmlVolumeNode::GetScalarTypeAsString()
 {
   switch (this->ScalarType)
   {
@@ -368,7 +368,7 @@ void vtkMrmlVolumeNode::Write(ofstream& of, int nIndent)
     of << " fullPrefix='" << this->FullPrefix << "'";
   }
   // Numbers
-  char *scalarType = this->GetScalarTypeAsString();
+  const char *scalarType = this->GetScalarTypeAsString();
   if (strcmp(scalarType, "Short")) 
   {
     of << " scalarType='" << scalarType << "'";
@@ -509,7 +509,7 @@ void vtkMrmlVolumeNode::Copy(vtkMrmlNode *anode)
 }
 
 //----------------------------------------------------------------------------
-void vtkMrmlVolumeNode::SetScanOrder(char *s)
+void vtkMrmlVolumeNode::SetScanOrder(const char *s)
 {
   if (s == NULL)
   {
@@ -741,7 +741,7 @@ void vtkMrmlVolumeNode::PrintSelf(ostream& os, vtkIndent indent)
 }
 
 //----------------------------------------------------------------------------
-void vtkMrmlVolumeNode::ComputeRasToIjkFromScanOrder(char *order)
+void vtkMrmlVolumeNode::ComputeRasToIjkFromScanOrder(const char *order)
 {
   int nx, ny, nz;
   vtkFloatingPointType crn[4][4],*ftl,*ftr,*fbr,*ltl,ctr[3];
@@ -1111,7 +1111,7 @@ vtkMrmlVolumeNode::ComputePositionMatrixFromRasToVtk(vtkMatrix4x4* RasToVtkMatri
 // Added by Attila Tanacs 10/10/2000 1/4/02
 
 // DICOMFileList
-void vtkMrmlVolumeNode::AddDICOMFileName(char *str)
+void vtkMrmlVolumeNode::AddDICOMFileName(const char *str)
 {
   if (DICOMFiles >= DICOM_FILE_LIMIT)
   {
@@ -1123,12 +1123,12 @@ void vtkMrmlVolumeNode::AddDICOMFileName(char *str)
   DICOMFiles++;
 }
 
-char *vtkMrmlVolumeNode::GetDICOMFileName(int idx)
+const char *vtkMrmlVolumeNode::GetDICOMFileName(int idx)
 {
   return DICOMFileList[idx];
 }
 
-void vtkMrmlVolumeNode::SetDICOMFileName(int idx, char *str)
+void vtkMrmlVolumeNode::SetDICOMFileName(int idx, const char *str)
 {
   delete [] DICOMFileList[idx];
   DICOMFileList[idx] = new char [strlen(str) + 1];
@@ -1164,7 +1164,7 @@ void vtkMrmlVolumeNode::DeleteDICOMMultiFrameOffsets()
   DICOMMultiFrameOffsets = 0;
 }
 
-char* vtkMrmlVolumeNode::ComputeScanOrderFromRasToIjk(vtkMatrix4x4 *RasToIjk)
+const char* vtkMrmlVolumeNode::ComputeScanOrderFromRasToIjk(vtkMatrix4x4 *RasToIjk)
 {
   vtkMatrix4x4 *IjkToRas = vtkMatrix4x4::New();
   vtkMatrix4x4::Invert(RasToIjk, IjkToRas);

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlHierarchyNode.h,v $
-  Date:      $Date: 2006/01/06 17:56:47 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/02/14 20:40:14 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlHierarchyNode - MRML node to represent an anatomical hierarchy.
@@ -57,8 +57,8 @@ public:
 protected:
   vtkMrmlHierarchyNode();
   ~vtkMrmlHierarchyNode();
-  vtkMrmlHierarchyNode(const vtkMrmlHierarchyNode&) {};
-  void operator=(const vtkMrmlHierarchyNode&) {};
+  vtkMrmlHierarchyNode(const vtkMrmlHierarchyNode&);
+  void operator=(const vtkMrmlHierarchyNode&);
 
   // Strings
   char *HierarchyID;

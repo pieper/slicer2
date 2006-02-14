@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlDataTetraMesh.h,v $
-  Date:      $Date: 2006/01/06 17:56:45 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/02/14 20:40:13 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlDataTetraMesh - Object used in the slicer to perform
@@ -61,8 +61,8 @@ public:
 protected:
   vtkMrmlDataTetraMesh();
   ~vtkMrmlDataTetraMesh();
-  vtkMrmlDataTetraMesh(const vtkMrmlDataTetraMesh&) {};
-  void operator=(const vtkMrmlDataTetraMesh&) {};
+  vtkMrmlDataTetraMesh(const vtkMrmlDataTetraMesh&);
+  void operator=(const vtkMrmlDataTetraMesh&);
 
   // Description: 
   // If Data has not be created, create it.

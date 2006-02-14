@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkIndirectLookupTable.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:44 $
-  Version:   $Revision: 1.22 $
+  Date:      $Date: 2006/02/14 20:40:13 $
+  Version:   $Revision: 1.23 $
 
 =========================================================================auto=*/
 #include <math.h>
@@ -99,7 +99,7 @@ void vtkIndirectLookupTable::PrintSelf(ostream& os, vtkIndent indent)
 }
 
 // For now, don't allow users to alter the MapRange
-void vtkIndirectLookupTable::SetMapRange(long min, long max)
+void vtkIndirectLookupTable::SetMapRange(long /*min*/, long /*max*/)
 {
   this->MapRange[0] = VTK_SHORT_MIN;
   this->MapRange[1] = VTK_SHORT_MAX;
@@ -582,7 +582,7 @@ static void vtkIndirectLookupTableMapFMRIData(vtkIndirectLookupTable *self, floa
 
 void vtkIndirectLookupTable::MapScalarsThroughTable2(void *input, unsigned char *output,
                                                      int inputDataType, int numberOfValues,
-                                                     int inputIncrement, int outputFormat)
+                                                     int inputIncrement, int /*outputFormat*/)
 {
     switch (inputDataType)
     {

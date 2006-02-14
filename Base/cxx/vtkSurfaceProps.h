@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSurfaceProps.h,v $
-  Date:      $Date: 2006/01/06 17:56:51 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2006/02/14 20:40:16 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
 #ifndef __vtkSurfaceProps_h
@@ -28,8 +28,7 @@ class VTK_SLICER_BASE_EXPORT vtkSurfaceProps : public vtkProcessObject
   public:
   vtkSurfaceProps();
   static vtkSurfaceProps *New() {return new vtkSurfaceProps;};
-  const char *GetClassName() {return "vtkSurfaceProps";};
-  
+
   void Update();
   void SetInput(vtkPolyData *input);
   vtkPolyData *GetInput();

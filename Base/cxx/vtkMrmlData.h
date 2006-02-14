@@ -6,8 +6,8 @@
   or http://www.slicer.org/copyright/copyright.txt for details.
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlData.h,v $
-  Date:      $Date: 2006/01/12 00:08:00 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/02/14 20:40:13 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlData - Abstract Object used in the slicer to perform
@@ -140,8 +140,8 @@ protected:
   // The virtual descructor is critical!!
   virtual ~vtkMrmlData();
 
-  vtkMrmlData(const vtkMrmlData&) {};
-  void operator=(const vtkMrmlData&) {};
+  vtkMrmlData(const vtkMrmlData&);
+  void operator=(const vtkMrmlData&);
 
 
   // Description: 

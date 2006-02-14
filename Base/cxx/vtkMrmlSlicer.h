@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.h,v $
-  Date:      $Date: 2006/01/08 04:48:05 $
-  Version:   $Revision: 1.45 $
+  Date:      $Date: 2006/02/14 20:40:15 $
+  Version:   $Revision: 1.46 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSlicer - main core of the 3D Slicer
@@ -252,8 +252,8 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   void SetOrientString(char *str);
   void SetOrientString(int s, char *str);
   int GetOrient(int s) {return this->Orient[s];};
-  char *GetOrientString(int s);
-  char *GetOrientList() {return
+  const char *GetOrientString(int s);
+  const char *GetOrientList() {return
 "Axial Sagittal Coronal InPlane InPlane90 InPlaneNeg90 Perp OrigSlice AxiSlice SagSlice CorSlice ReformatAxial ReformatSagittal ReformatCoronal NewOrient";};
 
   // Description:
@@ -263,7 +263,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   vtkFloatingPointType GetOffsetRangeHigh(int s) {
     return this->OffsetRange[s][this->Orient[s]][1];};
   void SetOffset(int s, vtkFloatingPointType offset);
-  void InitOffset(int s, char *str, vtkFloatingPointType offset);
+  void InitOffset(int s, const char *str, vtkFloatingPointType offset);
   vtkFloatingPointType GetOffset(int s) {return this->Offset[s][this->Orient[s]];};
   vtkFloatingPointType GetOffset(int s, char *str) {return 
       this->Offset[s][ConvertStringToOrient(str)];};
@@ -427,7 +427,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   void DrawSetShapeToPolygon() {this->PolyDraw->SetShapeToPolygon();};
   void DrawSetShapeToLines() {this->PolyDraw->SetShapeToLines();};
   void DrawSetShapeToPoints() {this->PolyDraw->SetShapeToPoints();};
-  char* GetShapeString() {return this->PolyDraw->GetShapeString();};
+  const char* GetShapeString() {return this->PolyDraw->GetShapeString();};
   //>> AT 01/17/01 01/19/01 02/19/01
   void DrawSetSelectedPointColor(vtkFloatingPointType r, vtkFloatingPointType g, vtkFloatingPointType b)
     {
@@ -781,17 +781,17 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
    int GetCompilerVersion();
     // Description:
     // return the name of the compiler
-    char *GetCompilerName();
+    const char *GetCompilerName();
 
     // Description:
     // return the vtk version
-    char *GetVTKVersion();
+    const char *GetVTKVersion();
     
 protected:
   vtkMrmlSlicer();
   ~vtkMrmlSlicer();
-  vtkMrmlSlicer(const vtkMrmlSlicer&) {};
-  void operator=(const vtkMrmlSlicer&) {};
+  vtkMrmlSlicer(const vtkMrmlSlicer&);
+  void operator=(const vtkMrmlSlicer&);
 
   void ComputeOffsetRange();
   void ComputeOffsetRangeIJK(int s);
@@ -800,8 +800,8 @@ protected:
   int IsOrientIJK(int s);
   void BuildLower(int s);
   void BuildUpper(int s);
-  int ConvertStringToOrient(char *str);
-  char* ConvertOrientToString(int orient);
+  int ConvertStringToOrient(const char *str);
+  const char* ConvertOrientToString(int orient);
   void ComputeReformatMatrix(int s);
   void ComputeReformatMatrixIJK(int s, vtkFloatingPointType offset, vtkMatrix4x4 *ref);
   vtkFloatingPointType GetOffsetForComputation(int s);

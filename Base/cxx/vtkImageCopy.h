@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageCopy.h,v $
-  Date:      $Date: 2006/01/06 17:56:39 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/02/14 20:40:11 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 //.NAME vtkImageCopy copies an image
@@ -41,8 +41,8 @@ public:
 protected:
   vtkImageCopy();
   ~vtkImageCopy() {};
-  vtkImageCopy(const vtkImageCopy&) {};
-  void operator=(const vtkImageCopy&) {};
+  vtkImageCopy(const vtkImageCopy&);
+  void operator=(const vtkImageCopy&);
 
   int Clear;
   

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditorEffects.h,v $
-  Date:      $Date: 2006/01/06 17:56:40 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/02/14 20:40:12 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 // .NAME vtkImageEditorEffects - Implementation of effects that 
@@ -61,8 +61,8 @@ protected:
 
   vtkImageEditorEffects();
   ~vtkImageEditorEffects();
-  vtkImageEditorEffects(const vtkImageEditorEffects&) {};
-  void operator=(const vtkImageEditorEffects&) {};
+  vtkImageEditorEffects(const vtkImageEditorEffects&);
+  void operator=(const vtkImageEditorEffects&);
 
   int IslandSize;
   int LargestIslandSize;

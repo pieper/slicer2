@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageBimodalAnalysis.h,v $
-  Date:      $Date: 2006/01/06 17:56:39 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2006/02/14 20:40:11 $
+  Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 // .NAME vtkImageBimodalAnalysis - Analysis bimodal histograms
@@ -66,8 +66,8 @@ public:
 protected:
   vtkImageBimodalAnalysis();
   ~vtkImageBimodalAnalysis() {};
-  vtkImageBimodalAnalysis(const vtkImageBimodalAnalysis&) {};
-  void operator=(const vtkImageBimodalAnalysis&) {};
+  vtkImageBimodalAnalysis(const vtkImageBimodalAnalysis&);
+  void operator=(const vtkImageBimodalAnalysis&);
 
   int Modality;
 

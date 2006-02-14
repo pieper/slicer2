@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlWindowLevelNode.h,v $
-  Date:      $Date: 2006/01/06 17:56:50 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/02/14 20:40:16 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlWindowLevelNode - MRML node to represent the properties of 
@@ -82,8 +82,8 @@ public:
 protected:
   vtkMrmlWindowLevelNode();
   ~vtkMrmlWindowLevelNode();
-  vtkMrmlWindowLevelNode(const vtkMrmlWindowLevelNode&) {};
-  void operator=(const vtkMrmlWindowLevelNode&) {};
+  vtkMrmlWindowLevelNode(const vtkMrmlWindowLevelNode&);
+  void operator=(const vtkMrmlWindowLevelNode&);
 
   // Numbers
   int Window;

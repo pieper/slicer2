@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageResize.h,v $
-  Date:      $Date: 2006/01/06 17:56:44 $
-  Version:   $Revision: 1.20 $
+  Date:      $Date: 2006/02/14 20:40:13 $
+  Version:   $Revision: 1.21 $
 
 =========================================================================auto=*/
 // .NAME vtkImageResize - resize (scale) the input image
@@ -56,8 +56,8 @@ public:
 protected:
   vtkImageResize();
   ~vtkImageResize() {};
-  vtkImageResize(const vtkImageResize&) {};
-  void operator=(const vtkImageResize&) {};
+  vtkImageResize(const vtkImageResize&);
+  void operator=(const vtkImageResize&);
 
   int OutputWholeExtent[6];
   int InputClipExtent[6];

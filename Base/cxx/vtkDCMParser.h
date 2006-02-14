@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDCMParser.h,v $
-  Date:      $Date: 2006/01/06 17:56:37 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2006/02/14 20:40:10 $
+  Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 
@@ -66,7 +66,7 @@ struct DCMDataElementStruct
   unsigned int NextBlock;
 };
 
-static char *TFS_String[32] = 
+static const char * const TFS_String[] = 
 {
   "Implicit VR Little Endian",
   "Explicit VR Little Endian",

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageConnectivity.h,v $
-  Date:      $Date: 2006/01/06 17:56:39 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/02/14 20:40:11 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 // .NAME vtkImageConnectivity - Identify and process islands of similar pixels
@@ -49,7 +49,7 @@ public:
   void SetFunctionToSaveIsland() {
       this->SetFunction(CONNECTIVITY_SAVE);};
   int GetFunction() {return this->function;}
-  char* GetFunctionString();
+  const char* GetFunctionString();
 
     // outputs of MeasureIsland
     vtkGetMacro(IslandSize, int);
@@ -79,8 +79,8 @@ public:
 protected:
     vtkImageConnectivity();
     ~vtkImageConnectivity(){};
-    vtkImageConnectivity(const vtkImageConnectivity&) {};
-    void operator=(const vtkImageConnectivity&) {};
+    vtkImageConnectivity(const vtkImageConnectivity&);
+    void operator=(const vtkImageConnectivity&);
 
     short Background;
     short MinForeground;

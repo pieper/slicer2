@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageReformat.h,v $
-  Date:      $Date: 2006/01/06 17:56:43 $
-  Version:   $Revision: 1.23 $
+  Date:      $Date: 2006/02/14 20:40:12 $
+  Version:   $Revision: 1.24 $
 
 =========================================================================auto=*/
 // .NAME vtkImageReformat -  Reformats a 2D image from a 3D volume.
@@ -110,8 +110,8 @@ class VTK_SLICER_BASE_EXPORT vtkImageReformat : public vtkImageToImageFilter
 protected:
     vtkImageReformat();
     ~vtkImageReformat();
-    vtkImageReformat(const vtkImageReformat&) {};
-    void operator=(const vtkImageReformat&) {};
+    vtkImageReformat(const vtkImageReformat&);
+    void operator=(const vtkImageReformat&);
 
   // >> AT 11/07/01
   vtkFloatingPointType OriginShift[2];

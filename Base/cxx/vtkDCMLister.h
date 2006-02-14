@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDCMLister.h,v $
-  Date:      $Date: 2006/01/06 17:56:37 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/02/14 20:40:10 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 
@@ -60,7 +60,7 @@ class VTK_SLICER_BASE_EXPORT vtkDCMLister : public vtkDCMParser
   char * PrintList();
   void ListElement(unsigned short Group,
            unsigned short Element, unsigned long length,
-           char *VR, char *Name);
+           const char *VR, const char *Name);
   char * callback(unsigned short group_code,
         unsigned short element_code,
         unsigned long length,

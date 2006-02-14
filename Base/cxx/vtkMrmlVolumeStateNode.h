@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlVolumeStateNode.h,v $
-  Date:      $Date: 2006/01/06 17:56:50 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/02/14 20:40:16 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlVolumeStateNode - MRML node to save volume options.
@@ -80,8 +80,8 @@ public:
 protected:
   vtkMrmlVolumeStateNode();
   ~vtkMrmlVolumeStateNode();
-  vtkMrmlVolumeStateNode(const vtkMrmlVolumeStateNode&) {};
-  void operator=(const vtkMrmlVolumeStateNode&) {};
+  vtkMrmlVolumeStateNode(const vtkMrmlVolumeStateNode&);
+  void operator=(const vtkMrmlVolumeStateNode&);
 
   // Strings
   char *VolumeRefID;

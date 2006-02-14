@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMathUtils.h,v $
-  Date:      $Date: 2006/01/06 17:56:45 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/02/14 20:40:13 $
+  Version:   $Revision: 1.15 $
 
 =========================================================================auto=*/
 #ifndef __vtkMathUtils_h
@@ -27,8 +27,7 @@ class VTK_SLICER_BASE_EXPORT vtkMathUtils : public vtkObject
 {
   public:
   static vtkMathUtils *New() {return new vtkMathUtils;};
-  const char *GetClassName() {return "vtkMathUtils";};
-  
+
   static int PrincipalMomentsAndAxes( vtkPoints *Points, vtkDataArray *Weights,
                                       vtkDataArray *Values, vtkDataArray *Vectors );
   static int AlignPoints( vtkPoints *Data, vtkPoints *Ref,

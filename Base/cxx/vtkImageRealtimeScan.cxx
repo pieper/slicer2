@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageRealtimeScan.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:43 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/02/14 20:40:12 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -32,7 +32,7 @@
 #include "vtkImageRealtimeScan.h"
 #include "vtkObjectFactory.h"
 
-static int Read16BitImage (char *filePrefix, char *filePattern, 
+static int Read16BitImage (const char *filePrefix, const char *filePattern, 
     int start, int end, int nx, int ny, int skip, int SwapBytes, 
     char *fileName, short *image);
 
@@ -175,7 +175,7 @@ long vtkImageRealtimeScan::SendServer(int cmd)
     n = writen(sockfd, buf, len);
     if (n < len) {
         // This happens when the server crashes.
-        fprintf(stderr, "Client wrote %d instead of %d bytes.\n",n,len);
+        fprintf(stderr, "Client wrote %ld instead of %ld bytes.\n",n,len);
         close(sockfd);
         return -1;
     }
@@ -282,8 +282,6 @@ int vtkImageRealtimeScan::OpenConnection(char *hostname, int port)
 #ifndef _WIN32
     struct sockaddr_in serv_addr;
     struct hostent *hostptr;
-    int len, n;
-    char buf[100];
 #endif
     
     // If already connected, then just verify the connection
@@ -382,7 +380,7 @@ int vtkImageRealtimeScan::PollRealtime()
     static char buf[200];
     
 #ifndef _WIN32
-    long len, n, nbytes;
+    long n, nbytes;
     vtkFloatingPointType matrix[16];
     int i, j;
     
@@ -603,7 +601,7 @@ void vtkImageRealtimeScan::PrintSelf(ostream& os, vtkIndent indent)
 
 // errcode:
 //  0 success, 1 can't open file, 2 can't read file
-static int Read16BitImage (char *filePrefix, char *filePattern, 
+static int Read16BitImage (const char *filePrefix, const char *filePattern, 
     int start, int end, int nx, int ny, int skip, int swapBytes,
     char *fileName, short *image)
 {

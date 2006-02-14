@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImagePlot.h,v $
-  Date:      $Date: 2006/01/06 17:56:43 $
-  Version:   $Revision: 1.20 $
+  Date:      $Date: 2006/02/14 20:40:12 $
+  Version:   $Revision: 1.21 $
 
 =========================================================================auto=*/
 // .NAME vtkImagePlot - duh
@@ -78,8 +78,8 @@ public:
 protected:
   vtkImagePlot();
   ~vtkImagePlot();
-  vtkImagePlot(const vtkImagePlot&) {};
-  void operator=(const vtkImagePlot&) {};
+  vtkImagePlot(const vtkImagePlot&);
+  void operator=(const vtkImagePlot&);
 
   vtkScalarsToColors *LookupTable;
   

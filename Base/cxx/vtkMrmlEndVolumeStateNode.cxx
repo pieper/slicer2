@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlEndVolumeStateNode.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:46 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/02/14 20:40:14 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -58,7 +58,6 @@ void vtkMrmlEndVolumeStateNode::Write(ofstream& of, int nIndent)
 void vtkMrmlEndVolumeStateNode::Copy(vtkMrmlNode *anode)
 {
   vtkMrmlNode::MrmlNodeCopy(anode);
-  vtkMrmlEndVolumeStateNode *node = (vtkMrmlEndVolumeStateNode *) anode;
 
 }
 

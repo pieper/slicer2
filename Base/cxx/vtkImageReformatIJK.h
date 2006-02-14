@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageReformatIJK.h,v $
-  Date:      $Date: 2006/01/06 17:56:43 $
-  Version:   $Revision: 1.18 $
+  Date:      $Date: 2006/02/14 20:40:12 $
+  Version:   $Revision: 1.19 $
 
 =========================================================================auto=*/
 // .NAME vtkImageReformatIJK -  
@@ -130,8 +130,8 @@ public:
 protected:
   vtkImageReformatIJK();
   ~vtkImageReformatIJK();
-    vtkImageReformatIJK(const vtkImageReformatIJK&) {};
-    void operator=(const vtkImageReformatIJK&) {};
+    vtkImageReformatIJK(const vtkImageReformatIJK&);
+    void operator=(const vtkImageReformatIJK&);
 
   vtkTimeStamp TransformTime;
   int OutputExtent[6];

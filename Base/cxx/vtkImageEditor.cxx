@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditor.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:40 $
-  Version:   $Revision: 1.18 $
+  Date:      $Date: 2006/02/14 20:40:11 $
+  Version:   $Revision: 1.19 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -128,8 +128,8 @@ void vtkImageEditor::PrintSelf(ostream& os, vtkIndent indent)
   
   vtkProcessObject::PrintSelf(os,indent);
 
-    os << indent << "RunTime:       " << this->RunTime << "\n";
-    os << indent << "TotalTime:     " << this->TotalTime << "\n";
+  os << indent << "RunTime:       " << this->RunTime << "\n";
+  os << indent << "TotalTime:     " << this->TotalTime << "\n";
   os << indent << "Clip:          " << this->Clip << "\n";
   os << indent << "UseInput:      " << this->UseInput << "\n";
   os << indent << "Slice:         " << this->Slice << "\n";
@@ -221,7 +221,7 @@ void vtkImageEditor::GetClipExtent(int extent[6])
 }
 
 //----------------------------------------------------------------------------
-char* vtkImageEditor::GetDimensionString()
+const char* vtkImageEditor::GetDimensionString()
 {
   switch (this->Dimension) 
   {

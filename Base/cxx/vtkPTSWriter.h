@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPTSWriter.h,v $
-  Date:      $Date: 2006/01/06 17:56:50 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/02/14 20:40:16 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -50,8 +50,8 @@ protected:
   virtual void WriteFile(ofstream *file, vtkImageData *data, int ext[6]);
   virtual void WriteFileHeader(ofstream *, vtkImageData *);
 private:
-  vtkPTSWriter(const vtkPTSWriter&) {};  // Not implemented.
-  void operator=(const vtkPTSWriter&) {};  // Not implemented.
+  vtkPTSWriter(const vtkPTSWriter&);  // Not implemented.
+  void operator=(const vtkPTSWriter&);  // Not implemented.
 };
 
 #endif

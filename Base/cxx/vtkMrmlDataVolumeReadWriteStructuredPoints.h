@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlDataVolumeReadWriteStructuredPoints.h,v $
-  Date:      $Date: 2006/01/06 17:56:46 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/02/14 20:40:14 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlDataVolumeReadWriteStructuredPoints - 
@@ -53,8 +53,8 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlDataVolumeReadWriteStructuredPoints : public
 protected:
   vtkMrmlDataVolumeReadWriteStructuredPoints();
   ~vtkMrmlDataVolumeReadWriteStructuredPoints();
-  vtkMrmlDataVolumeReadWriteStructuredPoints(const vtkMrmlDataVolumeReadWriteStructuredPoints&) {};
-  void operator=(const vtkMrmlDataVolumeReadWriteStructuredPoints&) {};
+  vtkMrmlDataVolumeReadWriteStructuredPoints(const vtkMrmlDataVolumeReadWriteStructuredPoints&);
+  void operator=(const vtkMrmlDataVolumeReadWriteStructuredPoints&);
 
   char *FileName;
 

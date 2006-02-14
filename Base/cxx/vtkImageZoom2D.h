@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageZoom2D.h,v $
-  Date:      $Date: 2006/01/06 17:56:44 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/02/14 20:40:13 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 // .NAME vtkImageZoom2D -  zooms (magnifies) a 2D image
@@ -74,8 +74,8 @@ public:
 protected:
     vtkImageZoom2D();
     ~vtkImageZoom2D(){};
-    vtkImageZoom2D(const vtkImageZoom2D&) {};
-    void operator=(const vtkImageZoom2D&) {};
+    vtkImageZoom2D(const vtkImageZoom2D&);
+    void operator=(const vtkImageZoom2D&);
 
   // Length of 1 Pixel in Zoom Window in the Original Image
   vtkFloatingPointType Step[2];

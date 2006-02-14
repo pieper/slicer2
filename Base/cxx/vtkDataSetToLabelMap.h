@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDataSetToLabelMap.h,v $
-  Date:      $Date: 2006/01/06 17:56:38 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/02/14 20:40:10 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 /* author: Delphine Nain, delfin@ai.mit.edu
@@ -84,20 +84,14 @@ vtkGetObjectMacro(BoundaryScalars,vtkShortArray);
 
   // Description:
   // Write the volume out to a specified filename.
-
   void Write(char *);
 
 protected:
-
   vtkDataSetToLabelMap();
-
   ~vtkDataSetToLabelMap();
 
-  vtkDataSetToLabelMap(const vtkDataSetToLabelMap&) {};
-
-  void operator=(const vtkDataSetToLabelMap&) {};
-
-
+  vtkDataSetToLabelMap(const vtkDataSetToLabelMap&);
+  void operator=(const vtkDataSetToLabelMap&);
   
   void Execute();
   int IsPointInside(vtkFloatingPointType s, vtkFloatingPointType t);

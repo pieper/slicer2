@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageReplaceRegion.h,v $
-  Date:      $Date: 2006/01/06 17:56:44 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/02/14 20:40:12 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 // .NAME vtkImageReplaceRegion - replaces a region in the input
@@ -47,8 +47,8 @@ public:
 protected:
   vtkImageReplaceRegion();
   ~vtkImageReplaceRegion();
-  vtkImageReplaceRegion(const vtkImageReplaceRegion&) {};
-  void operator=(const vtkImageReplaceRegion&) {};
+  vtkImageReplaceRegion(const vtkImageReplaceRegion&);
+  void operator=(const vtkImageReplaceRegion&);
 
   vtkIntArray *Indices;
   vtkImageData *Region;

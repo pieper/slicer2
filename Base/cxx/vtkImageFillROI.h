@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageFillROI.h,v $
-  Date:      $Date: 2006/01/06 17:56:41 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2006/02/14 20:40:12 $
+  Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 // .NAME vtkImageFillROI - Paints on top of an image.
@@ -46,7 +46,7 @@ class VTK_SLICER_BASE_EXPORT vtkImageFillROI : public vtkImageInPlaceFilter
 {
 public:
     static vtkImageFillROI *New();
-  vtkTypeMacro(vtkImageFillROI,vtkImageInPlaceFilter);
+    vtkTypeMacro(vtkImageFillROI,vtkImageInPlaceFilter);
     void PrintSelf(ostream& os, vtkIndent indent);
 
     vtkSetMacro(Value, vtkFloatingPointType);
@@ -57,12 +57,12 @@ public:
     void SetShapeToPoints() {this->shape = SHAPE_POINTS;};
     void SetShape(int s) {this->shape = s;};
     int GetShape() {return this->shape;};
-    char *GetShapeString() {switch (this->shape) {
+    const char *GetShapeString() {switch (this->shape) {
         case SHAPE_POLYGON: return "Polygon";
         case SHAPE_LINES: return "Lines";
         case SHAPE_POINTS: return "Points";
         default: return "None";};};
-    void SetShapeString(char *str) {
+    void SetShapeString(const char *str) {
         if (strcmp(str,"Polygon") == 0) this->SetShapeToPolygon();
         else if (strcmp(str,"Lines") == 0) this->SetShapeToLines();
         else this->SetShapeToPoints();};
@@ -76,8 +76,8 @@ public:
 protected:
     vtkImageFillROI();
   ~vtkImageFillROI();
-  vtkImageFillROI(const vtkImageFillROI&) {};
-    void operator=(const vtkImageFillROI&) {};
+  vtkImageFillROI(const vtkImageFillROI&);
+    void operator=(const vtkImageFillROI&);
 
     vtkPoints *Points;
     vtkFloatingPointType Value;

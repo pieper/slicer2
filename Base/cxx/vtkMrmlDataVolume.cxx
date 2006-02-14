@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlDataVolume.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:45 $
-  Version:   $Revision: 1.26 $
+  Date:      $Date: 2006/02/14 20:40:13 $
+  Version:   $Revision: 1.27 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -147,20 +147,21 @@ unsigned long int vtkMrmlDataVolume::GetMTime()
   return result;
 }
 
-char* 
-vtkMrmlDataVolume::GetOutputPointer(int zslice)
+const char* vtkMrmlDataVolume::GetOutputPointer(int zslice)
 {
     static char p[1024];
     void *ptr;
 
     if ( this->ImageData == NULL )
-    {   sprintf (p, "%p", 0);
-    } else
-    {
-        ptr = this->ImageData->GetScalarPointer(0, 0, zslice);
-        sprintf (p, "%p", ptr);
-    }
-    return (p);
+      {
+      sprintf (p, "%d", 0);
+      }
+    else
+      {
+      ptr = this->ImageData->GetScalarPointer(0, 0, zslice);
+      sprintf (p, "%p", ptr);
+      }
+    return p;
 }
 
 
