@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkInteractiveTensorGlyph.cxx,v $
-  Date:      $Date: 2006/01/12 15:36:56 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/02/15 22:29:32 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 #include "vtkInteractiveTensorGlyph.h"
@@ -123,13 +123,14 @@ void vtkInteractiveTensorGlyph::Execute()
   vtkFloatArray *newNormals=NULL;
   vtkFloatingPointType *x, s;
   vtkTransform *trans = vtkTransform::New();
+  vtkTransform *rotate;
+  vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
   vtkCell *cell;
   vtkIdList *cellPts;
   int npts;
   vtkIdType *pts;
   int cellId;
   int ptOffset=0;
-  vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
   vtkFloatingPointType *m[3], w[3], *v[3];
   vtkFloatingPointType m0[3], m1[3], m2[3];
   vtkFloatingPointType v0[3], v1[3], v2[3];
@@ -148,7 +149,7 @@ void vtkInteractiveTensorGlyph::Execute()
     vtkDebugMacro("No source.");
     return;
     }
-
+    
   pts = new vtkIdType[this->GetSource()->GetMaxCellSize()];
 
   vtkDataArray *inMask;
@@ -408,7 +409,7 @@ void vtkInteractiveTensorGlyph::Execute()
           v_maj[2]=v[2][0];
           if (this->TensorRotationMatrix)
             {
-              vtkTransform *rotate = vtkTransform::New();
+              rotate = vtkTransform::New();
               rotate->SetMatrix(this->TensorRotationMatrix);
               rotate->TransformPoint(v_maj,v_maj);
             }
@@ -537,6 +538,11 @@ void vtkInteractiveTensorGlyph::Execute()
   // reclaim extra memory we allocated
   output->Squeeze();
 
+  if (this->TensorRotationMatrix)
+    {
+     rotate->Delete();
+    }
+  userVolumeTransform->Delete();
   trans->Delete();
   matrix->Delete();
 
