@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.cxx,v $
-  Date:      $Date: 2006/02/10 22:51:31 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/02/15 08:54:17 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 
@@ -72,6 +72,7 @@ vtkSeedTracts::vtkSeedTracts()
   // Streamline parameters for all streamlines
   this->IntegrationDirection = VTK_INTEGRATE_BOTH_DIRECTIONS;
 
+  this->MinimumPathLength = 15;
 }
 
 //----------------------------------------------------------------------------
@@ -974,7 +975,13 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
                       newStreamline->Update();
 
                       // See if we like it enough to write
-                      if (newStreamline->GetOutput()->GetNumberOfPoints() > 30)
+                      // This relies on the fact that the step length is in units of
+                      // length (unlike fractions of a cell in vtkHyperStreamline).
+                      double length = 
+                        (newStreamline->GetOutput()->GetNumberOfPoints() - 1) * 
+                        newStreamline->GetIntegrationStepLength();
+ 
+                      if (length > this->MinimumPathLength)
                         {
                           
                           // transform model

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.h,v $
-  Date:      $Date: 2006/02/10 22:51:32 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/02/15 08:54:18 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 // .NAME vtkSeedTracts - 
@@ -190,6 +190,12 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
  // which the user can modify. 
  void UpdateAllHyperStreamlineSettings();
 
+ // Description
+ // Minimum length in mm for a path (otherwise the path will be deleted).
+ // Currently only used in SeedAndSaveStreamlinesInROI.
+ vtkGetMacro(MinimumPathLength,double);
+ vtkSetMacro(MinimumPathLength,double);
+
  protected:
   vtkSeedTracts();
   ~vtkSeedTracts();
@@ -213,6 +219,8 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   int InputROI2Value;
   vtkShortArray *InputMultipleROIValues;
   
+  double MinimumPathLength;
+
   int PointWithinTensorData(double *point, double *pointw);
   
   int TypeOfHyperStreamline;
