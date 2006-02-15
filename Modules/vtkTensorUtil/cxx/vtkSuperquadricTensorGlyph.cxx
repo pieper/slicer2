@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricTensorGlyph.cxx,v $
-  Date:      $Date: 2006/02/15 19:09:56 $
-  Version:   $Revision: 1.5.2.2 $
+  Date:      $Date: 2006/02/15 23:47:13 $
+  Version:   $Revision: 1.5.2.3 $
 
 =========================================================================auto=*/
 #include "vtkSuperquadricTensorGlyph.h"
@@ -130,13 +130,14 @@ void vtkSuperquadricTensorGlyph::Execute()
   vtkFloatingPointType *x, s;
   vtkFloatingPointType x2[3];
   vtkTransform *trans = vtkTransform::New();
+  vtkTransform *rotate= vtkTransform::New();
+  vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
   vtkCell *cell;
   vtkIdList *cellPts;
   int npts;
   vtkIdType *pts;
   int cellId;
   int ptOffset=0;
-  vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
   vtkFloatingPointType *m[3], w[3], *v[3];
   vtkFloatingPointType m0[3], m1[3], m2[3];
   vtkFloatingPointType v0[3], v1[3], v2[3];
@@ -208,7 +209,7 @@ void vtkSuperquadricTensorGlyph::Execute()
   //cout<<"Allocating datasets"<<endl;
   //cout<<"Num points: "<<numPts<<"  Num Source Pts: "<<numSourcePts<<endl;
   newPts = vtkPoints::New();
-  newPts->Allocate(2*numPts*numSourcePts);
+  newPts->Allocate(numPts*numSourcePts);
 
   //cout<<"Allocating cells"<<endl;
   // Setting up for calls to PolyData::InsertNextCell()
@@ -251,14 +252,14 @@ void vtkSuperquadricTensorGlyph::Execute()
   //cout<<"Allocating scalars"<<endl;
   
   newScalars = vtkFloatArray::New();
-  newScalars->Allocate(2*numPts*numSourcePts);
+  newScalars->Allocate(numPts*numSourcePts);
   
   if ( (sourceNormals = pd->GetNormals()) )
     {
       newNormals = vtkFloatArray::New();
       // vtk4.0, copied from tensor glyph filter
       newNormals->SetNumberOfComponents(3);
-      newNormals->Allocate(2*3*numPts*numSourcePts);
+      newNormals->Allocate(3*numPts*numSourcePts);
       //newNormals->Allocate(numPts*numSourcePts);
     }
 
@@ -365,8 +366,8 @@ void vtkSuperquadricTensorGlyph::Execute()
         }
     
     
-      double cl = (w[0]-w[1])/(w[0]+w[1]+w[2]);
-      double cp = 2*(w[1]-w[2])/(w[0]+w[1]+w[2]);
+      double cl = vtkTensorMathematics::LinearMeasure(w);
+      double cp = vtkTensorMathematics::PlanarMeasure(w);
       double alpha;
       double beta;
 
@@ -465,7 +466,6 @@ void vtkSuperquadricTensorGlyph::Execute()
           v_maj[2]=v[2][0];
           if (this->TensorRotationMatrix)
             {
-              vtkTransform *rotate = vtkTransform::New();
               rotate->SetMatrix(this->TensorRotationMatrix);
               rotate->TransformPoint(v_maj,v_maj);
             }
@@ -562,9 +562,10 @@ void vtkSuperquadricTensorGlyph::Execute()
       //cout<<"transforming glyph points into general set"<<endl;
       trans->TransformPoints(sourcePts,newPts);
       //cout<<"transformation done"<<endl;
+      sourceNormals=pd->GetNormals();
       if ( newNormals )
         {
-          //trans->TransformNormals(sourceNormals,newNormals);
+          trans->TransformNormals(sourceNormals,newNormals);
         }
 
       ptOffset += numSourcePts;
@@ -600,6 +601,10 @@ void vtkSuperquadricTensorGlyph::Execute()
   // reclaim extra memory we allocated
   output->Squeeze();
 
+  sq->Delete();
+
+  rotate->Delete();
+  userVolumeTransform->Delete();
   trans->Delete();
   matrix->Delete();
 
