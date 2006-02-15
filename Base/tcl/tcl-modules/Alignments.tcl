@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Alignments.tcl,v $
-#   Date:      $Date: 2006/01/06 17:56:57 $
-#   Version:   $Revision: 1.36 $
+#   Date:      $Date: 2006/02/15 21:31:44 $
+#   Version:   $Revision: 1.37 $
 # 
 #===============================================================================
 # FILE:        Alignments.tcl
@@ -126,7 +126,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.36 $} {$Date: 2006/01/06 17:56:57 $}]
+            {$Revision: 1.37 $} {$Date: 2006/02/15 21:31:44 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -3759,20 +3759,39 @@ proc AlignmentsHideSliceControls {} {
 proc AlignmentsSetRegTabState {mode} {
     global Matrix
 
+    if {[info exists Matrix(regMode)] == 0} {
+        DevErrorWindow "Alignments: Set the registration mode first."
+        return
+    }
+
     #These only affect TPS and FidAlign because of the split view
     switch $Matrix(regMode) {
         "FidAlign" {
-            $Matrix(rTPS) config -state $mode
-            $Matrix(rIntensity) config -state $mode
+            if {[info exists Matrix(rTPS)] == 1} {
+                $Matrix(rTPS) config -state $mode
+            }
+            if {[info exists Matrix(rIntensity)] == 1} {
+                $Matrix(rIntensity) config -state $mode
+            }
         }
         "TPS" {
-        $Matrix(rFidAlign) config -state $mode
-            $Matrix(rIntensity) config -state $mode
+            if {[info exists Matrix(rFidAlign)] == 1} {
+                $Matrix(rFidAlign) config -state $mode
+            }
+            if {[info exists Matrix(rIntensity)] == 1} {
+                $Matrix(rIntensity) config -state $mode
+            }
         }
         default {
-            $Matrix(rFidAlign) config -state $mode
-            $Matrix(rTPS) config -state $mode
+            if {[info exists Matrix(rFidAlign)] == 1} {
+                $Matrix(rFidAlign) config -state $mode
+            }
+            if {[info exists Matrix(rTPS)] == 1} {
+                $Matrix(rTPS) config -state $mode
+            }
+            if {[info exists Matrix(rIntensity)] == 1} {
                 $Matrix(rIntensity) config -state $mode
+            }
         }
     }
     #set the volume buttons
