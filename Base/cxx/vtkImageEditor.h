@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditor.h,v $
-  Date:      $Date: 2006/02/14 21:54:34 $
-  Version:   $Revision: 1.18 $
+  Date:      $Date: 2006/02/15 02:50:55 $
+  Version:   $Revision: 1.19 $
 
 =========================================================================auto=*/
 // .NAME vtkImageEditor - Applies editing effects to volumes.
@@ -48,7 +48,7 @@ class VTK_SLICER_BASE_EXPORT vtkImageEditor : public vtkProcessObject
 {
 public:
   static vtkImageEditor *New();
-  vtkTypeRevisionMacro(vtkImageEditor,vtkProcessObject);
+  vtkTypeMacro(vtkImageEditor,vtkProcessObject);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   // Description:

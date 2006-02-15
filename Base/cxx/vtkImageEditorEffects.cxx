@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditorEffects.cxx,v $
-  Date:      $Date: 2006/02/14 21:54:35 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/02/15 02:50:56 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 #include "vtkImageEditorEffects.h"
@@ -22,6 +22,18 @@
 #include "vtkImageCopy.h"
 #include "vtkImageLabelVOI.h"
 
+//------------------------------------------------------------------------------
+vtkImageEditorEffects* vtkImageEditorEffects::New()
+{
+  // First try to create the object from the vtkObjectFactory
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkImageEditorEffects");
+  if(ret)
+  {
+    return (vtkImageEditorEffects*)ret;
+  }
+  // If the factory was unable to create the object, then create it here.
+  return new vtkImageEditorEffects;
+}
 //----------------------------------------------------------------------------
 vtkImageEditorEffects::vtkImageEditorEffects()
 {

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditor.cxx,v $
-  Date:      $Date: 2006/02/14 21:54:34 $
-  Version:   $Revision: 1.21 $
+  Date:      $Date: 2006/02/15 02:50:55 $
+  Version:   $Revision: 1.22 $
 
 =========================================================================auto=*/
 #include "vtkImageEditor.h"
@@ -34,6 +34,18 @@ vtkCxxSetObjectMacro(vtkImageEditor, UndoOutput, vtkImageData);
 vtkCxxSetObjectMacro(vtkImageEditor, Region, vtkImageData);
 vtkCxxSetObjectMacro(vtkImageEditor, Indices, vtkIntArray);
 
+//------------------------------------------------------------------------------
+vtkImageEditor* vtkImageEditor::New()
+{
+  // First try to create the object from the vtkObjectFactory
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkImageEditor");
+  if(ret)
+  {
+    return (vtkImageEditor*)ret;
+  }
+  // If the factory was unable to create the object, then create it here.
+  return new vtkImageEditor;
+}
 //----------------------------------------------------------------------------
 vtkImageEditor::vtkImageEditor()
 {
