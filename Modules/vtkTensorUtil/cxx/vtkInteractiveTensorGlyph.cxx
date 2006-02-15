@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkInteractiveTensorGlyph.cxx,v $
-  Date:      $Date: 2006/02/15 22:29:32 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/02/15 23:01:00 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 #include "vtkInteractiveTensorGlyph.h"
@@ -123,7 +123,7 @@ void vtkInteractiveTensorGlyph::Execute()
   vtkFloatArray *newNormals=NULL;
   vtkFloatingPointType *x, s;
   vtkTransform *trans = vtkTransform::New();
-  vtkTransform *rotate;
+  vtkTransform *rotate= vtkTransform::New();;
   vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
   vtkCell *cell;
   vtkIdList *cellPts;
@@ -409,7 +409,6 @@ void vtkInteractiveTensorGlyph::Execute()
           v_maj[2]=v[2][0];
           if (this->TensorRotationMatrix)
             {
-              rotate = vtkTransform::New();
               rotate->SetMatrix(this->TensorRotationMatrix);
               rotate->TransformPoint(v_maj,v_maj);
             }
@@ -538,10 +537,7 @@ void vtkInteractiveTensorGlyph::Execute()
   // reclaim extra memory we allocated
   output->Squeeze();
 
-  if (this->TensorRotationMatrix)
-    {
-     rotate->Delete();
-    }
+  rotate->Delete();
   userVolumeTransform->Delete();
   trans->Delete();
   matrix->Delete();
