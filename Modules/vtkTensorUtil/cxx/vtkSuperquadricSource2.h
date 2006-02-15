@@ -7,24 +7,10 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricSource2.h,v $
-  Date:      $Date: 2005/12/20 22:56:25 $
-  Version:   $Revision: 1.2.2.1 $
+  Date:      $Date: 2006/02/15 19:09:56 $
+  Version:   $Revision: 1.2.2.2 $
 
 =========================================================================auto=*/
-/*=========================================================================
-
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkSuperquadricSource2.h,v $
-
-  Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
-  All rights reserved.
-  See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notice for more information.
-
-=========================================================================*/
 // .NAME vtkSuperquadricSource2 - create a polygonal superquadric centered 
 // at the origin
 // .SECTION Description

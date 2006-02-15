@@ -7,26 +7,10 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorImplicitFunctionToFunctionSet.cxx,v $
-  Date:      $Date: 2005/12/20 22:56:26 $
-  Version:   $Revision: 1.6.2.1 $
+  Date:      $Date: 2006/02/15 19:09:57 $
+  Version:   $Revision: 1.6.2.2 $
 
 =========================================================================auto=*/
-/*=========================================================================
-
-  Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: vtkTensorImplicitFunctionToFunctionSet.cxx,v $
-  Language:  C++
-  Date:      $Date: 2005/12/20 22:56:26 $
-  Version:   $Revision: 1.6.2.1 $
-
-  Copyright (c) 2002 Insight Consortium. All rights reserved.
-  See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even 
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-     PURPOSE.  See the above copyright notices for more information.
-
-=========================================================================*/
 #ifndef _vtkTensorImplicitFunctionToFunctionSet_txx
 #define _vtkTensorImplicitFunctionToFunctionSet_txx
 
@@ -36,7 +20,7 @@
 #include "vtkTensorImplicitFunctionToFunctionSet.h"
 
 
-vtkCxxRevisionMacro(vtkTensorImplicitFunctionToFunctionSet, "$Revision: 1.6.2.1 $");
+vtkCxxRevisionMacro(vtkTensorImplicitFunctionToFunctionSet, "$Revision: 1.6.2.2 $");
 vtkStandardNewMacro(vtkTensorImplicitFunctionToFunctionSet);
 
 void vtkTensorImplicitFunctionToFunctionSet::PrintSelf(ostream& os, vtkIndent indent)

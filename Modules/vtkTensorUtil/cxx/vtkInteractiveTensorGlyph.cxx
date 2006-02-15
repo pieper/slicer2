@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkInteractiveTensorGlyph.cxx,v $
-  Date:      $Date: 2005/12/20 22:56:24 $
-  Version:   $Revision: 1.10.2.1 $
+  Date:      $Date: 2006/02/15 19:09:55 $
+  Version:   $Revision: 1.10.2.2 $
 
 =========================================================================auto=*/
 #include "vtkInteractiveTensorGlyph.h"
@@ -136,7 +136,11 @@ void vtkInteractiveTensorGlyph::Execute()
   vtkFloatingPointType xv[3], yv[3], zv[3];
   vtkFloatingPointType maxScale;
   vtkPointData *pd, *outPD;
+#if (VTK_MAJOR_VERSION >= 5)
+  vtkDataSet *input = this->GetPolyDataInput(0);
+#else
   vtkDataSet *input = this->GetInput();
+#endif
   vtkPolyData *output = this->GetOutput();
 
   if (this->GetSource() == NULL)

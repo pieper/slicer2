@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMask.h,v $
-  Date:      $Date: 2005/12/20 22:56:26 $
-  Version:   $Revision: 1.2.8.1 $
+  Date:      $Date: 2006/02/15 19:09:57 $
+  Version:   $Revision: 1.2.8.2 $
 
 =========================================================================auto=*/
 // .NAME vtkTensorMask - Combines a mask and an image.
@@ -29,19 +29,20 @@
 
 #include "vtkTensorUtilConfigure.h"
 #include "vtkImageMask.h"
+#include "vtkImageTwoInputFilter.h"
 
 class VTK_TENSORUTIL_EXPORT vtkTensorMask : public vtkImageMask
 {
 public:
   static vtkTensorMask *New();
-  vtkTypeMacro(vtkTensorMask,vtkImageTwoInputFilter);
+  vtkTypeMacro(vtkTensorMask,vtkImageMask);
   void PrintSelf(ostream& os, vtkIndent indent);
 
 protected:
   vtkTensorMask();
   ~vtkTensorMask();
-  vtkTensorMask(const vtkTensorMask&) {};
-  void operator=(const vtkTensorMask&) {};
+  vtkTensorMask(const vtkTensorMask&);
+  void operator=(const vtkTensorMask&);
 
   void ThreadedExecute(vtkImageData **inDatas, vtkImageData *outData, int extent[6], int id);
 

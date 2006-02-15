@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPreciseHyperPoint.h,v $
-  Date:      $Date: 2005/12/20 22:56:25 $
-  Version:   $Revision: 1.4.8.1 $
+  Date:      $Date: 2006/02/15 19:09:55 $
+  Version:   $Revision: 1.4.8.2 $
 
 =========================================================================auto=*/
 #ifndef __vtkPreciseHyperPoint_h

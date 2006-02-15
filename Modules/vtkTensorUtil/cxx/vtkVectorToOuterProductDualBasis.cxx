@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkVectorToOuterProductDualBasis.cxx,v $
-  Date:      $Date: 2005/12/20 22:56:26 $
-  Version:   $Revision: 1.7.2.1 $
+  Date:      $Date: 2006/02/15 19:09:57 $
+  Version:   $Revision: 1.7.2.2 $
 
 =========================================================================auto=*/
 #include "vtkVectorToOuterProductDualBasis.h"
@@ -290,7 +290,7 @@ void vtkVectorToOuterProductDualBasis::SetInputVector(int num, vtkFloatingPointT
 
 void vtkVectorToOuterProductDualBasis::CalculateDualBasis()
 {
-  unsigned int i,j,k,count,N, result;
+  unsigned int i,j,k,count,N;
   // temp storage
   vtkFloatingPointType A[VTK_VECTOR_LENGTH][VTK_VECTOR_LENGTH];
   
@@ -646,7 +646,7 @@ int vtkVectorToOuterProductDualBasis::PseudoInverse(double **A, double **AI, int
   
   double **U, *W, **V;
   double maxw;
-  int problem, i, j, k;
+  int i, j, k;
   int maxmn;
   double **AItmp;
 

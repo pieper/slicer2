@@ -7,27 +7,10 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPreciseHyperStreamline.h,v $
-  Date:      $Date: 2005/12/20 22:56:25 $
-  Version:   $Revision: 1.4.8.1 $
+  Date:      $Date: 2006/02/15 19:09:56 $
+  Version:   $Revision: 1.4.8.2 $
 
 =========================================================================auto=*/
-/*=========================================================================
-
-Program:   Visualization Toolkit
-Module:    $RCSfile: vtkPreciseHyperStreamline.h,v $
-Language:  C++
-Date:      $Date: 2005/12/20 22:56:25 $
-Version:   $Revision: 1.4.8.1 $
-
-Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
-All rights reserved.
-See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
-
-This software is distributed WITHOUT ANY WARRANTY; without even 
-the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-PURPOSE.  See the above copyright notice for more information.
-
-=========================================================================*/
 // .NAME vtkPreciseHyperStreamline - generate hyperstreamline in arbitrary dataset
 // .SECTION Description
 // vtkPreciseHyperStreamline is a filter that integrates through a tensor field to 

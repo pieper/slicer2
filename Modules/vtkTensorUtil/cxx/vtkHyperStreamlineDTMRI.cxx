@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.cxx,v $
-  Date:      $Date: 2005/12/20 22:56:24 $
-  Version:   $Revision: 1.14.2.1 $
+  Date:      $Date: 2006/02/15 19:09:54 $
+  Version:   $Revision: 1.14.2.2 $
 
 =========================================================================auto=*/
 #include "vtkHyperStreamlineDTMRI.h"
@@ -21,17 +21,14 @@
 #include "vtkPointData.h"
 #include "vtkPolyData.h"
 // the superclass had these classes in the vtkHyperStreamline.cxx
-// file:
+// file: being compiled via CMakeListsLocal.txt
 #if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 3)
-#include "vtkHyperPointandArray.cxx"
+//#include "vtkHyperPointandArray.cxx"
 #endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.14.2.1 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.14.2.2 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
-// Construct object with initial starting position (0,0,0); integration step 
-// length 0.2; step length 0.01; forward integration; terminal eigenvalue 0.0;
-// number of sides 6; radius 0.5; and logarithmic scaling off.
 vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()
 {
   // defaults copied from superclass for now:
@@ -45,28 +42,24 @@ vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()
   this->Streamers = NULL;
 
   this->MaximumPropagationDistance = 100.0;
-  this->IntegrationStepLength = 0.2;
-  this->StepLength = 0.01;
+
+  this->RadiusOfCurvature = 2;
+
+  // in mm.
+  this->IntegrationStepLength = 0.5;
+
   this->IntegrationDirection = VTK_INTEGRATE_FORWARD;
   this->TerminalEigenvalue = 0.0;
-  this->NumberOfSides = 6;
-  this->Radius = 0.5;
-  this->LogScaling = 0;
+
   this->IntegrationEigenvector = VTK_INTEGRATE_MAJOR_EIGENVECTOR;
 
-  this->FractionalAnisotropy0 = vtkFloatArray::New();
-  this->FractionalAnisotropy1 = vtkFloatArray::New();
-  this->FractionalAnisotropy[0] = this->FractionalAnisotropy0;
-  this->FractionalAnisotropy[1] = this->FractionalAnisotropy1;
-
-  this->SetStoppingModeToLinearMeasure();
+  this->StoppingMode = VTK_TENS_LINEAR_MEASURE;
   this->StoppingThreshold=0.07;
 
 }
 
 vtkHyperStreamlineDTMRI::~vtkHyperStreamlineDTMRI()
 {
-
 }
 
 // copied from superclass
@@ -131,7 +124,11 @@ static void FixVectors(vtkFloatingPointType **prev, vtkFloatingPointType **curre
 
 void vtkHyperStreamlineDTMRI::Execute()
 {
+#if (VTK_MAJOR_VERSION >= 5)
+  vtkDataSet *input = this->GetPolyDataInput(0);
+#else
   vtkDataSet *input = this->GetInput();
+#endif
   vtkPointData *pd=input->GetPointData();
   vtkDataArray *inScalars;
   vtkDataArray *inTensors;
@@ -262,11 +259,6 @@ void vtkHyperStreamlineDTMRI::Execute()
 
     // compute invariants                                                               
     meanEV=(sPtr->W[0]+sPtr->W[1]+sPtr->W[2])/3;
-    this->FractionalAnisotropy[0]->InsertNextValue(sqrt3halves*sqrt(((sPtr->W[0]-meanEV)*(sPtr->W[0]-meanEV)+(sPtr->W[1]-meanEV)*(sPtr->W[1]-meanEV)+(sPtr->W[2]-meanEV)*(sPtr->W[2]-meanEV))/(sPtr->W[0]*sPtr->W[0]+sPtr->W[1]*sPtr->W[1]+sPtr->W[2]*sPtr->W[2])));
-    if ( this->IntegrationDirection == VTK_INTEGRATE_BOTH_DIRECTIONS )
-      {
-        this->FractionalAnisotropy[1]->InsertNextValue(sqrt3halves*sqrt(((sPtr->W[0]-meanEV)*(sPtr->W[0]-meanEV)+(sPtr->W[1]-meanEV)*(sPtr->W[1]-meanEV)+(sPtr->W[2]-meanEV)*(sPtr->W[2]-meanEV))/(sPtr->W[0]*sPtr->W[0]+sPtr->W[1]*sPtr->W[1]+sPtr->W[2]*sPtr->W[2])));
-      }
 
     if ( inScalars ) 
       {
@@ -306,7 +298,7 @@ void vtkHyperStreamlineDTMRI::Execute()
     dir = this->Streamers[ptId].Direction;
     cell = input->GetCell(sPtr->CellId);
     cell->EvaluateLocation(sPtr->SubId, sPtr->P, xNext, w);
-    step = this->IntegrationStepLength * sqrt((double)cell->GetLength2());
+    step = this->IntegrationStepLength;
     inTensors->GetTuples(cell->PointIds, cellTensors);
     if ( inScalars ) {inScalars->GetTuples(cell->PointIds, cellScalars);}
 
@@ -367,12 +359,14 @@ void vtkHyperStreamlineDTMRI::Execute()
               }
             K=sqrt(K);
             // units are radians per mm.
-            //vtkDebugMacro(<<K);
-            //cout << pointCount << "    " << K << endl;
-
-            if (K > this->MaxCurvature) 
+            // Convert to radius of curvature (in mm) 
+            // and compare to allowed radius.
+            if (K != 0)
               {
-                keepIntegrating=0;
+                if ((1/K) < this->RadiusOfCurvature) 
+                  {
+                    keepIntegrating=0;
+                  }
               }
           }
         else 
@@ -446,7 +440,7 @@ void vtkHyperStreamlineDTMRI::Execute()
           cell = input->GetCell(sNext->CellId);
           inTensors->GetTuples(cell->PointIds, cellTensors);
           if (inScalars){inScalars->GetTuples(cell->PointIds, cellScalars);}
-          step = this->IntegrationStepLength * sqrt((double)cell->GetLength2());
+          step = this->IntegrationStepLength;
           }
         }
 
@@ -477,10 +471,6 @@ void vtkHyperStreamlineDTMRI::Execute()
         FixVectors(sPtr->V, sNext->V, iv, ix, iy);
 
         // compute invariants at final position                                         
-        //meanEV=(sNext->W[0]+sNext->W[1]+sNext->W[2])/3;
-        //fa=sqrt3halves*sqrt(((sNext->W[0]-meanEV)*(sNext->W[0]-meanEV)+(sNext->W[1]-meanEV)*(sNext->W[1]-meanEV)+(sNext->W[2]-meanEV)*(sNext->W[2]-meanEV))/(sNext->W[0]*sNext->W[0]+sNext->W[1]*sNext->W[1]+sNext->W[2]*sNext->W[2]));
-        //this->FractionalAnisotropy[ptId]->InsertNextValue(fa);
-    
         switch (this->GetStoppingMode()) {
       case VTK_TENS_FRACTIONAL_ANISOTROPY:
           stop = vtkTensorMathematics::FractionalAnisotropy(sNext->W);
@@ -528,15 +518,23 @@ void vtkHyperStreamlineDTMRI::Execute()
   delete [] w;
   cellTensors->Delete();
   cellScalars->Delete();  
+
+  // note: these two lines fix memory leak in code copied from vtk
+  delete [] this->Streamers;
+  this->Streamers = NULL;
 }
 
 void vtkHyperStreamlineDTMRI::BuildLines()
 {
-  vtkHyperPoint *sPrev, *sPtr;
+  vtkHyperPoint *sPtr;
   vtkPoints *newPoints;
   vtkCellArray *newLines;
   vtkFloatArray *newScalars=NULL;
+#if (VTK_MAJOR_VERSION >= 5)
+  vtkDataSet *input = this->GetPolyDataInput(0);
+#else
   vtkDataSet *input = this->GetInput();
+#endif
   vtkPolyData *output = this->GetOutput();
   vtkPointData *outPD = output->GetPointData();
 
@@ -637,6 +635,11 @@ void vtkHyperStreamlineDTMRI::BuildLines()
 void vtkHyperStreamlineDTMRI::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
+ 
+  os << indent << "Radius of Curvature "
+     << this->RadiusOfCurvature << "\n";
+
+ 
 }
 
 

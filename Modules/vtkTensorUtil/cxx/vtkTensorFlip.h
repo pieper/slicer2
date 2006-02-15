@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorFlip.h,v $
-  Date:      $Date: 2005/12/20 22:56:26 $
-  Version:   $Revision: 1.2.2.1 $
+  Date:      $Date: 2006/02/15 19:09:57 $
+  Version:   $Revision: 1.2.2.2 $
 
 =========================================================================auto=*/
 // .NAME vtkTensorFlip - flip Y axis and negate xy and zy terms
@@ -39,8 +39,8 @@ public:
 protected:
   vtkTensorFlip();
   ~vtkTensorFlip() {};
-  vtkTensorFlip(const vtkTensorFlip&) {};
-  void operator=(const vtkTensorFlip&) {};
+  vtkTensorFlip(const vtkTensorFlip&);
+  void operator=(const vtkTensorFlip&);
 
   void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
   void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
