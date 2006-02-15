@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRI.tcl,v $
-#   Date:      $Date: 2006/02/08 19:58:08 $
-#   Version:   $Revision: 1.120.2.6 $
+#   Date:      $Date: 2006/02/15 19:48:24 $
+#   Version:   $Revision: 1.120.2.7 $
 # 
 #===============================================================================
 # FILE:        DTMRI.tcl
@@ -481,7 +481,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.120.2.6 $} {$Date: 2006/02/08 19:58:08 $}]
+                  {$Revision: 1.120.2.7 $} {$Date: 2006/02/15 19:48:24 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -1190,6 +1190,10 @@ proc DTMRIBuildVTK {} {
     #------------------------------------
     set object picker
     DTMRIMakeVTKObject vtkCellPicker $object
+    # Making this change causes incorrect location to be 
+    # chosen in 3D. Needs more investigation into SelectPick function
+    # in Select.tcl, which we are using.  To be done later, in conjunction
+    # with having fewer actors.
     #DTMRIMakeVTKObject vtkFastCellPicker $object
     DTMRIAddObjectProperty $object Tolerance 0.001 float {Pick Tolerance}
 
@@ -1218,13 +1222,12 @@ proc DTMRIBuildVTK {} {
     DTMRI(vtk,$object) SetPoint1 -1 0 0
     DTMRI(vtk,$object) SetPoint2 1 0 0
     
-    # too slow: maybe useful for nice photos
-    #set object glyphs,tubeLine
-    #DTMRIMakeVTKObject vtkTubeFilter $object
-    #DTMRI(vtk,$object) SetInput [DTMRI(vtk,glyphs,line) GetOutput]
-    #DTMRIAddObjectProperty $object Radius 0.1 float {Radius}
-    #DTMRIAddObjectProperty $object NumberOfSides 6 int \
-    #    {Number Of Sides}
+    set object glyphs,tube
+    DTMRIMakeVTKObject vtkTubeFilter $object
+    DTMRI(vtk,$object) SetInput [DTMRI(vtk,glyphs,line) GetOutput]
+    DTMRIAddObjectProperty $object Radius 0.1 float {Radius}
+    DTMRIAddObjectProperty $object NumberOfSides 6 int \
+        {Number Of Sides}
 
     # Ellipsoids
     set object glyphs,sphere
@@ -1237,6 +1240,10 @@ proc DTMRIBuildVTK {} {
     # Boxes
     set object glyphs,box
     DTMRIMakeVTKObject vtkCubeSource  $object
+
+    # stripping
+    set object glyphs,stripper
+    DTMRIMakeVTKObject vtkStripper $object
 
     # objects for placement of Standard glyphs in dataset
     #------------------------------------
@@ -1345,12 +1352,17 @@ proc DTMRIBuildVTK {} {
     # these are example objects used in creation of hyperstreamlines
     set streamline "streamlineControl,vtkHyperStreamlinePoints"
     set seedTracts [DTMRI(vtk,streamlineControl) GetSeedTracts]
-    vtkHyperStreamlinePoints DTMRI(vtk,$streamline) 
+    vtkHyperStreamlineDTMRI DTMRI(vtk,$streamline) 
     $seedTracts SetVtkHyperStreamlinePointsSettings \
         DTMRI(vtk,$streamline)
     set streamline "streamlineControl,vtkPreciseHyperStreamlinePoints"
     vtkPreciseHyperStreamlinePoints DTMRI(vtk,$streamline)
     $seedTracts SetVtkPreciseHyperStreamlinePointsSettings \
+        DTMRI(vtk,$streamline)
+
+    set streamline "streamlineControl,vtkHyperStreamlineTeem"
+    vtkHyperStreamlineTeem DTMRI(vtk,$streamline)
+    $seedTracts SetVtkHyperStreamlineTeemSettings \
         DTMRI(vtk,$streamline)
     
 

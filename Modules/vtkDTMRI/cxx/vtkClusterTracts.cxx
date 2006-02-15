@@ -5,10 +5,11 @@
   See Doc/copyright/copyright.txt
   or http://www.slicer.org/copyright/copyright.txt for details.
 
+
   Program:   3D Slicer
   Module:    $RCSfile: vtkClusterTracts.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:03 $
-  Version:   $Revision: 1.8.2.1 $
+  Date:      $Date: 2006/02/15 19:47:35 $
+  Version:   $Revision: 1.8.2.2 $
 
 =========================================================================auto=*/
 #include "vtkClusterTracts.h"
@@ -23,7 +24,8 @@
 // itk object for exception handling
 #include "itkExceptionObject.h"
 
-vtkCxxRevisionMacro(vtkClusterTracts, "$Revision: 1.8.2.1 $");
+
+vtkCxxRevisionMacro(vtkClusterTracts, "$Revision: 1.8.2.2 $");
 vtkStandardNewMacro(vtkClusterTracts);
 
 vtkCxxSetObjectMacro(vtkClusterTracts, InputStreamlines, vtkCollection);

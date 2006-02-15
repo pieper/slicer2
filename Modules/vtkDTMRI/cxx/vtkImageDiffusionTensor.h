@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageDiffusionTensor.h,v $
-  Date:      $Date: 2005/12/20 22:55:04 $
-  Version:   $Revision: 1.4.2.1 $
+  Date:      $Date: 2006/02/15 19:47:38 $
+  Version:   $Revision: 1.4.2.2 $
 
 =========================================================================auto=*/
 // .NAME vtkImageDiffusionTensor - 
@@ -122,8 +122,8 @@ class VTK_DTMRI_EXPORT vtkImageDiffusionTensor : public vtkImageMultipleInputFil
  protected:
   vtkImageDiffusionTensor();
   ~vtkImageDiffusionTensor();
-  vtkImageDiffusionTensor(const vtkImageDiffusionTensor&) {};
-  void operator=(const vtkImageDiffusionTensor&) {};
+  vtkImageDiffusionTensor(const vtkImageDiffusionTensor&);
+  void operator=(const vtkImageDiffusionTensor&);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   int NumberOfGradients;

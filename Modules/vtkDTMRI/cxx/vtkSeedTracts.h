@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.h,v $
-  Date:      $Date: 2005/12/20 22:55:08 $
-  Version:   $Revision: 1.5.2.1 $
+  Date:      $Date: 2006/02/15 19:47:41 $
+  Version:   $Revision: 1.5.2.2 $
 
 =========================================================================auto=*/
 // .NAME vtkSeedTracts - 
@@ -31,12 +31,14 @@
 #include "vtkShortArray.h"
 
 #include "vtkHyperStreamline.h"
-#include "vtkHyperStreamlinePoints.h"
+#include "vtkHyperStreamlineDTMRI.h"
+#include "vtkHyperStreamlineTeem.h"
 #include "vtkPreciseHyperStreamlinePoints.h"
 
 #define USE_VTK_HYPERSTREAMLINE 0
 #define USE_VTK_HYPERSTREAMLINE_POINTS 1
 #define USE_VTK_PRECISE_HYPERSTREAMLINE_POINTS 2
+#define USE_VTK_HYPERSTREAMLINE_TEEM 3
 
 class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
 {
@@ -160,16 +162,26 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
     }
 
   // Description
+  // Type of vtkHyperStreamline subclass to create.
+  // Use teem streamlines.
+  void UseVtkHyperStreamlineTeem()
+    {
+      this->TypeOfHyperStreamline=USE_VTK_HYPERSTREAMLINE_TEEM;
+    }
+
+  // Description
   // Example objects whose settings will be used in creation
   // of vtkHyperStreamline subclasses of that type.
   // This is an alternative to duplicating the parameters of 
   // these classes as parameters of this class.
-  vtkSetObjectMacro(VtkHyperStreamlinePointsSettings,vtkHyperStreamlinePoints);
-  vtkGetObjectMacro(VtkHyperStreamlinePointsSettings,vtkHyperStreamlinePoints);
+  vtkSetObjectMacro(VtkHyperStreamlinePointsSettings,vtkHyperStreamlineDTMRI);
+  vtkGetObjectMacro(VtkHyperStreamlinePointsSettings,vtkHyperStreamlineDTMRI);
   vtkSetObjectMacro(VtkPreciseHyperStreamlinePointsSettings,
                     vtkPreciseHyperStreamlinePoints);
   vtkGetObjectMacro(VtkPreciseHyperStreamlinePointsSettings,
                     vtkPreciseHyperStreamlinePoints);
+  vtkSetObjectMacro(VtkHyperStreamlineTeemSettings,vtkHyperStreamlineTeem);
+  vtkGetObjectMacro(VtkHyperStreamlineTeemSettings,vtkHyperStreamlineTeem);
 
  // Description
  // Update all tracts with current parameters.
@@ -183,7 +195,7 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   ~vtkSeedTracts();
 
   void SaveStreamlineAsTextFile(ofstream &filePoints,
-                                vtkHyperStreamlinePoints *currStreamline);
+                                vtkPolyData *currStreamline);
 
   vtkHyperStreamline *CreateHyperStreamline();
 
@@ -209,8 +221,9 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   // of each type, so that the user can modify it.
   // We copy its settings to each new created streamline.
   vtkHyperStreamline *VtkHyperStreamlineSettings;
-  vtkHyperStreamlinePoints *VtkHyperStreamlinePointsSettings;
+  vtkHyperStreamlineDTMRI *VtkHyperStreamlinePointsSettings;
   vtkPreciseHyperStreamlinePoints *VtkPreciseHyperStreamlinePointsSettings;
+  vtkHyperStreamlineTeem *VtkHyperStreamlineTeemSettings;
 
   // Since only integrating both directions makes sense in the application,
   // this is the default of this class. This prevents the objects above
@@ -218,7 +231,8 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   int IntegrationDirection;
 
 
-  void UpdateHyperStreamlinePointsSettings( vtkHyperStreamlinePoints *currHSP);
+  void UpdateHyperStreamlinePointsSettings( vtkHyperStreamlineDTMRI *currHSP);
+  void UpdateHyperStreamlineTeemSettings( vtkHyperStreamlineTeem *currHST);
 
 };
 

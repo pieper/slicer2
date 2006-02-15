@@ -7,14 +7,14 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTractShapeFeatures.h,v $
-  Date:      $Date: 2005/12/20 22:55:09 $
-  Version:   $Revision: 1.6.2.1 $
+  Date:      $Date: 2006/02/15 19:47:42 $
+  Version:   $Revision: 1.6.2.2 $
 
 =========================================================================auto=*/
 // .NAME vtkTractShapeFeatures - Compute tract similarity matrix for clustering
 
 // .SECTION Description
-// Takes as input a collection of N tracts (vtkHyperStreamlinePoints objects). 
+// Takes as input a collection of N tracts (vtkHyperStreamlineDTMRI objects). 
 // Compares them, and outputs an NxN weight matrix for clustering.
 // The same matrix is output also as an image for visualization.
 
@@ -33,7 +33,7 @@
 // Goes along with use of new vtkCxxSetObjectMacro
 class vtkCollection;
 class vtkImageData;
-class vtkHyperStreamlinePoints;
+class vtkHyperStreamlineDTMRI;
 
 class VTK_DTMRI_EXPORT vtkTractShapeFeatures : public vtkObject
 {
@@ -61,11 +61,18 @@ class VTK_DTMRI_EXPORT vtkTractShapeFeatures : public vtkObject
   vtkGetMacro(Sigma,double);
 
   // Description
-  // For Hausdorff only.  Use every Nth point on the tract path for 
+  // For Hausdorff variants only.  Use every Nth point on the tract path for 
   // comparison. 
   vtkSetClampMacro(HausdorffN,int,1,100);
   vtkGetMacro(HausdorffN,int);
 
+  // Description
+  // How to symmetrize distances (Hausdorff-based): mas, mean, min
+  vtkSetMacro(SymmetrizeMethod,int);
+  vtkGetMacro(SymmetrizeMethod,int);
+  void SetSymmetrizeMethodToMean() {this->SetSymmetrizeMethod(1);}
+  void SetSymmetrizeMethodToMin() {this->SetSymmetrizeMethod(2);}
+  void SetSymmetrizeMethodToMax() {this->SetSymmetrizeMethod(3);}
   
   //BTX
   // (wrapping doesn't work here so exclude this with BTX)
@@ -99,6 +106,10 @@ class VTK_DTMRI_EXPORT vtkTractShapeFeatures : public vtkObject
     {
       this->SetFeatureType(HAUSDORFF);
     };
+  void SetFeatureTypeToMeanClosestPoint()
+    {
+      this->SetFeatureType(MEAN_CLOSEST_POINT);
+    };
   void SetFeatureTypeToMeanAndCovariance()
     {
       this->SetFeatureType(MEAN_AND_COVARIANCE);
@@ -120,6 +131,7 @@ class VTK_DTMRI_EXPORT vtkTractShapeFeatures : public vtkObject
   vtkCollection *InputStreamlines;
   double Sigma;
   int HausdorffN;
+  int SymmetrizeMethod;
 
   vtkImageData *InterTractDistanceMatrixImage;
   vtkImageData *InterTractSimilarityMatrixImage;
@@ -129,7 +141,7 @@ class VTK_DTMRI_EXPORT vtkTractShapeFeatures : public vtkObject
   void ComputeFeaturesEndPoints();
   
   //BTX
-  enum ShapeFeatureType { MEAN_AND_COVARIANCE, HAUSDORFF, ENDPOINTS } ;
+  enum ShapeFeatureType { MEAN_AND_COVARIANCE, HAUSDORFF, ENDPOINTS, MEAN_CLOSEST_POINT} ;
   //ETX
   int FeatureType;
   vtkSetMacro(FeatureType,int);
@@ -145,7 +157,7 @@ class VTK_DTMRI_EXPORT vtkTractShapeFeatures : public vtkObject
   OutputType m_InterTractDistanceMatrix;
   OutputType m_InterTractSimilarityMatrix;
 
-  void GetPointsFromHyperStreamlinePointsSubclass(TractPointsListType::Pointer sample, vtkHyperStreamlinePoints *currStreamline);
+  void GetPointsFromHyperStreamlinePointsSubclass(TractPointsListType::Pointer sample, vtkHyperStreamlineDTMRI *currStreamline);
   //ETX
 
  private:

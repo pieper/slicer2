@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRIGlyphs.tcl,v $
-#   Date:      $Date: 2006/02/06 18:56:28 $
-#   Version:   $Revision: 1.16.2.4 $
+#   Date:      $Date: 2006/02/15 19:48:25 $
+#   Version:   $Revision: 1.16.2.5 $
 # 
 #===============================================================================
 # FILE:        DTMRIGlyphs.tcl
@@ -39,7 +39,7 @@ proc DTMRIGlyphsInit {} {
     #------------------------------------
     set m "Glyphs"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.16.2.4 $} {$Date: 2006/02/06 18:56:28 $}]
+                                 {$Revision: 1.16.2.5 $} {$Date: 2006/02/15 19:48:25 $}]
 
     # type of reformatting
     set DTMRI(mode,reformatType) 0
@@ -70,7 +70,7 @@ proc DTMRIGlyphsInit {} {
 
     # type of glyph to display (default to lines since fastest)
     set DTMRI(mode,glyphType) Lines
-    set DTMRI(mode,glyphTypeList) {Axes Lines Ellipsoids Boxes Superquadric}
+    set DTMRI(mode,glyphTypeList) {Axes Lines Tubes Ellipsoids Boxes Superquadric}
     set DTMRI(mode,glyphTypeList,tooltips) {{Display DTMRIs as 3 axes aligned with eigenvectors and scaled by eigenvalues.} {Display DTMRIs as lines aligned with one eigenvector and scaled by its eigenvalue.} {Display DTMRIs as ellipses aligned with eigenvectors and scaled by eigenvalues.} {Display DTMRIs as scaled oriented cubes.}}
     
     #name of glyph object
@@ -815,51 +815,69 @@ proc DTMRIUpdate {} {
         }    
               
             # for lines don't use normals filter before mapper
-        DTMRI(vtk,glyphs,mapper) SetInput \
-        [DTMRI(vtk,glyphs,append) GetOutput]
+        
+         DTMRI(vtk,glyphs,mapper) SetInput \
+         [DTMRI(vtk,glyphs,append) GetOutput]
 
             # Use axes or ellipsoids
             #------------------------------------
+      set type stripper            
       foreach plane "0 1 2" {  
             switch $DTMRI(mode,glyphType) {
                 "Axes" {
-                    $DTMRI(mode,glyphsObject$plane) SetSource \
+                    DTMRI(vtk,glyphs,$type) SetInput \
             [DTMRI(vtk,glyphs,axes) GetOutput]
-
+                    #$DTMRI(mode,glyphsObject$plane) SetSource \
+            #[DTMRI(vtk,glyphs,axes) GetOutput]
+            
                     # this is too slow, but might make nice pictures
                     #[DTMRI(vtk,glyphs,tubeAxes) GetOutput]
 
                 }
                 "Lines" {
-                    $DTMRI(mode,glyphsObject$plane) SetSource \
+                    DTMRI(vtk,glyphs,$type) SetInput \
             [DTMRI(vtk,glyphs,line) GetOutput]
+            #        $DTMRI(mode,glyphsObject$plane) SetSource \
+            #[DTMRI(vtk,glyphs,line) GetOutput]
 
                 }
-                "Ellipsoids" {
-                    $DTMRI(mode,glyphsObject$plane) SetSource \
+                "Tubes" {
+                    DTMRI(vtk,glyphs,$type) SetInput \
+            [DTMRI(vtk,glyphs,tube) GetOutput]
+                }
+                "Ellipsoids" {            
+                    DTMRI(vtk,glyphs,$type) SetInput \
             [DTMRI(vtk,glyphs,sphere) GetOutput]
+                    #$DTMRI(mode,glyphsObject$plane) SetSource \
+            #[DTMRI(vtk,glyphs,sphere) GetOutput]
 
                     # this normal filter improves display but is slow.
-                    DTMRI(vtk,glyphs,mapper) SetInput \
-                        [DTMRI(vtk,glyphs,normals) GetOutput]
+                    #DTMRI(vtk,glyphs,mapper) SetInput \
+                    #    [DTMRI(vtk,glyphs,normals) GetOutput]
+                    
                 }
                 "Boxes" {
-                    $DTMRI(mode,glyphsObject$plane) SetSource \
+                    DTMRI(vtk,glyphs,$type) SetInput \
             [DTMRI(vtk,glyphs,box) GetOutput]
+                    #$DTMRI(mode,glyphsObject$plane) SetSource \
+            #[DTMRI(vtk,glyphs,box) GetOutput]
 
                     # this normal filter improves display but is slow.
-                    DTMRI(vtk,glyphs,mapper) SetInput \
-                        [DTMRI(vtk,glyphs,normals) GetOutput]
+                    #DTMRI(vtk,glyphs,mapper) SetInput \
+                    #    [DTMRI(vtk,glyphs,normals) GetOutput]
                 }
         
            "Superquadric" {
                 $DTMRI(mode,glyphsObject$plane) SetSource \
                  [DTMRI(vtk,glyphs,line) GetOutput]
-                DTMRI(vtk,glyphs,mapper) SetInput \
-                        [DTMRI(vtk,glyphs,normals) GetOutput] 
-        }    
-            }
+                #DTMRI(vtk,glyphs,mapper) SetInput \
+                #        [DTMRI(vtk,glyphs,normals) GetOutput] 
+            }    
          }
+         $DTMRI(mode,glyphsObject$plane) SetSource \
+         [DTMRI(vtk,glyphs,stripper) GetOutput]
+ 
+      }
 
             # in case this is the first time we load a tensor volume, 
             # place the actors in the scene now. (Now that there is input

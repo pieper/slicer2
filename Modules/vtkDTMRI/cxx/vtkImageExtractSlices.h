@@ -7,9 +7,9 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageExtractSlices.h,v $
-  Date:      $Date: 2005/12/20 22:55:05 $
-  Version:   $Revision: 1.6.8.1 $
-
+  Date:      $Date: 2006/02/15 19:47:38 $
+  Version:   $Revision: 1.6.8.2 $
+ 
 =========================================================================auto=*/
 // .NAME vtkImageDiffusionTensor - 
 // .SECTION Description
@@ -93,8 +93,8 @@ class VTK_DTMRI_EXPORT vtkImageExtractSlices : public vtkImageToImageFilter
  protected:
   vtkImageExtractSlices();
   ~vtkImageExtractSlices() {};
-  vtkImageExtractSlices(const vtkImageExtractSlices&) {};
-  void operator=(const vtkImageExtractSlices&) {};
+  vtkImageExtractSlices(const vtkImageExtractSlices&);
+  void operator=(const vtkImageExtractSlices&);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   int SliceOffset;

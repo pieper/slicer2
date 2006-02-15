@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkColorROIFromTracts.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:03 $
-  Version:   $Revision: 1.5.2.1 $
+  Date:      $Date: 2006/02/15 19:47:36 $
+  Version:   $Revision: 1.5.2.2 $
 
 =========================================================================auto=*/
 

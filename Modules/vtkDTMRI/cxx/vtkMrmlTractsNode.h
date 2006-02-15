@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlTractsNode.h,v $
-  Date:      $Date: 2005/12/20 22:55:06 $
-  Version:   $Revision: 1.1.2.1 $
+  Date:      $Date: 2006/02/15 19:47:39 $
+  Version:   $Revision: 1.1.2.2 $
 
 =========================================================================auto=*/
 
@@ -41,8 +41,8 @@ class VTK_DTMRI_EXPORT vtkMrmlTractsNode : public vtkMrmlNode
  protected:
   vtkMrmlTractsNode();
   ~vtkMrmlTractsNode();
-  vtkMrmlTractsNode(const vtkMrmlTractsNode&) {};
-  void operator=(const vtkMrmlTractsNode&) {};
+  vtkMrmlTractsNode(const vtkMrmlTractsNode&);
+  void operator=(const vtkMrmlTractsNode&);
 
   char *FileName;
 

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkROISelectTracts.h,v $
-  Date:      $Date: 2005/12/27 22:22:05 $
-  Version:   $Revision: 1.3.2.2 $
+  Date:      $Date: 2006/02/15 19:47:40 $
+  Version:   $Revision: 1.3.2.3 $
 
 =========================================================================auto=*/
 // .NAME vtkROISelectTracts - 
@@ -97,8 +97,8 @@ class VTK_DTMRI_EXPORT vtkROISelectTracts : public vtkObject
   // Description
   // Threshold to pass the test and define that a streamline pass a given
   // set of ROI's define in the ADN list and NOT list.
-  vtkSetMacro(PassThreshold,int);
-  vtkGetMacro(PassThreshold,int);
+  vtkSetMacro(PassThreshold,double);
+  vtkGetMacro(PassThreshold,double);
   
   // Description
   // Input ROI volume for testing tract/ROI intersection
@@ -139,7 +139,7 @@ class VTK_DTMRI_EXPORT vtkROISelectTracts : public vtkObject
   vtkTransform *StreamlineWldToScaledIjk;
   vtkShortArray *InputANDROIValues;
   vtkShortArray *InputNOTROIValues;
-  int PassThreshold;
+  double PassThreshold;
   
   vtkDoubleArray *ConvolutionKernel;
   

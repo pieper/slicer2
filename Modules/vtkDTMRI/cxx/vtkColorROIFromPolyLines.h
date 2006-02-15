@@ -6,17 +6,17 @@
   or http://www.slicer.org/copyright/copyright.txt for details.
 
   Program:   3D Slicer
-  Module:    $RCSfile: vtkColorROIFromTracts.h,v $
+  Module:    $RCSfile: vtkColorROIFromPolyLines.h,v $
   Date:      $Date: 2006/02/15 19:47:36 $
-  Version:   $Revision: 1.1.2.2 $
+  Version:   $Revision: 1.1.2.1 $
 
 =========================================================================auto=*/
-// .NAME vtkColorROIFromTracts - 
+// .NAME vtkColorROIFromPolyLines - 
 // .SECTION Description
 //
 
-#ifndef __vtkColorROIFromTracts_h
-#define __vtkColorROIFromTracts_h
+#ifndef __vtkColorROIFromPolyLines_h
+#define __vtkColorROIFromPolyLines_h
 
 #include "vtkDTMRIConfigure.h"
 #include "vtkObject.h"
@@ -24,17 +24,19 @@
 #include "vtkImageData.h"
 #include "vtkTransform.h"
 #include "vtkCollection.h"
+#include "vtkIntArray.h"
 
-class VTK_DTMRI_EXPORT vtkColorROIFromTracts : public vtkObject
+class VTK_DTMRI_EXPORT vtkColorROIFromPolyLines : public vtkObject
 {
  public:
-  static vtkColorROIFromTracts *New();
-  vtkTypeMacro(vtkColorROIFromTracts,vtkObject);
+  static vtkColorROIFromPolyLines *New();
+  vtkTypeMacro(vtkColorROIFromPolyLines,vtkObject);
 
   void ColorROIFromStreamlines();
   
   // Description
   // Input ROI volume to color with the ID of the streamlines through the ROI
+  // Determines voxel size of output and region to color in output.
   vtkSetObjectMacro(InputROIForColoring, vtkImageData);
   vtkGetObjectMacro(InputROIForColoring, vtkImageData);
 
@@ -43,13 +45,13 @@ class VTK_DTMRI_EXPORT vtkColorROIFromTracts : public vtkObject
   vtkGetObjectMacro(OutputROIForColoring, vtkImageData);
 
   // Description
-  // Input to this class (for grabbing colors). This 
-  // may change to a colorID array.
-  vtkSetObjectMacro(Actors, vtkCollection);
+  // Input to this class (ID number of each polydata's label)
+  vtkSetObjectMacro(Labels, vtkIntArray);
 
   // Description
-  // Input to this class (tractographic paths)
-  vtkSetObjectMacro(Streamlines, vtkCollection);
+  // Input to this class (tractographic paths).
+  // Each item is a polydata containing lines in a cluster.
+  vtkSetObjectMacro(PolyLineClusters, vtkCollection);
 
   // Description
   // Transformation used to place streamlines in scene 
@@ -57,15 +59,13 @@ class VTK_DTMRI_EXPORT vtkColorROIFromTracts : public vtkObject
   vtkGetObjectMacro(WorldToTensorScaledIJK, vtkTransform);
 
   // Description
-  // Transformation used in seeding streamlines.  Their start
-  // points are specified in the coordinate system of the ROI volume.
-  // Transform the ijk coordinates of the ROI to world coordinates.
+  // Transformation that places the InputROI in world space
   vtkSetObjectMacro(ROIToWorld, vtkTransform);
   vtkGetObjectMacro(ROIToWorld, vtkTransform);
 
  protected:
-  vtkColorROIFromTracts();
-  ~vtkColorROIFromTracts();
+  vtkColorROIFromPolyLines();
+  ~vtkColorROIFromPolyLines();
 
   vtkImageData *InputROIForColoring;
   vtkImageData *OutputROIForColoring;
@@ -73,8 +73,8 @@ class VTK_DTMRI_EXPORT vtkColorROIFromTracts : public vtkObject
   vtkTransform *ROIToWorld;
   vtkTransform *WorldToTensorScaledIJK;
 
-  vtkCollection *Streamlines;
-  vtkCollection *Actors;
+  vtkCollection *PolyLineClusters;
+  vtkIntArray *Labels;
 
 };
 

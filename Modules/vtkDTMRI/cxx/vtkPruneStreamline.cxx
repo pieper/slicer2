@@ -7,24 +7,11 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPruneStreamline.cxx,v $
-  Date:      $Date: 2005/12/27 22:35:24 $
-  Version:   $Revision: 1.3.2.2 $
+  Date:      $Date: 2006/02/15 19:47:40 $
+  Version:   $Revision: 1.3.2.3 $
 
 =========================================================================auto=*/
-/*=========================================================================
 
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkPruneStreamline.cxx,v $
-
-  Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
-  All rights reserved.
-  See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notice for more information.
-
-=========================================================================*/
 #include "vtkPruneStreamline.h"
 
 #include "vtkAbstractTransform.h"
@@ -42,7 +29,8 @@
 
 #define VTK_MARGIN 0.1
 
-vtkCxxRevisionMacro(vtkPruneStreamline, "$Revision: 1.3.2.2 $");
+vtkCxxRevisionMacro(vtkPruneStreamline, "$Revision: 1.3.2.3 $");
+
 vtkStandardNewMacro(vtkPruneStreamline);
 
 vtkPruneStreamline::vtkPruneStreamline()
@@ -50,6 +38,7 @@ vtkPruneStreamline::vtkPruneStreamline()
   this->ANDROIValues = NULL;
   this->NOTROIValues = NULL;
   this->Threshold = 1;
+  this->MaxResponse = NULL;
   this->StreamlineIdPassTest = vtkIntArray::New();
 }
 
@@ -162,6 +151,7 @@ void vtkPruneStreamline::Execute()
   int *streamlineANDTest = new int[numANDROIs]; 
   int *streamlineNOTTest = new int[numNOTROIs];
   
+  
   //Data to store result  
   newPts = vtkPoints::New();
   newPts->Allocate(numPts);
@@ -170,7 +160,61 @@ void vtkPruneStreamline::Execute()
   short rval0;
   double val;
   int test;
+  
+  int *fiberResponse = new int[numANDROIs+numNOTROIs];
+  this->MaxResponse = new int[numANDROIs+numNOTROIs];
+  
+  for (int rId = 0; rId < numANDROIs + numNOTROIs; rId++) 
+      this->MaxResponse[rId] = 0; 
+   
+
+  //For each streamline, find the max response
+  inLines->InitTraversal();
+  for(int sId=0; sId<numStreamlines; sId++) {  
     
+    for (int rId = 0; rId < numANDROIs + numNOTROIs; rId++) 
+      fiberResponse[rId] = 0; 
+
+    for(int cellId=0; cellId<2; cellId++) {
+      inLines->GetNextCell(npts,ptId);
+      
+      for(int j=0;j<npts;j++) {
+         val=inScalars->GetComponent(ptId[j],0);
+         //cout<<"Value: "<<val<<endl;
+         for(int rId=0;rId<numANDROIs;rId++) {
+      
+           rval0 = ANDROIValues->GetValue(rId);
+           if(val>(rval0-VTK_MARGIN) && val<(rval0+VTK_MARGIN)) {
+           //We got response for this ROI
+           fiberResponse[rId]++;
+           break;
+           }
+         }
+      
+      
+         for(int rId=0;rId<numNOTROIs;rId++) {
+      
+           rval0 = NOTROIValues->GetValue(rId);
+           if(val>(rval0-VTK_MARGIN) && val<(rval0+VTK_MARGIN)) {
+              //We got response for this ROI
+              fiberResponse[rId+numANDROIs]++;
+              break;
+           }
+         }  
+    
+       } //end j loop throught cell points
+    } //end cellId  
+ 
+    
+    for (int rId = 0; rId < numANDROIs + numNOTROIs; rId++) 
+     {
+      if (this->MaxResponse[rId] <= fiberResponse[rId]) {
+       this->MaxResponse[rId] = fiberResponse[rId];
+      } 
+     }
+      
+ }//end loop through streamlines 
+
    //For each streamline see the responses that pass the test.
   inLines->InitTraversal();
   for(int sId=0; sId<numStreamlines; sId++) {
@@ -183,36 +227,34 @@ void vtkPruneStreamline::Execute()
     for (int i=0; i<numNOTROIs;i++)
       streamlineNOTTest[i] = 0;
     
-    
     for(int cellId=0; cellId<2; cellId++) {
-     inLines->GetNextCell(npts,ptId);
-  
-     for(int j=0;j<npts;j++) {
-         
-    val=inScalars->GetComponent(ptId[j],0);
-    //cout<<"Value: "<<val<<endl;
-    for(int rId=0;rId<numANDROIs;rId++) {
+      inLines->GetNextCell(npts,ptId);
       
-      rval0 = ANDROIValues->GetValue(rId);
-      if(val>(rval0-VTK_MARGIN) && val<(rval0+VTK_MARGIN)) {
-        //We got response for this ROI
-        streamlineANDTest[rId] += 1; 
-        break;
-       }
-     }
+      for(int j=0;j<npts;j++) {
+         val=inScalars->GetComponent(ptId[j],0);
+         //cout<<"Value: "<<val<<endl;
+         for(int rId=0;rId<numANDROIs;rId++) {
+           rval0 = ANDROIValues->GetValue(rId);
+           if(val>(rval0-VTK_MARGIN) && val<(rval0+VTK_MARGIN)) {
+           //We got response for this ROI
+           streamlineANDTest[rId] += 1; 
+           break;
+           }
+         }
       
-    for(int rId=0;rId<numNOTROIs;rId++) {
       
-      rval0 = NOTROIValues->GetValue(rId);
-      if(val>(rval0-VTK_MARGIN) && val<(rval0+VTK_MARGIN)) {
-        //We got response for this ROI
-        streamlineNOTTest[rId] += 1; 
-        break;
-       }
-     } 
+         for(int rId=0;rId<numNOTROIs;rId++) {
+      
+           rval0 = NOTROIValues->GetValue(rId);
+           if(val>(rval0-VTK_MARGIN) && val<(rval0+VTK_MARGIN)) {
+              //We got response for this ROI
+              streamlineNOTTest[rId] += 1; 
+              break;
+           }
+         }  
     
-     } //end j loop throught cell points
-   } //end cellId  
+       } //end j loop throught cell points
+    } //end cellId  
  
    test=this->TestForStreamline(streamlineANDTest,numANDROIs,streamlineNOTTest, numNOTROIs);
       
@@ -231,10 +273,14 @@ void vtkPruneStreamline::Execute()
  
  }// end loop thourgh streamlines.
  
- this->UpdateProgress (.8);
+ this->UpdateProgress (.9);
  
  delete streamlineANDTest;
- delete streamlineNOTTest; 
+ delete streamlineNOTTest;
+ delete fiberResponse;
+ delete this->MaxResponse;
+ this->MaxResponse = NULL;
+  
  StreamlineIdPassTest->Squeeze();
      
   // Define output    
@@ -254,16 +300,20 @@ int vtkPruneStreamline::TestForStreamline(int* streamlineANDTest, int nptsAND, i
 
   int i;
   int test;
-  test =0;
+  int th;
   
+  test =0;
     
   test = 1;
+  
   for(i=0;i<nptsAND;i++) {
-    test = test && (streamlineANDTest[i]>this->Threshold);    
+    th = ceil(this->Threshold*this->MaxResponse[i]);
+    test = test && (streamlineANDTest[i]>th);    
   }
   
   for(i=0;i<nptsNOT;i++) {
-    test = test && (streamlineNOTTest[i]<=this->Threshold);    
+    th = ceil(this->Threshold*this->MaxResponse[i+nptsAND]);
+    test = test && (streamlineNOTTest[i]<=th);    
   }
   
   return test;        

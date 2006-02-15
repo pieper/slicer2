@@ -7,24 +7,11 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPruneStreamline.h,v $
-  Date:      $Date: 2005/12/20 22:55:07 $
-  Version:   $Revision: 1.4.2.1 $
+  Date:      $Date: 2006/02/15 19:47:40 $
+  Version:   $Revision: 1.4.2.2 $
 
 =========================================================================auto=*/
-/*=========================================================================
 
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkPruneStreamline.h,v $
-
-  Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
-  All rights reserved.
-  See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notice for more information.
-
-=========================================================================*/
 // .NAME vtkPruneStreamline - transform points and associated normals and vectors for polygonal dataset
 // .SECTION Description
 // vtkPruneStreamline is a filter to transform point
@@ -80,8 +67,11 @@ public:
   //Description:
   // Number of positives that we have to get before declaring that a
   // streamline passes through a given ROI.
-  vtkSetMacro(Threshold,int);
-  vtkGetMacro(Threshold,int);
+  // This threshold is given as a percentage:
+  // 0: fibers touch at least one voxel of ROIs
+  // 1: means that fiber touches all the voxels of ROIs. 
+  vtkSetMacro(Threshold,double);
+  vtkGetMacro(Threshold,double);
   
 protected:
   vtkPruneStreamline();
@@ -92,7 +82,9 @@ protected:
   vtkShortArray *ANDROIValues;
   vtkShortArray *NOTROIValues;
   vtkIntArray *StreamlineIdPassTest;
-  int Threshold;
+  double Threshold;
+  
+  int *MaxResponse;  //Array with Max fiber response per ROI.
   
   int TestForStreamline(int *streamlineANDTest,int nptsAND, int *streamlineNOTTest, int nptsNOT);
   

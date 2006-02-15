@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRISave.tcl,v $
-#   Date:      $Date: 2005/12/20 22:55:11 $
-#   Version:   $Revision: 1.10.2.2 $
+#   Date:      $Date: 2006/02/15 19:48:26 $
+#   Version:   $Revision: 1.10.2.3 $
 # 
 #===============================================================================
 # FILE:        DTMRISave.tcl
@@ -33,7 +33,7 @@ proc DTMRISaveInit {} {
     #------------------------------------
     set m "Save"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.10.2.2 $} {$Date: 2005/12/20 22:55:11 $}]
+                                 {$Revision: 1.10.2.3 $} {$Date: 2006/02/15 19:48:26 $}]
 
     set DTMRI(Save,type) visualization
     set DTMRI(Save,coords) World

@@ -7,24 +7,11 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkStreamlineConvolve.cxx,v $
-  Date:      $Date: 2005/12/27 22:35:38 $
-  Version:   $Revision: 1.2.8.3 $
+  Date:      $Date: 2006/02/15 19:47:42 $
+  Version:   $Revision: 1.2.8.4 $
 
 =========================================================================auto=*/
-/*=========================================================================
 
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkStreamlineConvolve.cxx,v $
-
-  Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
-  All rights reserved.
-  See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notice for more information.
-
-=========================================================================*/
 #include "vtkStreamlineConvolve.h"
 
 #include "vtkCellArray.h"
@@ -36,7 +23,7 @@
 #include "vtkPolyData.h"
 #include "math.h"
 
-vtkCxxRevisionMacro(vtkStreamlineConvolve, "$Revision: 1.2.8.3 $");
+vtkCxxRevisionMacro(vtkStreamlineConvolve, "$Revision: 1.2.8.4 $");
 vtkStandardNewMacro(vtkStreamlineConvolve);
 
 // Construct with lower threshold=0, upper threshold=1, and threshold 
@@ -181,13 +168,13 @@ void vtkStreamlineConvolveExecute(vtkStreamlineConvolve *self,
   int *kernelSize;
   int kernelMiddle[3];
 
-  vtkIdType ptId, numPts;
+  vtkIdType numPts;
+
   vtkPolyData *output = self->GetOutput();
   vtkPolyData *streamlines = self->GetStreamlines();
 
   // For looping though output (and input) pixels.
   int inInc0, inInc1, inInc2;
-  T *inPtr0, *inPtr1, *inPtr2;
 
   // For looping through hood pixels
   int hoodMin0, hoodMax0, hoodMin1, hoodMax1, hoodMin2, hoodMax2;
@@ -212,7 +199,6 @@ void vtkStreamlineConvolveExecute(vtkStreamlineConvolve *self,
 
   // to compute the range
   unsigned long count = 0;
-  unsigned long target;
 
      
   numPts = streamlines->GetNumberOfPoints();

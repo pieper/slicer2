@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSaveTracts.cxx,v $
-  Date:      $Date: 2005/12/22 15:10:34 $
-  Version:   $Revision: 1.5.2.2 $
+  Date:      $Date: 2006/02/15 19:47:41 $
+  Version:   $Revision: 1.5.2.3 $
 
 =========================================================================auto=*/
 #include "vtkSaveTracts.h"
@@ -27,11 +27,11 @@
 #include "vtkActor.h"
 #include "vtkProperty.h"
 
+#include "vtkFloatArray.h"
+
 #include <sstream>
 
 #include "vtkHyperStreamline.h"
-#include "vtkHyperStreamlinePoints.h"
-#include "vtkPreciseHyperStreamlinePoints.h"
 
 //#include "vtkImageWriter.h"
 
@@ -179,10 +179,10 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
   G[0]=rgb[1];
   B[0]=rgb[2];
 
-  cout << "Traverse STREAMLINES" << endl;
+  vtkDebugMacro( << "Traverse STREAMLINES" );
   while(currStreamline && currActor && currTubeFilter)
     {
-      cout << "stream " << currStreamline << endl;
+      vtkDebugMacro( << "stream " << currStreamline);
       currColor=0;
       newColor=1;
       // If we have this color already, store its index in currColor
@@ -236,7 +236,7 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
     }
   
   // traverse appender collection (collectionOfModels) and write each to disk
-  cout << "Traverse APPENDERS" << endl;
+  vtkDebugMacro( << "Traverse APPENDERS");
   writer = vtkPolyDataWriter::New();
   tree = vtkMrmlTree::New();
   // object to hold any new colors we encounter (not on input color tree)
@@ -284,7 +284,7 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
   currBackTransform = vtkTransformPolyDataFilter::New();  
   while(currAppender)
     {
-      cout << idx << endl;
+      vtkDebugMacro( << idx );
       //Transform tubes back from World to ScaledIjk
       //Now tubes live in World space.
       
@@ -519,7 +519,7 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
   fileNameStr << filename << ".xml";
   tree->Write((char *)fileNameStr.str().c_str());
 
-  cout << "DELETING" << endl;
+  vtkDebugMacro( << "DELETING objects");
 
   // Delete all objects we created
   currBackTransform->Delete();
@@ -529,6 +529,7 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
   colorTreeTwo->Delete();
   currTransform->Delete();
 
+  vtkDebugMacro( << "Done.");
 }
 
 

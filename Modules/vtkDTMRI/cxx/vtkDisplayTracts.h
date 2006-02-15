@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDisplayTracts.h,v $
-  Date:      $Date: 2005/12/22 15:08:48 $
-  Version:   $Revision: 1.5.2.2 $
+  Date:      $Date: 2006/02/15 19:47:37 $
+  Version:   $Revision: 1.5.2.3 $
 
 =========================================================================auto=*/
 // .NAME vtkDisplayTracts - 
@@ -107,7 +107,13 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
   int GetNumberOfStreamlines() {return this->Streamlines->GetNumberOfItems();}
 
   // Description
-  // Get modified streamlines
+  // Get streamlines.
+  // These are what we are actually displaying.  They are either
+  // clipper objects (when we are clipping the input this->Streamlines)
+  // or they are pointers to the original input this->Streamlines
+  // objects.  The purpose of this is to avoid modifying
+  // the objects on the input this->Streamlines collection without
+  // actually duplicating them and wasting memory.
   vtkSetObjectMacro(ClippedStreamlines, vtkCollection);
   vtkGetObjectMacro(ClippedStreamlines, vtkCollection);
 
@@ -136,6 +142,8 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
   vtkGetMacro(Clipping,int);
   vtkBooleanMacro(Clipping,int);
 
+  // Description
+  // Clipping planes 
   vtkSetObjectMacro(ClipFunction, vtkImplicitFunction );
   vtkGetObjectMacro(ClipFunction, vtkImplicitFunction );
 
@@ -152,7 +160,15 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
   // functions not accessible to the user
   void CreateGraphicsObjects();
   void ApplyUserSettingsToGraphicsObject(int index);
-  vtkPolyDataSource *ClipStreamline(vtkHyperStreamline *streamline);
+//BTX
+#if (VTK_MAJOR_VERSION >= 5)
+  vtkPolyDataAlgorithm *
+#else
+  vtkPolyDataSource *
+#endif
+  ClipStreamline(vtkHyperStreamline *streamline);
+//ETX
+
 
   vtkTransform *WorldToTensorScaledIJK;
 

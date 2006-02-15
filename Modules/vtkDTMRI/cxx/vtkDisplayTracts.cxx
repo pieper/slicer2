@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDisplayTracts.cxx,v $
-  Date:      $Date: 2006/02/08 23:36:07 $
-  Version:   $Revision: 1.6.2.4 $
+  Date:      $Date: 2006/02/15 19:47:37 $
+  Version:   $Revision: 1.6.2.5 $
 
 =========================================================================auto=*/
 #include "vtkDisplayTracts.h"
@@ -80,13 +80,16 @@ vtkDisplayTracts::~vtkDisplayTracts()
   this->DeleteAllStreamlines();
 
   this->Renderers->Delete();
-  this->Streamlines->Delete();
+  if (this->Streamlines != NULL)
+    this->Streamlines->Delete();
   this->ClippedStreamlines->Delete();
   this->Mappers->Delete();
   this->Actors->Delete();
   this->TubeFilters->Delete();
+  this->TransformFilters->Delete();
 
   this->StreamlineLookupTable->Delete();
+  this->StreamlineProperty->Delete();
 }
 
 //----------------------------------------------------------------------------
@@ -116,7 +119,11 @@ void vtkDisplayTracts::SetClipping(int value)
 {
   vtkHyperStreamline *currStreamline;
   vtkTubeFilter *currTubeFilter;
+#if (VTK_MAJOR_VERSION >= 5)
+   vtkPolyDataAlgorithm *clippedStreamline;
+#else
   vtkPolyDataSource *clippedStreamline;
+#endif
   
   // test if we are changing the value before looping through all streamlines
   if (this->Clipping != value)
@@ -168,7 +175,14 @@ void vtkDisplayTracts::SetClipping(int value)
 
 // Handle clipping/not clipping a single streamline
 //----------------------------------------------------------------------------
-vtkPolyDataSource * vtkDisplayTracts::ClipStreamline(vtkHyperStreamline *currStreamline) 
+//BTX
+#if (VTK_MAJOR_VERSION >= 5)
+vtkPolyDataAlgorithm *
+#else
+vtkPolyDataSource *
+#endif
+vtkDisplayTracts::ClipStreamline(vtkHyperStreamline *currStreamline)
+//ETX
 {
 
   if (this->Clipping) 
@@ -258,9 +272,11 @@ void vtkDisplayTracts::UpdateAllTubeFiltersWithCurrentSettings()
 void vtkDisplayTracts::CreateGraphicsObjects()
 {
   int numStreamlines, numActorsCreated;
-  // for next vtk version:
-  //vtkPolyDataAlgorithm *currStreamline;
+#if (VTK_MAJOR_VERSION >= 5)
+  vtkPolyDataAlgorithm *currStreamline;
+#else
   vtkPolyDataSource *currStreamline;
+#endif
   vtkPolyDataMapper *currMapper;
   vtkActor *currActor;
   vtkTransform *currTransform;
@@ -332,6 +348,8 @@ void vtkDisplayTracts::CreateGraphicsObjects()
     }
 
 
+  currTransform->Delete();
+
   // For debugging print this info again
   // Find out how many streamlines we have, and if they all have actors
   numStreamlines = this->Streamlines->GetNumberOfItems();
@@ -401,10 +419,17 @@ void vtkDisplayTracts::DeleteAllStreamlines()
       this->DeleteStreamline(0);
       i++;
     }
+    
+  // Make sure the collection is empty
+  this->ClippedStreamlines->RemoveAllItems();
+  this->Mappers->RemoveAllItems();
+  this->TubeFilters->RemoveAllItems();
+  this->TransformFilters->RemoveAllItems();
+  this->Actors->RemoveAllItems();
   
 }
 
-// Delete one streamline and all of its associated objects.
+// Delete all of the DISPLAY objects created for one streamline 
 //----------------------------------------------------------------------------
 void vtkDisplayTracts::DeleteStreamline(int index)
 {
@@ -413,20 +438,21 @@ void vtkDisplayTracts::DeleteStreamline(int index)
   vtkPolyDataMapper *currMapper;
   vtkTransformPolyDataFilter *currTransFilter;
   vtkTubeFilter *currTubeFilter;
-  vtkHyperStreamline *currStreamline;
   vtkActor *currActor;
 
   vtkDebugMacro( << "Deleting actor " << index);
   currActor = (vtkActor *) this->Actors->GetItemAsObject(index);
   if (currActor != NULL)
     {
-        //Decrement variable Only when the actor is visible. 
-        if (currActor->GetVisibility()) {
-            this->NumberOfVisibleActors--;
-            currActor->VisibilityOff();
-        }
+
+      if (currActor->GetVisibility()) {
+          currActor->VisibilityOff();
+          this->NumberOfVisibleActors--;
+      }
+      
       // Remove from the scene (from each renderer)
       // Just like MainRemoveActor in Main.tcl.
+      // Don't delete the renderers since they are input.
       this->Renderers->InitTraversal();
       currRenderer= (vtkRenderer *)this->Renderers->GetNextItemAsObject();
       while(currRenderer)
@@ -435,14 +461,16 @@ void vtkDisplayTracts::DeleteStreamline(int index)
           currRenderer->RemoveActor(currActor);
           currRenderer= (vtkRenderer *)this->Renderers->GetNextItemAsObject();
         }
+
+      // Delete the actors, this class created them
       this->Actors->RemoveItem(index);
       currActor->Delete();
     }
 
   vtkDebugMacro( << "Delete stream" );
   // Remove from collection.
-  // If we are clipping this should delete it.
-  // Otherwise it removes a reference to the one still 
+  // If we are clipping this should delete the clipper object.
+  // Otherwise it removes a reference to the streamline object still 
   // on the Streamlines collection.
   this->ClippedStreamlines->RemoveItem(index);
 

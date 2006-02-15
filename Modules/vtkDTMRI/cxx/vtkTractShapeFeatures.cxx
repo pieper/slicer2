@@ -7,12 +7,12 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTractShapeFeatures.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:09 $
-  Version:   $Revision: 1.11.2.1 $
+  Date:      $Date: 2006/02/15 19:47:42 $
+  Version:   $Revision: 1.11.2.2 $
 
 =========================================================================auto=*/
 // for vtk objects we use here
-#include "vtkHyperStreamlinePoints.h"
+#include "vtkHyperStreamlineDTMRI.h"
 #include "vtkCollection.h"
 #include "vtkObjectFactory.h"
 #include "vtkPolyData.h"
@@ -33,10 +33,7 @@
 // for debug output of features
 #include "vtkImageData.h"
 
-
-
-
-vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.11.2.1 $");
+vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.11.2.2 $");
 vtkStandardNewMacro(vtkTractShapeFeatures);
 
 vtkCxxSetObjectMacro(vtkTractShapeFeatures, InputStreamlines, vtkCollection);
@@ -54,6 +51,7 @@ vtkTractShapeFeatures::vtkTractShapeFeatures()
 
   this->HausdorffN = 10;
 
+  this->SymmetrizeMethod = 1;
 }
 
 vtkTractShapeFeatures::~vtkTractShapeFeatures()
@@ -111,11 +109,10 @@ vtkImageData * vtkTractShapeFeatures::ConvertVNLMatrixToVTKImage(OutputType *mat
 
 }
 
-void vtkTractShapeFeatures::GetPointsFromHyperStreamlinePointsSubclass(TractPointsListType::Pointer sample, vtkHyperStreamlinePoints *currStreamline)
+void vtkTractShapeFeatures::GetPointsFromHyperStreamlinePointsSubclass(TractPointsListType::Pointer sample, vtkHyperStreamlineDTMRI *currStreamline)
 {
   XYZVectorType mv;
-  vtkPoints *hs0, *hs1;
-  vtkFloatArray *scalars;
+  vtkPoints *hs0;
   int ptidx, numPts;
   double point[3];
 
@@ -183,13 +180,18 @@ void vtkTractShapeFeatures::ComputeFeatures()
         this->ComputeFeaturesEndPoints();
         break;
       }
+    case MEAN_CLOSEST_POINT:
+      {
+        this->ComputeFeaturesHausdorff();
+        break;
+      }
       
     }
 }
 
 void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
 {
-  vtkHyperStreamlinePoints *currStreamline1, *currStreamline2;
+  vtkHyperStreamlineDTMRI *currStreamline1, *currStreamline2;
   XYZVectorType mv1, mv2;
 
   int numberOfStreamlines = this->InputStreamlines->GetNumberOfItems();
@@ -208,7 +210,7 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
   
   this->InputStreamlines->InitTraversal();
   // TO DO: make sure this is a vtkHyperStreamlinePoints object
-  currStreamline1= (vtkHyperStreamlinePoints *)this->InputStreamlines->GetNextItemAsObject();
+  currStreamline1= (vtkHyperStreamlineDTMRI *)this->InputStreamlines->GetNextItemAsObject();
   
   // test we have streamlines
   if (currStreamline1 == NULL)
@@ -230,7 +232,7 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
   for (int i = 0; i < numberOfStreamlines; i++)
     {
       vtkDebugMacro( "Current Streamline: " << i);
-      currStreamline1= (vtkHyperStreamlinePoints *)
+      currStreamline1= (vtkHyperStreamlineDTMRI *)
         this->InputStreamlines->GetItemAsObject(i);
 
       // Get the tract path's points on an itk list sample object
@@ -238,7 +240,7 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
                                                        currStreamline1);
       for (int j = 0; j < numberOfStreamlines; j++)
         {
-          currStreamline2= (vtkHyperStreamlinePoints *)
+          currStreamline2= (vtkHyperStreamlineDTMRI *)
             this->InputStreamlines->GetItemAsObject(j);
 
           // Get the tract path's points on an itk list sample object
@@ -251,7 +253,7 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
           // vars for computing distance
           sumDist = 0;
           maxMinDist = 0;
-          sumSqDist = 0;
+          //sumSqDist = 0;
           countDist = 0;
 
           size1 = sample1->Size();
@@ -277,11 +279,15 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
 
                   count2+=increment;
                 }
-              // accumulate the min dist to this point
+
+              // accumulate the min dist to this point 
+              // (for mean closest point)
               sumDist = sumDist + minDist; 
-              sumSqDist = sumSqDist + minDist*minDist; 
+              // (for testing squared distances)
+              //sumSqDist = sumSqDist + minDist*minDist; 
 
               // find max of min dists so far
+              // (for standard hausdorff)
               if (minDist > maxMinDist) {maxMinDist = minDist;}
 
               countDist++;
@@ -290,22 +296,76 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
             }
 
           // Store distance for this pair of tracts.
-          // Save "average Hausdorff" (avg of min dists) in matrix.
-          // normal Hausdorff is the max of the min dists.
-          // Note this is a symmetric distance measure, we use the 
-          // average of dist(a->b) and (b->a):
-          // in a standard normal distribution, 80% of the distribution
-          // is to the left of 0.842 (CDF(0.842)=80%)
+          double currentDistance = 0; 
+          switch (this->FeatureType)
+            {
+            case HAUSDORFF:
+              {
+                // normal Hausdorff is the max of the min dists.
+                currentDistance = maxMinDist;
+                break;
+              }
+            case MEAN_CLOSEST_POINT:
+              {
+                // Save "average Hausdorff" (avg of min dists) in matrix.
+                currentDistance = sumDist/countDist;
+                break;
+              }
 
-          //double tmp = sumDist/countDist + 0.842*sqrt(sumSqDist);
+            }
 
-          // normal
-          double tmp = sumDist/countDist;
-          // for 90 %
-          //double tmp = sumDist + 1.28*sqrt(sumSqDist);
-          m_InterTractDistanceMatrix(i,j) += tmp/2;
-          m_InterTractDistanceMatrix(j,i) += tmp/2;
-          //(*this->InterTractDistanceMatrix)[i][j] += i+j;
+
+          switch (this->SymmetrizeMethod) 
+            {
+            case 1:
+              {
+                // mean
+                // Symmetric distance measure, we use the 
+                // average of dist(a->b) and (b->a):
+                m_InterTractDistanceMatrix(i,j) += currentDistance/2;
+                m_InterTractDistanceMatrix(j,i) += currentDistance/2;
+                break;
+              }
+            case 2:
+              {
+                // min
+                // min of dist(a->b) and (b->a):
+                if (m_InterTractDistanceMatrix(i,j) == 0) 
+                  {
+                    m_InterTractDistanceMatrix(i,j) = currentDistance;
+                    m_InterTractDistanceMatrix(j,i) = currentDistance;
+                  } 
+                else
+                  {
+                    if (currentDistance < m_InterTractDistanceMatrix(i,j)) 
+                      {
+                        m_InterTractDistanceMatrix(i,j) = currentDistance;
+                        m_InterTractDistanceMatrix(j,i) = currentDistance;
+                      }
+                  }
+                break;
+              }
+            case 3:
+              {
+                // max
+                // max of dist(a->b) and (b->a):
+                if (m_InterTractDistanceMatrix(i,j) == 0) 
+                  {
+                    m_InterTractDistanceMatrix(i,j) = currentDistance;
+                    m_InterTractDistanceMatrix(j,i) = currentDistance;
+                  } 
+                else
+                  {
+                    if (currentDistance > m_InterTractDistanceMatrix(i,j)) 
+                      {
+                        m_InterTractDistanceMatrix(i,j) = currentDistance;
+                        m_InterTractDistanceMatrix(j,i) = currentDistance;
+                      }
+                  }
+                break;
+              }
+            }
+
         }
     }
 
@@ -330,7 +390,7 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
 
 void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
 {
-  vtkHyperStreamlinePoints *currStreamline;
+  vtkHyperStreamlineDTMRI *currStreamline;
 
   // to calculate covariance of the points
   typedef itk::Statistics::CovarianceCalculator< TractPointsListType > 
@@ -351,7 +411,7 @@ void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
   // get ready to traverse streamline collection.
   this->InputStreamlines->InitTraversal();
   // TO DO: make sure this is a vtkHyperStreamlinePoints object
-  currStreamline= (vtkHyperStreamlinePoints *)this->InputStreamlines->GetNextItemAsObject();
+  currStreamline= (vtkHyperStreamlineDTMRI *)this->InputStreamlines->GetNextItemAsObject();
   
   // test we have streamlines
   if (currStreamline == NULL)
@@ -483,7 +543,7 @@ void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
       features->PushBack( fv );
 
       // get next object in collection
-      currStreamline= (vtkHyperStreamlinePoints *)
+      currStreamline= (vtkHyperStreamlineDTMRI *)
         this->InputStreamlines->GetNextItemAsObject();
     }
 
@@ -547,7 +607,7 @@ void vtkTractShapeFeatures::ComputeFeaturesMeanAndCovariance()
 
 void vtkTractShapeFeatures::ComputeFeaturesEndPoints()
 {
-  vtkHyperStreamlinePoints *currStreamline;
+  vtkHyperStreamlineDTMRI *currStreamline;
 
   // the features are endpoints (3 values)
   typedef itk::Vector< double, 3 > FeatureVectorType;
@@ -559,7 +619,7 @@ void vtkTractShapeFeatures::ComputeFeaturesEndPoints()
   // Ready the input for access
   this->InputStreamlines->InitTraversal();
   // TO DO: make sure this is a vtkHyperStreamlinePoints object
-  currStreamline= (vtkHyperStreamlinePoints *)this->InputStreamlines->GetNextItemAsObject();
+  currStreamline= (vtkHyperStreamlineDTMRI *)this->InputStreamlines->GetNextItemAsObject();
   
   // test we have streamlines
   if (currStreamline == NULL)
@@ -593,7 +653,7 @@ void vtkTractShapeFeatures::ComputeFeaturesEndPoints()
       endpoint->PushBack( fv );
 
       // get next object in collection
-      currStreamline= (vtkHyperStreamlinePoints *)
+      currStreamline= (vtkHyperStreamlineDTMRI *)
         this->InputStreamlines->GetNextItemAsObject();
     }
 

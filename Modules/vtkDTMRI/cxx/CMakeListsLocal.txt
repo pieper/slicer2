@@ -39,6 +39,7 @@ vtkSaveTracts.cxx
 vtkROISelectTracts.cxx
 vtkColorROIFromTracts.cxx
 vtkEstimateDiffusionTensor.cxx
+vtkColorROIFromPolyLines.cxx
 )
 
 ## classes that one does not want tcl wrapped
@@ -73,7 +74,7 @@ INCLUDE_DIRECTORIES(
    ${VTKTENSORUTIL_BUILD_DIR}
    ${SANDBOX_SRC_DIR}/SlicerTractClusteringImplementation/Code 
    ${SANDBOX_SRC_DIR}/SpectralClustering
-
+   ${TEEM_BUILD_DIR}/include/
 )
 
 LINK_DIRECTORIES( 

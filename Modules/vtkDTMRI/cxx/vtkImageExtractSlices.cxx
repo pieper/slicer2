@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageExtractSlices.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:05 $
-  Version:   $Revision: 1.9.8.1 $
+  Date:      $Date: 2006/02/15 19:47:38 $
+  Version:   $Revision: 1.9.8.2 $
 
 =========================================================================auto=*/
 #include "vtkImageExtractSlices.h"
@@ -360,14 +360,13 @@ static void vtkImageExtractSlicesExecute2(vtkImageExtractSlices *self,
 {
   int idxX, idxY, idxZ;
   int idxRep;
-  int idxoutX,idxoutY;
   int maxX, maxY, maxZ;
-  int dimX, dimY, dimZ;
-  int inIncX, inIncY, inIncZ;
+  int dimX, dimY;
+  int inIncY, inIncZ;
   int outIncX, outIncY, outIncZ;
   unsigned long count = 0;
   unsigned long target;
-  int slice, period, offset, tiles ;
+  int period, offset, tiles ;
   int numrep,rep,avrep;
   
   // information for extracting the slices

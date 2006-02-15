@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkStochasticTracking.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:08 $
-  Version:   $Revision: 1.1.2.1 $
+  Date:      $Date: 2006/02/15 19:47:41 $
+  Version:   $Revision: 1.1.2.2 $
 
 =========================================================================auto=*/
 #include "vtkStochasticTracking.h"

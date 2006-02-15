@@ -23,8 +23,8 @@ renderers AddItem ren1
 streamControl SetInputRenderers renderers
 
 # Type of streamlines to create
-streamControl UseVtkHyperStreamlinePoints
-vtkHyperStreamlinePoints exampleObject
+[streamControl GetSeedTracts] UseVtkHyperStreamlinePoints
+vtkHyperStreamlineDTMRI exampleObject
 exampleObject  IntegrateMinorEigenvector
 exampleObject SetMaximumPropagationDistance 18.0
 exampleObject SetIntegrationStepLength 0.1
@@ -34,10 +34,11 @@ exampleObject SetNumberOfSides 18
 # Less picky anisotropy and curvature settings than default.
 # The defaults for brain will cut off these streamlines near the
 # botttom of the cube.
-exampleObject SetMinFractionalAnisotropy 0
+exampleObject SetStoppingThreshold 0
+exampleObject SetStoppingModeToLinearMeasure
 exampleObject SetMaxCurvature 10
 # Give the streamControl this object to copy new ones from
-streamControl SetVtkHyperStreamlinePointsSettings exampleObject
+[streamControl GetSeedTracts] SetVtkHyperStreamlinePointsSettings exampleObject
 
 #
 # generate tensors
@@ -50,19 +51,21 @@ set input [ptLoad GetOutput]
 
 # Set the tensors as input to the streamline controller
 streamControl SetInputTensorField $input
-streamControl ScalarVisibilityOn
+[streamControl GetDisplayTracts] ScalarVisibilityOn
 
 # this is needed so the streamControl object can
 # check whether the streamline start points are inside
 # the data.  Otherwise the data bounds aren't correct yet.
 ptLoad Update
 
-streamControl SeedStreamlineFromPoint 9 9 -9
-streamControl SeedStreamlineFromPoint -9 -9 -9
-streamControl SeedStreamlineFromPoint 9 -9 -9
-streamControl SeedStreamlineFromPoint -9 9 -9
-streamControl SeedStreamlineFromPoint 9 9 -9
-streamControl AddStreamlinesToScene
+
+[streamControl GetSeedTracts] SeedStreamlineFromPoint 9 9 -9
+[streamControl GetSeedTracts] SeedStreamlineFromPoint -9 -9 -9
+[streamControl GetSeedTracts] SeedStreamlineFromPoint 9 -9 -9
+[streamControl GetSeedTracts] SeedStreamlineFromPoint -9 9 -9
+[streamControl GetSeedTracts] SeedStreamlineFromPoint 9 9 -9
+
+[streamControl GetDisplayTracts] AddStreamlinesToScene
 
 
 # plane for context
@@ -153,11 +156,11 @@ renWin Render
 # test with another streamline added
 puts "Adding more streamlines, re-clustering"
 #streamControl DebugOn
-streamControl SeedStreamlineFromPoint 9 9 -9
-streamControl SeedStreamlineFromPoint -9 9 -9
-streamControl SeedStreamlineFromPoint -9 9 -9
-streamControl RemoveStreamlinesFromScene
-streamControl AddStreamlinesToScene
+[streamControl GetSeedTracts] SeedStreamlineFromPoint 9 9 -9
+[streamControl GetSeedTracts] SeedStreamlineFromPoint -9 9 -9
+[streamControl GetSeedTracts] SeedStreamlineFromPoint -9 9 -9
+[streamControl GetDisplayTracts] RemoveStreamlinesFromScene
+[streamControl GetDisplayTracts] AddStreamlinesToScene
 renWin Render
 set clusterer [streamControl GetTractClusterer]
 $clusterer SetNumberOfEigenvectors 2

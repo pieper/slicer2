@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:08 $
-  Version:   $Revision: 1.9.2.1 $
+  Date:      $Date: 2006/02/15 19:47:41 $
+  Version:   $Revision: 1.9.2.2 $
 
 =========================================================================auto=*/
 
@@ -20,6 +20,7 @@
 
 #include "vtkTransformPolyDataFilter.h"
 #include "vtkPolyDataWriter.h"
+#include "vtkTimerLog.h"
 
 #include <sstream>
 #include <string>
@@ -59,6 +60,7 @@ vtkSeedTracts::vtkSeedTracts()
   this->VtkHyperStreamlineSettings=NULL;
   this->VtkHyperStreamlinePointsSettings=NULL;
   this->VtkPreciseHyperStreamlinePointsSettings=NULL;
+  this->VtkHyperStreamlineTeemSettings=NULL;
 
   // default to vtkHyperStreamline class creation
   this->UseVtkHyperStreamline();
@@ -85,6 +87,18 @@ vtkSeedTracts::~vtkSeedTracts()
   if (this->InputROI) this->InputROI->Delete();
   if (this->InputROI2) this->InputROI->Delete();
 
+  // settings
+  if (this->VtkHyperStreamlineSettings) 
+    this->VtkHyperStreamlineSettings->Delete();
+  if (this->VtkHyperStreamlinePointsSettings) 
+    this->VtkHyperStreamlinePointsSettings->Delete();
+  if (this->VtkPreciseHyperStreamlinePointsSettings) 
+    this->VtkPreciseHyperStreamlinePointsSettings->Delete();
+  if (this->VtkHyperStreamlineTeemSettings) 
+    this->VtkHyperStreamlineTeemSettings->Delete();
+
+  // collection
+  if (this->Streamlines) this->Streamlines->Delete();
 }
 
 
@@ -98,11 +112,13 @@ vtkSeedTracts::~vtkSeedTracts()
 vtkHyperStreamline * vtkSeedTracts::CreateHyperStreamline()
 {
   vtkHyperStreamline *currHS;
-  vtkHyperStreamlinePoints *currHSP;
+  vtkHyperStreamlineDTMRI *currHSP;
   vtkPreciseHyperStreamlinePoints *currPHSP;
+  vtkHyperStreamlineTeem *currHST;
 
   vtkDebugMacro(<< "in create HyperStreamline, type " << this->TypeOfHyperStreamline);
 
+  
   switch (this->TypeOfHyperStreamline)
     {
     case USE_VTK_HYPERSTREAMLINE:
@@ -116,19 +132,40 @@ vtkHyperStreamline * vtkSeedTracts::CreateHyperStreamline()
           return(vtkHyperStreamline::New());
         }
       break;
+    case USE_VTK_HYPERSTREAMLINE_TEEM:
+      if (this->VtkHyperStreamlineTeemSettings) 
+        {
+          // create object
+          std::cout << "Creatng HST" << endl;
+          currHST=vtkHyperStreamlineTeem::New();
+
+          std::cout << "settings for HST" << endl;
+
+          this->UpdateHyperStreamlineTeemSettings(currHST);
+
+
+          std::cout << "returning HST" << endl;
+
+          return((vtkHyperStreamline *)currHST);
+        }
+      else
+        {
+          return((vtkHyperStreamline *) vtkHyperStreamlineTeem::New());
+        }
+      break;
     case USE_VTK_HYPERSTREAMLINE_POINTS:
       if (this->VtkHyperStreamlinePointsSettings) 
         {
           // create object
-          currHSP=vtkHyperStreamlinePoints::New();
+          currHSP=vtkHyperStreamlineDTMRI::New();
 
-          this->UpdateHyperStreamlinePointsSettings((vtkHyperStreamlinePoints *) currHSP);
+          this->UpdateHyperStreamlinePointsSettings(currHSP);
 
           return((vtkHyperStreamline *)currHSP);
         }
       else
         {
-          return((vtkHyperStreamline *) vtkHyperStreamlinePoints::New());
+          return((vtkHyperStreamline *) vtkHyperStreamlineDTMRI::New());
 
         }
 
@@ -212,7 +249,8 @@ vtkHyperStreamline * vtkSeedTracts::CreateHyperStreamline()
 void vtkSeedTracts::UpdateAllHyperStreamlineSettings()
 {
   vtkObject *currStreamline;
-  vtkHyperStreamlinePoints *currHSP;
+  vtkHyperStreamlineDTMRI *currHSP;
+  vtkHyperStreamlineTeem *currHST;
 
   // traverse streamline collection
   this->Streamlines->InitTraversal();
@@ -221,13 +259,20 @@ void vtkSeedTracts::UpdateAllHyperStreamlineSettings()
 
   while(currStreamline)
     {
-      std::cout << currStreamline->GetClassName() << endl;
-      if (strcmp(currStreamline->GetClassName(),"vtkHyperStreamlinePoints") == 0)
+      vtkDebugMacro( << currStreamline->GetClassName() );
+      if (strcmp(currStreamline->GetClassName(),"vtkHyperStreamlineDTMRI") == 0)
         {
-          std::cout << " match" <<endl;
-          currHSP = (vtkHyperStreamlinePoints *) currStreamline;
+          vtkDebugMacro( << " match" );
+          currHSP = (vtkHyperStreamlineDTMRI *) currStreamline;
           this->UpdateHyperStreamlinePointsSettings(currHSP);
           currHSP->Update();
+        }
+      if (strcmp(currStreamline->GetClassName(),"vtkHyperStreamlineTeem") == 0)
+        {
+          vtkDebugMacro( << " match" );
+          currHST = (vtkHyperStreamlineTeem *) currStreamline;
+          this->UpdateHyperStreamlineTeemSettings(currHST);
+          currHST->Update();
         }
 
       currStreamline= (vtkObject *)this->Streamlines->GetNextItemAsObject();
@@ -236,7 +281,7 @@ void vtkSeedTracts::UpdateAllHyperStreamlineSettings()
 
 // Update settings of one hyper streamline
 //----------------------------------------------------------------------------
-void vtkSeedTracts::UpdateHyperStreamlinePointsSettings( vtkHyperStreamlinePoints *currHSP)
+void vtkSeedTracts::UpdateHyperStreamlinePointsSettings( vtkHyperStreamlineDTMRI *currHSP)
 {
 
   // Copy user's settings into this object:
@@ -245,14 +290,8 @@ void vtkSeedTracts::UpdateHyperStreamlinePointsSettings( vtkHyperStreamlinePoint
   currHSP->SetMaximumPropagationDistance(this->VtkHyperStreamlinePointsSettings->GetMaximumPropagationDistance());
   // IntegrationStepLength
   currHSP->SetIntegrationStepLength(this->VtkHyperStreamlinePointsSettings->GetIntegrationStepLength());
-  // StepLength
-  currHSP->SetStepLength(this->VtkHyperStreamlinePointsSettings->GetStepLength());
-  // Radius
-  currHSP->SetRadius(this->VtkHyperStreamlinePointsSettings->GetRadius());
-  // NumberOfSides
-  currHSP->SetNumberOfSides(this->VtkHyperStreamlinePointsSettings->GetNumberOfSides());
-  // MaxCurvature
-  currHSP->SetMaxCurvature(this->VtkHyperStreamlinePointsSettings->GetMaxCurvature());
+  // RadiusOfCurvature
+  currHSP->SetRadiusOfCurvature(this->VtkHyperStreamlinePointsSettings->GetRadiusOfCurvature());
   
   // Stopping threshold
   currHSP->SetStoppingThreshold(this->VtkHyperStreamlinePointsSettings->GetStoppingThreshold());
@@ -267,6 +306,43 @@ void vtkSeedTracts::UpdateHyperStreamlinePointsSettings( vtkHyperStreamlinePoint
   // IntegrationDirection (set in this class, default both ways)
   currHSP->SetIntegrationDirection(this->IntegrationDirection);
 
+}
+
+// Update settings of one hyper streamline:
+// This is where teem hyperstreamlines have their settings updated
+// from the user interface.
+//----------------------------------------------------------------------------
+void vtkSeedTracts::UpdateHyperStreamlineTeemSettings( vtkHyperStreamlineTeem *currHST)
+{
+
+  std::cout << "in settings  function HST" << endl;
+
+  // Potentially this should update the tendFiberContext class for the given volume,
+  // instead of updating all streamlines.
+  
+  // Copy user's settings into this object:
+  
+  // MaximumPropagationDistance 
+  currHST->SetMaximumPropagationDistance(this->VtkHyperStreamlineTeemSettings->GetMaximumPropagationDistance());
+  // IntegrationStepLength
+  currHST->SetIntegrationStepLength(this->VtkHyperStreamlineTeemSettings->GetIntegrationStepLength());
+  // RadiusOfCurvature
+  currHST->SetRadiusOfCurvature(this->VtkHyperStreamlineTeemSettings->GetRadiusOfCurvature());
+  
+  // Stopping threshold
+  currHST->SetStoppingThreshold(this->VtkHyperStreamlineTeemSettings->GetStoppingThreshold());
+  
+  // Stopping Mode
+  currHST->SetStoppingMode(this->VtkHyperStreamlineTeemSettings->GetStoppingMode());
+  
+  
+  // Eigenvector to integrate
+  currHST->SetIntegrationEigenvector(this->VtkHyperStreamlineTeemSettings->GetIntegrationEigenvector());
+  
+  // IntegrationDirection (set in this class, default both ways)
+  currHST->SetIntegrationDirection(this->IntegrationDirection);
+
+  std::cout << "DONE in settings  function HST" << endl;
 }
 
 
@@ -290,7 +366,7 @@ int vtkSeedTracts::PointWithinTensorData(double *point, double *pointw)
 
   if (inbounds ==0)
     {
-      cout << "point " << pointw[0] << " " << pointw[1] << " " << pointw[2] << " outside of tensor dataset" << endl;
+      std::cout << "point " << pointw[0] << " " << pointw[1] << " " << pointw[2] << " outside of tensor dataset" << endl;
     }
 
   return(inbounds);
@@ -396,6 +472,10 @@ void vtkSeedTracts::SeedStreamlinesInROI()
   short *inPtr;
   vtkHyperStreamline *newStreamline;
 
+  // time
+  vtkTimerLog *timer = vtkTimerLog::New();
+  timer->StartTimer();
+
   // test we have input
   if (this->InputROI == NULL)
     {
@@ -491,6 +571,10 @@ void vtkSeedTracts::SeedStreamlinesInROI()
         }
       inPtr += inIncZ;
     }
+
+  timer->StopTimer();
+  std::cout << "Tractography in ROI time: " << timer->GetElapsedTime() << endl;
+
 }
 
 // seed in each voxel in the ROI, only keep paths that intersect the
@@ -507,7 +591,11 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
   unsigned long count = 0;
   //unsigned long target;
   short *inPtr;
-  vtkHyperStreamlinePoints *newStreamline;
+  vtkHyperStreamlineDTMRI *newStreamline;
+
+  // time
+  vtkTimerLog *timer = vtkTimerLog::New();
+  timer->StartTimer();
 
   // test we have input
   if (this->InputROI == NULL)
@@ -608,7 +696,7 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
                   if (this->PointWithinTensorData(point,point2))
                     {
                       // Now create a streamline.
-                      newStreamline=(vtkHyperStreamlinePoints *) this->CreateHyperStreamline();
+                      newStreamline=(vtkHyperStreamlineDTMRI *) this->CreateHyperStreamline();
 
                       // Set its input information.
                       newStreamline->SetInput(this->InputTensorField);
@@ -701,6 +789,8 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
       inPtr += inIncZ;
     }
 
+  timer->StopTimer();
+  std::cout << "Tractography in ROI time: " << timer->GetElapsedTime() << endl;
 }
 
 
@@ -721,13 +811,17 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   unsigned long target;
   int count2 = 0;
   short *inPtr;
-  vtkHyperStreamlinePoints *newStreamline;
+  vtkHyperStreamlineDTMRI *newStreamline;
   vtkTransform *transform;
   vtkTransformPolyDataFilter *transformer;
   vtkPolyDataWriter *writer;
   std::stringstream fileNameStr;
   int idx;
   ofstream filePoints, fileCoordinateSystemInfo;
+
+  // time
+  vtkTimerLog *timer = vtkTimerLog::New();
+  timer->StartTimer();
 
   // test we have input
   if (this->InputROI == NULL)
@@ -843,7 +937,7 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
               //cout << (count/(50.0*target) + (maxZ+1)*(maxY+1)) << endl;
               //cout << "progress: " << count << endl;
               // just output numbers from 1 to 50.
-              cout << count2 << endl;
+              std::cout << count2 << endl;
               count2++;
             }
           count++;
@@ -868,7 +962,7 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
                   if (this->PointWithinTensorData(point,point2))
                     {
                       // Now create a streamline 
-                      newStreamline=(vtkHyperStreamlinePoints *) 
+                      newStreamline=(vtkHyperStreamlineDTMRI *) 
                         this->CreateHyperStreamline();
                       
                       // Set its input information.
@@ -880,7 +974,7 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
                       newStreamline->Update();
 
                       // See if we like it enough to write
-                      if (newStreamline->GetOutput()->GetNumberOfPoints() > 100)
+                      if (newStreamline->GetOutput()->GetNumberOfPoints() > 30)
                         {
                           
                           // transform model
@@ -897,7 +991,7 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
                           writer->Write();
                           
                           // Save the center points to disk
-                          this->SaveStreamlineAsTextFile(filePoints,newStreamline);
+                          this->SaveStreamlineAsTextFile(filePoints,transformer->GetOutput());
 
                           idx++;
                         }
@@ -923,12 +1017,14 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   filePoints.close();
   
   // Tell user how many we wrote
-  cout << "Wrote " << idx << "model files." << endl;
+  std::cout << "Wrote " << idx << "model files." << endl;
 
   fileCoordinateSystemInfo << "Model files written:" << endl;
   fileCoordinateSystemInfo << idx << endl;
   fileCoordinateSystemInfo.close();
 
+  timer->StopTimer();
+  std::cout << "Tractography in ROI time: " << timer->GetElapsedTime() << endl;
 }
 
 // Save only one streamline. Called from within functions that save 
@@ -936,7 +1032,7 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
 // Current format is x1,y1,z1 x2,y2,z2 x3,y3,z3 \n
 //----------------------------------------------------------------------------
 void vtkSeedTracts::SaveStreamlineAsTextFile(ofstream &filePoints,
-                                             vtkHyperStreamlinePoints *currStreamline)
+                                             vtkPolyData *currStreamline)
 {
   vtkPoints *hs0, *hs1;
   int ptidx, numPts;
@@ -944,7 +1040,7 @@ void vtkSeedTracts::SaveStreamlineAsTextFile(ofstream &filePoints,
 
   
   //GetHyperStreamline0/1 and write their points.
-  hs0=currStreamline->GetOutput()->GetCell(0)->GetPoints();
+  hs0=currStreamline->GetCell(0)->GetPoints();
 
   // Write the first one in reverse order since both lines
   // travel outward from the initial point.
@@ -959,7 +1055,7 @@ void vtkSeedTracts::SaveStreamlineAsTextFile(ofstream &filePoints,
       ptidx--;
     }
 
-  hs1=currStreamline->GetOutput()->GetCell(1)->GetPoints();
+  hs1=currStreamline->GetCell(1)->GetPoints();
   numPts=hs1->GetNumberOfPoints();
   ptidx=1;
   while (ptidx < numPts)
