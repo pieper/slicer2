@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricTensorGlyph.cxx,v $
-  Date:      $Date: 2006/02/15 23:48:15 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/02/16 03:01:10 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 #include "vtkSuperquadricTensorGlyph.h"
@@ -216,21 +216,21 @@ void vtkSuperquadricTensorGlyph::Execute()
   if ( (sourceCells=sq->GetOutput()->GetVerts())->GetNumberOfCells() > 0 )
     {
       cells = vtkCellArray::New();
-      cells->Allocate(2*numPts*sourceCells->GetSize());
+      cells->Allocate(numPts*sourceCells->GetSize());
       output->SetVerts(cells);
       cells->Delete();
     }
   if ( (sourceCells=sq->GetOutput()->GetLines())->GetNumberOfCells() > 0 )
     {
       cells = vtkCellArray::New();
-      cells->Allocate(2*numPts*sourceCells->GetSize());
+      cells->Allocate(numPts*sourceCells->GetSize());
       output->SetLines(cells);
       cells->Delete();
     }
   if ( (sourceCells=sq->GetOutput()->GetPolys())->GetNumberOfCells() > 0 )
     {
       cells = vtkCellArray::New();
-      cells->Allocate(2*numPts*sourceCells->GetSize());
+      cells->Allocate(numPts*sourceCells->GetSize());
       output->SetPolys(cells);
       cells->Delete();
     }
@@ -238,7 +238,7 @@ void vtkSuperquadricTensorGlyph::Execute()
     {
       //cout<<"Allocating Strips"<<endl;
       cells = vtkCellArray::New();
-      cells->Allocate(2*numPts*sourceCells->GetSize());
+      cells->Allocate(numPts*sourceCells->GetSize());
       output->SetStrips(cells);
       cells->Delete();
     }
