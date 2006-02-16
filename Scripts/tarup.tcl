@@ -117,7 +117,7 @@ proc tarup_usage {} {
     puts "\t\tlocal, to make a local copy, no upload"
     puts "\tincludeSource\n\t\t0, to make a binary release (default)\n\t\t1, to include the cxx directories"
     puts "Example: tarup local 0"
-    puts "Caveate: upload to na-mic.org is only allowed from trusted machines at BWH."
+    puts "Caveat: upload to na-mic.org is only allowed from trusted machines at BWH."
 }
 
 #
@@ -636,7 +636,7 @@ puts "uploadFlag = $uploadFlag"
             "SunOS" -
             "Linux" - 
             "Darwin" {
-                exec xterm -e curl --connect-timeout 120 --silent --show-error --upload-file $curlfile $curldest
+                exec /usr/X11R6/bin/xterm -e curl --connect-timeout 120 --silent --show-error --upload-file $curlfile $curldest
             }
             default { 
                 exec rxvt -e curl --connect-timeout 120 --silent --show-error --upload-file $curlfile $curldest
