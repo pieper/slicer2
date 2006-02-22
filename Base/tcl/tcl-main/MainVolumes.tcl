@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainVolumes.tcl,v $
-#   Date:      $Date: 2006/02/01 22:33:39 $
-#   Version:   $Revision: 1.91.2.3 $
+#   Date:      $Date: 2006/02/22 20:30:51 $
+#   Version:   $Revision: 1.91.2.4 $
 # 
 #===============================================================================
 # FILE:        MainVolumes.tcl
@@ -54,7 +54,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.91.2.3 $} {$Date: 2006/02/01 22:33:39 $}]
+    {$Revision: 1.91.2.4 $} {$Date: 2006/02/22 20:30:51 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -324,8 +324,7 @@ proc MainVolumesRead {v} {
 
     set num [Volume($v,node) GetNumberOfDICOMFiles]
     if {$::Module(verbose)} {
-        puts "MainVolumesRead: node $v number of dicom files = $num\nPrinting node $v:"
-        Volume($v,node) Print
+        puts "MainVolumesRead: node $v number of dicom files = $num"
     }
     if {$num != 0} {
         Volume($v,node) SetFileType "DICOM"
@@ -360,7 +359,7 @@ proc MainVolumesRead {v} {
         }
         "Nrrd" {
             if { ! [ file exists [Volume($v,node) GetFullPrefix] ] } {
-                DevErrorWindow "Generic volume does not exist: [Volume($v,node) GetFullPrefix]"
+                DevErrorWindow "Nrrd volume does not exist: [Volume($v,node) GetFullPrefix]"
                 return -1
             }
         }
