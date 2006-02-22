@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkIndirectLookupTable.h,v $
-  Date:      $Date: 2006/02/14 20:40:13 $
-  Version:   $Revision: 1.20 $
+  Date:      $Date: 2006/02/22 23:47:16 $
+  Version:   $Revision: 1.21 $
 
 =========================================================================auto=*/
 /// .NAME vtkIndirectLookupTable - indirectly map scalar values into colors.
@@ -39,10 +39,6 @@
 #include "vtkScalarsToColors.h"
 #include "vtkUnsignedShortArray.h"
 #include "vtkSlicer.h"
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 class VTK_SLICER_BASE_EXPORT vtkIndirectLookupTable : public vtkScalarsToColors
 {

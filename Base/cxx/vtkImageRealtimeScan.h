@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageRealtimeScan.h,v $
-  Date:      $Date: 2006/01/06 17:56:43 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2006/02/22 23:47:16 $
+  Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 // .NAME vtkImageRealtimeScan - Get a realtime image from the scanner.
@@ -23,9 +23,6 @@
 #include "vtkMatrix4x4.h"
 #include "vtkSlicer.h"
 
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 #define LOC_OK 0
 #define LOC_NO 1

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageReformat.h,v $
-  Date:      $Date: 2006/02/14 20:40:12 $
-  Version:   $Revision: 1.24 $
+  Date:      $Date: 2006/02/22 23:47:16 $
+  Version:   $Revision: 1.25 $
 
 =========================================================================auto=*/
 // .NAME vtkImageReformat -  Reformats a 2D image from a 3D volume.
@@ -27,10 +27,6 @@
 #include "vtkFloatArray.h"
 #include "vtkTensor.h"
 #include "vtkSlicer.h"
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 class VTK_SLICER_BASE_EXPORT vtkImageReformat : public vtkImageToImageFilter
 {

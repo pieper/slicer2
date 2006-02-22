@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageGraph.h,v $
-  Date:      $Date: 2006/01/06 17:56:41 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/02/22 23:47:16 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 // .NAME vtkImageGraph - Abstract Filter used in slicer to plot graphs
@@ -18,10 +18,6 @@
 #include "vtkImageData.h"
 #include "vtkIndirectLookupTable.h"
 #include "vtkSlicer.h"
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 // From vtkImagePlot
 #define SET_PIXEL(x,y,color){ ptr  =&outPtr[y*NumXScalar+x*3]; memcpy(ptr,color,3);}

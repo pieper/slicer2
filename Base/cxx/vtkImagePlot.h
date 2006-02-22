@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImagePlot.h,v $
-  Date:      $Date: 2006/02/14 20:40:12 $
-  Version:   $Revision: 1.21 $
+  Date:      $Date: 2006/02/22 23:47:16 $
+  Version:   $Revision: 1.22 $
 
 =========================================================================auto=*/
 // .NAME vtkImagePlot - duh
@@ -24,10 +24,6 @@
 #include "vtkImageToImageFilter.h"
 #include "vtkScalarsToColors.h"
 #include "vtkSlicer.h"
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 class VTK_SLICER_BASE_EXPORT vtkImagePlot : public vtkImageToImageFilter
 {

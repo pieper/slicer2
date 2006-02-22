@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkResliceImage.h,v $
-  Date:      $Date: 2006/02/14 20:40:16 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/02/22 23:47:17 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Samson Timoner TetraMesh Library
   Module:    $RCSfile: vtkResliceImage.h,v $
   Language:  C++
-  Date:      $Date: 2006/02/14 20:40:16 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/02/22 23:47:17 $
+  Version:   $Revision: 1.16 $
   
 Copyright (c) 2001 Samson Timoner
 
@@ -47,10 +47,6 @@ class vtkUnstructuredGrid;
 #include "vtkUnstructuredGrid.h"
 #include "vtkMatrix4x4.h"
 #include "vtkSlicer.h"
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 class VTK_SLICER_BASE_EXPORT vtkResliceImage : public vtkImageToImageFilter
 {

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkBoolTess.h,v $
-  Date:      $Date: 2006/01/06 17:56:37 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/02/22 23:47:15 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 #ifndef __vtkBoolTess_h
@@ -16,10 +16,6 @@
 
 #include "vtkObject.h"
 #include "vtkSlicer.h"
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 //
 //BTX - begin tcl exclude

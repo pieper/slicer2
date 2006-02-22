@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageFillROI.h,v $
-  Date:      $Date: 2006/02/14 20:40:12 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/02/22 23:47:15 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 // .NAME vtkImageFillROI - Paints on top of an image.
@@ -33,10 +33,6 @@
 #include "point.h"
 #include <string.h>
 #include "vtkSlicer.h"
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 #define SHAPE_POLYGON 1
 #define SHAPE_LINES   2

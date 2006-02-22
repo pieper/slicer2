@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageDICOMReader.h,v $
-  Date:      $Date: 2006/02/14 20:40:11 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/02/22 23:47:15 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 // .NAME vtkImageDICOMReader - Superclass of binary file readers.
@@ -21,16 +21,10 @@
 #ifndef __vtkImageDICOMReader_h
 #define __vtkImageDICOMReader_h
 
-//#include <iostream.h>
-//#include <fstream.h>
 #include "vtkImageData.h"
 #include "vtkImageSource.h"
 #include "vtkTransform.h"
 #include "vtkSlicer.h"
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 #define VTK_FILE_BYTE_ORDER_BIG_ENDIAN 0
 #define VTK_FILE_BYTE_ORDER_LITTLE_ENDIAN 1

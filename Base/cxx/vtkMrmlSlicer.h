@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.h,v $
-  Date:      $Date: 2006/02/14 20:40:15 $
-  Version:   $Revision: 1.46 $
+  Date:      $Date: 2006/02/22 23:47:16 $
+  Version:   $Revision: 1.47 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSlicer - main core of the 3D Slicer
@@ -52,10 +52,6 @@
 
 #include "vtkSlicer.h"
 #define NUM_SLICES 3
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 // Orient
 

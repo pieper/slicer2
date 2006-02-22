@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPolyBoolean.h,v $
-  Date:      $Date: 2006/01/06 17:56:51 $
-  Version:   $Revision: 1.18 $
+  Date:      $Date: 2006/02/22 23:47:17 $
+  Version:   $Revision: 1.19 $
 
 =========================================================================auto=*/
 // .NAME vtkPolyBoolean - perform boolean union, subtraction or intersection of volumes
@@ -29,10 +29,6 @@
 #include "vtkPolygon.h"
 #include "vtkBoolTess.h"
 #include "vtkSlicer.h"
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 // Defines for Operation
 #define BOOL_A_MINUS_B 0

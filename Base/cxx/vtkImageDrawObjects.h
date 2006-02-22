@@ -7,20 +7,17 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageDrawObjects.h,v $
-  Date:      $Date: 2006/01/06 17:56:40 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/02/22 23:47:15 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 // .NAME vtkImageDrawObjects - Abstract Filter used in slicer to plot graphs
 #ifndef __vtkImageDrawObjects_h
 #define __vtkImageDrawObjects_h
+
 #include "vtkImageToImageFilter.h"
 #include "vtkImageGraph.h"
 #include "vtkSlicer.h"
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 //BTX
 

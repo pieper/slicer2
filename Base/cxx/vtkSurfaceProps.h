@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSurfaceProps.h,v $
-  Date:      $Date: 2006/02/14 20:40:16 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/02/22 23:47:17 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 #ifndef __vtkSurfaceProps_h
@@ -18,10 +18,6 @@
 #include "vtkPolyData.h"
 #include "vtkCellTriMacro.h"
 #include "vtkSlicer.h"
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 class VTK_SLICER_BASE_EXPORT vtkSurfaceProps : public vtkProcessObject
 {

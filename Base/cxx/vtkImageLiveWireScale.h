@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageLiveWireScale.h,v $
-  Date:      $Date: 2006/02/14 20:40:12 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/02/22 23:47:16 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 // .NAME vtkImageLiveWireScale - General scaling of images for input to LiveWire
@@ -33,10 +33,6 @@
 #include "vtkFloatArray.h"
 #include "vtkPoints.h"
 #include "vtkSlicer.h"
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 class VTK_SLICER_BASE_EXPORT vtkImageLiveWireScale : public vtkImageToImageFilter
 {

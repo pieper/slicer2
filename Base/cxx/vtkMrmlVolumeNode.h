@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlVolumeNode.h,v $
-  Date:      $Date: 2006/02/14 20:40:16 $
-  Version:   $Revision: 1.42 $
+  Date:      $Date: 2006/02/22 23:47:16 $
+  Version:   $Revision: 1.43 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlVolumeNode - MRML node for representing a volume (image stack).
@@ -31,10 +31,6 @@
 #include "vtkTransform.h"
 #include "vtkSlicer.h"
 #include "vtkMrmlVolumeReadWriteNode.h"
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 // found this the hard way: this had been a 'magic number' that allowed
 // the user to run off the end of the array with no error checking -- tsk tsk.

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageResize.h,v $
-  Date:      $Date: 2006/02/14 20:40:13 $
-  Version:   $Revision: 1.21 $
+  Date:      $Date: 2006/02/22 23:47:16 $
+  Version:   $Revision: 1.22 $
 
 =========================================================================auto=*/
 // .NAME vtkImageResize - resize (scale) the input image
@@ -25,10 +25,6 @@
 #include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 class VTK_SLICER_BASE_EXPORT vtkImageResize : public vtkImageToImageFilter
 {

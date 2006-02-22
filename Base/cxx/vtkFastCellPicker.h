@@ -6,8 +6,8 @@
   or http://www.slicer.org/copyright/copyright.txt for details.
   Program:   3D Slicer
   Module:    $RCSfile: vtkFastCellPicker.h,v $
-  Date:      $Date: 2006/01/08 04:44:32 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2006/02/22 23:47:15 $
+  Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 // .NAME vtkFastCellPicker - select a cell by shooting a ray into graphics window
@@ -32,10 +32,6 @@
 #include "vtkPicker.h"
 #include "vtkOBBTree.h"
 #include "vtkSlicer.h"
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 class VTK_SLICER_BASE_EXPORT vtkFastCellPicker : public vtkPicker
 {

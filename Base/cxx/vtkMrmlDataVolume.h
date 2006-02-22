@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlDataVolume.h,v $
-  Date:      $Date: 2006/02/14 20:40:13 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2006/02/22 23:47:16 $
+  Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlDataVolume - Object used in the slicer to perform
@@ -39,10 +39,6 @@
 #include "vtkSlicer.h"
 #include "vtkMrmlDataVolumeReadWrite.h"
 #include "vtkPTSWriter.h"
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 class vtkImageDICOMReader;
 class vtkImageReader;
