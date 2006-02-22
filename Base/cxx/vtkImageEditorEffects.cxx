@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditorEffects.cxx,v $
-  Date:      $Date: 2006/02/15 02:50:56 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2006/02/22 22:54:49 $
+  Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 #include "vtkImageEditorEffects.h"
@@ -57,12 +57,7 @@ void vtkImageEditorEffects::Threshold(float min, float max,
   thresh->SetInValue(in);
   thresh->SetOutValue(out);
 
-  // TODO - fix this
-#ifdef SLICER_VTK5
-  vtkWarningMacro ("cannot Threshold in vtk5");
-#else
   this->Apply(thresh, thresh);
-#endif
 
   thresh->SetInput(NULL);
   thresh->SetOutput(NULL);
@@ -80,12 +75,7 @@ void vtkImageEditorEffects::Draw(int value, vtkPoints *points, int radius,
   fill->SetShapeString(shape);
   fill->SetPoints(points);
 
-  // TODO - fix this
-#ifdef SLICER_VTK5
-  vtkWarningMacro ("cannot draw in vtk5");
-#else
   this->Apply(fill, fill);
-#endif
 
   fill->SetInput(NULL);
   fill->SetOutput(NULL);

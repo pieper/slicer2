@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageNeighborhoodFilter.h,v $
-  Date:      $Date: 2006/01/06 17:56:42 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/02/22 22:54:50 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 // .NAME vtkImageNeighborhoodFilter -  Augments vtkImageSpatialFilter with
@@ -21,14 +21,13 @@
 #ifndef __vtkImageNeighborhoodFilter_h
 #define __vtkImageNeighborhoodFilter_h
 
-#include "vtkImageSpatialFilter.h"
 #include "vtkSlicer.h"
 
-class VTK_SLICER_BASE_EXPORT vtkImageNeighborhoodFilter : public vtkImageSpatialFilter
+class VTK_SLICER_BASE_EXPORT vtkImageNeighborhoodFilter : public vtkSlicerImageSpatialAlgorithm
 {
 public:
   static vtkImageNeighborhoodFilter *New();
-  vtkTypeMacro(vtkImageNeighborhoodFilter,vtkImageSpatialFilter);
+  vtkTypeMacro(vtkImageNeighborhoodFilter,vtkSlicerImageSpatialAlgorithm);
     
   // Description:
   // Mask that defines area of interest in the neighborhood.

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageConnectivity.h,v $
-  Date:      $Date: 2006/02/14 20:40:11 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/02/22 22:54:49 $
+  Version:   $Revision: 1.15 $
 
 =========================================================================auto=*/
 // .NAME vtkImageConnectivity - Identify and process islands of similar pixels
@@ -18,8 +18,6 @@
 #ifndef __vtkImageConnectivity_h
 #define __vtkImageConnectivity_h
 
-#include "vtkImageData.h"
-#include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
 #define CONNECTIVITY_IDENTIFY 1
@@ -28,12 +26,12 @@
 #define CONNECTIVITY_MEASURE 4
 #define CONNECTIVITY_SAVE 5
 
-class VTK_SLICER_BASE_EXPORT vtkImageConnectivity : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageConnectivity : public vtkSlicerImageAlgorithm
 {
 public:
-    static vtkImageConnectivity *New();
-  vtkTypeMacro(vtkImageConnectivity,vtkImageToImageFilter);
-    void PrintSelf(ostream& os, vtkIndent indent);
+ static vtkImageConnectivity *New();
+ vtkTypeMacro(vtkImageConnectivity,vtkSlicerImageAlgorithm);
+ void PrintSelf(ostream& os, vtkIndent indent);
 
   // Function
   void SetFunction(int func) {
@@ -91,7 +89,7 @@ protected:
     int OutputLabel;
     int Seed[3];
     int function;
-  int SliceBySlice;
+    int SliceBySlice;
     
     void ExecuteData(vtkDataObject *);
 };

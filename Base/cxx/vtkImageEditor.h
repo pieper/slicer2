@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditor.h,v $
-  Date:      $Date: 2006/02/15 02:50:55 $
-  Version:   $Revision: 1.19 $
+  Date:      $Date: 2006/02/22 22:54:49 $
+  Version:   $Revision: 1.20 $
 
 =========================================================================auto=*/
 // .NAME vtkImageEditor - Applies editing effects to volumes.
@@ -38,7 +38,7 @@
 
 class vtkCallbackCommand;
 class vtkImageData;
-class vtkImageToImageFilter;
+class vtkSlicerImageAlgorithm;
 class vtkImageReplaceRegion;
 class vtkImageReformatIJK;
 class vtkImageCopy;
@@ -116,12 +116,12 @@ public:
   // The Last and First can be the same for an effect that can
   // be achieved with one filter.
   void Apply();
-  void Apply(vtkImageToImageFilter *firstFilter,
-    vtkImageToImageFilter *lastFilter);
-  virtual void SetFirstFilter(vtkImageToImageFilter*);
-  vtkGetObjectMacro(FirstFilter, vtkImageToImageFilter);
-  virtual void SetLastFilter(vtkImageToImageFilter*);
-  vtkGetObjectMacro(LastFilter, vtkImageToImageFilter);
+  void Apply(vtkSlicerImageAlgorithm *firstFilter,
+    vtkSlicerImageAlgorithm *lastFilter);
+  virtual void SetFirstFilter(vtkSlicerImageAlgorithm*);
+  vtkGetObjectMacro(FirstFilter, vtkSlicerImageAlgorithm);
+  virtual void SetLastFilter(vtkSlicerImageAlgorithm*);
+  vtkGetObjectMacro(LastFilter, vtkSlicerImageAlgorithm);
 
   // Description:
   // Apply the effect to a clipped portion of the input.
@@ -174,8 +174,8 @@ protected:
 
   // Pointers to the first and last filters in the pipeline for
   // performing the effect.
-  vtkImageToImageFilter *FirstFilter;
-  vtkImageToImageFilter *LastFilter;
+  vtkSlicerImageAlgorithm *FirstFilter;
+  vtkSlicerImageAlgorithm *LastFilter;
 
   int Slice;                // slice number for Dimension=Single
   int Dimension;            // 3D, Single, or Multi

@@ -7,14 +7,15 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageStatistics.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:44 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2006/02/22 22:54:50 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
 #include "vtkImageStatistics.h"
+#include "vtkObjectFactory.h"
+#include "vtkImageData.h"
 #include <math.h>
 #include <stdlib.h>
-#include "vtkObjectFactory.h"
 
 //------------------------------------------------------------------------------
 vtkImageStatistics* vtkImageStatistics::New()
@@ -281,8 +282,13 @@ void vtkImageStatistics::ExecuteData(vtkDataObject *)
   int *outPtr;
   int outExt[6];
 
+#ifdef SLICER_VTK5
+  vtkImageData *inData = this->GetImageDataInput (0);
+  vtkImageData *outData = this->GetImageDataInput(0);
+#else
   vtkImageData *inData = this->GetInput(); 
   vtkImageData *outData = this->GetOutput();
+#endif
     outData->GetWholeExtent(outExt);
     outData->SetExtent(outExt);
     outData->AllocateScalars();
@@ -319,9 +325,10 @@ void vtkImageStatistics::ExecuteData(vtkDataObject *)
     }
 }
 
+//------------------------------------------------------------------------------
 void vtkImageStatistics::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageToImageFilter::PrintSelf(os,indent);
+  Superclass::PrintSelf(os,indent);
 
   os << indent << "Igore Zero? "<<this->IgnoreZero     << "\n";
   os << indent << "NumExaminedElements: " <<this->GetNumExaminedElements()<< "\n";

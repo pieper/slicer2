@@ -7,12 +7,15 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageConnectivity.cxx,v $
-  Date:      $Date: 2006/02/14 20:40:11 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2006/02/22 22:54:49 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
 #include "vtkImageConnectivity.h"
+
 #include "vtkObjectFactory.h"
+#include "vtkImageData.h"
+
 #include <time.h>
 #include <string.h>
 #include <math.h>
@@ -816,8 +819,13 @@ static void vtkImageConnectivityExecute(vtkImageConnectivity *self,
 // the datas data types.
 void vtkImageConnectivity::ExecuteData(vtkDataObject *)
 {
+#ifdef SLICER_VTK5
+  vtkImageData *inData = this->GetImageDataInput (0);
+  vtkImageData *outData = this->GetImageDataInput(0);
+#else
   vtkImageData *inData = this->GetInput();
   vtkImageData *outData = this->GetOutput();
+#endif
   outData->SetExtent(outData->GetWholeExtent());
   outData->AllocateScalars();
 
@@ -828,7 +836,7 @@ void vtkImageConnectivity::ExecuteData(vtkDataObject *)
 
   int x1;
 
-  x1 = GetInput()->GetNumberOfScalarComponents();
+  x1 = inData->GetNumberOfScalarComponents();
   if (x1 != 1) 
   {
     vtkErrorMacro(<<"Input has "<<x1<<" instead of 1 scalar component.");
@@ -848,9 +856,10 @@ void vtkImageConnectivity::ExecuteData(vtkDataObject *)
           outData, (short *)(outPtr), outExt);
 }
 
+//----------------------------------------------------------------------------
 void vtkImageConnectivity::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageToImageFilter::PrintSelf(os,indent);
+  Superclass::PrintSelf(os,indent);
   
   os << indent << "Background:        " << this->Background << "\n";
   os << indent << "MinForeground:     " << this->MinForeground << "\n";

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSlicer.h,v $
-  Date:      $Date: 2006/01/06 17:56:51 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/02/22 22:54:50 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 
@@ -19,9 +19,13 @@
  * - sp 2002-04-19
  */
 
+#ifndef __vtkSlicer_h
+#define __vtkSlicer_h
+
+#include "vtkSystemIncludes.h"
 
 #ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
+typedef float vtkFloatingPointType;
 #endif
 
 //
@@ -32,4 +36,21 @@
 #define SLICER_VTK5
 #endif
 
+
 #include "vtkSlicerBaseWin32Header.h"
+
+// This is a trick to work around a feature in the current vtkWrapTcl
+// This should be removed once slicer fully switch to VTK 5.x execution style
+#ifdef SLICER_VTK5
+#include "vtkImageAlgorithm.h"
+#include "vtkImageSpatialAlgorithm.h"
+#define vtkSlicerImageAlgorithm vtkImageAlgorithm
+#define vtkSlicerImageSpatialAlgorithm vtkImageSpatialAlgorithm
+#else
+#include "vtkImageToImageFilter.h"
+#include "vtkImageSpatialFilter.h"
+#define vtkSlicerImageAlgorithm vtkImageToImageFilter
+#define vtkSlicerImageSpatialAlgorithm vtkImageSpatialFilter
+#endif
+
+#endif

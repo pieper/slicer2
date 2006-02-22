@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditor.cxx,v $
-  Date:      $Date: 2006/02/15 02:50:55 $
-  Version:   $Revision: 1.22 $
+  Date:      $Date: 2006/02/22 22:54:49 $
+  Version:   $Revision: 1.23 $
 
 =========================================================================auto=*/
 #include "vtkImageEditor.h"
@@ -26,8 +26,8 @@
 #include "vtkIntArray.h"
 #include <time.h>
 
-vtkCxxSetObjectMacro(vtkImageEditor, FirstFilter, vtkImageToImageFilter);
-vtkCxxSetObjectMacro(vtkImageEditor, LastFilter, vtkImageToImageFilter);
+vtkCxxSetObjectMacro(vtkImageEditor, FirstFilter, vtkSlicerImageAlgorithm);
+vtkCxxSetObjectMacro(vtkImageEditor, LastFilter, vtkSlicerImageAlgorithm);
 
 vtkCxxSetObjectMacro(vtkImageEditor, Output, vtkImageData);
 vtkCxxSetObjectMacro(vtkImageEditor, UndoOutput, vtkImageData);
@@ -236,7 +236,7 @@ void vtkImageEditor::ProgressCallbackFunction(vtkObject* caller,
                                               void* clientdata, void*)
 {
   vtkImageEditor *self = (vtkImageEditor *)(clientdata);
-  vtkImageToImageFilter *filter = self->GetFirstFilter();
+  vtkSlicerImageAlgorithm *filter = self->GetFirstFilter();
   if (filter)
   {
     self->UpdateProgress(filter->GetProgress());
@@ -268,8 +268,8 @@ void vtkImageEditor::SwapOutputs()
 }
 
 //----------------------------------------------------------------------------
-void vtkImageEditor::Apply(vtkImageToImageFilter *firstFilter,
-                           vtkImageToImageFilter *lastFilter)
+void vtkImageEditor::Apply(vtkSlicerImageAlgorithm *firstFilter,
+                           vtkSlicerImageAlgorithm *lastFilter)
 {
   this->SetFirstFilter(firstFilter);
   this->SetLastFilter(lastFilter);
