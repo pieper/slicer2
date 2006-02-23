@@ -7,14 +7,16 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageBimodalAnalysis.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:38 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2006/02/23 01:43:32 $
+  Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 #include "vtkImageBimodalAnalysis.h"
+#include "vtkObjectFactory.h"
+#include "vtkImageData.h"
+
 #include <math.h>
 #include <stdlib.h>
-#include "vtkObjectFactory.h"
 
 //------------------------------------------------------------------------------
 vtkImageBimodalAnalysis* vtkImageBimodalAnalysis::New()
@@ -227,7 +229,11 @@ static void vtkImageBimodalAnalysisExecute(vtkImageBimodalAnalysis *self,
 // the Datas data types.
 void vtkImageBimodalAnalysis::ExecuteData(vtkDataObject *)
 {
+#ifdef SLICER_VTK5
+  vtkImageData *inData = this->GetImageDataInput(0);
+#else
   vtkImageData *inData = this->GetInput();
+#endif
   vtkImageData *outData = this->GetOutput();
   void *inPtr;
   float *outPtr;
@@ -239,7 +245,7 @@ void vtkImageBimodalAnalysis::ExecuteData(vtkDataObject *)
   outPtr = (float *)outData->GetScalarPointer();
   
   // Components turned into x, y and z
-  int c = this->GetInput()->GetNumberOfScalarComponents();
+  int c = inData->GetNumberOfScalarComponents();
   if (c > 1)
   {
     vtkErrorMacro("This filter requires 1 scalar component, not " << c);
@@ -303,9 +309,10 @@ void vtkImageBimodalAnalysis::ExecuteData(vtkDataObject *)
 }
 
 
+//----------------------------------------------------------------------------
 void vtkImageBimodalAnalysis::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageToImageFilter::PrintSelf(os,indent);
+  Superclass::PrintSelf(os,indent);
 
 }
 

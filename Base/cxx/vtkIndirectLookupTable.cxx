@@ -7,13 +7,19 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkIndirectLookupTable.cxx,v $
-  Date:      $Date: 2006/02/14 20:40:13 $
-  Version:   $Revision: 1.23 $
+  Date:      $Date: 2006/02/23 01:43:35 $
+  Version:   $Revision: 1.24 $
 
 =========================================================================auto=*/
-#include <math.h>
 #include "vtkIndirectLookupTable.h"
+
 #include "vtkObjectFactory.h"
+#include "vtkUnsignedShortArray.h"
+#include "vtkLookupTable.h"
+
+#include <math.h>
+
+vtkCxxSetObjectMacro(vtkIndirectLookupTable,LookupTable,vtkLookupTable);
 
 //------------------------------------------------------------------------------
 vtkIndirectLookupTable* vtkIndirectLookupTable::New()

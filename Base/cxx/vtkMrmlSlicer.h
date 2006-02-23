@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.h,v $
-  Date:      $Date: 2006/02/22 23:47:16 $
-  Version:   $Revision: 1.47 $
+  Date:      $Date: 2006/02/23 01:43:35 $
+  Version:   $Revision: 1.48 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSlicer - main core of the 3D Slicer
@@ -25,33 +25,17 @@
 #ifndef __vtkMrmlSlicer_h
 #define __vtkMrmlSlicer_h
 
-//#include <fstream.h>
-#include <stdlib.h>
-//#include <iostream.h>
-
-#include "vtkCamera.h"
-#include "vtkImageReformatIJK.h"
-#include "vtkImageReformat.h"
-#include "vtkImageOverlay.h"
-#include "vtkImageMapToColors.h"
-#include "vtkMatrix4x4.h"
-#include "vtkTransform.h"
-#include "vtkPoints.h"
-#include "vtkLookupTable.h"
-#include "vtkMrmlDataVolume.h"
-#include "vtkMrmlVolumeNode.h"
-#include "vtkImageLabelOutline.h"
-#include "vtkImageCrossHair2D.h"
-#include "vtkImageZoom2D.h"
-#include "vtkImageDouble2D.h"
-#include "vtkIndirectLookupTable.h"
-#include "vtkImageDrawROI.h"
-#include "vtkStackOfPolygons.h"
-#include "vtkCollection.h"
-#include "vtkVoidArray.h"
-
+#include "vtkObject.h"
+#include "vtkImageOverlay.h" // For inline
+#include "vtkImageZoom2D.h" // For inline
+#include "vtkImageCrossHair2D.h" // For inline
+#include "vtkImageDrawROI.h" // For inline
+#include "vtkStackOfPolygons.h" // For inline
 #include "vtkSlicer.h"
+
 #define NUM_SLICES 3
+
+#include <stdlib.h>
 
 // Orient
 
@@ -75,6 +59,23 @@
 #define MRML_SLICER_ORIENT_SLICES      17
 #define MRML_SLICER_ORIENT_REFORMAT_AXISAGCOR   18
 #define MRML_SLICER_NUM_ORIENT         19
+
+class vtkCamera;
+class vtkImageReformatIJK;
+class vtkImageReformat;
+class vtkImageMapToColors;
+class vtkMatrix4x4;
+class vtkTransform;
+class vtkPoints;
+class vtkLookupTable;
+class vtkMrmlDataVolume;
+class vtkMrmlVolumeNode;
+class vtkImageLabelOutline;
+class vtkImageDouble2D;
+class vtkIndirectLookupTable;
+class vtkCollection;
+class vtkVoidArray;
+class vtkImageSource;
 
 class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject 
 {
@@ -305,11 +306,11 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   // This is for display only!  It can't be used to actually change
   // the volumes in the slicer.  Use the editor (vtkImageEditorEffects)
   // for that.
-  void SetFirstFilter(int s, vtkImageToImageFilter *filter);
+  void SetFirstFilter(int s, vtkSlicerImageAlgorithm *filter);
   // LastFilter is of type vtkImageSource, a superclass of 
   // both vtkImageToImage and vtkMultipleInput filters.
   void SetLastFilter(int s, vtkImageSource *filter);
-  vtkImageToImageFilter* GetFirstFilter(int s) {return this->FirstFilter[s];};
+  vtkSlicerImageAlgorithm * GetFirstFilter(int s) {return this->FirstFilter[s];};
   vtkImageSource* GetLastFilter(int s) {return this->LastFilter[s];};
 
   // Description:
@@ -873,7 +874,7 @@ protected:
   // Colors
   vtkIndirectLookupTable *LabelIndirectLUT;
 
-  vtkImageToImageFilter *FirstFilter[NUM_SLICES];
+  vtkSlicerImageAlgorithm *FirstFilter[NUM_SLICES];
   vtkImageSource *LastFilter[NUM_SLICES];
   int BackFilter;
   int ForeFilter;

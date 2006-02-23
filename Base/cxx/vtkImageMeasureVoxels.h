@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageMeasureVoxels.h,v $
-  Date:      $Date: 2006/02/22 23:47:16 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/02/23 01:43:33 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 // .NAME vtkImageMeasureVoxels - This filter counts labeled voxels.
@@ -17,20 +17,17 @@
 // to mL.  Output is written to a file.
 //
 
-
 #ifndef __vtkImageMeasureVoxels_h
 #define __vtkImageMeasureVoxels_h
 
-
-#include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
-#include "vtkFloatArray.h"
 
-class VTK_SLICER_BASE_EXPORT vtkImageMeasureVoxels : public vtkImageToImageFilter
+class vtkFloatArray;
+class VTK_SLICER_BASE_EXPORT vtkImageMeasureVoxels : public vtkSlicerImageAlgorithm
 {
 public:
   static vtkImageMeasureVoxels *New();
-  vtkTypeMacro(vtkImageMeasureVoxels,vtkImageToImageFilter);
+  vtkTypeMacro(vtkImageMeasureVoxels,vtkSlicerImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description: 
@@ -43,12 +40,14 @@ public:
 protected:
   vtkImageMeasureVoxels();
   ~vtkImageMeasureVoxels();
-  vtkImageMeasureVoxels(const vtkImageMeasureVoxels&);
-  void operator=(const vtkImageMeasureVoxels&);
 
   char *FileName;
   vtkFloatArray *Result;
   void ExecuteData(vtkDataObject *);
+
+private:
+  vtkImageMeasureVoxels(const vtkImageMeasureVoxels&);
+  void operator=(const vtkImageMeasureVoxels&);
 };
 
 #endif

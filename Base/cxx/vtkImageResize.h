@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageResize.h,v $
-  Date:      $Date: 2006/02/22 23:47:16 $
-  Version:   $Revision: 1.22 $
+  Date:      $Date: 2006/02/23 01:43:34 $
+  Version:   $Revision: 1.23 $
 
 =========================================================================auto=*/
 // .NAME vtkImageResize - resize (scale) the input image
@@ -22,15 +22,13 @@
 #ifndef __vtkImageResize_h
 #define __vtkImageResize_h
 
-#include "vtkImageData.h"
-#include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
-class VTK_SLICER_BASE_EXPORT vtkImageResize : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageResize : public vtkSlicerImageAlgorithm
 {
 public:
   static vtkImageResize *New();
-  vtkTypeMacro(vtkImageResize,vtkImageToImageFilter);
+  vtkTypeMacro(vtkImageResize,vtkSlicerImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   // Description:
@@ -52,8 +50,6 @@ public:
 protected:
   vtkImageResize();
   ~vtkImageResize() {};
-  vtkImageResize(const vtkImageResize&);
-  void operator=(const vtkImageResize&);
 
   int OutputWholeExtent[6];
   int InputClipExtent[6];
@@ -62,9 +58,15 @@ protected:
   
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
   void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
-  void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
+#ifndef SLICER_VTK5
+  void ExecuteInformation(){this->Superclass::ExecuteInformation();};
+#endif
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
     int outExt[6], int id);
+
+private:
+  vtkImageResize(const vtkImageResize&);
+  void operator=(const vtkImageResize&);
 };
 
 #endif

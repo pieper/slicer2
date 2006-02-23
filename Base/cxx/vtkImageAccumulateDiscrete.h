@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageAccumulateDiscrete.h,v $
-  Date:      $Date: 2006/02/22 23:47:15 $
-  Version:   $Revision: 1.18 $
+  Date:      $Date: 2006/02/23 01:43:32 $
+  Version:   $Revision: 1.19 $
 
 =========================================================================auto=*/
 // .NAME vtkImageAccumulateDiscrete - Generalized histograms upto 4 dimensions.
@@ -22,29 +22,29 @@
 #ifndef __vtkImageAccumulateDiscrete_h
 #define __vtkImageAccumulateDiscrete_h
 
-
-#include "vtkImageData.h"
-#include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
-class VTK_SLICER_BASE_EXPORT vtkImageAccumulateDiscrete : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageAccumulateDiscrete : public vtkSlicerImageAlgorithm
 {
 public:
   static vtkImageAccumulateDiscrete *New();
-  vtkTypeMacro(vtkImageAccumulateDiscrete,vtkImageToImageFilter);
+  vtkTypeMacro(vtkImageAccumulateDiscrete,vtkSlicerImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
 protected:
   vtkImageAccumulateDiscrete();
   ~vtkImageAccumulateDiscrete() {};
-  vtkImageAccumulateDiscrete(const vtkImageAccumulateDiscrete&);
-  void operator=(const vtkImageAccumulateDiscrete&);
 
   void ExecuteInformation(vtkImageData *input, vtkImageData *output);
-  void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
+#ifndef SLICER_VTK5
+  void ExecuteInformation(){this->Superclass::ExecuteInformation();};
+#endif
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
   void ExecuteData(vtkDataObject *);
 
+private:
+  vtkImageAccumulateDiscrete(const vtkImageAccumulateDiscrete&);
+  void operator=(const vtkImageAccumulateDiscrete&);
 };
 
 #endif

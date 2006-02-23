@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageLiveWireScale.h,v $
-  Date:      $Date: 2006/02/22 23:47:16 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/02/23 01:43:33 $
+  Version:   $Revision: 1.15 $
 
 =========================================================================auto=*/
 // .NAME vtkImageLiveWireScale - General scaling of images for input to LiveWire
@@ -28,17 +28,13 @@
 #ifndef __vtkImageLiveWireScale_h
 #define __vtkImageLiveWireScale_h
 
-
-#include "vtkImageToImageFilter.h"
-#include "vtkFloatArray.h"
-#include "vtkPoints.h"
 #include "vtkSlicer.h"
 
-class VTK_SLICER_BASE_EXPORT vtkImageLiveWireScale : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageLiveWireScale : public vtkSlicerImageAlgorithm
 {
   public:
   static vtkImageLiveWireScale *New();
-  vtkTypeMacro(vtkImageLiveWireScale,vtkImageToImageFilter);
+  vtkTypeMacro(vtkImageLiveWireScale,vtkSlicerImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -77,11 +73,9 @@ class VTK_SLICER_BASE_EXPORT vtkImageLiveWireScale : public vtkImageToImageFilte
   // just here for access from Execute.
   vtkFloatingPointType TransformationFunction(vtkFloatingPointType intensity, vtkFloatingPointType max, vtkFloatingPointType min);
 
-  protected:
+protected:
   vtkImageLiveWireScale();
   ~vtkImageLiveWireScale();
-  vtkImageLiveWireScale(const vtkImageLiveWireScale&);
-  void operator=(const vtkImageLiveWireScale&);
   
   int ScaleFactor;
   vtkFloatingPointType UpperCutoff;
@@ -93,10 +87,15 @@ class VTK_SLICER_BASE_EXPORT vtkImageLiveWireScale : public vtkImageToImageFilte
   int TransformationFunctionNumber;
 
   void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
+#ifndef SLICER_VTK5
   void UpdateData(vtkDataObject *data);
-  void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
+  void ExecuteInformation(){this->Superclass::ExecuteInformation();};
+#endif
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
                        int ext[6], int id);
+private:
+  vtkImageLiveWireScale(const vtkImageLiveWireScale&);
+  void operator=(const vtkImageLiveWireScale&);
 };
 
 #endif

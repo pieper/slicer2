@@ -7,15 +7,22 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageGraph.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:41 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2006/02/23 01:43:33 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
-#include <stdlib.h>
-#include "vtkMath.h"
-
 #include "vtkImageGraph.h"
+
 #include "vtkObjectFactory.h"
+#include "vtkMath.h"
+#include "vtkScalarsToColors.h"
+#include "vtkLookupTable.h"
+#include "vtkImageData.h"
+#include "vtkIndirectLookupTable.h"
+
+#include <stdlib.h>
+
+vtkCxxSetObjectMacro(vtkImageGraph,LookupTable,vtkScalarsToColors);
 
 //------------------------------------------------------------------------------
 GraphList::GraphList() {

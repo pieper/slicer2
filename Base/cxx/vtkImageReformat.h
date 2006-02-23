@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageReformat.h,v $
-  Date:      $Date: 2006/02/22 23:47:16 $
-  Version:   $Revision: 1.25 $
+  Date:      $Date: 2006/02/23 01:43:34 $
+  Version:   $Revision: 1.26 $
 
 =========================================================================auto=*/
 // .NAME vtkImageReformat -  Reformats a 2D image from a 3D volume.
@@ -16,23 +16,17 @@
 // vtkImageReformat allows interpolation or replication.
 //
 
-
 #ifndef __vtkImageReformat_h
 #define __vtkImageReformat_h
 
-#include "vtkImageData.h"
-#include "vtkImageToImageFilter.h"
-#include "vtkMatrix4x4.h"
-#include "vtkIntArray.h"
-#include "vtkFloatArray.h"
-#include "vtkTensor.h"
 #include "vtkSlicer.h"
 
-class VTK_SLICER_BASE_EXPORT vtkImageReformat : public vtkImageToImageFilter
+class vtkMatrix4x4;
+class VTK_SLICER_BASE_EXPORT vtkImageReformat : public vtkSlicerImageAlgorithm
 {
   public:
     static vtkImageReformat *New();
-  vtkTypeMacro(vtkImageReformat,vtkImageToImageFilter);
+    vtkTypeMacro(vtkImageReformat,vtkSlicerImageAlgorithm);
     void PrintSelf(ostream& os, vtkIndent indent);
 
     vtkGetMacro(Interpolate, int);
@@ -41,10 +35,10 @@ class VTK_SLICER_BASE_EXPORT vtkImageReformat : public vtkImageToImageFilter
 
     //Description: Wld stands for the world coordinates
     vtkGetObjectMacro(WldToIjkMatrix, vtkMatrix4x4);
-    vtkSetObjectMacro(WldToIjkMatrix, vtkMatrix4x4);
+    virtual void SetWldToIjkMatrix(vtkMatrix4x4*);
 
     vtkGetObjectMacro(ReformatMatrix, vtkMatrix4x4);
-    vtkSetObjectMacro(ReformatMatrix, vtkMatrix4x4);
+    virtual void SetReformatMatrix(vtkMatrix4x4*);
 
     //Description: reformatted image in pixels
     // more stuff
@@ -104,10 +98,8 @@ class VTK_SLICER_BASE_EXPORT vtkImageReformat : public vtkImageToImageFilter
   unsigned long GetMTime();
 
 protected:
-    vtkImageReformat();
-    ~vtkImageReformat();
-    vtkImageReformat(const vtkImageReformat&);
-    void operator=(const vtkImageReformat&);
+  vtkImageReformat();
+  ~vtkImageReformat();
 
   // >> AT 11/07/01
   vtkFloatingPointType OriginShift[2];
@@ -138,6 +130,9 @@ protected:
   //void Execute();
   void ExecuteData(vtkDataObject *out);
 
+private:
+  vtkImageReformat(const vtkImageReformat&);
+  void operator=(const vtkImageReformat&);
 };
 
 #endif

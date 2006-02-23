@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageCloseUp2D.h,v $
-  Date:      $Date: 2006/02/14 20:47:09 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2006/02/23 01:43:32 $
+  Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 // .NAME vtkImageCloseUp2D -  Creates a magnified 2D image
@@ -18,15 +18,14 @@
 #ifndef __vtkImageCloseUp2D_h
 #define __vtkImageCloseUp2D_h
 
-#include "vtkImageData.h"
-#include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
-class VTK_SLICER_BASE_EXPORT vtkImageCloseUp2D : public vtkImageToImageFilter
+class vtkImageData;
+class VTK_SLICER_BASE_EXPORT vtkImageCloseUp2D : public vtkSlicerImageAlgorithm
 {
 public:
   static vtkImageCloseUp2D *New();
-  vtkTypeMacro(vtkImageCloseUp2D,vtkImageToImageFilter);
+  vtkTypeMacro(vtkImageCloseUp2D,vtkSlicerImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -47,18 +46,21 @@ public:
 protected:
   vtkImageCloseUp2D();
   ~vtkImageCloseUp2D() {};
-  vtkImageCloseUp2D(const vtkImageCloseUp2D&);
-  void operator=(const vtkImageCloseUp2D&);
 
   void ExecuteInformation(vtkImageData *inData, 
-                                vtkImageData *outData);
-  void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
+                          vtkImageData *outData);
+#ifndef SLICER_VTK5
+  void ExecuteInformation(){this->Superclass::ExecuteInformation();};
+#endif
 
   // Override this function since inExt != outExt
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
   
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
                        int extent[6], int id);
+private:
+  vtkImageCloseUp2D(const vtkImageCloseUp2D&);
+  void operator=(const vtkImageCloseUp2D&);
 };
 
 #endif

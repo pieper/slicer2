@@ -7,14 +7,16 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageAccumulateDiscrete.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:38 $
-  Version:   $Revision: 1.18 $
+  Date:      $Date: 2006/02/23 01:43:32 $
+  Version:   $Revision: 1.19 $
 
 =========================================================================auto=*/
 #include "vtkImageAccumulateDiscrete.h"
+#include "vtkObjectFactory.h"
+#include "vtkImageData.h"
+
 #include <math.h>
 #include <stdlib.h>
-#include "vtkObjectFactory.h"
 
 //------------------------------------------------------------------------------
 vtkImageAccumulateDiscrete* vtkImageAccumulateDiscrete::New()
@@ -140,7 +142,11 @@ static void vtkImageAccumulateDiscreteExecute(vtkImageAccumulateDiscrete *self,
 // the Datas data types.
 void vtkImageAccumulateDiscrete::ExecuteData(vtkDataObject *)
 {
+#ifdef SLICER_VTK5
+  vtkImageData *inData = this->GetImageDataInput(0);
+#else
   vtkImageData *inData = this->GetInput();
+#endif
   vtkImageData *outData = this->GetOutput();
   outData->SetExtent(this->GetOutput()->GetWholeExtent());
   outData->AllocateScalars();
@@ -218,9 +224,10 @@ void vtkImageAccumulateDiscrete::ExecuteData(vtkDataObject *)
 }
 
 
+//----------------------------------------------------------------------------
 void vtkImageAccumulateDiscrete::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageToImageFilter::PrintSelf(os,indent);
+  Superclass::PrintSelf(os,indent);
 
 }
 

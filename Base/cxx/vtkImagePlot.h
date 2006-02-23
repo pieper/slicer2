@@ -7,11 +7,11 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImagePlot.h,v $
-  Date:      $Date: 2006/02/22 23:47:16 $
-  Version:   $Revision: 1.22 $
+  Date:      $Date: 2006/02/23 01:43:34 $
+  Version:   $Revision: 1.23 $
 
 =========================================================================auto=*/
-// .NAME vtkImagePlot - duh
+// .NAME vtkImagePlot - Display a plot of the input data
 // .SECTION Description
 // This filter displays a plot of the input data.  It expects input only along
 // the x-axis and will create basically a bar graph of it. 
@@ -20,16 +20,15 @@
 #ifndef __vtkImagePlot_h
 #define __vtkImagePlot_h
 
-#include "vtkImageData.h"
-#include "vtkImageToImageFilter.h"
-#include "vtkScalarsToColors.h"
 #include "vtkSlicer.h"
 
-class VTK_SLICER_BASE_EXPORT vtkImagePlot : public vtkImageToImageFilter
+class vtkScalarsToColors;
+class vtkImageData;
+class VTK_SLICER_BASE_EXPORT vtkImagePlot : public vtkSlicerImageAlgorithm
 {
 public:
   static vtkImagePlot *New();
-  vtkTypeMacro(vtkImagePlot,vtkImageToImageFilter);
+  vtkTypeMacro(vtkImagePlot,vtkSlicerImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   // Description:
@@ -59,7 +58,7 @@ public:
 
   // Description:
   // 
-  vtkSetObjectMacro(LookupTable,vtkScalarsToColors);
+  virtual void SetLookupTable(vtkScalarsToColors*);
   vtkGetObjectMacro(LookupTable,vtkScalarsToColors);
 
   // Description:
@@ -74,8 +73,6 @@ public:
 protected:
   vtkImagePlot();
   ~vtkImagePlot();
-  vtkImagePlot(const vtkImagePlot&);
-  void operator=(const vtkImagePlot&);
 
   vtkScalarsToColors *LookupTable;
   
@@ -88,9 +85,15 @@ protected:
 
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
   void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
-  void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
+#ifndef SLICER_VTK5
+  void ExecuteInformation(){this->Superclass::ExecuteInformation();};
+#endif
   void ExecuteData(vtkDataObject *);
   // void vtkImagePlotExecute(vtkImageData *inData,  unsigned char *inPtr,  int inExt[6], vtkImageData *outData, unsigned char *outPtr, int outExt[6]);
+
+private:
+  vtkImagePlot(const vtkImagePlot&);
+  void operator=(const vtkImagePlot&);
 };
 
 #endif

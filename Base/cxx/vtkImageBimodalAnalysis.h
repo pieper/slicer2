@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageBimodalAnalysis.h,v $
-  Date:      $Date: 2006/02/22 23:47:15 $
-  Version:   $Revision: 1.18 $
+  Date:      $Date: 2006/02/23 01:43:32 $
+  Version:   $Revision: 1.19 $
 
 =========================================================================auto=*/
 // .NAME vtkImageBimodalAnalysis - Analysis bimodal histograms
@@ -19,18 +19,16 @@
 #ifndef __vtkImageBimodalAnalysis_h
 #define __vtkImageBimodalAnalysis_h
 
+#include "vtkSlicer.h"
+
 #define VTK_BIMODAL_MODALITY_CT 0
 #define VTK_BIMODAL_MODALITY_MR 1
 
-#include "vtkImageData.h"
-#include "vtkImageToImageFilter.h"
-#include "vtkSlicer.h"
-
-class VTK_SLICER_BASE_EXPORT vtkImageBimodalAnalysis : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageBimodalAnalysis : public vtkSlicerImageAlgorithm
 {
 public:
   static vtkImageBimodalAnalysis *New();
-  vtkTypeMacro(vtkImageBimodalAnalysis,vtkImageToImageFilter);
+  vtkTypeMacro(vtkImageBimodalAnalysis,vtkSlicerImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -62,8 +60,6 @@ public:
 protected:
   vtkImageBimodalAnalysis();
   ~vtkImageBimodalAnalysis() {};
-  vtkImageBimodalAnalysis(const vtkImageBimodalAnalysis&);
-  void operator=(const vtkImageBimodalAnalysis&);
 
   int Modality;
 
@@ -76,10 +72,15 @@ protected:
   int SignalRange[2];
 
   void ExecuteInformation(vtkImageData *input, vtkImageData *output);
-  void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
+#ifndef SLICER_VTK5
+  void ExecuteInformation(){this->Superclass::ExecuteInformation();};
+#endif
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
   void ExecuteData(vtkDataObject *);
 
+private:
+  vtkImageBimodalAnalysis(const vtkImageBimodalAnalysis&);
+  void operator=(const vtkImageBimodalAnalysis&);
 };
 
 #endif

@@ -7,12 +7,13 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageDouble2D.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:40 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/02/23 01:43:32 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 #include "vtkImageDouble2D.h"
 #include "vtkObjectFactory.h"
+#include "vtkImageData.h"
 
 
 //------------------------------------------------------------------------------
@@ -211,8 +212,9 @@ void vtkImageDouble2D::ThreadedExecute(vtkImageData *inData,
     }
 }
 
+//----------------------------------------------------------------------------
 void vtkImageDouble2D::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageToImageFilter::PrintSelf(os,indent);
+  Superclass::PrintSelf(os,indent);
 }
 

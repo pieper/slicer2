@@ -7,12 +7,17 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageReformatIJK.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:43 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/02/23 01:43:34 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 #include "vtkImageReformatIJK.h"
+
 #include "vtkObjectFactory.h"
+#include "vtkMatrix4x4.h"
+#include "vtkIntArray.h"
+#include "vtkTransform.h"
+#include "vtkImageData.h"
 
 #define ORDER_IS 0
 #define ORDER_SI 1
@@ -21,6 +26,7 @@
 #define ORDER_PA 4
 #define ORDER_AP 5
 
+vtkCxxSetObjectMacro(vtkImageReformatIJK, WldToIjkMatrix, vtkMatrix4x4);
 
 //------------------------------------------------------------------------------
 vtkImageReformatIJK* vtkImageReformatIJK::New()
@@ -55,6 +61,7 @@ vtkImageReformatIJK::vtkImageReformatIJK()
   this->Modified();
 }
 
+//----------------------------------------------------------------------------
 vtkImageReformatIJK::~vtkImageReformatIJK()
 {
     this->Indices->Delete();
@@ -67,9 +74,10 @@ vtkImageReformatIJK::~vtkImageReformatIJK()
   }
 }
 
+//----------------------------------------------------------------------------
 void vtkImageReformatIJK::PrintSelf(ostream& os, vtkIndent indent)
 {
-    vtkImageToImageFilter::PrintSelf(os,indent);
+    Superclass::PrintSelf(os,indent);
 
     os << indent << "YStep[0]:    " << this->YStep[0] << "\n";
     os << indent << "YStep[1]:    " << this->YStep[1] << "\n";
@@ -92,7 +100,8 @@ void vtkImageReformatIJK::PrintSelf(ostream& os, vtkIndent indent)
   }
 }
 
-void vtkImageReformatIJK::SetInputOrderString(char *str)
+//----------------------------------------------------------------------------
+void vtkImageReformatIJK::SetInputOrderString(const char *str)
 {
   if      (strcmp(str, "SI") == 0) this->SetInputOrder(ORDER_SI);
   else if (strcmp(str, "IS") == 0) this->SetInputOrder(ORDER_IS);
@@ -106,7 +115,8 @@ void vtkImageReformatIJK::SetInputOrderString(char *str)
   }
 }
 
-void vtkImageReformatIJK::SetOutputOrderString(char *str)
+//----------------------------------------------------------------------------
+void vtkImageReformatIJK::SetOutputOrderString(const char *str)
 {
   if      (strcmp(str, "SI") == 0) this->SetOutputOrder(ORDER_SI);
   else if (strcmp(str, "IS") == 0) this->SetOutputOrder(ORDER_IS);
@@ -196,9 +206,14 @@ void vtkImageReformatIJK::ComputeOutputExtent()
   int i, inExt[6], ijk[3], dot;
   float x[4]={1,0,0,1}, y[4]={0,1,0,1}, z[4]={0,0,1,1};
 
+#ifdef SLICER_VTK5
+  vtkImageData *input = this->GetImageDataInput(0);
+#else
+  vtkImageData *input = this->GetInput();
+#endif
   // the whole extent of the input is needed to see
   // where the requested slice lies in the volume.
-  this->GetInput()->GetWholeExtent(inExt);
+  input->GetWholeExtent(inExt);
 
   // Output is XYZ, input is IJK
   // tran: XYZ->IJK
@@ -571,7 +586,11 @@ void vtkImageReformatIJK::ExecuteData(vtkDataObject *)
 {
     int outExt[6], id=0;
 
+#ifdef SLICER_VTK5
+    vtkImageData *inData = this->GetImageDataInput(0); 
+#else
     vtkImageData *inData = this->GetInput(); 
+#endif
 
     vtkImageData *outData = this->GetOutput();
     outData->GetWholeExtent(outExt);

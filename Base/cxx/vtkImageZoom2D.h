@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageZoom2D.h,v $
-  Date:      $Date: 2006/02/22 23:47:16 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/02/23 01:43:34 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 // .NAME vtkImageZoom2D -  zooms (magnifies) a 2D image
@@ -19,15 +19,13 @@
 #ifndef __vtkImageZoom2D_h
 #define __vtkImageZoom2D_h
 
-#include "vtkImageData.h"
-#include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
-class VTK_SLICER_BASE_EXPORT vtkImageZoom2D : public vtkImageToImageFilter
+class VTK_SLICER_BASE_EXPORT vtkImageZoom2D : public vtkSlicerImageAlgorithm
 {
 public:
     static vtkImageZoom2D *New();
-  vtkTypeMacro(vtkImageZoom2D,vtkImageToImageFilter);
+  vtkTypeMacro(vtkImageZoom2D,vtkSlicerImageAlgorithm);
     void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -70,8 +68,6 @@ public:
 protected:
     vtkImageZoom2D();
     ~vtkImageZoom2D(){};
-    vtkImageZoom2D(const vtkImageZoom2D&);
-    void operator=(const vtkImageZoom2D&);
 
   // Length of 1 Pixel in Zoom Window in the Original Image
   vtkFloatingPointType Step[2];
@@ -88,6 +84,10 @@ protected:
     vtkImageData *outData);
     void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
         int extent[6], int id);
+
+private:
+    vtkImageZoom2D(const vtkImageZoom2D&);
+    void operator=(const vtkImageZoom2D&);
 };
 
 #endif

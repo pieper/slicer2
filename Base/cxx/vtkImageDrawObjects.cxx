@@ -7,15 +7,17 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageDrawObjects.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:40 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/02/23 01:43:33 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
-#include <stdlib.h>
+#include "vtkImageDrawObjects.h"
+
+#include "vtkObjectFactory.h"
+#include "vtkImageData.h"
 #include "vtkMath.h"
 
-#include "vtkImageDrawObjects.h"
-#include "vtkObjectFactory.h"
+#include <stdlib.h>
 
 //------------------------------------------------------------------------------
 ObjectList::ObjectList() {
@@ -219,7 +221,11 @@ void vtkImageDrawObjects::ExecuteData(vtkDataObject *)
   int           outIncX, outIncY, outIncZ;
   unsigned char *outPtr;
 
+#ifdef SLICER_VTK5
+  vtkImageData  *inData  = this->GetImageDataInput(0);
+#else
   vtkImageData  *inData  = this->GetInput();
+#endif
   int           inIncX, inIncY, inIncZ;
   unsigned char *inPtr;
 
@@ -303,11 +309,12 @@ void vtkImageDrawObjects::ExecuteData(vtkDataObject *)
   }
 }
 
+//----------------------------------------------------------------------------
 void vtkImageDrawObjects::PrintSelf(ostream& os, vtkIndent indent)
 {
   ObjectList      *ListPtr;
 
-  vtkImageSource::PrintSelf(os,indent);
+  Superclass::PrintSelf(os,indent);
   ListPtr = &(this->List);
   if (ListPtr->GetID() > -1) {
      os << indent << "Objects:  " << endl;

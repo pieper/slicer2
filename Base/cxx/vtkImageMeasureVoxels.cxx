@@ -7,17 +7,19 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageMeasureVoxels.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:42 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/02/23 01:43:33 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 #include "vtkImageMeasureVoxels.h"
+
+#include "vtkObjectFactory.h"
 #include "vtkImageAccumulateDiscrete.h"
+#include "vtkFloatArray.h"
+#include "vtkImageData.h"
+
 #include <math.h>
 #include <stdlib.h>
-#include "vtkObjectFactory.h"
-
-//#include <iomanip.h>
 
 //------------------------------------------------------------------------------
 vtkImageMeasureVoxels* vtkImageMeasureVoxels::New()
@@ -180,7 +182,11 @@ void vtkImageMeasureVoxels::ExecuteData(vtkDataObject *)
 
   int outExt[6];
 
+#ifdef SLICER_VTK5
+  vtkImageData *inData = this->GetImageDataInput(0); 
+#else
   vtkImageData *inData = this->GetInput(); 
+#endif
   vtkImageData *outData = this->GetOutput();
     outData->GetWholeExtent(outExt);
     outData->SetExtent(outExt);
@@ -241,12 +247,13 @@ void vtkImageMeasureVoxels::ExecuteData(vtkDataObject *)
 }
 
 
+//----------------------------------------------------------------------------
 void vtkImageMeasureVoxels::PrintSelf(ostream& os, vtkIndent indent)
 {
   os << indent << "FileName: "
      << this->FileName << "\n";
   
-  vtkImageToImageFilter::PrintSelf(os,indent);
+  Superclass::PrintSelf(os,indent);
 
 }
 

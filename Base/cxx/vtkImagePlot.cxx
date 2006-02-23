@@ -7,14 +7,19 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImagePlot.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:43 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/02/23 01:43:33 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 #include "vtkImagePlot.h"
+
 #include "vtkObjectFactory.h"
+#include "vtkScalarsToColors.h"
+#include "vtkImageData.h"
 
 #define SET_PIXEL(x,y,color){ptr=&outPtr[(y)*nxnc+(x)*nc];memcpy(ptr,color,3);}
+
+vtkCxxSetObjectMacro(vtkImagePlot,LookupTable,vtkScalarsToColors);
 
 //------------------------------------------------------------------------------
 vtkImagePlot* vtkImagePlot::New()
@@ -86,7 +91,7 @@ vtkImagePlot::~vtkImagePlot()
 //----------------------------------------------------------------------------
 void vtkImagePlot::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageToImageFilter::PrintSelf(os,indent);
+  Superclass::PrintSelf(os,indent);
 
   os << indent << "Thickness:     " << this->Thickness;
   os << indent << "Height:        " << this->Height;
@@ -111,7 +116,7 @@ unsigned long vtkImagePlot::GetMTime()
 {
   unsigned long t1, t2;
 
-  t1 = this->vtkImageToImageFilter::GetMTime();
+  t1 = this->Superclass::GetMTime();
   if (this->LookupTable)
   {
     t2 = this->LookupTable->GetMTime();
@@ -428,7 +433,11 @@ static  void vtkImagePlotExecute(vtkImagePlot *self, vtkImageData *inData,  T *i
 //----------------------------------------------------------------------------
 void vtkImagePlot::ExecuteData(vtkDataObject *)
 {
+#ifdef SLICER_VTK5
+  vtkImageData *inData = this->GetImageDataInput(0);
+#else
   vtkImageData *inData = this->GetInput();
+#endif
   vtkImageData *outData = this->GetOutput();
   outData->SetExtent(this->GetOutput()->GetWholeExtent());
   outData->AllocateScalars();

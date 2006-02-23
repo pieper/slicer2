@@ -7,16 +7,19 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageDrawObjects.h,v $
-  Date:      $Date: 2006/02/22 23:47:15 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/02/23 01:43:33 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 // .NAME vtkImageDrawObjects - Abstract Filter used in slicer to plot graphs
+// .SECTION Description
+// vtkImageDrawObjects is 
+//
+
 #ifndef __vtkImageDrawObjects_h
 #define __vtkImageDrawObjects_h
 
-#include "vtkImageToImageFilter.h"
-#include "vtkImageGraph.h"
+#include "vtkImageGraph.h" // For GraphList
 #include "vtkSlicer.h"
 
 //BTX
@@ -45,12 +48,14 @@ protected:
    int Thickness;
    ObjectList* Next; 
 }; 
-
 //ETX
-class VTK_SLICER_BASE_EXPORT vtkImageDrawObjects : public vtkImageToImageFilter  {
+
+class vtkDataObject;
+class VTK_SLICER_BASE_EXPORT vtkImageDrawObjects : public vtkSlicerImageAlgorithm
+{ 
 public:
   static vtkImageDrawObjects *New();
-  vtkTypeMacro(vtkImageDrawObjects,vtkImageToImageFilter);
+  vtkTypeMacro(vtkImageDrawObjects,vtkSlicerImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

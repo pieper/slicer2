@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageLiveWireScale.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:42 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/02/23 01:43:33 $
+  Version:   $Revision: 1.15 $
 
 =========================================================================auto=*/
 #include "vtkImageLiveWireScale.h"
@@ -265,6 +265,7 @@ void vtkImageLiveWireScale::ExecuteInformation(vtkImageData *vtkNotUsed(input),
 }
 
 //----------------------------------------------------------------------------
+#ifndef SLICER_VTK5
 void vtkImageLiveWireScale::UpdateData(vtkDataObject *data)
 {
   
@@ -275,8 +276,9 @@ void vtkImageLiveWireScale::UpdateData(vtkDataObject *data)
     }
   
   // call the superclass update which will cause an execute.
-  this->vtkImageToImageFilter::UpdateData(data);
+  this->Superclass::UpdateData(data);
 }
+#endif
 
 
 //----------------------------------------------------------------------------
@@ -377,7 +379,7 @@ void vtkImageLiveWireScale::ThreadedExecute(vtkImageData *inData,
 //----------------------------------------------------------------------------
 void vtkImageLiveWireScale::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageToImageFilter::PrintSelf(os,indent);
+  Superclass::PrintSelf(os,indent);
 
   // numbers
   os << indent << "ScaleFactor: "<< this->ScaleFactor << "\n";

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageDouble2D.h,v $
-  Date:      $Date: 2006/02/14 20:40:11 $
-  Version:   $Revision: 1.18 $
+  Date:      $Date: 2006/02/23 01:43:33 $
+  Version:   $Revision: 1.19 $
 
 =========================================================================auto=*/
 // .NAME vtkImageDouble2D -  Doubles size of input image
@@ -19,32 +19,33 @@
 #ifndef __vtkImageDouble2D_h
 #define __vtkImageDouble2D_h
 
-#include "vtkImageData.h"
-#include "vtkImageToImageFilter.h"
-
 #include "vtkSlicer.h"
 
-class VTK_SLICER_BASE_EXPORT vtkImageDouble2D : public vtkImageToImageFilter
+class vtkImageData;
+class VTK_SLICER_BASE_EXPORT vtkImageDouble2D : public vtkSlicerImageAlgorithm
 {
 public:    
   static vtkImageDouble2D *New();
-  vtkTypeMacro(vtkImageDouble2D,vtkImageToImageFilter);
+  vtkTypeMacro(vtkImageDouble2D,vtkSlicerImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
 protected:
   vtkImageDouble2D();
   ~vtkImageDouble2D(){};
-  vtkImageDouble2D(const vtkImageDouble2D&);
-  void operator=(const vtkImageDouble2D&);
 
   // Override this function since inExt != outExt
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
   
   void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
-  void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
+#ifndef SLICER_VTK5
+  void ExecuteInformation(){this->Superclass::ExecuteInformation();};
+#endif
 
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
                        int extent[6], int id);
+private:
+  vtkImageDouble2D(const vtkImageDouble2D&);
+  void operator=(const vtkImageDouble2D&);
 };
 
 #endif

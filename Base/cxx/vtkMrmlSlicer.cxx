@@ -7,18 +7,34 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.cxx,v $
-  Date:      $Date: 2006/02/14 20:40:15 $
-  Version:   $Revision: 1.59 $
+  Date:      $Date: 2006/02/23 01:43:35 $
+  Version:   $Revision: 1.60 $
 
 =========================================================================auto=*/
-#include <stdio.h>
-#include <string.h>
-#include "vtkPointData.h"
 #include "vtkMrmlSlicer.h"
+
 #include "vtkObjectFactory.h"
-#include "vtkImageCanvasSource2D.h"
+#include "vtkCamera.h"
+#include "vtkImageReformatIJK.h"
+#include "vtkImageReformat.h"
+#include "vtkImageOverlay.h"
+#include "vtkImageMapToColors.h"
+#include "vtkMatrix4x4.h"
+#include "vtkTransform.h"
+#include "vtkPoints.h"
+#include "vtkLookupTable.h"
+#include "vtkMrmlDataVolume.h"
+#include "vtkMrmlVolumeNode.h"
+#include "vtkImageLabelOutline.h"
+#include "vtkImageCrossHair2D.h"
+#include "vtkImageZoom2D.h"
+#include "vtkImageDouble2D.h"
+#include "vtkIndirectLookupTable.h"
+#include "vtkImageDrawROI.h"
+#include "vtkStackOfPolygons.h"
+#include "vtkCollection.h"
+#include "vtkVoidArray.h"
 #include "vtkPointData.h"
-#include "vtkVersion.h"
 
 //-----  This hack needed to compile using gcc3 on OSX until new stdc++.dylib
 #ifdef __APPLE_CC__
@@ -898,7 +914,7 @@ void vtkMrmlSlicer::SetLabelVolume(int s, vtkMrmlDataVolume *vol)
 //----------------------------------------------------------------------------
 // Filter 
 //----------------------------------------------------------------------------
-void vtkMrmlSlicer::SetFirstFilter(int s, vtkImageToImageFilter *filter)
+void vtkMrmlSlicer::SetFirstFilter(int s, vtkSlicerImageAlgorithm *filter)
 {
   if (this->FirstFilter[s] != filter) 
   {
@@ -915,6 +931,7 @@ void vtkMrmlSlicer::SetFirstFilter(int s, vtkImageToImageFilter *filter)
     this->BuildUpperTime.Modified();
   } 
 }
+//----------------------------------------------------------------------------
 void vtkMrmlSlicer::SetLastFilter(int s, vtkImageSource *filter)
 {
   if (this->LastFilter[s] != filter) 

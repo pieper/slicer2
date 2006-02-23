@@ -7,12 +7,13 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageCloseUp2D.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:39 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/02/23 01:43:32 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 #include "vtkImageCloseUp2D.h"
 #include "vtkObjectFactory.h"
+#include "vtkImageData.h"
 
 //------------------------------------------------------------------------------
 
@@ -191,7 +192,7 @@ void vtkImageCloseUp2D::ThreadedExecute(vtkImageData *inData,
 
 void vtkImageCloseUp2D::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageToImageFilter::PrintSelf(os,indent);
+    Superclass::PrintSelf(os,indent);
   
     os << indent << "X:              " << this->X << "\n";
     os << indent << "Y:              " << this->Y << "\n";
