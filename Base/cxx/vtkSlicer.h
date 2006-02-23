@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSlicer.h,v $
-  Date:      $Date: 2006/02/22 23:13:51 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/02/23 02:33:33 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 
@@ -53,6 +53,7 @@ typedef float vtkFloatingPointType;
 #include "vtkImageSpatialFilter.h"
 #define vtkSlicerImageAlgorithm vtkImageToImageFilter
 #define vtkSlicerImageSpatialAlgorithm vtkImageSpatialFilter
+#define vtkSlicerImageAlgorithmCommand vtkImageToImageFilterCommand
 #define vtkSlicerImageAlgorithmCppCommand vtkImageToImageFilterCppCommand
 #define vtkSlicerImageSpatialAlgorithmCppCommand vtkImageSpatialFilterCppCommand
 #endif
