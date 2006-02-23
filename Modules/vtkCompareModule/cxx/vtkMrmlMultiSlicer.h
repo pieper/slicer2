@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlMultiSlicer.h,v $
-  Date:      $Date: 2006/01/06 17:57:22 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/02/23 02:29:34 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlMultiSlicer - adaptation of the main core of the 3D Slicer
@@ -21,14 +21,13 @@
 //
 // Don't change this file without permission from slicer@ai.mit.edu.  It
 // is intended to be general enough so developers don't need to hack it.
-//
+// The comment above was completely discarded since this class is a copy/paste
+// of the vtkMrmlSlicer, which simply duplicates code...
 
 #ifndef __vtkMrmlMultiSlicer_h
 #define __vtkMrmlMultiSlicer_h
 
 #include "vtkCompareModuleConfigure.h"
-
-#include <stdlib.h>
 
 #include "vtkCamera.h"
 #include "vtkImageReformatIJK.h"
@@ -57,10 +56,7 @@
 // FIXME Set mosaik slice index among slicer members
 #define MOSAIK_INDEX 9
 
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
-
+#include <stdlib.h>
 
 #define MRML_SLICER_LIGHT_ORIENT_AXIAL        0
 #define MRML_SLICER_LIGHT_ORIENT_SAGITTAL     1
@@ -251,11 +247,11 @@ class VTK_COMPAREMODULE_EXPORT vtkMrmlMultiSlicer : public vtkObject
   // Slice Orientation
   void SetOrient(int orient);
   void SetOrient(int s, int orient);
-  void SetOrientString(char *str);
-  void SetOrientString(int s, char *str);
+  void SetOrientString(const char *str);
+  void SetOrientString(int s, const char *str);
   int GetOrient(int s) {return this->Orient[s];};
-  char *GetOrientString(int s);
-  char *GetOrientList() {return
+  const char *GetOrientString(int s);
+  const char *GetOrientList() {return
 "Axial Sagittal Coronal InPlane InPlane90 InPlaneNeg90 Perp OrigSlice AxiSlice SagSlice CorSlice ReformatAxial ReformatSagittal ReformatCoronal NewOrient";};
 
   // Description:
@@ -265,7 +261,7 @@ class VTK_COMPAREMODULE_EXPORT vtkMrmlMultiSlicer : public vtkObject
   vtkFloatingPointType GetOffsetRangeHigh(int s) {
     return this->OffsetRange[s][this->Orient[s]][1];};
   void SetOffset(int s, vtkFloatingPointType offset);
-  void InitOffset(int s, char *str, vtkFloatingPointType offset);
+  void InitOffset(int s, const char *str, vtkFloatingPointType offset);
   vtkFloatingPointType GetOffset(int s) {return this->Offset[s][this->Orient[s]];};
   vtkFloatingPointType GetOffset(int s, char *str) {return
       this->Offset[s][ConvertStringToOrient(str)];};
@@ -310,11 +306,11 @@ class VTK_COMPAREMODULE_EXPORT vtkMrmlMultiSlicer : public vtkObject
   // This is for display only!  It can't be used to actually change
   // the volumes in the slicer.  Use the editor (vtkImageEditorEffects)
   // for that.
-  void SetFirstFilter(int s, vtkImageToImageFilter *filter);
+  void SetFirstFilter(int s, vtkSlicerImageAlgorithm *filter);
   // LastFilter is of type vtkImageSource, a superclass of
   // both vtkImageToImage and vtkMultipleInput filters.
   void SetLastFilter(int s, vtkImageSource *filter);
-  vtkImageToImageFilter* GetFirstFilter(int s) {return this->FirstFilter[s];};
+  vtkSlicerImageAlgorithm * GetFirstFilter(int s) {return this->FirstFilter[s];};
   vtkImageSource* GetLastFilter(int s) {return this->LastFilter[s];};
 
   // Description:
@@ -389,17 +385,15 @@ class VTK_COMPAREMODULE_EXPORT vtkMrmlMultiSlicer : public vtkObject
   int GetCompilerVersion();
   // Description:
   // return the name of the compiler
-  char *GetCompilerName();
+  const char *GetCompilerName();
+
   // Description:
   // return the vtk version
-  char *GetVTKVersion();
-
+  const char *GetVTKVersion();
 
 protected:
   vtkMrmlMultiSlicer();
   ~vtkMrmlMultiSlicer();
-  vtkMrmlMultiSlicer(const vtkMrmlMultiSlicer&) {};
-  void operator=(const vtkMrmlMultiSlicer&) {};
 
   void ComputeOffsetRange();
   void ComputeOffsetRangeIJK(int s);
@@ -413,8 +407,8 @@ protected:
   void BuildLowerMosaik();
   void BuildUpperMosaik();
 
-  int ConvertStringToOrient(char *str);
-  char* ConvertOrientToString(int orient);
+  int ConvertStringToOrient(const char *str);
+  const char* ConvertOrientToString(int orient);
   void ComputeReformatMatrix(int s);
   void ComputeReformatMatrixIJK(int s, vtkFloatingPointType offset, vtkMatrix4x4 *ref);
   vtkFloatingPointType GetOffsetForComputation(int s);
@@ -475,7 +469,7 @@ protected:
   // Colors
   vtkIndirectLookupTable *LabelIndirectLUT;
 
-  vtkImageToImageFilter *FirstFilter[NUM_SLICES];
+  vtkSlicerImageAlgorithm *FirstFilter[NUM_SLICES];
   vtkImageSource *LastFilter[NUM_SLICES];
   int BackFilter;
   int ForeFilter;
@@ -519,6 +513,9 @@ protected:
   // FIXME : added new member Mosaik
   vtkImageMosaik       *Mosaik;
 
+private:
+  vtkMrmlMultiSlicer(const vtkMrmlMultiSlicer&);
+  void operator=(const vtkMrmlMultiSlicer&);
 };
 
 #endif

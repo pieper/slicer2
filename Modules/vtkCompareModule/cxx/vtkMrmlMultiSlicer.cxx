@@ -7,18 +7,18 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlMultiSlicer.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:22 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/02/23 02:29:34 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
-#include <stdio.h>
-#include <string.h>
-#include "vtkPointData.h"
 #include "vtkMrmlMultiSlicer.h"
+
 #include "vtkObjectFactory.h"
 #include "vtkImageCanvasSource2D.h"
 #include "vtkPointData.h"
-#include "vtkVersion.h"
+
+#include <stdio.h>
+#include <string.h>
 
 //-----  This hack needed to compile using gcc3 on OSX until new stdc++.dylib
 #ifdef __APPLE_CC__
@@ -756,7 +756,7 @@ void vtkMrmlMultiSlicer::SetLabelVolume(int s, vtkMrmlDataVolume *vol)
 //----------------------------------------------------------------------------
 // Filter
 //----------------------------------------------------------------------------
-void vtkMrmlMultiSlicer::SetFirstFilter(int s, vtkImageToImageFilter *filter)
+void vtkMrmlMultiSlicer::SetFirstFilter(int s, vtkSlicerImageAlgorithm *filter)
 {
   if (this->FirstFilter[s] != filter)
   {
@@ -1322,7 +1322,7 @@ void vtkMrmlMultiSlicer::ComputeOffsetRangeIJK(int s)
   }
 }
 
-void vtkMrmlMultiSlicer::InitOffset(int s, char *str, vtkFloatingPointType offset)
+void vtkMrmlMultiSlicer::InitOffset(int s, const char *str, vtkFloatingPointType offset)
 {
   int orient = (int) ConvertStringToOrient(str);
   this->Offset[s][orient] = offset;
@@ -1366,7 +1366,7 @@ void vtkMrmlMultiSlicer::SetOrient(int s, int orient)
   this->ComputeReformatMatrix(s);
 }
 
-void vtkMrmlMultiSlicer::SetOrientString(char *str)
+void vtkMrmlMultiSlicer::SetOrientString(const char *str)
 {
   if (strcmp(str, "AxiSagCor") == 0)
        this->SetOrient(MRML_SLICER_LIGHT_ORIENT_AXISAGCOR);
@@ -1380,18 +1380,18 @@ void vtkMrmlMultiSlicer::SetOrientString(char *str)
        this->SetOrient(MRML_SLICER_LIGHT_ORIENT_AXISAGCOR);
 }
 
-char* vtkMrmlMultiSlicer::GetOrientString(int s)
+const char* vtkMrmlMultiSlicer::GetOrientString(int s)
 {
   return ConvertOrientToString(this->Orient[s]);
 }
 
-void vtkMrmlMultiSlicer::SetOrientString(int s, char *str)
+void vtkMrmlMultiSlicer::SetOrientString(int s, const char *str)
 {
   int orient = ConvertStringToOrient(str);
   this->SetOrient(s, orient);
 }
 
-int vtkMrmlMultiSlicer::ConvertStringToOrient(char *str)
+int vtkMrmlMultiSlicer::ConvertStringToOrient(const char *str)
 {
   if      (strcmp(str, "Axial") == 0)
        return MRML_SLICER_LIGHT_ORIENT_AXIAL;
@@ -1428,7 +1428,7 @@ int vtkMrmlMultiSlicer::ConvertStringToOrient(char *str)
        return MRML_SLICER_LIGHT_ORIENT_AXIAL;
 }
 
-char* vtkMrmlMultiSlicer::ConvertOrientToString(int orient)
+const char* vtkMrmlMultiSlicer::ConvertOrientToString(int orient)
 {
   switch (orient)
     {
@@ -2644,7 +2644,7 @@ int vtkMrmlMultiSlicer::GetCompilerVersion()
 // For Microsoft compiler, MSC
 // Else returns UNKNOWN
 
-char * vtkMrmlMultiSlicer::GetCompilerName()
+const char * vtkMrmlMultiSlicer::GetCompilerName()
 {
 
 #if defined(__GNUC__)
@@ -2660,7 +2660,7 @@ char * vtkMrmlMultiSlicer::GetCompilerName()
 //----------------------------------------------------------------------------
 // Description:
 // Returns the version number of the vtk library this has been compiled with
-char * vtkMrmlMultiSlicer::GetVTKVersion()
+const char * vtkMrmlMultiSlicer::GetVTKVersion()
 {
     return VTK_VERSION;
 }

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageMosaik.h,v $
-  Date:      $Date: 2006/01/06 17:57:22 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/02/23 02:29:34 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 // .NAME vtkImageMosaik - Make a mosaik from 2 image inputs
@@ -46,14 +46,16 @@ public:
 protected:
   vtkImageMosaik();
   ~vtkImageMosaik();
-  vtkImageMosaik(const vtkImageMosaik&) {};
-  void operator=(const vtkImageMosaik&) {};
 
   double opacity;
   int divisionWidth;
   int divisionHeight;
 
   void ExecuteData(vtkDataObject *data);
+
+private:
+  vtkImageMosaik(const vtkImageMosaik&);
+  void operator=(const vtkImageMosaik&);
 };
 
 #endif

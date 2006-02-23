@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.h,v $
-  Date:      $Date: 2006/02/23 01:43:35 $
-  Version:   $Revision: 1.48 $
+  Date:      $Date: 2006/02/23 02:29:33 $
+  Version:   $Revision: 1.49 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSlicer - main core of the 3D Slicer
@@ -179,14 +179,13 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   void SetNumHashes(int hashes);
   void SetCursorColor(vtkFloatingPointType red, vtkFloatingPointType green, vtkFloatingPointType blue);
   void SetCursorPosition(int s, int x, int y) {
-  this->Cursor[s]->SetCursor(x, y);};
-  
+    this->Cursor[s]->SetCursor(x, y);};
   // turn on or off the cross hair intersection - if off there's a gap
-    void SetCursorIntersect(int flag);
-    void SetCursorIntersect(int s, int flag) {
-        this->Cursor[s]->SetIntersectCross(flag); } ;
-    int GetCursorIntersect(int s) {
-        return this->Cursor[s]->GetIntersectCross(); };
+  void SetCursorIntersect(int flag);
+  void SetCursorIntersect(int s, int flag) {
+     this->Cursor[s]->SetIntersectCross(flag); } ;
+  int GetCursorIntersect(int s) {
+     return this->Cursor[s]->GetIntersectCross(); };
 
   // Description:
   // Field of view for slices.  Also used for reformatting...
@@ -216,7 +215,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   //--------- Volumes layered in the 3 slice windows -----------//
 
   // Description:
-  // The None volume is a single slice, all 0's, used as input to 
+  // The None volume is a single slice, all 0's, used as input to
   // the pipeline when no volume is selected.
   void SetNoneVolume(vtkMrmlDataVolume *vol);
   vtkGetObjectMacro(NoneVolume, vtkMrmlDataVolume);
@@ -239,15 +238,14 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   vtkMrmlDataVolume* GetForeVolume( int s) {return this->ForeVolume[s];};
   vtkMrmlDataVolume* GetLabelVolume(int s) {return this->LabelVolume[s];};
 
-
   //--------- Slice reformatting, orientation, point conversion  -----------//
 
   // Description:
   // Slice Orientation
   void SetOrient(int orient);
   void SetOrient(int s, int orient);
-  void SetOrientString(char *str);
-  void SetOrientString(int s, char *str);
+  void SetOrientString(const char *str);
+  void SetOrientString(int s, const char *str);
   int GetOrient(int s) {return this->Orient[s];};
   const char *GetOrientString(int s);
   const char *GetOrientList() {return
@@ -262,7 +260,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   void SetOffset(int s, vtkFloatingPointType offset);
   void InitOffset(int s, const char *str, vtkFloatingPointType offset);
   vtkFloatingPointType GetOffset(int s) {return this->Offset[s][this->Orient[s]];};
-  vtkFloatingPointType GetOffset(int s, char *str) {return 
+  vtkFloatingPointType GetOffset(int s, char *str) {return
       this->Offset[s][ConvertStringToOrient(str)];};
 
   // Description:
@@ -307,7 +305,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   // the volumes in the slicer.  Use the editor (vtkImageEditorEffects)
   // for that.
   void SetFirstFilter(int s, vtkSlicerImageAlgorithm *filter);
-  // LastFilter is of type vtkImageSource, a superclass of 
+  // LastFilter is of type vtkImageSource, a superclass of
   // both vtkImageToImage and vtkMultipleInput filters.
   void SetLastFilter(int s, vtkImageSource *filter);
   vtkSlicerImageAlgorithm * GetFirstFilter(int s) {return this->FirstFilter[s];};
@@ -335,14 +333,14 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   vtkBooleanMacro(FilterActive, int);
 
   // Description:
-  // Whether to overlay filter output on all layers 
+  // Whether to overlay filter output on all layers
   // or use it to replace the fore layer.
   vtkGetMacro(FilterOverlay, int);
   vtkSetMacro(FilterOverlay, int);
   vtkBooleanMacro(FilterOverlay, int);
 
   //-------------------- Additional Reformatting ---------------------------//
-  // For developers: convenience functions that reformat volumes 
+  // For developers: convenience functions that reformat volumes
   // in the slicer.
 
   // Description:
@@ -360,7 +358,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   vtkImageData *GetReformatOutputFromVolume(vtkMrmlDataVolume *v) {
     return this->GetVolumeReformatter(v)->GetOutput();
   };
-  
+
   // Description:
   // Set reformat matrix same as that of this slice
   void ReformatVolumeLikeSlice(vtkMrmlDataVolume * v, int s);
@@ -773,22 +771,20 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   // 
   void ReformatModified() {this->BuildUpperTime.Modified();};
 
-    // Description:
-    // return the version number of the compiler
-   int GetCompilerVersion();
-    // Description:
-    // return the name of the compiler
-    const char *GetCompilerName();
+  // Description:
+  // return the version number of the compiler
+  int GetCompilerVersion();
+  // Description:
+  // return the name of the compiler
+  const char *GetCompilerName();
 
-    // Description:
-    // return the vtk version
-    const char *GetVTKVersion();
-    
+  // Description:
+  // return the vtk version
+  const char *GetVTKVersion();
+
 protected:
   vtkMrmlSlicer();
   ~vtkMrmlSlicer();
-  vtkMrmlSlicer(const vtkMrmlSlicer&);
-  void operator=(const vtkMrmlSlicer&);
 
   void ComputeOffsetRange();
   void ComputeOffsetRangeIJK(int s);
@@ -825,7 +821,7 @@ protected:
   double ReformatSagittalT[3];
   double ReformatCoronalN[3];
   double ReformatCoronalT[3];
-  
+
   int Driver[NUM_SLICES];
   vtkFloatingPointType OffsetRange[NUM_SLICES][MRML_SLICER_NUM_ORIENT][2];
   int Orient[NUM_SLICES];
@@ -917,7 +913,9 @@ protected:
   // set field of view in al reformatters when slicer's FOV updates
   void VolumeReformattersSetFieldOfView(vtkFloatingPointType fov);
 
-    
+private:
+  vtkMrmlSlicer(const vtkMrmlSlicer&);
+  void operator=(const vtkMrmlSlicer&);
 };
 
 #endif
