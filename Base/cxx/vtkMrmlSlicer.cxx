@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.cxx,v $
-  Date:      $Date: 2006/02/23 01:43:35 $
-  Version:   $Revision: 1.60 $
+  Date:      $Date: 2006/02/23 02:41:47 $
+  Version:   $Revision: 1.61 $
 
 =========================================================================auto=*/
 #include "vtkMrmlSlicer.h"
@@ -1465,7 +1465,7 @@ void vtkMrmlSlicer::SetOrient(int s, int orient)
   this->ComputeReformatMatrix(s);
 }
 
-void vtkMrmlSlicer::SetOrientString(char *str)
+void vtkMrmlSlicer::SetOrientString(const char *str)
 {
   if (strcmp(str, "AxiSagCor") == 0)
        this->SetOrient(MRML_SLICER_ORIENT_AXISAGCOR);
@@ -1484,7 +1484,7 @@ const char* vtkMrmlSlicer::GetOrientString(int s)
   return ConvertOrientToString(this->Orient[s]);
 }
 
-void vtkMrmlSlicer::SetOrientString(int s, char *str)
+void vtkMrmlSlicer::SetOrientString(int s, const char *str)
 {
   int orient = ConvertStringToOrient(str);
   this->SetOrient(s, orient);
