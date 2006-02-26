@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.cxx,v $
-  Date:      $Date: 2006/02/15 08:54:17 $
-  Version:   $Revision: 1.18 $
+  Date:      $Date: 2006/02/26 02:39:36 $
+  Version:   $Revision: 1.19 $
 
 =========================================================================auto=*/
 
@@ -798,8 +798,6 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
 // Seed each streamline, cause it to Update, save its info to disk
 // and then Delete it.  This is a way to seed in the whole brain
 // without running out of memory. Nothing is displayed in the renderers.
-// Some defaults for deciding when to save (min length) are hard-coded
-// here for now.
 //----------------------------------------------------------------------------
 void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *modelFilename)
 {
@@ -866,8 +864,10 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   // leaving them in scaled IJK. This way the output
   // can be transformed into Lilla Zollei's coordinate
   // system so we can use her registration.
+  // Also we save the world to scaled IJK transform,
+  // now that paths are stored in world coords.
+
   // Open file
-  // Save all points to the same text file.
   fileNameStr << pointsFilename << ".coords";
   fileCoordinateSystemInfo.open(fileNameStr.str().c_str());
   if (fileCoordinateSystemInfo.fail())
@@ -886,7 +886,16 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   fileCoordinateSystemInfo << "voxel dimensions of tensor volume" << endl; 
   this->InputTensorField->GetSpacing(spacing);
   fileCoordinateSystemInfo << spacing[0] << " " << spacing[1] << " " << spacing[2] << endl;
-  
+  fileCoordinateSystemInfo << "world to scaled IJK transform" << endl; 
+  for (int idxI = 0; idxI < 4; idxI++)
+    {
+      for (int idxJ = 0; idxJ < 4; idxJ++)
+        {
+          fileCoordinateSystemInfo << this->WorldToTensorScaledIJK->GetMatrix()->GetElement(idxI,idxJ) << " ";
+        }
+    }
+  fileCoordinateSystemInfo << endl;
+
   writer = vtkPolyDataWriter::New();
 
   // currently this filter is not multithreaded, though in the future 
