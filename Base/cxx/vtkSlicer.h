@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSlicer.h,v $
-  Date:      $Date: 2006/02/27 19:21:52 $
-  Version:   $Revision: 1.10 $
+  Date:      $Date: 2006/02/27 20:08:45 $
+  Version:   $Revision: 1.11 $
 
 =========================================================================auto=*/
 
@@ -103,10 +103,8 @@ inline void SetImageInput(vtkImageToImageFilter *filter, vtkImageData *output)
   filter->SetInput(output);
 }
 #define vtkSlicerImageAlgorithm vtkImageToImageFilter
-#define vtkSlicerImageSpatialAlgorithm vtkImageSpatialFilter
 #define vtkSlicerImageAlgorithmCommand vtkImageToImageFilterCommand
 #define vtkSlicerImageAlgorithmCppCommand vtkImageToImageFilterCppCommand
-#define vtkSlicerImageSpatialAlgorithmCppCommand vtkImageSpatialFilterCppCommand
 #endif
 
 #endif
