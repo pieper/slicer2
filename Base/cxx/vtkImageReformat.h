@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageReformat.h,v $
-  Date:      $Date: 2006/02/23 01:43:34 $
-  Version:   $Revision: 1.26 $
+  Date:      $Date: 2006/02/27 19:21:51 $
+  Version:   $Revision: 1.27 $
 
 =========================================================================auto=*/
 // .NAME vtkImageReformat -  Reformats a 2D image from a 3D volume.
@@ -19,14 +19,15 @@
 #ifndef __vtkImageReformat_h
 #define __vtkImageReformat_h
 
+#include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
 class vtkMatrix4x4;
-class VTK_SLICER_BASE_EXPORT vtkImageReformat : public vtkSlicerImageAlgorithm
+class VTK_SLICER_BASE_EXPORT vtkImageReformat : public vtkImageToImageFilter
 {
   public:
     static vtkImageReformat *New();
-    vtkTypeMacro(vtkImageReformat,vtkSlicerImageAlgorithm);
+    vtkTypeMacro(vtkImageReformat,vtkImageToImageFilter);
     void PrintSelf(ostream& os, vtkIndent indent);
 
     vtkGetMacro(Interpolate, int);

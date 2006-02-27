@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageDrawObjects.h,v $
-  Date:      $Date: 2006/02/23 01:43:33 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/02/27 19:21:49 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 // .NAME vtkImageDrawObjects - Abstract Filter used in slicer to plot graphs
@@ -19,6 +19,7 @@
 #ifndef __vtkImageDrawObjects_h
 #define __vtkImageDrawObjects_h
 
+#include "vtkImageToImageFilter.h"
 #include "vtkImageGraph.h" // For GraphList
 #include "vtkSlicer.h"
 
@@ -51,11 +52,11 @@ protected:
 //ETX
 
 class vtkDataObject;
-class VTK_SLICER_BASE_EXPORT vtkImageDrawObjects : public vtkSlicerImageAlgorithm
+class VTK_SLICER_BASE_EXPORT vtkImageDrawObjects : public vtkImageToImageFilter
 { 
 public:
   static vtkImageDrawObjects *New();
-  vtkTypeMacro(vtkImageDrawObjects,vtkSlicerImageAlgorithm);
+  vtkTypeMacro(vtkImageDrawObjects,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

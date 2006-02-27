@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEuclideanDistanceTransformation.h,v $
-  Date:      $Date: 2006/01/06 17:56:41 $
-  Version:   $Revision: 1.10 $
+  Date:      $Date: 2006/02/27 19:21:50 $
+  Version:   $Revision: 1.11 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkImageEuclideanDistanceTransformation.h,v $
   Language:  C++
-  Date:      $Date: 2006/01/06 17:56:41 $
-  Version:   $Revision: 1.10 $
+  Date:      $Date: 2006/02/27 19:21:50 $
+  Version:   $Revision: 1.11 $
   Thanks:    Olivier Cuisenaire who developed this class
              URL: http://ltswww.epfl.ch/~cuisenai
          Email: Olivier.Cuisenaire@epfl.ch
@@ -134,7 +134,7 @@ protected:
   int ConsiderAnisotropy;
 
   void ExecuteInformation(vtkImageData *input, vtkImageData *output);
-  void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
+  void ExecuteInformation(){this->Subclass::ExecuteInformation();};
 
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,

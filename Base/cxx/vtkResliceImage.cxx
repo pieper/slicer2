@@ -6,8 +6,8 @@
   or http://www.slicer.org/copyright/copyright.txt for details.
   Program:   3D Slicer
   Module:    $RCSfile: vtkResliceImage.cxx,v $
-  Date:      $Date: 2006/02/23 01:43:35 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/02/27 19:21:52 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -15,8 +15,8 @@
   Program:   Samson Timoner TetraMesh Library
   Module:    $RCSfile: vtkResliceImage.cxx,v $
   Language:  C++
-  Date:      $Date: 2006/02/23 01:43:35 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/02/27 19:21:52 $
+  Version:   $Revision: 1.14 $
   
 Copyright (c) 2001 Samson Timoner
 
@@ -160,11 +160,7 @@ void vtkResliceImage::ComputeInputUpdateExtent(int InExt[6],
                                                int OutExt[6])
 {
 
-#ifdef SLICER_VTK5
-  vtkImageData *input = this->GetImageDataInput(0);
-#else
   vtkImageData *input = this->GetInput();
-#endif
   vtkFloatingPointType InSpace[3];   input ->GetSpacing(InSpace);
   vtkFloatingPointType OutSpace[3];  this->GetOutput()->GetSpacing(OutSpace);
   vtkFloatingPointType InOrigin[3];  input ->GetOrigin(InOrigin);

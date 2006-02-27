@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageMeasureVoxels.cxx,v $
-  Date:      $Date: 2006/02/23 01:43:33 $
-  Version:   $Revision: 1.18 $
+  Date:      $Date: 2006/02/27 19:21:50 $
+  Version:   $Revision: 1.19 $
 
 =========================================================================auto=*/
 #include "vtkImageMeasureVoxels.h"
@@ -182,11 +182,7 @@ void vtkImageMeasureVoxels::ExecuteData(vtkDataObject *)
 
   int outExt[6];
 
-#ifdef SLICER_VTK5
-  vtkImageData *inData = this->GetImageDataInput(0); 
-#else
   vtkImageData *inData = this->GetInput(); 
-#endif
   vtkImageData *outData = this->GetOutput();
     outData->GetWholeExtent(outExt);
     outData->SetExtent(outExt);

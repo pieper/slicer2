@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageStatistics.cxx,v $
-  Date:      $Date: 2006/02/22 22:54:50 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/02/27 19:21:51 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 #include "vtkImageStatistics.h"
@@ -276,29 +276,23 @@ static void vtkImageStatisticsExecute(vtkImageStatistics *self,
 // It just executes a switch statement to call the correct function for
 // the Datas data types.
 void vtkImageStatistics::ExecuteData(vtkDataObject *)
-
 {
   void *inPtr;
   int *outPtr;
   int outExt[6];
 
-#ifdef SLICER_VTK5
-  vtkImageData *inData = this->GetImageDataInput (0);
-  vtkImageData *outData = this->GetImageDataInput(0);
-#else
   vtkImageData *inData = this->GetInput(); 
   vtkImageData *outData = this->GetOutput();
-#endif
-    outData->GetWholeExtent(outExt);
-    outData->SetExtent(outExt);
-    outData->AllocateScalars();
+  outData->GetWholeExtent(outExt);
+  outData->SetExtent(outExt);
+  outData->AllocateScalars();
 
   inPtr  = inData->GetScalarPointer();
   outPtr = (int *)outData->GetScalarPointer();
-  
+
   // this filter expects that output is type int.
   if (outData->GetScalarType() != inData->GetScalarType())
-  {
+    {
     vtkErrorMacro(<< "Execute: out ScalarType " << outData->GetScalarType()
           << "must be the same as in ScalarType" 
                   << inData->GetScalarType() 

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSIO.h,v $
-  Date:      $Date: 2006/01/06 17:57:41 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/02/27 19:21:53 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkFSIO.h,v $
   Language:  C++
-  Date:      $Date: 2006/01/06 17:57:41 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/02/27 19:21:53 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================*/
 // .NAME vtkFSIO - Some IO functions for irregular FreeSurface files.
@@ -28,8 +28,13 @@
 #ifndef __vtkFSIO_h
 #define __vtkFSIO_h
 
+#include "vtkToolkits.h"
+#if ( (VTK_MAJOR_VERSION >= 5) || ( VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 5 ) )
+#include "vtk_zlib.h"
+#else
+#include "zlib.h"
+#endif
 #include <stdio.h>
-#include <zlib.h>
 
 
 class  vtkFSIO {

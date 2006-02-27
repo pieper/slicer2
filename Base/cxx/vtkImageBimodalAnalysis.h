@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageBimodalAnalysis.h,v $
-  Date:      $Date: 2006/02/23 01:43:32 $
-  Version:   $Revision: 1.19 $
+  Date:      $Date: 2006/02/27 19:21:49 $
+  Version:   $Revision: 1.20 $
 
 =========================================================================auto=*/
 // .NAME vtkImageBimodalAnalysis - Analysis bimodal histograms
@@ -19,16 +19,17 @@
 #ifndef __vtkImageBimodalAnalysis_h
 #define __vtkImageBimodalAnalysis_h
 
+#include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
 #define VTK_BIMODAL_MODALITY_CT 0
 #define VTK_BIMODAL_MODALITY_MR 1
 
-class VTK_SLICER_BASE_EXPORT vtkImageBimodalAnalysis : public vtkSlicerImageAlgorithm
+class VTK_SLICER_BASE_EXPORT vtkImageBimodalAnalysis : public vtkImageToImageFilter
 {
 public:
   static vtkImageBimodalAnalysis *New();
-  vtkTypeMacro(vtkImageBimodalAnalysis,vtkSlicerImageAlgorithm);
+  vtkTypeMacro(vtkImageBimodalAnalysis,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -72,9 +73,7 @@ protected:
   int SignalRange[2];
 
   void ExecuteInformation(vtkImageData *input, vtkImageData *output);
-#ifndef SLICER_VTK5
   void ExecuteInformation(){this->Superclass::ExecuteInformation();};
-#endif
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
   void ExecuteData(vtkDataObject *);
 

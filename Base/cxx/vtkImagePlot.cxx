@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImagePlot.cxx,v $
-  Date:      $Date: 2006/02/23 01:43:33 $
-  Version:   $Revision: 1.18 $
+  Date:      $Date: 2006/02/27 19:21:50 $
+  Version:   $Revision: 1.19 $
 
 =========================================================================auto=*/
 #include "vtkImagePlot.h"
@@ -433,11 +433,7 @@ static  void vtkImagePlotExecute(vtkImagePlot *self, vtkImageData *inData,  T *i
 //----------------------------------------------------------------------------
 void vtkImagePlot::ExecuteData(vtkDataObject *)
 {
-#ifdef SLICER_VTK5
-  vtkImageData *inData = this->GetImageDataInput(0);
-#else
   vtkImageData *inData = this->GetInput();
-#endif
   vtkImageData *outData = this->GetOutput();
   outData->SetExtent(this->GetOutput()->GetWholeExtent());
   outData->AllocateScalars();

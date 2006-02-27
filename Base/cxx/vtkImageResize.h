@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageResize.h,v $
-  Date:      $Date: 2006/02/23 01:43:34 $
-  Version:   $Revision: 1.23 $
+  Date:      $Date: 2006/02/27 19:21:51 $
+  Version:   $Revision: 1.24 $
 
 =========================================================================auto=*/
 // .NAME vtkImageResize - resize (scale) the input image
@@ -22,13 +22,14 @@
 #ifndef __vtkImageResize_h
 #define __vtkImageResize_h
 
+#include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
-class VTK_SLICER_BASE_EXPORT vtkImageResize : public vtkSlicerImageAlgorithm
+class VTK_SLICER_BASE_EXPORT vtkImageResize : public vtkImageToImageFilter
 {
 public:
   static vtkImageResize *New();
-  vtkTypeMacro(vtkImageResize,vtkSlicerImageAlgorithm);
+  vtkTypeMacro(vtkImageResize,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   // Description:
@@ -58,9 +59,7 @@ protected:
   
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
   void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
-#ifndef SLICER_VTK5
   void ExecuteInformation(){this->Superclass::ExecuteInformation();};
-#endif
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
     int outExt[6], int id);
 

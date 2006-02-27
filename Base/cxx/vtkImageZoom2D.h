@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageZoom2D.h,v $
-  Date:      $Date: 2006/02/23 02:41:47 $
-  Version:   $Revision: 1.19 $
+  Date:      $Date: 2006/02/27 19:21:51 $
+  Version:   $Revision: 1.20 $
 
 =========================================================================auto=*/
 // .NAME vtkImageZoom2D -  zooms (magnifies) a 2D image
@@ -19,13 +19,14 @@
 #ifndef __vtkImageZoom2D_h
 #define __vtkImageZoom2D_h
 
+#include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
-class VTK_SLICER_BASE_EXPORT vtkImageZoom2D : public vtkSlicerImageAlgorithm
+class VTK_SLICER_BASE_EXPORT vtkImageZoom2D : public vtkImageToImageFilter
 {
 public:
   static vtkImageZoom2D *New();
-  vtkTypeMacro(vtkImageZoom2D,vtkSlicerImageAlgorithm);
+  vtkTypeMacro(vtkImageZoom2D,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

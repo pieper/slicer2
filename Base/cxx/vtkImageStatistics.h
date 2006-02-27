@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageStatistics.h,v $
-  Date:      $Date: 2006/02/22 22:54:50 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2006/02/27 19:21:51 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
 // .NAME vtkImageStatistics - Get statistics on an image
@@ -23,14 +23,15 @@
 #ifndef __vtkImageStatistics_h
 #define __vtkImageStatistics_h
 
+#include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
 class vtkImageData;
-class VTK_SLICER_BASE_EXPORT vtkImageStatistics : public vtkSlicerImageAlgorithm
+class VTK_SLICER_BASE_EXPORT vtkImageStatistics : public vtkImageToImageFilter
 {
   public:
   static vtkImageStatistics *New();
-  vtkTypeMacro(vtkImageStatistics,vtkSlicerImageAlgorithm);
+  vtkTypeMacro(vtkImageStatistics,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

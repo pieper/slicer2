@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageAccumulateDiscrete.h,v $
-  Date:      $Date: 2006/02/23 01:43:32 $
-  Version:   $Revision: 1.19 $
+  Date:      $Date: 2006/02/27 19:21:48 $
+  Version:   $Revision: 1.20 $
 
 =========================================================================auto=*/
 // .NAME vtkImageAccumulateDiscrete - Generalized histograms upto 4 dimensions.
@@ -22,13 +22,14 @@
 #ifndef __vtkImageAccumulateDiscrete_h
 #define __vtkImageAccumulateDiscrete_h
 
+#include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
-class VTK_SLICER_BASE_EXPORT vtkImageAccumulateDiscrete : public vtkSlicerImageAlgorithm
+class VTK_SLICER_BASE_EXPORT vtkImageAccumulateDiscrete : public vtkImageToImageFilter
 {
 public:
   static vtkImageAccumulateDiscrete *New();
-  vtkTypeMacro(vtkImageAccumulateDiscrete,vtkSlicerImageAlgorithm);
+  vtkTypeMacro(vtkImageAccumulateDiscrete,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
 
 protected:
@@ -36,9 +37,7 @@ protected:
   ~vtkImageAccumulateDiscrete() {};
 
   void ExecuteInformation(vtkImageData *input, vtkImageData *output);
-#ifndef SLICER_VTK5
   void ExecuteInformation(){this->Superclass::ExecuteInformation();};
-#endif
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
   void ExecuteData(vtkDataObject *);
 

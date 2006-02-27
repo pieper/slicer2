@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditor.cxx,v $
-  Date:      $Date: 2006/02/22 22:54:49 $
-  Version:   $Revision: 1.23 $
+  Date:      $Date: 2006/02/27 19:21:49 $
+  Version:   $Revision: 1.24 $
 
 =========================================================================auto=*/
 #include "vtkImageEditor.h"
@@ -24,6 +24,7 @@
 #include "vtkImageReplaceRegion.h"
 #include "vtkImageReformatIJK.h"
 #include "vtkIntArray.h"
+#include "vtkImageToImageFilter.h"
 #include <time.h>
 
 vtkCxxSetObjectMacro(vtkImageEditor, FirstFilter, vtkSlicerImageAlgorithm);
@@ -586,7 +587,7 @@ void vtkImageEditor::Apply()
     }
 
     // Connect the reformatted slice to the filters, and execute.
-    this->FirstFilter->SetInput(reformat->GetOutput());
+    SetImageInput(this->FirstFilter,reformat->GetOutput());
     tStart = clock();
     this->LastFilter->Update();
     this->RunTime = (float)(clock() - tStart) / CLOCKS_PER_SEC;
@@ -599,7 +600,7 @@ void vtkImageEditor::Apply()
     replace = vtkImageReplaceRegion::New();
     replace->SetInput(this->Output);
     replace->SetIndices(reformat->GetIndices());
-    replace->SetRegion(this->LastFilter->GetOutput());
+    replace->SetRegion(GetImageOutput(this->LastFilter));
     replace->Update();
 
     // Reset Output pointer
@@ -649,7 +650,7 @@ void vtkImageEditor::Apply()
 
       // Filter the slice
       tStart = clock();
-      this->FirstFilter->SetInput(reformat->GetOutput());
+      SetImageInput(this->FirstFilter,reformat->GetOutput());
       this->LastFilter->Update();
       this->RunTime += (float)(clock() - tStart);
 
@@ -658,7 +659,7 @@ void vtkImageEditor::Apply()
       // not in place unless UndoOutput's ReleaseDataFlag is on.
       replace = vtkImageReplaceRegion::New();
       replace->SetInput(this->UndoOutput);
-      replace->SetRegion(this->LastFilter->GetOutput());
+      replace->SetRegion(GetImageOutput(this->LastFilter));
       replace->SetIndices(reformat->GetIndices());
       this->UndoOutput->ReleaseDataFlagOn();
       replace->Update();
@@ -692,10 +693,10 @@ void vtkImageEditor::Apply()
       clip->ClipDataOff();
       clip->SetOutputWholeExtent(this->ClipExtent);
    
-      this->FirstFilter->SetInput(clip->GetOutput());
+      SetImageInput(this->FirstFilter,clip->GetOutput());
 
       vtkImageConstantPad *pad = vtkImageConstantPad::New();
-      pad->SetInput(this->LastFilter->GetOutput());
+      pad->SetInput(GetImageOutput(this->LastFilter));
       pad->SetOutputWholeExtent(wholeExtent);
       
       // Execute
@@ -714,7 +715,7 @@ void vtkImageEditor::Apply()
     }
     else
     {
-      this->FirstFilter->SetInput(input);
+      SetImageInput(this->FirstFilter,input);
       
       // Execute
       input->Update();
@@ -722,7 +723,7 @@ void vtkImageEditor::Apply()
       this->LastFilter->Update();
       this->RunTime = (float)(clock() - tStart) / CLOCKS_PER_SEC;
 
-      this->SetUndoOutput(this->LastFilter->GetOutput());
+      this->SetUndoOutput(GetImageOutput(this->LastFilter));
     } 
     break;
   }

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkResliceImage.h,v $
-  Date:      $Date: 2006/02/23 01:43:35 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/02/27 19:21:52 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Samson Timoner TetraMesh Library
   Module:    $RCSfile: vtkResliceImage.h,v $
   Language:  C++
-  Date:      $Date: 2006/02/23 01:43:35 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/02/27 19:21:52 $
+  Version:   $Revision: 1.18 $
   
 Copyright (c) 2001 Samson Timoner
 
@@ -39,19 +39,20 @@ without express permission of the author.
 #ifndef __vtkResliceImage_h
 #define __vtkResliceImage_h
 
+#include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
 class vtkMatrix4x4;
 class vtkUnstructuredGrid;
 
-class VTK_SLICER_BASE_EXPORT vtkResliceImage : public vtkSlicerImageAlgorithm
+class VTK_SLICER_BASE_EXPORT vtkResliceImage : public vtkImageToImageFilter
 {
 public:
   // Description:
   // Default:: No transform between the coordinate systems
   // Output Extent of 1 pixel, spacing of (1,1,1), and origin of (0,0,0)
   static vtkResliceImage *New();
-  vtkTypeMacro(vtkResliceImage,vtkSlicerImageAlgorithm);
+  vtkTypeMacro(vtkResliceImage,vtkImageToImageFilter);
 
  // Description:
   // The output image will have the same spacing and origin and extent
@@ -102,9 +103,7 @@ protected:
 
   void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
-#ifndef SLICER_VTK5
   void ExecuteInformation(){this->Superclass::ExecuteInformation();};
-#endif
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,
                int outExt[6], int id);
   //ETX

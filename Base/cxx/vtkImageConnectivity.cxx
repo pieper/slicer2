@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageConnectivity.cxx,v $
-  Date:      $Date: 2006/02/22 22:54:49 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/02/27 19:21:49 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 #include "vtkImageConnectivity.h"
@@ -16,15 +16,7 @@
 #include "vtkObjectFactory.h"
 #include "vtkImageData.h"
 
-#include <time.h>
 #include <string.h>
-#include <math.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <limits.h>
-#include <stddef.h>
-#include <stdlib.h>
-
 
 //------------------------------------------------------------------------------
 vtkImageConnectivity* vtkImageConnectivity::New()
@@ -55,6 +47,7 @@ vtkImageConnectivity::vtkImageConnectivity()
   this->Seed[0] = this->Seed[1] = this->Seed[2] = 0;
 }
 
+//----------------------------------------------------------------------------
 const char* vtkImageConnectivity::GetFunctionString()
 {
   switch (this->function) 
@@ -819,13 +812,8 @@ static void vtkImageConnectivityExecute(vtkImageConnectivity *self,
 // the datas data types.
 void vtkImageConnectivity::ExecuteData(vtkDataObject *)
 {
-#ifdef SLICER_VTK5
-  vtkImageData *inData = this->GetImageDataInput (0);
-  vtkImageData *outData = this->GetImageDataInput(0);
-#else
   vtkImageData *inData = this->GetInput();
   vtkImageData *outData = this->GetOutput();
-#endif
   outData->SetExtent(outData->GetWholeExtent());
   outData->AllocateScalars();
 

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageLiveWireScale.h,v $
-  Date:      $Date: 2006/02/23 01:43:33 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/02/27 19:21:50 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 // .NAME vtkImageLiveWireScale - General scaling of images for input to LiveWire
@@ -28,13 +28,14 @@
 #ifndef __vtkImageLiveWireScale_h
 #define __vtkImageLiveWireScale_h
 
+#include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
-class VTK_SLICER_BASE_EXPORT vtkImageLiveWireScale : public vtkSlicerImageAlgorithm
+class VTK_SLICER_BASE_EXPORT vtkImageLiveWireScale : public vtkImageToImageFilter
 {
   public:
   static vtkImageLiveWireScale *New();
-  vtkTypeMacro(vtkImageLiveWireScale,vtkSlicerImageAlgorithm);
+  vtkTypeMacro(vtkImageLiveWireScale,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -87,10 +88,8 @@ protected:
   int TransformationFunctionNumber;
 
   void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
-#ifndef SLICER_VTK5
   void UpdateData(vtkDataObject *data);
   void ExecuteInformation(){this->Superclass::ExecuteInformation();};
-#endif
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
                        int ext[6], int id);
 private:

@@ -7,19 +7,18 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageLiveWireScale.cxx,v $
-  Date:      $Date: 2006/02/23 01:43:33 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/02/27 19:21:50 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 #include "vtkImageLiveWireScale.h"
-#include <math.h>
-//#include <stdlib.h>
-//#include <iomanip.h>
-#include <time.h>
 
+#include "vtkObjectFactory.h"
 #include "vtkImageData.h"
 #include "vtkImageProgressIterator.h"
-#include "vtkObjectFactory.h"
+
+#include <math.h>
+#include <time.h>
 
 //------------------------------------------------------------------------------
 vtkImageLiveWireScale* vtkImageLiveWireScale::New()
@@ -265,7 +264,6 @@ void vtkImageLiveWireScale::ExecuteInformation(vtkImageData *vtkNotUsed(input),
 }
 
 //----------------------------------------------------------------------------
-#ifndef SLICER_VTK5
 void vtkImageLiveWireScale::UpdateData(vtkDataObject *data)
 {
   
@@ -278,8 +276,6 @@ void vtkImageLiveWireScale::UpdateData(vtkDataObject *data)
   // call the superclass update which will cause an execute.
   this->Superclass::UpdateData(data);
 }
-#endif
-
 
 //----------------------------------------------------------------------------
 // This templated function executes the filter for any type of data.

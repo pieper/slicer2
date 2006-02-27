@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMGHReader.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:42 $
-  Version:   $Revision: 1.10 $
+  Date:      $Date: 2006/02/27 19:21:54 $
+  Version:   $Revision: 1.11 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkMGHReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2006/01/06 17:57:42 $
-  Version:   $Revision: 1.10 $
+  Date:      $Date: 2006/02/27 19:21:54 $
+  Version:   $Revision: 1.11 $
 
 =========================================================================*/
 #include "vtkMGHReader.h"
@@ -27,6 +27,8 @@
 #include "vtkIntArray.h"
 #include "vtkObjectFactory.h"
 #include "vtkFSIO.h"
+#include "vtkImageData.h"
+#include "vtkPointData.h"
 
 vtkMGHReader* vtkMGHReader::New()
 {

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageLabelVOI.h,v $
-  Date:      $Date: 2006/02/22 22:54:50 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2006/02/27 19:21:50 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
 // .NAME vtkImageLabelVOI -  Select label volume of interest
@@ -22,14 +22,15 @@
 #ifndef __vtkImageLabelVOI_h
 #define __vtkImageLabelVOI_h
 
+#include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
 class vtkImageData;
-class VTK_SLICER_BASE_EXPORT vtkImageLabelVOI : public vtkSlicerImageAlgorithm
+class VTK_SLICER_BASE_EXPORT vtkImageLabelVOI : public vtkImageToImageFilter
 {
 public:
   static vtkImageLabelVOI *New();
-  vtkTypeMacro(vtkImageLabelVOI,vtkSlicerImageAlgorithm);
+  vtkTypeMacro(vtkImageLabelVOI,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   vtkGetMacro(Method, int);

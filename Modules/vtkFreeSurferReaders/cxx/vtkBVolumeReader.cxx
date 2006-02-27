@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkBVolumeReader.cxx,v $
-  Date:      $Date: 2006/02/10 18:57:04 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/02/27 19:21:53 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,10 +16,21 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkBVolumeReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2006/02/10 18:57:04 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/02/27 19:21:53 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================*/
+#include "vtkBVolumeReader.h"
+#include "vtkObjectFactory.h"
+#include "vtkShortArray.h"
+#include "vtkUnsignedCharArray.h"
+#include "vtkFloatArray.h"
+#include "vtkIntArray.h"
+#include "vtkImageData.h"
+#include "vtkMatrix4x4.h"
+#include "vtkPointData.h"
+#include "vtkFSIO.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <ctype.h>
@@ -28,13 +39,6 @@
 #else
 #include <unistd.h>
 #endif
-#include "vtkBVolumeReader.h"
-#include "vtkShortArray.h"
-#include "vtkUnsignedCharArray.h"
-#include "vtkFloatArray.h"
-#include "vtkIntArray.h"
-#include "vtkObjectFactory.h"
-#include "vtkFSIO.h"
 
 vtkBVolumeReader* vtkBVolumeReader::New()
 {
@@ -527,7 +531,10 @@ int vtkBVolumeReader::ReadVolumeHeader()
                     sscanf(line, "%*s %d", &ds2);
                     this->DataSpacing[2] = (float)ds2;
                 } else {
-                    sscanf(line, "%*s %f", &this->DataSpacing[2]);
+                  // To support VTK4.2/VTK4.4
+                  float z;
+                  sscanf(line, "%*s %f", &z);
+                  this->DataSpacing[2] = z;
                 }
                 vtkDebugMacro(<<"vtkBVolumeReader: Read Volume Header: got slice thickness " << this->DataSpacing[2]);
             }
@@ -538,7 +545,7 @@ int vtkBVolumeReader::ReadVolumeHeader()
             else if(strncmp(line, "image_ti: ", 10) == 0)
                 sscanf(line, "%*s %f", &this->TI);
             else if(strncmp(line, "flip_angle: ", 10) == 0)
-                sscanf(line, "%*s %lf", &this->FlipAngle);
+                sscanf(line, "%*s %f", &this->FlipAngle);
             else if(strncmp(line, "top_left_r: ", 12) == 0)
             {
                 sscanf(line, "%*s %g", &tlr);

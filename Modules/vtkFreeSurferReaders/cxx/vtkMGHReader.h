@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMGHReader.h,v $
-  Date:      $Date: 2006/01/06 17:57:42 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/02/27 19:21:54 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkMGHReader.h,v $
   Language:  C++
-  Date:      $Date: 2006/01/06 17:57:42 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/02/27 19:21:54 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================*/
 // .NAME vtkMGHReader - read an MGH (.mgh) volume file from Freesurfer tools
@@ -30,12 +30,12 @@
 #define __vtkMGHReader_h
 
 #include <vtkFreeSurferReadersConfigure.h>
-#include <stdio.h>
-#include "vtkImageData.h"
-#include "vtkPointData.h"
 #include "vtkVolumeReader.h"
-#include "vtkTransform.h"
-#include <zlib.h>
+#if ( (VTK_MAJOR_VERSION >= 5) || ( VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 5 ) )
+#include "vtk_zlib.h"
+#else
+#include "zlib.h"
+#endif
 
 // Header sizes.
 const int FS_DIMENSION_HEADER_SIZE = sizeof(int) * 7;
@@ -51,6 +51,9 @@ const int MRI_INT = 1;
 const int MRI_FLOAT = 3;
 const int MRI_SHORT = 4;
 
+// Forward declaration
+class vtkImageData;
+class vtkDataArray;
 class VTK_FREESURFERREADERS_EXPORT vtkMGHReader : public vtkVolumeReader
 {
 public:

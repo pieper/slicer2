@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageMeasureVoxels.h,v $
-  Date:      $Date: 2006/02/23 01:43:33 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/02/27 19:21:50 $
+  Version:   $Revision: 1.15 $
 
 =========================================================================auto=*/
 // .NAME vtkImageMeasureVoxels - This filter counts labeled voxels.
@@ -20,14 +20,15 @@
 #ifndef __vtkImageMeasureVoxels_h
 #define __vtkImageMeasureVoxels_h
 
+#include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
 class vtkFloatArray;
-class VTK_SLICER_BASE_EXPORT vtkImageMeasureVoxels : public vtkSlicerImageAlgorithm
+class VTK_SLICER_BASE_EXPORT vtkImageMeasureVoxels : public vtkImageToImageFilter
 {
 public:
   static vtkImageMeasureVoxels *New();
-  vtkTypeMacro(vtkImageMeasureVoxels,vtkSlicerImageAlgorithm);
+  vtkTypeMacro(vtkImageMeasureVoxels,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description: 

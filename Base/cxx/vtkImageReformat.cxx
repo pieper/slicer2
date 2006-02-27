@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageReformat.cxx,v $
-  Date:      $Date: 2006/02/23 01:43:34 $
-  Version:   $Revision: 1.35 $
+  Date:      $Date: 2006/02/27 19:21:51 $
+  Version:   $Revision: 1.36 $
 
 =========================================================================auto=*/
 #include "vtkImageReformat.h"
@@ -1587,11 +1587,7 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
 void vtkImageReformat::ExecuteData(vtkDataObject *out)
 {
     int i,ext[6];
-#ifdef SLICER_VTK5
-    vtkImageData *input = this->GetImageDataInput(0);
-#else
     vtkImageData *input = this->GetInput();
-#endif
     vtkImageData *output = vtkImageData::SafeDownCast(out);
 
     output->SetExtent(output->GetUpdateExtent());

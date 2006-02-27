@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditor.h,v $
-  Date:      $Date: 2006/02/22 22:54:49 $
-  Version:   $Revision: 1.20 $
+  Date:      $Date: 2006/02/27 19:21:50 $
+  Version:   $Revision: 1.21 $
 
 =========================================================================auto=*/
 // .NAME vtkImageEditor - Applies editing effects to volumes.
@@ -116,8 +116,7 @@ public:
   // The Last and First can be the same for an effect that can
   // be achieved with one filter.
   void Apply();
-  void Apply(vtkSlicerImageAlgorithm *firstFilter,
-    vtkSlicerImageAlgorithm *lastFilter);
+  void Apply(vtkSlicerImageAlgorithm *firstFilter, vtkSlicerImageAlgorithm *lastFilter);
   virtual void SetFirstFilter(vtkSlicerImageAlgorithm*);
   vtkGetObjectMacro(FirstFilter, vtkSlicerImageAlgorithm);
   virtual void SetLastFilter(vtkSlicerImageAlgorithm*);

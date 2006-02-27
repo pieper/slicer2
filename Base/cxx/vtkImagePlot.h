@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImagePlot.h,v $
-  Date:      $Date: 2006/02/23 01:43:34 $
-  Version:   $Revision: 1.23 $
+  Date:      $Date: 2006/02/27 19:21:51 $
+  Version:   $Revision: 1.24 $
 
 =========================================================================auto=*/
 // .NAME vtkImagePlot - Display a plot of the input data
@@ -20,15 +20,16 @@
 #ifndef __vtkImagePlot_h
 #define __vtkImagePlot_h
 
+#include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
 class vtkScalarsToColors;
 class vtkImageData;
-class VTK_SLICER_BASE_EXPORT vtkImagePlot : public vtkSlicerImageAlgorithm
+class VTK_SLICER_BASE_EXPORT vtkImagePlot : public vtkImageToImageFilter
 {
 public:
   static vtkImagePlot *New();
-  vtkTypeMacro(vtkImagePlot,vtkSlicerImageAlgorithm);
+  vtkTypeMacro(vtkImagePlot,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   // Description:
@@ -85,9 +86,7 @@ protected:
 
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
   void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
-#ifndef SLICER_VTK5
   void ExecuteInformation(){this->Superclass::ExecuteInformation();};
-#endif
   void ExecuteData(vtkDataObject *);
   // void vtkImagePlotExecute(vtkImageData *inData,  unsigned char *inPtr,  int inExt[6], vtkImageData *outData, unsigned char *outPtr, int outExt[6]);
 

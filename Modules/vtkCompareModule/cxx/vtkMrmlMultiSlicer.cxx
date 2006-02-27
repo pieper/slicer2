@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlMultiSlicer.cxx,v $
-  Date:      $Date: 2006/02/23 02:29:34 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2006/02/27 19:21:52 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 #include "vtkMrmlMultiSlicer.h"
@@ -887,11 +887,11 @@ void vtkMrmlMultiSlicer::BuildUpper(int s)
     // Filter
         if (this->ForeFilter)
         {
-          this->FirstFilter[s]->SetInput(this->ForeReformat[s]->GetOutput());
+          SetImageInput(this->FirstFilter[s],this->ForeReformat[s]->GetOutput());
         }
         else
         {
-          this->FirstFilter[s]->SetInput(this->BackReformat[s]->GetOutput());
+          SetImageInput(this->FirstFilter[s],this->BackReformat[s]->GetOutput());
         }
     // Mapper
     if (this->FilterOverlay)
@@ -1063,11 +1063,13 @@ void vtkMrmlMultiSlicer::BuildUpperMosaik()
         // Filter
         if (this->ForeFilter)
         {
-          this->FirstFilter[MOSAIK_INDEX]->SetInput(this->ForeReformat[MOSAIK_INDEX]->GetOutput());
+          SetImageInput(this->FirstFilter[MOSAIK_INDEX],
+            this->ForeReformat[MOSAIK_INDEX]->GetOutput());
         }
         else
         {
-          this->FirstFilter[MOSAIK_INDEX]->SetInput(this->BackReformat[MOSAIK_INDEX]->GetOutput());
+          SetImageInput(this->FirstFilter[MOSAIK_INDEX],
+            this->BackReformat[MOSAIK_INDEX]->GetOutput());
         }
         // Mapper
         if (this->FilterOverlay)

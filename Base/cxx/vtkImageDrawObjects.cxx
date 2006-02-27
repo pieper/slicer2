@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageDrawObjects.cxx,v $
-  Date:      $Date: 2006/02/23 01:43:33 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/02/27 19:21:49 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 #include "vtkImageDrawObjects.h"
@@ -221,11 +221,7 @@ void vtkImageDrawObjects::ExecuteData(vtkDataObject *)
   int           outIncX, outIncY, outIncZ;
   unsigned char *outPtr;
 
-#ifdef SLICER_VTK5
-  vtkImageData  *inData  = this->GetImageDataInput(0);
-#else
   vtkImageData  *inData  = this->GetInput();
-#endif
   int           inIncX, inIncY, inIncZ;
   unsigned char *inPtr;
 

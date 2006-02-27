@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSimonParameterReaderWriter.h,v $
-  Date:      $Date: 2006/01/06 17:57:34 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2006/02/27 19:21:53 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 // .NAME vtkSimonParameterReaderWriter - performs common math operations
@@ -40,7 +40,6 @@
 #include "vtkObject.h"
 #include "vtkSlicer.h"
 #include <vtkEMLocalSegmentConfigure.h>
-#include "vtkSetGet.h"
 
 class  VTK_EMLOCALSEGMENT_EXPORT vtkSimonParameterReaderWriter : public vtkObject
 {

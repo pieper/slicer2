@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageLiveWireTester.h,v $
-  Date:      $Date: 2006/02/23 01:43:33 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/02/27 19:21:50 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 // .NAME vtkImageLiveWireTester - Wrapper around vtkImageLiveWire
@@ -21,13 +21,14 @@
 #ifndef __vtkImageLiveWireTester_h
 #define __vtkImageLiveWireTester_h
 
+#include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
-class VTK_SLICER_BASE_EXPORT vtkImageLiveWireTester : public vtkSlicerImageAlgorithm
+class VTK_SLICER_BASE_EXPORT vtkImageLiveWireTester : public vtkImageToImageFilter
 {
   public:
   static vtkImageLiveWireTester *New();
-  vtkTypeMacro(vtkImageLiveWireTester,vtkSlicerImageAlgorithm);
+  vtkTypeMacro(vtkImageLiveWireTester,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   // Description:

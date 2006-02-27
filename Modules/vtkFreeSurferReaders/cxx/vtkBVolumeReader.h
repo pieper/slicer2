@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkBVolumeReader.h,v $
-  Date:      $Date: 2006/01/06 17:57:40 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/02/27 19:21:53 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkBVolumeReader.h,v $
   Language:  C++
-  Date:      $Date: 2006/01/06 17:57:40 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/02/27 19:21:53 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================*/
 // .NAME vtkBVolumeReader - read a binary volume file from Freesurfer tools
@@ -30,11 +30,7 @@
 #define __vtkBVolumeReader_h
 
 #include <vtkFreeSurferReadersConfigure.h>
-#include <stdio.h>
-#include "vtkImageData.h"
-#include "vtkPointData.h"
 #include "vtkVolumeReader.h"
-#include "vtkTransform.h"
 
 // Header sizes.
 const int FS_DIMENSION_HEADER_SIZE = sizeof(int) * 7;
@@ -44,6 +40,9 @@ const int FS_WHOLE_HEADER_SIZE =
     FS_RAS_HEADER_SIZE + FS_DIMENSION_HEADER_SIZE + FS_UNUSED_HEADER_SIZE;
 
 
+class vtkImageData;
+class vtkMatrix4x4;
+class vtkDataArray;
 class VTK_FREESURFERREADERS_EXPORT vtkBVolumeReader : public vtkVolumeReader
 {
 public:

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageAccumulateDiscrete.cxx,v $
-  Date:      $Date: 2006/02/23 01:43:32 $
-  Version:   $Revision: 1.19 $
+  Date:      $Date: 2006/02/27 19:21:48 $
+  Version:   $Revision: 1.20 $
 
 =========================================================================auto=*/
 #include "vtkImageAccumulateDiscrete.h"
@@ -142,11 +142,7 @@ static void vtkImageAccumulateDiscreteExecute(vtkImageAccumulateDiscrete *self,
 // the Datas data types.
 void vtkImageAccumulateDiscrete::ExecuteData(vtkDataObject *)
 {
-#ifdef SLICER_VTK5
-  vtkImageData *inData = this->GetImageDataInput(0);
-#else
   vtkImageData *inData = this->GetInput();
-#endif
   vtkImageData *outData = this->GetOutput();
   outData->SetExtent(this->GetOutput()->GetWholeExtent());
   outData->AllocateScalars();

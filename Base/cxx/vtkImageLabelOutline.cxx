@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageLabelOutline.cxx,v $
-  Date:      $Date: 2006/02/22 22:54:50 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/02/27 19:21:50 $
+  Version:   $Revision: 1.15 $
 
 =========================================================================auto=*/
 #include "vtkImageLabelOutline.h"
@@ -201,11 +201,7 @@ void vtkImageLabelOutline::ThreadedExecute(vtkImageData *inData,
 {    int x1;
 
     // Single component input is required
-#ifdef SLICER_VTK5
-    vtkImageData *input = this->GetImageDataInput (0);
-#else
     vtkImageData *input = this->GetInput();
-#endif
     x1 = input->GetNumberOfScalarComponents();
     if (x1 != 1) {
     vtkErrorMacro(<<"Input has "<<x1<<" instead of 1 scalar component.");

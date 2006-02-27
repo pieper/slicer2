@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageReformatIJK.h,v $
-  Date:      $Date: 2006/02/23 01:43:34 $
-  Version:   $Revision: 1.20 $
+  Date:      $Date: 2006/02/27 19:21:51 $
+  Version:   $Revision: 1.21 $
 
 =========================================================================auto=*/
 // .NAME vtkImageReformatIJK -  
@@ -48,16 +48,17 @@
 #ifndef __vtkImageReformatIJK_h
 #define __vtkImageReformatIJK_h
 
+#include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
 class vtkMatrix4x4;
 class vtkTransform;
 class vtkIntArray;
-class VTK_SLICER_BASE_EXPORT vtkImageReformatIJK : public vtkSlicerImageAlgorithm
+class VTK_SLICER_BASE_EXPORT vtkImageReformatIJK : public vtkImageToImageFilter
 {
 public:
     static vtkImageReformatIJK *New();
-  vtkTypeMacro(vtkImageReformatIJK,vtkSlicerImageAlgorithm);
+  vtkTypeMacro(vtkImageReformatIJK,vtkImageToImageFilter);
     void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:

@@ -7,24 +7,21 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlDataVolume.cxx,v $
-  Date:      $Date: 2006/02/14 20:40:13 $
-  Version:   $Revision: 1.27 $
+  Date:      $Date: 2006/02/27 19:21:52 $
+  Version:   $Revision: 1.28 $
 
 =========================================================================auto=*/
-#include <stdio.h>
+#include "vtkMrmlDataVolume.h"
+
+#include "vtkObjectFactory.h"
+#include "vtkMrmlVolumeNode.h"
 #include "vtkCommand.h"
 #include "vtkCallbackCommand.h"
-#include "vtkMrmlDataVolume.h"
-#include "vtkMrmlVolumeNode.h"
-#include "vtkObjectFactory.h"
 #include "vtkImageReader.h"
 #include "vtkImageWriter.h"
 #include "vtkImageCanvasSource2D.h"
 #include "vtkImageCopy.h"
-#include <time.h>
 #include "vtkImageDICOMReader.h"
-
-
 #include "vtkPointData.h"
 
 //------------------------------------------------------------------------------

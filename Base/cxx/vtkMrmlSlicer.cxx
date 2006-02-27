@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.cxx,v $
-  Date:      $Date: 2006/02/23 02:41:47 $
-  Version:   $Revision: 1.61 $
+  Date:      $Date: 2006/02/27 19:21:52 $
+  Version:   $Revision: 1.62 $
 
 =========================================================================auto=*/
 #include "vtkMrmlSlicer.h"
@@ -1086,11 +1086,11 @@ void vtkMrmlSlicer::BuildUpper(int s)
     // Filter
         if (this->ForeFilter)
         {
-          this->FirstFilter[s]->SetInput(this->ForeReformat[s]->GetOutput());
+          SetImageInput(this->FirstFilter[s],this->ForeReformat[s]->GetOutput());
         }
         else
         {
-          this->FirstFilter[s]->SetInput(this->BackReformat[s]->GetOutput());
+          SetImageInput(this->FirstFilter[s],this->BackReformat[s]->GetOutput());
         }
     // Mapper
     if (this->FilterOverlay)

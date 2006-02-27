@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageBimodalAnalysis.cxx,v $
-  Date:      $Date: 2006/02/23 01:43:32 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/02/27 19:21:48 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 #include "vtkImageBimodalAnalysis.h"
@@ -229,11 +229,7 @@ static void vtkImageBimodalAnalysisExecute(vtkImageBimodalAnalysis *self,
 // the Datas data types.
 void vtkImageBimodalAnalysis::ExecuteData(vtkDataObject *)
 {
-#ifdef SLICER_VTK5
-  vtkImageData *inData = this->GetImageDataInput(0);
-#else
   vtkImageData *inData = this->GetInput();
-#endif
   vtkImageData *outData = this->GetOutput();
   void *inPtr;
   float *outPtr;

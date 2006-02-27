@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageCloseUp2D.h,v $
-  Date:      $Date: 2006/02/23 01:43:32 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/02/27 19:21:49 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 // .NAME vtkImageCloseUp2D -  Creates a magnified 2D image
@@ -18,14 +18,15 @@
 #ifndef __vtkImageCloseUp2D_h
 #define __vtkImageCloseUp2D_h
 
+#include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
 class vtkImageData;
-class VTK_SLICER_BASE_EXPORT vtkImageCloseUp2D : public vtkSlicerImageAlgorithm
+class VTK_SLICER_BASE_EXPORT vtkImageCloseUp2D : public vtkImageToImageFilter
 {
 public:
   static vtkImageCloseUp2D *New();
-  vtkTypeMacro(vtkImageCloseUp2D,vtkSlicerImageAlgorithm);
+  vtkTypeMacro(vtkImageCloseUp2D,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -49,9 +50,7 @@ protected:
 
   void ExecuteInformation(vtkImageData *inData, 
                           vtkImageData *outData);
-#ifndef SLICER_VTK5
   void ExecuteInformation(){this->Superclass::ExecuteInformation();};
-#endif
 
   // Override this function since inExt != outExt
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
