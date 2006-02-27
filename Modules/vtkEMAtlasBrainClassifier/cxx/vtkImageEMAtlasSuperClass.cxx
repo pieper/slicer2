@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMAtlasSuperClass.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:29 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/02/27 20:27:25 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 #include "vtkImageEMAtlasSuperClass.h"
@@ -302,8 +302,15 @@ void vtkImageEMAtlasSuperClass::PrintSelf(ostream& os,vtkIndent indent) {
   os << indent << "InitialBiasFilePrefix:     " << (this->InitialBiasFilePrefix ? this->InitialBiasFilePrefix : "(none)") << "\n";
   os << indent << "PredefinedLabelMapPrefix:         " << (this->PredefinedLabelMapPrefix ? this->PredefinedLabelMapPrefix : "(none)") << "\n";
 
-  char** Directions= new char*[6];
-  Directions[0] = "West "; Directions[1] = "North"; Directions[2] = "Up   "; Directions[3] = "East "; Directions[4] = "South"; Directions[5] = "Down ";
+  // No need of expensive call to new for a simple array
+  static const char * const Directions[] = {
+    "West ",
+    "North",
+    "Up   ",
+    "East ",
+    "South",
+    "Down "
+  };
   os << indent << "MrfParams:               " << endl;
   for (int z=0; z < 6; z++) { 
     os << indent << "   " << Directions[z] << ":    ";   
@@ -313,9 +320,6 @@ void vtkImageEMAtlasSuperClass::PrintSelf(ostream& os,vtkIndent indent) {
     }
     os << endl;
   }
-  // If you uncomment the following it gives you a seg fault 
-  // for (int z=0; z < 6; z++) delete[] Directions[z];
-  delete[] Directions; 
   for (int i =0; i < this->NumClasses; i++) {
     if (this->ClassListType[i] == CLASS) ((vtkImageEMAtlasClass*)this->ClassList[i])->PrintSelf(os,indent.GetNextIndent());
     else ((vtkImageEMAtlasSuperClass*)this->ClassList[i])->PrintSelf(os,indent.GetNextIndent());
