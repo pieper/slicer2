@@ -634,7 +634,9 @@ puts "uploadFlag = $uploadFlag"
         puts " -- upload $curlfile to $curldest"
         switch $::tcl_platform(os) {
             "SunOS" -
-            "Linux" - 
+            "Linux" {
+                exec xterm -e curl --connect-timeout 120 --silent --show-error --upload-file $curlfile $curldest
+            }
             "Darwin" {
                 exec /usr/X11R6/bin/xterm -e curl --connect-timeout 120 --silent --show-error --upload-file $curlfile $curldest
             }
