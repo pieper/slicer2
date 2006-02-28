@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageConnectivity.cxx,v $
-  Date:      $Date: 2006/02/27 19:21:49 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/02/28 18:52:51 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 #include "vtkImageConnectivity.h"
@@ -17,6 +17,7 @@
 #include "vtkImageData.h"
 
 #include <string.h>
+#include <assert.h>
 
 //------------------------------------------------------------------------------
 vtkImageConnectivity* vtkImageConnectivity::New()
