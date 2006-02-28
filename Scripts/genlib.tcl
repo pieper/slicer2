@@ -556,8 +556,6 @@ if { ![file exists $::ITK_TEST_FILE] } {
     file mkdir $SLICER_LIB/Insight-build
     cd $SLICER_LIB/Insight-build
 
-
-
     runcmd $::CMAKE \
         -G$GENERATOR \
         -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
@@ -663,4 +661,23 @@ if { ![file exists $::SANDBOX_TEST_FILE] } {
         cd $SLICER_LIB/NAMICSandBox-build/Distributions
         eval runcmd $::MAKE -j 8
     }
+}
+
+# Are all the test files present and accounted for?  If not, return error code
+
+if { ![file exists $::CMAKE] || \
+         ![file exists $::TEEM_TEST_FILE] || \
+         ![file exists $::TCL_TEST_FILE] || \
+         ![file exists $::TK_TEST_FILE] || \
+         ![file exists $::ITCL_TEST_FILE] || \
+         ![file exists $::IWIDGETS_TEST_FILE] || \
+         ![file exists $::BLT_TEST_FILE] || \
+         ![file exists $::VTK_TEST_FILE] || \
+         ![file exists $::ITK_TEST_FILE] || \
+         ![file exists $::SANDBOX_TEST_FILE] } { 
+    puts "Not all packages compiled; check errors and run genlib.tcl again."
+    exit 1 
+} else { 
+    puts "All packages compiled."
+    exit 0 
 }
