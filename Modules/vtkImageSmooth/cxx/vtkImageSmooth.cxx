@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageSmooth.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:54 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/02/28 19:19:40 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkImageSmooth.cxx,v $
   Language:  C++
-  Date:      $Date: 2006/01/06 17:57:54 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/02/28 19:19:40 $
+  Version:   $Revision: 1.7 $
 
   Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
   All rights reserved.
@@ -51,7 +51,7 @@
 //#undef DEBUG
 //----------------------------------------------------------------------------
 
-//vtkCxxRevisionMacro(vtkImageSmooth, "$Revision: 1.6 $");
+//vtkCxxRevisionMacro(vtkImageSmooth, "$Revision: 1.7 $");
 //vtkStandardNewMacro(vtkImageSmooth);
 
 //----------------------------------------------------------------------------
@@ -425,9 +425,10 @@ int final;
                 for(x=0;x<rowLength;x++)
                 {   
                     temp = (int)(self->dt * temp_ptr[x+shift_xyz]);
-                    final = outPtr[x+shift_xyz] + (OT)temp;
+                    final = (int)(outPtr[x+shift_xyz] + (OT)temp);
 
-                    if((OT)(final) > (OT)(255))
+                    /* do the comparison *before* the cast */
+                    if(final > 255)
                         outPtr[x+shift_xyz] = 255;
                     else
                       if(final < 0)
@@ -569,7 +570,7 @@ static void vtkImageSmoothExecute(vtkImageSmooth *self,
                                 ly = 0.5 * (outPtr[idxR+xyz+rowLength] - outPtr[idxR +xyz-rowLength]);
                                 lxx = 2 * outPtr[idxR+1+xyz] - 2 * outPtr[idxR+xyz];
                                 lyy = outPtr[idxR+xyz+rowLength] - 2*outPtr[idxR+xyz] + outPtr[idxR+xyz-rowLength];
-                                lxy = lxy = 0.25 * (outPtr[idxR+1+xyz+rowLength] - outPtr[idxR+1+xyz-rowLength] -
+                                lxy = 0.25 * (outPtr[idxR+1+xyz+rowLength] - outPtr[idxR+1+xyz-rowLength] -
                                       outPtr[idxR+xyz+rowLength] + outPtr[idxR+xyz-rowLength]);
 
                                 kapa = (ly*ly*lxx - 2*lx*ly*lxy + lx*lx*lyy); 
@@ -592,7 +593,7 @@ static void vtkImageSmoothExecute(vtkImageSmooth *self,
                                 ly = 0.5 * (outPtr[idxR+xyz+rowLength] - outPtr[idxR +xyz-rowLength]);
                                 lxx = 2 * outPtr[idxR-1+xyz] - 2 * outPtr[idxR+xyz];
                                 lyy = outPtr[idxR+xyz+rowLength] - 2*outPtr[idxR+xyz] + outPtr[idxR+xyz-rowLength];
-                                lxy = lxy = 0.25 * (outPtr[idxR+xyz+rowLength] - outPtr[idxR+xyz-rowLength] -
+                                lxy = 0.25 * (outPtr[idxR+xyz+rowLength] - outPtr[idxR+xyz-rowLength] -
                                       outPtr[idxR-1+xyz+rowLength] + outPtr[idxR-1+xyz-rowLength]);
                                 kapa = (ly*ly*lxx - 2*lx*ly*lxy + lx*lx*lyy); 
                                 if(kapa < 0)
