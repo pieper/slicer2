@@ -7,11 +7,13 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSLookupTable.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:41 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2006/02/28 20:50:07 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 #include "vtkFSLookupTable.h"
+
+#include "vtkObjectFactory.h"
 
 vtkFSLookupTable* vtkFSLookupTable::New()
 {
@@ -25,6 +27,7 @@ vtkFSLookupTable* vtkFSLookupTable::New()
   return new vtkFSLookupTable;
 }
 
+//------------------------------------------------------------------------------
 vtkFSLookupTable::vtkFSLookupTable()
 {
     this->LowThresh = -10000.0;
@@ -39,11 +42,13 @@ vtkFSLookupTable::vtkFSLookupTable()
     this->NumberOfColors = 256;
 }
 
+//------------------------------------------------------------------------------
 vtkFSLookupTable::~vtkFSLookupTable()
 {
     // delete any allocated memory
 }
 
+//------------------------------------------------------------------------------
 void vtkFSLookupTable::PrintSelf(ostream& os, vtkIndent indent)
 {
     vtkScalarsToColors::PrintSelf(os, indent);
@@ -59,7 +64,8 @@ void vtkFSLookupTable::PrintSelf(ostream& os, vtkIndent indent)
     os << indent << "Slope mid point FMid: " << this->FMid << endl;
 }
 
-char *vtkFSLookupTable::GetLutTypeString ()
+//------------------------------------------------------------------------------
+const char *vtkFSLookupTable::GetLutTypeString ()
 {
     switch (this->LutType) {
     case FSLUTHEAT:
@@ -82,6 +88,7 @@ char *vtkFSLookupTable::GetLutTypeString ()
     }
 }
 
+//------------------------------------------------------------------------------
 // reset all the values in case one was changed
 void vtkFSLookupTable::SetLutTypeToHeat()
 {
@@ -95,6 +102,7 @@ void vtkFSLookupTable::SetLutTypeToHeat()
     this->FMid = 2.0;
 }
 
+//------------------------------------------------------------------------------
 void vtkFSLookupTable::SetLutTypeToBlueRed()
 {
     this->LutType = FSLUTBLUERED;
@@ -109,6 +117,7 @@ void vtkFSLookupTable::SetLutTypeToBlueRed()
     this->NumberOfColors = 256;
 }
 
+//------------------------------------------------------------------------------
 void vtkFSLookupTable::SetLutTypeToRedBlue()
 {
     this->LutType = FSLUTREDBLUE;
@@ -123,6 +132,7 @@ void vtkFSLookupTable::SetLutTypeToRedBlue()
     this->NumberOfColors = 256;
 }
 
+//------------------------------------------------------------------------------
 void vtkFSLookupTable::SetLutTypeToRedGreen()
 {
     this->LutType = FSLUTREDGREEN;
@@ -137,6 +147,7 @@ void vtkFSLookupTable::SetLutTypeToRedGreen()
     this->NumberOfColors = 256;
 }
 
+//------------------------------------------------------------------------------
 void vtkFSLookupTable::SetLutTypeToGreenRed()
 {
     this->LutType = FSLUTGREENRED;
@@ -151,6 +162,8 @@ void vtkFSLookupTable::SetLutTypeToGreenRed()
     this->NumberOfColors = 256;
 }
 
+//------------------------------------------------------------------------------
+// What a strange code ...
 double *vtkFSLookupTable::GetRange()
 {
     double range[2];
@@ -162,7 +175,8 @@ double *vtkFSLookupTable::GetRange()
     
 }
 
-void vtkFSLookupTable::SetRange(double lo, double hi)
+//------------------------------------------------------------------------------
+void vtkFSLookupTable::SetRange(double /*lo*/, double /*hi*/)
 {
     // don't do anything as it's overriding the LUTs low threshold with the
     // scalar values' lowest value
@@ -170,6 +184,7 @@ void vtkFSLookupTable::SetRange(double lo, double hi)
 //    this->SetHiThresh(hi);
 }
 
+//------------------------------------------------------------------------------
 /// Given a scalar value v, return an rgba color value
 unsigned char *vtkFSLookupTable::MapValue(double val)
 {
@@ -326,6 +341,7 @@ unsigned char *vtkFSLookupTable::MapValue(double val)
     return this->RGBA;
 }
 
+//------------------------------------------------------------------------------
 /// passes val to MapValue
 void vtkFSLookupTable::GetColor(double val, double rgb[3])
 {
@@ -336,6 +352,7 @@ void vtkFSLookupTable::GetColor(double val, double rgb[3])
     rgb[2] = rgb8[2]/255.0;
 }
 
+//------------------------------------------------------------------------------
 void vtkFSLookupTable::MapScalarsThroughTable2(void *input, unsigned char *output,
                                int inputDataType, int numberOfValues,
                                int inputIncrement, int outputIncrement)

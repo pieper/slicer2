@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSLookupTable.h,v $
-  Date:      $Date: 2006/01/06 17:57:41 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2006/02/28 20:50:07 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 /// .NAME vtkFSLookupTable - A look up table for FreeSurfer colour scales.
@@ -20,11 +20,7 @@
 #define __vtkFSLookupTable_h
 
 #include <vtkFreeSurferReadersConfigure.h>
-#include "vtkObject.h"
-#include "vtkObjectFactory.h"
-#include "vtkLookupTable.h"
 #include "vtkScalarsToColors.h"
-#include "vtkUnsignedShortArray.h"
 
 /// Type constant, can have different types of colour scales
 const int FSLUTHEAT = 1;
@@ -49,7 +45,7 @@ public:
     vtkSetMacro(HiThresh,float);
 
     vtkGetMacro(LutType,int);
-    char *GetLutTypeString();
+    const char *GetLutTypeString();
     void SetLutTypeToHeat();
     void SetLutTypeToBlueRed();
     void SetLutTypeToRedBlue();
