@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkGDFReader.cxx,v $
-  Date:      $Date: 2006/02/28 20:37:56 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2006/02/28 20:43:02 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
 #include "vtkGDFReader.h"
@@ -667,76 +667,6 @@ void vtkGDFReader::PrintSelf(ostream& os, vtkIndent indent)
 //------------------------------------------------------------------------------
 void vtkGDFReader::PrintStdout()
 {
-  if (this->Title != NULL)
-    {
-    cout << "Title: " << this->Title << endl;
-    }
-  else
-    {
-      cout << "Title:" << endl;
-    }
-  if (this->MeasurementName != NULL)
-    {
-    cout << "Measurement name: " << this->MeasurementName << endl;
-    }
-  else
-    {
-      cout << "Measurement name:" << endl;
-    }
-  if (this->SubjectName != NULL)
-    {
-      cout << "Subject name: " << this->SubjectName << endl;
-    }
-  else
-    {
-      cout << "Subject name:" << endl;
-    }
-    if (this->DataFileName != NULL)
-      {
-    cout << "Data file name: " << this->DataFileName << endl;
-      }
-  else
-    {
-      cout << "Data file name:" << endl;
-    }
-    cout << "Number of classes: " << this->NumClasses << endl;
-    cout << "Number of variables: " << this->NumVariables << endl;
-    if (this->DefaultVariable != NULL)
-    {
-      cout << "Default variable: " << this->DefaultVariable << endl;
-    }
-  else
-    {
-      cout << "Default variable:" << endl;
-    }
-    cout << "Default variable index: " << this->DefaultVariableIndex << endl;
-    cout << "Number of subjects: " << this->NumberOfSubjects << endl;
-
-    if (this->Tessellation != NULL)
-        cout << "Tessellation: " << this->Tessellation << endl;
-    else
-        cout << "Tessellation: " << endl;
-    if (this->RegistrationSubject != NULL)
-        cout << "RegistrationSubject: " << this->RegistrationSubject << endl;
-    else
-        cout << "RegistrationSubject: " << endl;
-    
-    if (this->DesignMatFile != NULL)
-        cout << "DesignMatFile: " << this->DesignMatFile << endl;
-    else
-        cout << "DesignMatFile: " << endl;
-    
-    if (this->Creator != NULL)
-        cout << "Creator: " << this->Creator << endl;
-    else
-        cout << "Creator: " << endl;
-
-    cout << "SmoothSteps: " << this->SmoothSteps << endl;
-    if (this->SUBJECTS_DIR != NULL)
-        cout << "SUBJECTS_DIR: " << this->SUBJECTS_DIR << endl;
-    else
-        cout << "SUBJECTS_DIR: " << endl;
-    cout << "SynthSeed: " << this->SynthSeed << endl;
-    cout << "GD file conversion method: " << this->gd2mtx << endl;
-    
+  vtkIndent indent;
+  PrintSelf(cout, indent);
 }
