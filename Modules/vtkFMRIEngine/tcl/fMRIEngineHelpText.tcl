@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEngineHelpText.tcl,v $
-#   Date:      $Date: 2005/12/20 22:55:31 $
-#   Version:   $Revision: 1.21.2.2 $
+#   Date:      $Date: 2006/03/01 20:11:07 $
+#   Version:   $Revision: 1.21.2.3 $
 # 
 #===============================================================================
 # FILE:        fMRIEngineHelpText.tcl
@@ -488,4 +488,19 @@ proc fMRIEngineHelpSelectLabels { } {
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpSetDOF
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineHelpSetDOF { } {
+    #--- View 
+    #--- How to set the degree of freedom for thresholding activation 
+    set i [ fMRIEngineGetHelpWinID ]
+    set txt "<H3>Degree of freedom</H3>
+<P> The value of degree of freedom (DOF) is calculated by subtracting one (1) from the number of volumes in the fMRI sequence, from which the activation has been computed. The DOF is a required parameter for thresholding the activation volume."
+    DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
+}
 
