@@ -105,7 +105,6 @@ switch $::tcl_platform(os) {
 
 switch $::tcl_platform(os) {
     "SunOS" -
-    "Linux" -
     "Darwin" {
         set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin
 
@@ -117,6 +116,24 @@ switch $::tcl_platform(os) {
         set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/unu
         set ::VTK_TEST_FILE $::VTK_DIR/bin/vtk
         set ::SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/libSlicerClustering.a
+        set ::VTK_TCL_LIB $::TCL_LIB_DIR/libtcl8.4.$shared_lib_ext 
+        set ::VTK_TK_LIB $::TCL_LIB_DIR/libtk8.4.$shared_lib_ext
+        set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh8.4
+        set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/libITKCommon.$shared_lib_ext
+        set ::TK_EVENT_PATCH $::SLICER_HOME/tkEventPatch.diff
+        set ::BLT_PATCH $::SLICER_HOME/blt-patch.diff
+    }
+    "Linux" {
+    set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin
+
+        set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh8.4
+        set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish8.4
+        set ::ITCL_TEST_FILE $::TCL_LIB_DIR/libitclstub3.2.a
+        set ::IWIDGETS_TEST_FILE $::TCL_LIB_DIR/iwidgets4.0.1/iwidgets.tcl
+        set ::BLT_TEST_FILE $::TCL_BIN_DIR/bltwish24
+        set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/unu
+        set ::VTK_TEST_FILE $::VTK_DIR/bin/vtk
+        set ::SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/libSlicerClustering.so
         set ::VTK_TCL_LIB $::TCL_LIB_DIR/libtcl8.4.$shared_lib_ext 
         set ::VTK_TK_LIB $::TCL_LIB_DIR/libtk8.4.$shared_lib_ext
         set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh8.4
@@ -178,7 +195,7 @@ switch $::tcl_platform(os) {
         set ::COMPILER_PATH "/usr/bin"
         set ::COMPILER "g++"
         set ::CMAKE $::CMAKE_PATH/bin/cmake
-        set ::MAKE make
+        set ::MAKE "make"
         set ::SERIAL_MAKE "make"
     }
     "Darwin" {
