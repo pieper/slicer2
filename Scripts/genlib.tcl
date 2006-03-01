@@ -319,7 +319,7 @@ if { ![file exists $::TCL_TEST_FILE] } {
     } else {
         cd $SLICER_LIB/tcl/tcl/unix
 
-        runcmd ./configure --enable-threads --prefix=$SLICER_LIB/tcl-build
+        runcmd ./configure --prefix=$SLICER_LIB/tcl-build
         eval runcmd $::MAKE
         eval runcmd $::MAKE install
     }
