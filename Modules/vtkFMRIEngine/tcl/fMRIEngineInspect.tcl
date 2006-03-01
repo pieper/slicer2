@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEngineInspect.tcl,v $
-#   Date:      $Date: 2006/01/03 21:41:13 $
-#   Version:   $Revision: 1.29.2.4 $
+#   Date:      $Date: 2006/03/01 20:10:20 $
+#   Version:   $Revision: 1.29.2.5 $
 # 
 #===============================================================================
 # FILE:        fMRIEngineInspect.tcl
@@ -43,7 +43,12 @@ proc fMRIEngineScaleActivation {v} {
         return
     }
 
-    set dof [expr $MultiVolumeReader(noOfVolumes) - 1]
+    if {[ValidateInt $fMRIEngine(DOF)] == 0 ||
+        $fMRIEngine(DOF) < 1} {
+        DevErrorWindow "Degree of freedom (DOF) must be a positive integer number."
+        return
+    }
+
     if {[ValidateInt $fMRIEngine(pValue)] == 0 &&
         [ValidateFloat $fMRIEngine(pValue)] == 0} {
         DevErrorWindow "p Value must be a floating point or integer number."
@@ -67,7 +72,7 @@ proc fMRIEngineScaleActivation {v} {
                 vtkCDF cdf
             }
  
-            set t [cdf p2t $fMRIEngine(pValue) $dof]
+            set t [cdf p2t $fMRIEngine(pValue) $fMRIEngine(DOF)]
             cdf Delete
         } else {
             if {[info commands fMRIEngine(fdrThreshold)] != ""} {
@@ -85,7 +90,7 @@ proc fMRIEngineScaleActivation {v} {
             }
             fMRIEngine(fdrThreshold) SetOption $option 
 
-            fMRIEngine(fdrThreshold) SetDOF $dof
+            fMRIEngine(fdrThreshold) SetDOF $fMRIEngine(DOF)
             fMRIEngine(fdrThreshold) SetInput [Volume($id,vol) GetOutput]  
             fMRIEngine(fdrThreshold) Update
             set t [fMRIEngine(fdrThreshold) GetFDRThreshold]
@@ -111,10 +116,18 @@ proc fMRIEngineScaleActivation {v} {
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineUpdateViewTab {} {
-    global fMRIEngine Gui Volume
+    global fMRIEngine Gui Volume MultiVolumeReader
 
     set fMRIEngine(currentTab) "Inspect"
 
+    if {[info exists MultiVolumeReader(noOfVolumes)]} {
+        if {$fMRIEngine(DOF) == 1} {
+            set dof [expr $MultiVolumeReader(noOfVolumes) - 1]
+            set dof [expr {$dof > 0 ? $dof : 1}]
+            set fMRIEngine(DOF) $dof
+        }
+    }
+ 
     # Peristimulus histogram plotting will be disabled if the paradigm desgin is 
     # event-related or mixed.
     if {$fMRIEngine(paradigmDesignType) != "blocked"} {
@@ -379,10 +392,23 @@ proc fMRIEngineToggleCutoff {} {
 proc fMRIEngineBuildUIForThreshold {parent} {
     global fMRIEngine Gui
 
+    frame $parent.fVols -bg $Gui(activeWorkspace) -relief groove -bd 1
     frame $parent.fOptions -bg $Gui(activeWorkspace) -relief groove -bd 1
     frame $parent.fThreshold -bg $Gui(activeWorkspace) -relief groove -bd 1
-    pack $parent.fOptions $parent.fThreshold \
+    pack $parent.fVols $parent.fOptions $parent.fThreshold \
         -side top -fill x -padx 5 -pady 2 
+
+    #-------------------------------------------
+    # Vols frame 
+    #-------------------------------------------
+    set f $parent.fVols
+    DevAddButton $f.bHelp "?" "fMRIEngineHelpSetDOF" 2
+    DevAddLabel $f.lDOF "Degree of freedom:"
+    eval {entry $f.eDOF -width 9 \
+        -textvariable fMRIEngine(DOF)} $Gui(WEA)
+    set fMRIEngine(DOF) 1 
+
+    grid $f.bHelp $f.lDOF $f.eDOF -padx 1 -pady 2 -sticky e
 
     #-------------------------------------------
     # Options frame 
