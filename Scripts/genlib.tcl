@@ -665,6 +665,37 @@ if { ![file exists $::SANDBOX_TEST_FILE] } {
 
 # Are all the test files present and accounted for?  If not, return error code
 
+if { ![file exists $::CMAKE] } {
+    puts "CMake test file $::CMAKE not found."
+}
+if { ![file exists $::TEEM_TEST_FILE] } {
+    puts "Teem test file $::TEEM_TEST_FILE not found."
+}
+if { ![file exists $::TCL_TEST_FILE] } {
+    puts "Tcl test file $::TCL_TEST_FILE not found."
+}
+if { ![file exists $::TK_TEST_FILE] } {
+    puts "Tk test file $::TK_TEST_FILE not found."
+}
+if { ![file exists $::ITCL_TEST_FILE] } {
+    puts "incrTcl test file $::ITCL_TEST_FILE not found."
+}
+if { ![file exists $::IWIDGETS_TEST_FILE] } {
+    puts "iwidgets test file $::IWIDGETS_TEST_FILE not found."
+}
+if { ![file exists $::BLT_TEST_FILE] } {
+    puts "BLT test file $::BLT_TEST_FILE not found."
+}
+if { ![file exists $::VTK_TEST_FILE] } {
+    puts "VTK test file $::VTK_TEST_FILE not found."
+}
+if { ![file exists $::ITK_TEST_FILE] } {
+    puts "ITK test file $::ITK_TEST_FILE not found."
+}
+if { ![file exists $::SANDBOX_TEST_FILE] } { 
+    puts "Sandbox test file $::SANDBOX_TEST_FILE not found."
+}
+
 if { ![file exists $::CMAKE] || \
          ![file exists $::TEEM_TEST_FILE] || \
          ![file exists $::TCL_TEST_FILE] || \
