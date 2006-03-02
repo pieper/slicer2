@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEngineSequence.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:38 $
-#   Version:   $Revision: 1.9 $
+#   Date:      $Date: 2006/03/02 22:21:33 $
+#   Version:   $Revision: 1.10 $
 # 
 #===============================================================================
 # FILE:        fMRIEngineSequence.tcl
@@ -100,6 +100,7 @@ proc fMRIEngineBuildUIForSelect {parent} {
         -relief raised -bd 2 -width 13 \
         -indicatoron 1 \
         -menu $f.mbType.m} $Gui(WMBA)
+    bind $f.mbType <1> "fMRIEngineUpdateSequences" 
     eval {menu $f.mbType.m} $Gui(WMA)
 
     # Add menu items
