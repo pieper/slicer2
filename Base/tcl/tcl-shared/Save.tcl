@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Save.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:05 $
-#   Version:   $Revision: 1.17 $
+#   Date:      $Date: 2006/03/02 02:51:44 $
+#   Version:   $Revision: 1.18 $
 # 
 #===============================================================================
 # FILE:        Save.tcl
@@ -64,7 +64,7 @@ proc SaveInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.17 $} {$Date: 2006/01/06 17:57:05 $}]
+            {$Revision: 1.18 $} {$Date: 2006/03/02 02:51:44 $}]
 
     SaveInitTables
 
@@ -176,19 +176,33 @@ proc SaveRendererToFile {directory filename imageType {mag 1} {renderer ""}} {
         # one-to-one magnification, simplify
         SaveWindowToFile $directory $filename $imageType $renwin
     } else {
-        # render image in pieces using vtkRenderLargeImage
-        vtkRenderLargeImage saveLargeImage
-        saveLargeImage SetMagnification $mag
-        saveLargeImage SetInput $renderer
-
-        # save to file
-        SaveImageToFile $directory $filename $imageType \
-            [saveLargeImage GetOutput]
-        saveLargeImage Delete
+        set magImage [SaveGetMagnifiedImage $renderer $mag]
+        SaveImageToFile $directory $filename $imageType $magImage
 
         # re-render scene in normal mode
         $renwin Render
     }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC SaveGetMagnifiedImage
+# Return an image rendered from the renderer at the specified magnification
+# .ARGS
+# vtkRenderer ren the renderer
+# int mag magnification
+# .END
+#-------------------------------------------------------------------------------
+proc SaveGetMagnifiedImage {ren mag} {
+    # render image in pieces using vtkRenderLargeImage
+
+    if {[info command saveLargeImage] != ""} {
+        catch "saveLargeImage Delete"
+    }
+    vtkRenderLargeImage saveLargeImage
+    saveLargeImage SetMagnification $mag
+    saveLargeImage SetInput $ren
+    return [saveLargeImage GetOutput]
 }
 
 #-------------------------------------------------------------------------------
@@ -641,44 +655,69 @@ proc Save3DImage {} {
         } else { 
             # save slices too
 
+            # zoomed slices only works after vtk version 5.0
+            if {$::SLICER(VTK_VERSION) < 5.0} {
+                set imageOutputZoom 1
+                if {$Save(imageOutputZoom) > 1} {
+                    puts "WARNING: zooming of slice windows doesn't work, needs VTK 5+. Saving view unzoomed with slice windows."
+                }
+            } else {
+                set imageOutputZoom $Save(imageOutputZoom)
+            }
+
             # first append the 3 slices horizontally
+
             vtkImageAppend imAppendSl
             imAppendSl SetAppendAxis 0
             foreach s $Slice(idList) {
-                vtkWindowToImageFilter IFSl$s
-                IFSl$s SetInput sl${s}Win
-                imAppendSl AddInput [IFSl$s GetOutput]
+                if {$imageOutputZoom == 1} {
+                    vtkWindowToImageFilter IFSl$s
+                    IFSl$s SetInput sl${s}Win
+                    imAppendSl AddInput [IFSl$s GetOutput]
+                    set sliceWindowWidth 256
+                } else {
+                    imAppendSl AddInput [SaveGetMagnifiedImage sl${s}Imager $imageOutputZoom]
+                    set sliceWindowWidth [expr 256 * $imageOutputZoom]
+                }
             }
             
-            set w [winfo width .tViewer]
+            set w [expr [winfo width .tViewer] * $imageOutputZoom]
             # translate if viewer width is bigger
             vtkImageTranslateExtent imTrans
-            imTrans SetTranslation [expr ($w - 768)/2] 0 0
+            imTrans SetTranslation [expr ($w - 768*$imageOutputZoom)/2] 0 0
             imTrans SetInput [imAppendSl GetOutput]
             #pad them with the width of the viewer
             vtkImageConstantPad imPad
             imPad SetInput [imTrans GetOutput]
-            imPad SetOutputWholeExtent 0 $w 0 256 0 0
+            imPad SetOutputWholeExtent 0 $w 0 $sliceWindowWidth 0 0
             
             
             # then append the image of the 3 slices to the viewWin screen
             # vertically
             vtkImageAppend imAppendAll
             imAppendAll SetAppendAxis 1
-            vtkWindowToImageFilter IFVW
-            IFVW SetInput $viewWin
-            imAppendAll AddInput [imPad GetOutput]
-            imAppendAll AddInput [IFVW GetOutput]
+            if {$imageOutputZoom == 1} {
+                vtkWindowToImageFilter IFVW
+                IFVW SetInput $viewWin
+                imAppendAll AddInput [imPad GetOutput]
+                imAppendAll AddInput [IFVW GetOutput]
+            } else {
+                set zoomedViewerWindow [SaveGetMagnifiedImage viewRen $imageOutputZoom]
+                imAppendAll AddInput [imPad GetOutput]
+                imAppendAll AddInput $zoomedViewerWindow
+            }
 
             SaveImageToFile $Save(imageDirectory) $filebase \
                 $Save(imageFileType) [imAppendAll GetOutput]
 
             imAppendSl Delete
             imAppendAll Delete
-            IFVW Delete
-            IFSl0 Delete
-            IFSl1 Delete
-            IFSl2 Delete
+            if {$imageOutputZoom == 1} {
+                IFVW Delete
+                IFSl0 Delete
+                IFSl1 Delete
+                IFSl2 Delete
+            }
             imPad Delete
             imTrans Delete
         }
