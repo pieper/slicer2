@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: CrossSection.tcl,v $
-#   Date:      $Date: 2006/01/06 17:56:57 $
-#   Version:   $Revision: 1.8 $
+#   Date:      $Date: 2006/03/02 13:32:18 $
+#   Version:   $Revision: 1.9 $
 # 
 #===============================================================================
 # FILE:        CrossSection.tcl
@@ -1071,7 +1071,7 @@ proc CrossSectionBuildGUI {} {
     # Help frame
     #-------------------------------------------
     set help "This module is used to measure cross sections of structures such as vessels. 
-<BR>This module adds a "cutter" (a very thin vtk cylinder) at the
+<BR>This module adds a \"cutter\" (a very thin vtk cylinder) at the
 camera location on the endoscopy path. You then place the cutter at
 the location you want the measurement made, resize it so it does not
 go through several sections of the object under study and use the
