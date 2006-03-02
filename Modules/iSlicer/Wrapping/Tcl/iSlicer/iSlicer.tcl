@@ -18,7 +18,7 @@ if { [info commands isvolume] == "" } {
         istask.tcl isrange.tcl spinfloat.tcl 
         ismvolumeselector.tcl isvolumeoption.tcl 
         ismatrixoption.tcl istransformoption.tcl iscomm.tcl
-        ischeckbox.tcl
+        isprocess.tcl ischeckbox.tcl
     }
         
     foreach f $files {
