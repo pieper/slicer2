@@ -112,6 +112,9 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 // How many quality measures are used 
 #define EMSEGMENT_NUM_OF_QUALITY_MEASURE 1
 
+// the same as 1 / (e^6 - 1) - needed for Mean Field Approximation
+#define EMSEGMENT_INVERSE_NEIGHBORHOOD_ENERGY 0.00248491165684
+
 //ETX
 class VTK_EMATLASBRAINCLASSIFIER_EXPORT vtkImageEMGeneral : public vtkImageMultipleInputFilter
 {

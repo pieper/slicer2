@@ -43,10 +43,6 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMultiThreader.h" 
 #include "assert.h"
 
-// the same as 1 / (e^6 - 1)
-#define EMSEGMENTER_INVERSE_NEIGHBORHOOD_ENERGY 0.00248491165684
-
-
 // New Fast Gauss definition - necessary to include prior 
 inline double vtkImageEMAtlasBrainClassifier_FastGaussWeight(const double inverse_sigma, const double x, const float weight)
 {
@@ -856,7 +852,7 @@ static void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate(int id,
 
         if (ProbDataSpatialWeightPtr) {
       // NeighborhoodEnergy = 1-Alpha+Alpha*(Energy -1.0) * EMSEGMENTER_INVERSE_NEIGHBORHOOD_ENERGY;
-      NeighborhoodEnergy = 1-0.99+0.99*(Energy -1.0) * EMSEGMENTER_INVERSE_NEIGHBORHOOD_ENERGY;
+      NeighborhoodEnergy = 1-0.99+0.99*(Energy -1.0) * EMSEGMENT_INVERSE_NEIGHBORHOOD_ENERGY;
     } else {
       // For legacy definition
       NeighborhoodEnergy = (1-Alpha+Alpha*Energy);
