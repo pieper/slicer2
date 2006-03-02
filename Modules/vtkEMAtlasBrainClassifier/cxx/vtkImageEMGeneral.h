@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMGeneral.h,v $
-  Date:      $Date: 2006/01/06 17:57:30 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/03/02 20:19:13 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 // .NAME vtkImageEMGeneral
@@ -86,6 +86,10 @@
 
 // How many quality measures are used 
 #define EMSEGMENT_NUM_OF_QUALITY_MEASURE 1
+
+// the same as 1 / (e^6 - 1) - needed for Mean Field Approximation
+#define EMSEGMENT_INVERSE_NEIGHBORHOOD_ENERGY 0.00248491165684
+
 
 //ETX
 class VTK_EMATLASBRAINCLASSIFIER_EXPORT vtkImageEMGeneral : public vtkImageMultipleInputFilter
