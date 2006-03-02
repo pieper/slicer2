@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup_review.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:06 $
-#   Version:   $Revision: 1.10 $
+#   Date:      $Date: 2006/03/02 20:34:34 $
+#   Version:   $Revision: 1.11 $
 # 
 #===============================================================================
 # FILE:        dup_review.tcl
@@ -92,7 +92,7 @@ itcl::body dup_review::refresh {} {
         set birnid [lindex [file split $s] end-3] 
         set bb $_frame.b$b 
         pack [button $bb -text "Review $birnid" -command "$this run $s"]
-        TooltipAdd $bb "$s"
+        dup_TooltipAdd $bb "$s"
         incr b
     }
 
@@ -109,7 +109,7 @@ itcl::body dup_review::run {studydir} {
     # TODO - this avoids warning messages when slicer starts
     set ::env(SLICER_CUSTOM_CONFIG) "true"
     # TODO - this is linux only
-    exec $::env(SLICER_HOME)/slicer2-linux-x86 --agree_to_license $::PACKAGE_DIR_BIRNDUP/../../../tcl/gonogo.tcl $studydir
+    catch "exec $::env(SLICER_HOME)/slicer2-linux-x86 --agree_to_license $::PACKAGE_DIR_BIRNDUP/../../../tcl/gonogo.tcl $studydir"
 
     if { ![file exists $studydir/upload_list.txt] } {
         # user cancelled

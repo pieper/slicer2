@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup_sort.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:07 $
-#   Version:   $Revision: 1.14 $
+#   Date:      $Date: 2006/03/02 20:34:34 $
+#   Version:   $Revision: 1.15 $
 # 
 #===============================================================================
 # FILE:        dup_sort.tcl
@@ -144,7 +144,7 @@ itcl::body dup_sort::fill {dir} {
     pack $cs.buttons -fill x  -pady 5
 
     set ::DICOMrecurse "true"
-    set aborted [DefaceFindDICOM $dir *]
+    set aborted [dup_DefaceFindDICOM $dir *]
 
     if { $aborted == "true" } {
         $parent fill choose
@@ -152,7 +152,7 @@ itcl::body dup_sort::fill {dir} {
     }
 
     if {$::FindDICOMCounter <= 0} {
-        DevErrorWindow "No DICOM files found"
+        dup_DevErrorWindow "No DICOM files found"
         $parent fill choose
         return
     }
@@ -168,7 +168,7 @@ itcl::body dup_sort::fill {dir} {
     for  {set i 0} {$i < $::FindDICOMCounter} {incr i} {
         if { $study != $_DICOMFiles($i,StudyInstanceUID) ||
                 $patient != $_DICOMFiles(0,PatientID) } {
-            DevErrorWindow "Multiple patients and/or studies in source directory\n\n$_DICOMFiles(0,FileName)\nand\n$_DICOMFiles($i,FileName)\nThis must be corrected before you can run the files through this pipeline."
+            dup_DevErrorWindow "Multiple patients and/or studies in source directory\n\n$_DICOMFiles(0,FileName)\nand\n$_DICOMFiles($i,FileName)\nThis must be corrected before you can run the files through this pipeline."
             return
         }
         set id $_DICOMFiles($i,SeriesInstanceUID)
@@ -193,18 +193,18 @@ itcl::body dup_sort::fill {dir} {
     set inst [$parent pref INSTITUTION]
 
     if { [catch "exec java -jar $birnid_manager -create -p $inst -l $linktable -c $patient" resp] } {
-        DevErrorWindow "Cannot execute BIRN ID manager.  Ensure that UPLOAD2_DIR preference is correct and that Java is installed on your machine.\n\n$resp"
+        dup_DevErrorWindow "Cannot execute BIRN ID manager.  Ensure that UPLOAD2_DIR preference is correct and that Java is installed on your machine.\n\n$resp"
     } else {
 
         if { [catch "exec java -jar $birnid_manager -find -l $linktable -c $patient" resp] } {
-            DevErrorWindow "Cannot execute BIRN ID manager to access BIRN ID.  Ensure that LINKTABLE preference is correct.\n\n$resp"
+            dup_DevErrorWindow "Cannot execute BIRN ID manager to access BIRN ID.  Ensure that LINKTABLE preference is correct.\n\n$resp"
             set birnid ""
         } else {
             set birnid ""
             scan $resp {Birn ID=%[^,]s} birnid
 
             if { $birnid == "" } {
-                DevErrorWindow "Cannot parse BIRN ID.  Response is: \n$resp"
+                dup_DevErrorWindow "Cannot parse BIRN ID.  Response is: \n$resp"
                 puts stderr "Cannot parse BIRN ID.  Response is: \n$resp"
             }
 
@@ -241,23 +241,23 @@ itcl::body dup_sort::sort {} {
     # create the needed entries for each series
 
     if { $_study(project) == "" } {
-        DevErrorWindow "Please set Project #"
+        dup_DevErrorWindow "Please set Project #"
         return
     }
     if { $_study(visit) == "" } {
-        DevErrorWindow "Please set Visit #"
+        dup_DevErrorWindow "Please set Visit #"
         return
     }
     if { $_study(study) == "" } {
-        DevErrorWindow "Please set Study #"
+        dup_DevErrorWindow "Please set Study #"
         return
     }
     if { $_study(birnid) == "" } {
-        DevErrorWindow "Please set BIRN ID"
+        dup_DevErrorWindow "Please set BIRN ID"
         return
     }
     if { $_defacedir == "" } {
-        DevErrorWindow "Please set Destination Directory (temp area for deface processing)"
+        dup_DevErrorWindow "Please set Destination Directory (temp area for deface processing)"
         return
     }
 
@@ -269,15 +269,15 @@ itcl::body dup_sort::sort {} {
     }
 
     if { $has_mask == "yes" && $_series(master) == "" } {
-        DevErrorWindow "Please select master series for masking"
+        dup_DevErrorWindow "Please select master series for masking"
         return
     }
     if { $has_mask == "no" && $_series(master) != "" } {
-        DevWarningWindow "No series selected for masking - Mask Master ignored."
+        dup_DevWarningWindow "No series selected for masking - Mask Master ignored."
     }
 
     if { $_series(master) != "" && ($_series($_series(master),deident_method) != "Deface") } {
-        DevErrorWindow "Master series must be set to deface to be used as a mask.  Leave Mask Master blank if no masking is needed."
+        dup_DevErrorWindow "Master series must be set to deface to be used as a mask.  Leave Mask Master blank if no masking is needed."
         set _series(master) ""
         return
     }
@@ -377,3 +377,4 @@ itcl::body dup_sort::view {id} {
     Volume($volid,node) SetName "Ser $id, Flip $_series($id,FlipAngle)"
     MainUpdateMRML
 }
+

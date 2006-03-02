@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:06 $
-#   Version:   $Revision: 1.13 $
+#   Date:      $Date: 2006/03/02 20:34:33 $
+#   Version:   $Revision: 1.14 $
 # 
 #===============================================================================
 # FILE:        dup.tcl
@@ -354,6 +354,12 @@ itcl::body dup::prefui { } {
 # .END
 #-------------------------------------------------------------------------------
 proc dup_demo {} {
+    package require vtkSlicerBase
+    package require BIRNDUP
+    if { ![info exists ::Module(versbose)] } {
+        set ::Module(verbose) 0
+    }
+    wm withdraw .
     BIRNDUPInterface
 }
 

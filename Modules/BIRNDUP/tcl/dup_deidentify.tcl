@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup_deidentify.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:06 $
-#   Version:   $Revision: 1.12 $
+#   Date:      $Date: 2006/03/02 20:34:33 $
+#   Version:   $Revision: 1.13 $
 # 
 #===============================================================================
 # FILE:        dup_deidentify.tcl
@@ -90,7 +90,7 @@ itcl::body dup_deidentify::refresh {} {
         set birnid [lindex [file split $s] end-3] 
         set bb $_frame.b$b 
         pack [button $bb -text "Deidentify $birnid" -command "$this run $s"]
-        TooltipAdd $bb "$s"
+        dup_TooltipAdd $bb "$s"
         incr b
     }
 
@@ -118,7 +118,7 @@ itcl::body dup_deidentify::run {dir} {
 
     ## fake
 
-    set resp [DevOKCancel "Click Ok to run deidentification"]
+    set resp [dup_DevOKCancel "Click Ok to run deidentification"]
 
     if { $resp == "ok" } {
 
