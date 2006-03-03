@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKImageWriter.cxx,v $
-  Date:      $Date: 2006/01/23 16:22:49 $
-  Version:   $Revision: 1.10 $
+  Date:      $Date: 2006/03/03 15:12:32 $
+  Version:   $Revision: 1.11 $
 
 =========================================================================auto=*/
 #include "vtkITKImageWriter.h"
@@ -25,7 +25,7 @@
 
 // helper function
 template <class  TPixelType>
-void ITKWriteVTKImage(vtkImageData *inputImage, char *fileName, 
+void ITKWriteVTKImage(vtkITKImageWriter *self, vtkImageData *inputImage, char *fileName, 
                       vtkMatrix4x4* rasToIjkMatrix, TPixelType dummy) {
 
   typedef  itk::Image<TPixelType, 3> ImageType;
@@ -102,6 +102,16 @@ void ITKWriteVTKImage(vtkImageData *inputImage, char *fileName,
   typedef typename itk::ImageFileWriter<ImageType> ImageWriterType;      
   typename ImageWriterType::Pointer   itkImageWriter =  ImageWriterType::New();
 
+  if ( self->GetUseCompression() ) 
+    {
+    itkImageWriter->UseCompressionOn();
+    }
+    else
+    {
+    itkImageWriter->UseCompressionOff();
+    }
+
+
   // set pipeline for the image
   vtkFlip->SetInput( inputImage );
   vtkFlip->SetFilteredAxis(1);
@@ -131,6 +141,7 @@ vtkITKImageWriter::vtkITKImageWriter()
 {
   this->FileName = NULL;
   this->RasToIJKMatrix = NULL;
+  this->UseCompression = 0;
 }
 
 
@@ -215,61 +226,61 @@ void vtkITKImageWriter::Write()
       case VTK_DOUBLE:
         {
           double pixelType=0;
-          ITKWriteVTKImage(this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
         }
         break;
       case VTK_FLOAT:
         {
           float pixelType=0;
-          ITKWriteVTKImage(this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
         }
         break;
       case VTK_LONG:
         {
           long pixelType=0;
-          ITKWriteVTKImage(this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
         }
         break;
       case VTK_UNSIGNED_LONG:
         {
           unsigned long pixelType=0;
-          ITKWriteVTKImage(this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
         }
         break;
       case VTK_INT:
         {
           int pixelType=0;
-          ITKWriteVTKImage(this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
         }
         break;
       case VTK_UNSIGNED_INT:
         {
           unsigned int pixelType=0;
-          ITKWriteVTKImage(this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
         }
         break;
       case VTK_SHORT:
         {
           short pixelType=0;
-          ITKWriteVTKImage(this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType); 
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType); 
         }
         break;
       case VTK_UNSIGNED_SHORT:
         {
           unsigned short pixelType=0;
-          ITKWriteVTKImage(this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
         }
         break;
       case VTK_CHAR:
         {
           char pixelType=0;
-          ITKWriteVTKImage(this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
         }
         break;
       case VTK_UNSIGNED_CHAR:
         {
           unsigned char pixelType=0;
-          ITKWriteVTKImage(this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
         }
         break;
       default:
@@ -287,28 +298,28 @@ void vtkITKImageWriter::Write()
         {
           typedef itk::Vector<double, 3>    VectorPixelType;
           VectorPixelType pixelType;
-          ITKWriteVTKImage(this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
         }
         break;
       case VTK_FLOAT:
         {
           typedef itk::Vector<float, 3>    VectorPixelType;
           VectorPixelType pixelType;
-          ITKWriteVTKImage(this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
         }
         break;
       case VTK_UNSIGNED_SHORT:
         {
           typedef itk::Vector<unsigned short, 3>    VectorPixelType;
           VectorPixelType pixelType;
-          ITKWriteVTKImage(this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
         }
         break;
       case VTK_UNSIGNED_CHAR:
         {
           typedef itk::Vector<unsigned char, 3>    VectorPixelType;
           VectorPixelType pixelType;
-          ITKWriteVTKImage(this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
         }
         break;
       default:
