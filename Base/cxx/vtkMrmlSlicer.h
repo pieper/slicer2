@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.h,v $
-  Date:      $Date: 2006/02/23 02:29:33 $
-  Version:   $Revision: 1.49 $
+  Date:      $Date: 2006/03/03 22:49:02 $
+  Version:   $Revision: 1.50 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSlicer - main core of the 3D Slicer
@@ -186,7 +186,10 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
      this->Cursor[s]->SetIntersectCross(flag); } ;
   int GetCursorIntersect(int s) {
      return this->Cursor[s]->GetIntersectCross(); };
-
+    vtkFloatingPointType GetCursorHashGap() { return this->Cursor[0]->GetHashGap(); };
+    void SetCursorHashGap(vtkFloatingPointType gap);
+    void SetCursorHashGap(int s, vtkFloatingPointType gap) {
+        this->Cursor[s]->SetHashGap(gap); };
   // Description:
   // Field of view for slices.  Also used for reformatting...
   vtkGetMacro(FieldOfView, vtkFloatingPointType);

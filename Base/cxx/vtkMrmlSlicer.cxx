@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.cxx,v $
-  Date:      $Date: 2006/02/27 19:21:52 $
-  Version:   $Revision: 1.62 $
+  Date:      $Date: 2006/03/03 22:49:03 $
+  Version:   $Revision: 1.63 $
 
 =========================================================================auto=*/
 #include "vtkMrmlSlicer.h"
@@ -2185,6 +2185,20 @@ void vtkMrmlSlicer::SetCursorIntersect(int flag)
     }
 }
 
+// sets the gap between hash marks on the cursor, which adjusts the opening
+void vtkMrmlSlicer::SetCursorHashGap(vtkFloatingPointType gap)
+{
+    if (gap < this->Cursor[0]->GetHashLength() / 2.0) {
+        vtkWarningMacro(<<"Cursor hash gap should be greater than half of the hash length to avoid overlap in the center: " << this->Cursor[0]->GetHashLength() / 2.0);
+        //return;
+    }
+   for (int s=0; s<NUM_SLICES; s++)
+   {
+       this->SetCursorHashGap(s,gap);
+   }
+}
+
+    
 // DAVE need to call with SetAnnoColor
 void vtkMrmlSlicer::SetCursorColor(vtkFloatingPointType red, vtkFloatingPointType green, vtkFloatingPointType blue) 
 {
