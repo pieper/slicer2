@@ -5,20 +5,33 @@ catch "vn Delete"
 vtkMRMLVolumeNode vn
 
 sc RegisterNodeClass vn
-sc SetURL Modules/vtkSlicerThree/Tests/scene1.xml
+
+catch "vs Delete"
+vtkMRMLVolumeArchetypeStorageNode vs
+
+sc RegisterNodeClass vs
+
+sc SetURL Modules/vtkSlicerThree/Tests/volScene3.xml
 sc Connect
 
 puts "GetNumberOfNodesByClass [sc GetNumberOfNodesByClass vtkMRMLVolumeNode]"
 puts "GetNodeClasses [sc GetNodeClasses]"
 puts "GetNthNode"
 
-set v0 [sc GetNthNode 0]
+set n [sc GetNthNodeByClass 0 vtkMRMLVolumeNode]
 puts "Print volume node 0"
-puts "[$v0 Print]"
+puts "[$n Print]"
 
-set v1 [sc GetNthNode 1]
+set n [sc GetNthNodeByClass 1 vtkMRMLVolumeNode]
 puts "Print volume node 1"
-puts "[$v1 Print]"
+puts "[$n Print]"
 
 
+set n [sc GetNthNodeByClass 0 vtkMRMLVolumeArchetypeStorageNode]
+puts "Print Storage node 0"
+puts "[$n Print]"
+
+set n [sc GetNthNodeByClass 1 vtkMRMLVolumeArchetypeStorageNode]
+puts "Print Storage node 1"
+puts "[$n Print]"
 

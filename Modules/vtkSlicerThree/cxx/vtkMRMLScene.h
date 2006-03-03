@@ -75,7 +75,7 @@ public:
   int Commit(const char* url=NULL);
   
   // Create node with a given class
-  vtkMRMLNode* CreateNodeByClass(const char* className) ;
+  vtkMRMLNode* CreateNodeByClass(const char* className);
 
   // Register node class with the Scene so that it can create it from
   // a class name
@@ -109,10 +109,12 @@ public:
   vtkMRMLNode *GetNextNodeByClass(const char* className);
   
   vtkCollection *GetNodesByName(const char* name);
+
+  vtkCollection *GetNodesByID(const char* name);
+
+  vtkCollection* GetNodesByClassByID(const char* className, const char* id);
   
   vtkCollection *GetNodesByClassByName(const char* className, const char* name);
-  
-  vtkMRMLNode *GetNodeByClassById(const char* className, unsigned long id);
   
   vtkMRMLNode* GetNthNode(int n);
   
@@ -127,7 +129,7 @@ public:
   // returns list of names
   const char* GetNodeClasses();
   
-  int GetUniqueIdByClass(const char* className);
+  const char* GetUniqueIDByClass(const char* className);
   
   void InsertAfterNode( vtkMRMLNode *item, vtkMRMLNode *newItem);
   void InsertBeforeNode( vtkMRMLNode *item, vtkMRMLNode *newItem);
@@ -147,7 +149,8 @@ protected:
   char *URL;
   
   //BTX
-  std::map< std::string, int> UniqueIdByClass;
+  std::map< std::string, int> UniqueIDByClass;
+  std::vector< std::string > UniqueIDs;
   std::vector< vtkMRMLNode* > RegisteredNodeClasses;
   std::vector< std::string > RegisteredNodeTags;
   //ETX

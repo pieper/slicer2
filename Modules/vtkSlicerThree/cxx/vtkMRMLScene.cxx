@@ -7,10 +7,12 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLScene.cxx,v $
-Date:      $Date: 2006/02/11 17:20:11 $
-Version:   $Revision: 1.10 $
+Date:      $Date: 2006/03/03 22:26:40 $
+Version:   $Revision: 1.11 $
 
 =========================================================================auto=*/
+#include <sstream>
+
 #include "vtkMRMLScene.h"
 #include "vtkMRMLParser.h"
 #include "vtkObjectFactory.h"
@@ -22,7 +24,7 @@ vtkMRMLScene::vtkMRMLScene()
   this->URL = NULL;
   this->ClassNameList = NULL;
   this->RegisteredNodeClasses.clear();
-  this->UniqueIdByClass.clear();
+  this->UniqueIDByClass.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -88,6 +90,14 @@ int vtkMRMLScene::Connect()
   parser->SetFileName(URL);
   parser->Parse();
   parser->Delete();
+
+  // create node references
+  int nnodes = this->GetNumberOfItems();
+  vtkMRMLNode *node = NULL;
+  for (int n=0; n<nnodes; n++) {
+    node = (vtkMRMLNode *)this->GetItemAsObject(n);
+    node->UpdateScene(this);
+  }
   return 1;
 }
 
@@ -292,6 +302,44 @@ vtkCollection* vtkMRMLScene::GetNodesByName(const char* name)
   return nodes;
 }
 
+
+//------------------------------------------------------------------------------
+vtkCollection* vtkMRMLScene::GetNodesByID(const char* id)
+{
+  vtkCollection* nodes = vtkCollection::New();
+  
+  vtkCollectionElement *elem=this->Top;
+  vtkMRMLNode* node;
+  while (elem != NULL) {
+    node = (vtkMRMLNode*)elem->Item;
+    if (node->GetID() && !strcmp(node->GetID(), id)) {
+      nodes->AddItem(node);
+    }
+    
+    elem = elem->Next;
+  }
+  return nodes;
+}
+
+//------------------------------------------------------------------------------
+vtkCollection* vtkMRMLScene::GetNodesByClassByID(const char* className, const char* id)
+{
+  vtkCollection* nodes = vtkCollection::New();
+  
+  vtkCollectionElement *elem=this->Top;
+  vtkMRMLNode* node;
+  
+  while (elem != NULL) {
+    node = (vtkMRMLNode*)elem->Item;
+    if (node->GetID() && !strcmp(node->GetID(), id) && strcmp(elem->Item->GetClassName(), className) == 0) {
+      nodes->AddItem(node);
+    }
+
+    elem = elem->Next;
+  }
+  return nodes;
+}
+
 //------------------------------------------------------------------------------
 vtkCollection* vtkMRMLScene::GetNodesByClassByName(const char* className, const char* name)
 {
@@ -309,23 +357,6 @@ vtkCollection* vtkMRMLScene::GetNodesByClassByName(const char* className, const 
     elem = elem->Next;
   }
   return nodes;
-}
-
-//------------------------------------------------------------------------------
-vtkMRMLNode* vtkMRMLScene::GetNodeByClassById(const char* className, unsigned long id)
-{
-  vtkCollectionElement *elem = this->Top;
-  vtkMRMLNode* node;
-
-  while (elem != NULL) {
-    node = (vtkMRMLNode*)elem->Item;
-    if (node->GetID() == id && strcmp(elem->Item->GetClassName(), className) == 0) {
-      break;
-    }
-
-    elem = elem->Next;
-  }
-  return node;
 }
 
 //------------------------------------------------------------------------------
@@ -434,15 +465,37 @@ void vtkMRMLScene::PrintSelf(ostream& os, vtkIndent indent)
 }
 
 //------------------------------------------------------------------------------
-int vtkMRMLScene::GetUniqueIdByClass(const char* className)
+const char* vtkMRMLScene::GetUniqueIDByClass(const char* className)
 {
-  int id = 0;
-  if (UniqueIdByClass.find(className) == UniqueIdByClass.end() ) {
-    UniqueIdByClass[className] = 1;
+  std::string sname(className);
+  if (UniqueIDByClass.find(sname) == UniqueIDByClass.end() ) {
+    UniqueIDByClass[className] = 1;
   }
-  else {
-    id = UniqueIdByClass[className];
-    UniqueIdByClass[className] = id + 1;
+  int id = UniqueIDByClass[sname];
+
+  std::string name;
+
+  while (true) {
+    std::stringstream ss;
+    ss << className;
+    ss << id;
+    name = ss.str();
+    bool nameExists = false;
+    for (int i=0; i< UniqueIDs.size(); i++) {
+      if (UniqueIDs[i] == name) {
+        nameExists = true;
+        break;
+      }
+    }
+    if (nameExists) {
+      id++;
+      continue;
+    }
+    else {
+      break;
+    }
   }
-  return id;
+  UniqueIDByClass[className] = id + 1;
+  UniqueIDs.push_back(name);
+  return UniqueIDs[UniqueIDs.size()-1].c_str();
 }

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLModelNode.h,v $
-  Date:      $Date: 2006/02/14 21:24:27 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2006/03/03 22:26:39 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLModelNode - MRML node to represent a 3D surface model.
@@ -44,12 +44,6 @@ public:
   // Set node attributes
   virtual void ReadXMLAttributes( const char** atts);
 
-  // Read data for the node
-  virtual void ReadData();
-
-  // Write data for the node
-  virtual void WriteData();
-
   // Description:
   // Write this node's information to a MRML file in XML format.
   virtual void WriteXML(ostream& of, int indent);
@@ -62,11 +56,6 @@ public:
   // Description:
   // Get node XML tag name (like Volume, Model)
   virtual const char* GetNodeTagName() {return "Model";};
-
-  // Description:
-  // Path of the data file, relative to the MRML file
-  vtkSetStringMacro(FileName);
-  vtkGetStringMacro(FileName);
 
   // Description:
   // Name of the model's color, which is defined by a Color node in a MRML file
@@ -140,7 +129,6 @@ protected:
   vtkPolyData *PolyData;
 
   // Strings
-  char *FileName;
   char *Color;
   int LUTName;
     

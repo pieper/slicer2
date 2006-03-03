@@ -13,6 +13,9 @@ vtkMRMLParser.cxx
 vtkMRMLNode.cxx
 vtkMRMLVolumeNode.cxx
 vtkMRMLModelNode.cxx
+vtkMRMLStorageNode.cxx
+vtkMRMLVolumeArchetypeStorageNode.cxx
+vtkMRMLModelStorageNode.cxx
 )
 
 ## classes that one does not want tcl wrapped

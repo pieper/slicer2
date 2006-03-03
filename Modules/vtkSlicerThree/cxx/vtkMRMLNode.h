@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLNode.h,v $
-  Date:      $Date: 2006/02/14 21:24:28 $
-  Version:   $Revision: 1.10 $
+  Date:      $Date: 2006/03/03 22:26:40 $
+  Version:   $Revision: 1.11 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLNode - Abstract Superclass for all specific types of MRML nodes.
@@ -21,6 +21,8 @@
 #define __vtkMRMLNode_h
 
 #include "vtkObject.h"
+
+class vtkMRMLScene;
 
 class VTK_EXPORT vtkMRMLNode : public vtkObject
 {
@@ -41,19 +43,26 @@ public:
   virtual void ReadXMLAttributes(const char** atts);
 
   // Description:
+  // Set dependencies between this node and the parent node
+  // when parsing XML file
+  virtual void ProcessParentNode(vtkMRMLNode *parentNode){};
+
+  // Description:
+  // Set dependencies between this node and a child node
+  // when parsing XML file
+  virtual void ProcessChildNode(vtkMRMLNode *childNode){};
+  
+  // Description:
+  // Updates other nodes in the scene depending on this node
+  // This method is called automatically by XML parser after all nodes are created
+  virtual void UpdateScene(vtkMRMLScene *scene) {};
+
+  // Description:
   // Write this node's information to a MRML file in XML format.
   // NOTE: Subclasses should implement this method
   // NOTE: Call this method in the subclass impementation
   virtual void WriteXML(ostream& of, int indent);
   
-  // Read data for the node
-  // NOTE: Subclasses should implement this method
-  virtual void ReadData() = 0;
-  
-  // Write data for the node
-  // NOTE: Subclasses should implement this method
-  virtual void WriteData() = 0;
-
   // Description:
   // Copy everything from another node of the same type.
   // NOTE: Subclasses should implement this method
@@ -64,12 +73,6 @@ public:
   // Get node XML tag name (like Volume, Model)
   // NOTE: Subclasses should implement this method
   virtual const char* GetNodeTagName() = 0;
-  
-  // Description:
-  // Set/Get a numerical ID for the calling program to use to keep track
-  // of its various node objects.
-  vtkSetMacro(ID, unsigned int);
-  vtkGetMacro(ID, unsigned int);
   
   // Description:
   // Text description of this node, to be set by the user
@@ -88,14 +91,14 @@ public:
   
   
   // Description:
-  // Name of space in which this node lives
-  vtkSetStringMacro(SpaceName);
-  vtkGetStringMacro(SpaceName);
-  
-  // Description:
   // Node's effect on indentation when displaying the
   // contents of a MRML file. (0, +1, -1)
   vtkGetMacro(Indent, int);
+  
+  // Description:
+  // ID use by other nodes to reference this node in XML
+  vtkSetStringMacro(ID);
+  vtkGetStringMacro(ID);
   
 protected:
   
@@ -107,11 +110,10 @@ protected:
   
   vtkSetMacro(Indent, int);
   
-  unsigned int ID;
   char *Description;
   char *SceneRootDir;
   char *Name;
-  char *SpaceName;
+  char *ID;
   int Indent;
 };
 
