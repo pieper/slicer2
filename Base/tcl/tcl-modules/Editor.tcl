@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Editor.tcl,v $
-#   Date:      $Date: 2006/01/06 17:56:58 $
-#   Version:   $Revision: 1.84 $
+#   Date:      $Date: 2006/03/03 15:34:30 $
+#   Version:   $Revision: 1.85 $
 # 
 #===============================================================================
 # FILE:        Editor.tcl
@@ -105,7 +105,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.84 $} {$Date: 2006/01/06 17:56:58 $}]
+        {$Revision: 1.85 $} {$Date: 2006/03/03 15:34:30 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -1731,6 +1731,10 @@ proc EditorCopyNode {dst src} {
     Volume($dst,node) InterpolateOff
     Volume($dst,node) LabelMapOn
     Volume($dst,node) SetLUTName $Lut(idLabel)
+
+    # all label maps must be of type Short to work with the imaging algorithms,
+    # even if the original volume is float
+    Volume($dst,node) SetScalarType 4
 }
 
 #-------------------------------------------------------------------------------
