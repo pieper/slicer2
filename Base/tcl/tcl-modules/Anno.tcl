@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Anno.tcl,v $
-#   Date:      $Date: 2006/01/06 17:56:57 $
-#   Version:   $Revision: 1.23 $
+#   Date:      $Date: 2006/03/03 22:49:57 $
+#   Version:   $Revision: 1.24 $
 # 
 #===============================================================================
 # FILE:        Anno.tcl
@@ -45,7 +45,9 @@ proc AnnoInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.23 $} {$Date: 2006/01/06 17:56:57 $}]
+        {$Revision: 1.24 $} {$Date: 2006/03/03 22:49:57 $}]
+
+    set Anno(hashGap) [$::Interactor(activeSlicer) GetCursorHashGap]
 }
 
 #-------------------------------------------------------------------------------
@@ -158,8 +160,9 @@ cube and axes.
     # Frames
     frame $f.fCoords -bg $Gui(activeWorkspace)
     frame $f.fPrecision -bg $Gui(activeWorkspace)
+    frame $f.fHashGap -bg $Gui(activeWorkspace)
     frame $f.fFollow -bg $Gui(activeWorkspace)
-    pack $f.fCoords $f.fPrecision $f.fFollow -side top -pady $Gui(pad)
+    pack $f.fCoords $f.fPrecision $f.fHashGap $f.fFollow -side top -pady $Gui(pad)
 
     #-------------------------------------------
     # Mode->Coords frame
@@ -205,6 +208,18 @@ cube and axes.
     pack $f.l $f.f -side left -padx $Gui(pad) -fill x -anchor w
 
     #-------------------------------------------
+    # Mode->HashGap frame
+    #-------------------------------------------
+    set f $fMode.fHashGap
+    set tip1 "Adjust the gap between hashes on the crosshair. Central opening = 2 x gap."
+    eval {label $f.l -text "Hash Gap:"} $Gui(WLA)
+    eval {entry $f.e -width 10 -textvariable Anno(hashGap)} $Gui(WEA)
+    TooltipAdd $f.e $tip1
+    bind $f.e <Return> "AnnoSetHashGap"
+    pack $f.l $f.e -side left -padx $Gui(pad) -fill x -anchor w
+    
+
+    #-------------------------------------------
     # Mode->Follow frame
     #-------------------------------------------
     set f $fMode.fFollow
@@ -218,8 +233,23 @@ cube and axes.
     eval {checkbutton $f.cBox -text "Cube follows focal point" \
         -variable Anno(boxFollowFocalPoint) -indicatoron 0 -width 24 \
         -command "MainAnnoUpdateFocalPoint; Render3D"} $Gui(WCA)
-    pack $f.cAxes $f.cBox \
+    eval {checkbutton $f.cCrossHair -text "Axes follow cross hairs" \
+              -variable Anno(axesFollowCrossHairs) -indicatoron 0 -width 24 \
+              -command "MainAnnoUpdateAxesPosition; Render3D"} $Gui(WCA)
+    pack $f.cAxes $f.cCrossHair $f.cBox \
         -side top -fill x -padx $Gui(pad) -pady $Gui(pad) 
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC AnnoSetHashGap
+#
+# Sets the cursor gap between the cross hair hash marks for the currently active slicer, 
+# then renders the slices.
+# .END
+#-------------------------------------------------------------------------------
+proc AnnoSetHashGap {} {
+    global Interactor Anno
+    $Interactor(activeSlicer) SetCursorHashGap $Anno(hashGap)
+    RenderSlices
+}
