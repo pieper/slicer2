@@ -7,9 +7,9 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageExtractSlices.h,v $
-  Date:      $Date: 2006/02/14 20:57:41 $
-  Version:   $Revision: 1.8 $
-
+  Date:      $Date: 2006/03/06 21:07:29 $
+  Version:   $Revision: 1.9 $
+ 
 =========================================================================auto=*/
 // .NAME vtkImageDiffusionTensor - 
 // .SECTION Description

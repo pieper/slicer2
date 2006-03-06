@@ -7,24 +7,10 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkStreamlineConvolve.cxx,v $
-  Date:      $Date: 2006/01/13 16:44:43 $
-  Version:   $Revision: 1.6 $
-
+  Date:      $Date: 2006/03/06 21:07:30 $
+  Version:   $Revision: 1.7 $
 =========================================================================auto=*/
-/*=========================================================================
 
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkStreamlineConvolve.cxx,v $
-
-  Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
-  All rights reserved.
-  See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notice for more information.
-
-=========================================================================*/
 #include "vtkStreamlineConvolve.h"
 
 #include "vtkCellArray.h"
@@ -36,7 +22,7 @@
 #include "vtkPolyData.h"
 #include "math.h"
 
-vtkCxxRevisionMacro(vtkStreamlineConvolve, "$Revision: 1.6 $");
+vtkCxxRevisionMacro(vtkStreamlineConvolve, "$Revision: 1.7 $");
 vtkStandardNewMacro(vtkStreamlineConvolve);
 
 // Construct with lower threshold=0, upper threshold=1, and threshold 
@@ -182,6 +168,7 @@ void vtkStreamlineConvolveExecute(vtkStreamlineConvolve *self,
   int kernelMiddle[3];
 
   vtkIdType numPts;
+
   vtkPolyData *output = self->GetOutput();
   vtkPolyData *streamlines = self->GetStreamlines();
 

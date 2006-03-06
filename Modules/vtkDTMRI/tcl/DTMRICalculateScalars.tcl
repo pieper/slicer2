@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRICalculateScalars.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:27 $
-#   Version:   $Revision: 1.22 $
+#   Date:      $Date: 2006/03/06 21:07:30 $
+#   Version:   $Revision: 1.23 $
 # 
 #===============================================================================
 # FILE:        DTMRICalculateScalars.tcl
@@ -36,7 +36,7 @@ proc DTMRICalculateScalarsInit {} {
     #------------------------------------
     set m "CalculateScalars"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                         {$Revision: 1.22 $} {$Date: 2006/01/06 17:57:27 $}]
+                         {$Revision: 1.23 $} {$Date: 2006/03/06 21:07:30 $}]
 
 
     #------------------------------------
@@ -380,6 +380,9 @@ proc DTMRIDoMath {{operation ""}} {
     MainVolumesUpdate $v
     # tell the node what type of data so MRML file will be okay
     Volume($v,node) SetScalarType [[math GetOutput] GetScalarType]
+
+    # color operations generate 4 component volumes, so let the node know
+    Volume($v,node) SetNumScalars [[math GetOutput] GetNumberOfScalarComponents]
     
     math SetInput 0 ""    
     math SetInput 1 ""

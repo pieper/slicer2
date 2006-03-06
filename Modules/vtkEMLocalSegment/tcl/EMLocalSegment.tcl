@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMLocalSegment.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:34 $
-#   Version:   $Revision: 1.67 $
+#   Date:      $Date: 2006/03/06 21:07:31 $
+#   Version:   $Revision: 1.68 $
 # 
 #===============================================================================
 # FILE:        EMLocalSegment.tcl
@@ -269,7 +269,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.67 $} {$Date: 2006/01/06 17:57:34 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.68 $} {$Date: 2006/03/06 21:07:31 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -2786,6 +2786,76 @@ proc EMSegmentChangeSuperClassName {Active SuperClass} {
 }
 
 #-------------------------------------------------------------------------------
+# .PROC EMSegmentProbabilityDataExists
+# Checks if the class or any of the sub class has a ProbData Defined 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+
+proc EMSegmentProbabilityDataExists { SClass} {
+    global EMSegment Volume
+    if {$EMSegment(Cattrib,$SClass,ProbabilityData) != $Volume(idNone) } { return 1}
+
+    if {$EMSegment(Cattrib,$SClass,IsSuperClass) } {
+    foreach i $EMSegment(Cattrib,$SClass,ClassList) {
+        if {[EMSegmentProbabilityDataExists $i ]} { return 1}
+    }
+    }
+    return 0
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentCheckCurrentClassParameters
+# Checks for consistency in just the current class parameters
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc  EMSegmentCheckCurrentClassParameters {Class {WarningFlag 1}} {
+    global EMSegment
+
+    if {$EMSegment(Cattrib,$Class,LocalPriorWeight)} {
+    if {[EMSegmentProbabilityDataExists $Class] == 0} {
+        if {[DevYesNo "Prob Data Weight of Class $EMSegment(Cattrib,$Class,Label) is set to $EMSegment(Cattrib,$Class,LocalPriorWeight).However, no spatial priors are defined for this class or its sub-classes. Can Prob Data Weight be set to 0.0 ?"] !=  "yes" } {
+        return 0
+        } 
+        set EMSegment(Cattrib,$Class,LocalPriorWeight) 0.0
+    }
+    } elseif {$WarningFlag} {
+    if {[EMSegmentProbabilityDataExists $Class]} {
+        DevWarningWindow "Prob Data Weight of Class $EMSegment(Cattrib,$i,Label) is set to 0.0 even through prior data is defined in classes or subclasses! "
+        return -1
+    }
+    }
+    return 1
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EMSegmentCheckClassParameters
+# Checks for consistency in class parameters
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc  EMSegmentCheckClassParameters {SuperClass {WarningFlag 1}} {
+    global EMSegment
+
+    set Flag [EMSegmentCheckCurrentClassParameters $SuperClass $WarningFlag]
+    if {$Flag == -1} {set WarningFlag 0
+    } elseif {$Flag == 0} {return 0} 
+
+    foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
+    if {$EMSegment(Cattrib,$i,IsSuperClass)} {
+        EMSegmentCheckClassParameters $i $WarningFlag
+    } else {
+        set Flag [EMSegmentCheckCurrentClassParameters $i $WarningFlag]
+        if {$Flag == -1} {set WarningFlag 0
+            } elseif {$Flag == 0} {return 0} 
+    }
+    }
+
+    return 1 
+}
+    
+#-------------------------------------------------------------------------------
 # .PROC EMSegmentStartEM
 # Starts the EM Algorithm 
 # .ARGS
@@ -2822,6 +2892,12 @@ proc EMSegmentStartEM { {save_mode "save"} } {
        DevErrorWindow "Boundary Box exceed image limits !" 
        return
    }
+
+   if {[EMSegmentCheckClassParameters 0] ==  0} { 
+       DevErrorWindow "Inconcistency within Class Parameters settings !" 
+       return 
+   } 
+
    # ----------------------------------------------
    # 3. Call Algorithm
    # ----------------------------------------------
@@ -2968,8 +3044,8 @@ proc EMSegmentStartEM { {save_mode "save"} } {
            $vtkEMSegment SetImageInput $NumInputImagesSet "" 
      }
 
-     if {[$vtkEMSegment GetErrorFlag] == 0} { 
-         Volume($result,vol) SetImageData [$vtkEMSegment GetOutput]
+     if {([EMSegment(vtkEMSegment) GetErrorFlag] == 0) && ($ErrorFlag == 0)} { 
+         Volume($result,vol) SetImageData [EMSegment(vtkEMSegment) GetOutput]
      }
      $vtkEMSegment SetOutput ""
      # Delete instance
@@ -5303,7 +5379,6 @@ proc EMSegmentShowGraphWindow {{x 0} {y 0}} {
     puts blubber
     # Recreate popup if user killed it
     if {([winfo exists $Gui(wEMSegment)] == 0) || (($EMSegment(NumGraph) == 1) && ($EMSegment(NumInputChannel) > 1)) || (($EMSegment(NumGraph) == 3) && ($EMSegment(NumInputChannel) < 2))  } {
-        puts "hello "
         EMSegmentCreateGraphWindow
     }
 

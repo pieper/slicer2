@@ -7,30 +7,11 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricSource2.cxx,v $
-  Date:      $Date: 2006/01/06 17:58:06 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/03/06 21:07:33 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
-/*=========================================================================
 
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkSuperquadricSource2.cxx,v $
-
-  Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
-  All rights reserved.
-  See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notice for more information.
-
-=========================================================================*/
-/* vtkSuperquadric originally written by Us, 
-   Brigham and Women's Hospital, July 1998.
-
-   Based on "Rigid physically based superquadrics", A. H. Barr,
-   in "Graphics Gems III", David Kirk, ed., Academic Press, 1992.
-*/
 #include "vtkSuperquadricSource2.h"
 
 #include "vtkCellArray.h"
@@ -43,7 +24,7 @@
 
 #include <math.h>
 
-vtkCxxRevisionMacro(vtkSuperquadricSource2, "$Revision: 1.2 $");
+vtkCxxRevisionMacro(vtkSuperquadricSource2, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkSuperquadricSource2);
 
 static void evalSuperquadric2(double u, double v, 

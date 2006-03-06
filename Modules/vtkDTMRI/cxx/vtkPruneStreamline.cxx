@@ -7,24 +7,11 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPruneStreamline.cxx,v $
-  Date:      $Date: 2006/02/16 15:58:01 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/03/06 21:07:29 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
-/*=========================================================================
 
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkPruneStreamline.cxx,v $
-
-  Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
-  All rights reserved.
-  See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notice for more information.
-
-=========================================================================*/
 #include "vtkPruneStreamline.h"
 
 #include "vtkAbstractTransform.h"
@@ -42,7 +29,8 @@
 
 #define VTK_MARGIN 0.1
 
-vtkCxxRevisionMacro(vtkPruneStreamline, "$Revision: 1.6 $");
+vtkCxxRevisionMacro(vtkPruneStreamline, "$Revision: 1.7 $");
+
 vtkStandardNewMacro(vtkPruneStreamline);
 
 vtkPruneStreamline::vtkPruneStreamline()
@@ -318,8 +306,7 @@ int vtkPruneStreamline::TestForStreamline(int* streamlineANDTest, int nptsAND, i
   test =0;
     
   test = 1;
-  
-  
+
   for(i=0;i<nptsAND;i++) {
     th = (int) ceil(this->Threshold*this->MaxResponse[i]);
     test = test && (streamlineANDTest[i]>th);    

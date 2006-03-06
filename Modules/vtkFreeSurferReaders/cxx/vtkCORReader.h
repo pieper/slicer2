@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkCORReader.h,v $
-  Date:      $Date: 2006/01/06 17:57:40 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/03/06 21:07:32 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkCORReader.h,v $
   Language:  C++
-  Date:      $Date: 2006/01/06 17:57:40 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/03/06 21:07:32 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================*/
 // .NAME vtkFSCORReader - read COR file volume from Freesurfer tools

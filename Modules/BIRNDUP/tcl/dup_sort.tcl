@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup_sort.tcl,v $
-#   Date:      $Date: 2006/03/02 20:34:34 $
-#   Version:   $Revision: 1.15 $
+#   Date:      $Date: 2006/03/06 21:07:29 $
+#   Version:   $Revision: 1.16 $
 # 
 #===============================================================================
 # FILE:        dup_sort.tcl
@@ -55,6 +55,7 @@ if { [itcl::find class dup_sort] == "" } {
         method setdeident {id method} {}
         method fill {dir} {}
         method sort {} {}
+        method version {} {}
     }
 }
 
@@ -378,3 +379,7 @@ itcl::body dup_sort::view {id} {
     MainUpdateMRML
 }
 
+itcl::body dup_sort::version {} {
+    # print out version information
+    
+}

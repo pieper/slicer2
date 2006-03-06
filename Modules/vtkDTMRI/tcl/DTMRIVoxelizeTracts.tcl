@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRIVoxelizeTracts.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:28 $
-#   Version:   $Revision: 1.3 $
+#   Date:      $Date: 2006/03/06 21:07:30 $
+#   Version:   $Revision: 1.4 $
 # 
 #===============================================================================
 # FILE:        DTMRIVoxelizeTracts.tcl
@@ -15,6 +15,7 @@
 #   DTMRIVoxelizeTractsBuildGUI
 #   DTMRIVoxelizeTractsColorROIFromTracts
 #==========================================================================auto=
+
 proc DTMRIVoxelizeTractsInit {} {
 
     global DTMRI Volume
@@ -23,7 +24,7 @@ proc DTMRIVoxelizeTractsInit {} {
     #------------------------------------
     set m "VoxelizeTracts"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.3 $} {$Date: 2006/01/06 17:57:28 $}]
+                                 {$Revision: 1.4 $} {$Date: 2006/03/06 21:07:30 $}]
 
     set DTMRI(VoxTractsROILabelmap) $Volume(idNone)
 }

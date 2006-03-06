@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkBVolumeReader.h,v $
-  Date:      $Date: 2006/02/27 19:21:53 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/03/06 21:07:32 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkBVolumeReader.h,v $
   Language:  C++
-  Date:      $Date: 2006/02/27 19:21:53 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/03/06 21:07:32 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================*/
 // .NAME vtkBVolumeReader - read a binary volume file from Freesurfer tools

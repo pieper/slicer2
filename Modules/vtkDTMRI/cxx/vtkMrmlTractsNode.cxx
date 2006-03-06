@@ -7,10 +7,11 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlTractsNode.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:26 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/03/06 21:07:29 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
+
 #include "vtkMrmlTractsNode.h"
 #include "vtkObjectFactory.h"
 

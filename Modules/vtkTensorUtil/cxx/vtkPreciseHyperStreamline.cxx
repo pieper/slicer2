@@ -7,27 +7,11 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPreciseHyperStreamline.cxx,v $
-  Date:      $Date: 2006/01/06 17:58:05 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/03/06 21:07:33 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
-/*=========================================================================
 
-Program:   Visualization Toolkit
-Module:    $RCSfile: vtkPreciseHyperStreamline.cxx,v $
-Language:  C++
-Date:      $Date: 2006/01/06 17:58:05 $
-Version:   $Revision: 1.9 $
-
-Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen 
-All rights reserved.
-See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
-
-This software is distributed WITHOUT ANY WARRANTY; without even 
-the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
-PURPOSE.  See the above copyright notice for more information.
-
-=========================================================================*/
 #include <math.h>
 
 #include "vtkPreciseHyperStreamline.h"
@@ -45,7 +29,7 @@ PURPOSE.  See the above copyright notice for more information.
 #include "vtkTensorMathematics.h"
 
 
-vtkCxxRevisionMacro(vtkPreciseHyperStreamline, "$Revision: 1.9 $");
+vtkCxxRevisionMacro(vtkPreciseHyperStreamline, "$Revision: 1.10 $");
 vtkStandardNewMacro(vtkPreciseHyperStreamline);
 
 

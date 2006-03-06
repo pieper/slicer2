@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITensorRegistration.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:28 $
-#   Version:   $Revision: 1.25 $
+#   Date:      $Date: 2006/03/06 21:07:30 $
+#   Version:   $Revision: 1.26 $
 # 
 #===============================================================================
 # FILE:        DTMRITensorRegistration.tcl
@@ -68,7 +68,7 @@ proc DTMRITensorRegistrationInit {} {
     #------------------------------------
     set m "TensorRegistration"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.25 $} {$Date: 2006/01/06 17:57:28 $}]
+                                 {$Revision: 1.26 $} {$Date: 2006/03/06 21:07:30 $}]
 
     # Does the AG module exist? If not the registration tab will not be displayed
     if {[catch "package require vtkAG"]} {
@@ -633,6 +633,7 @@ proc DTMRITensorRegistrationBuildGUI {} {
     eval {menu $f.mbChannels.m} $Gui(WMA)
     set DTMRI(reg,mbChannels) $f.mbChannels
     set m $DTMRI(reg,mbChannels).m
+
     foreach v "{FractionalAnisotropy} {TraceFA} {TensorComponents}" {
        $m add command -label $v -command "DTMRIRegModifyOption Channels {$v}"
     }

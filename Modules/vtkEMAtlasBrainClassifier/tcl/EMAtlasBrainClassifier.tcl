@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:31 $
-#   Version:   $Revision: 1.33 $
+#   Date:      $Date: 2006/03/06 21:07:31 $
+#   Version:   $Revision: 1.34 $
 # 
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
@@ -107,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
    set Module($m,depend) ""
 
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.33 $} {$Date: 2006/01/06 17:57:31 $}]
+       {$Revision: 1.34 $} {$Date: 2006/03/06 21:07:31 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -972,6 +972,7 @@ proc EMAtlasBrainClassifier_Normalize { Mode } {
 proc EMAtlasBrainClassifier_NormalizeVolume { Vol OutVol Mode} {
     global Volume Matrix EMAtlasBrainClassifier
     vtkImageData hist
+
     vtkImageAccumulate ia
     ia SetInput $Vol
     ia SetComponentSpacing 1 1 1
@@ -998,6 +999,7 @@ proc EMAtlasBrainClassifier_NormalizeVolume { Vol OutVol Mode} {
     ia Update
     hist DeepCopy [ia GetOutput]
   
+
     set count 0
     set i 0
 
@@ -1457,7 +1459,7 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource NonRigidRegistrationF
         0 { puts "rigid." }
         1 { puts "similarity." }
         2 { puts "affine." }
-    default {puts "Do not know type   $LinearRegistrationType" ; return}
+        default {puts "Do not know type   $LinearRegistrationType" ; return}
 
     }
 

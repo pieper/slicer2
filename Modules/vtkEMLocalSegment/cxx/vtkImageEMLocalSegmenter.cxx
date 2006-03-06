@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMLocalSegmenter.cxx,v $
-  Date:      $Date: 2006/01/13 16:36:46 $
-  Version:   $Revision: 1.24 $
+  Date:      $Date: 2006/03/06 21:07:31 $
+  Version:   $Revision: 1.25 $
 
 =========================================================================auto=*/
 // Since 22-Apr-02 vtkImageEMLocal3DSegmenter is called vtkImageEMLocalSegmenter - Kilian
@@ -55,8 +55,11 @@ vtkImageEMLocalSegmenter::vtkImageEMLocalSegmenter()
   this->activeSuperClass = NULL;
   this->activeClass      = NULL;
   this->activeClassType  = SUPERCLASS;
- 
+  
   this->RegistrationInterpolationType = 0;
+
+  this->DebugImage       = NULL; 
+
 }
 
 //------------------------------------------------------------------------------
@@ -66,9 +69,9 @@ vtkImageEMLocalSegmenter::~vtkImageEMLocalSegmenter(){
 
 void vtkImageEMLocalSegmenter::DeleteVariables() {
   if (this->PrintDir) delete[] this->PrintDir;
+  this->PrintDir = NULL;
 
   this->NumInputImages = 0 ;
-  this->PrintDir = NULL;
   this->activeSuperClass = NULL;
   this->activeClass = NULL;
 

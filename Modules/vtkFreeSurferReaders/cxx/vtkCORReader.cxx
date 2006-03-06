@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkCORReader.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:40 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/03/06 21:07:32 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkCORReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2006/01/06 17:57:40 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/03/06 21:07:32 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================*/
 #include "vtkCORReader.h"

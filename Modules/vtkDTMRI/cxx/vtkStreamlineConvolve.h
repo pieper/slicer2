@@ -7,24 +7,10 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkStreamlineConvolve.h,v $
-  Date:      $Date: 2006/01/06 17:57:27 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2006/03/06 21:07:30 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
-/*=========================================================================
-
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkStreamlineConvolve.h,v $
-
-  Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
-  All rights reserved.
-  See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notice for more information.
-
-=========================================================================*/
 // .NAME vtkStreamlineConvolve - extracts points whose scalar value satisfies threshold criterion
 // .SECTION Description
 // vtkStreamlineConvolve is a filter that extracts points from a dataset that 

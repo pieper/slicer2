@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRIGlyphs.tcl,v $
-#   Date:      $Date: 2006/02/09 21:21:30 $
-#   Version:   $Revision: 1.20 $
+#   Date:      $Date: 2006/03/06 21:07:30 $
+#   Version:   $Revision: 1.21 $
 # 
 #===============================================================================
 # FILE:        DTMRIGlyphs.tcl
@@ -39,7 +39,7 @@ proc DTMRIGlyphsInit {} {
     #------------------------------------
     set m "Glyphs"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.20 $} {$Date: 2006/02/09 21:21:30 $}]
+                                 {$Revision: 1.21 $} {$Date: 2006/03/06 21:07:30 $}]
 
     # type of reformatting
     set DTMRI(mode,reformatType) 0
@@ -665,27 +665,19 @@ proc DTMRIUpdate {} {
         
         puts "masking by $DTMRI(mode,mask)"
 
-        #Create pipeline from scratch.
-        #There are problem when reusing the mask pipeline 
-        #for different tensor volumes (bug 139).
-        #Both vtkImageThreshold and vtkTensorMask seg fault.
+        #Create pipeline
         set thresh DTMRI(vtk,mask,threshold)
-        catch "$thresh Delete"
-        vtkImageThreshold $thresh
         $thresh SetInValue       1
         $thresh SetOutValue      0
         $thresh SetReplaceIn     1
         $thresh SetReplaceOut    1
-        $thresh SetOutputScalarTypeToShort    
-    
+        $thresh SetOutputScalarTypeToUnsignedChar    
+        
         $thresh ThresholdBetween $DTMRI(MaskLabel) $DTMRI(MaskLabel)
         set v $DTMRI(MaskLabelmap)
         $thresh SetInput [Volume($v,vol) GetOutput]
 
-
         set mask DTMRI(vtk,mask,mask)
-        catch "$mask Delete"
-        vtkTensorMask $mask
         $mask SetMaskInput [$thresh GetOutput]
         # use output from above thresholding pipeline as input
         $mask SetImageInput $dataSource

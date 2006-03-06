@@ -7,24 +7,12 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPruneStreamline.h,v $
-  Date:      $Date: 2006/02/14 21:39:49 $
-  Version:   $Revision: 1.6 $
-
+  Date:      $Date: 2006/03/06 21:07:30 $
+  Version:   $Revision: 1.7 $
 =========================================================================auto=*/
-/*=========================================================================
 
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkPruneStreamline.h,v $
 
-  Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
-  All rights reserved.
-  See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notice for more information.
-
-=========================================================================*/
 // .NAME vtkPruneStreamline - transform points and associated normals and vectors for polygonal dataset
 // .SECTION Description
 // vtkPruneStreamline is a filter to transform point

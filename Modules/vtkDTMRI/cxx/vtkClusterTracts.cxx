@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkClusterTracts.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:24 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/03/06 21:07:29 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 #include "vtkClusterTracts.h"
@@ -23,7 +23,8 @@
 // itk object for exception handling
 #include "itkExceptionObject.h"
 
-vtkCxxRevisionMacro(vtkClusterTracts, "$Revision: 1.9 $");
+
+vtkCxxRevisionMacro(vtkClusterTracts, "$Revision: 1.10 $");
 vtkStandardNewMacro(vtkClusterTracts);
 
 vtkCxxSetObjectMacro(vtkClusterTracts, InputStreamlines, vtkCollection);

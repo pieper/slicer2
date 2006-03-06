@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkNRRDReader.cxx,v $
-  Date:      $Date: 2006/01/11 16:07:15 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2006/03/06 21:07:33 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -50,7 +50,7 @@
 
 #include "teem/ten.h"
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.4 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.5 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -773,6 +773,8 @@ tenSpaceDirectionReduce(Nrrd *nout, const Nrrd *nin, double SD[9]) {
   double SDT[9], tenMeasr[9], tenSlice[9];
   float *tdata;
   size_t ii, nn;
+  unsigned int si, sj;
+  double det;
   
   if (!(nout && nin)) {
     sprintf(err, "%s: got NULL pointer", me);

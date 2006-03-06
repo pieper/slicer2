@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: VolGeneric.tcl,v $
-#   Date:      $Date: 2006/02/08 17:40:23 $
-#   Version:   $Revision: 1.22 $
+#   Date:      $Date: 2006/03/06 21:07:32 $
+#   Version:   $Revision: 1.23 $
 # 
 #===============================================================================
 # FILE:        VolGeneric.tcl
@@ -310,8 +310,8 @@ proc VolGenericApply {} {
         return
     }
 
-    if {[catch "genreader UpdateInformation"]} {
-        DevErrorWindow "Cannot read information for file $Volume(VolGeneric,FileName)"
+    if {[catch "genreader UpdateInformation" res]} {
+        DevErrorWindow "Cannot read information for file $Volume(VolGeneric,FileName)\n\n$res"
         VolGenericMainFileCloseUpdate
         MainMrmlDeleteNode Volume $i
         return;
@@ -491,7 +491,9 @@ proc VolGenericMainFileCloseUpdate {} {
         puts "VolGenericMainFileCloseUpdate"
     }
     foreach f $Volume(idList) {
-        puts "VolGenericMainFileCloseUpdate: Checking volume $f"
+        if { $::Module(verbose) } {
+            puts "VolGenericMainFileCloseUpdate: Checking volume $f"
+        }
         
         if {[info exists Volume(VolGeneric,$f,curveactor)] == 1} {
             if {$Module(verbose) == 1} {
@@ -550,6 +552,10 @@ proc VolGenericReaderProc {v} {
     flip Update
 
     Volume($v,vol) SetImageData [flip GetOutput]
+
+    ## copy spacing value from node to image data (to handle case where 
+    ## user manually set the spacings). 
+    eval [Volume($v,vol) GetOutput] SetSpacing [Volume($v,node) GetSpacing]
 
     flip Delete
     genreader Delete
