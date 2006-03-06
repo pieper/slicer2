@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Anno.tcl,v $
-#   Date:      $Date: 2006/03/06 19:24:22 $
-#   Version:   $Revision: 1.25 $
+#   Date:      $Date: 2006/03/06 21:57:45 $
+#   Version:   $Revision: 1.26 $
 # 
 #===============================================================================
 # FILE:        Anno.tcl
@@ -45,9 +45,11 @@ proc AnnoInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.25 $} {$Date: 2006/03/06 19:24:22 $}]
+        {$Revision: 1.26 $} {$Date: 2006/03/06 21:57:45 $}]
 
-#    set Anno(hashGap) [$::Interactor(activeSlicer) GetCursorHashGap]
+    set Anno(hashGap) [$::Interactor(activeSlicer) GetCursorHashGap]
+    set Anno(hashLen) [$::Interactor(activeSlicer) GetCursorHashLength]
+    set Anno(hashNum) [$::Interactor(activeSlicer) GetNumHashes]
 }
 
 #-------------------------------------------------------------------------------
@@ -161,9 +163,10 @@ cube and axes.
     frame $f.fCoords -bg $Gui(activeWorkspace)
     frame $f.fPrecision -bg $Gui(activeWorkspace)
     frame $f.fHashGap -bg $Gui(activeWorkspace)
+    frame $f.fHashLen -bg $Gui(activeWorkspace)
+    frame $f.fHashNum -bg $Gui(activeWorkspace)
     frame $f.fFollow -bg $Gui(activeWorkspace)
-    pack $f.fCoords $f.fPrecision  $f.fFollow -side top -pady $Gui(pad)
-# $f.fHashGap
+    pack $f.fCoords $f.fPrecision $f.fHashGap $f.fHashLen $f.fHashNum $f.fFollow -side top -pady $Gui(pad)
 
     #-------------------------------------------
     # Mode->Coords frame
@@ -218,7 +221,28 @@ cube and axes.
     TooltipAdd $f.e $tip1
     bind $f.e <Return> "AnnoSetHashGap"
     pack $f.l $f.e -side left -padx $Gui(pad) -fill x -anchor w
+
+    #-------------------------------------------
+    # Mode->HashLen frame
+    #-------------------------------------------
+    set f $fMode.fHashLen
+    set tip1 "Adjust the length of the hashes on the crosshair."
+    eval {label $f.l -text "Hash Length:"} $Gui(WLA)
+    eval {entry $f.e -width 10 -textvariable Anno(hashLen)} $Gui(WEA)
+    TooltipAdd $f.e $tip1
+    bind $f.e <Return> "AnnoSetHashLen"
+    pack $f.l $f.e -side left -padx $Gui(pad) -fill x -anchor w
     
+    #-------------------------------------------
+    # Mode->HashNum frame
+    #-------------------------------------------
+    set f $fMode.fHashNum
+    set tip1 "Adjust the number of the hashes on an arm of the crosshair."
+    eval {label $f.l -text "Number of Hash Marks:"} $Gui(WLA)
+    eval {entry $f.e -width 10 -textvariable Anno(hashNum)} $Gui(WEA)
+    TooltipAdd $f.e $tip1
+    bind $f.e <Return> "AnnoSetHashNum"
+    pack $f.l $f.e -side left -padx $Gui(pad) -fill x -anchor w
 
     #-------------------------------------------
     # Mode->Follow frame
@@ -252,5 +276,31 @@ cube and axes.
 proc AnnoSetHashGap {} {
     global Interactor Anno
     $Interactor(activeSlicer) SetCursorHashGap $Anno(hashGap)
+    RenderSlices
+}
+
+#-------------------------------------------------------------------------------
+# .PROC AnnoSetHashLen
+#
+# Sets the length of cross hair hash marks for the currently active slicer, 
+# then renders the slices.
+# .END
+#-------------------------------------------------------------------------------
+proc AnnoSetHashLen {} {
+    global Interactor Anno
+    $Interactor(activeSlicer) SetCursorHashLength $Anno(hashLen)
+    RenderSlices
+}
+
+#-------------------------------------------------------------------------------
+# .PROC AnnoSetHashNum
+#
+# Sets the number of cross hair hash marks per arm for the currently active slicer, 
+# then renders the slices.
+# .END
+#-------------------------------------------------------------------------------
+proc AnnoSetHashNum {} {
+    global Interactor Anno
+    $Interactor(activeSlicer) SetNumHashes $Anno(hashNum)
     RenderSlices
 }
