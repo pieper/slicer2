@@ -7,15 +7,14 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkBoolTess.cxx,v $
-  Date:      $Date: 2006/03/06 19:02:24 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/03/06 22:47:20 $
+  Version:   $Revision: 1.15 $
 
 =========================================================================auto=*/
+#include "vtkBoolTess.h"
 #include <math.h>
 #include <stdlib.h>
-//#include <iostream.h>
 #include <stdio.h>
-#include "vtkBoolTess.h"
 
 #define SIGN(x) (x>0?1:(x<0?-1:0))
 
