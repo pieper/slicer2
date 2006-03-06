@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITractCluster.tcl,v $
-#   Date:      $Date: 2006/02/15 19:48:27 $
-#   Version:   $Revision: 1.16.2.2 $
+#   Date:      $Date: 2006/03/06 21:21:55 $
+#   Version:   $Revision: 1.16.2.1.2.1 $
 # 
 #===============================================================================
 # FILE:        DTMRITractCluster.tcl
@@ -38,7 +38,7 @@ proc DTMRITractClusterInit {} {
     #------------------------------------
     set m "TractCluster"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.16.2.2 $} {$Date: 2006/02/15 19:48:27 $}]
+                                 {$Revision: 1.16.2.1.2.1 $} {$Date: 2006/03/06 21:21:55 $}]
 
     set DTMRI(TractCluster,NumberOfClusters) 5
     set DTMRI(TractCluster,Sigma) 20

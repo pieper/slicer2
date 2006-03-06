@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRIGlyphs.tcl,v $
-#   Date:      $Date: 2006/02/15 19:48:25 $
-#   Version:   $Revision: 1.16.2.5 $
+#   Date:      $Date: 2006/03/06 21:21:53 $
+#   Version:   $Revision: 1.16.2.3.2.1 $
 # 
 #===============================================================================
 # FILE:        DTMRIGlyphs.tcl
@@ -39,7 +39,7 @@ proc DTMRIGlyphsInit {} {
     #------------------------------------
     set m "Glyphs"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.16.2.5 $} {$Date: 2006/02/15 19:48:25 $}]
+                                 {$Revision: 1.16.2.3.2.1 $} {$Date: 2006/03/06 21:21:53 $}]
 
     # type of reformatting
     set DTMRI(mode,reformatType) 0

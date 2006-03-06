@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMLocalSegmenter.cxx,v $
-  Date:      $Date: 2006/01/31 16:58:23 $
-  Version:   $Revision: 1.22.2.2 $
+  Date:      $Date: 2006/03/06 21:21:56 $
+  Version:   $Revision: 1.22.2.1.2.1 $
 
 =========================================================================auto=*/
 // Since 22-Apr-02 vtkImageEMLocal3DSegmenter is called vtkImageEMLocalSegmenter - Kilian

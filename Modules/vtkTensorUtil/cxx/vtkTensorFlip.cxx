@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorFlip.cxx,v $
-  Date:      $Date: 2006/02/15 19:09:56 $
-  Version:   $Revision: 1.2.2.2 $
+  Date:      $Date: 2006/03/06 21:22:04 $
+  Version:   $Revision: 1.2.2.1.2.1 $
 
 =========================================================================auto=*/
 

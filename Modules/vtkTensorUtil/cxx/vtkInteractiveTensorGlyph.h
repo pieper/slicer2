@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkInteractiveTensorGlyph.h,v $
-  Date:      $Date: 2006/02/15 19:09:55 $
-  Version:   $Revision: 1.5.2.2 $
+  Date:      $Date: 2006/03/06 21:22:02 $
+  Version:   $Revision: 1.5.2.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkInteractiveTensorGlyph - scale and orient glyph according to tensor eigenvalues and eigenvectors

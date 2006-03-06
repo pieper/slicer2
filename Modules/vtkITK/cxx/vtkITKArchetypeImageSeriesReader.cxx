@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
-  Date:      $Date: 2006/02/01 23:21:25 $
-  Version:   $Revision: 1.8.2.4 $
+  Date:      $Date: 2006/03/06 21:21:59 $
+  Version:   $Revision: 1.8.2.2.2.1 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2006/02/01 23:21:25 $
-  Version:   $Revision: 1.8.2.4 $
+  Date:      $Date: 2006/03/06 21:21:59 $
+  Version:   $Revision: 1.8.2.2.2.1 $
 
   Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -72,7 +72,7 @@
 #include "itkGDCMImageIO.h"
 #include <itksys/SystemTools.hxx>
 
-vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.8.2.4 $");
+vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.8.2.2.2.1 $");
 vtkStandardNewMacro(vtkITKArchetypeImageSeriesReader);
 
 //----------------------------------------------------------------------------

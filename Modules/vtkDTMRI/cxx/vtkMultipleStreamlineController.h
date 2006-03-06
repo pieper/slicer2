@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMultipleStreamlineController.h,v $
-  Date:      $Date: 2006/02/15 19:47:39 $
-  Version:   $Revision: 1.45.2.2 $
+  Date:      $Date: 2006/03/06 21:21:49 $
+  Version:   $Revision: 1.45.2.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkMultipleStreamlineController - 

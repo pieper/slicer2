@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPreciseHyperStreamline.cxx,v $
-  Date:      $Date: 2006/02/15 19:09:55 $
-  Version:   $Revision: 1.8.2.2 $
+  Date:      $Date: 2006/03/06 21:22:02 $
+  Version:   $Revision: 1.8.2.1.2.1 $
 
 =========================================================================auto=*/
 
@@ -29,7 +29,7 @@
 #include "vtkTensorMathematics.h"
 
 
-vtkCxxRevisionMacro(vtkPreciseHyperStreamline, "$Revision: 1.8.2.2 $");
+vtkCxxRevisionMacro(vtkPreciseHyperStreamline, "$Revision: 1.8.2.1.2.1 $");
 vtkStandardNewMacro(vtkPreciseHyperStreamline);
 
 

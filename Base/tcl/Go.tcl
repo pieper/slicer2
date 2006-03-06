@@ -6,8 +6,8 @@
 # 
 #  Program:   3D Slicer
 #  Module:    $RCSfile: Go.tcl,v $
-#  Date:      $Date: 2006/03/01 15:13:10 $
-#  Version:   $Revision: 1.107.2.6 $
+#  Date:      $Date: 2006/03/06 21:21:41 $
+#  Version:   $Revision: 1.107.2.4.2.1 $
 #===============================================================================
 # FILE:        Go.tcl
 # PROCEDURES:  
@@ -927,7 +927,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.107.2.6 2006/03/01 15:13:10 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.107.2.4.2.1 2006/03/06 21:21:41 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 

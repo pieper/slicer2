@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.h,v $
-  Date:      $Date: 2006/02/15 19:09:54 $
-  Version:   $Revision: 1.6.2.2 $
+  Date:      $Date: 2006/03/06 21:22:01 $
+  Version:   $Revision: 1.6.2.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkHyperStreamlineDTMRI - generate hyperstreamline in arbitrary dataset

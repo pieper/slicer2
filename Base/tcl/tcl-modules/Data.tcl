@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Data.tcl,v $
-#   Date:      $Date: 2006/02/22 20:30:04 $
-#   Version:   $Revision: 1.55.8.2 $
+#   Date:      $Date: 2006/03/06 21:21:43 $
+#   Version:   $Revision: 1.55.8.1.2.1 $
 # 
 #===============================================================================
 # FILE:        Data.tcl
@@ -65,7 +65,7 @@ proc DataInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.55.8.2 $} {$Date: 2006/02/22 20:30:04 $}]
+        {$Revision: 1.55.8.1.2.1 $} {$Date: 2006/03/06 21:21:43 $}]
 
     set Data(index) ""
     set Data(clipboard) ""

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorImplicitFunctionToFunctionSet.cxx,v $
-  Date:      $Date: 2006/02/15 19:09:57 $
-  Version:   $Revision: 1.6.2.2 $
+  Date:      $Date: 2006/03/06 21:22:04 $
+  Version:   $Revision: 1.6.2.1.2.1 $
 
 =========================================================================auto=*/
 #ifndef _vtkTensorImplicitFunctionToFunctionSet_txx
@@ -20,7 +20,7 @@
 #include "vtkTensorImplicitFunctionToFunctionSet.h"
 
 
-vtkCxxRevisionMacro(vtkTensorImplicitFunctionToFunctionSet, "$Revision: 1.6.2.2 $");
+vtkCxxRevisionMacro(vtkTensorImplicitFunctionToFunctionSet, "$Revision: 1.6.2.1.2.1 $");
 vtkStandardNewMacro(vtkTensorImplicitFunctionToFunctionSet);
 
 void vtkTensorImplicitFunctionToFunctionSet::PrintSelf(ostream& os, vtkIndent indent)

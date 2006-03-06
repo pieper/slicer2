@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: ModelHierarchy.tcl,v $
-#   Date:      $Date: 2006/01/30 22:07:46 $
-#   Version:   $Revision: 1.18.2.2 $
+#   Date:      $Date: 2006/03/06 21:21:43 $
+#   Version:   $Revision: 1.18.2.1.2.1 $
 # 
 #===============================================================================
 # FILE:        ModelHierarchy.tcl
@@ -133,7 +133,7 @@ proc ModelHierarchyInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.18.2.2 $} {$Date: 2006/01/30 22:07:46 $}]
+        {$Revision: 1.18.2.1.2.1 $} {$Date: 2006/03/06 21:21:43 $}]
 
     # Initialize module-level variables
     #------------------------------------

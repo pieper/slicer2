@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEngineInspect.tcl,v $
-#   Date:      $Date: 2006/03/01 20:10:20 $
-#   Version:   $Revision: 1.29.2.5 $
+#   Date:      $Date: 2006/03/06 21:21:58 $
+#   Version:   $Revision: 1.29.2.4.2.1 $
 # 
 #===============================================================================
 # FILE:        fMRIEngineInspect.tcl

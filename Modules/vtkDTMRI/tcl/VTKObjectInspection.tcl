@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: VTKObjectInspection.tcl,v $
-#   Date:      $Date: 2006/02/15 19:48:28 $
-#   Version:   $Revision: 1.1.2.2 $
+#   Date:      $Date: 2006/03/06 21:21:56 $
+#   Version:   $Revision: 1.1.2.1.2.1 $
 # 
 #===============================================================================
 # FILE:        VTKObjectInspection.tcl

@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRI.tcl,v $
-#   Date:      $Date: 2006/02/15 19:48:24 $
-#   Version:   $Revision: 1.120.2.7 $
+#   Date:      $Date: 2006/03/06 21:21:52 $
+#   Version:   $Revision: 1.120.2.4.2.1 $
 # 
 #===============================================================================
 # FILE:        DTMRI.tcl
@@ -481,7 +481,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.120.2.7 $} {$Date: 2006/02/15 19:48:24 $}]
+                  {$Revision: 1.120.2.4.2.1 $} {$Date: 2006/03/06 21:21:52 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.

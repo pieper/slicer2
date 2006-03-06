@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainMrml.tcl,v $
-#   Date:      $Date: 2006/02/07 01:51:23 $
-#   Version:   $Revision: 1.111.2.5 $
+#   Date:      $Date: 2006/03/06 21:21:42 $
+#   Version:   $Revision: 1.111.2.4.2.1 $
 # 
 #===============================================================================
 # FILE:        MainMrml.tcl
@@ -77,7 +77,7 @@ proc MainMrmlInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainMrml \
-    {$Revision: 1.111.2.5 $} {$Date: 2006/02/07 01:51:23 $}]
+    {$Revision: 1.111.2.4.2.1 $} {$Date: 2006/03/06 21:21:42 $}]
 
     set Mrml(colorsUnsaved) 0
 }

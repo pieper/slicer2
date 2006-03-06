@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTractShapeFeatures.h,v $
-  Date:      $Date: 2006/02/15 19:47:42 $
-  Version:   $Revision: 1.6.2.2 $
+  Date:      $Date: 2006/03/06 21:21:52 $
+  Version:   $Revision: 1.6.2.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkTractShapeFeatures - Compute tract similarity matrix for clustering

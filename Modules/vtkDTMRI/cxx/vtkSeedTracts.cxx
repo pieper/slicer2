@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.cxx,v $
-  Date:      $Date: 2006/02/15 19:47:41 $
-  Version:   $Revision: 1.9.2.2 $
+  Date:      $Date: 2006/03/06 21:21:51 $
+  Version:   $Revision: 1.9.2.1.2.1 $
 
 =========================================================================auto=*/
 

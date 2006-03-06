@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Volumes.tcl,v $
-#   Date:      $Date: 2006/02/01 23:22:18 $
-#   Version:   $Revision: 1.127.2.4 $
+#   Date:      $Date: 2006/03/06 21:21:44 $
+#   Version:   $Revision: 1.127.2.1.2.1 $
 # 
 #===============================================================================
 # FILE:        Volumes.tcl
@@ -101,7 +101,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-             {$Revision: 1.127.2.4 $} {$Date: 2006/02/01 23:22:18 $}]
+             {$Revision: 1.127.2.1.2.1 $} {$Date: 2006/03/06 21:21:44 $}]
 
     # Props
     set Volume(propertyType) VolBasic

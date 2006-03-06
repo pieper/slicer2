@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKImageWriter.cxx,v $
-  Date:      $Date: 2006/01/31 22:44:42 $
-  Version:   $Revision: 1.6.2.2 $
+  Date:      $Date: 2006/03/06 21:21:59 $
+  Version:   $Revision: 1.6.2.1.2.1 $
 
 =========================================================================auto=*/
 #include "vtkITKImageWriter.h"

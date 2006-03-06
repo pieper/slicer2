@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditorEffects.cxx,v $
-  Date:      $Date: 2006/01/31 17:01:20 $
-  Version:   $Revision: 1.13.2.2 $
+  Date:      $Date: 2006/03/06 21:21:40 $
+  Version:   $Revision: 1.13.2.1.2.1 $
 
 =========================================================================auto=*/
 #include <stdio.h>

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPreciseHyperStreamlinePoints.h,v $
-  Date:      $Date: 2006/02/15 19:09:56 $
-  Version:   $Revision: 1.2.8.2 $
+  Date:      $Date: 2006/03/06 21:22:02 $
+  Version:   $Revision: 1.2.8.1.2.1 $
 
 =========================================================================auto=*/
 #ifndef __vtkPreciseHyperStreamlinePoints_h

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkBoolTess.h,v $
-  Date:      $Date: 2006/02/03 23:20:36 $
-  Version:   $Revision: 1.11.12.2 $
+  Date:      $Date: 2006/03/06 21:21:40 $
+  Version:   $Revision: 1.11.12.1.2.1 $
 
 =========================================================================auto=*/
 #ifndef __vtkBoolTess_h

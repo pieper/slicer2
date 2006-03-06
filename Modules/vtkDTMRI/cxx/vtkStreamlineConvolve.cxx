@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkStreamlineConvolve.cxx,v $
-  Date:      $Date: 2006/02/15 19:47:42 $
-  Version:   $Revision: 1.2.8.4 $
+  Date:      $Date: 2006/03/06 21:21:51 $
+  Version:   $Revision: 1.2.8.3.2.1 $
 
 =========================================================================auto=*/
 
@@ -23,7 +23,7 @@
 #include "vtkPolyData.h"
 #include "math.h"
 
-vtkCxxRevisionMacro(vtkStreamlineConvolve, "$Revision: 1.2.8.4 $");
+vtkCxxRevisionMacro(vtkStreamlineConvolve, "$Revision: 1.2.8.3.2.1 $");
 vtkStandardNewMacro(vtkStreamlineConvolve);
 
 // Construct with lower threshold=0, upper threshold=1, and threshold 

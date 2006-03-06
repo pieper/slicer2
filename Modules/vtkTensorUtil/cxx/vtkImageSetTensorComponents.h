@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageSetTensorComponents.h,v $
-  Date:      $Date: 2006/02/15 19:09:55 $
-  Version:   $Revision: 1.2.8.2 $
+  Date:      $Date: 2006/03/06 21:22:01 $
+  Version:   $Revision: 1.2.8.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageSetTensorComponents - Six scalar components to tensor

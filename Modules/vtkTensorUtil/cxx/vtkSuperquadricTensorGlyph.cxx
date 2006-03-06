@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricTensorGlyph.cxx,v $
-  Date:      $Date: 2006/02/16 02:59:38 $
-  Version:   $Revision: 1.5.2.4 $
+  Date:      $Date: 2006/03/06 21:22:03 $
+  Version:   $Revision: 1.5.2.1.2.1 $
 
 =========================================================================auto=*/
 #include "vtkSuperquadricTensorGlyph.h"

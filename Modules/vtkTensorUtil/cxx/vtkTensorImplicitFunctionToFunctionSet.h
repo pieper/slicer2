@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorImplicitFunctionToFunctionSet.h,v $
-  Date:      $Date: 2006/02/15 19:09:57 $
-  Version:   $Revision: 1.5.8.2 $
+  Date:      $Date: 2006/03/06 21:22:04 $
+  Version:   $Revision: 1.5.8.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkTensorImplicitFunctionToFunctionSet - Wrapper class around itk::BSplineInterpolateImageFuntion

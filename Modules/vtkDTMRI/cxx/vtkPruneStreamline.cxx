@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPruneStreamline.cxx,v $
-  Date:      $Date: 2006/02/16 15:57:35 $
-  Version:   $Revision: 1.3.2.4 $
+  Date:      $Date: 2006/03/06 21:21:50 $
+  Version:   $Revision: 1.3.2.2.2.1 $
 
 =========================================================================auto=*/
 
@@ -29,7 +29,7 @@
 
 #define VTK_MARGIN 0.1
 
-vtkCxxRevisionMacro(vtkPruneStreamline, "$Revision: 1.3.2.4 $");
+vtkCxxRevisionMacro(vtkPruneStreamline, "$Revision: 1.3.2.2.2.1 $");
 
 vtkStandardNewMacro(vtkPruneStreamline);
 

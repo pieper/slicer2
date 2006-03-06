@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageReformatIJK.cxx,v $
-  Date:      $Date: 2006/02/03 23:41:03 $
-  Version:   $Revision: 1.14.16.2 $
+  Date:      $Date: 2006/03/06 21:21:40 $
+  Version:   $Revision: 1.14.16.1.2.1 $
 
 =========================================================================auto=*/
 #include "vtkImageReformatIJK.h"

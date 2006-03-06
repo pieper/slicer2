@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkROISelectTracts.cxx,v $
-  Date:      $Date: 2006/02/15 19:47:40 $
-  Version:   $Revision: 1.3.2.4 $
+  Date:      $Date: 2006/03/06 21:21:50 $
+  Version:   $Revision: 1.3.2.3.2.1 $
 
 =========================================================================auto=*/
 

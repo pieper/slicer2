@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITensorRegistration.tcl,v $
-#   Date:      $Date: 2006/02/15 19:48:26 $
-#   Version:   $Revision: 1.22.2.4 $
+#   Date:      $Date: 2006/03/06 21:21:54 $
+#   Version:   $Revision: 1.22.2.3.2.1 $
 # 
 #===============================================================================
 # FILE:        DTMRITensorRegistration.tcl
@@ -68,7 +68,7 @@ proc DTMRITensorRegistrationInit {} {
     #------------------------------------
     set m "TensorRegistration"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.22.2.4 $} {$Date: 2006/02/15 19:48:26 $}]
+                                 {$Revision: 1.22.2.3.2.1 $} {$Date: 2006/03/06 21:21:54 $}]
 
     # Does the AG module exist? If not the registration tab will not be displayed
     if {[catch "package require vtkAG"]} {

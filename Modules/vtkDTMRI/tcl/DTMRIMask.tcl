@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRIMask.tcl,v $
-#   Date:      $Date: 2006/02/15 19:48:26 $
-#   Version:   $Revision: 1.13.2.3 $
+#   Date:      $Date: 2006/03/06 21:21:53 $
+#   Version:   $Revision: 1.13.2.2.2.1 $
 # 
 #===============================================================================
 # FILE:        DTMRIMask.tcl
@@ -33,7 +33,7 @@ proc DTMRIMaskInit {} {
     #------------------------------------
     set m "Mask"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.13.2.3 $} {$Date: 2006/02/15 19:48:26 $}]
+                                 {$Revision: 1.13.2.2.2.1 $} {$Date: 2006/03/06 21:21:53 $}]
 
     # type of masking to use to reduce volume of DTMRIs
     set DTMRI(mode,mask) None

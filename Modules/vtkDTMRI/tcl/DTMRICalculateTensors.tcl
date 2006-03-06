@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRICalculateTensors.tcl,v $
-#   Date:      $Date: 2006/02/15 19:48:25 $
-#   Version:   $Revision: 1.35.2.3 $
+#   Date:      $Date: 2006/03/06 21:21:53 $
+#   Version:   $Revision: 1.35.2.2.2.1 $
 # 
 #===============================================================================
 # FILE:        DTMRICalculateTensors.tcl
@@ -45,7 +45,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.35.2.3 $} {$Date: 2006/02/15 19:48:25 $}]
+                                 {$Revision: 1.35.2.2.2.1 $} {$Date: 2006/03/06 21:21:53 $}]
 
     # Initial path to search when loading files
     #------------------------------------
