@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.cxx,v $
-  Date:      $Date: 2006/03/03 22:49:03 $
-  Version:   $Revision: 1.63 $
+  Date:      $Date: 2006/03/06 21:56:41 $
+  Version:   $Revision: 1.64 $
 
 =========================================================================auto=*/
 #include "vtkMrmlSlicer.h"
@@ -2198,7 +2198,15 @@ void vtkMrmlSlicer::SetCursorHashGap(vtkFloatingPointType gap)
    }
 }
 
-    
+// sets the length of the cursor hash marks
+void vtkMrmlSlicer::SetCursorHashLength(vtkFloatingPointType len)
+{
+    for (int s=0; s<NUM_SLICES; s++)
+    {
+        this->SetCursorHashLength(s,len);
+    }
+}
+
 // DAVE need to call with SetAnnoColor
 void vtkMrmlSlicer::SetCursorColor(vtkFloatingPointType red, vtkFloatingPointType green, vtkFloatingPointType blue) 
 {
@@ -2214,6 +2222,11 @@ void vtkMrmlSlicer::SetNumHashes(int hashes)
   {
       this->Cursor[s]->SetNumHashes(hashes);
   }
+}
+
+int vtkMrmlSlicer::GetNumHashes()
+{
+    return this->Cursor[0]->GetNumHashes();
 }
 
 //----------------------------------------------------------------------------

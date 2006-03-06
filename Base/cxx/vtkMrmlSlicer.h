@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.h,v $
-  Date:      $Date: 2006/03/03 22:49:02 $
-  Version:   $Revision: 1.50 $
+  Date:      $Date: 2006/03/06 21:56:41 $
+  Version:   $Revision: 1.51 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSlicer - main core of the 3D Slicer
@@ -177,6 +177,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   // The cursor is the crosshair that moves with the mouse over the slices
   void SetShowCursor(int vis);
   void SetNumHashes(int hashes);
+    int GetNumHashes();
   void SetCursorColor(vtkFloatingPointType red, vtkFloatingPointType green, vtkFloatingPointType blue);
   void SetCursorPosition(int s, int x, int y) {
     this->Cursor[s]->SetCursor(x, y);};
@@ -190,6 +191,12 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
     void SetCursorHashGap(vtkFloatingPointType gap);
     void SetCursorHashGap(int s, vtkFloatingPointType gap) {
         this->Cursor[s]->SetHashGap(gap); };
+
+    vtkFloatingPointType GetCursorHashLength() { return this->Cursor[0]->GetHashLength(); };
+    void SetCursorHashLength(int s, vtkFloatingPointType len) {
+        this->Cursor[s]->SetHashLength(len); };
+    void SetCursorHashLength(vtkFloatingPointType len);
+    
   // Description:
   // Field of view for slices.  Also used for reformatting...
   vtkGetMacro(FieldOfView, vtkFloatingPointType);
