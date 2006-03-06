@@ -7,8 +7,9 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSurfaceProps.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:51 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/03/06 19:02:27 $
+  Version:   $Revision: 1.13 $
+
 =========================================================================auto=*/
 #include <math.h>
 #include "vtkMath.h"

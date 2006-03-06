@@ -6,8 +6,8 @@
   or http://www.slicer.org/copyright/copyright.txt for details.
   Program:   3D Slicer
   Module:    $RCSfile: vtkFastCellPicker.h,v $
-  Date:      $Date: 2006/02/22 23:47:15 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/03/06 19:02:25 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 // .NAME vtkFastCellPicker - select a cell by shooting a ray into graphics window

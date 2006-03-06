@@ -4,10 +4,11 @@
 
   See Doc/copyright/copyright.txt
   or http://www.slicer.org/copyright/copyright.txt for details.
+
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlData.h,v $
-  Date:      $Date: 2006/02/14 20:40:13 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2006/03/06 19:02:26 $
+  Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlData - Abstract Object used in the slicer to perform

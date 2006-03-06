@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkIndirectLookupTable.h,v $
-  Date:      $Date: 2006/02/23 01:43:35 $
-  Version:   $Revision: 1.22 $
+  Date:      $Date: 2006/03/06 19:02:26 $
+  Version:   $Revision: 1.23 $
 
 =========================================================================auto=*/
 /// .NAME vtkIndirectLookupTable - indirectly map scalar values into colors.

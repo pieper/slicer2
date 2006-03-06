@@ -4,10 +4,11 @@
 
   See Doc/copyright/copyright.txt
   or http://www.slicer.org/copyright/copyright.txt for details.
+
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlData.cxx,v $
-  Date:      $Date: 2006/01/08 04:45:05 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/03/06 19:02:26 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 #include <stdio.h>

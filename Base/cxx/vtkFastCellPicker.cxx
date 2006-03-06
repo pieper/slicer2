@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFastCellPicker.cxx,v $
-  Date:      $Date: 2006/01/08 04:38:20 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2006/03/06 19:02:25 $
+  Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 #include "vtkFastCellPicker.h"

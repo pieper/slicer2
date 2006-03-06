@@ -4,10 +4,11 @@
 
   See Doc/copyright/copyright.txt
   or http://www.slicer.org/copyright/copyright.txt for details.
+
   Program:   3D Slicer
   Module:    $RCSfile: vtkResliceImage.cxx,v $
-  Date:      $Date: 2006/02/27 19:21:52 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/03/06 19:02:27 $
+  Version:   $Revision: 1.15 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -15,8 +16,8 @@
   Program:   Samson Timoner TetraMesh Library
   Module:    $RCSfile: vtkResliceImage.cxx,v $
   Language:  C++
-  Date:      $Date: 2006/02/27 19:21:52 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/03/06 19:02:27 $
+  Version:   $Revision: 1.15 $
   
 Copyright (c) 2001 Samson Timoner
 

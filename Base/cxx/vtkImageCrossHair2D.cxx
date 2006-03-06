@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageCrossHair2D.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:39 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/03/06 19:02:25 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 #include "vtkImageCrossHair2D.h"
@@ -232,7 +232,7 @@ void vtkImageCrossHair2D::DrawCursor(vtkImageData *outData, int outExt[6])
   // Cursor Position.
     x = this->Cursor[0];
     y = this->Cursor[1];
-    
+  
   outData->GetSpacing(mmSpacing);
     // Conversions between mm and pixels:
     //   mm = pix * mmSpacing / mag

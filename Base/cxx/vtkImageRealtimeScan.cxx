@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageRealtimeScan.cxx,v $
-  Date:      $Date: 2006/02/14 20:40:12 $
-  Version:   $Revision: 1.18 $
+  Date:      $Date: 2006/03/06 19:02:26 $
+  Version:   $Revision: 1.19 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -28,14 +28,17 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include <algorithm> // required for std::swap
 #endif
 #include "vtkImageRealtimeScan.h"
 #include "vtkObjectFactory.h"
 
+// convert big-endian to little-endian
+#define DoByteSwap(x) SwapByte((unsigned char *) &x,sizeof(x))
+
 static int Read16BitImage (const char *filePrefix, const char *filePattern, 
     int start, int end, int nx, int ny, int skip, int SwapBytes, 
     char *fileName, short *image);
-
 
 //----------------------------------------------------------------------------
 vtkImageRealtimeScan::vtkImageRealtimeScan()
@@ -53,6 +56,11 @@ vtkImageRealtimeScan::vtkImageRealtimeScan()
     MinValue = MaxValue = 0;
     Recon = 0;
     ImageNum = 0;
+
+    // test byte order
+    short int word = 0x0001;
+    char *byte = (char *) &word;
+    ByteOrder = (byte[0] ? 1 : 0);
 }
 
 //----------------------------------------------------------------------------
@@ -157,7 +165,7 @@ Sends command 'cmd' to the server.
 ******************************************************************************/
 long vtkImageRealtimeScan::SendServer(int cmd)
 {
-    long nbytes=0;
+    long nbytes = 0;
 #ifndef _WIN32
     long n, len;
     char buf[LEN_NBYTES];
@@ -188,6 +196,7 @@ long vtkImageRealtimeScan::SendServer(int cmd)
         return -1;
     }
     bcopy(&buf[OFFSET_NBYTES], &nbytes, LEN_NBYTES);
+    nbytes = ntohl(nbytes);
 
 #endif
 
@@ -245,8 +254,10 @@ int vtkImageRealtimeScan::SetPosition(short tblPos, short patEntry,
     patPos = patPos + patEntry * 4;
 
     // Send data:
-    bcopy(&tblPos, &buf[OFFSET_IMG_TBLPOS], LEN_IMG_TBLPOS);
-    bcopy(&patPos, &buf[OFFSET_IMG_PATPOS], LEN_IMG_PATPOS);
+    short tblPos2 = htons(tblPos);
+    bcopy(&tblPos2, &buf[OFFSET_IMG_TBLPOS], LEN_IMG_TBLPOS);
+    short patPos2 = htons(patPos);
+    bcopy(&patPos2, &buf[OFFSET_IMG_PATPOS], LEN_IMG_PATPOS);
     len = LEN_IMG_TBLPOS + LEN_IMG_PATPOS;
     n = writen(sockfd, buf, len);
     if(n != len) {
@@ -268,12 +279,12 @@ int vtkImageRealtimeScan::SetPosition(short tblPos, short patEntry,
         return -1;
     }
     bcopy(&buf[OFFSET_NBYTES], &nbytes, LEN_NBYTES);
+    nbytes = ntohl(nbytes);
 
 #endif
 
     return nbytes;
 }
-
 /******************************************************************************
 OpenConnection
 ******************************************************************************/
@@ -299,22 +310,48 @@ int vtkImageRealtimeScan::OpenConnection(char *hostname, int port)
         fprintf(stderr,"Bad hostname: [%s]\n",hostname);
         return -1;
     }
-  
-    bzero((char *)&serv_addr, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port   = port;
 
-    bcopy(hostptr->h_addr, (char *)&serv_addr.sin_addr, hostptr->h_length);
+    if (OperatingSystem == 1)  // solaris
+    {
+        bzero((char *)&serv_addr, sizeof(serv_addr));
+        serv_addr.sin_family = AF_INET;
+        serv_addr.sin_port   = port;
 
-    if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        fprintf(stderr, "Socket allocation failed.\n");
-        return -1;
-    }
+        bcopy(hostptr->h_addr, (char *)&serv_addr.sin_addr, hostptr->h_length);
 
-    if (connect(sockfd, (sockaddr*)&serv_addr, sizeof(serv_addr)) == -1) {
-        fprintf(stderr, "Cannot connect to '%s'.\n", hostname);
-        close(sockfd);
-        return -1;
+        if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+            fprintf(stderr, "Socket allocation failed.\n");
+            return -1;
+        }
+
+        if (connect(sockfd, (sockaddr*)&serv_addr, sizeof(serv_addr)) == -1) {
+            fprintf(stderr, "Cannot connect to '%s'.\n", hostname);
+            close(sockfd);
+            return -1;
+        }
+    } 
+    else if (OperatingSystem == 2)  // linux
+    {
+        fprintf(stderr,"Hostname %s obtained\n",hostname);
+
+        if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+            fprintf(stderr, "Socket allocation failed.\n");
+            return -1;
+        }
+
+        fprintf(stderr, "Socket allocation done.\n");
+
+        int error;
+        struct sockaddr_in sin;
+        memcpy(&sin.sin_addr.s_addr,hostptr->h_addr,hostptr->h_length);
+        sin.sin_family = AF_INET;
+        sin.sin_port = htons(port);
+        if(connect(sockfd,(struct sockaddr *)&sin,sizeof(sin))==-1){
+            fprintf(stderr, "Cannot connect to '%s' because of ERROR %d.\n", hostname, error);
+            close(sockfd);
+            return -1;
+        }
+        fprintf(stderr, "Connection established to '%s'.\n", hostname);
     }
 
 #endif
@@ -399,13 +436,25 @@ int vtkImageRealtimeScan::PollRealtime()
 
     // Parse the update info
     bcopy(&buf[OFFSET_LOC_NEW], &NewLocator, LEN_LOC_NEW);
+    NewLocator = ntohs(NewLocator);
+
     bcopy(&buf[OFFSET_IMG_NEW], &NewImage,   LEN_IMG_NEW);
+    NewImage = ntohs(NewImage);
 
     // Read locator info if it exists
     if (NewLocator) {
         bcopy(&buf[OFFSET_LOC_STATUS], &LocatorStatus, LEN_LOC_STATUS);
+        LocatorStatus = ntohs(LocatorStatus);
+
         bcopy(&buf[OFFSET_LOC_MATRIX], matrix, LEN_LOC_MATRIX);
-        
+        if (ByteOrder)  // little endian 
+        {
+            for (int ii = 0; ii < 16; ii++)
+            {
+                DoByteSwap(matrix[ii]);
+            }
+        }
+
         for (i=0; i<4; i++) {
             for (j=0; j<4; j++) {
                 LocatorMatrix->SetElement(i,j,matrix[i*4+j]);
@@ -471,14 +520,35 @@ void vtkImageRealtimeScan::ExecuteInformation()
     vtkFloatingPointType matrix[16];
     short patPos;
         bcopy(&buf[OFFSET_IMG_TBLPOS],  &(this->TablePosition), LEN_IMG_TBLPOS);
+        this->TablePosition = ntohs(this->TablePosition);
         bcopy(&buf[OFFSET_IMG_PATPOS],  &patPos, LEN_IMG_PATPOS);
+        patPos = ntohs(patPos);
         bcopy(&buf[OFFSET_IMG_IMANUM],  &(this->ImageNum), LEN_IMG_IMANUM);
+        this->ImageNum = ntohl(this->ImageNum);
         bcopy(&buf[OFFSET_IMG_RECON],   &(this->Recon),    LEN_IMG_RECON);
+        this->Recon = ntohl(this->Recon);
         bcopy(&buf[OFFSET_IMG_MINPIX],  &(this->MinValue), LEN_IMG_MINPIX);
+        this->MinValue = ntohs(this->MinValue);
         bcopy(&buf[OFFSET_IMG_MAXPIX],  &(this->MaxValue), LEN_IMG_MAXPIX);
+        this->MaxValue = ntohs(this->MaxValue);
         bcopy(&buf[OFFSET_IMG_DIM    ], dim    , LEN_IMG_DIM);
+        for (int ii = 0; ii < 3; ii++)
+        {
+            dim[ii] = ntohs(dim[ii]);
+        }
         bcopy(&buf[OFFSET_IMG_SPACING], spacing, LEN_IMG_SPACING);
         bcopy(&buf[OFFSET_IMG_MATRIX ], matrix,  LEN_IMG_MATRIX);    
+        if (ByteOrder)  // little endian 
+        {
+            for (int ii = 0; ii < 3; ii++)
+            {
+                DoByteSwap(spacing[ii]);
+            }
+            for (int ii = 0; ii < 16; ii++)
+            {
+                DoByteSwap(matrix[ii]);
+            }
+        }
     
         // Decode patPos into a position and entry value
         this->PatientPosition = patPos % 4;
@@ -647,6 +717,18 @@ static int Read16BitImage (const char *filePrefix, const char *filePattern,
     return 0;
 }
 
+// convert big-endian to little-endian
+void vtkImageRealtimeScan::SwapByte(unsigned char *b, int n)
+{
+    register int i = 0;
+    register int j = n-1;
+
+    while (i < j)
+    {
+        std::swap(b[i], b[j]);
+        i++, j--;
+    }
+}
 
 
 
