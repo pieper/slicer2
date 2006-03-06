@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
-  Date:      $Date: 2006/02/08 17:40:22 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/03/06 20:09:00 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2006/02/08 17:40:22 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/03/06 20:09:00 $
+  Version:   $Revision: 1.14 $
 
   Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -74,7 +74,7 @@
 #include "itkGDCMImageIO.h"
 #include <itksys/SystemTools.hxx>
 
-vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.13 $");
+vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.14 $");
 vtkStandardNewMacro(vtkITKArchetypeImageSeriesReader);
 
 //----------------------------------------------------------------------------
@@ -344,7 +344,22 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
           {
             //itkGenericExceptionMacro ( "vtkITKArchetypeImageSeriesReader::ExecuteInformation: ImageIO for file " << fileNameCollapsed.c_str() << " does not exist.");
             //return;  TODO - figure out why imageIO is NULL for image series with more than one file
-          }
+
+          // handle the situation where the file contains a 3D image, but is in a
+          // directory that has multiple files that 'look' like a series to the 
+          // file name generator
+          this->FileNames.resize(0);
+          this->FileNames.push_back(this->Archetype);
+          seriesReader->SetFileNames(this->FileNames);
+          imageIO = seriesReader->GetImageIO();
+          if (imageIO.GetPointer() == NULL) 
+            {
+            vtkErrorMacro (<< "\nCould not load file \"" << this->Archetype << "\"\n\nIf there is a numerical series of files in this directory, please move the desired file to a directory by itself for reading.");
+            itkGenericExceptionMacro ("\n\nCould not load file, may be unsupported format.\n\nIf there is a numerical series of volume files in this directory, please move the desired file to a directory by itself for reading.\n");
+            return;
+            
+            }
+         }
       }
     if (this->UseNativeCoordinateOrientation)
       {
@@ -432,11 +447,22 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
   output->SetWholeExtent(extent);
   if (this->UseNativeScalarType)
     {
+<<<<<<< vtkITKArchetypeImageSeriesReader.cxx
       if (imageIO.GetPointer() == NULL) 
       {
       this->SetOutputScalarType(VTK_SHORT); // TODO - figure out why multi-file series doen't have an imageIO
       }
     else if (imageIO->GetComponentType() == itk::ImageIOBase::UCHAR)
+=======
+      if (imageIO.GetPointer() == NULL) 
+      {
+      // if we don't know about the image, make it single char so that it doesn't 
+      // overrun the buffer later (e.g. in the ITK iterator).  This may not be the correct type.
+      vtkErrorMacro(<< "imageIO is NULL - don't know correct scalar type so assuming unsigned char");
+      this->SetOutputScalarType(VTK_UNSIGNED_CHAR); // TODO - figure out why multi-file series doen't have an imageIO
+      }
+    else if (imageIO->GetComponentType() == itk::ImageIOBase::UCHAR)
+>>>>>>> 1.8.2.4
       {
       this->SetOutputScalarType(VTK_UNSIGNED_CHAR);
       }
