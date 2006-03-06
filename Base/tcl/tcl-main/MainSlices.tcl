@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainSlices.tcl,v $
-#   Date:      $Date: 2006/01/06 17:56:55 $
-#   Version:   $Revision: 1.62 $
+#   Date:      $Date: 2006/03/06 19:22:50 $
+#   Version:   $Revision: 1.63 $
 # 
 #===============================================================================
 # FILE:        MainSlices.tcl
@@ -86,7 +86,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.62 $} {$Date: 2006/01/06 17:56:55 $}]
+        {$Revision: 1.63 $} {$Date: 2006/03/06 19:22:50 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"
@@ -728,7 +728,7 @@ proc MainSlicesSetFov {} {
 #-------------------------------------------------------------------------------
 proc MainSlicesCenterCursor {s} {
     global View
-
+puts "MainSlicesCenterCursor $s"
     if {$View(mode) == "Quad512"} {
         Slicer SetCursorPosition $s 256 256
     } else {

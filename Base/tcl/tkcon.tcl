@@ -107,7 +107,11 @@ proc ::tkcon::Init {args} {
     # some main initialization occurs later in this proc,
     # to go after the UI init
     set MainInit 1
-    set title Main
+        if {[info exists ::SLICER(version)]} {
+            set title "Slicer $::SLICER(version)"
+        } else {
+            set title "Slicer"
+        }
     }
 
     ##
@@ -193,7 +197,7 @@ proc ::tkcon::Init {args} {
         alias clear dir dump echo idebug lremove
         tkcon_puts tkcon_gets observe observe_var unalias which what
     }
-    RCS        {RCS: @(#) $Id: tkcon.tcl,v 1.5 2003/03/17 03:11:10 pieper Exp $}
+    RCS        {RCS: @(#) $Id: tkcon.tcl,v 1.6 2006/03/06 19:24:21 nicole Exp $}
     HEADURL        {http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/tkcon/tkcon/tkcon.tcl?rev=HEAD}
     docs        "http://tkcon.sourceforge.net/"
     email        {jeff@hobbs.org}
@@ -623,7 +627,7 @@ proc ::tkcon::InitUI {title} {
     $con tag configure find -background $COLOR(blink)
 
     if {!$PRIV(WWW)} {
-    wm title $root "tkcon $PRIV(version) $title"
+    wm title $root "tkcon $title"
     bind $con <Configure> {
         scan [wm geometry [winfo toplevel %W]] "%%dx%%d" \
             ::tkcon::OPT(cols) ::tkcon::OPT(rows)

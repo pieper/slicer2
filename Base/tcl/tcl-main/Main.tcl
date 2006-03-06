@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Main.tcl,v $
-#   Date:      $Date: 2006/01/06 17:56:53 $
-#   Version:   $Revision: 1.129 $
+#   Date:      $Date: 2006/03/06 19:22:49 $
+#   Version:   $Revision: 1.130 $
 # 
 #===============================================================================
 # FILE:        Main.tcl
@@ -411,7 +411,7 @@ proc MainInit {} {
     # In each module's Init procedure, set Module(moduleName,category) to one of these strings.
     # If you use lindex, larger indices will indicate less tested modules.
     # set Module(categories) {Core Beta Experimental Example Unfiled}
-    set Module(categories) {Favourites Settings IO Application Filtering Segmentation Registration Measurement Visualisation Example Unfiled}
+    set Module(categories) {Favourites Settings IO Application Filtering Segmentation Registration Measurement Visualisation Example Unfiled All}
     # set Module(categories) {Data Processing Settings Other Unfiled}
     foreach m $Module(idList) {
         set Module($m,more) 0
@@ -441,7 +441,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.129 $} {$Date: 2006/01/06 17:56:53 $}]
+        {$Revision: 1.130 $} {$Date: 2006/03/06 19:22:49 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -1827,9 +1827,9 @@ proc MainExitQuery { } {
     if {$volumes != ""} {
          set msg "\
 The image data for the following volumes are unsaved:\n\
-$volumes\n\nDo you wish to save them before exiting?\n"
+$volumes\n\nDo you wish to exit anyway?\n"
         set retval [DevYesNo $msg]
-        if {$retval == "yes"} {
+        if {$retval == "no"} {
             Tab Editor row1 Volumes
             TabbedFrameInvoke $::Module(Editor,fVolumes) File
             return
@@ -1848,12 +1848,13 @@ $volumes\n\nDo you wish to save them before exiting?\n"
             }
         }
     }
+
     if {$models != ""} {
          set msg "\
 The polygon data for the following surface models are unsaved:\n\
-$models\n\nDo you wish to save them before exiting?"
+$models\n\nDo you wish to exit anyway?"
         set retval [DevYesNo $msg]
-        if {$retval == "yes"} {
+        if {$retval == "no"} {
             Tab ModelMaker row1 Save
             return
         }
@@ -1875,45 +1876,15 @@ $models\n\nDo you wish to save them before exiting?"
     if {$tetmesh != ""} {
        set msg "\
 The Volume Meshes for the following tetrahedral mesh are unsaved:\n\
-$tetmesh\n\nDo you wish to save them before exiting?" 
+$tetmesh\n\nDo you wish to exit anyway?" 
         set retval [DevYesNo $msg]
-        if {$retval == "yes"} {
+        if {$retval == "no"} {
             Tab TetraMesh row1 Read
             return
         }
     }
 
     MainExitProgram
-    if {0} {
-    if {[llength "$tetmesh $models $volumes"] == 0} {
-        MainExitProgram
-    }
-
-        set msg "";
-    if {$volumes != ""} {
-        set msg "\
-$msg The image data for the following volumes are unsaved:\n\
-$volumes\n\n"
-    }
-    if {$models != ""} {
-        set msg "\
-$msg The polygon data for the following surface models are unsaved:\n\
-$models\n\n"
-    }
-    if {$tetmesh != ""} {
-        set msg "\
-$msg The Volume Meshes for the following tetrahedral mesh are unsaved:\n\
-$tetmesh\n\n"
-    }
-
-    set msg "${msg}Exit anyway?" 
-
-#    set x 0
-#    set y [expr [winfo rooty $Gui(bExit)] - 60]
-    set x 20
-    set y 50
-    YesNoPopup Exit $x $y $msg MainExitProgram 
-    }
 }
 
 #-------------------------------------------------------------------------------
@@ -2182,6 +2153,7 @@ proc FormatModuleCategories {} {
 # the variable Module($module,category), and if so, adds the module id to the list being built in
 # Module(idList,$category). Also appends Module(categories) with any missing categories.
 # Also alphabetises the modules lists, except for the Core one.
+# Also builds a sorted list of all modules in the All category.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -2204,6 +2176,7 @@ proc MainBuildCategoryIDLists {} {
         } else {
             lappend Module(idList,Unfiled) $mod
         }
+        lappend Module(idList,All) $mod
     }
     
     # build a list of current categories
@@ -2252,13 +2225,18 @@ proc MainBuildCategoryMenu {} {
             foreach module $Module(idList,$category) {
                 # for now, just switch to the tab for this module, if it has a gui
                 if { [info exists Module($module,procGUI)] } {
+                    # are there too many entries, so we should have a column break?
+                    set colbreak [MainVolumesBreakVolumeMenu $Gui(mModules).m$category]
                     if {$Module(more) == 1} {
                         $Gui(mModules).m$category add command -label "$module" \
-                            -command "set Module(btn) More; Tab $module; $Module(rMore) config -text $module"
+                            -command "set Module(btn) More; Tab $module; $Module(rMore) config -text $module" \
+                            -columnbreak $colbreak
                     } else {
                         # just tab to the module, don't have to reset the Module(rMore) text 
                         # because no More button exists
-                        $Gui(mModules).m$category add command -label "$module" -command "Tab $module"
+                        $Gui(mModules).m$category add command -label "$module" \
+                            -command "Tab $module" \
+                            -columnbreak $colbreak
                     }
                 }
             }

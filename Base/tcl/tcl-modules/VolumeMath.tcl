@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: VolumeMath.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:02 $
-#   Version:   $Revision: 1.47 $
+#   Date:      $Date: 2006/03/06 19:24:24 $
+#   Version:   $Revision: 1.48 $
 # 
 #===============================================================================
 # FILE:        VolumeMath.tcl
@@ -140,7 +140,7 @@ proc VolumeMathInit {} {
     #   appropriate info when the module is checked in.
     #   
         lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.47 $} {$Date: 2006/01/06 17:57:02 $}]
+        {$Revision: 1.48 $} {$Date: 2006/03/06 19:24:24 $}]
 
     # Initialize module-level variables
     #------------------------------------

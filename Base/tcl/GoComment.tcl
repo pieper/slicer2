@@ -79,7 +79,8 @@ if {$file != ""} {
     if {[file exists [file join $prog tcl-modules Volumes]] == 1} {
         set dirs "$dirs tcl-modules/Volumes"
     }
-    foreach dir $dirs {
+    if {0} {  
+     foreach dir $dirs {
         foreach file "[glob -nocomplain $prog/$dir/*.tcl] \
             [glob -nocomplain $prog/$dir/*.h] \
             [glob -nocomplain $prog/$dir/*.cxx]" {
@@ -92,6 +93,8 @@ if {$file != ""} {
             ProcessFile $filename $::verbose
         }
     }
+    }
+
     if {$::doModsFlag == 1} {
         puts "Processing modules..."
         # process files in modules

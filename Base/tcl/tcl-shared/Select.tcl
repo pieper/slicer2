@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Select.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:05 $
-#   Version:   $Revision: 1.15 $
+#   Date:      $Date: 2006/03/06 19:24:26 $
+#   Version:   $Revision: 1.16 $
 # 
 #===============================================================================
 # FILE:        Select.tcl
@@ -251,6 +251,9 @@ proc SelectPick2D { widget x y } {
         scan [Slicer GetWldPoint] "%g %g %g" xRas yRas zRas
         set Select(xyz) "$xRas $yRas $zRas"
         set Select(xy) "$widget $x $y"
+        if {$::Module(verbose)} {
+            puts "SelectPick2d: widget $widget, x $x, y $y -> ras = $Select(xyz)"
+        }
         return 1
     } else {
         return 0

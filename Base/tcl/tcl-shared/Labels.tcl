@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Labels.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:05 $
-#   Version:   $Revision: 1.28 $
+#   Date:      $Date: 2006/03/06 19:24:26 $
+#   Version:   $Revision: 1.29 $
 # 
 #===============================================================================
 # FILE:        Labels.tcl
@@ -55,7 +55,7 @@ proc LabelsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-                                  {$Revision: 1.28 $} {$Date: 2006/01/06 17:57:05 $}]
+                                  {$Revision: 1.29 $} {$Date: 2006/03/06 19:24:26 $}]
 
 
     # Props

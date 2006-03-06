@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: ModelHierarchy.tcl,v $
-#   Date:      $Date: 2006/01/30 22:11:52 $
-#   Version:   $Revision: 1.20 $
+#   Date:      $Date: 2006/03/06 19:24:22 $
+#   Version:   $Revision: 1.21 $
 # 
 #===============================================================================
 # FILE:        ModelHierarchy.tcl
@@ -133,7 +133,7 @@ proc ModelHierarchyInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.20 $} {$Date: 2006/01/30 22:11:52 $}]
+        {$Revision: 1.21 $} {$Date: 2006/03/06 19:24:22 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -437,7 +437,7 @@ proc ModelHierarchyEnter {} {
 #-------------------------------------------------------------------------------
 proc ModelHierarchyExit {{param 1}} {
     global ModelHierarchy Gui
-
+    
     # destroy frame and create it again to delete all labels and buttons
 
     set f $ModelHierarchy(ModelCanvas)

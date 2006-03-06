@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Colors.tcl,v $
-#   Date:      $Date: 2006/01/06 17:56:57 $
-#   Version:   $Revision: 1.35 $
+#   Date:      $Date: 2006/03/06 19:24:22 $
+#   Version:   $Revision: 1.36 $
 # 
 #===============================================================================
 # FILE:        Colors.tcl
@@ -69,7 +69,7 @@ proc ColorsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.35 $} {$Date: 2006/01/06 17:56:57 $}]
+        {$Revision: 1.36 $} {$Date: 2006/03/06 19:24:22 $}]
 
     # default color xml file
     set Color(defaultColorFileName) [ExpandPath Colors.xml]

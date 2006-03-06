@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Gui.tcl,v $
-#   Date:      $Date: 2006/01/06 17:56:52 $
-#   Version:   $Revision: 1.56 $
+#   Date:      $Date: 2006/03/06 19:22:49 $
+#   Version:   $Revision: 1.57 $
 # 
 #===============================================================================
 # FILE:        Gui.tcl
@@ -72,7 +72,7 @@ proc GuiInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo Gui \
-    {$Revision: 1.56 $} {$Date: 2006/01/06 17:56:52 $}]
+    {$Revision: 1.57 $} {$Date: 2006/03/06 19:22:49 $}]
 
 
     # enable tooltips by default.  This should check user preferences somehow.

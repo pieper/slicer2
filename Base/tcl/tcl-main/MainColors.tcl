@@ -1,4 +1,5 @@
 #=auto==========================================================================
+
 #   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 # 
 #   See Doc/copyright/copyright.txt
@@ -6,8 +7,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainColors.tcl,v $
-#   Date:      $Date: 2006/02/03 23:42:07 $
-#   Version:   $Revision: 1.21 $
+#   Date:      $Date: 2006/03/06 19:22:49 $
+#   Version:   $Revision: 1.22 $
 # 
 #===============================================================================
 # FILE:        MainColors.tcl
@@ -19,6 +20,7 @@
 #   MainColorsAddColor name diffuseColor ambient diffuse specular power
 #   MainColorsDeleteLabel c delLabel
 #   MainColorsGetColorFromLabel label
+#   MainColorsGetColorIDFromName name
 #==========================================================================auto=
 
 
@@ -33,7 +35,7 @@ proc MainColorsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainColors \
-        {$Revision: 1.21 $} {$Date: 2006/02/03 23:42:07 $}]
+        {$Revision: 1.22 $} {$Date: 2006/03/06 19:22:49 $}]
 
     set Color(activeID) ""
     set Color(name) ""
@@ -167,8 +169,8 @@ proc MainColorsAddLabel {c newLabel} {
 #-------------------------------------------------------------------------------
 # .PROC MainColorsAddColor
 #
-# Creates a new color named "name".
-# Returns the new color's ID on success, else ""
+# Creates a new color named "name".<br>
+# Returns the new color's ID on success, else empty string.
 # .ARGS
 # str name name of the new color
 # array diffuseColor rgb value to use
@@ -227,7 +229,7 @@ proc MainColorsAddColor {name diffuseColor \
 #-------------------------------------------------------------------------------
 # .PROC MainColorsDeleteLabel
 #
-# Deletes "delLabel" from Color node "node"
+# Deletes "delLabel" from Color node with id "c"
 # .ARGS
 # int c id of the color node
 # int delLabel the color label to delete 
@@ -269,22 +271,23 @@ proc MainColorsGetColorFromLabel {label} {
     return ""
 }
 
-proc MainColorsGetLabelFromColorName {colorName} {
+#-------------------------------------------------------------------------------
+# .PROC MainColorsGetColorIDFromName
+# Returns the colour node id with this name, or -1 if not found
+# .ARGS
+# str name the name of the colour
+# .END
+#-------------------------------------------------------------------------------
+proc MainColorsGetColorIDFromName {name} {
     global Color Mrml
 
     set tree Mrml(colorTree) 
     set node [$tree InitColorTraversal]
     while {$node != ""} {
-        set name [$node GetName]
-        
-        if {$name == $colorName} {
-
-            # return list of labels that correspond to this color
-            return [$node GetLabels]
-            
-            }
-
+        if {$name == [$node GetName]} {
+            return [$node GetID]
+        }
         set node [$tree GetNextColor]
     }
-    return ""
+    return -1
 }

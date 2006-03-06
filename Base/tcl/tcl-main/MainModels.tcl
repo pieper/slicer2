@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainModels.tcl,v $
-#   Date:      $Date: 2006/01/06 17:56:54 $
-#   Version:   $Revision: 1.71 $
+#   Date:      $Date: 2006/03/06 19:22:50 $
+#   Version:   $Revision: 1.72 $
 # 
 #===============================================================================
 # FILE:        MainModels.tcl
@@ -71,7 +71,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.71 $} {$Date: 2006/01/06 17:56:54 $}]
+        {$Revision: 1.72 $} {$Date: 2006/03/06 19:22:50 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""

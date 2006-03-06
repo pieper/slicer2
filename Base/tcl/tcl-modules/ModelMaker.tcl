@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: ModelMaker.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:00 $
-#   Version:   $Revision: 1.62 $
+#   Date:      $Date: 2006/03/06 19:24:23 $
+#   Version:   $Revision: 1.63 $
 # 
 #===============================================================================
 # FILE:        ModelMaker.tcl
@@ -67,7 +67,7 @@ proc ModelMakerInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.62 $} {$Date: 2006/01/06 17:57:00 $}]
+        {$Revision: 1.63 $} {$Date: 2006/03/06 19:24:23 $}]
 
     # Create
     set ModelMaker(idVolume) $Volume(idNone)

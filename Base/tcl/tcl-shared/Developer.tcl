@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Developer.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:04 $
-#   Version:   $Revision: 1.52 $
+#   Date:      $Date: 2006/03/06 19:24:26 $
+#   Version:   $Revision: 1.53 $
 # 
 #===============================================================================
 # FILE:        Developer.tcl
@@ -686,6 +686,8 @@ proc DevGetFile { filename { MustPop 0} { DefaultExt "" } { DefaultDir "" } {Tit
     set dir [file dirname $filename]
     if { $filename == "" && $DefaultDir != "" } { set dir $DefaultDir }
     if { [file isdir $filename] } { set dir $filename }
+
+    set filename [file tail $filename]
     
     # if we are saving, the file doesn't have to exist yet.
         

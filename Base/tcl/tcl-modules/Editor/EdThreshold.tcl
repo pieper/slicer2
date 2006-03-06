@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EdThreshold.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:03 $
-#   Version:   $Revision: 1.23 $
+#   Date:      $Date: 2006/03/06 19:24:25 $
+#   Version:   $Revision: 1.24 $
 # 
 #===============================================================================
 # FILE:        EdThreshold.tcl
@@ -85,6 +85,7 @@ proc EdThresholdBuildVTK {} {
         Ed(EdThreshold,thresh$s) SetReplaceOut $Ed(EdThreshold,replaceOut)
         Ed(EdThreshold,thresh$s) SetInValue    0
         Ed(EdThreshold,thresh$s) SetOutValue   $Ed(EdThreshold,bg)
+        Ed(EdThreshold,thresh$s) SetOutputScalarTypeToShort
     }
 }
 

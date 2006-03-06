@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Anno.tcl,v $
-#   Date:      $Date: 2006/03/03 22:49:57 $
-#   Version:   $Revision: 1.24 $
+#   Date:      $Date: 2006/03/06 19:24:22 $
+#   Version:   $Revision: 1.25 $
 # 
 #===============================================================================
 # FILE:        Anno.tcl
@@ -45,9 +45,9 @@ proc AnnoInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.24 $} {$Date: 2006/03/03 22:49:57 $}]
+        {$Revision: 1.25 $} {$Date: 2006/03/06 19:24:22 $}]
 
-    set Anno(hashGap) [$::Interactor(activeSlicer) GetCursorHashGap]
+#    set Anno(hashGap) [$::Interactor(activeSlicer) GetCursorHashGap]
 }
 
 #-------------------------------------------------------------------------------
@@ -162,7 +162,8 @@ cube and axes.
     frame $f.fPrecision -bg $Gui(activeWorkspace)
     frame $f.fHashGap -bg $Gui(activeWorkspace)
     frame $f.fFollow -bg $Gui(activeWorkspace)
-    pack $f.fCoords $f.fPrecision $f.fHashGap $f.fFollow -side top -pady $Gui(pad)
+    pack $f.fCoords $f.fPrecision  $f.fFollow -side top -pady $Gui(pad)
+# $f.fHashGap
 
     #-------------------------------------------
     # Mode->Coords frame
