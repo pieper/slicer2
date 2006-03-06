@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Anno.tcl,v $
-#   Date:      $Date: 2006/03/06 21:57:45 $
-#   Version:   $Revision: 1.26 $
+#   Date:      $Date: 2006/03/06 22:29:17 $
+#   Version:   $Revision: 1.27 $
 # 
 #===============================================================================
 # FILE:        Anno.tcl
@@ -45,7 +45,7 @@ proc AnnoInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.26 $} {$Date: 2006/03/06 21:57:45 $}]
+        {$Revision: 1.27 $} {$Date: 2006/03/06 22:29:17 $}]
 
     set Anno(hashGap) [$::Interactor(activeSlicer) GetCursorHashGap]
     set Anno(hashLen) [$::Interactor(activeSlicer) GetCursorHashLength]
@@ -261,7 +261,11 @@ cube and axes.
     eval {checkbutton $f.cCrossHair -text "Axes follow cross hairs" \
               -variable Anno(axesFollowCrossHairs) -indicatoron 0 -width 24 \
               -command "MainAnnoUpdateAxesPosition; Render3D"} $Gui(WCA)
-    pack $f.cAxes $f.cCrossHair $f.cBox \
+    eval {checkbutton $f.cMouseCrossHair -text "Cross hairs follow mouse" \
+              -variable ::Interactor(crosshairFollowsMouse)  -indicatoron 0 -width 24} $Gui(WCA)
+    TooltipAdd $f.cMouseCrossHair "Cross hairs will follow mouse at all times if selected, otherwise only if shift key is pressed"
+              
+    pack $f.cAxes $f.cCrossHair $f.cMouseCrossHair $f.cBox \
         -side top -fill x -padx $Gui(pad) -pady $Gui(pad) 
 
 }

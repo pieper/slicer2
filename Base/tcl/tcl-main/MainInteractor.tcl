@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainInteractor.tcl,v $
-#   Date:      $Date: 2006/03/03 22:54:13 $
-#   Version:   $Revision: 1.65 $
+#   Date:      $Date: 2006/03/06 22:29:17 $
+#   Version:   $Revision: 1.66 $
 # 
 #===============================================================================
 # FILE:        MainInteractor.tcl
@@ -91,9 +91,7 @@ proc MainInteractorBind {widget} {
     bind $widget <Enter>             {MainInteractorEnter %W %x %y;}
     bind $widget <Leave>             {MainInteractorExit %W}
     bind $widget <Expose>            {MainInteractorExpose %W}
-    if {$Interactor(crosshairFollowsMouse)} {
-        bind $widget <Motion>            {MainInteractorMotion %W %x %y}
-    }
+    bind $widget <Motion>            {MainInteractorMotion %W %x %y}
     bind $widget <Shift-Motion>      {MainInteractorShiftMotion %W %x %y}
 
     # Any mouse button
@@ -239,10 +237,11 @@ proc MainInteractorXY {s x y} {
 # int ys screen y
 # int x 
 # int y
-# int mainSlice if 1, move the mag window, otherwise it's called to update the cursor on the shift linked slice windows
+# int mainSlice if 1, move the mag window, otherwise it's called to update the cursor on the shift linked slice windows. Defaults to 1.
+# int shiftMotion if 1, over ride the crosshair follows mouse flag being 0. Defaults to 0.
 # .END
 #-------------------------------------------------------------------------------
-proc MainInteractorCursor {s xs ys x y {mainSlice 1}} {
+proc MainInteractorCursor {s xs ys x y {mainSlice 1} {shiftMotion 0}} {
     global Slice Anno View Interactor
 
     # pixel value
@@ -346,9 +345,11 @@ proc MainInteractorCursor {s xs ys x y {mainSlice 1}} {
         }
     }
 
-    # Move cursor
-    $Interactor(activeSlicer) SetCursorPosition $s $xs $ys
-    if {$::Module(verbose)} { puts "MainInteractorCursor: set cursor position:\n\ts = $s\n\txs = $xs, ys = $ys" }
+    if {$Interactor(crosshairFollowsMouse) || $shiftMotion} {
+        # Move cursor
+        $Interactor(activeSlicer) SetCursorPosition $s $xs $ys
+        if {$::Module(verbose)} { puts "MainInteractorCursor: set cursor position:\n\ts = $s\n\txs = $xs, ys = $ys" }
+    }
 
     # Show close-up image
     if {$mainSlice && 
@@ -543,9 +544,10 @@ proc MainInteractorKeyPress {key widget x y} {
 # windowpath widget
 # int x
 # int y
+# int shiftMotionFlag passed through to MainInteractorCursor, defaults to 0, when 1 it means that it can over ride the cross hairs following mouse flag being 0
 # .END
 #-------------------------------------------------------------------------------
-proc MainInteractorMotion {widget x y} {
+proc MainInteractorMotion {widget x y {shiftMotionFlag 0}} {
     global Interactor Module
 
     set s $Interactor(s)
@@ -560,8 +562,7 @@ proc MainInteractorMotion {widget x y} {
     }
 
     # Cursor
-    MainInteractorCursor $s $xs $ys $x $y
-
+    MainInteractorCursor $s $xs $ys $x $y 1 $shiftMotionFlag
 
     # Render this slice
     MainInteractorRender
@@ -581,7 +582,13 @@ proc MainInteractorShiftMotion {widget x y} {
 
     if {$::Module(verbose)} { puts "\nMainInteractorShiftMotion widget = $widget, x = $x, y = $y" }
 
-    MainInteractorMotion $widget $x $y
+    # this will set up the calls to the MainInteractorCursor so that the cross 
+    # hairs will follow the mouse when shift is down
+    set shiftMotionFlag 1
+
+    MainInteractorMotion $widget $x $y $shiftMotionFlag
+
+    
 
     set s $Interactor(s)
     scan [MainInteractorXY $s $x $y] "%d %d %d %d" xs ys x y 
@@ -612,15 +619,15 @@ proc MainInteractorShiftMotion {widget x y} {
             switch -glob [$Interactor(activeSlicer) GetOrientString $slice] {
                 "Axial" { 
                     MainSlicesSetOffset $slice $sRas
-                    MainInteractorCursor $slice $sliceXS $sliceYS $sliceX $sliceY 0
+                    MainInteractorCursor $slice $sliceXS $sliceYS $sliceX $sliceY 0 $shiftMotionFlag
                 }
                 "Sagittal" { 
                     MainSlicesSetOffset $slice $rRas
-                    MainInteractorCursor $slice $sliceXS $sliceYS $sliceX $sliceY 0
+                    MainInteractorCursor $slice $sliceXS $sliceYS $sliceX $sliceY 0 $shiftMotionFlag
                 }
                 "Coronal" { 
                     MainSlicesSetOffset $slice $aRas
-                    MainInteractorCursor $slice $sliceXS $sliceYS $sliceX $sliceY 0
+                    MainInteractorCursor $slice $sliceXS $sliceYS $sliceX $sliceY 0 $shiftMotionFlag
                 }
 
                 # TODO need to get the unscaled pixel coordinates for RAS and
@@ -664,7 +671,7 @@ proc MainInteractorShiftMotion {widget x y} {
                             }
                             set off [expr round($dim * ($sRas - [lindex $lpi_point 2]) / [lindex $ras_extent 2])]
                             MainSlicesSetOffset $slice $off
-                            MainInteractorCursor $slice $sliceXS $sliceYS $sliceX $sliceY 0
+                            MainInteractorCursor $slice $sliceXS $sliceYS $sliceX $sliceY 0 $shiftMotionFlag
                         }
                         "SagSlice" { 
                             switch [$node GetScanOrder] {
@@ -680,7 +687,7 @@ proc MainInteractorShiftMotion {widget x y} {
                             }
                             set off [expr round($dim * ($rRas - [lindex $lpi_point 0]) / [lindex $ras_extent 0])]
                             MainSlicesSetOffset $slice $off
-                            MainInteractorCursor $slice $sliceXS $sliceYS $sliceX $sliceY 0
+                            MainInteractorCursor $slice $sliceXS $sliceYS $sliceX $sliceY 0 $shiftMotionFlag
                         }
                         "CorSlice" {
                             switch [$node GetScanOrder] {
@@ -696,7 +703,7 @@ proc MainInteractorShiftMotion {widget x y} {
                             }
                             set off [expr round($dim * ($aRas - [lindex $lpi_point 1]) / [lindex $ras_extent 1])]
                             MainSlicesSetOffset $slice $off
-                            MainInteractorCursor $slice $sliceXS $sliceYS $sliceX $sliceY 0
+                            MainInteractorCursor $slice $sliceXS $sliceYS $sliceX $sliceY 0 $shiftMotionFlag
                         }
                     }
                 }
