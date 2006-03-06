@@ -98,6 +98,8 @@ ENABLE_TESTING()
 #ADD_TEST("slicer-${dtmritestname}" "${SLICER_EXECUTABLE}" --agree_to_license --no-tkcon --script ${tclfile} --exec exit)
 #ENDFOREACH(tclfile)
 
+ADD_TEST("TestSlicerBase" "${SLICER_EXECUTABLE}" --agree_to_license --no-tkcon --script ${CTEST_SLICER_HOME}/Base/Testing/testSlicerBase.tcl --exec exit)
+
 ADD_TEST("slicer-tarup" "${SLICER_EXECUTABLE}" "--agree_to_license" "--exec" "source" "${CTEST_SLICER_HOME}/Scripts/tarup.tcl" ".," "tarup" "nightly" ".," "exit")
 
 # Setup Find/Use slicer
