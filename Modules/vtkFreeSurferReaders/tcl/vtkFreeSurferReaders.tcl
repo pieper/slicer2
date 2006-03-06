@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: vtkFreeSurferReaders.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:42 $
-#   Version:   $Revision: 1.49 $
+#   Date:      $Date: 2006/03/06 19:41:02 $
+#   Version:   $Revision: 1.50 $
 # 
 #===============================================================================
 # FILE:        vtkFreeSurferReaders.tcl
@@ -328,7 +328,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.49 $} {$Date: 2006/01/06 17:57:42 $}]
+        {$Revision: 1.50 $} {$Date: 2006/03/06 19:41:02 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -1820,6 +1820,12 @@ proc vtkFreeSurferReadersBApply {} {
     }
     vtkBVolumeReader Volume($i,vol,rw)
 
+    if {$::Module(verbose)} {
+        puts "Turning debug on for vtkBVolumeReader Volume($i,vol,rw)"
+        Volume($i,vol,rw) DebugOn
+    }
+
+
     # set the filename  stem
     set stem [file rootname $vtkFreeSurferReaders(VolumeFileName)]
     if {$::Module(verbose)} {
@@ -1848,7 +1854,7 @@ proc vtkFreeSurferReadersBApply {} {
         }
         set updateReturn [Volume($i,vol,rw) Update]
         if {$updateReturn == 0} {
-            DevErrorWindow "vtkMGHReader: update on volume $i failed."
+            DevErrorWindow "vtkFreeSurferReadersBApply: update on volume $i failed."
         }
 
 
@@ -2276,7 +2282,22 @@ if {1} {
         puts "\tFile pattern = [Volume($i,node) GetFilePattern]"
     }
 
-if {$::Module(verbose)} { puts "Right before MainUpdateMRML: vol $i number of components: [[[[Volume($i,vol,rw) GetOutput] GetPointData] GetScalars] GetNumberOfComponents]" }
+if {$::Module(verbose)} { 
+    set c 0
+    puts "Right before MainUpdateMRML: vol $i number of components: "
+    set o [Volume($i,vol,rw) GetOutput]
+    if {$o != ""} { 
+        set pd [$o GetPointData]
+        if {$pd != ""} {
+            set s [$pd GetScalars]
+            if {$s != ""} {
+                set c [$s GetNumberOfComponents]
+            }
+        }
+    }
+    puts "$c"
+}
+                
 
     # Reads in the volume via the Execute procedure
     MainUpdateMRML
@@ -3368,12 +3389,12 @@ proc vtkFreeSurferReadersReadMGH {v} {
 proc vtkFreeSurferReadersReadBfloat {v} {
     global Volume
 
-puts "\n\n\n\nvtkFreeSurferReadersReadBfloat $v - just returns"
+# puts "\n\n\n\nvtkFreeSurferReadersReadBfloat $v - just returns"
 
     if {$::Module(verbose)} {
         puts "vtkFreeSurferReadersReadBfloat: volume id = $v"
-        DevInfoWindow "vtkFreeSurferReadersReadBfloat: volume id = $v - SKIPPING this!"
-        return
+  #      DevInfoWindow "vtkFreeSurferReadersReadBfloat: volume id = $v - SKIPPING this!"
+   #     return
     }
 
     if { [info commands vtkBVolumeReader] == "" } {
@@ -3384,11 +3405,21 @@ puts "\n\n\n\nvtkFreeSurferReadersReadBfloat $v - just returns"
     catch "bfloatreader Delete"
     vtkBVolumeReader bfloatreader
 
+    if {$::Module(verbose)} {
+        puts "ReadBFloat: setting debug on on the reader"
+        bfloatreader DebugOn
+    }
     # not going to work, need to recreate the file name from what's saved in the node: FilePattern, FilePrefix, and ImageRange
     # bfloatreader SetFileName  [Volume($v,node) GetFullPrefix]
     set stem [Volume($v,node) GetFullPrefix]
     bfloatreader SetFilePrefix $stem
     bfloatreader SetStem $stem
+
+    # set up the progress reporting
+    set ::Gui(progressText) "Reading b data volume"
+    bfloatreader AddObserver StartEvent MainStartProgress
+    bfloatreader AddObserver ProgressEvent "MainShowProgress bfloatreader"
+    bfloatreader AddObserver EndEvent MainEndProgress
 
     bfloatreader Update
     bfloatreader SetRegistrationFileName ${stem}.dat
@@ -3400,6 +3431,7 @@ puts "\n\n\n\nvtkFreeSurferReadersReadBfloat $v - just returns"
 
 #    Volume($v,vol) SetImageData [bfloatreader GetOutput]
     bfloatreader Delete
+    MainEndProgress
 }
 
 #-------------------------------------------------------------------------------
@@ -5902,7 +5934,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set timemsg [join [split $timemsg] "-"]
     # make up the message with single quotes between each one for easy parsing later, 
     # leave out ones on the end as will get empty strings there
-    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.49 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
+    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.50 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
