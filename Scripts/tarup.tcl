@@ -30,7 +30,7 @@ set __comment__ {
     for windows visual studio 7, the following files are needed for a debug build:
         msvci70d.dll msvcp70d.dll msvcr70d.dll
     for linux redhat7.3
-        ld-2.2.5.so libpthread-0.9.so libstdc++-3-libc6.2-2-2.10.0.so libstdc++.so.5  
+        ld-2.2.5.so libpthread-0.9.so libstdc++-3-libc6.2-2-2.10.0.so libstdc++.so.5  libgcc_s.so.1
     for solaris
         libgcc_s.so.1 libstdc++.so.3  
     for darwin
@@ -117,7 +117,7 @@ proc tarup_usage {} {
     puts "\t\tlocal, to make a local copy, no upload"
     puts "\tincludeSource\n\t\t0, to make a binary release (default)\n\t\t1, to include the cxx directories"
     puts "Example: tarup local 0"
-    puts "Caveate: upload to na-mic.org is only allowed from trusted machines at BWH."
+    puts "Caveat: upload to na-mic.org is only allowed from trusted machines at BWH."
 }
 
 #
@@ -230,12 +230,25 @@ puts "uploadFlag = $uploadFlag"
     file copy -force $::env(TCL_BIN_DIR) $archivedir/Lib/$::env(BUILD)/tcl-build/bin
 
     puts " -- copying teem files"
-    file mkdir $archivedir/Lib/$::env(BUILD)/teem-build/bin
-    file copy -force $::env(TEEM_BIN_DIR) $archivedir/Lib/$::env(BUILD)/teem-build/bin
+    if { $::env(BUILD) == "win32" } {
+    # special case due to the teem-build dir structure on windows
+    # - env(TEEM_BIN_DIR) ends in bin/$::env(VTK_BUILD_TYPE) on win32 and just bin on unix
+        file mkdir $archivedir/Lib/$::env(BUILD)/teem-build/bin
+        file copy -force $::env(TEEM_BIN_DIR) $archivedir/Lib/$::env(BUILD)/teem-build/bin
+    } else {
+        file mkdir $archivedir/Lib/$::env(BUILD)/teem-build
+        file copy -force $::env(TEEM_BIN_DIR) $archivedir/Lib/$::env(BUILD)/teem-build
+    }
 
     puts " -- copying sandbox files"
     file mkdir $archivedir/Lib/$::env(BUILD)/NAMICSandBox-build
     file copy -force $::env(SANDBOX_BIN_DIR) $archivedir/Lib/$::env(BUILD)/NAMICSandBox-build
+    if { $::tcl_platform(os) == "Linux" && 
+            $::tcl_platform(machine) == "x86_64" } {
+        # special case to handle shared build on 64 bit
+        file copy -force $::env(SANDBOX_BIN_DIR)/../Distributions/bin/libDistributions.so $archivedir/Lib/$::env(BUILD)/NAMICSandBox-build/bin
+    }
+
 
     #
     # grab the vtk libraries and binaries
@@ -315,9 +328,9 @@ puts "uploadFlag = $uploadFlag"
       }
       "Linux" {
 #         set sharedLibs [list ld-2.2.5.so libpthread-0.9.so libstdc++-3-libc6.2-2-2.10.0.so]
-          set sharedLibs [GetLinkedLibs [list libstdc]]
+          set sharedLibs [GetLinkedLibs [list libstdc libgcc_s]]
           if {$sharedLibs == ""} {
-              set sharedLibs [list libstdc++-libc6.2-2.so.3 libstdc++.so.5]
+              set sharedLibs [list libstdc++-libc6.2-2.so.3 libstdc++.so.5 libgcc_s.so.1]
               set sharedSearchPath [split $::env(LD_LIBRARY_PATH) ":"]
           } else {
               set sharedSearchPath ""
@@ -621,9 +634,11 @@ puts "uploadFlag = $uploadFlag"
         puts " -- upload $curlfile to $curldest"
         switch $::tcl_platform(os) {
             "SunOS" -
-            "Linux" - 
-            "Darwin" {
+            "Linux" {
                 exec xterm -e curl --connect-timeout 120 --silent --show-error --upload-file $curlfile $curldest
+            }
+            "Darwin" {
+                exec /usr/X11R6/bin/xterm -e curl --connect-timeout 120 --silent --show-error --upload-file $curlfile $curldest
             }
             default { 
                 exec rxvt -e curl --connect-timeout 120 --silent --show-error --upload-file $curlfile $curldest

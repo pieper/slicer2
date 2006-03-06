@@ -161,7 +161,7 @@ if { [file exists $localvarsfile] } {
 }
 
 if ($isRelease) {
-    set ::env(VTK_BUILD_TYPE) "Release"
+    set ::VTK_BUILD_TYPE "Release"
     puts "Overriding slicer_variables.tcl; VTK_BUILD_TYPE is $::env(VTK_BUILD_TYPE)"
 }
 
@@ -201,6 +201,7 @@ if { $GENLIB(clean) } {
         if { [file exists $SLICER_HOME/isPatched] } {
             runcmd rm $SLICER_HOME/isPatched
         }
+
         if { [file exists $SLICER_HOME/isPatchedBLT] } {
             runcmd rm $SLICER_HOME/isPatchedBLT
         }
@@ -555,6 +556,8 @@ if { ![file exists $::ITK_TEST_FILE] } {
 
     file mkdir $SLICER_LIB/Insight-build
     cd $SLICER_LIB/Insight-build
+
+
 
     runcmd $::CMAKE \
         -G$GENERATOR \
