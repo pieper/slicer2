@@ -1,14 +1,14 @@
 /*=auto=========================================================================
 
-  Portions (c) Copyright 2006 Brigham and Women's Hospital (BWH) All Rights Reserved.
+  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 
   See Doc/copyright/copyright.txt
   or http://www.slicer.org/copyright/copyright.txt for details.
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKArchetypeImageSeriesVectorReader.cxx,v $
-  Date:      $Date: 2006/02/08 17:40:23 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2006/03/06 20:09:01 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================auto=*/
 #include "vtkITKArchetypeImageSeriesVectorReader.h"
@@ -35,7 +35,7 @@
 #include <itksys/SystemTools.hxx>
 
 vtkStandardNewMacro(vtkITKArchetypeImageSeriesVectorReader);
-vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesVectorReader, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesVectorReader, "$Revision: 1.2 $");
 
 //----------------------------------------------------------------------------
 vtkITKArchetypeImageSeriesVectorReader::vtkITKArchetypeImageSeriesVectorReader()

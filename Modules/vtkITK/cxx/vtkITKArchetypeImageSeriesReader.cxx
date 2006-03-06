@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
-  Date:      $Date: 2006/03/06 20:09:00 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/03/06 20:09:58 $
+  Version:   $Revision: 1.15 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2006/03/06 20:09:00 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/03/06 20:09:58 $
+  Version:   $Revision: 1.15 $
 
   Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -74,7 +74,7 @@
 #include "itkGDCMImageIO.h"
 #include <itksys/SystemTools.hxx>
 
-vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.14 $");
+vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.15 $");
 vtkStandardNewMacro(vtkITKArchetypeImageSeriesReader);
 
 //----------------------------------------------------------------------------
@@ -447,13 +447,6 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
   output->SetWholeExtent(extent);
   if (this->UseNativeScalarType)
     {
-<<<<<<< vtkITKArchetypeImageSeriesReader.cxx
-      if (imageIO.GetPointer() == NULL) 
-      {
-      this->SetOutputScalarType(VTK_SHORT); // TODO - figure out why multi-file series doen't have an imageIO
-      }
-    else if (imageIO->GetComponentType() == itk::ImageIOBase::UCHAR)
-=======
       if (imageIO.GetPointer() == NULL) 
       {
       // if we don't know about the image, make it single char so that it doesn't 
@@ -462,7 +455,6 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
       this->SetOutputScalarType(VTK_UNSIGNED_CHAR); // TODO - figure out why multi-file series doen't have an imageIO
       }
     else if (imageIO->GetComponentType() == itk::ImageIOBase::UCHAR)
->>>>>>> 1.8.2.4
       {
       this->SetOutputScalarType(VTK_UNSIGNED_CHAR);
       }
