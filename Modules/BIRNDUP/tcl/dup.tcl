@@ -6,13 +6,14 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup.tcl,v $
-#   Date:      $Date: 2006/03/02 20:34:33 $
-#   Version:   $Revision: 1.14 $
+#   Date:      $Date: 2006/03/07 21:18:57 $
+#   Version:   $Revision: 1.15 $
 # 
 #===============================================================================
 # FILE:        dup.tcl
 # PROCEDURES:  
 #   dup_demo
+#   dup_main
 #   BIRNDUPInterface
 #==========================================================================auto=
 
@@ -348,22 +349,6 @@ itcl::body dup::prefui { } {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC dup_demo
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc dup_demo {} {
-    package require vtkSlicerBase
-    package require BIRNDUP
-    if { ![info exists ::Module(versbose)] } {
-        set ::Module(verbose) 0
-    }
-    wm withdraw .
-    BIRNDUPInterface
-}
-
-#-------------------------------------------------------------------------------
 # .PROC BIRNDUPInterface
 # 
 # .ARGS
@@ -384,3 +369,32 @@ proc BIRNDUPInterface {} {
         wm geometry .t 900x700+50+50
     }
 }
+
+#-------------------------------------------------------------------------------
+# .PROC dup_demo
+# 
+# Stub for old entry point (renamed dup_main)
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc dup_demo {} {
+
+    dup_main
+}
+
+#-------------------------------------------------------------------------------
+# .PROC dup_main
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc dup_main {} {
+    package require vtkSlicerBase
+    package require BIRNDUP
+    if { ![info exists ::Module(versbose)] } {
+        set ::Module(verbose) 0
+    }
+    wm withdraw .
+    BIRNDUPInterface
+}
+
