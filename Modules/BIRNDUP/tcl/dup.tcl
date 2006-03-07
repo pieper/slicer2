@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup.tcl,v $
-#   Date:      $Date: 2006/03/07 21:18:57 $
-#   Version:   $Revision: 1.15 $
+#   Date:      $Date: 2006/03/07 22:29:04 $
+#   Version:   $Revision: 1.16 $
 # 
 #===============================================================================
 # FILE:        dup.tcl
@@ -38,6 +38,7 @@ upload pipeline (birndup)
 # Default resources
 # 
 option add *dup.appname "BIRN Deidentification and Upload Pipeline" widgetDefault
+option add *dup.exitonclose "false" widgetDefault
 
 #
 # The class definition - define if needed (not when re-sourcing)
@@ -48,6 +49,7 @@ if { [itcl::find class dup] == "" } {
         inherit iwidgets::Mainwindow
 
         itk_option define -appname appname Appname {}
+        itk_option define -exitonclose exitonclose Exitonclose {}
 
         constructor {args} {}
         destructor {}
@@ -125,6 +127,9 @@ itcl::body dup::constructor {args} {
 
 
 itcl::body dup::destructor {} {
+    if { $itk_option(-exitonclose) } {
+        exit
+    }
 }
 
 
@@ -354,19 +359,19 @@ itcl::body dup::prefui { } {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc BIRNDUPInterface {} {
+proc BIRNDUPInterface { {exitonclose "false"} } {
 
     foreach c { "" _sort _deidentify _review _upload } {
         catch "itcl::delete class dup$c"
         source $::PACKAGE_DIR_BIRNDUP/../../../tcl/dup$c.tcl;
     }
 
-    dup .t
+    dup .dup -exitonclose $exitonclose
 
-    if { [info command .t] != "" } {
+    if { [info command .dup] != "" } {
         # if the user didn't cancel, keep going...
-        .t activate
-        wm geometry .t 900x700+50+50
+        wm geometry .dup 900x700+50+50
+        .dup activate
     }
 }
 
@@ -379,7 +384,7 @@ proc BIRNDUPInterface {} {
 #-------------------------------------------------------------------------------
 proc dup_demo {} {
 
-    dup_main
+    dup_main "false"
 }
 
 #-------------------------------------------------------------------------------
@@ -388,13 +393,13 @@ proc dup_demo {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc dup_main {} {
+proc dup_main { {exitonclose "true"} } {
     package require vtkSlicerBase
     package require BIRNDUP
     if { ![info exists ::Module(versbose)] } {
         set ::Module(verbose) 0
     }
     wm withdraw .
-    BIRNDUPInterface
+    BIRNDUPInterface $exitonclose
 }
 
