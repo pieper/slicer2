@@ -6,8 +6,8 @@
 # 
 #  Program:   3D Slicer
 #  Module:    $RCSfile: Go.tcl,v $
-#  Date:      $Date: 2006/03/06 21:07:00 $
-#  Version:   $Revision: 1.113 $
+#  Date:      $Date: 2006/03/07 21:16:26 $
+#  Version:   $Revision: 1.114 $
 #===============================================================================
 # FILE:        Go.tcl
 # PROCEDURES:  
@@ -109,7 +109,7 @@ set ::SLICER(version) "$::SLICER(major_version).$::SLICER(minor_version)$::SLICE
 proc Usage { {msg ""} } {
     global SLICER
     
-    set msg "$msg\nusage: slicer2-<arch> \[options\] \[MRML file name .xml | dir with MRML file\]"
+    set msg "$msg\nusage: slicer2-<arch> \[options\] \[MRML file name .xml | dir with MRML file | tcl script\]"
     set msg "$msg\n  <arch> is one of win32.exe, solaris-sparc, or linux-x86"
     set msg "$msg\n  \[options\] is one of the following:"
     set msg "$msg\n   --help : prints this message and exits"
@@ -127,6 +127,7 @@ proc Usage { {msg ""} } {
     set msg "$msg\n   --exec <tcl code> : some code to execute after slicer loads"
     set msg "$msg\n                       (note: cannot specify scene after --exec)"
     set msg "$msg\n                       (note: use ,. instead of ; between tcl statements)"
+    set msg "$msg\n   --eval <tcl code> : like --exec, but doesn't load slicer first"
     set msg "$msg\n   --all-info : print out all of the version info and continue"
     set msg "$msg\n   --enable-stereo : set the flag to allow use of frame sequential stereo"
     set msg "$msg\n   --old-voxel-shift : start slicer with voxel coords in corner not center of image pixel"
@@ -154,6 +155,7 @@ set ::SLICER(load-freesurfer-qa) ""
 set ::SLICER(load-bxh) ""
 set ::SLICER(script) ""
 set ::SLICER(exec) ""
+set ::SLICER(eval) ""
 set ::SLICER(versionInfo) ""
 # these scripts will be evaluated after Slicer is done booting up
 set ::SLICER(utilScripts) ""
@@ -279,8 +281,31 @@ for {set i 0} {$i < $argc} {incr i} {
                 }
                 # allow a ".," to mean ";" in argument to facilitate scripting
                 # (it looks like a semicolon turned on it side
-                regsub -all ".," $::SLICER(exec) ";" ::SLICER(exec)
-                regsub -all ",." $::SLICER(exec) ";" ::SLICER(exec)
+                regsub -all {\.,} $::SLICER(exec) ";" ::SLICER(exec)
+                regsub -all {,\.} $::SLICER(exec) ";" ::SLICER(exec)
+            }
+        }
+        "--eval*" {
+            set embeddedarg ""
+            scan $a "--eval%s" embeddedarg
+            set ::SLICER(eval) "$::SLICER(eval) $embeddedarg"
+            incr i
+            if { $i == $argc && $embeddedarg == ""} {
+                Usage "missing argument for $a\n"
+            } else {
+                while { $i < $argc } {
+                    set term [lindex $argv $i]
+                    if { [string match "--*" $term] } {
+                        break
+                    } else {
+                        set ::SLICER(eval) "$::SLICER(eval) $term"
+                        incr i
+                    } 
+                }
+                # allow a ".," to mean ";" in argument to facilitate scripting
+                # (it looks like a semicolon turned on it side
+                regsub -all {\.,} $::SLICER(eval) ";" ::SLICER(eval)
+                regsub -all {,\.} $::SLICER(eval) ";" ::SLICER(eval)
             }
         }
         "--all-info" {
@@ -775,6 +800,23 @@ if {$::env(BUILD) == "darwin-ppc"} {
     }
 }
 
+#
+# eval
+# - allows you to invoke entry points into applications that use slicer packages
+#   and the boot process, but don't use the slicer interface
+# - take tcl code from the command line and evaluate it before slicer starts up
+# - if the global eval_finished variable is set before exit is called, the script will continue
+#   and slicer will boot.  
+#   If exit is called, slicer will quit without running the interface
+#
+if { $::SLICER(eval) != "" } {
+    SplashKill
+    eval $::SLICER(eval)
+    set ::eval_finished 0
+    vwait ::eval_finished 
+}
+
+
 foreach m $::env(SLICER_MODULES_TO_REQUIRE) {
     if {[lsearch $m $ignored] == -1} {
         puts "Loading Module $m..."
@@ -927,7 +969,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.113 2006/03/06 21:07:00 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.114 2006/03/07 21:16:26 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
