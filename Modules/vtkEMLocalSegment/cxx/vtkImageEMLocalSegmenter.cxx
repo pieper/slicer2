@@ -598,9 +598,11 @@ static void vtkImageEMLocalSegmenterExecute(vtkImageEMLocalSegmenter *self,float
       short *LabelList = new short[TotalNumClasses];
       memset(LabelList,0,sizeof(short)*TotalNumClasses);
       // Get all existing labels
-      self->GetHeadClass()->GetAllLabels(LabelList,0,TotalNumClasses);
+      int index = self->GetHeadClass()->GetAllLabels(LabelList,0,TotalNumClasses);
+      // Otherwise no classes defined
+      assert(index);
       // Label all super classes
-      self->GetHeadClass()->LabelAllSuperClasses(LabelList,TotalNumClasses);
+      self->GetHeadClass()->LabelAllSuperClasses(LabelList,index, TotalNumClasses);
       delete[] LabelList;
   }
 

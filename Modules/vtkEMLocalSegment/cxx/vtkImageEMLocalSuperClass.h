@@ -76,7 +76,7 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSuperClass : public vtkImageEMLoc
 
   int           GetTotalNumberOfClasses(bool flag); // if flag is set => includes subclasses of type SUPERCLASS
   int           GetAllLabels(short *LabelList, int result,int Max); // Gets all labels from the Substructures
-  void          LabelAllSuperClasses(short *TakenLabelList, int Max);
+  int          LabelAllSuperClasses(short *TakenLabelList, int Result, int Max);
 
   //BTX
   void**        GetClassList() {return this->ClassList;}
