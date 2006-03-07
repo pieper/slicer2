@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: isframes.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:08 $
-#   Version:   $Revision: 1.6 $
+#   Date:      $Date: 2006/03/07 21:19:35 $
+#   Version:   $Revision: 1.7 $
 # 
 #===============================================================================
 # FILE:        isframes.tcl
@@ -177,9 +177,15 @@ itcl::body isframes::constructor {args} {
 
 itcl::body isframes::destructor {} {
     destroy $_tkrw 
-    $_ren Delete
-    $_mapper Delete
-    $_actor Delete
+    if { $_ren != "" } {
+        $_ren Delete
+    }
+    if { $_mapper != "" } {
+        $_mapper Delete
+    }
+    if { $_actor != "" } {
+        $_actor Delete
+    }
 }
 
 # ------------------------------------------------------------------
@@ -277,8 +283,10 @@ itcl::configbody isframes::frame {
     $imgr SetFileName $filename
     $imgr Update
     set dims [[$imgr GetOutput] GetDimensions]
-    $_tkrw configure -width [lindex $dims 0] -height [lindex $dims 1]
-    $_mapper SetInput [$imgr GetOutput]
+    if { $_tkrw != "" && $_mapper != "" } {
+        $_tkrw configure -width [lindex $dims 0] -height [lindex $dims 1]
+        $_mapper SetInput [$imgr GetOutput]
+    }
     $imgr Delete
     
     $this expose
@@ -290,7 +298,9 @@ itcl::configbody isframes::frame {
 
 
 itcl::body isframes::expose {} {
-    $_tkrw Render
+    if { $_tkrw != ""} {
+        $_tkrw Render
+    }
 }
 
 
@@ -320,7 +330,6 @@ itcl::body isframes::entrycallback {} {
 
 itcl::body isframes::pre_destroy {} {
 
-    tk_messageBox -message "pre_destroy"
     [$_tkrw GetRenderWindow] Delete
     after idle "destroy $_tkrw"
     $_ren Delete
@@ -346,9 +355,9 @@ proc isframes_demo {} {
     wm title .isframesdemo "isframes demo"
     wm geometry .isframesdemo 400x700
 
-    pack [isframes .isframesdemo.isf] -fill both -expand true
-    .isframesdemo.isf configure -filepattern c:/tmp/slicer-%04d.png -start 1 -end 65
-    .isframesdemo.isf configure -frame 1
+    pack [isframes .isframesdemo.isf2] -fill both -expand true
+    .isframesdemo.isf2 configure -filepattern /tmp/slicer-%04d.png -start 1 -end 65
+    .isframesdemo.isf2 configure -frame 1
 }
 
 
