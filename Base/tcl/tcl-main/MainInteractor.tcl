@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainInteractor.tcl,v $
-#   Date:      $Date: 2006/03/06 22:29:17 $
-#   Version:   $Revision: 1.66 $
+#   Date:      $Date: 2006/03/07 22:45:38 $
+#   Version:   $Revision: 1.67 $
 # 
 #===============================================================================
 # FILE:        MainInteractor.tcl
@@ -199,10 +199,6 @@ proc MainInteractorBind {widget} {
 proc MainInteractorXY {s x y} {
     global Interactor
 
-    if {$::Module(verbose)} {
-        puts "\tMainInteractorXY: input $s $x $y"
-    }
-
     # Compute screen coordinates for this slice
     if {$Interactor(s) == $s} {
         set ySize $Interactor(ySize)
@@ -213,17 +209,9 @@ proc MainInteractorXY {s x y} {
     set xs $x
     set ys $y
 
-    if {$::Module(verbose)} {
-        puts "\tMainInteractorXY: flipped y: xs = x = $x, ys = y = $y"
-    }
-
     # Convert Screen coordinates to Reformatted image coordinates
     $Interactor(activeSlicer) SetScreenPoint $s $x $y
     scan [$Interactor(activeSlicer) GetReformatPoint] "%d %d" x y
-
-    if {$::Module(verbose)} {
-        puts "\tMainInteractorXY: got reformated point x = $x, y = $y"
-    }
 
     return "$xs $ys $x $y"
 }
@@ -586,21 +574,18 @@ proc MainInteractorShiftMotion {widget x y} {
     # hairs will follow the mouse when shift is down
     set shiftMotionFlag 1
 
-    MainInteractorMotion $widget $x $y $shiftMotionFlag
-
-    
+    MainInteractorMotion $widget $x $y $shiftMotionFlag    
 
     set s $Interactor(s)
     scan [MainInteractorXY $s $x $y] "%d %d %d %d" xs ys x y 
-    if {$::Module(verbose)} {
-        puts "MainInteractorShiftMotion:\n\tAfter call to MainInteractorXY:\n\txs = $xs, ys = $ys\n\tx = $x, y = $y"
-    }
 
     $Interactor(activeSlicer) SetReformatPoint $s $x $y
     scan [$Interactor(activeSlicer) GetWldPoint] "%g %g %g" rRas aRas sRas 
     scan [$Interactor(activeSlicer) GetIjkPoint] "%g %g %g" iIjk jIjk kIjk
 
-    if {$::Module(verbose)} { puts "MainInteractorShiftMotion after call to SetReformatPoint:\n\trRas = $rRas, aRas = $aRas, sRas = $sRas\n\tiIjk = $iIjk, jIjk = $jIjk, kIjk = $kIjk\n\tAxes follow active voxel = $::Anno(axesFollowCrossHairs)" }
+    if {$::Module(verbose)} { 
+        puts "MainInteractorShiftMotion:\n\tAfter call to MainInteractorXY:\n\txs = $xs, ys = $ys\n\tx = $x, y = $y"
+        puts "MainInteractorShiftMotion after call to SetReformatPoint:\n\trRas = $rRas, aRas = $aRas, sRas = $sRas\n\tiIjk = $iIjk, jIjk = $jIjk, kIjk = $kIjk\n\tAxes follow active voxel = $::Anno(axesFollowCrossHairs)" }
 
     if {$::Anno(axesFollowCrossHairs)} {
         MainAnnoUpdateAxesPosition $rRas $aRas $sRas
@@ -609,11 +594,9 @@ proc MainInteractorShiftMotion {widget x y} {
     for {set slice 0} {$slice < 3} {incr slice} {
         if {$slice != $s} {
             scan [MainInteractorRasToXy $slice $rRas $aRas $sRas] "%d %d" sX sY
-            if {$::Module(verbose) == 1} {
-                puts "\nMainInteractorShiftMotion: In slice loop, slice = $slice\n\tras $rRas $aRas $sRas\n\tOutput from RasToXy: sX = $sX, sY = $sY"
-            }
             scan [MainInteractorXY $slice $sX $sY] "%d %d %d %d" sliceXS sliceYS sliceX sliceY
             if {$::Module(verbose) == 1} {
+                puts "\nMainInteractorShiftMotion: In slice loop, slice = $slice\n\tras $rRas $aRas $sRas\n\tOutput from RasToXy: sX = $sX, sY = $sY"
                 puts "\tOutput from MainInteractorXY:\n\t\tsliceXS = $sliceXS, sliceYS = $sliceYS\n\t\tsliceX = $sliceX, sliceY = $sliceY "
             }
             switch -glob [$Interactor(activeSlicer) GetOrientString $slice] {
@@ -1543,15 +1526,16 @@ proc MainInteractorRasToXy {slice r a s } {
     set minX 0
     set minY 0
 
+    if {[lsearch $::Slice(idList) $slice] == -1} {
+        puts "MainInteractorRasToXy: invalid slice, $slice not in list $::Slice(idList)"
+        return "0 0"
+    }
+
     # take into account the view options, may be 256 or 512
+    set sliceMaxX [lindex [$::Gui(fSl${slice}Win) configure -width] end]
+    set sliceMaxY [lindex [$::Gui(fSl${slice}Win) configure -height] end]
 
-    set 0maxX [lindex [$::Gui(fSl0Win) configure -width] end]
-    set 0maxY [lindex [$::Gui(fSl0Win) configure -height] end]
-    set 1maxX [lindex [$::Gui(fSl1Win) configure -width] end]
-    set 1maxY [lindex [$::Gui(fSl1Win) configure -height] end]
-    set 2maxX [lindex [$::Gui(fSl2Win) configure -width] end]
-    set 2maxY [lindex [$::Gui(fSl2Win) configure -height] end]
-
+    
     # take into account the pan
     Slicer GetZoomCenter
     scan [Slicer GetZoomCenter$slice] "%g %g" cx cy
@@ -1573,17 +1557,15 @@ proc MainInteractorRasToXy {slice r a s } {
     if {$::Module(verbose) == 1} {
         puts "\trTL aTL sTL = $rTL $aTL $sTL"
         puts "\trBR aBR sBR = $rBR $aBR $sBR"
-        foreach n {0 1 2} {
-            puts "\t${n}maxX =  [subst $${n}maxX], ${n}maxY = [subst $${n}maxY]"
-        }
+        puts "\tsliceMaxX = $sliceMaxX, sliceMaxY = $sliceMaxY"
     }
 
     # in case of a divide by zero case, set up default x,y in the center
-    set x [expr ([subst $${slice}maxX] - $minX)/2 + $minX]
-    set y [expr ([subst $${slice}maxY] - $minY)/2 + $minY]
+    set x [expr ($sliceMaxX - $minX)/2 + $minX]
+    set y [expr ($sliceMaxY - $minY)/2 + $minY]
 
     # get the difference between the panned center and the half center
-    if {[subst $${slice}maxX] == 512} { 
+    if {$sliceMaxX == 512} { 
         set z 2
     } else {
         set z 1
@@ -1599,28 +1581,28 @@ proc MainInteractorRasToXy {slice r a s } {
         "0" {
             # use the x, y / r, a
             if {[expr ($rBR - $rTL)] != 0.0} {
-                set x [expr ((($r - $rTL) * ([subst $${slice}maxX] - $minX) / ($rBR - $rTL)) + $minX)]
+                set x [expr ((($r - $rTL) * ($sliceMaxX - $minX) / ($rBR - $rTL)) + $minX)]
             }
             if {[expr ($aBR - $aTL)] != 0.0} {
-                set y [expr ((($a - $aTL) * ([subst $${slice}maxY] - $minY) / ($aBR - $aTL)) + $minY)]
+                set y [expr ((($a - $aTL) * ($sliceMaxY - $minY) / ($aBR - $aTL)) + $minY)]
             }
         }
         "1" {
             # use the y, z / a, s
             if {[expr ($aBR - $aTL)] != 0.0} {
-                set x [expr ((($a - $aTL) * ([subst $${slice}maxX] - $minX) / ($aBR - $aTL)) + $minX)]
+                set x [expr ((($a - $aTL) * ($sliceMaxX - $minX) / ($aBR - $aTL)) + $minX)]
             }
             if {[expr ($sBR - $sTL)] != 0.0} {
-                set y [expr ((($s - $sTL) * ([subst $${slice}maxY] - $minY) / ($sBR - $sTL)) + $minY)]
+                set y [expr ((($s - $sTL) * ($sliceMaxY - $minY) / ($sBR - $sTL)) + $minY)]
             }
         } 
         "2" {
             # use the x, z / r, s
             if {[expr ($rBR - $rTL)] != 0.0} {
-                set x [expr ((($r - $rTL) * ([subst $${slice}maxX] - $minX) / ($rBR - $rTL)) + $minX)]
+                set x [expr ((($r - $rTL) * ($sliceMaxX - $minX) / ($rBR - $rTL)) + $minX)]
             }
             if {[expr ($sBR - $sTL)] != 0.0} {
-                set y [expr ((($s - $sTL) * ([subst $${slice}maxY] - $minY) / ($sBR - $sTL)) + $minY)]
+                set y [expr ((($s - $sTL) * ($sliceMaxY - $minY) / ($sBR - $sTL)) + $minY)]
             }
         }
     }
