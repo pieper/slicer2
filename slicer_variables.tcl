@@ -116,6 +116,7 @@ switch $::tcl_platform(os) {
         set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/unu
         set ::VTK_TEST_FILE $::VTK_DIR/bin/vtk
         set ::SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/libSlicerClustering.a
+        set ::ALT_SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/libSlicerClustering.a
         set ::VTK_TCL_LIB $::TCL_LIB_DIR/libtcl8.4.$shared_lib_ext 
         set ::VTK_TK_LIB $::TCL_LIB_DIR/libtk8.4.$shared_lib_ext
         set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh8.4
@@ -124,7 +125,7 @@ switch $::tcl_platform(os) {
         set ::BLT_PATCH $::SLICER_HOME/blt-patch.diff
     }
     "Linux" {
-    set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin
+        set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin
 
         set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh8.4
         set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish8.4
@@ -134,6 +135,7 @@ switch $::tcl_platform(os) {
         set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/unu
         set ::VTK_TEST_FILE $::VTK_DIR/bin/vtk
         set ::SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/libSlicerClustering.so
+        set ::ALT_SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/libSlicerClustering.a
         set ::VTK_TCL_LIB $::TCL_LIB_DIR/libtcl8.4.$shared_lib_ext 
         set ::VTK_TK_LIB $::TCL_LIB_DIR/libtk8.4.$shared_lib_ext
         set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh8.4
@@ -163,6 +165,7 @@ switch $::tcl_platform(os) {
         set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/unu.exe
         set ::VTK_TEST_FILE $::VTK_DIR/bin/$::VTK_BUILD_TYPE/vtk.exe
         set ::SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/$::VTK_BUILD_TYPE/SlicerClustering.lib
+        set ::ALT_SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/$::VTK_BUILD_TYPE/SlicerClustering.lib
         set ::VTK_TCL_LIB $::TCL_LIB_DIR/tcl84.lib
         set ::VTK_TK_LIB $::TCL_LIB_DIR/tk84.lib
         set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh84.exe

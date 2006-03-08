@@ -586,7 +586,7 @@ if { ![file exists $::ITK_TEST_FILE] } {
 ################################################################################
 # Get and build the sandbox
 
-if { ![file exists $::SANDBOX_TEST_FILE] } {
+if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FILE] } {
     cd $SLICER_LIB
 
     runcmd $::SVN checkout $::SANDBOX_TAG NAMICSandBox 
@@ -695,8 +695,12 @@ if { ![file exists $::VTK_TEST_FILE] } {
 if { ![file exists $::ITK_TEST_FILE] } {
     puts "ITK test file $::ITK_TEST_FILE not found."
 }
-if { ![file exists $::SANDBOX_TEST_FILE] } { 
-    puts "Sandbox test file $::SANDBOX_TEST_FILE not found."
+if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FILE] } { 
+    if {$isLinux} { 
+    puts "Sandbox test file $::SANDBOX_TEST_FILE or $::ALT_SANDBOX_TEST_FILE not found." 
+    } else { 
+    puts "Sandbox test file $::SANDBOX_TEST_FILE not found." 
+    }
 }
 
 if { ![file exists $::CMAKE] || \
@@ -708,9 +712,11 @@ if { ![file exists $::CMAKE] || \
          ![file exists $::BLT_TEST_FILE] || \
          ![file exists $::VTK_TEST_FILE] || \
          ![file exists $::ITK_TEST_FILE] || \
-         ![file exists $::SANDBOX_TEST_FILE] } { 
+         ![file exists $::SANDBOX_TEST_FILE] } {
+    if { ![file exists $::ALT_SANDBOX_TEST_FILE] } {
     puts "Not all packages compiled; check errors and run genlib.tcl again."
     exit 1 
+    }
 } else { 
     puts "All packages compiled."
     exit 0 
