@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainSlices.tcl,v $
-#   Date:      $Date: 2006/03/06 19:22:50 $
-#   Version:   $Revision: 1.63 $
+#   Date:      $Date: 2006/03/08 22:11:55 $
+#   Version:   $Revision: 1.64 $
 # 
 #===============================================================================
 # FILE:        MainSlices.tcl
@@ -86,7 +86,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.63 $} {$Date: 2006/03/06 19:22:50 $}]
+        {$Revision: 1.64 $} {$Date: 2006/03/08 22:11:55 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"
@@ -960,6 +960,7 @@ proc MainSlicesSetOffset {s {value ""}} {
         return
     }
    
+    set setSliderFlag 0
     # figure out what offset to use
     if {$value == ""} {
         # this means we were called directly from the slider w/ no value param
@@ -971,10 +972,13 @@ proc MainSlicesSetOffset {s {value ""}} {
     } elseif {$value == "Next"} {
         set value [expr $Slice($s,offset) + $Slice($s,offsetIncrement)]
         set Slice($s,offset) $value
+    } else {
+        # the value was passed in, we should save it in Slice(s,offset) so the slider is right
+        set setSliderFlag 1
     }
    
     if {$::Module(verbose)} {
-        puts "Main Slices Set Offset s = $s, value = $value"
+        puts "Main Slices Set Offset s = $s, value = $value (set slider = $setSliderFlag)"
     } 
 
     # validate value
@@ -995,6 +999,11 @@ proc MainSlicesSetOffset {s {value ""}} {
     }
     
     MainSlicesRefreshClip $s
+
+    if {$setSliderFlag} {
+        # update the slice offset in the gui
+        set Slice($s,offset) [Slicer GetOffset $s]
+    }
 }
 
 #-------------------------------------------------------------------------------
