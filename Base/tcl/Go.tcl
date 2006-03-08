@@ -6,8 +6,8 @@
 # 
 #  Program:   3D Slicer
 #  Module:    $RCSfile: Go.tcl,v $
-#  Date:      $Date: 2006/03/07 21:16:26 $
-#  Version:   $Revision: 1.114 $
+#  Date:      $Date: 2006/03/08 20:36:04 $
+#  Version:   $Revision: 1.115 $
 #===============================================================================
 # FILE:        Go.tcl
 # PROCEDURES:  
@@ -475,7 +475,13 @@ proc SplashShow { {delayms 7000} } {
     tk scaling $oscaling
 }
 
-SplashShow
+
+#
+# put up the splash screen, but only if the rest of the interface is going to come up
+#
+if { $::SLICER(eval) == "" } {
+    SplashShow
+}
 
 
 #
@@ -492,6 +498,22 @@ if { $::SLICER(tkcon) == "true" } {
 
 raise .splash
 update
+
+#
+# eval
+# - allows you to invoke entry points into applications that use slicer packages
+#   and the boot process, but don't use the slicer interface
+# - take tcl code from the command line and evaluate it before slicer starts up
+# - if the global eval_finished variable is set before exit is called, the script will continue
+#   and slicer will boot.  
+#   If exit is called, slicer will quit without running the interface
+#
+if { $::SLICER(eval) != "" } {
+    SplashKill
+    eval $::SLICER(eval)
+    set ::eval_finished 0
+    vwait ::eval_finished 
+}
 
 
 #
@@ -800,22 +822,6 @@ if {$::env(BUILD) == "darwin-ppc"} {
     }
 }
 
-#
-# eval
-# - allows you to invoke entry points into applications that use slicer packages
-#   and the boot process, but don't use the slicer interface
-# - take tcl code from the command line and evaluate it before slicer starts up
-# - if the global eval_finished variable is set before exit is called, the script will continue
-#   and slicer will boot.  
-#   If exit is called, slicer will quit without running the interface
-#
-if { $::SLICER(eval) != "" } {
-    SplashKill
-    eval $::SLICER(eval)
-    set ::eval_finished 0
-    vwait ::eval_finished 
-}
-
 
 foreach m $::env(SLICER_MODULES_TO_REQUIRE) {
     if {[lsearch $m $ignored] == -1} {
@@ -969,7 +975,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.114 2006/03/07 21:16:26 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.115 2006/03/08 20:36:04 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
