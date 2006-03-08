@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainInteractor.tcl,v $
-#   Date:      $Date: 2006/03/07 22:45:38 $
-#   Version:   $Revision: 1.67 $
+#   Date:      $Date: 2006/03/08 22:12:22 $
+#   Version:   $Revision: 1.68 $
 # 
 #===============================================================================
 # FILE:        MainInteractor.tcl
@@ -568,7 +568,9 @@ proc MainInteractorMotion {widget x y {shiftMotionFlag 0}} {
 proc MainInteractorShiftMotion {widget x y} {
     global Interactor Module
 
-    if {$::Module(verbose)} { puts "\nMainInteractorShiftMotion widget = $widget, x = $x, y = $y" }
+    if {$::Module(verbose)} { 
+        puts "\nMainInteractorShiftMotion widget = $widget, x = $x, y = $y" 
+    }
 
     # this will set up the calls to the MainInteractorCursor so that the cross 
     # hairs will follow the mouse when shift is down
@@ -1535,24 +1537,33 @@ proc MainInteractorRasToXy {slice r a s } {
     set sliceMaxX [lindex [$::Gui(fSl${slice}Win) configure -width] end]
     set sliceMaxY [lindex [$::Gui(fSl${slice}Win) configure -height] end]
 
-    
-    # take into account the pan
-    Slicer GetZoomCenter
-    scan [Slicer GetZoomCenter$slice] "%g %g" cx cy
-
     if {$::Module(verbose) == 1} {
-        puts "MainInteractorRasToXy: input slice = $slice, r = $r, a = $a, s = $s\n\tzoom center = $cx $cy"
+        puts "MainInteractorRasToXy: input slice = $slice, r = $r, a = $a, s = $s"
     }
 
     # calculate the corner points of this slice window in ras, 
-    # but not the doubled up coords, just use the standard 256 one, 
-    # as it's taken into account when you get the world point
-    # top left
-    $Interactor(activeSlicer) SetReformatPoint $slice $minX 256
+    # setting the screen point, it takes into account pan/zoom
+
+    # top left 
+    $Interactor(activeSlicer) SetScreenPoint $slice $minX $sliceMaxY
+    # but now we need to set the reformat point explicitly
+    scan [$Interactor(activeSlicer) GetReformatPoint] "%d %d" rx ry
+    if {$::Module(verbose)} {
+        puts "\ttop left: rx = $rx, ry = $ry"
+    }
+    $Interactor(activeSlicer) SetReformatPoint $slice $rx $ry
+    # and now get the recalc'd world point
     scan [$Interactor(activeSlicer) GetWldPoint] "%g %g %g" rTL aTL sTL
+    
     # bottom right
-    $Interactor(activeSlicer) SetReformatPoint $slice 256 $minY
+    $Interactor(activeSlicer) SetScreenPoint $slice $sliceMaxX $minY
+    scan [$Interactor(activeSlicer) GetReformatPoint] "%d %d" rx ry
+    if {$::Module(verbose)} {
+        puts "\tbottom right: rx = $rx, ry = $ry"
+    }
+    $Interactor(activeSlicer) SetReformatPoint $slice $rx $ry
     scan [$Interactor(activeSlicer) GetWldPoint] "%g %g %g" rBR aBR sBR
+
 
     if {$::Module(verbose) == 1} {
         puts "\trTL aTL sTL = $rTL $aTL $sTL"
@@ -1563,18 +1574,9 @@ proc MainInteractorRasToXy {slice r a s } {
     # in case of a divide by zero case, set up default x,y in the center
     set x [expr ($sliceMaxX - $minX)/2 + $minX]
     set y [expr ($sliceMaxY - $minY)/2 + $minY]
-
-    # get the difference between the panned center and the half center
-    if {$sliceMaxX == 512} { 
-        set z 2
-    } else {
-        set z 1
-    }
-    set dx [expr $x - ($cx * $z)]
-    set dy [expr $y - ($cy * $z)]
     
     if {$::Module(verbose)} {
-        puts "\ts = $slice, x = $x, y = $y, cx = $cx, cy = $cy, dx = $dx, dy = $dy, z = $z"
+        puts "\ts = $slice, x = $x, y = $y"
     }
 
     switch $slice {
@@ -1607,8 +1609,11 @@ proc MainInteractorRasToXy {slice r a s } {
         }
     }
 
-    set x [expr int($x + $dx)]
-    set y [expr int($y - $dy)]
+   
+    # assume panning has been dealt with
+    set x [expr int($x)]
+    set y [expr int($y)]
+    
     if {$::Module(verbose) == 1} {
         puts "\tMainInteractorRasToXy: returning x = $x, y = $y"
     }
