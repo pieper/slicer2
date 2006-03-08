@@ -155,7 +155,6 @@ switch $::tcl_platform(os) {
 
         set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin/$::VTK_BUILD_TYPE
 
-        #  
         set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
         set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh84.exe
         set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish84.exe
