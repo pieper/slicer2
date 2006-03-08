@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.cxx,v $
-  Date:      $Date: 2006/03/06 21:56:41 $
-  Version:   $Revision: 1.64 $
+  Date:      $Date: 2006/03/08 22:14:27 $
+  Version:   $Revision: 1.65 $
 
 =========================================================================auto=*/
 #include "vtkMrmlSlicer.h"
@@ -501,7 +501,7 @@ void vtkMrmlSlicer::PrintSelf(ostream& os, vtkIndent indent)
     {
       this->LastFilter[s]->PrintSelf(os,indent.GetNextIndent());
     }
-    os << indent << "DoubleSliceSize: " <<this->DoubleSliceSize[s] << "\n";
+    os << indent << "DoubleSliceSize: " << s << " " << this->DoubleSliceSize[s] << "\n";
   }
 }
 
