@@ -258,46 +258,6 @@ if { ![file exists $::CMAKE] } {
 
 
 ################################################################################
-# Get and build teem
-#
-
-if { ![file exists $::TEEM_TEST_FILE] } {
-    cd $SLICER_LIB
-
-    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login 
-    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TEEM_TAG teem
-
-    file mkdir $SLICER_LIB/teem-build
-    cd $SLICER_LIB/teem-build
-
-    if { $isDarwin } {
-        set C_FLAGS -DCMAKE_C_FLAGS:STRING=-fno-common \
-    } else {
-        set C_FLAGS ""
-    }
-
-    runcmd $::CMAKE \
-        -G$GENERATOR \
-        -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
-        -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
-        $C_FLAGS \
-        -DBUILD_SHARED_LIBS:BOOL=ON \
-        -DBUILD_TESTING:BOOL=OFF \
-        ../teem
-
-    if {$isWindows} {
-        if { $MSVC6 } {
-            runcmd $::MAKE teem.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
-        } else {
-            runcmd $::MAKE teem.SLN /build  $::VTK_BUILD_TYPE
-        }
-    } else {
-        eval runcmd $::MAKE -j 8
-    }
-}
-
-
-################################################################################
 # Get and build tcl, tk, itcl, widgets
 #
 
@@ -543,6 +503,69 @@ if { ![file exists $::VTK_TEST_FILE] } {
         eval runcmd $::MAKE -j 8
     }
 }
+
+################################################################################
+# Get and build teem
+# -- relies on VTK's png and zlib
+#
+
+if { ![file exists $::TEEM_TEST_FILE] } {
+    cd $SLICER_LIB
+
+    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login 
+    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TEEM_TAG teem
+
+    file mkdir $SLICER_LIB/teem-build
+    cd $SLICER_LIB/teem-build
+
+    if { $isDarwin } {
+        set C_FLAGS -DCMAKE_C_FLAGS:STRING=-fno-common \
+    } else {
+        set C_FLAGS ""
+    }
+
+    switch $::tcl_platform(os) {
+        "SunOS" -
+        "Linux" {
+            set zlib "libvtkzlib.so"
+            set png "libvtkpng.so"
+        }
+        "Darwin" {
+            set zlib "libvtkzlib.dylib"
+            set png "libvtkpng.dylib"
+        }
+        "Windows NT" {
+            set zlib "vtkzlib.lib"
+            set png "vtkpng.lib"
+        }
+    }
+
+    runcmd $::CMAKE \
+        -G$GENERATOR \
+        -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
+        -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+        $C_FLAGS \
+        -DBUILD_SHARED_LIBS:BOOL=ON \
+        -DBUILD_TESTING:BOOL=OFF \
+        -DTEEM_ZLIB:BOOL=ON \
+        -DTEEM_PNG:BOOL=ON \
+        -DZLIB_INCLUDE_DIR:PATH=$::SLICER_LIB/VTK/Utilities/zlib \
+        -DZLIB_LIBRARY:FILEPATH=$::SLICER_LIB/VTK-build/bin/$::VTK_BUILD_TYPE/$zlib \
+        -DPNG_PNG_INCLUDE_DIR:PATH=$::SLICER_LIB/VTK/Utilities/png \
+        -DPNG_LIBRARY:FILEPATH=$::SLICER_LIB/VTK-build/bin/$::VTK_BUILD_TYPE/$png \
+        ../teem
+
+    if {$isWindows} {
+        if { $MSVC6 } {
+            runcmd $::MAKE teem.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
+        } else {
+            runcmd $::MAKE teem.SLN /build  $::VTK_BUILD_TYPE
+        }
+    } else {
+        eval runcmd $::MAKE -j 8
+    }
+}
+
 
 ################################################################################
 # Get and build itk
