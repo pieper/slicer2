@@ -72,6 +72,7 @@ INCLUDE_DIRECTORIES(
    ${VTKSLICERBASE_BUILD_DIR}
    ${VTKTENSORUTIL_SOURCE_DIR}/cxx
    ${VTKTENSORUTIL_BUILD_DIR}
+   ${SANDBOX_SRC_DIR}/trunk/SlicerTractClusteringImplementation/Code 
    ${SANDBOX_SRC_DIR}/SlicerTractClusteringImplementation/Code 
    ${SANDBOX_SRC_DIR}/SpectralClustering
    ${TEEM_BUILD_DIR}/include/
