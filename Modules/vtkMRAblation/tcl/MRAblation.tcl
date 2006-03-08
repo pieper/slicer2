@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MRAblation.tcl,v $
-#   Date:      $Date: 2006/03/08 15:18:51 $
-#   Version:   $Revision: 1.1.2.1 $
+#   Date:      $Date: 2006/03/08 18:38:12 $
+#   Version:   $Revision: 1.1.2.2 $
 # 
 #===============================================================================
 # FILE:        MRAblation.tcl
@@ -137,7 +137,7 @@ proc MRAblationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.1 $} {$Date: 2006/03/08 15:18:51 $}]
+        {$Revision: 1.1.2.2 $} {$Date: 2006/03/08 18:38:12 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -218,13 +218,17 @@ proc MRAblationBuildGUI {} {
     # Refer to the documentation for details on the syntax.
     #
     set help "
-    The MRAblation module is an example for developers.  It shows how to add a module 
-    to the Slicer.  The source code is in slicer2/Modules/vtkMRAblation/tcl/MRAblation.tcl.
-    <P>
-    Description by tab:
+
+    The MRAblation module is intended to process and display MR data \
+    from laser ablation experiment.
+    <BR><BR>
+    <B>Load</B> allows you to load a set of MR volumes (in GE format) \
+    into Slicer.
     <BR>
-    <UL>
-    <LI><B>Tons o' Stuff:</B> This tab is a demo for developers.
+    <B>Compute</B> lets you to compute thermal volume(s).
+    <BR>
+    <B>Display</B> gives you the ability to select a thermal volume for \
+    display. 
     "
     regsub -all "\n" $help {} help
     MainHelpApplyTags MRAblation $help
@@ -303,7 +307,7 @@ proc MRAblationBuildGUI {} {
 
     # parameters
     set f $fLoad.fMiddle.fParams
-    DevAddLabel $f.lSeq "Types of images:"
+    DevAddLabel $f.lSeq "Set of images:"
     eval {entry $f.eSeq -textvariable MRAblation(sequence) -width 40} $Gui(WEA)
     set MRAblation(sequence) "first;second;third;fourth"
 
@@ -354,7 +358,7 @@ proc MRAblationBuildGUI {} {
     eval {checkbutton $f.cbComputing \
         -variable MRAblation(checkbuttonComputing) \
         -width 28 \
-        -text "Automatic"} $Gui(WEA) 
+        -text "One volume per phase"} $Gui(WEA) 
     $f.cbComputing select 
     bind $f.cbComputing <1> "MRAblationToggleComputing"
 
@@ -405,12 +409,12 @@ proc MRAblationBuildGUI {} {
 
     MRAblationSelectImage hot phase-2 
 
-    # Real image
+    # Magnitude image
     #---------------------------
-    DevAddLabel $f.lReal "Real images:"
+    DevAddLabel $f.lMag "Magnitude images:"
 
-    set realImgList [list {none}]
-    set df [lindex $realImgList 0] 
+    set magImgList [list {none}]
+    set df [lindex $magImgList 0] 
     eval {menubutton $f.mbType3 -text $df \
           -relief raised -bd 2 -width 10 \
           -indicatoron 1 \
@@ -418,8 +422,27 @@ proc MRAblationBuildGUI {} {
     eval {menu $f.mbType3.m} $Gui(WMA)
     
     # Save menubutton for config
-    set MRAblation(gui,realImgMenuButton) $f.mbType3
-    set MRAblation(gui,realImgMenu) $f.mbType3.m
+    set MRAblation(gui,magnitudeImgMenuButton) $f.mbType3
+    set MRAblation(gui,magnitudeImgMenu) $f.mbType3.m
+
+    MRAblationSelectImage magnitude none
+
+
+    # Real image
+    #---------------------------
+    DevAddLabel $f.lReal "Real images:"
+
+    set realImgList [list {none}]
+    set df [lindex $realImgList 0] 
+    eval {menubutton $f.mbType4 -text $df \
+          -relief raised -bd 2 -width 10 \
+          -indicatoron 1 \
+          -menu $f.mbType4.m} $Gui(WMBA)
+    eval {menu $f.mbType4.m} $Gui(WMA)
+    
+    # Save menubutton for config
+    set MRAblation(gui,realImgMenuButton) $f.mbType4
+    set MRAblation(gui,realImgMenu) $f.mbType4.m
 
     MRAblationSelectImage real none
 
@@ -429,15 +452,15 @@ proc MRAblationBuildGUI {} {
 
     set imagImgList [list {none}]
     set df [lindex $imagImgList 0] 
-    eval {menubutton $f.mbType4 -text $df \
+    eval {menubutton $f.mbType5 -text $df \
           -relief raised -bd 2 -width 10 \
           -indicatoron 1 \
-          -menu $f.mbType4.m} $Gui(WMBA)
-    eval {menu $f.mbType4.m} $Gui(WMA)
+          -menu $f.mbType5.m} $Gui(WMBA)
+    eval {menu $f.mbType5.m} $Gui(WMA)
 
     # Save menubutton for config
-    set MRAblation(gui,imaginaryImgMenuButton) $f.mbType4
-    set MRAblation(gui,imaginaryImgMenu) $f.mbType4.m
+    set MRAblation(gui,imaginaryImgMenuButton) $f.mbType5
+    set MRAblation(gui,imaginaryImgMenu) $f.mbType5.m
  
     MRAblationSelectImage imaginary none
 
@@ -448,16 +471,18 @@ proc MRAblationBuildGUI {} {
     set MRAblation(volumePrefix) "T-"
 
     blt::table $f \
-       0,0 $f.lCold   -padx 5 -pady 2 -anchor e \
+       0,0 $f.lCold   -padx 3 -pady 2 -anchor e \
        0,1 $f.mbType   -padx 5 -pady 2 -anchor w -fill x \
-       1,0 $f.lHot -padx 5 -pady 2 -anchor e \
+       1,0 $f.lHot -padx 3 -pady 2 -anchor e \
        1,1 $f.mbType2 -padx 5 -pady 2 -anchor w -fill x \
-       2,0 $f.lReal -padx 5 -pady 2 -anchor e \
+       2,0 $f.lMag -padx 3 -pady 2 -anchor e \
        2,1 $f.mbType3 -padx 5 -pady 2 -anchor w -fill x \
-       3,0 $f.lImag -padx 5 -pady 2 -anchor e \
+       3,0 $f.lReal -padx 3 -pady 2 -anchor e \
        3,1 $f.mbType4 -padx 5 -pady 2 -anchor w -fill x \
-       4,0 $f.lPrefix -padx 5 -pady 2 -anchor e \
-       4,1 $f.ePrefix -padx 5 -pady 2 -anchor w -fill x
+       4,0 $f.lImag -padx 3 -pady 2 -anchor e \
+       4,1 $f.mbType5 -padx 5 -pady 2 -anchor w -fill x \
+       5,0 $f.lPrefix -padx 3 -pady 2 -anchor e \
+       5,1 $f.ePrefix -padx 5 -pady 2 -anchor w -fill x
    
     #----------------------------
     # Compute->Bottom frame
@@ -558,8 +583,10 @@ proc MRAblationCompute {} {
         DevErrorWindow "Cold image and hot image cannot be the same."
         return
     }
-    if {$MRAblation(realImageCurrent) == $MRAblation(imaginaryImageCurrent)} {
-        DevErrorWindow "Real image and imaginary image cannot be the same."
+    if {$MRAblation(realImageCurrent) == $MRAblation(imaginaryImageCurrent) ||
+        $MRAblation(realImageCurrent) == $MRAblation(magnitudeImageCurrent) ||
+        $MRAblation(magnitudeImageCurrent) == $MRAblation(imaginaryImageCurrent)} {
+        DevErrorWindow "Make sure magnitude, real and imaginary images are different."
         return
     }
 
@@ -710,6 +737,13 @@ proc MRAblationCompute {} {
 
 
     }
+
+    # set the first magnitude image as the background
+    set name laser-$MRAblation(magnitudeImageCurrent)-1
+    set id [MIRIADSegmentGetVolumeByName $name] 
+    MainSlicesSetVolumeAll Back $id
+    # MainVolumesSetActive $id
+    MainVolumesRender
 
     $MRAblation(gui,computeApplyButton) config -state normal 
  
@@ -881,7 +915,12 @@ proc MRAblationCreateVolume {c} {
     }
 }
    
- 
+
+#-------------------------------------------------------------------------------
+# .PROC MRAblationWatch 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc MRAblationWatch {} {
     global MRAblation Gui 
   
@@ -899,6 +938,7 @@ proc MRAblationWatch {} {
         if {$MRAblation(phaseCount) == $MRAblation(phase)} {
             $MRAblation(gui,loadApplyButton) config -state normal 
             set MRAblation(updateComputeTab) 1 
+
             return
         }
 
@@ -1024,6 +1064,9 @@ proc MRAblationUpdateRealAndImaginaryImages {} {
     }
     set len [llength $MRAblation(sequenceList)]
     if {$len <= 0} {
+        $MRAblation(gui,magnitudeImgMenu) add command -label none \
+            -command "MRAblationSelectImage magnitude none"
+
         $MRAblation(gui,realImgMenu) add command -label none \
             -command "MRAblationSelectImage real none"
 
@@ -1031,6 +1074,9 @@ proc MRAblationUpdateRealAndImaginaryImages {} {
             -command "MRAblationSelectImage imaginary none"
     } else {
         foreach s $MRAblation(sequenceList) {
+            $MRAblation(gui,magnitudeImgMenu) add command -label $s \
+                -command "MRAblationSelectImage magnitude $s"
+
             $MRAblation(gui,realImgMenu) add command -label $s \
                 -command "MRAblationSelectImage real $s"
 
@@ -1038,7 +1084,8 @@ proc MRAblationUpdateRealAndImaginaryImages {} {
                 -command "MRAblationSelectImage imaginary $s"
         }
 
-        MRAblationSelectImage real [lindex $MRAblation(sequenceList) 0] 
+        MRAblationSelectImage magnitude [lindex $MRAblation(sequenceList) 0] 
+        MRAblationSelectImage real [lindex $MRAblation(sequenceList) end-1] 
         MRAblationSelectImage imaginary [lindex $MRAblation(sequenceList) end] 
     }
 }
@@ -1105,6 +1152,9 @@ proc MRAblationSelectImage {type name} {
     } elseif {$type == "real"} {
         $MRAblation(gui,realImgMenuButton) config -text $name
         set MRAblation(realImageCurrent) $name 
+    } elseif {$type == "magnitude"} {
+        $MRAblation(gui,magnitudeImgMenuButton) config -text $name
+        set MRAblation(magnitudeImageCurrent) $name 
     } else {
         $MRAblation(gui,imaginaryImgMenuButton) config -text $name
         set MRAblation(imaginaryImageCurrent) $name 
