@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MRAblation.tcl,v $
-#   Date:      $Date: 2006/03/08 18:38:12 $
-#   Version:   $Revision: 1.1.2.2 $
+#   Date:      $Date: 2006/03/09 17:20:07 $
+#   Version:   $Revision: 1.1.2.3 $
 # 
 #===============================================================================
 # FILE:        MRAblation.tcl
@@ -137,7 +137,7 @@ proc MRAblationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.2 $} {$Date: 2006/03/08 18:38:12 $}]
+        {$Revision: 1.1.2.3 $} {$Date: 2006/03/09 17:20:07 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -358,7 +358,7 @@ proc MRAblationBuildGUI {} {
     eval {checkbutton $f.cbComputing \
         -variable MRAblation(checkbuttonComputing) \
         -width 28 \
-        -text "One volume per phase"} $Gui(WEA) 
+        -text "One volume per timepoint"} $Gui(WEA) 
     $f.cbComputing select 
     bind $f.cbComputing <1> "MRAblationToggleComputing"
 
@@ -471,18 +471,18 @@ proc MRAblationBuildGUI {} {
     set MRAblation(volumePrefix) "T-"
 
     blt::table $f \
-       0,0 $f.lCold   -padx 3 -pady 2 -anchor e \
-       0,1 $f.mbType   -padx 5 -pady 2 -anchor w -fill x \
-       1,0 $f.lHot -padx 3 -pady 2 -anchor e \
-       1,1 $f.mbType2 -padx 5 -pady 2 -anchor w -fill x \
-       2,0 $f.lMag -padx 3 -pady 2 -anchor e \
-       2,1 $f.mbType3 -padx 5 -pady 2 -anchor w -fill x \
-       3,0 $f.lReal -padx 3 -pady 2 -anchor e \
-       3,1 $f.mbType4 -padx 5 -pady 2 -anchor w -fill x \
-       4,0 $f.lImag -padx 3 -pady 2 -anchor e \
-       4,1 $f.mbType5 -padx 5 -pady 2 -anchor w -fill x \
-       5,0 $f.lPrefix -padx 3 -pady 2 -anchor e \
-       5,1 $f.ePrefix -padx 5 -pady 2 -anchor w -fill x
+       0,0 $f.lCold   -padx 1 -pady 2 -anchor e \
+       0,1 $f.mbType  -padx 1 -pady 2 -anchor w -fill x \
+       1,0 $f.lHot    -padx 1 -pady 2 -anchor e \
+       1,1 $f.mbType2 -padx 1 -pady 2 -anchor w -fill x \
+       2,0 $f.lMag    -padx 1 -pady 2 -anchor e \
+       2,1 $f.mbType3 -padx 1 -pady 2 -anchor w -fill x \
+       3,0 $f.lReal   -padx 1 -pady 2 -anchor e \
+       3,1 $f.mbType4 -padx 1 -pady 2 -anchor w -fill x \
+       4,0 $f.lImag   -padx 1 -pady 2 -anchor e \
+       4,1 $f.mbType5 -padx 1 -pady 2 -anchor w -fill x \
+       5,0 $f.lPrefix -padx 1 -pady 2 -anchor e \
+       5,1 $f.ePrefix -padx 1 -pady 2 -anchor w -fill x
    
     #----------------------------
     # Compute->Bottom frame
