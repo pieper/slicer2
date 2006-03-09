@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageThermalMap.cxx,v $
-  Date:      $Date: 2006/03/08 15:15:12 $
-  Version:   $Revision: 1.1.2.1 $
+  Date:      $Date: 2006/03/09 14:55:28 $
+  Version:   $Revision: 1.1.2.2 $
 
 =========================================================================auto=*/
 #include "vtkImageThermalMap.h"
@@ -65,12 +65,12 @@ static void vtkImageThermalMapExecute(
     int inInc0, inInc1, inInc2;
     int outInc0, outInc1, outInc2;
     T **inPtrs0, **inPtrs1, **inPtrs2; 
-    float *outPtr0, *outPtr1, *outPtr2;
+    long *outPtr0, *outPtr1, *outPtr2;
 
     // The extent of the whole input image
     int inImageMin0, inImageMin1, inImageMin2;
     int inImageMax0, inImageMax1, inImageMax2;
-    float *outPtr = (float*) outData->GetScalarPointerForExtent(outExt);
+    long *outPtr = (long *) outData->GetScalarPointerForExtent(outExt);
 
     unsigned long count = 0;
     unsigned long target;
@@ -160,7 +160,7 @@ static void vtkImageThermalMapExecute(
                 }
 
                 t = t * -1000.0;
-                *outPtr0 = t;
+                *outPtr0 = (long)t;
 
                 for (i = 0; i < numberOfInputs; i++) {
                     inPtrs0[i] += inInc0;
@@ -267,9 +267,9 @@ void vtkImageThermalMap::ExecuteInformation(
         }
     }
 
-    // we like floats
+    // we like longs
     output->SetNumberOfScalarComponents(1);
-    output->SetScalarType(VTK_FLOAT);
+    output->SetScalarType(VTK_LONG);
 }
 
 
