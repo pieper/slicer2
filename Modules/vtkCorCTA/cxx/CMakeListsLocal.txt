@@ -14,6 +14,7 @@
 SET(LOCAL_MODULE_SRCS
 vtkThinning.cxx
 vtkSkeleton2Lines.cxx
+vtkImageFlux.cxx
 )
 
 
