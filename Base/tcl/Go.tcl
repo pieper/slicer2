@@ -6,8 +6,8 @@
 # 
 #  Program:   3D Slicer
 #  Module:    $RCSfile: Go.tcl,v $
-#  Date:      $Date: 2006/03/09 16:53:10 $
-#  Version:   $Revision: 1.116 $
+#  Date:      $Date: 2006/03/10 18:33:01 $
+#  Version:   $Revision: 1.117 $
 #===============================================================================
 # FILE:        Go.tcl
 # PROCEDURES:  
@@ -441,8 +441,13 @@ proc SplashKill {} {
     # release the grab
     grab release .splash
 
-    catch "destroy .splash" 
-    catch "image delete $splashim"
+    # because this is called from bgerror, don't cause any errors 
+    if {[info command .splash] != ""} {
+        destroy .splash
+    }
+    if { [lsearch [image names] $splashim] != -1 } {
+        image delete $splashim
+    }
 
 }
 
@@ -985,7 +990,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.116 2006/03/09 16:53:10 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.117 2006/03/10 18:33:01 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
