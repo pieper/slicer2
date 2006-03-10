@@ -6,8 +6,8 @@
 # 
 #  Program:   3D Slicer
 #  Module:    $RCSfile: Go.tcl,v $
-#  Date:      $Date: 2006/03/10 18:33:01 $
-#  Version:   $Revision: 1.117 $
+#  Date:      $Date: 2006/03/10 21:58:55 $
+#  Version:   $Revision: 1.118 $
 #===============================================================================
 # FILE:        Go.tcl
 # PROCEDURES:  
@@ -438,15 +438,16 @@ proc SplashKill {} {
     # clear out the event queue
     update
 
-    # release the grab
-    grab release .splash
-
     # because this is called from bgerror, don't cause any errors 
     if {[info command .splash] != ""} {
+        # release the grab
+        grab release .splash
         destroy .splash
     }
-    if { [lsearch [image names] $splashim] != -1 } {
-        image delete $splashim
+    if { [info exists splasim] } {
+        if { [lsearch [image names] $splashim] != -1 } {
+            image delete $splashim
+        }
     }
 
 }
@@ -505,13 +506,13 @@ if { $::SLICER(eval) == "" } {
 if { $::SLICER(tkcon) == "true" } { 
     set av $argv; set argv "" ;# keep tkcon from trying to interpret command line args
     source $prog/tkcon.tcl
-    ::tkcon::Init
+    ::tkcon::Init -root .tkcon
     tkcon attach main
     wm geometry .tkcon +10-90
     set argv $av
 }
 
-raise .splash
+SplashRaise
 update
 
 #
@@ -990,7 +991,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.117 2006/03/10 18:33:01 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.118 2006/03/10 21:58:55 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
