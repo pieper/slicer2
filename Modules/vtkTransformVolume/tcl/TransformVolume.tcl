@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: TransformVolume.tcl,v $
-#   Date:      $Date: 2006/01/06 17:58:07 $
-#   Version:   $Revision: 1.28 $
+#   Date:      $Date: 2006/03/10 22:43:52 $
+#   Version:   $Revision: 1.29 $
 # 
 #===============================================================================
 # FILE:        TransformVolume.tcl
@@ -157,7 +157,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.28 $} {$Date: 2006/01/06 17:58:07 $}]
+        {$Revision: 1.29 $} {$Date: 2006/03/10 22:43:52 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -602,7 +602,7 @@ proc TransformVolumeRun {} {
         
         puts " TransformVolume : transforming volume [Volume($v,node) GetName]"
         
-        $isv configure -volume [Volume($v,node) GetName]
+        $isv configure -volume [Volume($v,node) GetID]
         
         $isv configure -orientation $TransformVolume(OutputOrientation)
 
@@ -943,7 +943,7 @@ proc TransformVolumeUpdatePreview {} {
 
         $isv volmenu_update
 
-        $isv configure -volume [Volume($v,node) GetName]
+        $isv configure -volume [Volume($v,node) GetID]
 
         if {[info exists TransformVolume(OutputOrientation)]} {
             $isv configure -orientation $TransformVolume(OutputOrientation)
