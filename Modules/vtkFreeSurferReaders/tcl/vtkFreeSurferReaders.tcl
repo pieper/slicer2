@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: vtkFreeSurferReaders.tcl,v $
-#   Date:      $Date: 2006/03/06 19:41:02 $
-#   Version:   $Revision: 1.50 $
+#   Date:      $Date: 2006/03/10 20:44:47 $
+#   Version:   $Revision: 1.51 $
 # 
 #===============================================================================
 # FILE:        vtkFreeSurferReaders.tcl
@@ -203,7 +203,7 @@ proc vtkFreeSurferReadersInit {} {
 
     # if this is not set to 1, will query user if they wish to look for subjects in the SUBJECTS_DIR dir
     # if too many subjects (fails with 2k) are there, slicer may hang
-    set vtkFreeSurferReaders(QAAlwaysGlob) 0
+    set vtkFreeSurferReaders(QAAlwaysGlob) 1
 
     set vtkFreeSurferReaders(QAVolTypes) {aseg brain filled nu norm orig T1 wm}
     set vtkFreeSurferReaders(QADefaultVolTypes) {aseg norm}
@@ -328,7 +328,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.50 $} {$Date: 2006/03/06 19:41:02 $}]
+        {$Revision: 1.51 $} {$Date: 2006/03/10 20:44:47 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -2667,6 +2667,12 @@ proc vtkFreeSurferReadersMainFileCloseUpdate {} {
         puts "setting coloursLoaded to 0"
     }
     set ::vtkFreeSurferReaders(coloursLoaded) 0
+
+    # delete any scalar label arrays
+    foreach sla [info globals *vtkFreeSurferReadersLabels] {
+        global $sla
+        array unset $sla
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -3045,7 +3051,10 @@ proc vtkFreeSurferReadersReadAnnotation {a {_id -1} {annotFileName ""}} {
                 
         set fssar fssar_$a
         catch "$fssar Delete"
-        vtkFSSurfaceAnnotationReader $fssar                
+        vtkFSSurfaceAnnotationReader $fssar  
+        if {$::Module(verbose)} {
+            $fssar DebugOn
+        }
         $fssar SetFileName $annotFileName
         $fssar SetOutput $scalars
         $fssar SetColorTableOutput $lut
@@ -3085,7 +3094,13 @@ proc vtkFreeSurferReadersReadAnnotation {a {_id -1} {annotFileName ""}} {
         
         array unset _labels
         array set _labels [$fssar GetColorTableNames]
+        # save the array for future browsing
+        array unset ::${_id}vtkFreeSurferReadersLabels
+        array set ::${_id}vtkFreeSurferReadersLabels [array get _labels]
+
         set entries [lsort -integer [array names _labels]]
+        
+
         if {$::Module(verbose)} {
             puts "Label entries:\n$entries"
             puts "0th: [lindex $entries 0], last:  [lindex $entries end]"
@@ -5497,7 +5512,7 @@ proc vtkFreeSurferReadersSetQASubjects {} {
                 set retval [tk_messageBox -type yesnocancel -title "Subject directory check" -message "About to search in $dir for FreeSurfer subjects. Continue? \nPress Cancel to not ask again and always search.\n\nOperation may hang if greater than 1000 subject dirs are present, can reset dir in vtkFreeSurferReaders QA tab."]
             }
             if {$retval == "cancel"} {
-                set vtkFreeSurferReaders(QAAlwaysGlob) 1
+                set vtkFreeSurferReaders(QAAlwaysGlob) 0
             }
             if {$retval == "yes" || $retval == "cancel"} {
                 set files [glob -nocomplain $dir/*]
@@ -5934,7 +5949,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set timemsg [join [split $timemsg] "-"]
     # make up the message with single quotes between each one for easy parsing later, 
     # leave out ones on the end as will get empty strings there
-    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.50 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
+    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.51 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -6849,8 +6864,23 @@ proc vtkFreeSurferReadersPickScalar {widget x y} {
                     set val [[[$Model($mid,polyData) GetPointData] GetScalars] GetValue $pid]
                     # get the colour that it's mapped to
                     set col [[Model($mid,mapper,viewRen) GetLookupTable] GetColor $val]
-                    if {$::Module(verbose)} { puts "pid $pid val = $val, colour = $col" }
-                    vtkFreeSurferReadersShowScalarValue $mid $pid $val $col
+                    
+                    # get the name of the colour if it's a label map
+                    set colourName ""
+                    set scalarsName  [[[$Model($mid,polyData) GetPointData] GetScalars] GetName]
+                    if {$scalarsName == "labels"} {
+                        if {[array exists ::${mid}vtkFreeSurferReadersLabels]} {
+                            global ::${mid}vtkFreeSurferReadersLabels
+                            set colourName [subst $${mid}vtkFreeSurferReadersLabels($val)]
+                        } else {
+                            if {$::Module(verbose)} {
+                                puts "can't find array ${mid}vtkFreeSurferReadersLabels"
+                            }
+                        }
+                    }
+                    
+                    if {$::Module(verbose)} { puts "pid $pid val = $val, colour = $col, colourName = $colourName (scalars name = $scalarsName)" }
+                    vtkFreeSurferReadersShowScalarValue $mid $pid $val $col $colourName
                 } else {
                     if {$::Module(verbose)} { puts "pid $pid out of range of $numTuples for model $mid" }
                 }
@@ -6877,12 +6907,13 @@ proc vtkFreeSurferReadersPickScalar {widget x y} {
 # int pid point id (vertex number)
 # float val scalar value
 # string col the colour that the scalar value has mapped to
+# string colourName the name of the colour that the scalar has been mapped to
 # .END
 #-------------------------------------------------------------------------------
-proc vtkFreeSurferReadersShowScalarValue {mid pid val col} {
+proc vtkFreeSurferReadersShowScalarValue {mid pid val col {colourName ""}} {
     global vtkFreeSurferReaders Gui
 
-    if {$::Module(verbose)} {  puts "mid = $mid, pid = $pid, val = $val" }
+    if {$::Module(verbose)} {  puts "mid = $mid, pid = $pid, val = $val, colour name = $colourName" }
 
     set w .topScalars${mid}
     if {[info command $w] != ""} {
@@ -6890,6 +6921,7 @@ proc vtkFreeSurferReadersShowScalarValue {mid pid val col} {
         wm deiconify $w
         $w.f.lScalar configure -text "Scalar Value = $val"
         $w.f.lColour configure -text "Display Colour = $col"
+        $w.f.lColourName configure -text "$colourName"
         $w.f.lPoint configure -text "Point id = $pid"
     } else {
         # build it
@@ -6902,9 +6934,10 @@ proc vtkFreeSurferReadersShowScalarValue {mid pid val col} {
 
         eval {label $w.f.lScalar -text "Scalar Value = $val" -width 40} $Gui(WLA)
         eval {label $w.f.lColour -text "Display Colour = $col" -width 40} $Gui(WLA)
+        eval {label $w.f.lColourName -text "$colourName" -width 40} $Gui(WLA)
         eval {label $w.f.lModel -text "Model id = $mid" -width 40} $Gui(WLA)
         eval {label $w.f.lPoint -text "Point id = $pid" -width 40} $Gui(WLA)
-        pack $w.f.lScalar $w.f.lColour $w.f.lModel $w.f.lPoint -side top 
+        pack $w.f.lScalar $w.f.lColour $w.f.lColourName $w.f.lModel $w.f.lPoint -side top 
 
         DevAddButton $w.f.bClose "Close" "wm withdraw $w"
         pack $w.f.bClose -side top -pady $Gui(pad) -expand 1
