@@ -35,45 +35,59 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 =========================================================================auto=*/
-// .NAME vtkMRMLParser - Parse XML scene file
+// .NAME vtkMRMLSceneManager - a list of actors
 // .SECTION Description
+// vtkMRMLSceneManager represents and provides methods to manipulate a list of
+// MRML objects. The list is core and duplicate
+// entries are not prevented.
+//
+// .SECTION see also
+// vtkMRMLNode vtkCollection 
 
+#ifndef __vtkMRMLSceneManager_h
+#define __vtkMRMLSceneManager_h
 
-#ifndef __vtkMRMLParser_h
-#define __vtkMRMLParser_h
-
-#include <stack> 
-
-#include "vtkObjectFactory.h"
-#include "vtkXMLParser.h"
+#include <list>
+#include <map>
+#include <vector>
+#include <string>
 
 #include "vtkMRML.h"
 #include "vtkMRMLScene.h"
+#include "vtkMRMLNode.h"
 
-class VTK_EXPORT vtkMRMLParser : public vtkXMLParser
+class vtkTransform;
+
+class VTK_EXPORT vtkMRMLSceneManager : public vtkObject
 {
 public:
-  static vtkMRMLParser *New();
-  vtkTypeMacro(vtkMRMLParser,vtkCollection);
-  void PrintSelf(ostream& os, vtkIndent indent){}
+  static vtkMRMLSceneManager *New();
+  vtkTypeMacro(vtkMRMLSceneManager,vtkCollection);
+  void PrintSelf(ostream& os, vtkIndent indent);
   
-  vtkGetObjectMacro(MRMLScene, vtkMRMLScene);
-  vtkSetObjectMacro(MRMLScene, vtkMRMLScene);
-  
-protected:
-  vtkMRMLParser() {MRMLScene=NULL;};
-  ~vtkMRMLParser() {};
-  vtkMRMLParser(const vtkMRMLParser&);
-  void operator=(const vtkMRMLParser&);
-  
-  virtual void StartElement(const char* name, const char** atts);
-  virtual void EndElement (const char *name);
+  vtkMRMLScene* GetCurrentScene() {return this->CurrentScene;};
+  void SetCurrentScene(vtkMRMLScene* scene) {this->CurrentScene = scene;};
 
+  void CreateReferenceScene();
+
+  void Undo();
+
+protected:
+  vtkMRMLSceneManager();
+  ~vtkMRMLSceneManager();
+  vtkMRMLSceneManager(const vtkMRMLSceneManager&);
+  void operator=(const vtkMRMLSceneManager&);
+  
 private:
-  vtkMRMLScene* MRMLScene;
-//BTX
-  std::stack< vtkMRMLNode *> NodeStack;
-//ETX
+
+  vtkMRMLScene* CurrentScene;
+  int UndoStackSize;
+
+  //BTX
+  std::vector< vtkMRMLScene* >  UndoStack;
+  //ETX
+  
+
 };
 
 #endif

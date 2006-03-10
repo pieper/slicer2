@@ -55,9 +55,11 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkCollection.h"
 #include "vtkObjectFactory.h"
 
+#include "vtkMRML.h"
 #include "vtkMRMLNode.h"
 
 class vtkTransform;
+class vtkMRMLSceneManager;
 
 class VTK_EXPORT vtkMRMLScene : public vtkCollection
 {
@@ -139,13 +141,18 @@ public:
   
   int GetTransformBetweenSpaces( const char *space1, const char *space2, 
                                  vtkTransform *xform );
+
+  vtkMRMLSceneManager* GetSceneManager() {return this->SceneManager;};
+  void SetSceneManager(vtkMRMLSceneManager* sceneManager) {this->SceneManager = sceneManager;};
+
   
 protected:
   vtkMRMLScene();
-  ~vtkMRMLScene() {};
+  ~vtkMRMLScene();
   vtkMRMLScene(const vtkMRMLScene&);
   void operator=(const vtkMRMLScene&);
   
+  vtkMRMLSceneManager *SceneManager;
   char *URL;
   
   //BTX

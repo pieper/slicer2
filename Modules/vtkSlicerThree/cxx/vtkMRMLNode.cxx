@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLNode.cxx,v $
-Date:      $Date: 2006/03/03 22:26:39 $
-Version:   $Revision: 1.5 $
+Date:      $Date: 2006/03/10 21:23:44 $
+Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 #include "vtkMRMLNode.h"
@@ -47,6 +47,9 @@ vtkMRMLNode::vtkMRMLNode()
   this->SetName("");
 
   this->SceneRootDir = NULL;
+
+  this->ReferenceNode = NULL;
+  this->Scene = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -55,6 +58,8 @@ vtkMRMLNode::~vtkMRMLNode()
   this->SetDescription(NULL);
   this->SetName(NULL);
   this->SetID(NULL);
+
+  this->ReferenceNode->Delete();
 }
 
 //----------------------------------------------------------------------------
@@ -62,8 +67,10 @@ void vtkMRMLNode::Copy(vtkMRMLNode *node)
 {
   this->SetDescription(node->GetDescription());
   this->SetName(strcat(node->GetName(), "1"));
-  this->SetID(node->GetID());
-  //TODO create unique id
+
+  this->SetID( this->Scene->GetUniqueIDByClass( node->GetClassName() ) );
+
+  this->SetScene(node->GetScene());
 }
 
 //----------------------------------------------------------------------------

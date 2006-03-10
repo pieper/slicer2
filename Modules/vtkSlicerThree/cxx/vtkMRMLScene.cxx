@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLScene.cxx,v $
-Date:      $Date: 2006/03/03 22:26:40 $
-Version:   $Revision: 1.11 $
+Date:      $Date: 2006/03/10 21:23:44 $
+Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
 #include <sstream>
@@ -25,6 +25,18 @@ vtkMRMLScene::vtkMRMLScene()
   this->ClassNameList = NULL;
   this->RegisteredNodeClasses.clear();
   this->UniqueIDByClass.clear();
+  this->SceneManager = NULL;
+}
+
+//------------------------------------------------------------------------------
+vtkMRMLScene::~vtkMRMLScene() 
+{
+  if (this->URL) {
+    delete this->URL;
+  }
+  if (this->ClassNameList) {
+    delete this->ClassNameList;
+  }
 }
 
 //------------------------------------------------------------------------------
