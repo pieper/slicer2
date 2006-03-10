@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2006/01/26 18:21:32 $
-#   Version:   $Revision: 1.38.12.2 $
+#   Date:      $Date: 2006/03/10 22:25:55 $
+#   Version:   $Revision: 1.38.12.2.2.1 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -89,7 +89,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2 $} {$Date: 2006/01/26 18:21:32 $}]
+        {$Revision: 1.38.12.2.2.1 $} {$Date: 2006/03/10 22:25:55 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -152,7 +152,7 @@ proc LocatorInit {} {
     set Locator(File,fid)    ""
     # Flashpoint
     set Locator(Flashpoint,msPoll) 100
-    set Locator(Flashpoint,port)   10000
+    set Locator(Flashpoint,port)   20000
     set Locator(Flashpoint,host)   mrtws 
     # Images
     set Locator(Images,msPoll)   1000
@@ -162,6 +162,8 @@ proc LocatorInit {} {
     set Locator(Images,increment) 1
     # Csys
     set Locator(csysVisible) 0
+
+    set Locator(bellCount) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -1813,8 +1815,16 @@ proc LocatorLoopFlashpoint {} {
         # Report status to user
         if {$locStatus == 0} {
             set locText "OK"
+            set Locator(bellCount) 0
         } else {
             set locText "BLOCKED"
+            set rem [expr $Locator(bellCount) % 50]
+            if {$rem == 0} {
+                # Every 5 seconds ring the bell if locator is not available
+                bell
+            }
+
+            incr Locator(bellCount)
         }
         $Locator(lLocStatus) config -text $locText
 
