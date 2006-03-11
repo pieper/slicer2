@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLScene.cxx,v $
-Date:      $Date: 2006/03/10 21:23:44 $
-Version:   $Revision: 1.12 $
+Date:      $Date: 2006/03/11 19:51:14 $
+Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 #include <sstream>
@@ -25,7 +25,10 @@ vtkMRMLScene::vtkMRMLScene()
   this->ClassNameList = NULL;
   this->RegisteredNodeClasses.clear();
   this->UniqueIDByClass.clear();
-  this->SceneManager = NULL;
+
+  this->CurrentScene =  vtkCollection::New();
+  this->UndoStackSize = 100;
+  this->UndoFlag = true;
 }
 
 //------------------------------------------------------------------------------
@@ -37,6 +40,7 @@ vtkMRMLScene::~vtkMRMLScene()
   if (this->ClassNameList) {
     delete this->ClassNameList;
   }
+  this->CurrentScene->Delete();
 }
 
 //------------------------------------------------------------------------------
@@ -96,7 +100,10 @@ int vtkMRMLScene::Connect()
     vtkErrorMacro("Need URL specified");
     return 0;
   }
-  this->RemoveAllItems();
+  bool undoFlag = this->GetUndoFlag();
+  this->SetUndoOff();
+
+  this->CurrentScene->RemoveAllItems();
   vtkMRMLParser* parser = vtkMRMLParser::New();
   parser->SetMRMLScene(this);
   parser->SetFileName(URL);
@@ -104,12 +111,15 @@ int vtkMRMLScene::Connect()
   parser->Delete();
 
   // create node references
-  int nnodes = this->GetNumberOfItems();
+  int nnodes = this->CurrentScene->GetNumberOfItems();
   vtkMRMLNode *node = NULL;
   for (int n=0; n<nnodes; n++) {
-    node = (vtkMRMLNode *)this->GetItemAsObject(n);
+    node = (vtkMRMLNode *)this->CurrentScene->GetItemAsObject(n);
     node->UpdateScene(this);
   }
+
+  this->SetUndoFlag(undoFlag);
+
   return 1;
 }
 
@@ -120,7 +130,6 @@ int vtkMRMLScene::Commit(const char* url)
     url = URL;
   }
 
-  vtkCollectionElement *elem = this->Top;
   vtkMRMLNode *node;
   ofstream file;
   int indent=0, deltaIndent;
@@ -143,8 +152,8 @@ int vtkMRMLScene::Commit(const char* url)
   file << "<MRML>\n";
    
   // Write each node
-  while (elem != NULL) {
-    node = (vtkMRMLNode*)elem->Item;
+  for (int n=0; n < this->CurrentScene->GetNumberOfItems(); n++) {
+    node = (vtkMRMLNode*)this->CurrentScene->GetItemAsObject(n);
     
     deltaIndent = node->GetIndent();
     if ( deltaIndent < 0 ) {
@@ -155,9 +164,7 @@ int vtkMRMLScene::Commit(const char* url)
     
     if ( deltaIndent > 0 ) {
       indent += 2;
-    }
-    
-    elem = elem->Next;
+    }    
   }
   
   file << "</MRML>\n";
@@ -175,14 +182,13 @@ int vtkMRMLScene::Commit(const char* url)
 //------------------------------------------------------------------------------
 int vtkMRMLScene::GetNumberOfNodesByClass(const char *className)
 {
-  vtkCollectionElement *elem=this->Top;
   int num=0;
-  
-  while (elem != NULL) {
-    if (!strcmp(elem->Item->GetClassName(), className)) {
+  vtkMRMLNode *node;
+  for (int n=0; n < this->CurrentScene->GetNumberOfItems(); n++) {
+    node = (vtkMRMLNode*)this->CurrentScene->GetItemAsObject(n);
+    if (!strcmp(node->GetClassName(), className)) {
       num++;
     }
-    elem = elem->Next;
   }
   return num;
 }
@@ -191,10 +197,11 @@ int vtkMRMLScene::GetNumberOfNodesByClass(const char *className)
 std::list< std::string > vtkMRMLScene::GetNodeClassesList()
 {
   std::list< std::string > classes;
-  vtkCollectionElement *elem=this->Top;
-  while (elem != NULL) {
-    classes.push_back(elem->Item->GetClassName());
-    elem = elem->Next;
+
+  vtkMRMLNode *node;
+  for (int n=0; n < this->CurrentScene->GetNumberOfItems(); n++) {
+    node = (vtkMRMLNode*)this->CurrentScene->GetItemAsObject(n);
+    classes.push_back(node->GetClassName());
   }
   classes.unique();
   return classes;
@@ -224,93 +231,58 @@ const char* vtkMRMLScene::GetNodeClasses()
 //------------------------------------------------------------------------------
 vtkMRMLNode *vtkMRMLScene::GetNextNodeByClass(const char *className)
 {
-  vtkCollectionElement *elem=this->Current;
-  
-  if (elem != NULL) {
-    elem = elem->Next;
+  vtkMRMLNode *node = (vtkMRMLNode*)this->CurrentScene->GetNextItemAsObject();
+
+  while (node != NULL && strcmp(node->GetClassName(), className)) {
+    node = (vtkMRMLNode*)this->CurrentScene->GetNextItemAsObject();
   }
-  
-  while (elem != NULL && strcmp(elem->Item->GetClassName(), className)) {
-    elem = elem->Next;
-  }
-  
-  if (elem != NULL) {
-    this->Current = elem;
-    return (vtkMRMLNode*)(elem->Item);
-  }
-  else {
-    return NULL;
-  }
+  return node;
 }
 
-//------------------------------------------------------------------------------
-vtkMRMLNode* vtkMRMLScene::InitTraversalByClass(const char *className)
-{
-  vtkCollectionElement *elem=this->Top;
-  
-  while (elem != NULL && strcmp(elem->Item->GetClassName(), className)) {
-    elem = elem->Next;
-  }
-  
-  if (elem != NULL) {
-    this->Current = elem;
-    return (vtkMRMLNode*)(elem->Item);
-  }
-  else {
-    return NULL;
-  }
-}
 
 //------------------------------------------------------------------------------
 vtkMRMLNode* vtkMRMLScene::GetNthNode(int n)
 {
-  vtkCollectionElement *elem;
-  
-  if(n < 0 || n >= this->NumberOfItems) {
+
+  if(n < 0 || n >= this->CurrentScene->GetNumberOfItems()) {
     return NULL;
   }
-  
-  elem = this->Top;
-  for (int j = 0; j < n; j++, elem = elem->Next) {}
-  
-  return (vtkMRMLNode*)(elem->Item);
+  else {
+    return (vtkMRMLNode*)this->CurrentScene->GetItemAsObject(n);
+  }
 }
 
 //------------------------------------------------------------------------------
 vtkMRMLNode* vtkMRMLScene::GetNthNodeByClass(int n, const char *className)
 {
-  vtkCollectionElement *elem;
-  int j=0;
-  
-  elem = this->Top;
-  while (elem != NULL) {
-    if (strcmp(elem->Item->GetClassName(), className) == 0) {
-      if (j == n) {
-        return (vtkMRMLNode*)(elem->Item);
+  int num=0;
+  vtkMRMLNode *node;
+  for (int nn=0; nn < this->CurrentScene->GetNumberOfItems(); nn++) {
+    node = (vtkMRMLNode*)this->CurrentScene->GetItemAsObject(nn);
+    if (!strcmp(node->GetClassName(), className)) {
+      if (num == n) {
+        return node;
       }
-      j++;
+      num++;
     }
-    elem = elem->Next;
   }
-  
   return NULL;
 }
 
 //------------------------------------------------------------------------------
 vtkCollection* vtkMRMLScene::GetNodesByName(const char* name)
 {
+
   vtkCollection* nodes = vtkCollection::New();
-  
-  vtkCollectionElement *elem=this->Top;
-  vtkMRMLNode* node;
-  while (elem != NULL) {
-    node = (vtkMRMLNode*)elem->Item;
+
+  vtkMRMLNode *node;
+  for (int n=0; n < this->CurrentScene->GetNumberOfItems(); n++) {
+    node = (vtkMRMLNode*)this->CurrentScene->GetItemAsObject(n);
     if (!strcmp(node->GetName(), name)) {
       nodes->AddItem(node);
     }
-    
-    elem = elem->Next;
   }
+  
   return nodes;
 }
 
@@ -318,18 +290,17 @@ vtkCollection* vtkMRMLScene::GetNodesByName(const char* name)
 //------------------------------------------------------------------------------
 vtkCollection* vtkMRMLScene::GetNodesByID(const char* id)
 {
+
   vtkCollection* nodes = vtkCollection::New();
-  
-  vtkCollectionElement *elem=this->Top;
-  vtkMRMLNode* node;
-  while (elem != NULL) {
-    node = (vtkMRMLNode*)elem->Item;
+
+  vtkMRMLNode *node;
+  for (int n=0; n < this->CurrentScene->GetNumberOfItems(); n++) {
+    node = (vtkMRMLNode*)this->CurrentScene->GetItemAsObject(n);
     if (node->GetID() && !strcmp(node->GetID(), id)) {
       nodes->AddItem(node);
     }
-    
-    elem = elem->Next;
   }
+  
   return nodes;
 }
 
@@ -338,17 +309,14 @@ vtkCollection* vtkMRMLScene::GetNodesByClassByID(const char* className, const ch
 {
   vtkCollection* nodes = vtkCollection::New();
   
-  vtkCollectionElement *elem=this->Top;
-  vtkMRMLNode* node;
-  
-  while (elem != NULL) {
-    node = (vtkMRMLNode*)elem->Item;
-    if (node->GetID() && !strcmp(node->GetID(), id) && strcmp(elem->Item->GetClassName(), className) == 0) {
+  vtkMRMLNode *node;
+  for (int n=0; n < this->CurrentScene->GetNumberOfItems(); n++) {
+    node = (vtkMRMLNode*)this->CurrentScene->GetItemAsObject(n);
+    if (node->GetID() && !strcmp(node->GetID(), id) && strcmp(node->GetClassName(), className) == 0) {
       nodes->AddItem(node);
     }
-
-    elem = elem->Next;
   }
+
   return nodes;
 }
 
@@ -357,17 +325,14 @@ vtkCollection* vtkMRMLScene::GetNodesByClassByName(const char* className, const 
 {
   vtkCollection* nodes = vtkCollection::New();
   
-  vtkCollectionElement *elem=this->Top;
-  vtkMRMLNode* node;
-  
-  while (elem != NULL) {
-    node = (vtkMRMLNode*)elem->Item;
-    if (!strcmp(node->GetName(), name) && strcmp(elem->Item->GetClassName(), className) == 0) {
+  vtkMRMLNode *node;
+  for (int n=0; n < this->CurrentScene->GetNumberOfItems(); n++) {
+    node = (vtkMRMLNode*)this->CurrentScene->GetItemAsObject(n);
+    if (!strcmp(node->GetName(), name) && strcmp(node->GetClassName(), className) == 0) {
       nodes->AddItem(node);
     }
-
-    elem = elem->Next;
   }
+
   return nodes;
 }
 
@@ -393,79 +358,19 @@ int vtkMRMLScene::GetTransformBetweenSpaces( const char *space1,
 //------------------------------------------------------------------------------
 void vtkMRMLScene::InsertAfterNode(vtkMRMLNode *item, vtkMRMLNode *n)
 {
-  int i;
-  vtkCollectionElement *elem, *newElem;
-  
-  // Empty list
-  if (!this->Top) {
-    return;
-  }
-  
-  newElem = new vtkCollectionElement;
-  n->Register(this);
-  newElem->Item = n;
-  
-  elem = this->Top;
-  for (i = 0; i < this->NumberOfItems; i++) {
-    if (elem->Item == item) {
-      newElem->Next = elem->Next;
-      elem->Next = newElem;
-      
-      if (this->Bottom == elem) {
-        this->Bottom = newElem;
-      }
-      this->NumberOfItems++;
-      return;
-    }
-    else {
-      elem = elem->Next;
-    }
-  }
+  vtkErrorMacro("NOT IMPLEMENTEED YET");
 }
 
 //------------------------------------------------------------------------------
 void vtkMRMLScene::InsertBeforeNode(vtkMRMLNode *item, vtkMRMLNode *n)
 {
-  int i;
-  vtkCollectionElement *elem, *newElem, *prev;
-  
-  // Empty list
-  if (!this->Top) {
-    return;
-  }
-  
-  newElem = new vtkCollectionElement;
-  n->Register(this);
-  newElem->Item = n;
-  
-  
-  elem = this->Top;
-  
-  // if insert before 1st elem
-  if (elem->Item == item) {
-    newElem->Next = this->Top;
-    this->Top = newElem;
-    this->NumberOfItems++;
-    return;
-  }
-
-  for (i = 1; i < this->NumberOfItems; i++) {
-    prev = elem;
-    elem = elem->Next;
-
-    if (elem->Item == item) {
-      newElem->Next = prev->Next;
-      prev->Next = newElem;
-      this->NumberOfItems++;
-      return;
-    }
-  }
+  vtkErrorMacro("NOT IMPLEMENTEED YET");
 }
 
 //------------------------------------------------------------------------------
 void vtkMRMLScene::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkCollection::PrintSelf(os,indent);
+  this->CurrentScene->vtkCollection::PrintSelf(os,indent);
   std::list<std::string> classes = this->GetNodeClassesList();
 
   std::list< std::string >::const_iterator iter;
@@ -511,3 +416,44 @@ const char* vtkMRMLScene::GetUniqueIDByClass(const char* className)
   UniqueIDs.push_back(name);
   return UniqueIDs[UniqueIDs.size()-1].c_str();
 }
+
+//------------------------------------------------------------------------------
+void vtkMRMLScene::CreateReferenceScene()
+{
+  if (this->CurrentScene == NULL) {
+    return;
+  }
+
+  vtkCollection* newScene = vtkCollection::New();
+
+  vtkCollection* currentScene = this->CurrentScene;
+  
+  int nnodes = currentScene->GetNumberOfItems();
+
+  for (int n=0; n<nnodes; n++) {
+    vtkMRMLNode *node  = dynamic_cast < vtkMRMLNode *>(currentScene->GetItemAsObject(n));
+    if (node) {
+      vtkMRMLNode *newNode = node->CreateNodeInstance();
+      newNode->SetScene(this);
+      newNode->SetReferenceNode(node);
+      newScene->AddItem(newNode);
+    }
+  }
+
+  //TODO check max stack size
+  this->UndoStack.push_back(currentScene);
+  this->CurrentScene = newScene;
+  
+}
+
+//------------------------------------------------------------------------------
+void vtkMRMLScene::Undo()
+{
+  this->CurrentScene->RemoveAllItems();
+  this->CurrentScene->Delete();
+  this->CurrentScene = NULL;
+
+  this->CurrentScene = dynamic_cast < vtkCollection *>( this->UndoStack.back() );
+  UndoStack.pop_back();
+}
+

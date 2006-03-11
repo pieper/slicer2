@@ -70,6 +70,11 @@ public:
 
   void CreateReferenceScene();
 
+  void SetUndoOn() {UndoFlag=true;};
+  void SetUndoOff() {UndoFlag=false;};
+  int GetUndoFlag() {return UndoFlag;};
+  void SetUndoFlag(int flag) {UndoFlag = flag;};
+
   void Undo();
 
 protected:
@@ -82,6 +87,8 @@ private:
 
   vtkMRMLScene* CurrentScene;
   int UndoStackSize;
+
+  bool UndoFlag;
 
   //BTX
   std::vector< vtkMRMLScene* >  UndoStack;

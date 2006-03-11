@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLVolumeArchetypeStorageNode.h,v $
-  Date:      $Date: 2006/03/10 21:23:45 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/03/11 19:51:14 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLVolumeArchetypeStorageNode - MRML node for representing a volume (image stack).
@@ -25,6 +25,7 @@
 #define __vtkMRMLVolumeArchetypeStorageNode_h
 
 #include "vtkMRML.h"
+#include "vtkMRMLScene.h"
 #include "vtkMRMLStorageNode.h"
 
 
@@ -72,8 +73,8 @@ class VTK_EXPORT vtkMRMLVolumeArchetypeStorageNode : public vtkMRMLStorageNode
 
   // Description:
   // A file name or one name in a series
-  vtkSetStringMacro(FileArcheType);
-  vtkGetStringMacro(FileArcheType);
+  MRMLNodeSetStringMacro(FileArcheType);
+  MRMLNodeGetStringMacro(FileArcheType, vtkMRMLVolumeArchetypeStorageNode);
 
 protected:
   vtkMRMLVolumeArchetypeStorageNode();

@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLSceneManager.cxx,v $
-Date:      $Date: 2006/03/10 21:23:45 $
-Version:   $Revision: 1.1 $
+Date:      $Date: 2006/03/11 19:51:14 $
+Version:   $Revision: 1.2 $
 
 =========================================================================auto=*/
 #include "vtkMRMLSceneManager.h"
@@ -17,7 +17,9 @@ Version:   $Revision: 1.1 $
 vtkMRMLSceneManager::vtkMRMLSceneManager() 
 {
   this->CurrentScene =  vtkMRMLScene::New();
+  this->CurrentScene->SetSceneManager(this);
   this->UndoStackSize = 100;
+  this->UndoFlag = true;
 }
 
 //------------------------------------------------------------------------------

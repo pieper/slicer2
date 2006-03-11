@@ -57,8 +57,8 @@ public:
   vtkTypeMacro(vtkMRMLParser,vtkCollection);
   void PrintSelf(ostream& os, vtkIndent indent){}
   
-  vtkGetObjectMacro(MRMLScene, vtkMRMLScene);
-  vtkSetObjectMacro(MRMLScene, vtkMRMLScene);
+  vtkMRMLScene* GetMRMLScene() {return this->MRMLScene;};
+  void SetMRMLScene(vtkMRMLScene* scene) {this->MRMLScene = scene;};
   
 protected:
   vtkMRMLParser() {MRMLScene=NULL;};

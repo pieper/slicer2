@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLNode.cxx,v $
-Date:      $Date: 2006/03/10 21:23:44 $
-Version:   $Revision: 1.6 $
+Date:      $Date: 2006/03/11 19:51:14 $
+Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 #include "vtkMRMLNode.h"
@@ -59,7 +59,9 @@ vtkMRMLNode::~vtkMRMLNode()
   this->SetName(NULL);
   this->SetID(NULL);
 
-  this->ReferenceNode->Delete();
+  if (this->ReferenceNode) {
+    this->ReferenceNode->Delete();
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -115,4 +117,13 @@ void vtkMRMLNode::ReadXMLAttributes(const char** atts)
     }
   } 
   return;
+}
+
+//----------------------------------------------------------------------------
+void vtkMRMLNode::DeleteReferenceNode()
+{
+  if (this->ReferenceNode != NULL) {
+    this->ReferenceNode->DeleteReferenceNode();
+  }
+  ReferenceNode=NULL;
 }
