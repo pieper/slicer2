@@ -7,8 +7,8 @@
 
   Program:   MRML
   Module:    $RCSfile: vtkMRML.h,v $
-  Date:      $Date: 2006/03/11 19:51:14 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/03/12 16:34:34 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 
@@ -35,63 +35,3 @@
 #define VTK_MRML_EXPORT
 #endif
 
-#include "vtkSetGet.h"
-
-#define MRMLNodeSetMacro(name,type) \
-virtual void Set##name (type _arg) \
-{ \
-  if (GetScene()->GetUndoFlag() == true) { \
-    this->GetScene()->CreateReferenceScene(); \
-    this->Copy(this->GetReferenceNode()); \
-    this->DeleteReferenceNode(); \
-  } \
-  if (this->name != _arg) { \
-    this->name = _arg; \
-    this->Modified(); \
-  } \
-} 
-
-#define MRMLNodeGetMacro(name,type,className) \
-virtual type Get##name () { \
-  if (this->ReferenceNode != NULL) { \
-    className *node = dynamic_cast < className *> (this->ReferenceNode); \
-    return node->Get##name (); \
-  } \
-  else { \
-    return this->name; \
-  } \
-} 
-
-#define MRMLNodeSetStringMacro(name) \
-virtual void Set##name (const char* _arg) \
-{ \
-  if (GetScene()->GetUndoFlag() == true) { \
-    this->GetScene()->CreateReferenceScene(); \
-    this->Copy(this->GetReferenceNode()); \
-    this->DeleteReferenceNode(); \
-  } \
-  if ( this->name == NULL && _arg == NULL) { return;} \
-  if ( this->name && _arg && (!strcmp(this->name,_arg))) { return;} \
-  if (this->name) { delete [] this->name; } \
-  if (_arg) \
-    { \
-    this->name = new char[strlen(_arg)+1]; \
-    strcpy(this->name,_arg); \
-    } \
-   else \
-    { \
-    this->name = NULL; \
-    } \
-  this->Modified(); \
-  } 
-
-#define MRMLNodeGetStringMacro(name, className) \
-virtual char* Get##name () { \
-  if (this->ReferenceNode != NULL) { \
-    className *node = dynamic_cast < className *> (this->ReferenceNode); \
-    return node->Get##name (); \
-  } \
-  else { \
-    return this->name; \
-  } \
-} 

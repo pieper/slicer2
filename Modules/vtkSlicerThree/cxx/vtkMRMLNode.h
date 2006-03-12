@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLNode.h,v $
-  Date:      $Date: 2006/03/11 19:51:14 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/03/12 16:34:34 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLNode - Abstract Superclass for all specific types of MRML nodes.
@@ -23,6 +23,68 @@
 #include "vtkObject.h"
 
 #include "vtkMRML.h"
+
+
+#define MRMLUndoableSetMacro(name,type,className) \
+void className::UndoableSet##name (type _arg) \
+{ \
+  className *node = this; \
+  if (GetScene()->GetUndoFlag() == true) { \
+    this->GetScene()->CreateReferenceScene(); \
+    node = dynamic_cast < className *> (this->GetFirstReferencingNode()); \
+    className *refNode = dynamic_cast < className *> (this->GetLastReferencedNode()); \
+    if (refNode != NULL && node != NULL) { \
+      node->Copy(refNode); \
+    } \
+    node->ReferenceNode=NULL; \
+  } \
+  if (node->name != _arg) { \
+    node->name = _arg; \
+    node->Modified(); \
+  } \
+} 
+
+#define MRMLGetMacro(name,type,className) \
+type className::Get##name () { \
+    className *node = dynamic_cast < className *> (this->GetFirstReferencingNode()); \
+    node = dynamic_cast < className *> (node->GetLastReferencedNode()); \
+    return node->##name; \
+} 
+
+#define MRMLUndoableSetStringMacro(name,className) \
+void className::UndoableSet##name (const char* _arg) \
+{ \
+  className *node = this; \
+  if (GetScene()->GetUndoFlag() == true) { \
+    this->GetScene()->CreateReferenceScene(); \
+    node = dynamic_cast < className *> (this->GetFirstReferencingNode()); \
+    className *refNode = dynamic_cast < className *> (this->GetLastReferencedNode()); \
+    if (refNode != NULL && node != NULL) { \
+      node->Copy(refNode); \
+    } \
+    node->ReferenceNode=NULL; \
+  } \
+  if ( node->name == NULL && _arg == NULL) { return;} \
+  if ( node->name && _arg && (!strcmp(node->name,_arg))) { return;} \
+  if (node->name) { delete [] node->name; } \
+  if (_arg) \
+    { \
+    node->name = new char[strlen(_arg)+1]; \
+    strcpy(node->name,_arg); \
+    } \
+   else \
+    { \
+    node->name = NULL; \
+    } \
+  node->Modified(); \
+  } 
+
+#define MRMLGetStringMacro(name, className) \
+char* className::Get##name () { \
+    className *node = dynamic_cast < className *> (this->GetFirstReferencingNode()); \
+    node = dynamic_cast < className *> (node->GetLastReferencedNode()); \
+    return node->##name; \
+} 
 
 class vtkMRMLScene;
 
@@ -106,7 +168,14 @@ public:
   vtkGetObjectMacro(ReferenceNode, vtkMRMLNode);
   vtkSetObjectMacro(ReferenceNode, vtkMRMLNode);
 
-  void DeleteReferenceNode();
+  vtkGetObjectMacro(ReferencingNode, vtkMRMLNode);
+  vtkSetObjectMacro(ReferencingNode, vtkMRMLNode);
+
+
+  vtkMRMLNode* GetLastReferencedNode();
+  vtkMRMLNode* GetFirstReferencingNode();
+
+  void DeleteReference();
   
   vtkMRMLScene* GetScene() {return this->Scene;};
   void SetScene(vtkMRMLScene* scene) {this->Scene = scene;};
@@ -129,6 +198,7 @@ protected:
   int Indent;
 
   vtkMRMLNode *ReferenceNode;
+  vtkMRMLNode *ReferencingNode;
   vtkMRMLScene *Scene;
 };
 

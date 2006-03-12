@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLNode.cxx,v $
-Date:      $Date: 2006/03/11 19:51:14 $
-Version:   $Revision: 1.7 $
+Date:      $Date: 2006/03/12 16:34:34 $
+Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 #include "vtkMRMLNode.h"
@@ -49,6 +49,7 @@ vtkMRMLNode::vtkMRMLNode()
   this->SceneRootDir = NULL;
 
   this->ReferenceNode = NULL;
+  this->ReferencingNode = NULL;
   this->Scene = NULL;
 }
 
@@ -62,15 +63,17 @@ vtkMRMLNode::~vtkMRMLNode()
   if (this->ReferenceNode) {
     this->ReferenceNode->Delete();
   }
+  if (this->ReferencingNode) {
+    this->ReferencingNode->Delete();
+  }
 }
 
 //----------------------------------------------------------------------------
 void vtkMRMLNode::Copy(vtkMRMLNode *node)
 {
   this->SetDescription(node->GetDescription());
-  this->SetName(strcat(node->GetName(), "1"));
-
-  this->SetID( this->Scene->GetUniqueIDByClass( node->GetClassName() ) );
+  this->SetName(node->GetName());
+  this->SetID( node->GetID() );
 
   this->SetScene(node->GetScene());
 }
@@ -120,10 +123,33 @@ void vtkMRMLNode::ReadXMLAttributes(const char** atts)
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLNode::DeleteReferenceNode()
+
+vtkMRMLNode* vtkMRMLNode::GetLastReferencedNode()
 {
   if (this->ReferenceNode != NULL) {
-    this->ReferenceNode->DeleteReferenceNode();
+    return this->ReferenceNode->GetLastReferencedNode();
+  }
+  else {
+    return this;
+  }
+}
+//----------------------------------------------------------------------------
+
+vtkMRMLNode* vtkMRMLNode::GetFirstReferencingNode()
+{
+  if (this->ReferencingNode != NULL) {
+    return this->ReferencingNode->GetFirstReferencingNode();
+  }
+  else {
+    return this;
+  }
+}
+
+//----------------------------------------------------------------------------
+void vtkMRMLNode::DeleteReference()
+{
+  if (this->ReferenceNode != NULL) {
+    this->ReferenceNode->DeleteReference();
   }
   ReferenceNode=NULL;
 }

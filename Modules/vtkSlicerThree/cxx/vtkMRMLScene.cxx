@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLScene.cxx,v $
-Date:      $Date: 2006/03/11 19:51:14 $
-Version:   $Revision: 1.13 $
+Date:      $Date: 2006/03/12 16:34:34 $
+Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 #include <sstream>
@@ -436,6 +436,7 @@ void vtkMRMLScene::CreateReferenceScene()
       vtkMRMLNode *newNode = node->CreateNodeInstance();
       newNode->SetScene(this);
       newNode->SetReferenceNode(node);
+      node->SetReferencingNode(newNode);
       newScene->AddItem(newNode);
     }
   }
@@ -449,11 +450,27 @@ void vtkMRMLScene::CreateReferenceScene()
 //------------------------------------------------------------------------------
 void vtkMRMLScene::Undo()
 {
+  if (this->UndoStack.size() == 0) {
+    return;
+  }
+
+  vtkCollection *currentScene = dynamic_cast < vtkCollection *>( this->UndoStack.back() );
+
+  int nnodes = currentScene->GetNumberOfItems();
+  for (int n=0; n<nnodes; n++) {
+    vtkMRMLNode *node  = dynamic_cast < vtkMRMLNode *>(currentScene->GetItemAsObject(n));
+    if (node) {
+      if (node->GetReferencingNode() != NULL) {
+        node->GetReferencingNode()->Delete();
+        node->SetReferencingNode(NULL);
+      }
+    }
+  }
+
   this->CurrentScene->RemoveAllItems();
   this->CurrentScene->Delete();
-  this->CurrentScene = NULL;
+  this->CurrentScene = currentScene;
 
-  this->CurrentScene = dynamic_cast < vtkCollection *>( this->UndoStack.back() );
   UndoStack.pop_back();
 }
 

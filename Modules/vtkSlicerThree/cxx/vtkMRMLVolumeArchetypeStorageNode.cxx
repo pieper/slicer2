@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLVolumeArchetypeStorageNode.cxx,v $
-Date:      $Date: 2006/03/03 22:26:41 $
-Version:   $Revision: 1.1 $
+Date:      $Date: 2006/03/12 16:34:34 $
+Version:   $Revision: 1.2 $
 
 =========================================================================auto=*/
 
@@ -25,10 +25,44 @@ Version:   $Revision: 1.1 $
 #include "vtkITKArchetypeImageSeriesReader.h"
 #include "vtkITKArchetypeImageSeriesScalarReader.h"
 
-// Initialize static member that controls resampling -- 
-// old comment: "This offset will be changed to 0.5 from 0.0 per 2/8/2002 Slicer 
-// development meeting, to move ijk coordinates to voxel centers."
+/*
+void vtkMRMLVolumeArchetypeStorageNode::SetFileArcheTypeUndo (const char* _arg) 
+{ 
+  vtkMRMLVolumeArchetypeStorageNode *node = this;
+  if (GetScene()->GetUndoFlag() == true) { 
+    this->GetScene()->CreateReferenceScene(); 
+    node = dynamic_cast < vtkMRMLVolumeArchetypeStorageNode *> (this->GetFirstReferencingNode());
+    vtkMRMLVolumeArchetypeStorageNode *refNode = dynamic_cast < vtkMRMLVolumeArchetypeStorageNode *> (this->GetLastReferencedNode()); 
+    if (refNode != NULL && node != NULL) { 
+      node->Copy(refNode); 
+    } 
+    node->ReferenceNode=NULL;
+  } 
+  if ( node->FileArcheType == NULL && _arg == NULL) { return;} 
+  if ( node->FileArcheType && _arg && (!strcmp(node->FileArcheType,_arg))) { return;} 
+  if (node->FileArcheType) { delete [] node->FileArcheType; } 
+  if (_arg) 
+    { 
+    node->FileArcheType = new char[strlen(_arg)+1]; 
+    strcpy(node->FileArcheType,_arg); 
+    } 
+   else 
+    { 
+    node->FileArcheType = NULL; 
+    } 
+  node->Modified(); 
+  } 
 
+char* vtkMRMLVolumeArchetypeStorageNode::GetFileArcheType () 
+{ 
+    vtkMRMLVolumeArchetypeStorageNode *node = dynamic_cast < vtkMRMLVolumeArchetypeStorageNode *> (this->GetFirstReferencingNode()); 
+    node = dynamic_cast < vtkMRMLVolumeArchetypeStorageNode *> (node->GetLastReferencedNode()); 
+    return node->FileArcheType; 
+} 
+*/
+
+MRMLUndoableSetStringMacro(FileArcheType, vtkMRMLVolumeArchetypeStorageNode);
+MRMLGetStringMacro(FileArcheType, vtkMRMLVolumeArchetypeStorageNode);
 
 //------------------------------------------------------------------------------
 vtkMRMLVolumeArchetypeStorageNode* vtkMRMLVolumeArchetypeStorageNode::New()
