@@ -95,10 +95,7 @@ public:
 
   // Description:
   // Add a path to the list.
-  void AddNode(vtkMRMLNode *n) {
-    //TODO convert URL to Root directory
-    n->SetSceneRootDir("");
-    this->CurrentScene->vtkCollection::AddItem((vtkObject *)n);};
+  void AddNode(vtkMRMLNode *n);
   
   // Description:
   // Remove a path from the list.

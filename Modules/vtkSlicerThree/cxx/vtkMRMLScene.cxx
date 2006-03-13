@@ -7,11 +7,13 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLScene.cxx,v $
-Date:      $Date: 2006/03/12 16:34:34 $
-Version:   $Revision: 1.14 $
+Date:      $Date: 2006/03/13 16:36:45 $
+Version:   $Revision: 1.15 $
 
 =========================================================================auto=*/
 #include <sstream>
+
+//#include <vtksys/SystemTools.hxx> 
 
 #include "vtkMRMLScene.h"
 #include "vtkMRMLParser.h"
@@ -177,6 +179,17 @@ int vtkMRMLScene::Commit(const char* url)
   this->SetErrorCode(vtkErrorCode::GetErrorCodeFromString("NoError"));
 #endif
   return 1;
+}
+
+void vtkMRMLScene::AddNode(vtkMRMLNode *n)
+{
+  //TODO convert URL to Root directory
+  n->SetSceneRootDir("");
+
+  //vtksys_stl::string root = vtksys::SystemTools::GetParentDirectory(this->GetURL());   
+  //n->SetSceneRootDir(root.c_str());
+
+  this->CurrentScene->vtkCollection::AddItem((vtkObject *)n);
 }
 
 //------------------------------------------------------------------------------

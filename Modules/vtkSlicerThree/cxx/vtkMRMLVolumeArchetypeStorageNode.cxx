@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLVolumeArchetypeStorageNode.cxx,v $
-Date:      $Date: 2006/03/12 16:34:34 $
-Version:   $Revision: 1.2 $
+Date:      $Date: 2006/03/13 16:36:45 $
+Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 
@@ -24,42 +24,8 @@ Version:   $Revision: 1.2 $
 #include "vtkImageData.h"
 #include "vtkITKArchetypeImageSeriesReader.h"
 #include "vtkITKArchetypeImageSeriesScalarReader.h"
+#include "vtkITKImageWriter.h"
 
-/*
-void vtkMRMLVolumeArchetypeStorageNode::SetFileArcheTypeUndo (const char* _arg) 
-{ 
-  vtkMRMLVolumeArchetypeStorageNode *node = this;
-  if (GetScene()->GetUndoFlag() == true) { 
-    this->GetScene()->CreateReferenceScene(); 
-    node = dynamic_cast < vtkMRMLVolumeArchetypeStorageNode *> (this->GetFirstReferencingNode());
-    vtkMRMLVolumeArchetypeStorageNode *refNode = dynamic_cast < vtkMRMLVolumeArchetypeStorageNode *> (this->GetLastReferencedNode()); 
-    if (refNode != NULL && node != NULL) { 
-      node->Copy(refNode); 
-    } 
-    node->ReferenceNode=NULL;
-  } 
-  if ( node->FileArcheType == NULL && _arg == NULL) { return;} 
-  if ( node->FileArcheType && _arg && (!strcmp(node->FileArcheType,_arg))) { return;} 
-  if (node->FileArcheType) { delete [] node->FileArcheType; } 
-  if (_arg) 
-    { 
-    node->FileArcheType = new char[strlen(_arg)+1]; 
-    strcpy(node->FileArcheType,_arg); 
-    } 
-   else 
-    { 
-    node->FileArcheType = NULL; 
-    } 
-  node->Modified(); 
-  } 
-
-char* vtkMRMLVolumeArchetypeStorageNode::GetFileArcheType () 
-{ 
-    vtkMRMLVolumeArchetypeStorageNode *node = dynamic_cast < vtkMRMLVolumeArchetypeStorageNode *> (this->GetFirstReferencingNode()); 
-    node = dynamic_cast < vtkMRMLVolumeArchetypeStorageNode *> (node->GetLastReferencedNode()); 
-    return node->FileArcheType; 
-} 
-*/
 
 MRMLUndoableSetStringMacro(FileArcheType, vtkMRMLVolumeArchetypeStorageNode);
 MRMLGetStringMacro(FileArcheType, vtkMRMLVolumeArchetypeStorageNode);
@@ -188,7 +154,11 @@ void vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
   vtkITKArchetypeImageSeriesScalarReader* reader = vtkITKArchetypeImageSeriesScalarReader::New();
 
   reader->SetArchetype(fullName.c_str());
+  reader->SetOutputScalarTypeToNative();
+  reader->SetDesiredCoordinateOrientationToNative();
+  reader->SetUseNativeOriginOff();
   reader->Update();
+
   volNode->SetImageData (reader->GetOutput());
 
   // set volume attributes
@@ -208,9 +178,46 @@ void vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
     }
   }
   volNode->SetIjkToRasMatrix(mat);
+  //TODO update scene to send Modified event
 }
 
 void vtkMRMLVolumeArchetypeStorageNode::WriteData(vtkMRMLNode *refNode)
 {
-  vtkErrorMacro("NOT IMPLEMENTED YET");
+  if (!refNode->IsA("vtkMRMLVolumeNode") ) {
+    vtkErrorMacro("Reference node is not a vtkMRMLVolumeNode");
+    return;
+  }
+  
+  vtkMRMLVolumeNode *volNode = dynamic_cast <vtkMRMLVolumeNode *> (refNode);
+  
+  if (volNode->GetImageData() == NULL) {
+    vtkErrorMacro("cannot write ImageData, it's NULL");
+  }
+  
+  std::string fullName;
+  if (this->SceneRootDir != NULL) {
+    fullName = std::string(this->SceneRootDir) + std::string(this->GetFileArcheType());
+  }
+  else {
+    fullName = std::string(this->GetFileArcheType());
+  }
+  
+  if (fullName == std::string("")) {
+    vtkErrorMacro("vtkMRMLVolumeNode: File name not specified");
+  }
+  vtkITKImageWriter *writer = vtkITKImageWriter::New();
+  writer->SetFileName(fullName.c_str());
+  
+  writer->SetInput( volNode->GetImageData() );
+
+  // set volume attributes
+  vtkMatrix4x4* mat = vtkMatrix4x4::New();
+  volNode->GetIjkToRasMatrix(mat);
+  mat->Invert();
+
+  writer->SetRasToIJKMatrix(mat);
+
+  writer->Write();
+
+  writer->Delete();
 }
