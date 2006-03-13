@@ -216,6 +216,7 @@ puts "uploadFlag = $uploadFlag"
     #
     file mkdir $archivedir/Doc
     file copy -force Doc/copyright $archivedir/Doc
+    file copy -force Doc/library_copyrights $archivedir/Doc
 
     #
     # grab the tcl libraries and binaries
