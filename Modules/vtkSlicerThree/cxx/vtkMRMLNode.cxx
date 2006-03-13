@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLNode.cxx,v $
-Date:      $Date: 2006/03/12 16:34:34 $
-Version:   $Revision: 1.8 $
+Date:      $Date: 2006/03/13 21:20:00 $
+Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 #include "vtkMRMLNode.h"
@@ -47,9 +47,6 @@ vtkMRMLNode::vtkMRMLNode()
   this->SetName("");
 
   this->SceneRootDir = NULL;
-
-  this->ReferenceNode = NULL;
-  this->ReferencingNode = NULL;
   this->Scene = NULL;
 }
 
@@ -59,13 +56,6 @@ vtkMRMLNode::~vtkMRMLNode()
   this->SetDescription(NULL);
   this->SetName(NULL);
   this->SetID(NULL);
-
-  if (this->ReferenceNode) {
-    this->ReferenceNode->Delete();
-  }
-  if (this->ReferencingNode) {
-    this->ReferencingNode->Delete();
-  }
 }
 
 //----------------------------------------------------------------------------
@@ -120,36 +110,4 @@ void vtkMRMLNode::ReadXMLAttributes(const char** atts)
     }
   } 
   return;
-}
-
-//----------------------------------------------------------------------------
-
-vtkMRMLNode* vtkMRMLNode::GetLastReferencedNode()
-{
-  if (this->ReferenceNode != NULL) {
-    return this->ReferenceNode->GetLastReferencedNode();
-  }
-  else {
-    return this;
-  }
-}
-//----------------------------------------------------------------------------
-
-vtkMRMLNode* vtkMRMLNode::GetFirstReferencingNode()
-{
-  if (this->ReferencingNode != NULL) {
-    return this->ReferencingNode->GetFirstReferencingNode();
-  }
-  else {
-    return this;
-  }
-}
-
-//----------------------------------------------------------------------------
-void vtkMRMLNode::DeleteReference()
-{
-  if (this->ReferenceNode != NULL) {
-    this->ReferenceNode->DeleteReference();
-  }
-  ReferenceNode=NULL;
 }

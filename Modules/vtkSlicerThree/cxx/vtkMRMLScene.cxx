@@ -7,11 +7,12 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLScene.cxx,v $
-Date:      $Date: 2006/03/13 16:36:45 $
-Version:   $Revision: 1.15 $
+Date:      $Date: 2006/03/13 21:20:00 $
+Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 #include <sstream>
+#include <hash_map>
 
 //#include <vtksys/SystemTools.hxx> 
 
@@ -431,7 +432,7 @@ const char* vtkMRMLScene::GetUniqueIDByClass(const char* className)
 }
 
 //------------------------------------------------------------------------------
-void vtkMRMLScene::CreateReferenceScene()
+void vtkMRMLScene::PushIntoUndoStack()
 {
   if (this->CurrentScene == NULL) {
     return;
@@ -446,18 +447,25 @@ void vtkMRMLScene::CreateReferenceScene()
   for (int n=0; n<nnodes; n++) {
     vtkMRMLNode *node  = dynamic_cast < vtkMRMLNode *>(currentScene->GetItemAsObject(n));
     if (node) {
-      vtkMRMLNode *newNode = node->CreateNodeInstance();
-      newNode->SetScene(this);
-      newNode->SetReferenceNode(node);
-      node->SetReferencingNode(newNode);
-      newScene->AddItem(newNode);
+      newScene->AddItem(node);
     }
   }
 
   //TODO check max stack size
-  this->UndoStack.push_back(currentScene);
-  this->CurrentScene = newScene;
-  
+  this->UndoStack.push_back(newScene);
+}
+
+//------------------------------------------------------------------------------
+void vtkMRMLScene::ReplaceNodeInUndoStack(vtkMRMLNode *replaceNode, vtkMRMLNode *withNode)
+{
+  vtkCollection* undoScene = dynamic_cast < vtkCollection *>( this->UndoStack.back() );;
+  int nnodes = undoScene->GetNumberOfItems();
+  for (int n=0; n<nnodes; n++) {
+    vtkMRMLNode *node  = dynamic_cast < vtkMRMLNode *>(undoScene->GetItemAsObject(n));
+    if (node == replaceNode) {
+      undoScene->ReplaceItem (n, withNode);
+    }
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -467,23 +475,64 @@ void vtkMRMLScene::Undo()
     return;
   }
 
-  vtkCollection *currentScene = dynamic_cast < vtkCollection *>( this->UndoStack.back() );
+  int nnodes;
+  int n;
 
-  int nnodes = currentScene->GetNumberOfItems();
-  for (int n=0; n<nnodes; n++) {
+  vtkCollection* currentScene = this->CurrentScene;
+  std::hash_map<std::string, vtkMRMLNode*> currentMap;
+  nnodes = currentScene->GetNumberOfItems();
+  for (n=0; n<nnodes; n++) {
     vtkMRMLNode *node  = dynamic_cast < vtkMRMLNode *>(currentScene->GetItemAsObject(n));
     if (node) {
-      if (node->GetReferencingNode() != NULL) {
-        node->GetReferencingNode()->Delete();
-        node->SetReferencingNode(NULL);
-      }
+      currentMap[node->GetID()] = node;
     }
   }
 
-  this->CurrentScene->RemoveAllItems();
-  this->CurrentScene->Delete();
-  this->CurrentScene = currentScene;
+  vtkCollection* undoScene = dynamic_cast < vtkCollection *>( this->UndoStack.back() );;
+  std::hash_map<std::string, vtkMRMLNode*> undoMap;
+  nnodes = undoScene->GetNumberOfItems();
+  for (n=0; n<nnodes; n++) {
+    vtkMRMLNode *node  = dynamic_cast < vtkMRMLNode *>(undoScene->GetItemAsObject(n));
+    if (node) {
+      undoMap[node->GetID()] = node;
+    }
+  }
 
+  std::hash_map<std::string, vtkMRMLNode*>::iterator iter;
+  std::hash_map<std::string, vtkMRMLNode*>::iterator curIter;
+
+  // copy back changes and add deleted nodes to the current scene
+  std::vector<vtkMRMLNode*> addNodes;
+
+  for(iter=undoMap.begin(); iter != undoMap.end(); iter++) {
+    curIter = currentMap.find(iter->first);
+    if ( curIter == currentMap.end() ) {
+      // the node was deleted, add Node back to the curreent scene
+      addNodes.push_back(iter->second);
+    }
+    else if (iter->second != curIter->second) {
+      // nodes differ, copy from undo to current scene
+      curIter->second->Copy(iter->second);
+    }
+  }
+  
+  // remove new nodes created before Undo
+  std::vector<vtkMRMLNode*> removeNodes;
+  for(curIter=currentMap.begin(); curIter != currentMap.end(); curIter++) {
+    iter = undoMap.find(curIter->first);
+    if ( iter == undoMap.end() ) {
+      removeNodes.push_back(curIter->second);
+    }
+  }
+
+  for (n=0; n<addNodes.size(); n++) {
+    this->AddNode(addNodes[n]);
+  }
+  for (n=0; n<removeNodes.size(); n++) {
+    this->RemoveNode(removeNodes[n]);
+  }
+  undoScene->RemoveAllItems();
+  undoScene->Delete();
   UndoStack.pop_back();
 }
 

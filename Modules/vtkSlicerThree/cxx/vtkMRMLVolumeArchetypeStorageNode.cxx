@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLVolumeArchetypeStorageNode.cxx,v $
-Date:      $Date: 2006/03/13 16:36:45 $
-Version:   $Revision: 1.3 $
+Date:      $Date: 2006/03/13 21:20:01 $
+Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 
@@ -27,8 +27,21 @@ Version:   $Revision: 1.3 $
 #include "vtkITKImageWriter.h"
 
 
-MRMLUndoableSetStringMacro(FileArcheType, vtkMRMLVolumeArchetypeStorageNode);
-MRMLGetStringMacro(FileArcheType, vtkMRMLVolumeArchetypeStorageNode);
+//MRMLUndoableSetStringMacro(FileArcheType, vtkMRMLVolumeArchetypeStorageNode);
+
+void vtkMRMLVolumeArchetypeStorageNode::UndoableSetFileArcheType (const char* _arg)
+{
+  if (this->GetScene()->GetUndoFlag() == true) {
+    this->GetScene()->PushIntoUndoStack();
+    vtkMRMLVolumeArchetypeStorageNode *node = dynamic_cast < vtkMRMLVolumeArchetypeStorageNode *> (this->CreateNodeInstance());
+    if (node != NULL) {
+      node->Copy(this);
+      this->GetScene()->ReplaceNodeInUndoStack(this, node);
+    }
+  }
+  SetFileArcheType(_arg);
+} 
+
 
 //------------------------------------------------------------------------------
 vtkMRMLVolumeArchetypeStorageNode* vtkMRMLVolumeArchetypeStorageNode::New()

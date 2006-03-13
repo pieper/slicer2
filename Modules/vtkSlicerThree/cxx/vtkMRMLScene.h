@@ -67,15 +67,6 @@ public:
   vtkTypeMacro(vtkMRMLScene,vtkCollection);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-  void CreateReferenceScene();
-
-  void SetUndoOn() {UndoFlag=true;};
-  void SetUndoOff() {UndoFlag=false;};
-  int GetUndoFlag() {return UndoFlag;};
-  void SetUndoFlag(int flag) {UndoFlag = flag;};
-
-  void Undo();
-
   // Filename should be flie://path/file.xml
   vtkSetStringMacro(URL);
   vtkGetStringMacro(URL);
@@ -147,6 +138,17 @@ public:
   int GetTransformBetweenSpaces( const char *space1, const char *space2, 
                                  vtkTransform *xform );
 
+  // Undo API
+  void SetUndoOn() {UndoFlag=true;};
+  void SetUndoOff() {UndoFlag=false;};
+  int  GetUndoFlag() {return UndoFlag;};
+  void SetUndoFlag(int flag) {UndoFlag = flag;};
+
+  void Undo();
+
+  void PushIntoUndoStack();
+
+  void ReplaceNodeInUndoStack(vtkMRMLNode *node, vtkMRMLNode *withNode);
   
 protected:
   vtkMRMLScene();
@@ -159,7 +161,7 @@ protected:
   int UndoStackSize;
   bool UndoFlag;
   //BTX
-  std::vector< vtkCollection* >  UndoStack;
+  std::list< vtkCollection* >  UndoStack;
   //ETX
   
   char *URL;
@@ -187,6 +189,7 @@ private:
   unsigned long ErrorCode;
 
   char* ClassNameList;
+
 };
 
 #endif
