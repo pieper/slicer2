@@ -128,6 +128,7 @@ terms specified in this license.
 
 
 
+/* Start of teem license */
 /*=========================================================================
 
                     Simple Library Usage License
@@ -697,3 +698,4 @@ necessary.  Here is a sample; alter the names:
 That's all there is to it!
 
 =========================================================================*/
+/* end of teem license */
