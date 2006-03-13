@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLNode.cxx,v $
-Date:      $Date: 2006/03/13 21:20:00 $
-Version:   $Revision: 1.9 $
+Date:      $Date: 2006/03/13 22:15:10 $
+Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 #include "vtkMRMLNode.h"
@@ -111,3 +111,4 @@ void vtkMRMLNode::ReadXMLAttributes(const char** atts)
   } 
   return;
 }
+

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLNode.h,v $
-  Date:      $Date: 2006/03/13 21:20:00 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2006/03/13 22:15:10 $
+  Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLNode - Abstract Superclass for all specific types of MRML nodes.
@@ -23,36 +23,6 @@
 #include "vtkObject.h"
 
 #include "vtkMRML.h"
-
-
-#define MRMLUndoableSetMacro(name,type,className) \
-void className::UndoableSet##name (type _arg) \
-{ \
-  if (this->GetScene()->GetUndoFlag() == true) { \
-    this->GetScene()->PushIntoUndoStack(); \
-    className *node = dynamic_cast < className *> (this->CreateNodeInstance()); \
-    if (node != NULL) { \
-      node->Copy(this); \
-      this->GetScene()->ReplaceNodeInUndoStack(this, node); \
-    } \
-  } \
-  Set##name(_arg); \
-} 
-
-
-#define MRMLUndoableSetStringMacro(name,className) \
-void className::UndoableSet##name (const char* _arg) \
-{ \
-   if (this->GetScene()->GetUndoFlag() == true) { \
-    this->GetScene()->PushIntoUndoStack(); \
-    className *node = dynamic_cast < className *> (this->CreateNodeInstance()); \
-    if (node != NULL) { \
-      node->Copy(this); \
-      this->GetScene()->ReplaceNodeInUndoStack(this, node); \
-    } \
-  } \
-  Set##name(_arg); \
-} 
 
 class vtkMRMLScene;
 
@@ -134,7 +104,6 @@ public:
   
   vtkMRMLScene* GetScene() {return this->Scene;};
   void SetScene(vtkMRMLScene* scene) {this->Scene = scene;};
-
 
 protected:
   

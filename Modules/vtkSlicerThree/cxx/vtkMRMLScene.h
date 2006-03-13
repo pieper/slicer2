@@ -146,18 +146,24 @@ public:
 
   void Undo();
 
-  void PushIntoUndoStack();
+  void SaveStateForUndo(vtkMRMLNode *node);
+  void SaveStateForUndo(vtkCollection *nodes);
+  //BTX
+  void SaveStateForUndo(std::vector<vtkMRMLNode *> nodes);
+  //ETX
 
-  void ReplaceNodeInUndoStack(vtkMRMLNode *node, vtkMRMLNode *withNode);
-  
 protected:
   vtkMRMLScene();
   ~vtkMRMLScene();
   vtkMRMLScene(const vtkMRMLScene&);
   void operator=(const vtkMRMLScene&);
   
-  vtkCollection* CurrentScene;
 
+  void PushIntoUndoStack();
+
+  void ReplaceNodeInUndoStack(vtkMRMLNode *node, vtkMRMLNode *withNode);
+  
+  vtkCollection* CurrentScene;
   int UndoStackSize;
   bool UndoFlag;
   //BTX

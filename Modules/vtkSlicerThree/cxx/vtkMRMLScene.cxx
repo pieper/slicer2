@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLScene.cxx,v $
-Date:      $Date: 2006/03/13 21:20:00 $
-Version:   $Revision: 1.16 $
+Date:      $Date: 2006/03/13 22:15:10 $
+Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 #include <sstream>
@@ -430,6 +430,53 @@ const char* vtkMRMLScene::GetUniqueIDByClass(const char* className)
   UniqueIDs.push_back(name);
   return UniqueIDs[UniqueIDs.size()-1].c_str();
 }
+
+//------------------------------------------------------------------------------
+void vtkMRMLScene::SaveStateForUndo (vtkMRMLNode *node)
+{
+  this->SetUndoOn();
+  this->PushIntoUndoStack();
+  vtkMRMLNode *snode = node->CreateNodeInstance();
+  if (snode != NULL) {
+    snode->Copy(node);
+    this->ReplaceNodeInUndoStack(node, snode);
+  }
+} 
+
+//------------------------------------------------------------------------------
+void vtkMRMLScene::SaveStateForUndo (std::vector<vtkMRMLNode *> nodes)
+{
+  this->SetUndoOn();
+  this->PushIntoUndoStack();
+  for (int n=0; n<nodes.size(); n++) {
+    vtkMRMLNode *node = nodes[n];
+    vtkMRMLNode *snode = node->CreateNodeInstance();
+    if (snode != NULL) {
+      snode->Copy(node);
+      this->ReplaceNodeInUndoStack(node, snode);
+    }
+  }
+} 
+
+//------------------------------------------------------------------------------
+void vtkMRMLScene::SaveStateForUndo (vtkCollection* nodes)
+{
+  this->SetUndoOn();
+  this->PushIntoUndoStack();
+
+  int nnodes = nodes->GetNumberOfItems();
+  
+  for (int n=0; n<nnodes; n++) {
+    vtkMRMLNode *node  = dynamic_cast < vtkMRMLNode *>(nodes->GetItemAsObject(n));
+    if (node) {
+      vtkMRMLNode *snode = node->CreateNodeInstance();
+      if (snode != NULL) {
+        snode->Copy(node);
+        this->ReplaceNodeInUndoStack(node, snode);
+      }
+    }
+  }
+} 
 
 //------------------------------------------------------------------------------
 void vtkMRMLScene::PushIntoUndoStack()

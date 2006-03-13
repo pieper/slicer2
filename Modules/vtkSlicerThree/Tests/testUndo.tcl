@@ -15,13 +15,16 @@ puts "[$n Print]"
 
 puts "GetFileArcheType = [$n GetFileArcheType]"
 
-$n UndoableSetFileArcheType ff1
+sc SaveStateForUndo $n
+$n SetFileArcheType ff1
 puts "GetFileArcheType = [$n GetFileArcheType]"
 
-$n UndoableSetFileArcheType ff2
+sc SaveStateForUndo $n
+$n SetFileArcheType ff2
 puts "GetFileArcheType = [$n GetFileArcheType]"
 
-$n UndoableSetFileArcheType ff3
+sc SaveStateForUndo $n
+$n SetFileArcheType ff3
 puts "GetFileArcheType = [$n GetFileArcheType]"
 
 puts Undo
