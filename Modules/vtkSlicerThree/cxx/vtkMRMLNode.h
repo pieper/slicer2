@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLNode.h,v $
-  Date:      $Date: 2006/03/12 16:34:34 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/03/13 19:20:42 $
+  Version:   $Revision: 1.15 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLNode - Abstract Superclass for all specific types of MRML nodes.
@@ -83,7 +83,7 @@ void className::UndoableSet##name (const char* _arg) \
 char* className::Get##name () { \
     className *node = dynamic_cast < className *> (this->GetFirstReferencingNode()); \
     node = dynamic_cast < className *> (node->GetLastReferencedNode()); \
-    return node->##name; \
+    return node->name; \
 } 
 
 class vtkMRMLScene;
