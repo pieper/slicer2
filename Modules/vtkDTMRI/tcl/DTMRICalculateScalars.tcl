@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRICalculateScalars.tcl,v $
-#   Date:      $Date: 2006/03/06 21:07:30 $
-#   Version:   $Revision: 1.23 $
+#   Date:      $Date: 2006/03/14 17:04:38 $
+#   Version:   $Revision: 1.24 $
 # 
 #===============================================================================
 # FILE:        DTMRICalculateScalars.tcl
@@ -36,7 +36,7 @@ proc DTMRICalculateScalarsInit {} {
     #------------------------------------
     set m "CalculateScalars"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                         {$Revision: 1.23 $} {$Date: 2006/03/06 21:07:30 $}]
+                         {$Revision: 1.24 $} {$Date: 2006/03/14 17:04:38 $}]
 
 
     #------------------------------------
@@ -326,19 +326,8 @@ proc DTMRIDoMath {{operation ""}} {
 
     #Set up proper scale factor
     #Map result between 1 - 1000
-    set rangexx [[[$input GetPointData] GetTensors] GetRange 0]
-    set rangeyy [[[$input GetPointData] GetTensors] GetRange 4]
-    set rangezz [[[$input GetPointData] GetTensors] GetRange 8]
-    
-    # handle case where value is too small for a float (e.g. 2.122e-314)
-    scan [lindex $rangexx 1] "%g" frangexx
-    scan [lindex $rangeyy 1] "%g" frangeyy
-    scan [lindex $rangezz 1] "%g" frangezz
-
-    set maxTrace [expr $frangexx + $frangeyy + $frangezz]
     
     puts "Running oper: $operation"
-    puts "Max Trace: $maxTrace"
     
     # removed this hard-coded reset of the user's selected scale value after reviewing with LMI folks (sp - for slicer 2.6
     if { 0 } { 
