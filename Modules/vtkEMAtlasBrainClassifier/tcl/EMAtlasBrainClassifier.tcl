@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
-#   Date:      $Date: 2005/12/20 22:55:19 $
-#   Version:   $Revision: 1.26.2.3 $
+#   Date:      $Date: 2006/03/14 23:10:49 $
+#   Version:   $Revision: 1.26.2.4 $
 # 
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
@@ -107,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
    set Module($m,depend) ""
 
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.26.2.3 $} {$Date: 2005/12/20 22:55:19 $}]
+       {$Revision: 1.26.2.4 $} {$Date: 2006/03/14 23:10:49 $}]
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
     set EMAtlasBrainClassifier(Volume,T2W)  $Volume(idNone)
@@ -1146,7 +1146,7 @@ proc EMAtlasBrainClassifier_RegistrationInitialize {RegisterAtlasDirList} {
         set UploadNeeded 1
             break
             }
-        }
+        }  
         if {$UploadNeeded && ([EMAtlasBrainClassifierDownloadAtlas] == 0)} { return -1}
     }
 
@@ -1314,69 +1314,95 @@ proc EMAtlasBrainClassifier_LoadAtlas {RegisterAtlasDirList RegisterAtlasNameLis
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierDownloadAtlas { } {
     global EMAtlasBrainClassifier tcl_platform
+
+    if {$tcl_platform(os) == "Linux" || 
+        $tcl_platform(os) == "SunOS" ||
+        $tcl_platform(os) == "Darwin"} { 
+        set urlAddress "http://na-mic.org/Wiki/images/8/8d/VtkEMAtlasBrainClassifier_AtlasDefault.tar.gz" 
+        set outputFile "[file dirname $EMAtlasBrainClassifier(AtlasDir)]/atlas.tar.gz"
+    } else {
+        set urlAddress "http://na-mic.org/Wiki/images/5/57/VtkEMAtlasBrainClassifier_AtlasDefault.zip"
+        set outputFile "[file dirname $EMAtlasBrainClassifier(AtlasDir)]/atlas.zip"
+    }
+
+    # temporary message to prompt the user to download and extract the file themselves.
+    set text "The module did not detect an atlas at the default location. An atlas can be"
+    set text "$text\ndownloaded from:\n$urlAddress\nand saved to:\n$outputFile"
+    set text "$text\nThen extract the atlas directory as\n${EMAtlasBrainClassifier(AtlasDir)}"
+    set text "$text\nand restart the segmentation."
+    if {[info command .topAtlas] != ""} {
+        wm deiconify .topAtlas
+        return 0
+    }
+    # otherwise build a frame with the info in it
+    global Gui
+    toplevel .topAtlas
+    wm title .topAtlas "Atlas not found"
+    frame .topAtlas.f1 -bg $::Gui(activeWorkspace)
+    pack .topAtlas.f1 -side top -padx $::Gui(pad) -pady $::Gui(pad) -fill x
+    set f .topAtlas.f1
+    eval {label $f.l -text $text} $::Gui(WLA)
+    DevAddButton $f.bClose "Close" "wm withdraw .topAtlas"
+    pack $f.l $f.bClose -side top -pady $::Gui(pad) -expand 1
+    return 0
+
     set text "The module did not detect an atlas at the default location. An atlas can be"
     set text "$text\ndownloaded by pressing the \"\OK\" button. This might take a while! "
     set text "$text\nIf you want to continue and you have PROBLEMS downloading the data please do the following:"
-    set text "$text\nDowload the data from http://na-mic.org/Wiki/index.php/Slicer:Data_EMAtlas"
+    set text "$text\nDownload the data from http://na-mic.org/Wiki/index.php/Slicer:Data_EMAtlas"
     set text "$text\nto [file dirname $EMAtlasBrainClassifier(AtlasDir)]"
     set text "$text\nand uncompress the file.\n"      
     set text "$text\nBy pressing the \"OK\" button I agree with the copyright restriction explained in further "
     set text "${text}detail at http://na-mic.org/Wiki/index.php/Slicer:Data_EMAtlas."
 
      if {$EMAtlasBrainClassifier(BatchMode)} {
-      puts "$text"
-    } else {
-    if {[DevOKCancel "$text" ] != "ok"} { return 0}
-    }
+         puts "$text"
+     } else {
+         if {[DevOKCancel "$text" ] != "ok"} { return 0}
+     }
 
     DownloadInit
-
-    if {$tcl_platform(os) == "Linux"} { 
-       set urlAddress "http://na-mic.org/Wiki/images/8/8d/VtkEMAtlasBrainClassifier_AtlasDefault.tar.gz" 
-       set outputFile "[file dirname $EMAtlasBrainClassifier(AtlasDir)]/atlas.tar.gz"
-    } else {
-      set urlAddress "http://na-mic.org/Wiki/images/5/57/VtkEMAtlasBrainClassifier_AtlasDefault.zip"
-      set outputFile "[file dirname $EMAtlasBrainClassifier(AtlasDir)]/atlas.zip"
-    }
 
     catch {exec rm -f $outputFile}
     catch {exec rm -rf $EMAtlasBrainClassifier(AtlasDir)}
 
     if {[DownloadFile "$urlAddress" "$outputFile"] == 0} {
-      return 0
+        return 0
     }
 
     puts "Start extracting $outputFile ...." 
-    if {$tcl_platform(os) == "Linux"} { 
-    catch {exec rm -f [file rootname $outputFile]}
-    puts "exec gunzip $outputFile"
-    set OKFlag [catch {exec gunzip -f $outputFile} errormsg]
-    if {$OKFlag == 0} {
-        catch {exec rm -f atlas}
-        puts "exec tar xf [file rootname $outputFile]]"
-        set OKFlag [catch {exec tar xf [file rootname $outputFile]} errormsg]
+    if {$tcl_platform(os) == "Linux" || 
+        $tcl_platform(os) == "SunOS" ||
+        $tcl_platform(os) == "Darwin"} { 
+        catch {exec rm -f [file rootname $outputFile]}
+        puts "exec gunzip $outputFile"
+        set OKFlag [catch {exec gunzip -f $outputFile} errormsg]
         if {$OKFlag == 0} {
-        puts "exec mv atlas ${EMAtlasBrainClassifier(AtlasDir)}/"
-        set OKFlag [catch {exec mv atlas ${EMAtlasBrainClassifier(AtlasDir)}/}  errormsg]
+            catch {exec rm -f atlas}
+            puts "exec tar xf [file rootname $outputFile]]"
+            set OKFlag [catch {exec tar xf [file rootname $outputFile]} errormsg]
+            if {$OKFlag == 0} {
+                puts "exec mv atlas ${EMAtlasBrainClassifier(AtlasDir)}/"
+                set OKFlag [catch {exec mv atlas ${EMAtlasBrainClassifier(AtlasDir)}/}  errormsg]
+            }
         }
-    }
-    set RMFile [file rootname $outputFile]
+        set RMFile [file rootname $outputFile]
     } else {
-    set OKFlag [catch {exec unzip -o -qq $outputFile}  errormsg] 
-    set RMFile $outputFile
+        set OKFlag [catch {exec unzip -o -qq $outputFile}  errormsg] 
+        set RMFile $outputFile
     } 
     puts "... finished extracting"
     if {$OKFlag == 1} {
-      DevErrorWindow "Could not uncompress $outputFile because of the following error message:\n$errormsg\nPlease manually uncompress the file."
-      return 0
+        DevErrorWindow "Could not uncompress $outputFile because of the following error message:\n$errormsg\nPlease manually uncompress the file."
+        return 0
     } 
-
+    
     if {$EMAtlasBrainClassifier(BatchMode)} {
-    puts "Atlas installation completed!" 
+        puts "Atlas installation completed!" 
     } else {
-    DevInfoWindow "Atlas installation completed!" 
+        DevInfoWindow "Atlas installation completed!" 
     }
-
+    
     catch {exec rm -f $RMFile} 
     return 1
 }
