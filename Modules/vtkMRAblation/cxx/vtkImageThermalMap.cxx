@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageThermalMap.cxx,v $
-  Date:      $Date: 2006/03/15 18:10:45 $
-  Version:   $Revision: 1.1.2.4 $
+  Date:      $Date: 2006/03/15 20:53:29 $
+  Version:   $Revision: 1.1.2.5 $
 
 =========================================================================auto=*/
 #include "vtkImageThermalMap.h"
@@ -59,62 +59,33 @@ static void vtkImageThermalMapExecute(
         int outExt[6], 
         int id)
 {
-    // For looping though output (and input) pixels.
-    int outMin0, outMax0, outMin1, outMax1, outMin2, outMax2;
-    int outIdx0, outIdx1, outIdx2;
-    int inInc0, inInc1, inInc2;
-    int outInc0, outInc1, outInc2;
-    T **inPtrs0, **inPtrs1, **inPtrs2; 
-    long *outPtr0, *outPtr1, *outPtr2;
-
-    // The extent of the whole input image
-    int inImageMin0, inImageMin1, inImageMin2;
-    int inImageMax0, inImageMax1, inImageMax2;
-    long *outPtr = (long *) outData->GetScalarPointerForExtent(outExt);
-
+    int idxR, idxY, idxZ;
+    int maxY, maxZ;
+    int inIncX, inIncY, inIncZ;
+    int outIncX, outIncY, outIncZ;
+    int rowLength;
     unsigned long count = 0;
     unsigned long target;
-    int numberOfInputs;
 
-    // Get information to march through data
+    // Get increments to march through data 
     // all indatas are the same type, so use the same increments
-    inDatas[0]->GetIncrements(inInc0, inInc1, inInc2); 
+    inDatas[0]->GetContinuousIncrements(outExt, inIncX, inIncY, inIncZ);
+    outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
 
-    // march through all inputs using array of input pointers.
-    numberOfInputs = self->GetNumberOfInputs();
-    inPtrs0 = new T* [numberOfInputs];
-    inPtrs1 = new T* [numberOfInputs];
-    inPtrs2 = new T* [numberOfInputs];
-
-    self->GetInput()->GetWholeExtent(inImageMin0, inImageMax0, inImageMin1,
-            inImageMax1, inImageMin2, inImageMax2);
-
-    outData->GetIncrements(outInc0, outInc1, outInc2); 
-    outMin0 = outExt[0];   outMax0 = outExt[1];
-    outMin1 = outExt[2];   outMax1 = outExt[3];
-    outMin2 = outExt[4];   outMax2 = outExt[5];
-
-    // in and out should be marching through corresponding pixels.
-    target = (unsigned long)((outMax2-outMin2+1)*
-            (outMax1-outMin1+1)/50.0);
+    // find the region to loop over
+    rowLength = (outExt[1] - outExt[0]+1)*inDatas[0]->GetNumberOfScalarComponents();
+    maxY = outExt[3] - outExt[2]; 
+    maxZ = outExt[5] - outExt[4];
+    target = (unsigned long)((maxZ+1)*(maxY+1)/50.0);
     target++;
 
+    long *outPtr = (long *) outData->GetScalarPointerForExtent(outExt);
+    int numberOfInputs = self->GetNumberOfInputs(); 
 
-    // loop through pixels of output (and all inputs)
-    int i = 0;
-    outPtr2 = outPtr;
-    for (i = 0; i < numberOfInputs; i++) {
-        inPtrs2[i] = inPtrs[i];
-    }
-
-    for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
+    // Loop through input pixels
+    for (idxZ = 0; idxZ <= maxZ; idxZ++)
     {
-        outPtr1 = outPtr2;
-        for (i = 0; i < numberOfInputs; i++) {
-            inPtrs1[i] = inPtrs2[i];
-        }
-        for (outIdx1 = outMin1; 
-                !self->AbortExecute && outIdx1 <= outMax1; outIdx1++)
+        for (idxY = 0; !self->AbortExecute && idxY <= maxY; idxY++)
         {
             if (!id) 
             {
@@ -124,21 +95,16 @@ static void vtkImageThermalMapExecute(
                 }
                 count++;
             }
-
-            outPtr0 = outPtr1;
-            for (i = 0; i < numberOfInputs; i++) {
-                inPtrs0[i] = inPtrs1[i];
-            }
-            for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+            for (idxR = 0; idxR < rowLength; idxR++)
             {
-                // compute thermal volume
+                // Pixel operation: compute thermal volume
                 float t  = 0.0;
                 float pi = 3.1415926535897931;
 
-                float r1 = (*inPtrs0[0]);
-                float i1 = (*inPtrs0[1]);
-                float r2 = (*inPtrs0[2]);
-                float i2 = (*inPtrs0[3]);
+                float r1 = (*inPtrs[0]);
+                float i1 = (*inPtrs[1]);
+                float r2 = (*inPtrs[2]);
+                float i2 = (*inPtrs[3]);
                 float xx = r1 * r2 + i1 * i2;
                 float yy = i1 * r2 - r1 * i2;
 
@@ -163,24 +129,26 @@ static void vtkImageThermalMapExecute(
                 }
 
                 // t = t * -1000.0;
-                *outPtr0 = (long)t;
+                *outPtr = (long)t;
+                outPtr++;
 
-                for (i = 0; i < numberOfInputs; i++) {
-                    inPtrs0[i] += inInc0;
+                for (int i = 0; i < numberOfInputs; i++)
+                {
+                    inPtrs[i]++;
                 }
-                outPtr0 += outInc0;
-            }//for0
-            for (i = 0; i < numberOfInputs; i++) {
-                inPtrs1[i] += inInc1;
             }
-            outPtr1 += outInc1;
-        }//for1
-        for (i = 0; i < numberOfInputs; i++) {
-            inPtrs2[i] += inInc2;
+            outPtr += outIncY;
+            for (int i = 0; i < numberOfInputs; i++)
+            {
+                inPtrs[i] += inIncY;
+            }
         }
-        outPtr2 += outInc2;
-    }//for2
-
+        outPtr += outIncZ;
+        for (int i = 0; i < numberOfInputs; i++)
+        {
+            inPtrs[i] += inIncZ;
+        }
+    }
 }
 
 
