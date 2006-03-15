@@ -1,5 +1,6 @@
 package require vtk
 package require vtkinteraction
+package require iSlicer
 
 #
 # rely on the fact that a class loaded from the shared
