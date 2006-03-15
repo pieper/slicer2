@@ -84,7 +84,7 @@ set ::TCL_LIB_DIR $::SLICER_LIB/tcl-build/lib
 set ::TCL_INCLUDE_DIR $::SLICER_LIB/tcl-build/include
 set ::CMAKE_PATH $::SLICER_LIB/CMake-build
 #set ::CMAKE_PATH "c:/Program Files/CMake 2.2"
-set ::SOV_BINARY_DIR " "
+set ::SOV_BINARY_DIR ""
 set ::XVNC_EXECUTABLE " "
 
 
