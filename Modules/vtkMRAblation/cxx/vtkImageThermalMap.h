@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageThermalMap.h,v $
-  Date:      $Date: 2006/03/08 15:14:56 $
-  Version:   $Revision: 1.1.2.1 $
+  Date:      $Date: 2006/03/15 17:00:54 $
+  Version:   $Revision: 1.1.2.2 $
 
 =========================================================================auto=*/
 // .NAME vtkImageThermalMap -  generates a thermal volume from the four
@@ -31,7 +31,16 @@ class VTK_MRABLATION_EXPORT vtkImageThermalMap : public vtkImageMultipleInputFil
   static vtkImageThermalMap *New();
   vtkTypeMacro(vtkImageThermalMap,vtkImageMultipleInputFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
-  
+
+  vtkGetMacro(TE, float);
+  vtkSetMacro(TE, float);
+
+  vtkGetMacro(W0, float);
+  vtkSetMacro(W0, float);
+
+  vtkGetMacro(TC, float);
+  vtkSetMacro(TC, float);
+
   protected:
 
   vtkImageThermalMap();
@@ -41,6 +50,10 @@ class VTK_MRABLATION_EXPORT vtkImageThermalMap : public vtkImageMultipleInputFil
   void ExecuteInformation(){this->vtkImageMultipleInputFilter::ExecuteInformation();};
   void ThreadedExecute(vtkImageData **inDatas, vtkImageData *outData, 
                        int extent[6], int id);
+
+  float TE;
+  float W0;
+  float TC;
 };
 
 #endif
