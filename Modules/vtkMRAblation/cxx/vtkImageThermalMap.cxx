@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageThermalMap.cxx,v $
-  Date:      $Date: 2006/03/09 14:55:28 $
-  Version:   $Revision: 1.1.2.2 $
+  Date:      $Date: 2006/03/15 17:02:48 $
+  Version:   $Revision: 1.1.2.3 $
 
 =========================================================================auto=*/
 #include "vtkImageThermalMap.h"
@@ -146,6 +146,9 @@ static void vtkImageThermalMapExecute(
                 {
                     // atan2 the same as matlab:
                     t = atan2(yy,xx);
+
+                    // get temperature
+                    t = t / 2.0 / pi / self->GetTE() / self->GetW0() / self->GetTC();
                 } 
                 else 
                 {
@@ -159,7 +162,7 @@ static void vtkImageThermalMapExecute(
                     }
                 }
 
-                t = t * -1000.0;
+                // t = t * -1000.0;
                 *outPtr0 = (long)t;
 
                 for (i = 0; i < numberOfInputs; i++) {
