@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup.tcl,v $
-#   Date:      $Date: 2006/03/15 00:17:49 $
-#   Version:   $Revision: 1.17 $
+#   Date:      $Date: 2006/03/15 22:52:18 $
+#   Version:   $Revision: 1.18 $
 # 
 #===============================================================================
 # FILE:        dup.tcl
@@ -198,15 +198,24 @@ itcl::body dup::load_example { {dir "choose"} } {
 
     if { $dir == "choose" } {
         set dir [tk_chooseDirectory \
-                    -initialdir $::env(SLICER_HOME)/../data/birndup/Project_a-for-review \
-                    -title "Select Example Review Directory" ]
+                    -initialdir [$this pref DEFACE_DIR]/../example-data \
+                    -title "Select Example Project Review Directory" ]
     }
     
     if { $dir != "" } {
+        set target [$this pref DEFACE_DIR]/[file tail $dir]
+        if { [file exists $target] } {
+            set ret [dup_DevOKCancel "Directory $target already exists - delete it?"]
+            if { $ret == "OK" } {
+                file delete -force $target
+            } else {
+                return
+            }
+        }
         file copy -force $dir [$this pref DEFACE_DIR]
     }
 
-    $this refresh review
+    $this refresh
 }
 
 itcl::body dup::refresh { {pane "all"} } {
