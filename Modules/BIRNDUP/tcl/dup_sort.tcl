@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup_sort.tcl,v $
-#   Date:      $Date: 2006/03/06 21:07:29 $
-#   Version:   $Revision: 1.16 $
+#   Date:      $Date: 2006/03/15 00:17:49 $
+#   Version:   $Revision: 1.17 $
 # 
 #===============================================================================
 # FILE:        dup_sort.tcl
@@ -189,12 +189,13 @@ itcl::body dup_sort::fill {dir} {
     # - then pull the value from the table
     #
 
-    set birnid_manager [$parent pref UPLOAD2_DIR]/external/birnid_man.jar
+    set birnid_manager [$parent cget -birndup_dir]/bin/birnid_man.jar
+    puts $birnid_manager
     set linktable [$parent pref LINKTABLE]
     set inst [$parent pref INSTITUTION]
 
     if { [catch "exec java -jar $birnid_manager -create -p $inst -l $linktable -c $patient" resp] } {
-        dup_DevErrorWindow "Cannot execute BIRN ID manager.  Ensure that UPLOAD2_DIR preference is correct and that Java is installed on your machine.\n\n$resp"
+        dup_DevErrorWindow "Cannot execute BIRN ID manager.  Ensure that Java is installed on your machine.\n\n$resp"
     } else {
 
         if { [catch "exec java -jar $birnid_manager -find -l $linktable -c $patient" resp] } {
@@ -286,7 +287,7 @@ itcl::body dup_sort::sort {} {
     set studypath $_defacedir/Project_$_study(project)/$_study(birnid)/Visit_$_study(visit)/Study_$_study(study)/Raw_Data
 
     if { [glob -nocomplain $studypath] != "" } {
-        if { [DevOKCancel "$studypath is not empty - okay to delete?"] != "ok" } {
+        if { [dup_DevOKCancel "$studypath is not empty - okay to delete?"] != "ok" } {
             return
         } 
         file delete -force $studypath
@@ -306,26 +307,25 @@ itcl::body dup_sort::sort {} {
     }
 
     set deident_operations ""
-    if { $_series(master) != "" } {
-        # must run the master deface first if it exists
-        lappend deident_operations "dcanon -deface $_series($_series(master),destdir)"
-    }
+    set mask_series ""
     foreach id $_series(ids) {
         if { $id == $_series(master) } {
             continue
         }
         switch $_series($id,deident_method) {
             "Deface" {
-                lappend deident_operations "dcanon -deface $_series($id,destdir)"
+                # deface this on independently - not part of the MaskGroup
+                lappend deident_operations "dcanon/dcanon -deface $_series($id,destdir)"
             }
             "Mask" {
-                lappend deident_operations "dcanon -mask $_series($_series(master),destdir)-anon $_series($id,destdir)"
+                # lappend deident_operations "dcanon/dcanon -mask $_series($_series(master),destdir)-anon $_series($id,destdir)"
+                lappend mask_series "$_series($id,destdir)"
             }
             "Header Only" {
-                lappend deident_operations "dcanon -convert $_series($id,destdir)"
+                lappend deident_operations "dcanon/dcanon -convert $_series($id,destdir)"
             }
             "As Is" {
-                lappend deident_operations "dcanon -noanon -convert $_series($id,destdir)"
+                lappend deident_operations "dcanon/dcanon -noanon -convert $_series($id,destdir)"
             }
             "Do Not Upload" {
                 # nothing
@@ -336,7 +336,20 @@ itcl::body dup_sort::sort {} {
         }
     }
     $this fill ""
-    
+
+    if { [llength $mask_series] > 0 &&  $_series(master) == "" } {
+        error "cannot mask any series without a deface master series"
+    }
+
+    if { $_series(master) != "" } {
+        set cmd "scripts/birnd_up -i $_series($_series(master),destdir)"
+        foreach m $mask_series {
+            set cmd "$cmd $m"
+        }
+        set cmd "$cmd -o $studypath -subjid MaskGroup"
+        lappend deident_operations $cmd
+    }
+
     set fp [open "$studypath/source_directory" w]
     puts $fp $sourcedir
     close $fp
@@ -363,10 +376,14 @@ itcl::body dup_sort::view {id} {
     if { [lsearch $_series(ids) $id] == -1 } {
         error "series $id not loaded"
     }
-    if { [info command VolAnalyzetempdir] == "" } {
+    if { [info command dup_tempdir] == "" } {
         error "no temp dir command available"
     }
-    set viewdir [VolAnalyzetempdir]/$id.[pid]
+    if { [catch "package require iSlicer"] } {
+        error "the iSlicer package is not available"
+    }
+
+    set viewdir [dup_tempdir]/$id.[pid]
     file delete -force $viewdir
     file mkdir $viewdir
 
@@ -374,9 +391,13 @@ itcl::body dup_sort::view {id} {
         file copy $_DICOMFiles($i,FileName) $viewdir/
     }
 
-    set volid [DICOMLoadStudy $viewdir]
-    Volume($volid,node) SetName "Ser $id, Flip $_series($id,FlipAngle)"
-    MainUpdateMRML
+    catch "destroy .dup_sort_view"
+    toplevel .dup_sort_view
+    wm geometry .dup_sort_view 400x600
+    pack [isframes .dup_sort_view.isf] -fill both -expand true
+    .dup_sort_view.isf configure -filepattern $viewdir/* -filetype DICOMImage
+    .dup_sort_view.isf middle
+
 }
 
 itcl::body dup_sort::version {} {

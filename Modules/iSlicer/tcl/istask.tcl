@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: istask.tcl,v $
-#   Date:      $Date: 2006/03/02 20:21:31 $
-#   Version:   $Revision: 1.6 $
+#   Date:      $Date: 2006/03/15 00:17:50 $
+#   Version:   $Revision: 1.7 $
 # 
 #===============================================================================
 # FILE:        istask.tcl
@@ -68,6 +68,7 @@ if { [itcl::find class istask] == "" } {
         variable _taskafter ""
 
         method w {} {return $_w}
+        method onoffbutton {} {return $_onoffbutton}
         method on {} {}
         method off {} {}
         method toggle {} {}

@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: isprocess.tcl,v $
-#   Date:      $Date: 2006/03/02 20:20:13 $
-#   Version:   $Revision: 1.1 $
+#   Date:      $Date: 2006/03/15 00:17:50 $
+#   Version:   $Revision: 1.2 $
 # 
 #===============================================================================
 # FILE:        isprocess.tcl
@@ -41,6 +41,7 @@ isprocess - a widget for managing an external command line process
 # - sets the default colors for the widget components
 #
 option add *isprocess.commandline "" widgetDefault
+option add *isprocess.finishcommand "" widgetDefault
 
 #
 # The class definition - define if needed (not when re-sourcing)
@@ -58,7 +59,8 @@ if { [itcl::find class isprocess] == "" } {
         # inherited or composed as part of other widgets
         # or become part of the option database
         #
-        itk_option define -commandline commandline Taskcommand {}
+        itk_option define -commandline commandline Commandline {}
+        itk_option define -finishcommand finishcommand Finishcommand {}
 
         variable _w ""
         variable _commandline ""
@@ -68,11 +70,13 @@ if { [itcl::find class isprocess] == "" } {
         variable _fp ""
 
         method w {} {return $_w}
+        method task {} {return $_task}
 
         method entrycallback {} {}
-        method start {} {puts "start $itk_option(-commandline)"}
-        method update_outtext {} {puts "update"}
-        method cancel {} {puts "cancel"}
+        method start {} {}
+        method update_outtext {} {}
+        method cancel {} {}
+        method get { {index1 0.0} {index2 end} } {}
     }
 }
 
@@ -112,6 +116,10 @@ itcl::body isprocess::constructor {args} {
 itcl::body isprocess::destructor {} {
 }
 
+itcl::configbody isprocess::commandline {
+    set _commandline $itk_option(-commandline)
+}
+
 itcl::body isprocess::entrycallback {} {
     
     $this configure -commandline $_commandline
@@ -121,7 +129,16 @@ itcl::body isprocess::start {} {
     
     $_outtext clear
 
-    set _fp [open "| $_commandline" r]
+    set ret [catch [list open "| $_commandline" r] res]
+    if { $ret } {
+        if { $itk_option(-finishcommand) != "" } {
+            eval $itk_option(-finishcommand) $ret [list $res]
+        }
+        $_task off
+        return
+    }        
+
+    set _fp $res
     fconfigure $_fp -blocking 0
 }
 
@@ -145,12 +162,25 @@ itcl::body isprocess::update_outtext {} {
 
 itcl::body isprocess::cancel {} {
 
+    fconfigure $_fp -blocking 1
     set ret [catch "close $_fp" res]
-    set _fp ""
-    if { $ret != 0 } {
-        tk_messageBox -title "Process Result" -type ok -message "\nCommand line: \n\n  $_commandline\n\nreturned error:\n\n  $res"
+
+    if { $itk_option(-finishcommand) != "" } {
+        eval $itk_option(-finishcommand) $ret [list $res]
+    } else {
+        if { $ret != 0 } {
+            tk_messageBox -title "Process Result" -type ok -message "\nCommand line: \n\n  $_commandline\n\nreturned error:\n\n  $res"
+        }
     }
+
+    set _fp ""
 }
+
+itcl::body isprocess::get { {index1 0.0} {index2 end} } {
+
+    return [$_outtext get $index1 $index2]
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC isprocess_demo

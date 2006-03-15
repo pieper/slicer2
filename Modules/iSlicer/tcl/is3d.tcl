@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: is3d.tcl,v $
-#   Date:      $Date: 2006/01/13 01:25:55 $
-#   Version:   $Revision: 1.15 $
+#   Date:      $Date: 2006/03/15 00:17:50 $
+#   Version:   $Revision: 1.16 $
 # 
 #===============================================================================
 # FILE:        is3d.tcl
@@ -402,14 +402,18 @@ itcl::configbody is3d::isvolume {
 
     # The mapper / ray cast function know how to render the data
     vtkVolumeRayCastCompositeFunction  $_compfunc
-    if {0} {
+    catch "__vtkversion Delete"
+    vtkVersion __vtkversion
+    if { [__vtkversion GetVTKMajorVersion] <= 4 } {
         vtkVolumeRayCastMapper $_volmapper
         $_volmapper SetVolumeRayCastFunction $_compfunc
         $_volmapper SetSampleDistance 0.5
     } else {
+        # only do this branch on vtk5
         #vtkVolumeTextureMapper2D $_volmapper
         vtkVolumeTextureMapper3D $_volmapper
     }
+    __vtkversion Delete
     $_volmapper SetInput [$_cast GetOutput]
 
     # The volume holds the mapper and the property and

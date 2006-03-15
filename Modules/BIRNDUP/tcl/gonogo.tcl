@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: gonogo.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:07 $
-#   Version:   $Revision: 1.8 $
+#   Date:      $Date: 2006/03/15 00:17:50 $
+#   Version:   $Revision: 1.9 $
 # 
 #===============================================================================
 # FILE:        gonogo.tcl
@@ -496,7 +496,7 @@ proc main {} {
     global ROOT MP upload_series_list defer_series_list
 
     if { [catch "package require iSlicer"] } {
-        DevErrorWindow "Need iSlicer Module to run this program.  Please update Slicer"
+        dup_DevErrorWindow "Need iSlicer Module to run this program.  Please update Slicer"
         exit 1
     }
 

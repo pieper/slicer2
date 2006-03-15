@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup_review.tcl,v $
-#   Date:      $Date: 2006/03/02 20:34:34 $
-#   Version:   $Revision: 1.11 $
+#   Date:      $Date: 2006/03/15 00:17:49 $
+#   Version:   $Revision: 1.12 $
 # 
 #===============================================================================
 # FILE:        dup_review.tcl
@@ -116,16 +116,15 @@ itcl::body dup_review::run {studydir} {
         return
     }
 
-    package require fileutil
-    set to_upload [::fileutil::cat $studydir/upload_list.txt]
-    set to_defer [::fileutil::cat $studydir/defer_list.txt]
+    set to_upload [::dup_review::cat $studydir/upload_list.txt]
+    set to_defer [::dup_review::cat $studydir/defer_list.txt]
     
     set defercount [llength $to_defer]
     if { $defercount > 0 } {
-        set resp [DevOKCancel "The Study contains $defercount series that did not pass review.\n\nClick Ok to upload only the approved series or cancel to defer the entire study."]
+        set resp [dup_DevOKCancel "The Study contains $defercount series that did not pass review.\n\nClick Ok to upload only the approved series or cancel to defer the entire study."]
         if { $resp != "ok" } {
-            set sourcedir [::fileutil::cat $studydir/source_directory] 
-            DevErrorWindow "The study in $sourcedir did not pass review.  Manual defacing must be used."
+            set sourcedir [::dup_review::cat $studydir/source_directory] 
+            dup_DevErrorWindow "The study in $sourcedir did not pass review.  Manual defacing must be used."
             file delete -force $studydir
             $parent log "manual defacing needed for $studydir"
             $parent refresh 
@@ -139,3 +138,9 @@ itcl::body dup_review::run {studydir} {
     $parent refresh 
 }
 
+proc dup_review::cat {filename} {
+    set fp [open $filename r]
+    set data [read $fp]
+    close $fp
+    return $data
+}

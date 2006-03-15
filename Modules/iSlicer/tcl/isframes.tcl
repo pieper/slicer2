@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: isframes.tcl,v $
-#   Date:      $Date: 2006/03/07 21:19:35 $
-#   Version:   $Revision: 1.7 $
+#   Date:      $Date: 2006/03/15 00:17:50 $
+#   Version:   $Revision: 1.8 $
 # 
 #===============================================================================
 # FILE:        isframes.tcl
@@ -38,6 +38,7 @@ option add *isframes.start 0 widgetDefault
 option add *isframes.end 0 widgetDefault
 option add *isframes.skip 1 widgetDefault
 option add *isframes.filepattern "" widgetDefault
+option add *isframes.filetype "" widgetDefault
 
 #
 # The class definition - define if needed (not when re-sourcing)
@@ -56,6 +57,7 @@ if { [itcl::find class isframes] == "" } {
       # or become part of the option database
       #
       itk_option define -filepattern filepattern Filepattern ""
+      itk_option define -filetype filetype Filetype ""
       itk_option define -frame frame Frame 0
       itk_option define -start start Start 0
       itk_option define -end end End 0
@@ -91,6 +93,7 @@ if { [itcl::find class isframes] == "" } {
       method tkrw   {}   {return $_tkrw}
       method rw     {}   {return [$_tkrw GetRenderWindow]}
 
+      method middle     {}   {}
       method next     {}   {}
       method entrycallback {}   {}
       
@@ -255,28 +258,33 @@ itcl::configbody isframes::frame {
         set filename [format $itk_option(-filepattern) $itk_option(-frame)]
     }
 
-    set ext [string tolower [file extension $filename]]
-    switch $ext {
-        ".pnm" - ".ppm" - ".pgm" {
-            vtkPNMReader $imgr 
-        }
-        ".jpg" - ".jepg" {
-            vtkJPEGReader $imgr 
-        }
-        ".bmp" {
-            vtkBMPReader $imgr 
-        }
-        ".ps"  {
-            vtkPostScriptReader $imgr 
-        }
-        ".tif" - ".tiff" {
-            vtkTIFFReader $imgr 
-        }
-        ".png" {
-            vtkPNGReader $imgr 
-        }
-        default {
-            error "unknown image format $ext; options are .ppm, .jpg, .bmp, .ps, .tif, .png"
+    set filetype $itk_option(-filetype)
+    if { $filetype != "" } {
+        vtk${filetype}Reader $imgr
+    } else {
+        set ext [string tolower [file extension $filename]]
+        switch $ext {
+            ".pnm" - ".ppm" - ".pgm" {
+                vtkPNMReader $imgr 
+            }
+            ".jpg" - ".jepg" {
+                vtkJPEGReader $imgr 
+            }
+            ".bmp" {
+                vtkBMPReader $imgr 
+            }
+            ".ps"  {
+                vtkPostScriptReader $imgr 
+            }
+            ".tif" - ".tiff" {
+                vtkTIFFReader $imgr 
+            }
+            ".png" {
+                vtkPNGReader $imgr 
+            }
+            default {
+                error "unknown image format $ext; options are .ppm, .jpg, .bmp, .ps, .tif, .png"
+            }
         }
     }
 
@@ -311,6 +319,12 @@ itcl::body isframes::next {} {
         set f $itk_option(-start)
     }
     $this configure -frame $f
+}
+
+itcl::body isframes::middle {} {
+    
+    set middle [expr ($itk_option(-start) + $itk_option(-end)) / 2]
+    $this configure -frame $middle
 }
 
 itcl::body isframes::entrycallback {} {

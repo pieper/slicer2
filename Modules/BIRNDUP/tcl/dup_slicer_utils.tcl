@@ -52,7 +52,7 @@ proc dup_DefaceFindDICOM2 { StartDir AddDir Pattern } {
                     set PatientName 'unknown'
                 }
                 set DICOMFiles($FindDICOMCounter,PatientName) $PatientName
-                AddListUnique DICOMPatientNames $PatientName
+                dup_AddListUnique DICOMPatientNames $PatientName
                 
                 if [expr [parser FindElement 0x0010 0x0020] == "1"] {
                     set Length [lindex [split [parser ReadElement]] 3]
@@ -64,10 +64,10 @@ proc dup_DefaceFindDICOM2 { StartDir AddDir Pattern } {
                     set PatientID 'unknown'
                 }
                 set DICOMFiles($FindDICOMCounter,PatientID) $PatientID
-                AddListUnique DICOMPatientIDs $PatientID
+                dup_AddListUnique DICOMPatientIDs $PatientID
                 set add {}
                 append add "<" $PatientID "><" $PatientName ">"
-                AddListUnique DICOMPatientIDsNames $add
+                dup_AddListUnique DICOMPatientIDsNames $add
                 set DICOMFiles($FindDICOMCounter,PatientIDName) $add
                 #DYW change to studyID if [expr [parser FindElement 0x0020 0x000d] == "1"] 
                 if [expr [parser FindElement 0x0020 0x0010] == "1"] {
@@ -262,6 +262,28 @@ proc dup_DevErrorWindow {{message "Unknown Error"}} {
         puts "$message"
     }
     tk_messageBox -title Slicer -icon error -message $message -type ok
+    tk scaling $oscaling
+}
+
+# DevErrorWindow is needed by the bgerror catcher
+if { [info command DevErrorWindow] == "" } {
+    proc DevErrorWindow {m} {dup_DevErrorWindow $m}
+}
+
+#-------------------------------------------------------------------------------
+# .PROC dup_DevInfoWindow
+#
+#  Report Information to the user. Force them to click OK to continue.<br>
+#  Resets the tk scaling to 1 and then returns it to the original value.
+#
+# .ARGS
+#  str message The error message. Default: \"Unknown Warning\"
+# .END
+#-------------------------------------------------------------------------------
+proc dup_DevInfoWindow {message} {
+    set oscaling [tk scaling]
+    tk scaling 1
+    tk_messageBox -title "Slicer" -icon info -message $message -type ok
     tk scaling $oscaling
 }
 
@@ -496,3 +518,68 @@ proc dup_TooltipToggle {} {
     } 
 }
 
+## copied from tcllib ##
+#
+# ::fileutil::tempdir --
+#
+#    Return the correct directory to use for temporary files.
+#    Python attempts this sequence, which seems logical:
+#
+#       1. The directory named by the `TMPDIR' environment variable.
+#
+#       2. The directory named by the `TEMP' environment variable.
+#
+#       3. The directory named by the `TMP' environment variable.
+#
+#       4. A platform-specific location:
+#            * On Macintosh, the `Temporary Items' folder.
+#
+#            * On Windows, the directories `C:\\TEMP', `C:\\TMP',
+#              `\\TEMP', and `\\TMP', in that order.
+#
+#            * On all other platforms, the directories `/tmp',
+#              `/var/tmp', and `/usr/tmp', in that order.
+#
+#        5. As a last resort, the current working directory.
+#
+# Arguments:
+#    None.
+#
+# Side Effects:
+#    None.
+#
+# Results:
+#    The directory for temporary files.
+
+proc dup_tempdir {} {
+    global tcl_platform env
+    set attempdirs [list]
+
+    foreach tmp {TMPDIR TEMP TMP} {
+        if { [info exists env($tmp)] } {
+            lappend attempdirs $env($tmp)
+        }
+    }
+
+    switch $tcl_platform(platform) {
+        windows {
+            lappend attempdirs "C:\\TEMP" "C:\\TMP" "\\TEMP" "\\TMP"
+        }
+        macintosh {
+            set tmpdir $env(TRASH_FOLDER)  ;# a better place?
+        }
+        default {
+            lappend attempdirs [file join / tmp] \
+            [file join / var tmp] [file join / usr tmp]
+        }
+    }
+
+    foreach tmp $attempdirs {
+        if { [file isdirectory $tmp] && [file writable $tmp] } {
+            return $tmp
+        }
+    }
+
+    # If nothing else worked...
+    return [pwd]
+}

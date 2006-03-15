@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup_upload.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:07 $
-#   Version:   $Revision: 1.8 $
+#   Date:      $Date: 2006/03/15 00:17:50 $
+#   Version:   $Revision: 1.9 $
 # 
 #===============================================================================
 # FILE:        dup_upload.tcl
@@ -92,7 +92,7 @@ itcl::body dup_upload::refresh {} {
         set birnid [lindex [file split $s] end-3] 
         set bb $_frame.b$b 
         pack [button $bb -text "Upload $birnid" -command "$this run $s"]
-        TooltipAdd $bb "$s"
+        dup_TooltipAdd $bb "$s"
         incr b
     }
 
@@ -107,7 +107,7 @@ itcl::body dup_upload::run {dir} {
     $parent log "starting upload of $dir"
 
 
-    if { [DevOKCancel "Upload of $dir complete.  Temp copy will now be deleted." ] == "ok" } {
+    if { [dup_DevOKCancel "Upload of $dir complete.  Temp copy will now be deleted." ] == "ok" } {
         file delete -force $dir
     } else {
         close [open $studydir/uploaded "w"]
