@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup_sort.tcl,v $
-#   Date:      $Date: 2006/03/15 00:17:49 $
-#   Version:   $Revision: 1.17 $
+#   Date:      $Date: 2006/03/15 19:46:36 $
+#   Version:   $Revision: 1.18 $
 # 
 #===============================================================================
 # FILE:        dup_sort.tcl
@@ -55,6 +55,7 @@ if { [itcl::find class dup_sort] == "" } {
         method setdeident {id method} {}
         method fill {dir} {}
         method sort {} {}
+        method make_broken_link {linkname targetdir} {}
         method version {} {}
     }
 }
@@ -318,7 +319,6 @@ itcl::body dup_sort::sort {} {
                 lappend deident_operations "dcanon/dcanon -deface $_series($id,destdir)"
             }
             "Mask" {
-                # lappend deident_operations "dcanon/dcanon -mask $_series($_series(master),destdir)-anon $_series($id,destdir)"
                 lappend mask_series "$_series($id,destdir)"
             }
             "Header Only" {
@@ -342,9 +342,14 @@ itcl::body dup_sort::sort {} {
     }
 
     if { $_series(master) != "" } {
+        set scan 1
         set cmd "scripts/birnd_up -i $_series($_series(master),destdir)"
+        $this make_broken_link $_series($_series(master),destdir)-anon MaskGroup/scan_$scan
+        incr scan
         foreach m $mask_series {
             set cmd "$cmd $m"
+            $this make_broken_link $m-anon MaskGroup/scan_$scan
+            incr scan
         }
         set cmd "$cmd -o $studypath -subjid MaskGroup"
         lappend deident_operations $cmd
@@ -398,6 +403,30 @@ itcl::body dup_sort::view {id} {
     .dup_sort_view.isf configure -filepattern $viewdir/* -filetype DICOMImage
     .dup_sort_view.isf middle
 
+}
+
+itcl::body dup_sort::make_broken_link {linkname targetdir} {
+    # need to make a relative symbolic link to target that will be made later, but
+    # need to make the target directory exists 
+    # or link will fail
+    # - this is in a new directory, so destdir shouldn't exist yet
+    # - NB: this is not cross-platform
+    # - remove the directory so that birnd_up can create it later
+    # TODO: I don't think this can be done using the tcl file link command
+    # since it creates an absolute path for the target
+
+    set cwd [pwd]
+    cd [file dirname $linkname]
+puts "making link in [pwd]"
+puts "exec ln -s $targetdir [file tail $linkname]"
+    if { ![file exists $targetdir] } {
+        file mkdir $targetdir
+        exec ln -s $targetdir [file tail $linkname]
+        file delete $targetdir
+    } else {
+        exec ln -s $targetdir [file tail $linkname]
+    }
+    cd $cwd
 }
 
 itcl::body dup_sort::version {} {
