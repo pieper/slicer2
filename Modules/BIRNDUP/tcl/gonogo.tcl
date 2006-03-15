@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: gonogo.tcl,v $
-#   Date:      $Date: 2006/03/15 00:17:50 $
-#   Version:   $Revision: 1.9 $
+#   Date:      $Date: 2006/03/15 22:52:51 $
+#   Version:   $Revision: 1.10 $
 # 
 #===============================================================================
 # FILE:        gonogo.tcl
@@ -222,6 +222,8 @@ proc getSeriesApproval {series_path} {
     wm geom $ROOT.mp +$x+$y
     wm deiconify $ROOT.mp
 
+    wm protocol $ROOT.mp WM_DELETE_WINDOW "set ser_rvalue -1"
+
     # Wait on click of defer or upload button
     #-------------------------------------------------------------------
     tkwait variable ser_rvalue
@@ -327,7 +329,7 @@ proc getStudyApproval {study_path} {
     destroy $ROOT.gonogo
 
     if { $rvalue == -1 } {
-        exit 0
+        exit -1 
     }
 
     foreach s [array names series_approval] {
@@ -337,6 +339,7 @@ proc getStudyApproval {study_path} {
             lappend defer_series_list $s
         }
     }
+    return 0
 }
 
 #-------------------------------------------------------------------------------
