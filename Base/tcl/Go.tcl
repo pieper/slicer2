@@ -6,8 +6,8 @@
 # 
 #  Program:   3D Slicer
 #  Module:    $RCSfile: Go.tcl,v $
-#  Date:      $Date: 2006/03/10 21:58:55 $
-#  Version:   $Revision: 1.118 $
+#  Date:      $Date: 2006/03/15 00:16:56 $
+#  Version:   $Revision: 1.119 $
 #===============================================================================
 # FILE:        Go.tcl
 # PROCEDURES:  
@@ -495,7 +495,7 @@ proc SplashShow { {delayms 7000} } {
 #
 # put up the splash screen, but only if the rest of the interface is going to come up
 #
-if { $::SLICER(eval) == "" } {
+if { $::SLICER(eval) == "" && $::SLICER(exec) == "" && $::SLICER(script) == "" } {
     SplashShow
 }
 
@@ -991,7 +991,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.118 2006/03/10 21:58:55 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.119 2006/03/15 00:16:56 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
