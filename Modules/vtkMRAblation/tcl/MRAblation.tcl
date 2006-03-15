@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MRAblation.tcl,v $
-#   Date:      $Date: 2006/03/09 17:20:07 $
-#   Version:   $Revision: 1.1.2.3 $
+#   Date:      $Date: 2006/03/15 17:05:15 $
+#   Version:   $Revision: 1.1.2.4 $
 # 
 #===============================================================================
 # FILE:        MRAblation.tcl
@@ -137,7 +137,7 @@ proc MRAblationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.3 $} {$Date: 2006/03/09 17:20:07 $}]
+        {$Revision: 1.1.2.4 $} {$Date: 2006/03/15 17:05:15 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -343,31 +343,43 @@ proc MRAblationBuildGUI {} {
 
     set fCompute $Module(MRAblation,fCompute)
     set f $fCompute
-    
+
     foreach frame "Top Middle Bottom" {
-        frame $f.f$frame -bg $Gui(activeWorkspace)
-        pack $f.f$frame -side top -padx 10 -pady 5 -fill x
+        if {$frame == "Bottom"} {
+            frame $f.f$frame -bg $Gui(activeWorkspace)
+        } else {
+            frame $f.f$frame -bg $Gui(activeWorkspace) -relief groove -bd 2 
+        }
+        pack $f.f$frame -side top -padx 5 -pady 5
     }
-    
+   
     #----------------------------
     # Compute->Top frame
     #----------------------------
     set f $fCompute.fTop
-    DevAddButton $f.bHelp "?" "MRAblationHelpComputing" 2
+    foreach frame "Title Buttons Images" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx 3 -pady 5 -fill x
+    }
+ 
+    set f $fCompute.fTop.fTitle
+    DevAddLabel $f.lTitle "Specify images:"
+    pack $f.lTitle -side top -pady 3 -fill x
+ 
+    set f $fCompute.fTop.fButtons
+
+    DevAddButton $f.bHelp "?" "MRAblationHelpSpecifyImages" 2
 
     eval {checkbutton $f.cbComputing \
         -variable MRAblation(checkbuttonComputing) \
-        -width 28 \
+        -width 25 \
         -text "One volume per timepoint"} $Gui(WEA) 
     $f.cbComputing select 
     bind $f.cbComputing <1> "MRAblationToggleComputing"
 
-    grid $f.bHelp $f.cbComputing -padx 1 -pady 5 
+    grid $f.bHelp $f.cbComputing -padx 1 -pady 3 
 
-    #---------------------------
-    # Compute->Middle frame
-    #---------------------------
-    set f $fCompute.fMiddle
+    set f $fCompute.fTop.fImages
 
     # Cold image
     #---------------------------
@@ -464,30 +476,80 @@ proc MRAblationBuildGUI {} {
  
     MRAblationSelectImage imaginary none
 
-    # Volume prefix:
-    #---------------------------
-    DevAddLabel $f.lPrefix "Volume prefix:"
-    eval {entry $f.ePrefix -textvariable MRAblation(volumePrefix) -width 19} $Gui(WEA)
-    set MRAblation(volumePrefix) "T-"
+    blt::table $f \
+       0,0 $f.lCold   -padx 5 -pady 2 -anchor e \
+       0,1 $f.mbType  -padx 5 -pady 2 -anchor w \
+       1,0 $f.lHot    -padx 5 -pady 2 -anchor e \
+       1,1 $f.mbType2 -padx 5 -pady 2 -anchor w \
+       2,0 $f.lMag    -padx 5 -pady 2 -anchor e \
+       2,1 $f.mbType3 -padx 5 -pady 2 -anchor w \
+       3,0 $f.lReal   -padx 5 -pady 2 -anchor e \
+       3,1 $f.mbType4 -padx 5 -pady 2 -anchor w \
+       4,0 $f.lImag   -padx 5 -pady 2 -anchor e \
+       4,1 $f.mbType5 -padx 5 -pady 2 -anchor w 
+
+
+    #----------------------------
+    # Compute->Middle frame
+    #----------------------------
+    set f $fCompute.fMiddle
+    foreach frame "Title Values" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx 1 -pady 5 -fill x
+    }
+ 
+    set f $fCompute.fMiddle.fTitle
+
+    DevAddButton $f.bHelp "?" "MRAblationHelpSpecifyParameters" 2
+    DevAddLabel $f.lTitle "Specify parameters:" 
+    grid $f.bHelp $f.lTitle -padx 1 -pady 3 
+
+    # parameters
+    set f $fCompute.fMiddle.fValues
+
+    DevAddLabel $f.lTE "TE:"
+    eval {entry $f.eTE -textvariable MRAblation(TE) -width 26} $Gui(WEA)
+    set MRAblation(TE) 0.020 
+
+    DevAddLabel $f.lW0 "w0:"
+    eval {entry $f.eW0 -textvariable MRAblation(w0) -width 26} $Gui(WEA)
+    set MRAblation(w0) "21.3"
+
+    DevAddLabel $f.lTC "TC:"
+    eval {entry $f.eTC -textvariable MRAblation(TC) -width 26} $Gui(WEA)
+    set MRAblation(TC) "0.01076"
 
     blt::table $f \
-       0,0 $f.lCold   -padx 1 -pady 2 -anchor e \
-       0,1 $f.mbType  -padx 1 -pady 2 -anchor w -fill x \
-       1,0 $f.lHot    -padx 1 -pady 2 -anchor e \
-       1,1 $f.mbType2 -padx 1 -pady 2 -anchor w -fill x \
-       2,0 $f.lMag    -padx 1 -pady 2 -anchor e \
-       2,1 $f.mbType3 -padx 1 -pady 2 -anchor w -fill x \
-       3,0 $f.lReal   -padx 1 -pady 2 -anchor e \
-       3,1 $f.mbType4 -padx 1 -pady 2 -anchor w -fill x \
-       4,0 $f.lImag   -padx 1 -pady 2 -anchor e \
-       4,1 $f.mbType5 -padx 1 -pady 2 -anchor w -fill x \
-       5,0 $f.lPrefix -padx 1 -pady 2 -anchor e \
-       5,1 $f.ePrefix -padx 1 -pady 2 -anchor w -fill x
-   
+       0,0 $f.lTE -padx 5 -pady 2 -anchor e \
+       0,1 $f.eTE -padx 5 -pady 2 -anchor w \
+       1,0 $f.lW0 -padx 5 -pady 2 -anchor e \
+       1,1 $f.eW0 -padx 5 -pady 2 -anchor w \
+       2,0 $f.lTC -padx 5 -pady 2 -anchor e \
+       2,1 $f.eTC -padx 5 -pady 2 -anchor w
+
+
     #----------------------------
     # Compute->Bottom frame
     #----------------------------
     set f $fCompute.fBottom
+    foreach frame "Prefix Apply" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side top -padx 1 -pady 5 -fill x
+    }
+ 
+    set f $fCompute.fBottom.fPrefix
+    # Volume prefix:
+    #---------------------------
+    DevAddLabel $f.lPrefix "Volume prefix:"
+    eval {entry $f.ePrefix -textvariable MRAblation(volumePrefix) -width 18} $Gui(WEA)
+    set MRAblation(volumePrefix) "T-"
+
+    blt::table $f \
+       0,0 $f.lPrefix -padx 1 -pady 2 -anchor e \
+       0,1 $f.ePrefix -padx 1 -pady 2 -anchor w -fill x
+
+    set f $fCompute.fBottom.fApply
+ 
     DevAddButton $f.bApply "Apply" "MRAblationCompute" 15 
     set MRAblation(gui,computeApplyButton) $f.bApply 
     pack $f.bApply -side top -padx 8
@@ -590,6 +652,19 @@ proc MRAblationCompute {} {
         return
     }
 
+    if {[ValidateFloat $MRAblation(TE)] == 0 || $MRAblation(TE) < 0} {
+        DevErrorWindow "TE must be a positive float."
+        return
+    }
+    if {[ValidateFloat $MRAblation(w0)] == 0 || $MRAblation(w0) < 0} {
+        DevErrorWindow "w0 must be a positive float."
+        return
+    }
+    if {[ValidateFloat $MRAblation(TC)] == 0 || $MRAblation(TC) < 0} {
+        DevErrorWindow "TC must be a positive float."
+        return
+    }
+
 
     # Cold phase number
     set i [string last "-" $MRAblation(coldImageCurrent)]
@@ -673,6 +748,10 @@ proc MRAblationCompute {} {
             unset -nocomplain MRAblation(thermalMap)
         }
         vtkImageThermalMap MRAblation(thermalMap) 
+
+        MRAblation(thermalMap) SetTE $MRAblation(TE) 
+        MRAblation(thermalMap) SetW0 $MRAblation(w0) 
+        MRAblation(thermalMap) SetTC $MRAblation(TC) 
 
         MRAblation(thermalMap) AddInput $coldRealImageData
         MRAblation(thermalMap) AddInput $coldImaginaryImageData 
