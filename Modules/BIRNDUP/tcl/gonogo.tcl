@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: gonogo.tcl,v $
-#   Date:      $Date: 2006/03/15 22:52:51 $
-#   Version:   $Revision: 1.10 $
+#   Date:      $Date: 2006/03/16 22:36:35 $
+#   Version:   $Revision: 1.11 $
 # 
 #===============================================================================
 # FILE:        gonogo.tcl
@@ -162,6 +162,7 @@ proc getSeriesApproval {series_path} {
     foreach view $VIEW_LIST {
         #set mp_file($view) "$series_path/Deface/$view.mpg"
         # sp: changed to frame rendering
+        set mp_file(series_path) "$series_path"
         set mp_file($view) "$series_path/Deface/$view-0000.png"
         set mp_file($view,pattern) "$series_path/Deface/$view*"
         set mp_out($view) ""
@@ -182,6 +183,9 @@ proc getSeriesApproval {series_path} {
     pack $ROOT.mp.bot -side bottom -fill both -expand 1
     eval label $ROOT.mp.msg -justify left -text [list "Verifying series: [file tail $series_path]"]
     pack $ROOT.mp.msg -in $ROOT.mp.top -fill both -expand 1 -padx 1m -pady 3m
+
+    button $ROOT.mp.headers -text "View Headers" -command "mpOpenHeaders"
+    pack $ROOT.mp.headers -in $ROOT.mp.top -fill both -expand 1 -padx 1m -pady 3m
 
     createImages
 
@@ -206,6 +210,7 @@ proc getSeriesApproval {series_path} {
             pack $ROOT.mp.$view.notfound -side left
         }
     }
+
 
     eval button $ROOT.mp.bot.upload -relief raised -text Upload -command [list "set ser_rvalue 1"]
     pack $ROOT.mp.bot.upload -side left -expand 1 -padx 3m -pady 5m
@@ -430,27 +435,29 @@ proc mpOpen {view} {
     pack [isframes $w.isf -filepattern $mp_file($view,pattern)] -fill both -expand true
     [$w.isf task] on
     
-    if {0} {
-        set f $mp_file($view)
-        if {![file exists $f]} {
-            tk_dialog .oops Error "Error on \"$f\": file does not exist" error 0 OK
-            return
-        }
-        if {![file readable $f]} {
-            tk_dialog .oops Error "Error on \"$f\": file is not readable" error 0 OK
-            return
-        }
-
-        set comm "| $MP"
-        set comm "$comm -slave -loop 1000"
-        set comm "$comm $f"
-        set comm "$comm >& /dev/null"
-        set mp_out($view) [open $comm "w"]
-    }
-
     $ROOT.mp.$view.play config -state normal
     $ROOT.mp.$view.forward config -state normal
     eval $ROOT.mp.$view.open config -text Close -command [list "mpClose $view"]
+}
+
+#-------------------------------------------------------------------------------
+# .PROC mpOpenHeaders
+# show the dicom headers for the current series 
+# .ARGS
+# 
+# .END
+#-------------------------------------------------------------------------------
+proc mpOpenHeaders {} {
+    global ROOT MP mp_file mp_out
+
+
+    set w .headers
+    catch "destroy $w"
+    toplevel $w
+    wm geometry $w 850x400
+
+    pack [isframes $w.isf -filetype "text" -dumpcommand "$::env(SLICER_HOME)/../birndup/bin/dcmdump" -filepattern $mp_file(series_path)/*] -fill both -expand true
+    [$w.isf task] on
 }
 
 #-------------------------------------------------------------------------------
