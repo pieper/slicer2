@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITractography.tcl,v $
-#   Date:      $Date: 2006/02/15 19:48:27 $
-#   Version:   $Revision: 1.42.2.5 $
+#   Date:      $Date: 2006/03/16 20:02:45 $
+#   Version:   $Revision: 1.42.2.6 $
 # 
 #===============================================================================
 # FILE:        DTMRITractography.tcl
@@ -58,7 +58,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.42.2.5 $} {$Date: 2006/02/15 19:48:27 $}]
+                                 {$Revision: 1.42.2.6 $} {$Date: 2006/03/16 20:02:45 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -540,6 +540,69 @@ proc DTMRITractographyBuildGUI {} {
     }
 
     #-------------------------------------------
+    # Tract->Notebook->Settings->TractingVar->NoSpline->Variables frames
+    #-------------------------------------------
+
+    foreach entry $DTMRI(stream,variableList) \
+        text $DTMRI(stream,variableList,text) \
+        tip $DTMRI(stream,variableList,tooltips) \
+        type $DTMRI(stream,variableList,type) {
+
+            set f $DTMRI(stream,tractingFrame,NoSpline)
+
+            frame $f.f$entry -bg $Gui(activeWorkspace)
+            pack $f.f$entry -side top -padx 0 -pady 1 -fill x
+            set f $f.f$entry
+
+            eval {label $f.l$entry -text "$text:"} $Gui(WLA)
+            TooltipAdd $f.l$entry $tip
+            pack $f.l$entry -side left  -padx $Gui(pad)
+
+
+            if {$type == "entry"} {
+
+                eval {entry $f.e$entry -width 8 \
+                          -textvariable DTMRI(stream,$entry)} \
+                    $Gui(WEA)
+
+                TooltipAdd $f.e$entry $tip
+                pack $f.e$entry -side right  -padx $Gui(pad)
+
+            } elseif {$type == "menu"} {
+
+                eval {menubutton $f.mb$entry -text "$DTMRI(stream,$entry)" \
+                          -relief raised -bd 2 -width 20 \
+                          -menu $f.mb$entry.m} $Gui(WMBA)
+                eval {menu $f.mb$entry.m} $Gui(WMA)
+                pack $f.mb$entry -side right -padx $Gui(pad)
+
+                # save menubutton for config
+                set DTMRI(stream,mb$entry) $f.mb$entry
+                # Add a tooltip
+                TooltipAdd $f.mb$entry $tip
+
+                # add menu items
+                foreach item $DTMRI(stream,$entry,menu) {
+                    $f.mb$entry.m add command \
+                        -label $item \
+                        -command "set DTMRI(stream,$entry) $item; \
+                    $f.mb$entry config -text $item"
+                }
+            }
+        }
+
+    #-------------------------------------------
+    # Tract->Notebook->Settings->TractingVar->NoSpline
+    #-------------------------------------------
+
+    set f $DTMRI(stream,tractingFrame,NoSpline)
+
+    eval {button $f.bApply -text "Apply to all tracts" \
+              -command "DTMRITractographyUpdateAllStreamlineSettings"} $Gui(WBA)
+    pack $f.bApply -padx $Gui(pad) -pady $Gui(pad) -side top
+
+
+    #-------------------------------------------
     # Tract->Notebook->Settings->TractingVar->BSpline frame
     #-------------------------------------------
     set f $DTMRI(stream,tractingFrame,BSpline)
@@ -646,69 +709,6 @@ proc DTMRITractographyBuildGUI {} {
 
 
     #-------------------------------------------
-    # Tract->Notebook->Settings->TractingVar->NoSpline->Variables frames
-    #-------------------------------------------
-
-    foreach entry $DTMRI(stream,variableList) \
-        text $DTMRI(stream,variableList,text) \
-        tip $DTMRI(stream,variableList,tooltips) \
-        type $DTMRI(stream,variableList,type) {
-
-            set f $DTMRI(stream,tractingFrame,NoSpline)
-
-            frame $f.f$entry -bg $Gui(activeWorkspace)
-            pack $f.f$entry -side top -padx 0 -pady 1 -fill x
-            set f $f.f$entry
-
-            eval {label $f.l$entry -text "$text:"} $Gui(WLA)
-            TooltipAdd $f.l$entry $tip
-            pack $f.l$entry -side left  -padx $Gui(pad)
-
-
-            if {$type == "entry"} {
-
-                eval {entry $f.e$entry -width 8 \
-                          -textvariable DTMRI(stream,$entry)} \
-                    $Gui(WEA)
-
-                TooltipAdd $f.e$entry $tip
-                pack $f.e$entry -side right  -padx $Gui(pad)
-
-            } elseif {$type == "menu"} {
-
-                eval {menubutton $f.mb$entry -text "$DTMRI(stream,$entry)" \
-                          -relief raised -bd 2 -width 20 \
-                          -menu $f.mb$entry.m} $Gui(WMBA)
-                eval {menu $f.mb$entry.m} $Gui(WMA)
-                pack $f.mb$entry -side right -padx $Gui(pad)
-
-                # save menubutton for config
-                set DTMRI(stream,mb$entry) $f.mb$entry
-                # Add a tooltip
-                TooltipAdd $f.mb$entry $tip
-
-                # add menu items
-                foreach item $DTMRI(stream,$entry,menu) {
-                    $f.mb$entry.m add command \
-                        -label $item \
-                        -command "set DTMRI(stream,$entry) $item; \
-                    $f.mb$entry config -text $item"
-                }
-            }
-        }
-
-    #-------------------------------------------
-    # Tract->Notebook->Settings->TractingVar->NoSpline
-    #-------------------------------------------
-
-    set f $DTMRI(stream,tractingFrame,NoSpline)
-
-    eval {button $f.bApply -text "Apply to all tracts" \
-              -command "DTMRITractographyUpdateAllStreamlineSettings"} $Gui(WBA)
-    pack $f.bApply -padx $Gui(pad) -pady $Gui(pad) -side top
-
-
-    #-------------------------------------------
     # Tract->Notebook->Settings->TractingVar->Teem->Variables frames
     #-------------------------------------------
 
@@ -770,6 +770,9 @@ proc DTMRITractographyBuildGUI {} {
               -command "DTMRITractographyUpdateAllStreamlineSettings"} $Gui(WBA)
     pack $f.bApply -padx $Gui(pad) -pady $Gui(pad) -side top
 
+    #Bring the right frame up depending on the tracting method
+    raise $DTMRI(stream,tractingFrame,$DTMRI(stream,tractingMethod))
+    focus $DTMRI(stream,tractingFrame,$DTMRI(stream,tractingMethod))
 
     ##########################################################
     #
@@ -1219,7 +1222,6 @@ proc DTMRIUpdateStreamlineSettings {} {
     global DTMRI
 
     set seedTracts [DTMRI(vtk,streamlineControl) GetSeedTracts]
-
     # set up type of streamline to create
     switch $DTMRI(stream,tractingMethod) {
         "BSpline" {
