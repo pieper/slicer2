@@ -576,8 +576,8 @@ if { ![file exists $::TEEM_TEST_FILE] } {
 if { ![file exists $::ITK_TEST_FILE] } {
     cd $SLICER_LIB
 
-    runcmd $::CVS -d :pserver:anoncvs:@www.itk.org:/cvsroot/Insight login
-    runcmd $::CVS -z3 -d :pserver:anoncvs@www.itk.org:/cvsroot/Insight checkout -r $::ITK_TAG Insight
+    runcmd $::CVS -d :pserver:anoncvs:@www.vtk.org:/cvsroot/Insight login
+    runcmd $::CVS -z3 -d :pserver:anoncvs@www.vtk.org:/cvsroot/Insight checkout -r $::ITK_TAG Insight
 
     file mkdir $SLICER_LIB/Insight-build
     cd $SLICER_LIB/Insight-build
