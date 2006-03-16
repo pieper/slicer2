@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.cxx,v $
-  Date:      $Date: 2006/02/08 22:49:33 $
-  Version:   $Revision: 1.29 $
+  Date:      $Date: 2006/03/16 19:38:06 $
+  Version:   $Revision: 1.30 $
 
 =========================================================================auto=*/
 
@@ -675,7 +675,11 @@ vtkFloatingPointType vtkTensorMathematics::Determinant(vtkFloatingPointType D[3]
 
 vtkFloatingPointType vtkTensorMathematics::RelativeAnisotropy(vtkFloatingPointType w[3]) 
 {
-  vtkFloatingPointType trace = w[0]+w[1]+w[2] + VTK_EPS;   
+  vtkFloatingPointType trace = w[0]+w[1]+w[2];   
+  
+  if (trace < VTK_EPS)
+     trace = trace + VTK_EPS;
+  
   return ((0.70710678)*
                 (sqrt((w[0]-w[1])*(w[0]-w[1]) + 
                       (w[2]-w[1])*(w[2]-w[1]) +
@@ -684,8 +688,11 @@ vtkFloatingPointType vtkTensorMathematics::RelativeAnisotropy(vtkFloatingPointTy
 
 vtkFloatingPointType vtkTensorMathematics::FractionalAnisotropy(vtkFloatingPointType w[3])
 {
-  vtkFloatingPointType norm = sqrt(w[0]*w[0]+ w[1]*w[1] +  w[2]*w[2])+ VTK_EPS; 
-
+  vtkFloatingPointType norm = sqrt(w[0]*w[0]+ w[1]*w[1] +  w[2]*w[2]); 
+   
+   if (norm < VTK_EPS)
+      norm = norm + VTK_EPS;
+  
   return ((0.70710678)*
                 (sqrt((w[0]-w[1])*(w[0]-w[1]) + 
                       (w[2]-w[1])*(w[2]-w[1]) +
@@ -694,17 +701,27 @@ vtkFloatingPointType vtkTensorMathematics::FractionalAnisotropy(vtkFloatingPoint
 
 vtkFloatingPointType vtkTensorMathematics::LinearMeasure(vtkFloatingPointType w[3])
 {
-  return (w[0] - w[1])/(w[0]+VTK_EPS);
+  if (w[0] < VTK_EPS) 
+     return (w[0] - w[1])/(w[0]+VTK_EPS);
+  else
+     return (w[0] - w[1])/(w[0]);
+
 }
 
 vtkFloatingPointType vtkTensorMathematics::PlanarMeasure(vtkFloatingPointType w[3])
 {
-  return (w[1] - w[2])/(w[0]+VTK_EPS);
+  if (w[0] < VTK_EPS)
+     return (w[1] - w[2])/(w[0]+VTK_EPS);
+  else
+     return (w[1] - w[2])/(w[0]);
 }
 
 vtkFloatingPointType vtkTensorMathematics::SphericalMeasure(vtkFloatingPointType w[3])
 {
-  return (w[2])/(w[0]+VTK_EPS);
+  if (w[0] < VTK_EPS)
+     return (w[2])/(w[0]+VTK_EPS);
+  else
+     return  (w[2])/(w[0]);
 }
 
 
@@ -733,7 +750,8 @@ vtkFloatingPointType vtkTensorMathematics::Mode(vtkFloatingPointType w[3])
                   (w[2] - mean)*(w[2] - mean))/3;
   norm = sqrt(norm);
   norm = norm*norm*norm;
-  norm += VTK_EPS;
+  if (norm < VTK_EPS)
+     norm += VTK_EPS;
   // multiply by sqrt 2: range from -1 to 1
   return  (M_SQRT2*((w[0] + w[1] - 2*w[2]) * 
                          (2*w[0] - w[1] - w[2]) * 
