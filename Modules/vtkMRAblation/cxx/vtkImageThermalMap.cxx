@@ -7,14 +7,14 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageThermalMap.cxx,v $
-  Date:      $Date: 2006/03/15 20:53:29 $
-  Version:   $Revision: 1.1.2.5 $
+  Date:      $Date: 2006/03/16 17:24:26 $
+  Version:   $Revision: 1.1.2.6 $
 
 =========================================================================auto=*/
 #include "vtkImageThermalMap.h"
 #include "vtkObjectFactory.h"
 #include <math.h>
-
+#include <fstream.h>   // file I/O
 
 //------------------------------------------------------------------------------
 vtkImageThermalMap* vtkImageThermalMap::New()
@@ -50,12 +50,13 @@ vtkImageThermalMap::~vtkImageThermalMap()
 //----------------------------------------------------------------------------
 // Description:
 // This templated function executes the filter for any type of data.
-template <class T>
+template <class IT, class OT>
 static void vtkImageThermalMapExecute(
         vtkImageThermalMap *self,
         vtkImageData **inDatas, 
-        T **inPtrs,
+        IT **inPtrs,
         vtkImageData *outData,
+        OT *outPtr,
         int outExt[6], 
         int id)
 {
@@ -79,7 +80,6 @@ static void vtkImageThermalMapExecute(
     target = (unsigned long)((maxZ+1)*(maxY+1)/50.0);
     target++;
 
-    long *outPtr = (long *) outData->GetScalarPointerForExtent(outExt);
     int numberOfInputs = self->GetNumberOfInputs(); 
 
     // Loop through input pixels
@@ -128,13 +128,12 @@ static void vtkImageThermalMapExecute(
                     }
                 }
 
-                // t = t * -1000.0;
-                *outPtr = (long)t;
+                *outPtr = (OT)t;
                 outPtr++;
 
                 for (int i = 0; i < numberOfInputs; i++)
                 {
-                    inPtrs[i]++;
+                    (inPtrs[i])++;
                 }
             }
             outPtr += outIncY;
@@ -165,25 +164,26 @@ void vtkImageThermalMap::ThreadedExecute(
         int id)
 {
     void **inPtrs = new void* [this->NumberOfInputs];
-
     for (int i = 0; i < this->NumberOfInputs; i++) 
     {
-        inPtrs[i] = inDatas[i]->GetScalarPointerForExtent(inDatas[i]->GetExtent());
+        inPtrs[i] = inDatas[i]->GetScalarPointerForExtent(outExt);
     }
+
+    void *outPtr = outData->GetScalarPointerForExtent(outExt);
 
     switch (inDatas[0]->GetScalarType())
     {
-        case VTK_SHORT:
-            vtkImageThermalMapExecute(
+        vtkTemplateMacro7(vtkImageThermalMapExecute,
                 this, 
                 inDatas, 
-                (short **)(inPtrs), 
+                (short **)inPtrs, 
                 outData, 
+                (short *)outPtr,
                 outExt, 
                 id);
             break;
         default:
-            vtkErrorMacro(<< "Execute: Bad input ScalarType, short needed");
+            vtkErrorMacro(<< "Execute: Unknown input ScalarType");
             return;
     }
 
@@ -240,7 +240,7 @@ void vtkImageThermalMap::ExecuteInformation(
 
     // we like longs
     output->SetNumberOfScalarComponents(1);
-    output->SetScalarType(VTK_LONG);
+    output->SetScalarType(VTK_SHORT);
 }
 
 
