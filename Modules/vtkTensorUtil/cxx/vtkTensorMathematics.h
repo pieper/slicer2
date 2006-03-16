@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.h,v $
-  Date:      $Date: 2006/02/14 20:54:15 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2006/03/16 21:29:10 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
 // .NAME vtkTensorMathematics - Trace, determinant, anisotropy measures
@@ -44,6 +44,9 @@
 #define VTK_TENS_D33                   13
 #define VTK_TENS_MODE                  14
 #define VTK_TENS_COLOR_MODE            15
+#define VTK_TENS_MAX_EIGENVALUE_PROJX 16
+#define VTK_TENS_MAX_EIGENVALUE_PROJY 17
+#define VTK_TENS_MAX_EIGENVALUE_PROJZ 18
 
 #include "vtkTensorUtilConfigure.h"
 #include "vtkImageTwoInputFilter.h"
@@ -96,6 +99,13 @@ public:
     {this->SetOperation(VTK_TENS_MID_EIGENVALUE);};
   void SetOperationToMinEigenvalue() 
     {this->SetOperation(VTK_TENS_MIN_EIGENVALUE);};
+
+   void SetOperationToMaxEigenvalueProjectionX()
+   {this->SetOperation(VTK_TENS_MAX_EIGENVALUE_PROJX);};
+   void SetOperationToMaxEigenvalueProjectionY()
+   {this->SetOperation(VTK_TENS_MAX_EIGENVALUE_PROJY);};
+   void SetOperationToMaxEigenvalueProjectionZ()
+   {this->SetOperation(VTK_TENS_MAX_EIGENVALUE_PROJZ);};
 
 
   // Description: 
@@ -187,6 +197,9 @@ public:
   static vtkFloatingPointType MaxEigenvalue(vtkFloatingPointType w[3]);
   static vtkFloatingPointType MiddleEigenvalue(vtkFloatingPointType w[3]);
   static vtkFloatingPointType MinEigenvalue(vtkFloatingPointType w[3]);
+  static vtkFloatingPointType MaxEigenvalueProjectionX(vtkFloatingPointType v0[3], vtkFloatingPointType w[3]);
+  static vtkFloatingPointType MaxEigenvalueProjectionY(vtkFloatingPointType v0[3], vtkFloatingPointType w[3]);
+  static vtkFloatingPointType MaxEigenvalueProjectionZ(vtkFloatingPointType v0[3], vtkFloatingPointType w[3]);
   static vtkFloatingPointType Mode(vtkFloatingPointType w[3]);
   static void ColorByMode(vtkFloatingPointType w[3], vtkFloatingPointType &R,vtkFloatingPointType &G, vtkFloatingPointType &B);
 

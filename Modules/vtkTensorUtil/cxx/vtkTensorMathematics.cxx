@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.cxx,v $
-  Date:      $Date: 2006/03/16 19:38:06 $
-  Version:   $Revision: 1.30 $
+  Date:      $Date: 2006/03/16 21:29:10 $
+  Version:   $Revision: 1.31 $
 
 =========================================================================auto=*/
 
@@ -495,7 +495,19 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
           case VTK_TENS_MIN_EIGENVALUE:
             *outPtr = (T)w[2];
           break;
-
+          
+          case VTK_TENS_MAX_EIGENVALUE_PROJX:
+            *outPtr = static_cast<T> (vtkTensorMathematics::MaxEigenvalueProjectionX(v0,w));
+          break;
+          
+          case VTK_TENS_MAX_EIGENVALUE_PROJY:
+            *outPtr = static_cast<T> (vtkTensorMathematics::MaxEigenvalueProjectionY(v0,w));
+          break;           
+          
+          case VTK_TENS_MAX_EIGENVALUE_PROJZ:
+            *outPtr = static_cast<T> (vtkTensorMathematics::MaxEigenvalueProjectionZ(v0,w));
+          break;           
+           
           case VTK_TENS_MODE:
             *outPtr = static_cast<T> (vtkTensorMathematics::Mode(w));
           break;
@@ -629,6 +641,9 @@ void vtkTensorMathematics::ThreadedExecute(vtkImageData **inData,
     case VTK_TENS_MAX_EIGENVALUE:
     case VTK_TENS_MID_EIGENVALUE:
     case VTK_TENS_MIN_EIGENVALUE:
+    case VTK_TENS_MAX_EIGENVALUE_PROJX:
+    case VTK_TENS_MAX_EIGENVALUE_PROJY:
+    case VTK_TENS_MAX_EIGENVALUE_PROJZ: 
     case VTK_TENS_COLOR_ORIENTATION:
     case VTK_TENS_MODE:
     case VTK_TENS_COLOR_MODE:
@@ -738,6 +753,21 @@ vtkFloatingPointType vtkTensorMathematics::MiddleEigenvalue(vtkFloatingPointType
 vtkFloatingPointType vtkTensorMathematics::MinEigenvalue(vtkFloatingPointType w[3])
 {
   return w[2];
+}
+
+vtkFloatingPointType vtkTensorMathematics::MaxEigenvalueProjectionX(vtkFloatingPointType v0[3], vtkFloatingPointType w[3]) 
+{
+  return fabs(w[0]*v0[0]);
+}
+
+vtkFloatingPointType vtkTensorMathematics::MaxEigenvalueProjectionY(vtkFloatingPointType v0[3], vtkFloatingPointType w[3]) 
+{
+  return fabs(w[0]*v0[1]);
+}
+
+vtkFloatingPointType vtkTensorMathematics::MaxEigenvalueProjectionZ(vtkFloatingPointType v0[3], vtkFloatingPointType w[3]) 
+{
+  return fabs(w[0]*v0[2]);
 }
 
 vtkFloatingPointType vtkTensorMathematics::Mode(vtkFloatingPointType w[3])
