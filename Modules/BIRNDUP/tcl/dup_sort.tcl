@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup_sort.tcl,v $
-#   Date:      $Date: 2006/03/16 22:35:50 $
-#   Version:   $Revision: 1.19 $
+#   Date:      $Date: 2006/03/16 22:57:11 $
+#   Version:   $Revision: 1.20 $
 # 
 #===============================================================================
 # FILE:        dup_sort.tcl
@@ -53,7 +53,9 @@ if { [itcl::find class dup_sort] == "" } {
         destructor {}
 
         method refresh {} {}
+        method series_temp_dir {id} {}
         method view {id} {}
+        method headers {id} {}
         method setdeident {id method} {}
         method fill {dir} {}
         method sort {} {}
@@ -243,7 +245,8 @@ itcl::body dup_sort::fill {dir} {
         $sf.om$id insert end "Mask" "Deface" "Header Only" "As Is" "Do Not Upload"
         $this setdeident $id "Mask"
         button $sf.b$id -text "View" -command "$this view $id"
-        grid $sf.l$id $sf.cb$id $sf.om$id $sf.b$id -row $row -sticky ew
+        button $sf.h$id -text "Headers" -command "$this headers $id"
+        grid $sf.l$id $sf.cb$id $sf.om$id $sf.b$id $sf.h$id -row $row -sticky ew
         incr row
     }
 }
@@ -406,8 +409,8 @@ itcl::body dup_sort::setdeident {id method} {
     }
 }
 
-itcl::body dup_sort::view {id} {
 
+itcl::body dup_sort::series_temp_dir {id} {
     if { ![info exists _series(ids)] } {
         error "no series loaded"
     }
@@ -429,6 +432,14 @@ itcl::body dup_sort::view {id} {
         file copy $_DICOMFiles($i,FileName) $viewdir/
     }
 
+    return $viewdir
+} 
+
+
+itcl::body dup_sort::view {id} {
+
+    set viewdir [$this series_temp_dir $id]
+
     catch "destroy .dup_sort_view"
     toplevel .dup_sort_view
     wm geometry .dup_sort_view 400x600
@@ -436,6 +447,17 @@ itcl::body dup_sort::view {id} {
     .dup_sort_view.isf configure -filepattern $viewdir/* -filetype DICOMImage
     .dup_sort_view.isf middle
 
+}
+
+itcl::body dup_sort::headers {id} {
+
+    set viewdir [$this series_temp_dir $id]
+
+    catch "destroy .dup_sort_headers"
+    toplevel .dup_sort_headers
+    wm geometry .dup_sort_headers 400x600
+    pack [isframes .dup_sort_headers.isf] -fill both -expand true
+    .dup_sort_headers.isf configure -filepattern $viewdir/* -filetype text -dumpcommand "$::env(SLICER_HOME)/../birndup/bin/dcmdump" 
 }
 
 itcl::body dup_sort::make_broken_link {linkname targetdir} {
