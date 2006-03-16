@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup_deidentify.tcl,v $
-#   Date:      $Date: 2006/03/15 00:17:49 $
-#   Version:   $Revision: 1.14 $
+#   Date:      $Date: 2006/03/16 22:35:00 $
+#   Version:   $Revision: 1.15 $
 # 
 #===============================================================================
 # FILE:        dup_deidentify.tcl
@@ -139,10 +139,12 @@ itcl::body dup_deidentify::run {dir} {
         set dcanon_dir [$parent cget -birndup_dir]/dcanon
         set mri_dir [$parent cget -birndup_dir]/bin
         set birnd_up_dir [$parent cget -birndup_dir]
+        set atlas_dir [$parent cget -birndup_dir]/atlas
         set ::env(DCANON_DIR) $dcanon_dir
         set ::env(MRI_DIR) $mri_dir
         set ::env(BIN_DIR) $mri_dir
         set ::env(BIRND_UP_DIR) $birnd_up_dir
+        set ::env(ATLAS_DIR) $atlas_dir
         foreach op $ops {
             puts "executing $op"
             $parent log "executing $op"
