@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup_sort.tcl,v $
-#   Date:      $Date: 2006/03/15 19:46:36 $
-#   Version:   $Revision: 1.18 $
+#   Date:      $Date: 2006/03/16 22:35:50 $
+#   Version:   $Revision: 1.19 $
 # 
 #===============================================================================
 # FILE:        dup_sort.tcl
@@ -42,6 +42,8 @@ if { [itcl::find class dup_sort] == "" } {
         public variable parent ""
         public variable sourcedir ""
 
+        variable _name
+
         variable _defacedir ""
         variable _study
         variable _series
@@ -66,6 +68,12 @@ if { [itcl::find class dup_sort] == "" } {
 # ------------------------------------------------------------------
 itcl::body dup_sort::constructor {args} {
     global env
+
+    # make a unique name associated with this object
+    set _name [namespace tail $this]
+    # remove dots from name so it can be used in widget names
+    regsub -all {\.} $_name "_" _name
+
 
     set _study(project) ""
     set _study(visit) ""
@@ -316,7 +324,7 @@ itcl::body dup_sort::sort {} {
         switch $_series($id,deident_method) {
             "Deface" {
                 # deface this on independently - not part of the MaskGroup
-                lappend deident_operations "dcanon/dcanon -deface $_series($id,destdir)"
+                lappend deident_operations "dcanon/dcanon -radius $_series($id,radius) -deface $_series($id,destdir)"
             }
             "Mask" {
                 lappend mask_series "$_series($id,destdir)"
@@ -343,7 +351,7 @@ itcl::body dup_sort::sort {} {
 
     if { $_series(master) != "" } {
         set scan 1
-        set cmd "scripts/birnd_up -i $_series($_series(master),destdir)"
+        set cmd "scripts/birnd_up -radius $_series($_series(master),radius) -i $_series($_series(master),destdir)"
         $this make_broken_link $_series($_series(master),destdir)-anon MaskGroup/scan_$scan
         incr scan
         foreach m $mask_series {
@@ -370,7 +378,32 @@ itcl::body dup_sort::sort {} {
 }
 
 itcl::body dup_sort::setdeident {id method} {
+
     set _series($id,deident_method) $method
+
+    if { $method == "Deface" } {
+        if { ![info exists _series($id,radius)] } {
+            set _series($id,radius) 7 ;# TODO: this is the default for all defacing
+        }
+        set d .radiusd_$_name
+        catch "destroy $d"
+        iwidgets::dialogshell $d
+        set cs [$d childsite]
+        pack [iwidgets::spinint $cs.radius -labeltext "Radius: " -range {1 20}  -width 5] -fill both -expand true 
+        $cs.radius delete 0 end
+        $cs.radius insert end $_series($id,radius) 
+        $cs.radius configure -textvariable [itcl::scope _series($id,radius)] 
+        $d add ok -text "OK" -command "set _series($id,radius) \[$cs.radius get\]; destroy $d"
+        $d add cancel -text "Cancel" -command "set _series($id,radius) $_series($id,radius); destroy $d"
+        $d default ok
+        $d activate
+        update
+        grab $d
+        tkwait window $d
+        grab release $d
+
+        puts $_series($id,radius)
+    }
 }
 
 itcl::body dup_sort::view {id} {
