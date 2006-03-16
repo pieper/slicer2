@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: isframes.tcl,v $
-#   Date:      $Date: 2006/03/16 18:42:22 $
-#   Version:   $Revision: 1.9 $
+#   Date:      $Date: 2006/03/16 22:37:15 $
+#   Version:   $Revision: 1.10 $
 # 
 #===============================================================================
 # FILE:        isframes.tcl
@@ -275,21 +275,27 @@ itcl::configbody isframes::frame {
         pack forget $_image
         pack $_text -fill both -expand true
 
-        if { $itk_option(-dumpcommand) != "" } {
-            set fp [open "| $itk_option(-dumpcommand) $filename" "r"]
+        if { [file isdirectory $filename] } {
+            set contents "$filename is a directory"
         } else {
-            set fp [open $filename "r"]
+            if { $itk_option(-dumpcommand) != "" } {
+                set fp [open "| $itk_option(-dumpcommand) $filename" "r"]
+            } else {
+                set fp [open $filename "r"]
+            }
+            set contents [read $fp]
+            close $fp
         }
-        set contents [read $fp]
-        close $fp
+        set oscroll [lindex [$_text yview] 0]
         $_text clear
         $_text insert 1.0 $contents
+        $_text yview moveto $oscroll
     } else {
         pack forget $_text
         pack $_image -fill both -expand true
+        set imgr ::imgr_$_name
+        catch "$imgr Delete"
         if { $filetype != "" } {
-            set imgr ::imgr_$_name
-            catch "$imgr Delete"
             vtk${filetype}Reader $imgr
         } else {
             set ext [string tolower [file extension $filename]]
