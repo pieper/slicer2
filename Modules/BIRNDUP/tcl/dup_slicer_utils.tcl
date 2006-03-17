@@ -617,3 +617,49 @@ proc dup_tempdir {} {
     # If nothing else worked...
     return [pwd]
 }
+
+# return the information required by the --all-info flag
+proc dup_AllInfo { {argv {}} {programVersion "none"} } {
+
+    if {[info exists ::SLICER(versionInfo)]} {
+        set infoText $::SLICER(versionInfo)
+    } else {
+        set execName "slicer2-linux-x86"
+        set infoText "ProgramName: $execName ProgramArguments: $argv\nTimeStamp: [clock format [clock seconds] -format "%D-%T-%Z"] User: $::env(USER) Machine: $::tcl_platform(machine) Platform: $::tcl_platform(os) PlatformVersion: $::tcl_platform(osVersion)"
+    }
+
+    if {$programVersion == "none"} {
+        if {[info exist ::SLICER(version)]} {
+            set programVersion $::SLICER(version)
+        }
+    }
+
+    package require vtkSlicerBase
+    catch "infoSlicer Delete"
+    vtkMrmlSlicer infoSlicer
+
+    set compilerVersion [infoSlicer GetCompilerVersion]
+    set compilerName [infoSlicer GetCompilerName]
+    set vtkVersion [infoSlicer GetVTKVersion]
+
+    if {[info command vtkITKVersion] == ""} {
+        set itkVersion "none"
+    } else {
+        catch "vtkITKVersion vtkitkver"
+        catch "set itkVersion [vtkitkver GetITKVersion]"
+        catch "vtkitkver Delete"
+    }
+    set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: $::tcl_patchLevel LibName: TK LibVersion: $::tk_patchLevel LibName: ITK LibVersion: ${itkVersion}"
+    set cvsID {$Id: dup_slicer_utils.tcl,v 1.4 2006/03/17 21:58:49 nicole Exp $}
+    set idText "BIRNDUP"
+    foreach a $cvsID {
+        lappend idText [string trim $a {$ \t}]
+    }
+    set infoText "$infoText  Version: $programVersion CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: $idText "
+
+    infoSlicer Delete
+
+    puts $infoText
+
+    return $infoText
+}
