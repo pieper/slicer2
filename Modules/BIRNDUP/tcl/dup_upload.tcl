@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup_upload.tcl,v $
-#   Date:      $Date: 2006/03/17 22:45:01 $
-#   Version:   $Revision: 1.10 $
+#   Date:      $Date: 2006/03/17 23:15:36 $
+#   Version:   $Revision: 1.11 $
 # 
 #===============================================================================
 # FILE:        dup_upload.tcl
@@ -106,13 +106,13 @@ itcl::body dup_upload::run {dir} {
 
     $parent log "starting upload of $dir"
 
-    if { [dup_DevOKCancel "Upload of $dir cannot be done automatically.  \nIf you have manually uploaded, click OK and this copy will be deleted.\n\nIf you click Cancel, will not be deleted, but will be marked as finished and removed from the interface." ] == "ok" } {
+    if { [dup_DevOKCancel "Upload of $dir cannot be done automatically.\n\nIf you have manually uploaded, click OK and this copy will be deleted.\n\nIf you click Cancel, the data will not be deleted, but will be marked as finished and removed from the interface." ] == "ok" } {
         file delete -force $dir
+        $parent log "local copy of $dir deleted"
     } else {
-        close [open $_studydir/uploaded "w"]
+        close [open $dir/uploaded "w"]
+        $parent log "local copy of $dir not deleted, but marked as uploaded"
     }
-
-    tk_messageBox -message "Note: upload not yet integrated.  See the information in the upload2 directory for manual upload instructions"
 
     $parent log "finished upload of $dir"
     $parent refresh upload

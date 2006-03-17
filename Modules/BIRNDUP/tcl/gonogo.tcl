@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: gonogo.tcl,v $
-#   Date:      $Date: 2006/03/17 21:57:17 $
-#   Version:   $Revision: 1.13 $
+#   Date:      $Date: 2006/03/17 23:15:53 $
+#   Version:   $Revision: 1.14 $
 # 
 #===============================================================================
 # FILE:        gonogo.tcl
@@ -112,7 +112,7 @@ proc createImages {} {
 proc getDone {upload_file defer_file} {
     global ROOT
 
-    set msg "UPLOAD FILE=$upload_file\nDEFER FILE=$defer_file\n\nDEFER FILE contains the list of deferred series.\nUPLOAD FILE contains the list of series that were approved for upload, this file should be edited and used as the input file for upload2.pl."
+    set msg "UPLOAD FILE=\n$upload_file\nDEFER FILE=\n$defer_file\n\nDEFER FILE contains the list of deferred series.\nUPLOAD FILE contains the list of series that were approved for upload, used as the basis for file uploads."
 
     catch {destroy $ROOT.done}
     toplevel $ROOT.done -class Dialog
