@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup.tcl,v $
-#   Date:      $Date: 2006/03/17 15:44:56 $
-#   Version:   $Revision: 1.19 $
+#   Date:      $Date: 2006/03/17 21:35:07 $
+#   Version:   $Revision: 1.20 $
 # 
 #===============================================================================
 # FILE:        dup.tcl
@@ -178,7 +178,7 @@ itcl::body dup::about_dialog {} {
 
 itcl::body dup::help {} {
 
-    dup_DevInfoWindow "Biomedical Informatics Research Network\nDeidentification and Upload Pipeline.\n\nwww.nbirn.net\n\nFor Evaluation Use Only."
+    dup_DevInfoWindow "For information about this software, see: http://www.na-mic.org/Wiki/index.php/MBIRN:BIRNDUP:Distribution"
 }
 
 itcl::body dup::fill { {dir "choose"} } {
