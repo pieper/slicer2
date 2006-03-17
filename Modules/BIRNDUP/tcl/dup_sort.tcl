@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup_sort.tcl,v $
-#   Date:      $Date: 2006/03/16 22:57:11 $
-#   Version:   $Revision: 1.20 $
+#   Date:      $Date: 2006/03/17 19:32:46 $
+#   Version:   $Revision: 1.21 $
 # 
 #===============================================================================
 # FILE:        dup_sort.tcl
@@ -204,6 +204,15 @@ itcl::body dup_sort::fill {dir} {
     puts $birnid_manager
     set linktable [$parent pref LINKTABLE]
     set inst [$parent pref INSTITUTION]
+
+    if { ![file exists [file dirname $linktable]] } {
+        set ret [dup_DevOKCancel "Linktable directory [file dirname $linktable] does not exist.  Okay to create?"]
+        if { $ret == "OK" } {
+            file mkdir [file dirname $linktable]
+        } else {
+            return
+        }
+    }
 
     if { [catch "exec java -jar $birnid_manager -create -p $inst -l $linktable -c $patient" resp] } {
         dup_DevErrorWindow "Cannot execute BIRN ID manager.  Ensure that Java is installed on your machine.\n\n$resp"
