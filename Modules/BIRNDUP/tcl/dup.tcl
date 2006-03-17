@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup.tcl,v $
-#   Date:      $Date: 2006/03/17 21:35:07 $
-#   Version:   $Revision: 1.20 $
+#   Date:      $Date: 2006/03/17 23:15:17 $
+#   Version:   $Revision: 1.21 $
 # 
 #===============================================================================
 # FILE:        dup.tcl
@@ -198,7 +198,7 @@ itcl::body dup::load_example { {dir "choose"} } {
 
     if { $dir == "choose" } {
         set dir [tk_chooseDirectory \
-                    -initialdir [$this pref DEFACE_DIR]/../example-data \
+                    -initialdir [$this pref DEFACE_DIR]/../example-data/Project_x \
                     -title "Select Example Project Review Directory" ]
     }
     
@@ -206,7 +206,7 @@ itcl::body dup::load_example { {dir "choose"} } {
         set target [$this pref DEFACE_DIR]/[file tail $dir]
         if { [file exists $target] } {
             set ret [dup_DevOKCancel "Directory $target already exists - delete it?"]
-            if { $ret == "OK" } {
+            if { $ret == "ok" } {
                 file delete -force $target
             } else {
                 return
