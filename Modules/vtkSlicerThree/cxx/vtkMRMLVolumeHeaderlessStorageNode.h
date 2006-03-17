@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLVolumeHeaderlessStorageNode.h,v $
-  Date:      $Date: 2006/03/16 22:09:00 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2006/03/17 15:10:10 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLVolumeHeaderlessStorageNode - MRML node for representing a volume (image stack).
@@ -65,7 +65,7 @@ class VTK_EXPORT vtkMRMLVolumeHeaderlessStorageNode : public vtkMRMLStorageNode
 
   // Description:
   // Copy the node's attributes to this object
-  virtual void Copy(vtkMRMLVolumeHeaderlessStorageNode *node);
+  virtual void Copy(vtkMRMLNode *node);
 
   // Description:
   // Get node XML tag name (like Storage, Model)

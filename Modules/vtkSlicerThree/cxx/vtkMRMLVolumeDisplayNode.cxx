@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLVolumeDisplayNode.cxx,v $
-Date:      $Date: 2006/03/16 22:09:00 $
-Version:   $Revision: 1.1 $
+Date:      $Date: 2006/03/17 15:10:10 $
+Version:   $Revision: 1.2 $
 
 =========================================================================auto=*/
 
@@ -81,8 +81,48 @@ vtkMRMLVolumeDisplayNode::~vtkMRMLVolumeDisplayNode()
 //----------------------------------------------------------------------------
 void vtkMRMLVolumeDisplayNode::WriteXML(ostream& of, int nIndent)
 {
-  vtkErrorMacro("NOT IMPLEMENTED YET");
-  (void)of; (void)nIndent;
+Superclass::WriteXML(of, nIndent);
+
+  vtkIndent indent(nIndent);
+
+  if (this->LUTName != NULL) {
+    of << indent << "LUTName='" << this->LUTName << "' ";
+  }
+
+  std::stringstream ss;
+
+  ss << this->Window;
+  of << indent << "Window='" << ss.str() << "' ";
+  ss.clear();
+
+  ss << this->Level;
+  of << indent << "Level='" << ss.str() << "' ";
+  ss.clear();
+
+  ss << this->UpperThreshold;
+  of << indent << "UpperThreshold='" << ss.str() << "' ";
+  ss.clear();
+
+  ss << this->LowerThreshold;
+  of << indent << "LowerThreshold='" << ss.str() << "' ";
+  ss.clear();
+
+  ss << this->Interpolate;
+  of << indent << "Interpolate='" << ss.str() << "' ";
+  ss.clear();
+
+  ss << this->AutoWindowLevel;
+  of << indent << "AutoWindowLevel='" << ss.str() << "' ";
+  ss.clear();
+
+  ss << this->ApplyThreshold;
+  of << indent << "ApplyThreshold='" << ss.str() << "' ";
+  ss.clear();
+
+  ss << this->AutoThreshold;
+  of << indent << "AutoThreshold='" << ss.str() << "' ";
+  ss.clear();
+
 }
 
 //----------------------------------------------------------------------------
@@ -142,9 +182,10 @@ void vtkMRMLVolumeDisplayNode::ReadXMLAttributes(const char** atts)
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, Name, VolumeID
-void vtkMRMLVolumeDisplayNode::Copy(vtkMRMLVolumeDisplayNode *node)
+void vtkMRMLVolumeDisplayNode::Copy(vtkMRMLNode *anode)
 {
-  Superclass::Copy(node);
+  Superclass::Copy(anode);
+  vtkMRMLVolumeDisplayNode *node = (vtkMRMLVolumeDisplayNode *) anode;
 
   this->SetLUTName(node->LUTName);
   this->SetAutoWindowLevel(node->AutoWindowLevel);

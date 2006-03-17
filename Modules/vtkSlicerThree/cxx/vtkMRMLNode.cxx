@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLNode.cxx,v $
-Date:      $Date: 2006/03/13 22:15:10 $
-Version:   $Revision: 1.10 $
+Date:      $Date: 2006/03/17 15:10:09 $
+Version:   $Revision: 1.11 $
 
 =========================================================================auto=*/
 #include "vtkMRMLNode.h"
@@ -88,7 +88,16 @@ void vtkMRMLNode::PrintSelf(ostream& os, vtkIndent indent)
 //----------------------------------------------------------------------------
 void vtkMRMLNode::WriteXML(ostream& of, int nIndent)
 {
-  vtkErrorMacro("NOT IMPLEMENTED YET");
+  vtkIndent indent(nIndent);
+  if (this->ID != NULL) {
+    of << indent << "ID='" << this->ID << "' ";
+  }
+  if (this->Name != NULL) {
+    of << indent << "Name='" << this->Name << "' ";
+  }
+  if (this->Description != NULL) {
+    of << indent << "Description='" << this->Description << "' ";
+  }
 }
 
 //----------------------------------------------------------------------------

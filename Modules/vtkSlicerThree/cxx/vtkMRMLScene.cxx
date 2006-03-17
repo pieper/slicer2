@@ -7,13 +7,14 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLScene.cxx,v $
-Date:      $Date: 2006/03/13 22:15:10 $
-Version:   $Revision: 1.17 $
+Date:      $Date: 2006/03/17 15:10:09 $
+Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 #include <sstream>
-#include <hash_map>
+#include <map>
 
+//#include <hash_map>
 //#include <vtksys/SystemTools.hxx> 
 
 #include "vtkMRMLScene.h"
@@ -163,7 +164,12 @@ int vtkMRMLScene::Commit(const char* url)
       indent -=2;
     }
     
+    vtkIndent vindent(indent);
+    file << vindent << "<" << node->GetNodeTagName() << "\n";
+
     node->WriteXML(file, indent);
+    
+    file << vindent << "></" << node->GetNodeTagName() << ">\n";
     
     if ( deltaIndent > 0 ) {
       indent += 2;
@@ -526,7 +532,8 @@ void vtkMRMLScene::Undo()
   int n;
 
   vtkCollection* currentScene = this->CurrentScene;
-  std::hash_map<std::string, vtkMRMLNode*> currentMap;
+  //std::hash_map<std::string, vtkMRMLNode*> currentMap;
+  std::map<std::string, vtkMRMLNode*> currentMap;
   nnodes = currentScene->GetNumberOfItems();
   for (n=0; n<nnodes; n++) {
     vtkMRMLNode *node  = dynamic_cast < vtkMRMLNode *>(currentScene->GetItemAsObject(n));
@@ -536,7 +543,8 @@ void vtkMRMLScene::Undo()
   }
 
   vtkCollection* undoScene = dynamic_cast < vtkCollection *>( this->UndoStack.back() );;
-  std::hash_map<std::string, vtkMRMLNode*> undoMap;
+  //std::hash_map<std::string, vtkMRMLNode*> undoMap;
+  std::map<std::string, vtkMRMLNode*> undoMap;
   nnodes = undoScene->GetNumberOfItems();
   for (n=0; n<nnodes; n++) {
     vtkMRMLNode *node  = dynamic_cast < vtkMRMLNode *>(undoScene->GetItemAsObject(n));
@@ -545,8 +553,10 @@ void vtkMRMLScene::Undo()
     }
   }
 
-  std::hash_map<std::string, vtkMRMLNode*>::iterator iter;
-  std::hash_map<std::string, vtkMRMLNode*>::iterator curIter;
+  //std::hash_map<std::string, vtkMRMLNode*>::iterator iter;
+  //std::hash_map<std::string, vtkMRMLNode*>::iterator curIter;
+  std::map<std::string, vtkMRMLNode*>::iterator iter;
+  std::map<std::string, vtkMRMLNode*>::iterator curIter;
 
   // copy back changes and add deleted nodes to the current scene
   std::vector<vtkMRMLNode*> addNodes;

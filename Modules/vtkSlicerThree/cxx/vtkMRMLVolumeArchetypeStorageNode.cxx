@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLVolumeArchetypeStorageNode.cxx,v $
-Date:      $Date: 2006/03/13 22:15:11 $
-Version:   $Revision: 1.5 $
+Date:      $Date: 2006/03/17 15:10:10 $
+Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 
@@ -56,22 +56,25 @@ vtkMRMLNode* vtkMRMLVolumeArchetypeStorageNode::CreateNodeInstance()
 //----------------------------------------------------------------------------
 vtkMRMLVolumeArchetypeStorageNode::vtkMRMLVolumeArchetypeStorageNode()
 {
-  this->FileArcheType = NULL;
+  this->FileArchetype = NULL;
 }
 
 //----------------------------------------------------------------------------
 vtkMRMLVolumeArchetypeStorageNode::~vtkMRMLVolumeArchetypeStorageNode()
 {
-  if (this->FileArcheType) {
-    delete [] this->FileArcheType;
-    this->FileArcheType = NULL;
+  if (this->FileArchetype) {
+    delete [] this->FileArchetype;
+    this->FileArchetype = NULL;
   }
 }
 
 void vtkMRMLVolumeArchetypeStorageNode::WriteXML(ostream& of, int nIndent)
 {
-  vtkErrorMacro("NOT IMPLEMENTED YET");
-  (void)of; (void)nIndent;
+  Superclass::WriteXML(of, nIndent);
+  vtkIndent indent(nIndent);
+  if (this->FileArchetype != NULL) {
+    of << indent << "FileArchetype='" << this->FileArchetype << "' ";
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -85,8 +88,8 @@ void vtkMRMLVolumeArchetypeStorageNode::ReadXMLAttributes(const char** atts)
   while (*atts != NULL) {
     attName = *(atts++);
     attValue = *(atts++);
-    if (!strcmp(attName, "FileArcheType")) {
-      this->SetFileArcheType(attValue);
+    if (!strcmp(attName, "FileArchetype")) {
+      this->SetFileArchetype(attValue);
     }
   }
 }
@@ -96,11 +99,10 @@ void vtkMRMLVolumeArchetypeStorageNode::ReadXMLAttributes(const char** atts)
 // Does NOT copy: ID, FilePrefix, Name, StorageID
 void vtkMRMLVolumeArchetypeStorageNode::Copy(vtkMRMLNode *anode)
 {
-  vtkMRMLStorageNode::Copy(anode);
+  Superclass::Copy(anode);
   vtkMRMLVolumeArchetypeStorageNode *node = (vtkMRMLVolumeArchetypeStorageNode *) anode;
 
-  // Strings
-  this->SetFileArcheType(node->FileArcheType);
+  this->SetFileArchetype(node->FileArchetype);
 }
 
 //----------------------------------------------------------------------------
@@ -108,8 +110,8 @@ void vtkMRMLVolumeArchetypeStorageNode::PrintSelf(ostream& os, vtkIndent indent)
 {  
   vtkMRMLStorageNode::PrintSelf(os,indent);
 
-  os << indent << "FileArcheType: " <<
-    (this->FileArcheType ? this->FileArcheType : "(none)") << "\n";
+  os << indent << "FileArchetype: " <<
+    (this->FileArchetype ? this->FileArchetype : "(none)") << "\n";
 }
 
 //----------------------------------------------------------------------------
@@ -136,10 +138,10 @@ void vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
 
   std::string fullName;
   if (this->SceneRootDir != NULL) {
-    fullName = std::string(this->SceneRootDir) + std::string(this->GetFileArcheType());
+    fullName = std::string(this->SceneRootDir) + std::string(this->GetFileArchetype());
   }
   else {
-    fullName = std::string(this->GetFileArcheType());
+    fullName = std::string(this->GetFileArchetype());
   }
 
   if (fullName == std::string("")) {
@@ -174,6 +176,7 @@ void vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
     }
   }
   volNode->SetIjkToRasMatrix(mat);
+  volNode->SetStorageNode(this);
   //TODO update scene to send Modified event
 }
 
@@ -192,10 +195,10 @@ void vtkMRMLVolumeArchetypeStorageNode::WriteData(vtkMRMLNode *refNode)
   
   std::string fullName;
   if (this->SceneRootDir != NULL) {
-    fullName = std::string(this->SceneRootDir) + std::string(this->GetFileArcheType());
+    fullName = std::string(this->SceneRootDir) + std::string(this->GetFileArchetype());
   }
   else {
-    fullName = std::string(this->GetFileArcheType());
+    fullName = std::string(this->GetFileArchetype());
   }
   
   if (fullName == std::string("")) {

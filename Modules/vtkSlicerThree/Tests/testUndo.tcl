@@ -13,31 +13,31 @@ set n [sc GetNthNodeByClass 0 vtkMRMLVolumeArchetypeStorageNode]
 puts "Print Storage node 0"
 puts "[$n Print]"
 
-puts "GetFileArcheType = [$n GetFileArcheType]"
+puts "GetFileArchetype = [$n GetFileArchetype]"
 
 sc SaveStateForUndo $n
-$n SetFileArcheType ff1
-puts "GetFileArcheType = [$n GetFileArcheType]"
+$n SetFileArchetype ff1
+puts "GetFileArchetype = [$n GetFileArchetype]"
 
 sc SaveStateForUndo $n
-$n SetFileArcheType ff2
-puts "GetFileArcheType = [$n GetFileArcheType]"
+$n SetFileArchetype ff2
+puts "GetFileArchetype = [$n GetFileArchetype]"
 
 sc SaveStateForUndo $n
-$n SetFileArcheType ff3
-puts "GetFileArcheType = [$n GetFileArcheType]"
+$n SetFileArchetype ff3
+puts "GetFileArchetype = [$n GetFileArchetype]"
 
 puts Undo
 sc Undo
-puts "GetFileArcheType = [$n GetFileArcheType]"
+puts "GetFileArchetype = [$n GetFileArchetype]"
 
 puts Undo
 sc Undo
-puts "GetFileArcheType = [$n GetFileArcheType]"
+puts "GetFileArchetype = [$n GetFileArchetype]"
 
 puts Undo
 sc Undo
-puts "GetFileArcheType = [$n GetFileArcheType]"
+puts "GetFileArchetype = [$n GetFileArchetype]"
 
 
 
