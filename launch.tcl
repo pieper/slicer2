@@ -129,7 +129,13 @@ foreach v $envVars {
     if {[lsearch $envVarsToSet $v] != -1} {
         # it's not set already, use our values, either from the variables file, 
         # or our defaults set above, ie set env(VTK_DIR) $VTK_DIR
-        set ::env($v) [subst $$v]
+        if { [set $v] == "" } {
+            # need to set empty string to something because setting
+            # env var to "" actually unsets it so it can't be referenced later
+            set ::env($v) "/dev/null"
+        } else {
+            set ::env($v) [set $v]
+        }
     } else {
         # it's already been set, don't over-ride
         puts stderr "NOT Overriding current $v $::env($v)"
