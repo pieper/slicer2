@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup_sort.tcl,v $
-#   Date:      $Date: 2006/03/17 19:32:46 $
-#   Version:   $Revision: 1.21 $
+#   Date:      $Date: 2006/03/17 22:00:20 $
+#   Version:   $Revision: 1.22 $
 # 
 #===============================================================================
 # FILE:        dup_sort.tcl
@@ -207,17 +207,19 @@ itcl::body dup_sort::fill {dir} {
 
     if { ![file exists [file dirname $linktable]] } {
         set ret [dup_DevOKCancel "Linktable directory [file dirname $linktable] does not exist.  Okay to create?"]
-        if { $ret == "OK" } {
+        if { $ret == "ok" } {
             file mkdir [file dirname $linktable]
         } else {
             return
         }
     }
 
+    puts "ProgramName: java -jar $birnid_manager ProgramArguments: -create -p $inst -l $linktable -c $patient TimeStamp: [clock format [clock seconds] -format \"%D-%T-%Z\"] User: $::env(USER) Machine: $::tcl_platform(machine)"
     if { [catch "exec java -jar $birnid_manager -create -p $inst -l $linktable -c $patient" resp] } {
         dup_DevErrorWindow "Cannot execute BIRN ID manager.  Ensure that Java is installed on your machine.\n\n$resp"
     } else {
 
+        puts "ProgramName: java -jar $birnid_manager ProgramArguments: -find -l $linktable -c $patient TimeStamp: [clock format [clock seconds] -format \"%D-%T-%Z\"] User: $::env(USER) Machine: $::tcl_platform(machine)"
         if { [catch "exec java -jar $birnid_manager -find -l $linktable -c $patient" resp] } {
             dup_DevErrorWindow "Cannot execute BIRN ID manager to access BIRN ID.  Ensure that LINKTABLE preference is correct.\n\n$resp"
             set birnid ""
@@ -336,16 +338,16 @@ itcl::body dup_sort::sort {} {
         switch $_series($id,deident_method) {
             "Deface" {
                 # deface this on independently - not part of the MaskGroup
-                lappend deident_operations "dcanon/dcanon -radius $_series($id,radius) -deface $_series($id,destdir)"
+                lappend deident_operations "dcanon/dcanon --all-info -radius $_series($id,radius) -deface $_series($id,destdir)"
             }
             "Mask" {
                 lappend mask_series "$_series($id,destdir)"
             }
             "Header Only" {
-                lappend deident_operations "dcanon/dcanon -convert $_series($id,destdir)"
+                lappend deident_operations "dcanon/dcanon --all-info -convert $_series($id,destdir)"
             }
             "As Is" {
-                lappend deident_operations "dcanon/dcanon -noanon -convert $_series($id,destdir)"
+                lappend deident_operations "dcanon/dcanon --all-info -noanon -convert $_series($id,destdir)"
             }
             "Do Not Upload" {
                 # nothing
@@ -363,7 +365,7 @@ itcl::body dup_sort::sort {} {
 
     if { $_series(master) != "" } {
         set scan 1
-        set cmd "scripts/birnd_up -radius $_series($_series(master),radius) -i $_series($_series(master),destdir)"
+        set cmd "scripts/birnd_up --all-info -radius $_series($_series(master),radius) -i $_series($_series(master),destdir)"
         $this make_broken_link $_series($_series(master),destdir)-anon MaskGroup/scan_$scan
         incr scan
         foreach m $mask_series {
