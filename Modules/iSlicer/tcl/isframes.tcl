@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: isframes.tcl,v $
-#   Date:      $Date: 2006/03/16 22:37:15 $
-#   Version:   $Revision: 1.10 $
+#   Date:      $Date: 2006/03/17 23:16:12 $
+#   Version:   $Revision: 1.11 $
 # 
 #===============================================================================
 # FILE:        isframes.tcl
@@ -278,13 +278,19 @@ itcl::configbody isframes::frame {
         if { [file isdirectory $filename] } {
             set contents "$filename is a directory"
         } else {
-            if { $itk_option(-dumpcommand) != "" } {
-                set fp [open "| $itk_option(-dumpcommand) $filename" "r"]
-            } else {
-                set fp [open $filename "r"]
+            set ret [ catch {
+                if { $itk_option(-dumpcommand) != "" } {
+                    set fp [open "| $itk_option(-dumpcommand) $filename" "r"]
+                } else {
+                    set fp [open $filename "r"]
+                }
+                set contents [read $fp]
+                close $fp
+            } res ]
+            
+            if { $ret } {
+                set contents "Error opening $filename with $itk_option(-dumpcommand)\n\n$res"
             }
-            set contents [read $fp]
-            close $fp
         }
         set oscroll [lindex [$_text yview] 0]
         $_text clear
