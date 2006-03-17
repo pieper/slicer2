@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup_review.tcl,v $
-#   Date:      $Date: 2006/03/15 00:17:49 $
-#   Version:   $Revision: 1.12 $
+#   Date:      $Date: 2006/03/17 15:45:43 $
+#   Version:   $Revision: 1.13 $
 # 
 #===============================================================================
 # FILE:        dup_review.tcl
@@ -109,7 +109,11 @@ itcl::body dup_review::run {studydir} {
     # TODO - this avoids warning messages when slicer starts
     set ::env(SLICER_CUSTOM_CONFIG) "true"
     # TODO - this is linux only
-    catch "exec $::env(SLICER_HOME)/slicer2-linux-x86 --agree_to_license $::PACKAGE_DIR_BIRNDUP/../../../tcl/gonogo.tcl $studydir"
+    set ret [catch "exec $::env(SLICER_HOME)/slicer2-$::env(BUILD) --agree_to_license $::PACKAGE_DIR_BIRNDUP/../../../tcl/gonogo.tcl $studydir" res]
+
+    if { $ret && $::errorCode != "NONE" } {
+        dup_DevErrorWindow "Could not launch the review process.  Please file a bug report with the following information.\n\n$res"
+    }
 
     if { ![file exists $studydir/upload_list.txt] } {
         # user cancelled
