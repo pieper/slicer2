@@ -132,7 +132,7 @@ foreach v $envVars {
         if { [set $v] == "" } {
             # need to set empty string to something because setting
             # env var to "" actually unsets it so it can't be referenced later
-            set ::env($v) "/dev/null"
+            set ::env($v) ":"
         } else {
             set ::env($v) [set $v]
         }
