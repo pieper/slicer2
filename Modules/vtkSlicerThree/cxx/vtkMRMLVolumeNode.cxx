@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLVolumeNode.cxx,v $
-Date:      $Date: 2006/03/17 15:10:10 $
-Version:   $Revision: 1.13 $
+Date:      $Date: 2006/03/17 17:01:53 $
+Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 
@@ -99,8 +99,8 @@ void vtkMRMLVolumeNode::WriteXML(ostream& of, int nIndent)
   if (this->StorageNodeID != NULL) {
     of << indent << "StorageNodeID='" << this->StorageNodeID << "' ";
   }
-  if (this->StorageNodeID != NULL) {
-    of << indent << "StorageNodeID='" << this->StorageNodeID << "' ";
+  if (this->DisplayNodeID != NULL) {
+    of << indent << "DisplayNodeID='" << this->DisplayNodeID << "' ";
   }
   if (this->IjkToRasDirections != NULL) {
     std::stringstream ss;
@@ -375,7 +375,7 @@ void vtkMRMLVolumeNode::UpdateScene(vtkMRMLScene *scene)
     return;
   }
 
-  vtkCollection* nodes = scene->GetNodesByID(StorageNodeID);
+  vtkCollection* nodes = scene->GetNodesByID(this->StorageNodeID);
   if (nodes->GetNumberOfItems() != 1) {
     vtkErrorMacro("Not unique reference to StorageNode: ID" << StorageNodeID);
   }
@@ -384,13 +384,15 @@ void vtkMRMLVolumeNode::UpdateScene(vtkMRMLScene *scene)
     node->ReadData(this);
   }
   
-  nodes = scene->GetNodesByID(DisplayNodeID);
-  if (nodes->GetNumberOfItems() != 1) {
-    vtkErrorMacro("Not unique reference to DisplayNodeID: ID" << StorageNodeID);
-  }
-  vtkMRMLVolumeDisplayNode *displayNode  = dynamic_cast < vtkMRMLVolumeDisplayNode *>(nodes->GetItemAsObject(0));
+  if (this->DisplayNodeID != NULL) {
+  nodes = scene->GetNodesByID(this->DisplayNodeID);
+    if (nodes->GetNumberOfItems() != 1) {
+      vtkErrorMacro("Not unique reference to DisplayNodeID: ID" << StorageNodeID);
+    }
+    vtkMRMLVolumeDisplayNode *displayNode  = dynamic_cast < vtkMRMLVolumeDisplayNode *>(nodes->GetItemAsObject(0));
 
-  this->SetDisplayNode(displayNode);
+    this->SetDisplayNode(displayNode);
+  }
   
 }
 
