@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup_deidentify.tcl,v $
-#   Date:      $Date: 2006/03/16 22:35:00 $
-#   Version:   $Revision: 1.15 $
+#   Date:      $Date: 2006/03/17 22:00:53 $
+#   Version:   $Revision: 1.16 $
 # 
 #===============================================================================
 # FILE:        dup_deidentify.tcl
@@ -170,7 +170,7 @@ itcl::body dup_deidentify::run {dir} {
 
             set steps 15 ;# face 24 degrees per frame
             set skip 3 ;# slices show every 3 mm
-            set res [$this execute $::env(SLICER_HOME)/slicer2-linux-x86 --agree_to_license --no-tkcon --load-dicom $ser --script $::env(SLICER_HOME)/Modules/iSlicer/tcl/evaluation-movies.tcl --exec eval_movies $ser/Deface $steps $skip ., exit]
+            set res [$this execute $::env(SLICER_HOME)/slicer2-linux-x86 --agree_to_license --all-info --no-tkcon --load-dicom $ser --script $::env(SLICER_HOME)/Modules/iSlicer/tcl/evaluation-movies.tcl --exec eval_movies $ser/Deface $steps $skip ., exit]
             if { $_return_code } {
                 puts stderr "rendering failed with error:\n$_result\nresult: \n$res"
                 $parent log "rendering failed with error:\n$_result\nresult: \n$res"
