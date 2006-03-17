@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: gonogo.tcl,v $
-#   Date:      $Date: 2006/03/17 21:35:44 $
-#   Version:   $Revision: 1.12 $
+#   Date:      $Date: 2006/03/17 21:57:17 $
+#   Version:   $Revision: 1.13 $
 # 
 #===============================================================================
 # FILE:        gonogo.tcl
@@ -51,6 +51,8 @@
 
 global MP ROOT VIEW_LIST
 set VIEW_LIST "face slices-axial slices-coronal slices-sagittal"
+
+set GONOGO_VERSION "0.9"
 
 # TODO - fix mplayer
 ##set MP $env(MP_PATH)
@@ -496,7 +498,7 @@ proc mpTogglePause {view} {
 proc viewSlicer {series_path} {
 
     # TODO - this is linux specific
-    set pid_slicer [exec $::env(SLICER_HOME)/slicer2-linux-x86 --load-dicom $series_path &]
+    set pid_slicer [exec $::env(SLICER_HOME)/slicer2-linux-x86 --all-info --load-dicom $series_path &]
 }
 
 #-------------------------------------------------------------------------------
@@ -512,6 +514,12 @@ proc main {} {
         exit 1
     }
 
+    if { [catch "package require BIRNDUP"] } {
+        dup_DevErrorWindow "Need BIRNDUP Module to run this program. Please update Slicer"
+        exit 1
+    }
+
+    dup_AllInfo $::argv $::GONOGO_VERSION
 
     set ROOT ""
 
