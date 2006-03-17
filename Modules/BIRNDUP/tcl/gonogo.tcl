@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: gonogo.tcl,v $
-#   Date:      $Date: 2006/03/16 22:36:35 $
-#   Version:   $Revision: 1.11 $
+#   Date:      $Date: 2006/03/17 21:35:44 $
+#   Version:   $Revision: 1.12 $
 # 
 #===============================================================================
 # FILE:        gonogo.tcl
@@ -434,10 +434,12 @@ proc mpOpen {view} {
 
     pack [isframes $w.isf -filepattern $mp_file($view,pattern)] -fill both -expand true
     [$w.isf task] on
-    
+    wm protocol $w WM_DELETE_WINDOW "mpClose $view"
+
     $ROOT.mp.$view.play config -state normal
     $ROOT.mp.$view.forward config -state normal
     eval $ROOT.mp.$view.open config -text Close -command [list "mpClose $view"]
+
 }
 
 #-------------------------------------------------------------------------------
