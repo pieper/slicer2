@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup.tcl,v $
-#   Date:      $Date: 2006/03/15 22:52:18 $
-#   Version:   $Revision: 1.18 $
+#   Date:      $Date: 2006/03/17 15:44:56 $
+#   Version:   $Revision: 1.19 $
 # 
 #===============================================================================
 # FILE:        dup.tcl
@@ -373,11 +373,8 @@ itcl::body dup::prefui { } {
     $d buttonconfigure OK -command "$this pref_save; $d deactivate 0"
     $d buttonconfigure Cancel -command "$this pref_restore; $d deactivate 1"
 
-    #$d configure -modality application
-
-
-    $d activate
     $d center
+    $d activate
 }
 
 #-------------------------------------------------------------------------------
