@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkMRMLVolumeHeaderlessStorageNode.cxx,v $
-Date:      $Date: 2006/03/17 15:10:10 $
-Version:   $Revision: 1.2 $
+Date:      $Date: 2006/03/18 12:24:37 $
+Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 
@@ -186,6 +186,7 @@ void vtkMRMLVolumeHeaderlessStorageNode::Copy(vtkMRMLNode *anode)
 void vtkMRMLVolumeHeaderlessStorageNode::PrintSelf(ostream& os, vtkIndent indent)
 {  
   vtkMRMLStorageNode::PrintSelf(os,indent);
+  int idx;
 
   os << indent << "Filename: " <<
     (this->Filename ? this->Filename : "(none)") << "\n";
@@ -195,7 +196,7 @@ void vtkMRMLVolumeHeaderlessStorageNode::PrintSelf(ostream& os, vtkIndent indent
   os << indent << "FileScalarType:    " << this->FileScalarType << "\n";
   os << indent << "FileNumberOfScalarComponents:  " << this->FileNumberOfScalarComponents << "\n";
   os << "FileSpacing:\n";
-  for (int idx = 0; idx < 3; ++idx) {
+  for (idx = 0; idx < 3; ++idx) {
     os << indent << ", " << this->FileSpacing[idx];
   }
   os << ")\n";
