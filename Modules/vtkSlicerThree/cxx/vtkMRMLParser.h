@@ -50,7 +50,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMRML.h"
 #include "vtkMRMLScene.h"
 
-class VTK_EXPORT vtkMRMLParser : public vtkXMLParser
+class VTK_MRML_EXPORT vtkMRMLParser : public vtkXMLParser
 {
 public:
   static vtkMRMLParser *New();

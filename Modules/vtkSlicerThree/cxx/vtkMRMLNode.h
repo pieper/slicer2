@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLNode.h,v $
-  Date:      $Date: 2006/03/13 22:15:10 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/03/19 17:12:29 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLNode - Abstract Superclass for all specific types of MRML nodes.
@@ -26,7 +26,7 @@
 
 class vtkMRMLScene;
 
-class VTK_EXPORT vtkMRMLNode : public vtkObject
+class VTK_MRML_EXPORT vtkMRMLNode : public vtkObject
 {
 public:
   static vtkMRMLNode *New();

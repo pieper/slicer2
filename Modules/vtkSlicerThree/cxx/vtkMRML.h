@@ -7,8 +7,8 @@
 
   Program:   MRML
   Module:    $RCSfile: vtkMRML.h,v $
-  Date:      $Date: 2006/03/12 16:34:34 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2006/03/19 17:12:28 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 
@@ -24,7 +24,7 @@
 #if ( (VTK_MAJOR_VERSION >= 5) || ( VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 5 ) )
 #define MRML_VTK5
 #endif
-
+/*
 #if defined(WIN32) && !defined(VTKMRML_STATIC)
 #if defined(MRML_EXPORTS)
 #define VTK_MRML_EXPORT __declspec( dllexport ) 
@@ -34,4 +34,5 @@
 #else
 #define VTK_MRML_EXPORT
 #endif
-
+*/
+#define VTK_MRML_EXPORT VTK_EXPORT

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLModelStorageNode.h,v $
-  Date:      $Date: 2006/03/10 21:23:44 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/03/19 17:12:29 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLModelStorageNode - MRML node for representing a volume (image stack).
@@ -30,7 +30,7 @@
 
 class vtkImageData;
 
-class VTK_EXPORT vtkMRMLModelStorageNode : public vtkMRMLStorageNode
+class VTK_MRML_EXPORT vtkMRMLModelStorageNode : public vtkMRMLStorageNode
 {
   public:
   static vtkMRMLModelStorageNode *New();

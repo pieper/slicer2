@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMRMLModelNode.h,v $
-  Date:      $Date: 2006/03/10 21:23:44 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/03/19 17:12:28 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 // .NAME vtkMRMLModelNode - MRML node to represent a 3D surface model.
@@ -29,7 +29,7 @@
 #include "vtkMRMLNode.h"
 
 
-class VTK_EXPORT vtkMRMLModelNode : public vtkMRMLNode
+class VTK_MRML_EXPORT vtkMRMLModelNode : public vtkMRMLNode
 {
 public:
   static vtkMRMLModelNode *New();

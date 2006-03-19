@@ -60,7 +60,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 class vtkTransform;
 
-class VTK_EXPORT vtkMRMLScene : public vtkObject
+class VTK_MRML_EXPORT vtkMRMLScene : public vtkObject
 {
 public:
   static vtkMRMLScene *New();
