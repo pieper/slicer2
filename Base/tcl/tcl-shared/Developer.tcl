@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Developer.tcl,v $
-#   Date:      $Date: 2006/03/06 19:24:26 $
-#   Version:   $Revision: 1.53 $
+#   Date:      $Date: 2006/03/20 06:45:19 $
+#   Version:   $Revision: 1.54 $
 # 
 #===============================================================================
 # FILE:        Developer.tcl
@@ -1326,3 +1326,26 @@ proc DevLaunchBrowserURL { url } {
         DevWarningWindow "Could not detect your default browser.\n\nYou may need to set your BROWSER environment variable.\n\nPlease open $url manually."
     }
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC DevNewInstance
+# create a uniquely named vtk class instances
+# .ARGS
+# class - the vtk class
+# prefix - optional name 
+# .END
+#-------------------------------------------------------------------------------
+proc DevNewInstance { class {prefix ""} } {
+
+    if { $prefix == "" } {
+        set prefix $class
+    }
+    set serial 1
+    while { [info command ${prefix}_$serial] != "" } {
+        incr serial
+    }
+    return [$class ${prefix}_$serial]
+    
+}
+
