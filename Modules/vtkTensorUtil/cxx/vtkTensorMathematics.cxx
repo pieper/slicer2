@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.cxx,v $
-  Date:      $Date: 2006/03/16 21:29:10 $
-  Version:   $Revision: 1.31 $
+  Date:      $Date: 2006/03/20 06:40:43 $
+  Version:   $Revision: 1.32 $
 
 =========================================================================auto=*/
 
@@ -29,6 +29,7 @@
 #include "vtkTransform.h"
 #include "vtkFloatArray.h"
 #include "vtkPointData.h"
+#include "vtkMathUtils.h"
 #include "time.h"
 #include "vtkLookupTable.h"
 
@@ -460,7 +461,9 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
           //  2. Take absolute value
           //  3. Increase eigenvalues by negative part
           // The two first options have been problematic. Try 3 
-          vtkTensorMathematics::FixNegativeEigenvalues(w);
+          if (vtkTensorMathematics::FixNegativeEigenvalues(w)) {
+             cout<<"Warning: Eigenvalues are not properly sorted"<<endl;
+          }   
 
           // pixel operation
           switch (op)
@@ -661,20 +664,19 @@ void vtkTensorMathematics::ThreadedExecute(vtkImageData **inData,
 
 }
 
-void  vtkTensorMathematics::FixNegativeEigenvalues(vtkFloatingPointType w[3])
+int  vtkTensorMathematics::FixNegativeEigenvalues(vtkFloatingPointType w[3])
 {
-       if(w[2]<0) {
-            w[2] = 0;
-            w[1] += (-w[2]);
-            w[0] += (-w[2]);
-        }
-        if (w[1]<0) {
-            w[1] = 0;
-            w[0] += (-w[1]);
-        }
-        if (w[0] <0) {
-            w[0]=0;
-        }    
+  if(w[2]<0) {
+     w[1] += (-w[2]);
+     w[0] += (-w[2]);
+     w[2] = 0;
+  }
+     
+  if (!((w[0]>= w[1] && w[0]>= w[2]) &&
+      (w[1]>=w[2]) ))  {
+        return -1;
+  }
+  return 0;
 }
 
 vtkFloatingPointType vtkTensorMathematics::Trace(vtkFloatingPointType D[3][3])
@@ -817,16 +819,14 @@ void vtkTensorMathematics::ModeToRGB(double Mode, double FA,
    int sextant;
 
    // Mode is clamped to [-1,1]
-   Mode = (Mode < -1
-           ? -1
-           : (Mode > 1
-              ? 1
+   Mode = (Mode < -0.9999
+           ? -0.9999
+           : (Mode > 0.9999
+              ? 0.9999
               : Mode));
    // invert mode to get desired colormap effect
    // negative (blue) up to positive (red)
    Mode = -Mode;
-   // Mode is limited to [-1,1)
-   Mode = (1 == Mode ? -1 : Mode);
    // Hue is in [0, 6)
    Hue = 3*(Mode+1);
    // to avoid using last two sextants

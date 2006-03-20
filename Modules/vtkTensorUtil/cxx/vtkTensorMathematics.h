@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.h,v $
-  Date:      $Date: 2006/03/16 21:29:10 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/03/20 06:41:19 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 // .NAME vtkTensorMathematics - Trace, determinant, anisotropy measures
@@ -186,7 +186,7 @@ public:
 
   // Description:
   // Helper functions to perform operations pixel-wise
-  static void FixNegativeEigenvalues(vtkFloatingPointType w[3]);
+  static int FixNegativeEigenvalues(vtkFloatingPointType w[3]);
   static vtkFloatingPointType Determinant(vtkFloatingPointType D[3][3]);
   static vtkFloatingPointType Trace(vtkFloatingPointType D[3][3]);
   static vtkFloatingPointType RelativeAnisotropy(vtkFloatingPointType w[3]);
