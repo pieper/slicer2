@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: AG.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:12 $
-#   Version:   $Revision: 1.19 $
+#   Date:      $Date: 2006/03/20 12:22:00 $
+#   Version:   $Revision: 1.20 $
 # 
 #===============================================================================
 # FILE:        AG.tcl
@@ -60,6 +60,7 @@
 #   AGCreateLinMat
 #   AGSaveGridTransform
 #   AGColorComparison
+#   AGCommandLine
 #==========================================================================auto=
 #===============================================================================
 # FILE:        AG.tcl   
@@ -235,7 +236,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.19 $} {$Date: 2006/01/06 17:57:12 $}]
+        {$Revision: 1.20 $} {$Date: 2006/03/20 12:22:00 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -3862,4 +3863,73 @@ proc AGColorComparison {} {
     MainSlicesSetVolumeAll Back $v2
     MainSlicesSetVolumeAll Fore $Volume(idNone)
     RenderAll
+}
+
+#-------------------------------------------------------------------------------
+# .PROC AGCommandLine
+# Command-line registration using AG. Currently, the input is analyze,
+# output is vtk. A parameter-file is needed, you can use
+# AGInitCommandLineParameters.tcl in the Modules/vtkAG/tcl directory.
+# Coregistration file is mandatory at the moment. 
+# Example usage:
+#   1) Set up a virtual display:
+#        Xvfb :2 -screen 0 800x600x16
+#   2) Run Slicer and execute AG:
+#        slicer2-linux-x86 -y --no-tkcon --exec AGCommandLine target.hdr 
+#        source.hdr coreg.hdr AGInitCommandLineParameters.tcl , exit
+#        -display :2 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc AGCommandLine { {targetname} {sourcename} {coregname} {paramfile} } {
+  # have args as extra arg
+  global AG Volume
+  puts "Targetname: $targetname"
+  puts "Sourcename: $sourcename"
+  puts "Coregname: $coregname"
+  puts "Paramfile: $paramfile"
+  
+  set resultname [string trimright $sourcename ".hdr"]
+  append resultname "_warp.vtk"
+
+  # source parameterfile, containing one proc
+  source $paramfile
+  # and run it
+  AGInitCommandLineParameters
+  puts "targetname"
+  # They are vol 1 and 2
+  set ::Volume(VolAnalyze,FileName) $targetname
+  VolAnalyzeApply; RenderAll
+  set ::Volume(VolAnalyze,FileName) $sourcename
+  VolAnalyzeApply; RenderAll
+  
+  # set target and source for registration
+  set ::AG(InputVolTarget) 1
+  set ::AG(InputVolSource) 2
+  # create new result volume = -5
+  set ::AG(ResultVol) -5
+
+  # and run
+  RunAG
+
+  # save output
+  AGWritevtkImageData [Volume($AG(ResultVol),vol) GetOutput] $resultname
+  
+  # ResultVol is 3, CoregVol 4, ResultCoregVol 5
+  # Do coregistration
+  set ::Volume(VolAnalyze,FileName) $coregname
+  VolAnalyzeApply; RenderAll
+  set ::AG(CoregVol) 4
+
+  AGCoregister
+  set coregname [string trimright $coregname ".hdr"]
+  append coregname "_coreg.vtk"
+  AGWritevtkImageData [Volume(5,vol) GetOutput] $coregname
+
+  # Write transforms to disk
+  set lintransname [string trimright $sourcename ".hdr"]
+  set gridtransname $lintransname
+  append lintransname "_lintrans"
+  append gridtransname "_gridtrans.vtk"
+  AGWriteLinearNonLinearTransform $lintransname $gridtransname
 }
