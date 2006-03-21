@@ -106,7 +106,7 @@ proc EMAtlasBrainClassifierInit {} {
    set Module($m,depend) ""
 
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.32.2.2 $} {$Date: 2006/01/07 04:00:06 $}]
+       {$Revision: 1.32.2.3 $} {$Date: 2006/03/21 05:39:51 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -127,7 +127,6 @@ proc EMAtlasBrainClassifierInit {} {
  
      set EMAtlasBrainClassifier(AlignInput) 0
  
-     # Debug 
      set EMAtlasBrainClassifier(WorkingDirectory) "$Mrml(dir)/EMSeg"    
      set EMAtlasBrainClassifier(DefaultAtlasDir)  "$env(SLICER_HOME)/Modules/vtkEMAtlasBrainClassifier/atlas"   
      set EMAtlasBrainClassifier(AtlasDir)         $EMAtlasBrainClassifier(DefaultAtlasDir)  
@@ -1098,9 +1097,8 @@ proc EMAtlasBrainClassifier_NormalizeVolume { Vol OutVol Mode} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_AtlasList { } {
-    global  EMAtlasBrainClassifier   
-    set XMLTemplateTextOrig [EMAtlasBrainClassifierReadXMLFile $EMAtlasBrainClassifier(XMLTemplate)]
+proc EMAtlasBrainClassifier_AtlasList {XMLTemplate } {
+    set XMLTemplateTextOrig [EMAtlasBrainClassifierReadXMLFile $XMLTemplate] 
     set XMLTemplateText  "$XMLTemplateTextOrig"
 
     set RegisterAtlasDirList "" 
@@ -1294,12 +1292,11 @@ proc EMAtlasBrainClassifier_AtlasRegistration {RegisterAtlasDirList RegisterAtla
       EMAtlasBrainClassifierVolumeWriter $VolIDOutput
       # Write Transformation To File
       EMAtlasBrainClassifierWriteTransformation
-
    }
    MainMrmlDeleteNode Volume $VolIDSource 
    MainUpdateMRML
    RenderAll
-  
+
    # ---------------------------------------------------------------
    # Resample atlas files
 
@@ -1446,7 +1443,7 @@ proc EMAtlasBrainClassifierDownloadAtlas { } {
 # .END
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierRegistration {inTarget inSource NonRigidRegistrationFlag {LinearRegistrationType 2} } {
-    global EMAtlasBrainClassifier Volume AG 
+    global EMAtlasBrainClassifier Volume AG MathImage
    
     
     catch "Target Delete"
@@ -1465,9 +1462,9 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource NonRigidRegistrationF
     puts "No initial transform"
     TransformEMAtlasBrainClassifier PostMultiply 
 
+    # set ::AG(Debug) 1 
     ## to be changed to EMAtlaspreprocess
     AGPreprocess Source Target $inSource $inTarget
-
 
     if { [info commands __dummy_transform] == ""} {
             vtkTransform __dummy_transform
@@ -1486,7 +1483,7 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource NonRigidRegistrationF
     ###### Linear Tfm ######
     catch "GCR Delete"
     vtkImageGCR GCR
-    GCR SetVerbose 0
+    GCR SetVerbose 1
 
     # Set i/o
     GCR SetTarget Target
@@ -1499,13 +1496,15 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource NonRigidRegistrationF
     ## Metric: 1=GCR-L1,2=GCR-L2,3=Correlation,4=MI
     GCR SetCriterion       4 
     ## Tfm type: -1=translation, 0=rigid, 1=similarity, 2=affine
+    # puts "Debug linear registrtion type"
+    # GCR SetTransformDomain 0
     GCR SetTransformDomain $LinearRegistrationType
  
     ## 2D registration only?
     GCR SetTwoD 0
   
     # Do it!
-    GCR Update     
+    GCR Update   
     TransformEMAtlasBrainClassifier Concatenate [[GCR GetGeneralTransform] GetConcatenatedTransform 1]
 
     if {$NonRigidRegistrationFlag} {
@@ -1516,7 +1515,7 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource NonRigidRegistrationF
       # Set i/o
       warp SetSource Source
       warp SetTarget Target 
-      
+
       # Set the parameters
       warp SetVerbose 0
       [warp GetGeneralTransform] SetInput TransformEMAtlasBrainClassifier
@@ -1524,8 +1523,11 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource NonRigidRegistrationF
       warp SetResliceTensors 0 
       ## 1=demon, 2=optical flow 
       warp SetForceType 1          
-      warp SetMinimumIterations  0 
+
       warp SetMaximumIterations  50
+      # puts "Debug Max Iter"
+      # warp SetMaximumIterations  1
+
       ## What does it mean?
       warp SetMinimumLevel -1  
       warp SetMaximumLevel -1  
@@ -1537,9 +1539,9 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource NonRigidRegistrationF
 
       # Do it!
       warp Update
-
+      
       TransformEMAtlasBrainClassifier Concatenate warp
-    }
+     }
   # save the transform
   set EMAtlasBrainClassifier(Transform) TransformEMAtlasBrainClassifier
 }
@@ -1599,7 +1601,7 @@ proc EMAtlasBrainClassifierWriteTransformation { } {
 # vtkImageData outResampled
 # .END
 #-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifierResample {inTarget inSource outResampled bgValue} {
+proc EMAtlasBrainClassifierResample {inTarget inSource outResampled bgValue {OutImageDataFlag 0}} {
     global EMAtlasBrainClassifier Volume Gui
     
     catch "Source Delete"
@@ -1643,12 +1645,17 @@ proc EMAtlasBrainClassifierResample {inTarget inSource outResampled bgValue} {
     # Threshold Update
     
     catch "Resampled Delete"
+    if {$OutImageDataFlag } {
+    # outResampled represents a data volume
+        $outResampled DeepCopy [Reslicer GetOutput]  
+    $outResampled SetOrigin 0 0 0
+
+    } else { 
     vtkImageData Resampled
-
     Resampled DeepCopy [Reslicer GetOutput]  
-
-    Volume($outResampled,vol) SetImageData  Resampled
+    Volume($outResampled,vol) SetImageData  Resampled 
     Resampled SetOrigin 0 0 0
+    }
     Source Delete
     Target Delete
     Cast Delete
@@ -2422,23 +2429,22 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     # ---------------------------------------------------------------
     # Align T2 to T1 
     if {$EMAtlasBrainClassifier(AlignInput) } {
-    # Just perform rigid registration
-    EMAtlasBrainClassifierRegistration $EMAtlasBrainClassifier(Volume,SPGR) $EMAtlasBrainClassifier(Volume,T2W) 0 0 
-    set VolIDOutput [DevCreateNewCopiedVolume $EMAtlasBrainClassifier(Volume,SPGR) "" "AlignedT2W"]
+      # Just perform rigid registration
+      EMAtlasBrainClassifierRegistration $EMAtlasBrainClassifier(Volume,SPGR) $EMAtlasBrainClassifier(Volume,T2W) 0 0 
+      set VolIDOutput [DevCreateNewCopiedVolume $EMAtlasBrainClassifier(Volume,SPGR) "" "AlignedT2W"]
 
-    # Resample the Atlas SPGR
-    EMAtlasBrainClassifierResample   $EMAtlasBrainClassifier(Volume,SPGR) $EMAtlasBrainClassifier(Volume,T2W) $VolIDOutput 0 
+      # Resample the Atlas SPGR
+      EMAtlasBrainClassifierResample   $EMAtlasBrainClassifier(Volume,SPGR) $EMAtlasBrainClassifier(Volume,T2W) $VolIDOutput 0 
     
-    set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/t2w-aligned/I"
-    Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
-    Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
-    Volume($VolIDOutput,node) SetLittleEndian $EMAtlasBrainClassifier(LittleEndian)
-    if {$EMAtlasBrainClassifier(Save,AlignedT2)} {
+      set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/t2w-aligned/I"
+      Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
+      Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
+      Volume($VolIDOutput,node) SetLittleEndian $EMAtlasBrainClassifier(LittleEndian)
+      if {$EMAtlasBrainClassifier(Save,AlignedT2)} {
         EMAtlasBrainClassifierVolumeWriter $VolIDOutput
+      }
+      set EMAtlasBrainClassifier(Volume,T2W) $VolIDOutput
     }
-        set EMAtlasBrainClassifier(Volume,T2W) $VolIDOutput
-    }
-    
     # ---------------------------------------------------------------
     # Normalize images
     foreach input "SPGR T2W" {
@@ -2448,7 +2454,7 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     # ---------------------------------------------------------------
     # Determine list of atlas 
     # (to be registered and resampled from template file)
-    set Result [EMAtlasBrainClassifier_AtlasList]
+    set Result [EMAtlasBrainClassifier_AtlasList $EMAtlasBrainClassifier(XMLTemplate)]
     set RegisterAtlasDirList [lindex $Result 0]
     set RegisterAtlasNameList [lindex $Result 1]
   
@@ -2531,7 +2537,10 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifier_BatchMode {{AlgorithmVersion Standard} {SegmentationMode ""} {TemplateXMLFile ""} {AtlasDir "" } {SPGRVolID 1} {T2VolID 2} {ExitFlag 1}} {
     global Mrml EMAtlasBrainClassifier Volume
- 
+
+    set EMAtlasBrainClassifier(Save,SPGR)    1
+    set EMAtlasBrainClassifier(Save,T2W)     1
+
     set EMAtlasBrainClassifier(WorkingDirectory) $Mrml(dir)
 
     set EMAtlasBrainClassifier(Volume,SPGR) [Volume($SPGRVolID,node) GetID]
@@ -2565,7 +2574,7 @@ proc EMAtlasBrainClassifier_BatchMode {{AlgorithmVersion Standard} {Segmentation
     puts "AtlasDir:  $EMAtlasBrainClassifier(AtlasDir)"
 
     SplashKill
- 
+
     set SucessFlag [EMAtlasBrainClassifierStartSegmentation]
 
     if {$ExitFlag} {MainExitProgram [expr 1 - $SucessFlag ] }
