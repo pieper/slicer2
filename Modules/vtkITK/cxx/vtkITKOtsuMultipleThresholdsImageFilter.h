@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKOtsuMultipleThresholdsImageFilter.h,v $
-  Date:      $Date: 2006/01/06 17:57:47 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2006/03/21 20:58:36 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKOtsuMultipleThresholdsImageFilter.h,v $
   Language:  C++
-  Date:      $Date: 2006/01/06 17:57:47 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2006/03/21 20:58:36 $
+  Version:   $Revision: 1.4 $
 */
 // .NAME vtkITKOtsuMultipleThresholdsImageFilter - Wrapper class around itk::OtsuMultipleThresholdsImageFilter
 // .SECTION Description
@@ -39,6 +39,10 @@ class VTK_EXPORT vtkITKOtsuMultipleThresholdsImageFilter : public vtkITKImageToI
   static vtkITKOtsuMultipleThresholdsImageFilter *New();
   vtkTypeRevisionMacro(vtkITKOtsuMultipleThresholdsImageFilter, vtkITKImageToImageFilterSS);
   
+  //BTX
+  typedef itk::OtsuMultipleThresholdsImageFilter<Superclass::InputImageType, Superclass::OutputImageType> ImageFilterType;
+  //ETX
+
   void SetNumberOfHistogramBins( unsigned long value) 
   {
     DelegateITKInputMacro ( SetNumberOfHistogramBins, value );
@@ -63,7 +67,7 @@ class VTK_EXPORT vtkITKOtsuMultipleThresholdsImageFilter : public vtkITKImageToI
   { DelegateITKOutputMacro ( GetLabelOffset ); };
   
   vtkShortArray *GetThresholds () {
-    std::vector<InputImagePixelType> th;
+    ImageFilterType::ThresholdVectorType th;
     th = this->GetImageFilterPointer()->GetThresholds();
     this->Thresholds->SetNumberOfComponents(1);
     this->Thresholds->SetNumberOfTuples(th.size());
@@ -77,7 +81,6 @@ class VTK_EXPORT vtkITKOtsuMultipleThresholdsImageFilter : public vtkITKImageToI
 
 protected:
   //BTX
-  typedef itk::OtsuMultipleThresholdsImageFilter<Superclass::InputImageType, Superclass::OutputImageType> ImageFilterType;
   vtkITKOtsuMultipleThresholdsImageFilter() : Superclass (ImageFilterType::New())
   {
     this->Thresholds = vtkShortArray::New();
@@ -94,7 +97,7 @@ private:
   
 };
 
-vtkCxxRevisionMacro(vtkITKOtsuMultipleThresholdsImageFilter, "$Revision: 1.3 $");
+vtkCxxRevisionMacro(vtkITKOtsuMultipleThresholdsImageFilter, "$Revision: 1.4 $");
 vtkStandardNewMacro(vtkITKOtsuMultipleThresholdsImageFilter);
 
 #endif
