@@ -18,9 +18,12 @@ set __comment {
 set starkitRelease "-200403"
 
 puts "making linux..."
-
 exec tclkitsh starkit${starkitRelease}/sdx.kit wrap slicer2 -runtime starkit${starkitRelease}/tclkit-linux-x86
 file rename -force slicer2 ../../slicer2-linux-x86
+
+puts "making linux 64 bit..."
+exec tclkitsh starkit${starkitRelease}/sdx.kit wrap slicer2 -runtime starkit${starkitRelease}/tclkit-linux-x86_64
+file rename -force slicer2 ../../slicer2-linux-x86_64
 
 puts "making solaris..."
 exec tclkitsh starkit${starkitRelease}/sdx.kit wrap slicer2 -runtime starkit${starkitRelease}/tclkit-solaris-sparc
