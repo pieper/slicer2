@@ -108,7 +108,11 @@ switch $tcl_platform(os) {
         set SLICER_EXECUTABLE "-DSLICER_EXECUTABLE:STRING=$SLICER_HOME/slicer2-darwin-ppc"
     }
     "Linux" {
-        set SLICER_EXECUTABLE "-DSLICER_EXECUTABLE:STRING=$SLICER_HOME/slicer2-linux-x86"
+        if {$::tcl_platform(machine) == "x86_64"} {
+            set SLICER_EXECUTABLE "-DSLICER_EXECUTABLE:STRING=$SLICER_HOME/slicer2-linux-x86_64"
+        } else {
+            set SLICER_EXECUTABLE "-DSLICER_EXECUTABLE:STRING=$SLICER_HOME/slicer2-linux-x86"
+        }    
     }
     default { 
         set SLICER_EXECUTABLE "-DSLICER_EXECUTABLE:STRING=$SLICER_HOME/slicer2-win32.exe"

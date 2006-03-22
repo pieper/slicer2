@@ -30,6 +30,7 @@ if {[info exists ::env(SLICER_HOME)]} {
 # - solaris can be solaris8 or solaris9
 set solaris "solaris8"
 set linux "linux-x86"
+set linux_64 "linux-x86_64"
 set darwin "darwin-ppc"
 set windows "win32"
 #
@@ -37,7 +38,13 @@ set windows "win32"
 #
 switch $::tcl_platform(os) {
     "SunOS" { set ::env(BUILD) $solaris }
-    "Linux" { set ::env(BUILD) $linux }
+    "Linux" {           
+        if {$::tcl_platform(machine) == "x86_64"} {
+            set ::env(BUILD) $linux_64 
+        } else {
+            set ::env(BUILD) $linux
+        }
+    }       
     "Darwin" { set ::env(BUILD) $darwin }
     default { 
         set ::env(BUILD) $windows 

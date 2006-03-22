@@ -152,9 +152,10 @@ foreach v $envVars {
 #
 # set the base library paths for this build 
 # 
-if {$::env(BUILD) == $solaris || 
+if {$::env(BUILD) == $solaris ||
+    $::env(BUILD) == $linux_64 || 
     $::env(BUILD) == $linux} {
-        # add vtk, slicer, and tcl bins
+    # add vtk, slicer, and tcl bins
         set ::env(LD_LIBRARY_PATH) $::env(VTK_DIR)/bin:$::env(LD_LIBRARY_PATH)
         set ::env(LD_LIBRARY_PATH) $::env(KWWIDGETS_DIR)/bin:$::env(LD_LIBRARY_PATH)
         set ::env(LD_LIBRARY_PATH) $::env(ITK_BINARY_PATH)/bin:$::env(LD_LIBRARY_PATH)
@@ -202,6 +203,7 @@ set ::env(TK_LIBRARY) $::env(TCL_LIB_DIR)/tk8.4
 #
 if {$::env(BUILD) == $solaris || 
     $::env(BUILD) == $linux ||
+    $::env(BUILD) == $linux_64 ||
     $::env(BUILD) == $darwin} {
         set ::env(TCLLIBPATH) "$::env(VTK_DIR)/Wrapping/Tcl $::env(TCLLIBPATH)"
         set ::env(TCLLIBPATH) "$::env(KWWIDGETS_DIR)/Wrapping/Tcl $::env(TCLLIBPATH)"
@@ -254,6 +256,7 @@ foreach modulePath $modulePaths {
         if {[string first Custom $moduleName] == -1} {
             lappend ::env(SLICER_MODULES_TO_REQUIRE) $moduleName
             if {$::env(BUILD) == $solaris || 
+                $::env(BUILD) == $linux_64 || 
                 $::env(BUILD) == $linux} {
                 set ::env(LD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$::env(BUILD)/bin:$::env(LD_LIBRARY_PATH)
                 set ::env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $::env(TCLLIBPATH)"
@@ -340,8 +343,9 @@ if { [string match *.tcl $argv0] } {
 #
 if { $::BATCH == "true" } {
     if {$::env(BUILD) == $solaris || 
-            $::env(BUILD) == $darwin ||
-            $::env(BUILD) == $linux} {
+        $::env(BUILD) == $darwin ||
+        $::env(BUILD) == $linux ||
+        $::env(BUILD) == $linux_64} {
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix
         regsub -all "{|}" $argv "\\\"" argv
         set ret [catch "exec $::env(VTK_DIR)/bin/vtk \"$mainscript\" $argv" res]
@@ -398,6 +402,7 @@ set argv $newargv
 
 if {$::env(BUILD) == $solaris || 
     $::env(BUILD) == $darwin ||
+    $::env(BUILD) == $linux_64 ||
     $::env(BUILD) == $linux} {
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix
         # - don't put process in background so that jdemo can track its status
