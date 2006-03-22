@@ -14,7 +14,7 @@ INCLUDE (${VTKITK_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 # Create the vtkITK C++ library
 #
 # (Doesn't work here because of a CMake bug)
-# ADD_LIBRARY (vtkITK LOCAL_MODULE_SRCS)
+# ADD_LIBRARY (vtkITK ${LOCAL_MODULE_SRCS})
 
 #
 # Create the vtkITK Tcl library
@@ -22,9 +22,10 @@ INCLUDE (${VTKITK_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 
 IF (VTK_WRAP_TCL AND VTKITK_WRAP_TCL)
 
-  VTK_WRAP_TCL (vtkITKTCL ITKTCL_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkITKTCL ITKTCL_SRCS)
+  VTK_WRAP_TCL (vtkITKTCL ITKTCL_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkITKTCL ${ITKTCL_SRCS})
   TARGET_LINK_LIBRARIES (vtkITKTCL 
+                         vtkITK
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
@@ -55,16 +56,17 @@ ENDIF (VTK_WRAP_TCL AND VTKITK_WRAP_TCL)
 
 IF (VTK_WRAP_PYTHON AND VTKITK_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkITKPython ITKPython_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_PYTHON (vtkITKPython ITKPython_SRCS ${LOCAL_MODULE_SRCS})
 
   IF (APPLE)
-    ADD_LIBRARY (vtkITKPython MODULE ITKPython_SRCS)
+    ADD_LIBRARY (vtkITKPython MODULE ${ITKPython_SRCS})
   ELSE (APPLE)
-    ADD_LIBRARY (vtkITKPython SHARED ITKPython_SRCS)
+    ADD_LIBRARY (vtkITKPython SHARED ${ITKPython_SRCS})
   ENDIF (APPLE)
 
   IF (WIN32)
     TARGET_LINK_LIBRARIES (vtkITKPython 
+                           vtkITK
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -74,6 +76,7 @@ IF (VTK_WRAP_PYTHON AND VTKITK_WRAP_PYTHON)
                            optimized ${PYTHON_LIBRARY})
   ELSE (WIN32)
     TARGET_LINK_LIBRARIES (vtkITKPython 
+                           vtkITKPython 
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -106,9 +109,10 @@ ENDIF (VTK_WRAP_PYTHON AND VTKITK_WRAP_PYTHON)
 
 IF (VTK_WRAP_JAVA AND VTKITK_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkITKJava ITKJava_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkITKJava SHARED ITKJava_SRCS)
+  VTK_WRAP_JAVA (vtkITKJava ITKJava_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkITKJava SHARED ${ITKJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkITKJava 
+                         vtkITK
                          vtkIOJava
                          vtkGraphicsJava
                          vtkImagingJava 
@@ -136,7 +140,7 @@ ENDIF (VTK_WRAP_JAVA AND VTKITK_WRAP_JAVA)
 # Link to VTK and local
 #
 
-LINK_LIBRARIES (
+TARGET_LINK_LIBRARIES (
   vtkITK
   vtkIO
   vtkGraphics
@@ -146,17 +150,17 @@ LINK_LIBRARIES (
 )
 
 IF (VTK_USE_HYBRID)
-  LINK_LIBRARIES (vtkHybrid)
+  TARGET_LINK_LIBRARIES (vtkITK vtkHybrid)
 ENDIF (VTK_USE_HYBRID)
 
 IF (VTK_USE_PARALLEL)
-  LINK_LIBRARIES (vtkParallel)
+  TARGET_LINK_LIBRARIES (vtkITK vtkParallel)
 ENDIF (VTK_USE_PARALLEL)
 
 IF (VTK_USE_PATENTED)
-  LINK_LIBRARIES (vtkPatented)
+  TARGET_LINK_LIBRARIES (vtkITK vtkPatented)
 ENDIF (VTK_USE_PATENTED)
 
 IF (VTK_USE_RENDERING)
-  LINK_LIBRARIES (vtkRendering)
+  TARGET_LINK_LIBRARIES (vtkITK vtkRendering)
 ENDIF (VTK_USE_RENDERING)

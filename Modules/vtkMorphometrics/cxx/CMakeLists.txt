@@ -14,7 +14,7 @@ INCLUDE (${VTKMORPHOMETRICS_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 # Create the vtkMorphometrics C++ library
 #
 # (Doesn't work here because of a CMake bug)
-# ADD_LIBRARY (vtkMorphometrics LOCAL_MODULE_SRCS)
+# ADD_LIBRARY (vtkMorphometrics ${LOCAL_MODULE_SRCS})
 
 #
 # Create the vtkMorphometrics Tcl library
@@ -22,9 +22,10 @@ INCLUDE (${VTKMORPHOMETRICS_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 
 IF (VTK_WRAP_TCL AND VTKMORPHOMETRICS_WRAP_TCL)
 
-  VTK_WRAP_TCL (vtkMorphometricsTCL MorphometricsTCL_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkMorphometricsTCL MorphometricsTCL_SRCS)
+  VTK_WRAP_TCL (vtkMorphometricsTCL MorphometricsTCL_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkMorphometricsTCL ${MorphometricsTCL_SRCS})
   TARGET_LINK_LIBRARIES (vtkMorphometricsTCL 
+                         vtkMorphometrics
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
@@ -55,16 +56,17 @@ ENDIF (VTK_WRAP_TCL AND VTKMORPHOMETRICS_WRAP_TCL)
 
 IF (VTK_WRAP_PYTHON AND VTKMORPHOMETRICS_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkMorphometricsPython MorphometricsPython_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_PYTHON (vtkMorphometricsPython MorphometricsPython_SRCS ${LOCAL_MODULE_SRCS})
 
   IF (APPLE)
-    ADD_LIBRARY (vtkMorphometricsPython MODULE MorphometricsPython_SRCS)
+    ADD_LIBRARY (vtkMorphometricsPython MODULE ${MorphometricsPython_SRCS})
   ELSE (APPLE)
-    ADD_LIBRARY (vtkMorphometricsPython SHARED MorphometricsPython_SRCS)
+    ADD_LIBRARY (vtkMorphometricsPython SHARED ${MorphometricsPython_SRCS})
   ENDIF (APPLE)
 
   IF (WIN32)
     TARGET_LINK_LIBRARIES (vtkMorphometricsPython 
+                           vtkMorphometrics
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -74,6 +76,7 @@ IF (VTK_WRAP_PYTHON AND VTKMORPHOMETRICS_WRAP_PYTHON)
                            optimized ${PYTHON_LIBRARY})
   ELSE (WIN32)
     TARGET_LINK_LIBRARIES (vtkMorphometricsPython 
+                           vtkMorphometricsPython 
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -106,9 +109,10 @@ ENDIF (VTK_WRAP_PYTHON AND VTKMORPHOMETRICS_WRAP_PYTHON)
 
 IF (VTK_WRAP_JAVA AND VTKMORPHOMETRICS_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkMorphometricsJava MorphometricsJava_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkMorphometricsJava SHARED MorphometricsJava_SRCS)
+  VTK_WRAP_JAVA (vtkMorphometricsJava MorphometricsJava_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkMorphometricsJava SHARED ${MorphometricsJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkMorphometricsJava 
+                         vtkMorphometrics
                          vtkIOJava
                          vtkGraphicsJava
                          vtkImagingJava 
@@ -136,7 +140,7 @@ ENDIF (VTK_WRAP_JAVA AND VTKMORPHOMETRICS_WRAP_JAVA)
 # Link to VTK and local
 #
 
-LINK_LIBRARIES (
+TARGET_LINK_LIBRARIES (
   vtkMorphometrics
   vtkIO
   vtkGraphics
@@ -146,17 +150,17 @@ LINK_LIBRARIES (
 )
 
 IF (VTK_USE_HYBRID)
-  LINK_LIBRARIES (vtkHybrid)
+  TARGET_LINK_LIBRARIES (vtkMorphometrics vtkHybrid)
 ENDIF (VTK_USE_HYBRID)
 
 IF (VTK_USE_PARALLEL)
-  LINK_LIBRARIES (vtkParallel)
+  TARGET_LINK_LIBRARIES (vtkMorphometrics vtkParallel)
 ENDIF (VTK_USE_PARALLEL)
 
 IF (VTK_USE_PATENTED)
-  LINK_LIBRARIES (vtkPatented)
+  TARGET_LINK_LIBRARIES (vtkMorphometrics vtkPatented)
 ENDIF (VTK_USE_PATENTED)
 
 IF (VTK_USE_RENDERING)
-  LINK_LIBRARIES (vtkRendering)
+  TARGET_LINK_LIBRARIES (vtkMorphometrics vtkRendering)
 ENDIF (VTK_USE_RENDERING)

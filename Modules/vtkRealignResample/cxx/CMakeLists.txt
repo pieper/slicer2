@@ -14,7 +14,7 @@ INCLUDE (${VTKREALIGNRESAMPLE_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 # Create the vtkRealignResample C++ library
 #
 # (Doesn't work here because of a CMake bug)
-# ADD_LIBRARY (vtkRealignResample LOCAL_MODULE_SRCS)
+# ADD_LIBRARY (vtkRealignResample ${LOCAL_MODULE_SRCS})
 
 #
 # Create the vtkRealignResample Tcl library
@@ -22,9 +22,10 @@ INCLUDE (${VTKREALIGNRESAMPLE_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 
 IF (VTK_WRAP_TCL AND VTKREALIGNRESAMPLE_WRAP_TCL)
 
-  VTK_WRAP_TCL (vtkRealignResampleTCL RealignResampleTCL_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkRealignResampleTCL RealignResampleTCL_SRCS)
+  VTK_WRAP_TCL (vtkRealignResampleTCL RealignResampleTCL_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkRealignResampleTCL ${RealignResampleTCL_SRCS})
   TARGET_LINK_LIBRARIES (vtkRealignResampleTCL 
+                         vtkRealignResample
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
@@ -55,16 +56,17 @@ ENDIF (VTK_WRAP_TCL AND VTKREALIGNRESAMPLE_WRAP_TCL)
 
 IF (VTK_WRAP_PYTHON AND VTKREALIGNRESAMPLE_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkRealignResamplePython RealignResamplePython_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_PYTHON (vtkRealignResamplePython RealignResamplePython_SRCS ${LOCAL_MODULE_SRCS})
 
   IF (APPLE)
-    ADD_LIBRARY (vtkRealignResamplePython MODULE RealignResamplePython_SRCS)
+    ADD_LIBRARY (vtkRealignResamplePython MODULE ${RealignResamplePython_SRCS})
   ELSE (APPLE)
-    ADD_LIBRARY (vtkRealignResamplePython SHARED RealignResamplePython_SRCS)
+    ADD_LIBRARY (vtkRealignResamplePython SHARED ${RealignResamplePython_SRCS})
   ENDIF (APPLE)
 
   IF (WIN32)
     TARGET_LINK_LIBRARIES (vtkRealignResamplePython 
+                           vtkRealignResample
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -74,6 +76,7 @@ IF (VTK_WRAP_PYTHON AND VTKREALIGNRESAMPLE_WRAP_PYTHON)
                            optimized ${PYTHON_LIBRARY})
   ELSE (WIN32)
     TARGET_LINK_LIBRARIES (vtkRealignResamplePython 
+                           vtkRealignResamplePython 
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -106,9 +109,10 @@ ENDIF (VTK_WRAP_PYTHON AND VTKREALIGNRESAMPLE_WRAP_PYTHON)
 
 IF (VTK_WRAP_JAVA AND VTKREALIGNRESAMPLE_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkRealignResampleJava RealignResampleJava_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkRealignResampleJava SHARED RealignResampleJava_SRCS)
+  VTK_WRAP_JAVA (vtkRealignResampleJava RealignResampleJava_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkRealignResampleJava SHARED ${RealignResampleJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkRealignResampleJava 
+                         vtkRealignResample
                          vtkIOJava
                          vtkGraphicsJava
                          vtkImagingJava 
@@ -136,7 +140,7 @@ ENDIF (VTK_WRAP_JAVA AND VTKREALIGNRESAMPLE_WRAP_JAVA)
 # Link to VTK and local
 #
 
-LINK_LIBRARIES (
+TARGET_LINK_LIBRARIES (
   vtkRealignResample
   vtkIO
   vtkGraphics
@@ -146,17 +150,17 @@ LINK_LIBRARIES (
 )
 
 IF (VTK_USE_HYBRID)
-  LINK_LIBRARIES (vtkHybrid)
+  TARGET_LINK_LIBRARIES (vtkRealignResample vtkHybrid)
 ENDIF (VTK_USE_HYBRID)
 
 IF (VTK_USE_PARALLEL)
-  LINK_LIBRARIES (vtkParallel)
+  TARGET_LINK_LIBRARIES (vtkRealignResample vtkParallel)
 ENDIF (VTK_USE_PARALLEL)
 
 IF (VTK_USE_PATENTED)
-  LINK_LIBRARIES (vtkPatented)
+  TARGET_LINK_LIBRARIES (vtkRealignResample vtkPatented)
 ENDIF (VTK_USE_PATENTED)
 
 IF (VTK_USE_RENDERING)
-  LINK_LIBRARIES (vtkRendering)
+  TARGET_LINK_LIBRARIES (vtkRealignResample vtkRendering)
 ENDIF (VTK_USE_RENDERING)
