@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMAtlasSegmenter.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:29 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2006/03/23 16:47:29 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
 // Since 22-Apr-02 vtkImageEMAtlas3DSegmenter is called vtkImageEMAtlasSegmenter - Kilian
@@ -697,6 +697,8 @@ static void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate(int id,
         // it should be exp(*ProbData)[i] from Tina's thesis I say now bc values with zero probability will be still displayed
         // Kilian May 2002: I believe the form underneath is correct - Tina's PhD thesis displays it exactly like underneath 
     // if (((j == 13891) || (j == 13946)) && i == 0) cout << "duda1 " << i << " " << j << " " << *wxp  << " " <<  *wxn  <<  " " << *wyp  << " " <<  *wyn  <<  " " << *wzp  << " " <<  *wzn  <<  endl;
+    // Kilian Mar 06: The following line is not correct - compare with vtkEMLocalSegment. I have not changed this yet bc I would need to alter the template file, which I am hesitent to do.  
+
     NeighborhoodEnergy = (1-Alpha+Alpha*exp((*wxp++) + (*wxn++) + (*wyp++) + (*wyn++) + (*wzp++) + (*wzn++)));
     for (l=0;l< NumChildClasses[i];l++){
        ConditionalTissueProbability = TissueProbability[i] * vtkImageEMGeneral::FastGaussMulti(InvSqrtDetLogCov[index],cY_M, LogMu[index],InvLogCov[index],NumInputImages, VirtualNumInputImages[i]); 
@@ -788,11 +790,11 @@ static void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate(int id,
 void vtkImageEMAtlasSegmenter_MeanFieldApproximation3DThreadPrivate(void *jobparm) {  EMAtlas_MF_Approximation_Work_Private *job = (EMAtlas_MF_Approximation_Work_Private *)jobparm;
   // Define Type of ProbDataPtr
    switch (job->ProbDataType) {
-    vtkTemplateMacro26(vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate,job->id, job->w_m_input,job->MapVector,job->cY_M,job->imgX,job->imgY,
+    vtkTemplateMacro(vtkImageEMAtlasSegmenter_MeanFieldApproximation3DPrivate(job->id, job->w_m_input,job->MapVector,job->cY_M,job->imgX,job->imgY,
                        job->imgXY,job->StartVoxel,job->EndVoxel, job->NumClasses, job->NumTotalTypeCLASS, job->NumChildClasses, 
                        job->NumInputImages, job->Alpha,job->MrfParams, (VTK_TT**) job->ProbDataPtr, job->ProbDataIncY,
                        job->ProbDataIncZ, job->ProbDataWeight, job->ProbDataMinusWeight, job->LogMu,job->InvLogCov,
-                       job->InvSqrtDetLogCov, job->TissueProbability, job->VirtualNumInputImages,job->w_m_output);
+                       job->InvSqrtDetLogCov, job->TissueProbability, job->VirtualNumInputImages,job->w_m_output));
 
    }
 }
@@ -1060,9 +1062,9 @@ int vtkImageEMAtlasSegmenter::MF_Approx_Workpile(float **w_m_input,unsigned char
   // Sylvain did not like this because different results are produced on different machines - Kilian
   // I threw threaded function out - however to reduce labor I did not change the structure, which I should
 
-  // numthreads = 1;
-  numthreads = vtkMultiThreader::GetGlobalDefaultNumberOfThreads(); 
-  cout << "Debug: Kilian: Number of Threads: " <<   numthreads << endl;
+  numthreads = 1;
+  // numthreads = vtkMultiThreader::GetGlobalDefaultNumberOfThreads(); 
+  // cout << "Debug: Kilian: Number of Threads: " <<   numthreads << endl;
 
   jobsize = this->ImageProd/numthreads;
   for (i = 0; i < numthreads; i++) {
@@ -2099,9 +2101,11 @@ static void vtkImageEMAtlasSegmenterExecute(vtkImageEMAtlasSegmenter *self,float
       short *LabelList = new short[TotalNumClasses];
       memset(LabelList,0,sizeof(short)*TotalNumClasses);
       // Get all existing labels
-      self->GetHeadClass()->GetAllLabels(LabelList,0,TotalNumClasses);
+      int index = self->GetHeadClass()->GetAllLabels(LabelList,0,TotalNumClasses);
+      // Otherwise no classes defined
+      assert(index);
       // Label all super classes
-      self->GetHeadClass()->LabelAllSuperClasses(LabelList,TotalNumClasses);
+      self->GetHeadClass()->LabelAllSuperClasses(LabelList,index, TotalNumClasses);
       delete[] LabelList;
   }
 

@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
-#   Date:      $Date: 2006/03/06 21:07:31 $
-#   Version:   $Revision: 1.34 $
+#   Date:      $Date: 2006/03/23 16:47:55 $
+#   Version:   $Revision: 1.35 $
 # 
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
@@ -107,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
    set Module($m,depend) ""
 
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.34 $} {$Date: 2006/03/06 21:07:31 $}]
+       {$Revision: 1.35 $} {$Date: 2006/03/23 16:47:55 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -1108,13 +1108,17 @@ proc EMAtlasBrainClassifier_NormalizeVolume { Vol OutVol Mode} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_AtlasList { } {
-    global  EMAtlasBrainClassifier   
-    set XMLTemplateText [EMAtlasBrainClassifierReadXMLFile $EMAtlasBrainClassifier(XMLTemplate)]
+proc EMAtlasBrainClassifier_AtlasList { XMLTemplate } {
+    global  EMAtlasBrainClassifier  
+
+    set XMLTemplateTextOrig [EMAtlasBrainClassifierReadXMLFile $XMLTemplate] 
+    set XMLTemplateText  "$XMLTemplateTextOrig"
 
     set RegisterAtlasDirList "" 
     set RegisterAtlasNameList "" 
     
+    # ----------------------------------------------------------
+    # Determine Spatial Prior to be loaded 
     set NextLineIndex [EMAtlasBrainClassifierGrepLine "$XMLTemplateText" "<SegmenterClass"] 
 
     while {$NextLineIndex != "-1 -1"} {
@@ -1585,7 +1589,7 @@ proc EMAtlasBrainClassifierWriteTransformation { } {
 # vtkImageData outResampled
 # .END
 #-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifierResample {inTarget inSource outResampled bgValue} {
+proc EMAtlasBrainClassifierResample {inTarget inSource outResampled bgValue {OutImageDataFlag 0}} {
     global EMAtlasBrainClassifier Volume Gui
     
     catch "Source Delete"
@@ -1631,10 +1635,16 @@ proc EMAtlasBrainClassifierResample {inTarget inSource outResampled bgValue} {
     catch "Resampled Delete"
     vtkImageData Resampled
 
-    Resampled DeepCopy [Reslicer GetOutput]  
-
-    Volume($outResampled,vol) SetImageData  Resampled
-    Resampled SetOrigin 0 0 0
+    if {$OutImageDataFlag } {
+        # outResampled represents a data volume
+        $outResampled DeepCopy [Reslicer GetOutput]  
+        $outResampled SetOrigin 0 0 0
+    } else { 
+        vtkImageData Resampled
+        Resampled DeepCopy [Reslicer GetOutput]  
+        Volume($outResampled,vol) SetImageData  Resampled 
+        Resampled SetOrigin 0 0 0
+    }
     Source Delete
     Target Delete
     Cast Delete
@@ -2432,7 +2442,7 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     # ---------------------------------------------------------------
     # Determine list of atlas 
     # (to be registered and resampled from template file)
-    set Result [EMAtlasBrainClassifier_AtlasList]
+    set Result [EMAtlasBrainClassifier_AtlasList $EMAtlasBrainClassifier(XMLTemplate)]
     set RegisterAtlasDirList [lindex $Result 0]
     set RegisterAtlasNameList [lindex $Result 1]
   

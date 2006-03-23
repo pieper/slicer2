@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMAtlasSuperClass.h,v $
-  Date:      $Date: 2006/01/06 17:57:30 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2006/03/23 16:47:30 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
 // .NAME vtkImageEMAtlasSuperClass
@@ -53,7 +53,7 @@ class VTK_EMATLASBRAINCLASSIFIER_EXPORT vtkImageEMAtlasSuperClass : public vtkIm
 
   int           GetTotalNumberOfClasses(bool flag); // if flag is set => includes subclasses of type SUPERCLASS
   int           GetAllLabels(short *LabelList, int result,int Max); // Gets all labels from the Substructures
-  void          LabelAllSuperClasses(short *TakenLabelList, int Max);
+  int           LabelAllSuperClasses(short *TakenLabelList, int Result, int Max);
 
   //BTX
   void**        GetClassList() {return this->ClassList;}
