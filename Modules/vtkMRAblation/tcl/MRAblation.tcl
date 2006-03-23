@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MRAblation.tcl,v $
-#   Date:      $Date: 2006/03/23 18:59:29 $
-#   Version:   $Revision: 1.1.2.6 $
+#   Date:      $Date: 2006/03/23 22:50:13 $
+#   Version:   $Revision: 1.1.2.7 $
 # 
 #===============================================================================
 # FILE:        MRAblation.tcl
@@ -137,7 +137,7 @@ proc MRAblationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.6 $} {$Date: 2006/03/23 18:59:29 $}]
+        {$Revision: 1.1.2.7 $} {$Date: 2006/03/23 22:50:13 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -846,12 +846,12 @@ proc MRAblationLoadVolume {} {
 
 
 #-------------------------------------------------------------------------------
-# .PROC MRAblationCreateVolume
+# .PROC MRAblationCreateGEVolume
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MRAblationCreateVolume {c} {
+proc MRAblationCreateGEVolume {c} {
     global MRAblation Volume 
 
     set lenOfSequence [llength $MRAblation(sequenceList)]
@@ -915,6 +915,80 @@ proc MRAblationCreateVolume {c} {
         }
     }
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC MRAblationCreateDCMVolume
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MRAblationCreateDCMVolume {c} {
+    global MRAblation Volume 
+
+    set lenOfSequence [llength $MRAblation(sequenceList)]
+    set startIndex [expr ($c - 1) * $MRAblation(plane) * $lenOfSequence]
+    for {set s 0} {$s < $lenOfSequence} {incr s} {
+
+        #-------------------------------------------
+        # Make a directory called mrablation-tmp
+        # under the $MRAblation(workingDir).
+        #-------------------------------------------
+        set tmp [file join $MRAblation(workingDir) mrablation-tmp]
+        if {[file exists $tmp]} {
+            file delete -force $tmp
+        }
+        file mkdir $tmp
+
+        #-------------------------------------------
+        # For each sequence, we copy its image files
+        # into mrablation-tmp and re-name them as
+        # dcm.001, dcm.002, dcm.003, ..., which is required
+        # by generic volume reader in slicer.
+        #-------------------------------------------
+        set index [expr $startIndex + $s]
+        for {set p 0} {$p < $MRAblation(plane)} {incr p} {
+            set fileName [lindex $MRAblation(imageFiles) $index]
+            file copy -force $fileName $tmp
+
+            set tail [file tail $fileName]
+            set source [file join $tmp $tail]
+            set ext [format "%03d" [expr $p + 1]]
+            set target [file join $tmp dcm.$ext]
+
+            file rename -force $source $target 
+
+            set index [expr $index + $lenOfSequence]
+        }
+
+        #-------------------------------------------
+        # Call generic reader in slicer 
+        #-------------------------------------------
+        set Volume(fileType) Generic
+        set Volume(activeID) NEW
+        set Volume(firstFile) [file join $tmp dcm.001] 
+        VolumesSetFirst
+
+        set seqName [lindex $MRAblation(sequenceList) $s]
+        set Volume(name) laser$MRAblation(scanIndex)-$seqName-$c
+
+
+        # auto
+        set Volume(readHeaders) 1 
+        # Load greyscale
+        set Volume(labelMap) 0
+
+        VolGenericApply
+        RenderAll
+
+        lappend MRAblation(volumeNames) $Volume(name) 
+
+        # Clean up
+        if {[file exists $tmp]} {
+            file delete -force $tmp
+        }
+    }
+}
    
 
 #-------------------------------------------------------------------------------
@@ -926,15 +1000,35 @@ proc MRAblationWatch {} {
     global MRAblation Gui 
   
     set MRAblation(imageFiles) ""
-    set MRAblation(imageFiles) [glob -nocomplain -directory $MRAblation(imageDir) I.*]
-    set MRAblation(imageFiles) [lsort -ascii $MRAblation(imageFiles)]
+
+    # check file format: ge or dicom
+    # ge files start wtih I
+    set geFiles [glob -nocomplain -directory $MRAblation(imageDir) -type f I.*]
+    set noGeFiles [llength $geFiles]
+    # dicom files start wtih a digit 
+    set dcmFiles [glob -nocomplain -directory $MRAblation(imageDir) -type f  {[0-9].*}]
+    set noDcmFiles [llength $dcmFiles]
+ 
+    if {$noGeFiles > 0} {
+        set MRAblation(imageFiles) $geFiles 
+        set MRAblation(imageFiles) [lsort -ascii $MRAblation(imageFiles)]
+    } elseif {$noDcmFiles > 0} {
+        set MRAblation(imageFiles) $dcmFiles 
+        set MRAblation(imageFiles) [lsort -dictionary $MRAblation(imageFiles)]
+    }
 
     set numOfExistingFiles [llength $MRAblation(imageFiles)]
     set numOfRequiredFiles \
         [expr $MRAblation(phaseCount) * $MRAblation(plane) * [llength $MRAblation(sequenceList)]] 
 
     if {$numOfExistingFiles >= $numOfRequiredFiles} {
-        MRAblationCreateVolume $MRAblation(phaseCount) 
+        if {$noGeFiles > 0 && $noDcmFiles == 0} {
+            MRAblationCreateGEVolume $MRAblation(phaseCount) 
+        }
+        if {$noDcmFiles > 0 && $noGeFiles == 0} {
+            MRAblationCreateDCMVolume $MRAblation(phaseCount) 
+        }
+ 
         MRAblationCompute $MRAblation(phaseCount)
  
 
