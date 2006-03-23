@@ -72,6 +72,8 @@ vtkMrmlSegmenterSuperClassNode::vtkMrmlSegmenterSuperClassNode() {
   this->PCAShapeModelType = 0;
   this->RegistrationIndependentSubClassFlag = 0;
   this->AtlasNode = vtkMrmlSegmenterAtlasSuperClassNode::New();
+
+  this->PredefinedLabelID = -1;
 }
 
 //----------------------------------------------------------------------------
@@ -94,6 +96,7 @@ void vtkMrmlSegmenterSuperClassNode::Write(ofstream& of, int nIndent)
   of << " PrintShapeSimularityMeasure='" << this->PrintShapeSimularityMeasure << "'";
   of << " PCAShapeModelType='" << this->PCAShapeModelType << "'";
   of << " RegistrationIndependentSubClassFlag='" << this->RegistrationIndependentSubClassFlag << "'";
+  if (this->PredefinedLabelID > -1) of << " PredefinedLabelID ='" << this->PredefinedLabelID << "'";
   of << ">\n";
 
 }
@@ -118,6 +121,8 @@ void vtkMrmlSegmenterSuperClassNode::Copy(vtkMrmlNode *anode)
   this->PrintShapeSimularityMeasure   = node->PrintShapeSimularityMeasure;
   this->PCAShapeModelType             = node->PCAShapeModelType;
   this->RegistrationIndependentSubClassFlag = node->RegistrationIndependentSubClassFlag;
+  this->PredefinedLabelID        = node->PredefinedLabelID;
+
 }
 
 //----------------------------------------------------------------------------
@@ -137,4 +142,6 @@ void vtkMrmlSegmenterSuperClassNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "PrintShapeSimularityMeasure:   " << this->PrintShapeSimularityMeasure << "\n";
   os << indent << "PCAShapeModelType:             " << this->PCAShapeModelType << "\n";
   os << indent << "RegistrationIndependentSubClassFlag: " << this->RegistrationIndependentSubClassFlag << "\n";
+  os << indent << "PredefinedLabelID:             " << this->PredefinedLabelID << "\n";
+
 }

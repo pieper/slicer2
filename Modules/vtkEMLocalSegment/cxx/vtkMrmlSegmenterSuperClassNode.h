@@ -162,24 +162,6 @@ public:
   void  SetInitialBiasFilePrefix(char* init) { AtlasNode->SetInitialBiasFilePrefix(init);}
 
   // Description:
-  // Kilian: Jan06: This allows you to "jump" over the hirarchical segmentation level by providing an already existing 
-  // labelmap of the region of interes 
-  char* GetPredefinedLabelMapPrefix()           { return AtlasNode->GetPredefinedLabelMapPrefix();}
-  void  SetPredefinedLabelMapPrefix(char* init) { AtlasNode->SetPredefinedLabelMapPrefix(init);}
-  
-  // Description:
-  // Kilian Jan06: This is necessary so we can load in predefined labelmaps with different anatomical structures
-  // If we cannot define the label of the superclass it would change everytime we change the tree structure
-  int  GetPredefinedLabelID() {return AtlasNode->GetPredefinedLabelID();}
-  void SetPredefinedLabelID(int init) {AtlasNode->SetPredefinedLabelID(init);}
-
-  // Description:
-  // This variable allows to control the influence of the LocalPrior spatially for all substructures 
-  // Note: this variable is applied to all the subclasses during the segmentation bc the subclasses define the local Prior
-  char* GetLocalPriorSpatialWeightName() {return AtlasNode->GetLocalPriorSpatialWeightName();}
-  void  SetLocalPriorSpatialWeightName(char* init) {AtlasNode->SetLocalPriorSpatialWeightName(init);}
-
-  // Description:
   // You can stop the bias calculation after a certain number of iterations
   // By default it is set to -1 which means it never stops
   vtkGetMacro(StopBiasCalculation,int); 
@@ -214,7 +196,20 @@ public:
   /// our method is not as rebust. For this specific case we would set the flag for FG and do not set it for BG !
   vtkGetMacro(RegistrationIndependentSubClassFlag,int);      
   vtkSetMacro(RegistrationIndependentSubClassFlag,int);      
- 
+
+  // Description:
+  // Kilian: Jan06: Gives superclass the predefined ID , make sure that no other class has that label/ID - this simplifies 
+  // using PredefinedLabelMapPrefix with different structure settings
+  vtkGetMacro(PredefinedLabelID,int); 
+  vtkSetMacro(PredefinedLabelID,int); 
+
+
+ // Description:
+  // This allows you to "jump" over the hirarchical segmentation level by providing an already existing 
+  // labelmap of the region of interes 
+  char* GetPredefinedLabelMapPrefix() {return AtlasNode->GetPredefinedLabelMapPrefix();}
+  void  SetPredefinedLabelMapPrefix(char* init) { AtlasNode->SetPredefinedLabelMapPrefix(init);}
+
 protected:
   vtkMrmlSegmenterSuperClassNode();
   ~vtkMrmlSegmenterSuperClassNode(){this->AtlasNode->Delete();};
@@ -234,6 +229,8 @@ protected:
   int GenerateBackgroundProbability;
   int PCAShapeModelType;
   int RegistrationIndependentSubClassFlag;
+
+  int PredefinedLabelID;
 };
 
 #endif

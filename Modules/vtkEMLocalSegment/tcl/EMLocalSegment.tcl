@@ -291,7 +291,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.66.2.2 $} {$Date: 2006/01/26 00:36:50 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.66.2.3 $} {$Date: 2006/03/23 16:50:56 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -1954,11 +1954,11 @@ proc EMSegmentUpdateMRML {} {
           } else { set EMSegment(Cattrib,$NumClass,ProbabilityData) $Volume(idNone) }
 
           # Spatial Weight of Probability
-      set VolumeName  [SegmenterSuperClass($pid,node) GetLocalPriorSpatialWeightName]
-          set VolumeIndex [lsearch $VolumeNameList $VolumeName]
-          if {($VolumeName != "") && ($VolumeIndex > -1) } { 
-          set EMSegment(Cattrib,$NumClass,ProbDataSpatialWeight) [lindex $Volume(idList) $VolumeIndex]
-          } else { set EMSegment(Cattrib,$NumClass,ProbDataSpatialWeight) $Volume(idNone) }
+          # set VolumeName  [SegmenterSuperClass($pid,node) GetLocalPriorSpatialWeightName]
+          # set VolumeIndex [lsearch $VolumeNameList $VolumeName]
+          # if {($VolumeName != "") && ($VolumeIndex > -1) } { 
+          # set EMSegment(Cattrib,$NumClass,ProbDataSpatialWeight) [lindex $Volume(idList) $VolumeIndex]
+          # } else { set EMSegment(Cattrib,$NumClass,ProbDataSpatialWeight) $Volume(idNone) }
 
           # Input Channel Weight
           set InputChannelWeights [SegmenterSuperClass($pid,node) GetInputChannelWeights]
@@ -2624,12 +2624,12 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
              SegmenterSuperClass($pid,node) SetLocalPriorName ""
           }
 
-      set v $EMSegment(Cattrib,$i,ProbDataSpatialWeight)
-      if {$v != $Volume(idNone) } {
-             SegmenterSuperClass($pid,node) SetLocalPriorSpatialWeightName [Volume($v,node) GetName]
-          } else {
-             SegmenterSuperClass($pid,node) SetLocalPriorSpatialWeightName ""
-          }
+          # set v $EMSegment(Cattrib,$i,ProbDataSpatialWeight)
+          # if {$v != $Volume(idNone) } {
+          #    SegmenterSuperClass($pid,node) SetLocalPriorSpatialWeightName [Volume($v,node) GetName]
+          # } else {
+          #    SegmenterSuperClass($pid,node) SetLocalPriorSpatialWeightName ""
+          # }
 
           set InputChannelWeights ""
           for {set y 0} {$y < $EMSegment(MaxInputChannelDef)} {incr y} {
