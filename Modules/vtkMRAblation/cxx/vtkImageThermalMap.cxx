@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageThermalMap.cxx,v $
-  Date:      $Date: 2006/03/16 17:24:26 $
-  Version:   $Revision: 1.1.2.6 $
+  Date:      $Date: 2006/03/23 18:45:38 $
+  Version:   $Revision: 1.1.2.7 $
 
 =========================================================================auto=*/
 #include "vtkImageThermalMap.h"
@@ -114,7 +114,8 @@ static void vtkImageThermalMapExecute(
                     t = atan2(yy,xx);
 
                     // get temperature
-                    t = t / 2.0 / pi / self->GetTE() / self->GetW0() / (-1 * self->GetTC());
+                    // add the base temperature of human body: 37
+                    t = 37 + (t / 2.0 / pi / self->GetTE() / self->GetW0() / (-1 * self->GetTC()));
                 } 
                 else 
                 {
