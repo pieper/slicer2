@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MRAblation.tcl,v $
-#   Date:      $Date: 2006/03/23 18:46:33 $
-#   Version:   $Revision: 1.1.2.5 $
+#   Date:      $Date: 2006/03/23 18:59:29 $
+#   Version:   $Revision: 1.1.2.6 $
 # 
 #===============================================================================
 # FILE:        MRAblation.tcl
@@ -137,7 +137,7 @@ proc MRAblationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.5 $} {$Date: 2006/03/23 18:46:33 $}]
+        {$Revision: 1.1.2.6 $} {$Date: 2006/03/23 18:59:29 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -222,13 +222,11 @@ proc MRAblationBuildGUI {} {
     The MRAblation module is intended to process and display MR data \
     from laser ablation experiment.
     <BR><BR>
-    <B>Set Up</B> allows you to load a set of MR volumes (in GE format) \
-    into Slicer.
+    <B>Set Up</B> Set up parameters for the experiment.
     <BR>
-    <B>Compute</B> lets you to compute thermal volume(s).
+    <B>Compute</B> Start to compute thermal volume(s).
     <BR>
-    <B>Display</B> gives you the ability to select a thermal volume for \
-    display. 
+    <B>Display</B> Select a thermal volume for display. 
     "
     regsub -all "\n" $help {} help
     MainHelpApplyTags MRAblation $help
@@ -646,6 +644,7 @@ proc MRAblationCompute {hot} {
     }
 
     # Check if images are loaded
+    # by default, the timepoint is cold
     set cold 1
     set pList ""
     lappend pList $cold 
