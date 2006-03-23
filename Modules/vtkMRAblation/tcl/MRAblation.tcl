@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MRAblation.tcl,v $
-#   Date:      $Date: 2006/03/15 17:05:15 $
-#   Version:   $Revision: 1.1.2.4 $
+#   Date:      $Date: 2006/03/23 18:46:33 $
+#   Version:   $Revision: 1.1.2.5 $
 # 
 #===============================================================================
 # FILE:        MRAblation.tcl
@@ -79,9 +79,9 @@ proc MRAblationInit {} {
     #   row2,tab = like row1 
     #
 
-    set Module($m,row1List) "Help Load Compute Display"
-    set Module($m,row1Name) "{Help} {Load} {Compute} {Display}"
-    set Module($m,row1,tab) Load 
+    set Module($m,row1List) "Help SetUp Compute Display"
+    set Module($m,row1Name) "{Help} {Set Up} {Compute} {Display}"
+    set Module($m,row1,tab) SetUp 
 
     # Define Procedures
     #------------------------------------
@@ -137,7 +137,7 @@ proc MRAblationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.4 $} {$Date: 2006/03/15 17:05:15 $}]
+        {$Revision: 1.1.2.5 $} {$Date: 2006/03/23 18:46:33 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -156,7 +156,7 @@ proc MRAblationInit {} {
     set MRAblation(volumeNames) ""
     set MRAblation(sequenceList) ""
     set MRAblation(updateComputeTab) 1 
- 
+    set MRAblation(scanIndex) 0 
 
     # Source all appropriate tcl files here. 
     source "$MRAblation(modulePath)/tcl/MRAblationHelpText.tcl"
@@ -222,7 +222,7 @@ proc MRAblationBuildGUI {} {
     The MRAblation module is intended to process and display MR data \
     from laser ablation experiment.
     <BR><BR>
-    <B>Load</B> allows you to load a set of MR volumes (in GE format) \
+    <B>Set Up</B> allows you to load a set of MR volumes (in GE format) \
     into Slicer.
     <BR>
     <B>Compute</B> lets you to compute thermal volume(s).
@@ -235,78 +235,76 @@ proc MRAblationBuildGUI {} {
     MainHelpBuildGUI MRAblation
 
     #-------------------------------------------
-    # Load frame
+    # SetUp frame
     #-------------------------------------------
-    set fLoad $Module(MRAblation,fLoad)
-    set f $fLoad
+    set fSetUp $Module(MRAblation,fSetUp)
+    set f $fSetUp
     
-    foreach frame "Top Middle Bottom" {
-        if {$frame != "Bottom"} {
-            frame $f.f$frame -bg $Gui(activeWorkspace) -relief groove -bd 2 
-        } else {
-            frame $f.f$frame -bg $Gui(activeWorkspace)
-        }
+    foreach frame "Top Middle" {
+        frame $f.f$frame -bg $Gui(activeWorkspace) -relief groove -bd 2 
         pack $f.f$frame -side top -padx 10 -pady 5 -fill x
     }
     
     #----------------------------
-    # Load->Top frame
+    # SetUp->Top frame
     #----------------------------
-    set f $fLoad.fTop
+    set f $fSetUp.fTop
     foreach frame "ImageDir WorkingDir" {
         frame $f.f$frame -bg $Gui(activeWorkspace) 
         pack $f.f$frame -side top -pady 3 
     }
 
     # Image dir
-    set f $fLoad.fTop.fImageDir
+    set f $fSetUp.fTop.fImageDir
     foreach frame "Up Down" {
         frame $f.f$frame -bg $Gui(activeWorkspace) 
         pack $f.f$frame -side top -pady 5
     }
 
-    set f $fLoad.fTop.fImageDir.fUp
+    set f $fSetUp.fTop.fImageDir.fUp
     DevAddLabel  $f.lPlace "Where are the images?" 
     DevAddButton $f.bBrowse "Browse..." "MRAblationBrowse imageDir" 9 
     pack $f.lPlace $f.bBrowse -side left -padx 5
 
-    set f $fLoad.fTop.fImageDir.fDown
+    set f $fSetUp.fTop.fImageDir.fDown
     eval {entry $f.eDir -textvariable MRAblation(imageDir) -width 70} $Gui(WEA)
     pack $f.eDir -side left -padx 5
    
     # Working dir
-    set f $fLoad.fTop.fWorkingDir
+    set f $fSetUp.fTop.fWorkingDir
     foreach frame "Up Down" {
         frame $f.f$frame -bg $Gui(activeWorkspace) 
         pack $f.f$frame -side top -pady 5 
     }
 
-    set f $fLoad.fTop.fWorkingDir.fUp
+    set f $fSetUp.fTop.fWorkingDir.fUp
     DevAddLabel  $f.lPlace "Working directory?" 
     DevAddButton $f.bBrowse "Browse..." "MRAblationBrowse workingDir" 9 
     DevAddButton $f.bSame "Same" "MRAblationGetWorkingDir" 8 
     pack $f.lPlace $f.bBrowse $f.bSame -side left -padx 1 
 
-    set f $fLoad.fTop.fWorkingDir.fDown
+    set f $fSetUp.fTop.fWorkingDir.fDown
     eval {entry $f.eDir -textvariable MRAblation(workingDir) -width 70} $Gui(WEA)
     pack $f.eDir -side left -padx 5
  
     #---------------------------
-    # Load->Middle frame
+    # SetUp->Middle frame
     #---------------------------
-    set f $fLoad.fMiddle
+    set f $fSetUp.fMiddle
     foreach frame "Title Params" {
         frame $f.f$frame -bg $Gui(activeWorkspace) 
         pack $f.f$frame -side top -pady 5
     }
 
+
     # tile
-    set f $fLoad.fMiddle.fTitle
-    DevAddLabel $f.l "Specify the experiment:" 
-    pack $f.l -side top -pady 5 -fill x
+    set f $fSetUp.fMiddle.fTitle
+    DevAddButton $f.bHelp "?" "MRAblationHelpSpecifyExperiment" 2
+    DevAddLabel $f.lTitle "Specify the experiment:" 
+    grid $f.bHelp $f.lTitle -padx 1 -pady 3 
 
     # parameters
-    set f $fLoad.fMiddle.fParams
+    set f $fSetUp.fMiddle.fParams
     DevAddLabel $f.lSeq "Set of images:"
     eval {entry $f.eSeq -textvariable MRAblation(sequence) -width 40} $Gui(WEA)
     set MRAblation(sequence) "first;second;third;fourth"
@@ -319,22 +317,34 @@ proc MRAblationBuildGUI {} {
     eval {entry $f.ePlane -textvariable MRAblation(plane) -width 40} $Gui(WEA)
     set MRAblation(plane) "10"
 
+    DevAddLabel $f.lTE "TE:"
+    eval {entry $f.eTE -textvariable MRAblation(TE) -width 26} $Gui(WEA)
+    set MRAblation(TE) 0.020 
+
+    DevAddLabel $f.lW0 "w0:"
+    eval {entry $f.eW0 -textvariable MRAblation(w0) -width 26} $Gui(WEA)
+    set MRAblation(w0) "21.3"
+
+    DevAddLabel $f.lTC "TC:"
+    eval {entry $f.eTC -textvariable MRAblation(TC) -width 26} $Gui(WEA)
+    set MRAblation(TC) "0.01076"
+
+
     blt::table $f \
        0,0 $f.lSeq   -padx 5 -pady 1 -anchor e \
        0,1 $f.eSeq   -padx 5 -pady 1 -anchor w \
        1,0 $f.lPhase -padx 5 -pady 1 -anchor e \
        1,1 $f.ePhase -padx 5 -pady 1 -anchor w \
        2,0 $f.lPlane -padx 5 -pady 1 -anchor e \
-       2,1 $f.ePlane -padx 5 -pady 1 -anchor w
-   
-    #----------------------------
-    # Load->Bottom frame
-    #----------------------------
-    set f $fLoad.fBottom
-    DevAddButton $f.bApply "Apply" "MRAblationLoadVolume" 15 
-    set MRAblation(gui,loadApplyButton) $f.bApply
-    pack $f.bApply -side top -padx 8 
+       2,1 $f.ePlane -padx 5 -pady 1 -anchor w \
+       3,0 $f.lTE    -padx 5 -pady 1 -anchor e \
+       3,1 $f.eTE    -padx 5 -pady 1 -anchor w \
+       4,0 $f.lW0    -padx 5 -pady 1 -anchor e \
+       4,1 $f.eW0    -padx 5 -pady 1 -anchor w \
+       5,0 $f.lTC    -padx 5 -pady 1 -anchor e \
+       5,1 $f.eTC    -padx 5 -pady 1 -anchor w
 
+  
     #-------------------------------------------
     # Compute frame
     #-------------------------------------------
@@ -344,8 +354,8 @@ proc MRAblationBuildGUI {} {
     set fCompute $Module(MRAblation,fCompute)
     set f $fCompute
 
-    foreach frame "Top Middle Bottom" {
-        if {$frame == "Bottom"} {
+    foreach frame "Top Middle" {
+        if {$frame == "Middle"} {
             frame $f.f$frame -bg $Gui(activeWorkspace)
         } else {
             frame $f.f$frame -bg $Gui(activeWorkspace) -relief groove -bd 2 
@@ -357,7 +367,7 @@ proc MRAblationBuildGUI {} {
     # Compute->Top frame
     #----------------------------
     set f $fCompute.fTop
-    foreach frame "Title Buttons Images" {
+    foreach frame "Title Images" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx 3 -pady 5 -fill x
     }
@@ -366,60 +376,7 @@ proc MRAblationBuildGUI {} {
     DevAddLabel $f.lTitle "Specify images:"
     pack $f.lTitle -side top -pady 3 -fill x
  
-    set f $fCompute.fTop.fButtons
-
-    DevAddButton $f.bHelp "?" "MRAblationHelpSpecifyImages" 2
-
-    eval {checkbutton $f.cbComputing \
-        -variable MRAblation(checkbuttonComputing) \
-        -width 25 \
-        -text "One volume per timepoint"} $Gui(WEA) 
-    $f.cbComputing select 
-    bind $f.cbComputing <1> "MRAblationToggleComputing"
-
-    grid $f.bHelp $f.cbComputing -padx 1 -pady 3 
-
     set f $fCompute.fTop.fImages
-
-    # Cold image
-    #---------------------------
-    DevAddLabel $f.lCold "Cold images:"
-
-    set coldImgList [list {phase-1}]
-    set MRAblation(coldImageCurrent) phase-1
-    set df [lindex $coldImgList 0] 
-    eval {menubutton $f.mbType -text $df \
-          -relief raised -bd 2 -width 10 \
-          -indicatoron 1 \
-          -menu $f.mbType.m} $Gui(WMBA)
-    eval {menu $f.mbType.m} $Gui(WMA)
-    
-    # Save menubutton for config
-    set MRAblation(gui,coldImgMenuButton) $f.mbType
-    set MRAblation(gui,coldImgMenu) $f.mbType.m
-    $MRAblation(gui,coldImgMenuButton) config -state disabled 
- 
-    MRAblationSelectImage cold phase-1 
-
-    # Hot image
-    #---------------------------
-    DevAddLabel $f.lHot "Hot images:"
-
-    set hotImgList [list {phase-2}]
-    set MRAblation(hotImageCurrent) phase-2
-    set df [lindex $hotImgList 0] 
-    eval {menubutton $f.mbType2 -text $df \
-          -relief raised -bd 2 -width 10 \
-          -indicatoron 1 \
-          -menu $f.mbType2.m} $Gui(WMBA)
-    eval {menu $f.mbType2.m} $Gui(WMA)
-
-    # Save menubutton for config
-    set MRAblation(gui,hotImgMenuButton) $f.mbType2
-    set MRAblation(gui,hotImgMenu) $f.mbType2.m
-    $MRAblation(gui,hotImgMenuButton) config -state disabled 
-
-    MRAblationSelectImage hot phase-2 
 
     # Magnitude image
     #---------------------------
@@ -477,80 +434,37 @@ proc MRAblationBuildGUI {} {
     MRAblationSelectImage imaginary none
 
     blt::table $f \
-       0,0 $f.lCold   -padx 5 -pady 2 -anchor e \
-       0,1 $f.mbType  -padx 5 -pady 2 -anchor w \
-       1,0 $f.lHot    -padx 5 -pady 2 -anchor e \
-       1,1 $f.mbType2 -padx 5 -pady 2 -anchor w \
-       2,0 $f.lMag    -padx 5 -pady 2 -anchor e \
-       2,1 $f.mbType3 -padx 5 -pady 2 -anchor w \
-       3,0 $f.lReal   -padx 5 -pady 2 -anchor e \
-       3,1 $f.mbType4 -padx 5 -pady 2 -anchor w \
-       4,0 $f.lImag   -padx 5 -pady 2 -anchor e \
-       4,1 $f.mbType5 -padx 5 -pady 2 -anchor w 
+       0,0 $f.lMag    -padx 5 -pady 2 -anchor e \
+       0,1 $f.mbType3 -padx 5 -pady 2 -anchor w \
+       1,0 $f.lReal   -padx 5 -pady 2 -anchor e \
+       1,1 $f.mbType4 -padx 5 -pady 2 -anchor w \
+       2,0 $f.lImag   -padx 5 -pady 2 -anchor e \
+       2,1 $f.mbType5 -padx 5 -pady 2 -anchor w 
 
 
     #----------------------------
     # Compute->Middle frame
     #----------------------------
     set f $fCompute.fMiddle
-    foreach frame "Title Values" {
-        frame $f.f$frame -bg $Gui(activeWorkspace)
-        pack $f.f$frame -side top -padx 1 -pady 5 -fill x
-    }
- 
-    set f $fCompute.fMiddle.fTitle
-
-    DevAddButton $f.bHelp "?" "MRAblationHelpSpecifyParameters" 2
-    DevAddLabel $f.lTitle "Specify parameters:" 
-    grid $f.bHelp $f.lTitle -padx 1 -pady 3 
-
-    # parameters
-    set f $fCompute.fMiddle.fValues
-
-    DevAddLabel $f.lTE "TE:"
-    eval {entry $f.eTE -textvariable MRAblation(TE) -width 26} $Gui(WEA)
-    set MRAblation(TE) 0.020 
-
-    DevAddLabel $f.lW0 "w0:"
-    eval {entry $f.eW0 -textvariable MRAblation(w0) -width 26} $Gui(WEA)
-    set MRAblation(w0) "21.3"
-
-    DevAddLabel $f.lTC "TC:"
-    eval {entry $f.eTC -textvariable MRAblation(TC) -width 26} $Gui(WEA)
-    set MRAblation(TC) "0.01076"
-
-    blt::table $f \
-       0,0 $f.lTE -padx 5 -pady 2 -anchor e \
-       0,1 $f.eTE -padx 5 -pady 2 -anchor w \
-       1,0 $f.lW0 -padx 5 -pady 2 -anchor e \
-       1,1 $f.eW0 -padx 5 -pady 2 -anchor w \
-       2,0 $f.lTC -padx 5 -pady 2 -anchor e \
-       2,1 $f.eTC -padx 5 -pady 2 -anchor w
-
-
-    #----------------------------
-    # Compute->Bottom frame
-    #----------------------------
-    set f $fCompute.fBottom
     foreach frame "Prefix Apply" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx 1 -pady 5 -fill x
     }
  
-    set f $fCompute.fBottom.fPrefix
+    set f $fCompute.fMiddle.fPrefix
     # Volume prefix:
     #---------------------------
-    DevAddLabel $f.lPrefix "Volume prefix:"
-    eval {entry $f.ePrefix -textvariable MRAblation(volumePrefix) -width 18} $Gui(WEA)
+    DevAddLabel $f.lPrefix "Thermal volume prefix:"
+    eval {entry $f.ePrefix -textvariable MRAblation(volumePrefix) -width 15} $Gui(WEA)
     set MRAblation(volumePrefix) "T-"
 
     blt::table $f \
        0,0 $f.lPrefix -padx 1 -pady 2 -anchor e \
        0,1 $f.ePrefix -padx 1 -pady 2 -anchor w -fill x
 
-    set f $fCompute.fBottom.fApply
+    set f $fCompute.fMiddle.fApply
  
-    DevAddButton $f.bApply "Apply" "MRAblationCompute" 15 
+    DevAddButton $f.bApply "Start" "MRAblationStart" 15 
     set MRAblation(gui,computeApplyButton) $f.bApply 
     pack $f.bApply -side top -padx 8
 
@@ -631,71 +545,118 @@ proc MRAblationDisplayThermalVolume {} {
 }
 
 
-#-------------------------------------------------------------------------------
-# .PROC MRAblationCompute
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc MRAblationCompute {} {
-    global MRAblation Volume Gui
+proc MRAblationCheckUserInput {} {
+    global MRAblation 
 
-    # Error checking
-    if {$MRAblation(coldImageCurrent) == $MRAblation(hotImageCurrent)} {
-        DevErrorWindow "Cold image and hot image cannot be the same."
-        return
+    if {! [file exists $MRAblation(imageDir)]} {
+        DevErrorWindow "The image directory doesn't exist."
+        return 1
     }
+
+    if {! [file exists $MRAblation(workingDir)]} {
+        DevErrorWindow "The working directory doesn't exist."
+        return 1
+    }
+
+    if {! [file writable $MRAblation(workingDir)]} {
+        DevErrorWindow "The working directory is not writable."
+        return 1
+    }
+
+    if {$MRAblation(sequenceList) == ""} {
+        set MRAblation(sequenceList) [split $MRAblation(sequence) ";"]
+    }
+    set sequenceLength [llength $MRAblation(sequenceList)]
+    if {$sequenceLength < 1} {
+        DevErrorWindow "Set of images have not been specified."
+        return 1
+    }
+
+    if {[ValidateInt $MRAblation(phase)] == 0 || $MRAblation(phase) < 2} {
+        DevErrorWindow "# of timepoints must be a (> 1) integer number."
+        return 1
+    }
+
+    if {[ValidateInt $MRAblation(plane)] == 0 || $MRAblation(plane) < 1} {
+        DevErrorWindow "# of slices must be a positive integer number."
+        return 1
+    }
+
+
     if {$MRAblation(realImageCurrent) == $MRAblation(imaginaryImageCurrent) ||
         $MRAblation(realImageCurrent) == $MRAblation(magnitudeImageCurrent) ||
         $MRAblation(magnitudeImageCurrent) == $MRAblation(imaginaryImageCurrent)} {
         DevErrorWindow "Make sure magnitude, real and imaginary images are different."
-        return
+        return 1
     }
 
     if {[ValidateFloat $MRAblation(TE)] == 0 || $MRAblation(TE) < 0} {
         DevErrorWindow "TE must be a positive float."
-        return
+        return 1
     }
     if {[ValidateFloat $MRAblation(w0)] == 0 || $MRAblation(w0) < 0} {
         DevErrorWindow "w0 must be a positive float."
-        return
+        return 1
     }
     if {[ValidateFloat $MRAblation(TC)] == 0 || $MRAblation(TC) < 0} {
         DevErrorWindow "TC must be a positive float."
+        return 1
+    }
+
+    return 0
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC MRAblationStart
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MRAblationStart {} {
+    global MRAblation Volume Gui
+
+    #-------------------------------------------
+    # Error checking of user input 
+    #-------------------------------------------
+    set error [MRAblationCheckUserInput]
+    if {$error} {
+        return
+    }
+ 
+
+    incr MRAblation(scanIndex)
+
+    #-------------------------------------------
+    # Load and compute volumes 
+    #-------------------------------------------
+    set MRAblation(volumeNames) ""
+    set MRAblation(phaseCount) 1
+    MRAblationWatch 
+}
+
+
+proc MRAblationCompute {hot} {
+    global MRAblation Volume Gui
+
+    # does nothing for the first volume
+    # assume it's cold image
+    if {$hot == 1} {
         return
     }
 
-
-    # Cold phase number
-    set i [string last "-" $MRAblation(coldImageCurrent)]
-    set cold [string range $MRAblation(coldImageCurrent) [expr $i + 1] end]
-
-    # Hot phase number(s)
-    if {$MRAblation(hotImageCurrent) == "all"} {
-        set hot all 
-    } else {
-        set i [string last "-" $MRAblation(hotImageCurrent)]
-        set hot [string range $MRAblation(hotImageCurrent) [expr $i + 1] end]
-    }
-
-
     # Check if images are loaded
+    set cold 1
     set pList ""
-    if {$hot == "all"} {
-        for {set p 1} {$p <= $MRAblation(phase)} {incr p} {
-            lappend pList $p
-        } 
-    } else {
-        lappend pList $cold
-        lappend pList $hot
-    }
-
+    lappend pList $cold 
+    lappend pList $hot 
+ 
     set iList ""
     lappend iList $MRAblation(realImageCurrent)
     lappend iList $MRAblation(imaginaryImageCurrent)
     foreach p $pList {
         foreach e $iList {
-            set n laser-$e-$p
+            set n laser$MRAblation(scanIndex)-$e-$p
             set id [MIRIADSegmentGetVolumeByName $n] 
             if {$id <= 0} {
                 DevErrorWindow "Volume doesn't exist: $n"
@@ -708,36 +669,26 @@ proc MRAblationCompute {} {
  
     # Compute thermal volume(s)    
     set pList ""
-    if {$hot == "all"} {
-        for {set p 1} {$p <= $MRAblation(phase)} {incr p} {
-            if {$p != $cold} {
-                lappend pList $p
-            }
-        } 
-    } else {
-        lappend pList $hot
-    }
+    lappend pList $hot
 
     # real image of cold image
-    set coldRealVolName laser-$MRAblation(realImageCurrent)-$cold
+    set coldRealVolName laser$MRAblation(scanIndex)-$MRAblation(realImageCurrent)-$cold
     set coldRealVolID [MIRIADSegmentGetVolumeByName $coldRealVolName] 
     set coldRealImageData [Volume($coldRealVolID,vol) GetOutput] 
  
     # imaginary image of cold image
-    set coldImaginaryVolName laser-$MRAblation(imaginaryImageCurrent)-$cold
+    set coldImaginaryVolName laser$MRAblation(scanIndex)-$MRAblation(imaginaryImageCurrent)-$cold
     set coldImaginaryVolID [MIRIADSegmentGetVolumeByName $coldImaginaryVolName] 
     set coldImaginaryImageData [Volume($coldImaginaryVolID,vol) GetOutput] 
 
-    set MRAblation(thermalVolumeNames) ""
- 
     foreach p $pList {
         # real image of hot image
-        set hotRealVolName laser-$MRAblation(realImageCurrent)-$p
+        set hotRealVolName laser$MRAblation(scanIndex)-$MRAblation(realImageCurrent)-$p
         set hotRealVolID [MIRIADSegmentGetVolumeByName $hotRealVolName] 
         set hotRealImageData [Volume($hotRealVolID,vol) GetOutput] 
 
         # imaginary image of hot image
-        set hotImaginaryVolName laser-$MRAblation(imaginaryImageCurrent)-$p
+        set hotImaginaryVolName laser$MRAblation(scanIndex)-$MRAblation(imaginaryImageCurrent)-$p
         set hotImaginaryVolID [MIRIADSegmentGetVolumeByName $hotImaginaryVolName] 
         set hotImaginaryImageData [Volume($hotImaginaryVolID,vol) GetOutput] 
         
@@ -818,7 +769,7 @@ proc MRAblationCompute {} {
     }
 
     # set the first magnitude image as the background
-    set name laser-$MRAblation(magnitudeImageCurrent)-1
+    set name laser$MRAblation(scanIndex)-$MRAblation(magnitudeImageCurrent)-1
     set id [MIRIADSegmentGetVolumeByName $name] 
     MainSlicesSetVolumeAll Back $id
     # MainVolumesSetActive $id
@@ -826,33 +777,6 @@ proc MRAblationCompute {} {
 
     $MRAblation(gui,computeApplyButton) config -state normal 
  
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC MRAblationToggleComputing
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc MRAblationToggleComputing {} {
-    global MRAblation 
-
-    set toggle [expr {$MRAblation(checkbuttonComputing) == 1 ? 0 : 1}]
-    if {$toggle} {
-        $MRAblation(gui,coldImgMenuButton) config -state disabled 
-        $MRAblation(gui,hotImgMenuButton) config -state disabled 
-
-        # set cold and hot image
-        set l [$MRAblation(gui,coldImgMenu) entrycget 0 -label]
-        MRAblationSelectImage cold $l 
-
-        set l [$MRAblation(gui,hotImgMenu) entrycget end -label]
-        MRAblationSelectImage hot $l 
-    } else {
-        $MRAblation(gui,coldImgMenuButton) config -state normal 
-        $MRAblation(gui,hotImgMenuButton) config -state normal 
-    }
 }
 
 
@@ -916,7 +840,6 @@ proc MRAblationLoadVolume {} {
     }
 
     set MRAblation(volumeNames) ""
-    $MRAblation(gui,loadApplyButton) config -state disabled 
     set MRAblation(phaseCount) 1
     MRAblationWatch 
 
@@ -975,7 +898,7 @@ proc MRAblationCreateVolume {c} {
         VolumesSetFirst
 
         set seqName [lindex $MRAblation(sequenceList) $s]
-        set Volume(name) laser-$seqName-$c
+        set Volume(name) laser$MRAblation(scanIndex)-$seqName-$c
 
         # auto
         set Volume(readHeaders) 1 
@@ -1013,9 +936,10 @@ proc MRAblationWatch {} {
 
     if {$numOfExistingFiles >= $numOfRequiredFiles} {
         MRAblationCreateVolume $MRAblation(phaseCount) 
+        MRAblationCompute $MRAblation(phaseCount)
+ 
 
         if {$MRAblation(phaseCount) == $MRAblation(phase)} {
-            $MRAblation(gui,loadApplyButton) config -state normal 
             set MRAblation(updateComputeTab) 1 
 
             return
@@ -1029,7 +953,7 @@ proc MRAblationWatch {} {
 
     } 
 
-    after 1000 "MRAblationWatch"
+    after 3000 "MRAblationWatch"
 }
 
 
@@ -1051,7 +975,6 @@ proc MRAblationBrowse {dir} {
     set MRAblation($dir) \
         [tk_chooseDirectory -initialdir $initDir] 
 
-    $MRAblation(gui,loadApplyButton) config -state normal 
     after cancel "MRAblationWatch"
 }
 
@@ -1118,7 +1041,6 @@ proc MRAblationUpdateComputeTab {} {
     global MRAblation
 
     if {$MRAblation(updateComputeTab)} {
-        MRAblationUpdateColdAndHotImages
         MRAblationUpdateRealAndImaginaryImages
 
         set MRAblation(updateComputeTab) 0
