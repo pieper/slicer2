@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMLocalSegmenter.cxx,v $
-  Date:      $Date: 2006/03/06 21:07:31 $
-  Version:   $Revision: 1.25 $
+  Date:      $Date: 2006/03/23 18:02:12 $
+  Version:   $Revision: 1.26 $
 
 =========================================================================auto=*/
 // Since 22-Apr-02 vtkImageEMLocal3DSegmenter is called vtkImageEMLocalSegmenter - Kilian
@@ -16,7 +16,7 @@
 #include "vtkImageEMLocalSegmenter.h"
 #include "vtkObjectFactory.h"
 #include "EMLocalAlgorithm.h"
-
+#include "assert.h"
 //------------------------------------------------------------------------------
 // General vtkImageEMLocalSegmenter functions
 //------------------------------------------------------------------------------
@@ -589,9 +589,12 @@ static void vtkImageEMLocalSegmenterExecute(vtkImageEMLocalSegmenter *self,float
       short *LabelList = new short[TotalNumClasses];
       memset(LabelList,0,sizeof(short)*TotalNumClasses);
       // Get all existing labels
-      self->GetHeadClass()->GetAllLabels(LabelList,0,TotalNumClasses);
+      int index = self->GetHeadClass()->GetAllLabels(LabelList,0,TotalNumClasses);
+      // Otherwise no classes defined
+      assert(index);
       // Label all super classes
-      self->GetHeadClass()->LabelAllSuperClasses(LabelList,TotalNumClasses);
+      self->GetHeadClass()->LabelAllSuperClasses(LabelList,index, TotalNumClasses);
+
       delete[] LabelList;
   }
 

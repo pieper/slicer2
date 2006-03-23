@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterSuperClassNode.h,v $
-  Date:      $Date: 2006/02/14 21:24:27 $
-  Version:   $Revision: 1.18 $
+  Date:      $Date: 2006/03/23 18:02:13 $
+  Version:   $Revision: 1.19 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSegmenterClassNode - MRML node to represent transformation matrices.
@@ -178,6 +178,13 @@ public:
   /// our method is not as rebust. For this specific case we would set the flag for FG and do not set it for BG !
   vtkGetMacro(RegistrationIndependentSubClassFlag,int);      
   vtkSetMacro(RegistrationIndependentSubClassFlag,int);      
+
+  // Description:
+  // Kilian: Jan06: Gives superclass the predefined ID , make sure that no other class has that label/ID - this simplifies 
+  // using PredefinedLabelMapPrefix with different structure settings
+  vtkGetMacro(PredefinedLabelID,int); 
+  vtkSetMacro(PredefinedLabelID,int); 
+
  
 protected:
   vtkMrmlSegmenterSuperClassNode();
@@ -196,6 +203,7 @@ protected:
   int GenerateBackgroundProbability;
   int PCAShapeModelType;
   int RegistrationIndependentSubClassFlag;
+  int PredefinedLabelID;
 private:
   vtkMrmlSegmenterSuperClassNode(const vtkMrmlSegmenterSuperClassNode&);
   void operator=(const vtkMrmlSegmenterSuperClassNode&);

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterSuperClassNode.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:34 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2006/03/23 18:02:13 $
+  Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 //#include <stdio.h>
@@ -48,6 +48,8 @@ vtkMrmlSegmenterSuperClassNode::vtkMrmlSegmenterSuperClassNode() {
   this->PCAShapeModelType = 0;
   this->RegistrationIndependentSubClassFlag = 0;
   this->AtlasNode = vtkMrmlSegmenterAtlasSuperClassNode::New();
+
+  this->PredefinedLabelID = -1;
 }
 
 //----------------------------------------------------------------------------
@@ -70,6 +72,7 @@ void vtkMrmlSegmenterSuperClassNode::Write(ofstream& of, int nIndent)
   of << " PrintShapeSimularityMeasure='" << this->PrintShapeSimularityMeasure << "'";
   of << " PCAShapeModelType='" << this->PCAShapeModelType << "'";
   of << " RegistrationIndependentSubClassFlag='" << this->RegistrationIndependentSubClassFlag << "'";
+  if (this->PredefinedLabelID > -1) of << " PredefinedLabelID ='" << this->PredefinedLabelID << "'";
   of << ">\n";
 
 }
@@ -94,6 +97,7 @@ void vtkMrmlSegmenterSuperClassNode::Copy(vtkMrmlNode *anode)
   this->PrintShapeSimularityMeasure   = node->PrintShapeSimularityMeasure;
   this->PCAShapeModelType             = node->PCAShapeModelType;
   this->RegistrationIndependentSubClassFlag = node->RegistrationIndependentSubClassFlag;
+  this->PredefinedLabelID        = node->PredefinedLabelID;
 }
 
 //----------------------------------------------------------------------------
@@ -113,4 +117,5 @@ void vtkMrmlSegmenterSuperClassNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "PrintShapeSimularityMeasure:   " << this->PrintShapeSimularityMeasure << "\n";
   os << indent << "PCAShapeModelType:             " << this->PCAShapeModelType << "\n";
   os << indent << "RegistrationIndependentSubClassFlag: " << this->RegistrationIndependentSubClassFlag << "\n";
+  os << indent << "PredefinedLabelID:             " << this->PredefinedLabelID << "\n";
 }

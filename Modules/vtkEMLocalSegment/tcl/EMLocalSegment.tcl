@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMLocalSegment.tcl,v $
-#   Date:      $Date: 2006/03/06 21:07:31 $
-#   Version:   $Revision: 1.68 $
+#   Date:      $Date: 2006/03/23 18:02:13 $
+#   Version:   $Revision: 1.69 $
 # 
 #===============================================================================
 # FILE:        EMLocalSegment.tcl
@@ -269,7 +269,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.68 $} {$Date: 2006/03/06 21:07:31 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.69 $} {$Date: 2006/03/23 18:02:13 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -2616,13 +2616,13 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
               set BeginName ""
             }
             foreach Attribute $EMSegment(Gui${Name}AttributeList) {
-        if {$Attribute != "LocalPriorName"} { 
-            if {$Attribute  == "InitialBiasFilePrefix" || $Attribute  == "PredefinedLabelMapPrefix" } {
-            SegmenterSuperClass($pid,node) Set$Attribute "$EMSegment(Cattrib,$i,$Attribute)"
-            } else {
-            eval SegmenterSuperClass($pid,node) Set$Attribute $EMSegment(Cattrib,$i,$Attribute) 
-                    }
-        }
+              if {$Attribute != "LocalPriorName" && $Attribute != "LocalPriorSpatialWeightName" } { 
+                if {$Attribute  == "InitialBiasFilePrefix" || $Attribute  == "PredefinedLabelMapPrefix" } {
+                  SegmenterSuperClass($pid,node) Set$Attribute "$EMSegment(Cattrib,$i,$Attribute)"
+                } else {
+                  eval SegmenterSuperClass($pid,node) Set$Attribute $EMSegment(Cattrib,$i,$Attribute) 
+                }
+              }
             }
          }
 
@@ -2948,8 +2948,12 @@ proc EMSegmentStartEM { {save_mode "save"} } {
      }
      # For debugging
      # puts [$vtkEMSegment Print]
+     if {$NumInputImagesSet} {
+       $vtkEMSegment Update
+     } else {
+       set ErrorFlag 1
+     }
 
-     $vtkEMSegment Update
      if {[$vtkEMSegment GetErrorFlag]} {
          set ErrorFlag 1
          DevErrorWindow "Error Report: \n[$vtkEMSegment GetErrorMessages]Fix errors before resegmenting !"
@@ -3044,9 +3048,10 @@ proc EMSegmentStartEM { {save_mode "save"} } {
            $vtkEMSegment SetImageInput $NumInputImagesSet "" 
      }
 
-     if {([EMSegment(vtkEMSegment) GetErrorFlag] == 0) && ($ErrorFlag == 0)} { 
-         Volume($result,vol) SetImageData [EMSegment(vtkEMSegment) GetOutput]
+     if {([$vtkEMSegment GetErrorFlag] == 0) && ($ErrorFlag == 0)} { 
+         Volume($result,vol) SetImageData [$vtkEMSegment GetOutput]
      }
+
      $vtkEMSegment SetOutput ""
      # Delete instance
      if { $EMSegment(EMAtlasBrainClassifierFlag) } {
@@ -5802,7 +5807,7 @@ proc EMSegmentMakeModels { } {
 
    set data [histo GetOutput]
    for {set i 0} {$i <= $bins} {incr i} {
-       set val [$data $::getScalarComponentAs $i 0 0 0]
+       set val [$data $::getScalarComponent $i 0 0 0]
        set Label(label)  [expr $i + $min]  
        if {$val >0 &&  $Label(label) != 0} {
           
