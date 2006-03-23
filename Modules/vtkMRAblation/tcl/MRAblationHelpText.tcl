@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MRAblationHelpText.tcl,v $
-#   Date:      $Date: 2006/03/15 17:07:15 $
-#   Version:   $Revision: 1.1.2.4 $
+#   Date:      $Date: 2006/03/23 18:47:59 $
+#   Version:   $Revision: 1.1.2.5 $
 # 
 #===============================================================================
 # FILE:        MRAblationHelpText.tcl
@@ -51,16 +51,16 @@ proc MRAblationHelpSpecifyImages { } {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC MRAblationHelpSpecifyParameters
+# .PROC MRAblationHelpSpecifyExperiment
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc MRAblationHelpSpecifyParameters { } {
+proc MRAblationHelpSpecifyExperiment { } {
     #--- Compute 
     #--- compute thermal volumes 
     set i [ MRAblationGetHelpWinID ]
-    set txt "<H3>Specifying parameters for thermal volume computation</H3>
+    set txt "<H3>Specifying the experiment</H3>
 
 <P> <B>TE</B>: Time to excitation, a pulse sequence parameter, measured in milliseconds (msec). Input TE here in seconds. 
 <BR> <B>w0</B>: Operating frequency of maganet.
