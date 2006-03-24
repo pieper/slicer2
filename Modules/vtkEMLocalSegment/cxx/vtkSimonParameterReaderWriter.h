@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSimonParameterReaderWriter.h,v $
-  Date:      $Date: 2006/02/27 19:21:53 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2006/03/24 02:05:45 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
 // .NAME vtkSimonParameterReaderWriter - performs common math operations
@@ -70,23 +70,22 @@ public:
 
   static int TurnParameteresIntoInverseRotationTranslation(double *Translation, double *Rotation, double *Scale, float *invRotation, float *invTranslation, int paraType, int  TwoDFlag, int RigidFlag);
 
+  // Description:
+  // Creates the inverse affine matrix to the one produced by  TurnParameteresIntoInverseRotationTranslation 
+  // I used to have functions called generateInverse... . These did not do the right thing
+  static void TurnParameteresIntoRotationTranslation( double Xtranslate, double Ytranslate , double Ztranslate, double Xrotate, double Yrotate, 
+                           double Zrotate, double Xscale, double Yscale, double Zscale, float *invRotation, 
+                           float *invTranslation, int paraType);
+
   // To use Guimonds program I spit out a parameter file in the needed form 
   int transfereWarfieldToGuimondParameterFile(char *WarfieldFileName, char *GuimondFileName);
-  // Takes Warfield parameter file, calculates the inverse and returns it into a guimond file 
-  int generateInverseFromWarfieldToGuimondParameterFile(char *WarfieldFileName, char *GuimondFileName);
-  // Generates the inverse from Warfield parameters and writes it into Warfield Parameters
-  int generateInverseFromWarfieldToWarfieldParameterFile(char *WarfieldFileName, char *InverseWarfieldFileName);
 
   // Description
   // For Tcl interface 
   // returns a 1 if it did not work  and otherwise 0 
   int ReadFileParameter(char *WarfieldFileName) ;
-  // Description
-  // Inverts the file parameters -> if you do it twcie you have the original parameters back.
-  // returns a 1 if it did not work and otherwise 0  
-  int InvertFileParameter();
-  
-  // Tried out other ways did not work 
+
+   // Tried out other ways did not work 
   // Translation and Rotation 
   vtkGetVector6Macro(FileParameter1,double);
   // Scaling 
