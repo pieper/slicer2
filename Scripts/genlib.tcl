@@ -291,7 +291,7 @@ if { ![file exists $::TEEM_TEST_FILE] } {
             runcmd $::MAKE teem.SLN /build  $::VTK_BUILD_TYPE
         }
     } else {
-        eval runcmd $::MAKE -j 8
+        eval runcmd $::MAKE
     }
 }
 
@@ -539,7 +539,7 @@ if { ![file exists $::VTK_TEST_FILE] } {
             runcmd $::MAKE VTK.SLN /build  $::VTK_BUILD_TYPE
         }
     } else {
-        eval runcmd $::MAKE -j 8
+        eval runcmd $::MAKE 
     }
 }
 
@@ -576,7 +576,7 @@ if { ![file exists $::ITK_TEST_FILE] } {
             runcmd $::MAKE ITK.SLN /build  $::VTK_BUILD_TYPE
         }
     } else {
-        eval runcmd $::MAKE -j 8
+        eval runcmd $::MAKE
     }
 }
 
@@ -659,8 +659,8 @@ if { ![file exists $::SANDBOX_TEST_FILE] } {
         # At some point in the future, the classes in these libraries
         # will become part of ITK and this will no longer be needed.
         cd $SLICER_LIB/NAMICSandBox-build/SlicerTractClusteringImplementation   
-        eval runcmd $::MAKE -j 8
+        eval runcmd $::MAKE 
         cd $SLICER_LIB/NAMICSandBox-build/Distributions
-        eval runcmd $::MAKE -j 8
+        eval runcmd $::MAKE
     }
 }
