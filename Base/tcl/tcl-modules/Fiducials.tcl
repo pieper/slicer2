@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Fiducials.tcl,v $
-#   Date:      $Date: 2006/01/06 17:56:59 $
-#   Version:   $Revision: 1.66 $
+#   Date:      $Date: 2006/03/28 23:32:00 $
+#   Version:   $Revision: 1.67 $
 # 
 #===============================================================================
 # FILE:        Fiducials.tcl
@@ -96,7 +96,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.66 $} {$Date: 2006/01/06 17:56:59 $}]
+        {$Revision: 1.67 $} {$Date: 2006/03/28 23:32:00 $}]
     
     # Initialize module-level variables
     set Fiducials(renList) "viewRen matRen"
@@ -817,7 +817,7 @@ proc FiducialsVTKCreateFiducialsList { id type {scale ""} {textScale ""} {visibi
 proc FiducialsVTKCreatePoint { fid pid visibility} {
     global Fiducials Point Mrml Module
     
-    if { [info command vtkTextureText] != "" } {   
+    if { [FiducialsUseTextureText] } {   
         if {[info command Point($pid,text)] == ""} {
             # create it
             vtkTextureText Point($pid,text)
@@ -846,7 +846,7 @@ proc FiducialsVTKCreatePoint { fid pid visibility} {
         if {[info command Point($pid,follower,$r)] == ""} {
             vtkFollower Point($pid,follower,$r)
         }
-        if { [info command vtkTextureText] != "" } {
+        if { [FiducialsUseTextureText] } {
             Point($pid,follower,$r) SetMapper [[Point($pid,text) GetFollower] GetMapper]
             Point($pid,follower,$r) SetTexture [Point($pid,text) GetTexture]
         } else {
@@ -1546,7 +1546,7 @@ proc FiducialsResetVariables { {deleteFlag "0"} } {
                         Point($pid,follower,$r) Delete
                     }
                 }
-                if { [info command vtkTextureText] == "" &&
+                if { [FiducialsUseTextureText] &&
                      [info command Point($pid,mapper)] != ""} {
                     Point($pid,mapper) Delete
                 }
@@ -2089,7 +2089,7 @@ proc FiducialsDeletePoint {fid pid {noUpdate 0}} {
             puts "FiducialsDeletePoint: removed actor Point($pid,follower,$r) and deleted it"
         }
     }
-    if { [info command vtkTextureText] == "" } {
+    if { [FiducialsUseTextureText] } {
         Point($pid,mapper) Delete
     }
     Point($pid,text) Delete
@@ -3268,7 +3268,7 @@ proc FiducialsGetActiveSelectedPointIdList {} {
 #-------------------------------------------------------------------------------
 proc FiducialsToTextCards {modelid} {
 
-    if { $modelid != "" && [info commands vtkTextCard] != "" } {
+    if { $modelid != "" && [FiducialsUseTextureText] } {
 
         catch {[Fiducials_sch GetTextCards] RemoveAllItems}
         catch "Fiducials_sch Delete"
@@ -3442,4 +3442,22 @@ proc FiducialsUpdateZoom2D { s zoom } {
         }
     }
     set Fiducials(updating2DZoom) 0
+}
+
+#-------------------------------------------------------------------------------
+# .PROC FiducialsUseTextureText
+# Return 1 if the texture text classes are available on this platform
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsUseTextureText {} {
+
+    if { $::tcl_platform(machine) == "x86_64" } {
+        # don't use the freetype fonts on 64 bit machines for now...
+        return 0
+    }
+    if { [info command vtkTextureText] != "" } {   
+        return 1
+    }
+    return 0
 }
