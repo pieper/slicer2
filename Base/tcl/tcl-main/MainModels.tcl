@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainModels.tcl,v $
-#   Date:      $Date: 2006/03/06 19:22:50 $
-#   Version:   $Revision: 1.72 $
+#   Date:      $Date: 2006/03/29 20:07:45 $
+#   Version:   $Revision: 1.73 $
 # 
 #===============================================================================
 # FILE:        MainModels.tcl
@@ -71,7 +71,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.72 $} {$Date: 2006/03/06 19:22:50 $}]
+        {$Revision: 1.73 $} {$Date: 2006/03/29 20:07:45 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -192,8 +192,10 @@ proc MainModelsUpdateMRML {} {
         $menu delete 0 end
         
         foreach m $Model(idList) {
+            set colbreak [MainVolumesBreakVolumeMenu $menu]
             $menu add command -label [Model($m,node) GetName] \
-                -command "MainModelsSetActive $m"
+                -command "MainModelsSetActive $m" \
+                -columnbreak $colbreak
         }
     }
 
