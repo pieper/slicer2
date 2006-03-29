@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainMrml.tcl,v $
-#   Date:      $Date: 2006/02/07 01:51:23 $
-#   Version:   $Revision: 1.111.2.5 $
+#   Date:      $Date: 2006/03/29 21:58:19 $
+#   Version:   $Revision: 1.111.2.6 $
 # 
 #===============================================================================
 # FILE:        MainMrml.tcl
@@ -77,7 +77,7 @@ proc MainMrmlInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainMrml \
-    {$Revision: 1.111.2.5 $} {$Date: 2006/02/07 01:51:23 $}]
+    {$Revision: 1.111.2.6 $} {$Date: 2006/03/29 21:58:19 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -264,10 +264,21 @@ proc MainMrmlAddNode {nodeType  {globalArray ""}} {
         set Array(idList) "[lreplace $Array(idList) $j $j] $Array(idNone)"
     }
 
+    
     # Create vtkMrmlNode
     set n ${globalArray}($i,node)
     vtkMrml${nodeType}Node $n
     $n SetID $i
+
+    # if it's a Fiducial, create the selected point id list?
+    if {$globalArray == "Fiducials"} {
+        if {$::Module(verbose)} {
+            puts "Does a selected point id list exist yet for list $i? [info exist ::Fiducials($i,selectedPointIdList)] (if 0, creating it)"
+        }
+        if {[info exist ::Fiducials($i,selectedPointIdList)] == 0} {
+            set ::Fiducials($i,selectedPointIdList) ""
+        }
+    }
 
     # Add node to tree
     Mrml($tree) AddItem $n
@@ -1113,7 +1124,17 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                     set val [lreplace $a 0 0]
                     switch [string tolower $key] {
                         "description"             {$n SetDescription  $val}
-                        "name"             {$n SetName         $val}
+                        "name"             {
+                            # check to make sure there are no spaces in the name
+                            if {[string first " " $val] != -1} {
+                                if {$::Module(verbose)} {
+                                    puts "MainMrmlBuildTreesVersion2.0: changing spaces to underscores in Fiducial name $val"
+                                }
+                                $n SetName [regsub -all " " $val "_"]
+                            } else {
+                                $n SetName         $val
+                            }
+                        }
                         "type"              {eval $n SetType     $val}
                         "visibility"        {eval $n SetVisibility $val}
                         "symbolsize"         {eval $n SetSymbolSize    $val}
@@ -1132,7 +1153,16 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                     set val [lreplace $a 0 0]
                     switch [string tolower $key] {
                         "description"             {$n SetDescription  $val}
-                        "name"             {$n SetName         $val}
+                        "name"             {
+                            if {[string first " " $val] != -1} {
+                                if {$::Module(verbose)} {
+                                    puts "MainMrmlBuildTreesVersion2.0: changing spaces to underscores in Point name $val"
+                                }
+                                $n SetName [regsub -all " " $val "_"]
+                            } else {
+                                $n SetName         $val
+                            }
+                        }
                         "index"            {eval $n SetIndex        $val}
                         "xyz"              {eval $n SetXYZ     $val}
                         "focalxyz"         {eval $n SetFXYZ     $val}
@@ -1158,7 +1188,17 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                     switch [string tolower $key] {
                         
                         "desc"             {$n SetDescription  $val}
-                        "name"             {$n SetName         $val}
+                        "name"             {
+                            # check to make sure there are no spaces in the name
+                            if {[string first " " $val] != -1} {
+                                if {$::Module(verbose)} {
+                                    puts "MainMrmlBuildTreesVersion2.0: changing spaces to underscores in Landmark name $val"
+                                }
+                                $n SetName [regsub -all " " $val "_"]
+                            } else {
+                                $n SetName         $val
+                            }
+                        }
                         "xyz"              {eval $n SetXYZ     $val}
                         "focalxyz"              {eval $n SetFXYZ     $val}
                         "pathposition"    {$n SetPathPosition  $val}
