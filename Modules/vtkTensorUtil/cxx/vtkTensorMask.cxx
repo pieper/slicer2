@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMask.cxx,v $
-  Date:      $Date: 2006/01/12 15:36:56 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/03/29 14:53:27 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 #include "vtkTensorMask.h"
@@ -193,11 +193,7 @@ static void vtkTensorMaskExecuteTensor(vtkTensorMask *self, int ext[6],
   maskState = self->GetNotMask();
 
   // input tensors
-#if (VTK_MAJOR_VERSION >= 5)
-  inTensors = self->GetImageDataInput(0)->GetPointData()->GetTensors();
-#else
   inTensors = self->GetInput()->GetPointData()->GetTensors();
-#endif
   // output tensors
   outTensors = self->GetOutput()->GetPointData()->GetTensors();
 
@@ -329,11 +325,7 @@ void vtkTensorMask::ThreadedExecute(vtkImageData **inData,
   // output
   outPtr = outData->GetScalarPointerForExtent(outExt);
   // input tensors
-#if (VTK_MAJOR_VERSION >= 5)
-  inTensors = this->GetImageDataInput(0)->GetPointData()->GetTensors();
-#else
   inTensors = this->GetInput()->GetPointData()->GetTensors();
-#endif
 
   tExt = inData[1]->GetExtent();
   if (tExt[0] > outExt[0] || tExt[1] < outExt[1] || 
