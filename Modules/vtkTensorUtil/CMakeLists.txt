@@ -63,6 +63,7 @@ IF (VTKTENSORUTIL_CAN_BUILD)
 
   SUBDIRS (
     cxx
+    Testing
   )
 
   #
