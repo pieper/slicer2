@@ -33,7 +33,7 @@ ADD_EXECUTABLE(vtkTensorUtilTests ${TUTests})
 TARGET_LINK_LIBRARIES(vtkTensorUtilTests vtkTensorUtil)
 
 # FIXME
-SET(VTK_TENSOR_UTIL_TESTS "${EXECUTABLE_OUTPUT_PATH}/vtkTensorUtil")
+SET(VTK_TENSOR_UTIL_TESTS "${EXECUTABLE_OUTPUT_PATH}/vtkTensorUtilTests")
 
 # Loop over files and create executables
 FOREACH(name ${TEST_SRCS})
