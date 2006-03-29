@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Fiducials.tcl,v $
-#   Date:      $Date: 2006/03/28 23:35:41 $
-#   Version:   $Revision: 1.65.2.4 $
+#   Date:      $Date: 2006/03/29 22:01:05 $
+#   Version:   $Revision: 1.65.2.5 $
 # 
 #===============================================================================
 # FILE:        Fiducials.tcl
@@ -96,7 +96,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.65.2.4 $} {$Date: 2006/03/28 23:35:41 $}]
+        {$Revision: 1.65.2.5 $} {$Date: 2006/03/29 22:01:05 $}]
     
     # Initialize module-level variables
     set Fiducials(renList) "viewRen matRen"
@@ -1439,11 +1439,18 @@ proc FiducialsUpdateMRML {} {
                     # add it
                     $cb add "[Point($pid,node) GetName]" -text "[Point($pid,node) GetName]" \
                         -command "FiducialsSelectionFromCheckbox $menu $cb no $pid"
+                    if {$::Module(verbose)} {
+                        puts "FiducialsUpdateMrml: added command for point $pid:\n\tFiducialsSelectionFromCheckbox menu = $menu, cb = $cb no , pid = $pid"
+                    }
                 } else { 
                 }
                 # if it is selected, tell the scroll
                 set fid $Fiducials($name,fid)
                 set index [lsearch $Fiducials($fid,pointIdList) $pid]
+                if {[info exists Fiducials($fid,selectedPointIdList)] == 0} {
+                    # it didn't get created yet (may have been read from mrml, set it to an empty list
+                    set Fiducials($fid,selectedPointIdList) ""
+                }
                 if {[lsearch $Fiducials($fid,selectedPointIdList) $pid] != -1} {
                     if {$::Module(verbose)} { puts "FiducialsUpdateMRML: $cb selecting index $index" }
                     if {[lsearch [$cb getselind] $index] == -1} {
@@ -1669,7 +1676,7 @@ proc FiducialsCheckListExistence {name {argfid ""}} {
 #-------------------------------------------------------------------------------
 # .PROC FiducialsCreateFiducialsList
 # Create a new Fiducials/EndFiducials nodes with that name that will hold a set of points.<br>
-# If a list with that name exists already, return -1.<br>
+# If a list with that name exists already, or there is a space in the name, return -1.<br>
 # If the new Fiducials/EndFiducials pair is created, return its id .
 # .ARGS 
 # str type the type of the fiducial node
@@ -1681,6 +1688,12 @@ proc FiducialsCheckListExistence {name {argfid ""}} {
 proc FiducialsCreateFiducialsList {type name {textSize "6"} {symbolSize "6"}} {
     global Fiducials Point
     
+    # check to see if there's a space in the name
+    if {[string first " " $name] != -1} {
+        DevErrorWindow "Invalid fiducial list name:\n\"$name\"\nNo spaces allowed."
+        return -1
+    }
+
     # search in the existing lists to see if one already exists with that name
     if { [FiducialsCheckListExistence $name] == 0 } {
     
@@ -2031,10 +2044,12 @@ proc FiducialsDeletePoint {fid pid {noUpdate 0}} {
 
     # first check if the ID of the Point to be deleted is in the selected 
     # list and if so, delete it
-    set index [lsearch $Fiducials($fid,selectedPointIdList) $pid]
-    if { $index != -1 } {
-        # remove the id from the list
-        set Fiducials($fid,selectedPointIdList) [lreplace $Fiducials($fid,selectedPointIdList) $index $index]
+    if {[info exist Fiducials($fid,selectedPointIdList)]} {
+        set index [lsearch $Fiducials($fid,selectedPointIdList) $pid]
+        if { $index != -1 } {
+            # remove the id from the list
+            set Fiducials($fid,selectedPointIdList) [lreplace $Fiducials($fid,selectedPointIdList) $index $index]
+        }
     }
 
     # delete the checkbox if this is the active list (it won't get added if it's not there now)
@@ -2336,12 +2351,20 @@ proc FiducialsSetActiveList {name {menu ""} {cb ""}} {
             foreach pid [FiducialsGetPointIdListFromName $name] {
                 if {[$s index "[Point($pid,node) GetName]"] == -1} {
                     # add it
-                    if {$::Module(verbose)} { puts "SetActiveList: Adding a fid $pid, selected id list = $Fiducials($fid,selectedPointIdList)\n\tmenu = $menu"}                        
+                    if {$::Module(verbose)} { puts "SetActiveList: Adding a fid $pid, selected id list = $Fiducials($fid,selectedPointIdList)\n\tmenu = $menu\n\ts = $s"}                        
                     if {$menu == ""} {
-                        set thismenu [lindex $menulist $menuindex]
-                        $s add "[Point($pid,node) GetName]" -text "[Point($pid,node) GetName]" \
-                            -command "FiducialsSelectionFromCheckbox $thismenu $s no $pid"
+                        # set thismenu [lindex $menulist $menuindex] 
+                        foreach thismenu $menulist {
+                            $s add "[Point($pid,node) GetName]" -text "[Point($pid,node) GetName]" \
+                                -command "FiducialsSelectionFromCheckbox $thismenu $s no $pid"
+                            if {$::Module(verbose)} {
+                                puts "SetActiveList: adding command for menu $thismenu"
+                            }
+                        }
                         incr menuindex
+                        if {$::Module(verbose)} {
+                            puts "\t menu was empty, used $menulist, s = $s, pid = $pid"
+                        }
                     } else {
                         $s add "[Point($pid,node) GetName]" -text "[Point($pid,node) GetName]" \
                             -command "FiducialsSelectionFromCheckbox $menu $s no $pid"
@@ -2350,19 +2373,26 @@ proc FiducialsSetActiveList {name {menu ""} {cb ""}} {
                 if {[info exists Fiducials($name,fid)] == 1} {
                     set fid $Fiducials($name,fid)
                     set index [lsearch $Fiducials($fid,pointIdList) $pid]
-                    # if it is selected, tell the scroll
-                    if {[lsearch $Fiducials($fid,selectedPointIdList) $pid] != -1} {
-                        if {[lsearch [$s getselind] $index] == -1} {
-                            if {$::Module(verbose)} { puts "FiducialsSetActiveList: $s selecting index \"$index\"" }
+                    # is there a selected point id list?
+                    if {[info exists Fiducials($fid,selectedPointIdList)] == 1} {
+                        # if it is selected, tell the scroll
+                        if {[lsearch $Fiducials($fid,selectedPointIdList) $pid] != -1} {
+                            if {[lsearch [$s getselind] $index] == -1} {
+                                if {$::Module(verbose)} { puts "FiducialsSetActiveList: $s selecting index \"$index\"" }
                                 $s select "$index"
-                        } else {
-                            if {$::Module(verbose)} { puts "FiducialsSetActiveList $index already selected" }
+                            } else {
+                                if {$::Module(verbose)} { puts "FiducialsSetActiveList $index already selected" }
+                            }
+                        } else { 
+                            # deselect it
+                            if {[lsearch [$s getselind] $index] != -1} {
+                                if {$::Module(verbose)} { puts "FiducialsSetActiveList: $s deselecting $index"}
+                                $s deselect "$index"
+                            }
                         }
-                    } else { 
-                        # deselect it
-                        if {[lsearch [$s getselind] $index] != -1} {
-                            if {$::Module(verbose)} { puts "FiducialsSetActiveList: $s deselecting $index"}
-                            $s deselect "$index"
+                    } else {
+                        if {$::Module(verbose)} {
+                            puts "FiducialsSetActiveList: no selectedPointIdList ofr fid $fid"
                         }
                     }
                 }    
@@ -2416,15 +2446,16 @@ proc FiducialsSelectionUpdate {fid pid on} {
         }
     }
 
+    # if the selected point id list doesn't exist, create an empty list
+    if {[info exist Fiducials($fid,selectedPointIdList)] == 0} {
+        set Fiducials($fid,selectedPointIdList) ""
+    }
+
     # only do stuff with the checkbox list if it's the active list
 
     ### ON CASE #####
     if {$on } {
-        if {[info exist Fiducials($fid,selectedPointIdList)] == 0} {
-            set index -1
-        } else {
-            set index [lsearch $Fiducials($fid,selectedPointIdList) $pid]
-        }
+        set index [lsearch $Fiducials($fid,selectedPointIdList) $pid]
         if { $index == -1} {
             lappend Fiducials($fid,selectedPointIdList) $pid
             # tell procedure who want to know about it
@@ -2537,8 +2568,11 @@ proc FiducialsSelectionFromPicker {actor cellId} {
         foreach r $Fiducials(renList) {
             if { $actor == "Fiducials($fid,actor,$r)" } {
                 set pid [FiducialsPointIdFromGlyphCellId $fid $cellId]
-                
-                set index [lsearch $Fiducials($fid,selectedPointIdList) $pid]
+                if {[info exist Fiducials($fid,selectedPointIdList)]} {
+                    set index [lsearch $Fiducials($fid,selectedPointIdList) $pid]
+                } else {
+                    set index -1
+                }
                 if {$::Module(verbose)} {
                     puts "FiducialsSelectionFromPicker: pid $pid in selected point list = $index"
                 }
@@ -2588,6 +2622,9 @@ proc FiducialsSelectionFromCheckbox {menu cb focusOnActiveFiducial pid} {
         set selind [$cb getselind]
         if {$::Module(verbose)} {
             puts "FiducialsUpdateSelectionFromCheckbox: selected = $selind, pid = $pid"
+        }
+        if {[info exists Fiducials($fid,selectedPointIdList)] == 0} {
+            set Fiducials($fid,selectedPointIdList) ""
         }
         set selpind [lsearch $Fiducials($fid,selectedPointIdList) $pid]
         set checkboxInd [lsearch $Fiducials($fid,pointIdList) $pid]
@@ -2721,6 +2758,9 @@ proc FiducialsUpdateSelectionForActor {fid {pid -1}} {
     }
     foreach pid $pidList {
         # if the point is selected
+        if {[info exists Fiducials($fid,selectedPointIdList)] == 0} {
+            set Fiducials($fid,selectedPointIdList) ""
+        }
         if {$::Module(verbose)} { puts "\tis the pt $pid in $Fiducials($fid,selectedPointIdList)?" }
         if {[lsearch $Fiducials($fid,selectedPointIdList) $pid] != -1} { 
             if {$::Module(verbose)} { puts "\t\tyes" }
@@ -3225,7 +3265,9 @@ proc FiducialsGetSelectedPointIdListFromName { name } {
     global Fiducials Point
     if { [lsearch $Fiducials(listOfNames) $name] != -1 } {
         set fid $Fiducials($name,fid)
-        return $Fiducials($fid,selectedPointIdList) 
+        if {[info exists Fiducials($fid,selectedPointIdList)]} {
+            return $Fiducials($fid,selectedPointIdList) 
+        } else { return "" } 
     } else {
         return ""
     }
@@ -3242,7 +3284,9 @@ proc FiducialsGetAllSelectedPointIdList {} {
     set list ""
     foreach name $Fiducials(listOfNames) {
         set fid $Fiducials($name,fid)
-        set list [concat $list $Fiducials($fid,selectedPointIdList)] 
+        if {[info exist Fiducials($fid,selectedPointIdList)]} {
+            set list [concat $list $Fiducials($fid,selectedPointIdList)] 
+        }
     }
     return $list
 }
