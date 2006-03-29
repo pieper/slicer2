@@ -38,6 +38,12 @@ int TestInstance(int argc, char *argv[])
   vtkTensorMathematics::New()->Delete();
   vtkVectorToOuterProductDualBasis::New()->Delete();
 
+  // Test non-vtkObject
+  vtkPreciseHyperPoint a;
+  vtkPreciseHyperArray b;
+  vtkHyperPoint c;
+  vtkHyperArray d;
+
   return 0;
 }
 

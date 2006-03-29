@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkInteractiveTensorGlyph.cxx,v $
-  Date:      $Date: 2006/02/15 23:01:00 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/03/29 16:46:58 $
+  Version:   $Revision: 1.15 $
 
 =========================================================================auto=*/
 #include "vtkInteractiveTensorGlyph.h"
@@ -48,6 +48,7 @@ vtkInteractiveTensorGlyph::vtkInteractiveTensorGlyph()
   // Instead of coloring glyphs by passing through input
   // scalars, color according to features we are computing.
   //this->ColorGlyphsWithLinearMeasure();
+  this->ScalarMeasure = 0; // Need to initialed var before callling ColorGlyphsWithDirection
   this->ColorGlyphsWithDirection();
 
   this->VolumePositionMatrix = NULL;

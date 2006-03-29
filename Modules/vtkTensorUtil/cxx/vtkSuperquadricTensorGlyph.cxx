@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricTensorGlyph.cxx,v $
-  Date:      $Date: 2006/02/16 03:01:10 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/03/29 16:46:58 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 #include "vtkSuperquadricTensorGlyph.h"
@@ -49,6 +49,7 @@ vtkSuperquadricTensorGlyph::vtkSuperquadricTensorGlyph()
 {
   // Instead of coloring glyphs by passing through input
   // scalars, color according to features we are computing.
+  this->ScalarMeasure = 0; // Need to initialed var before callling ColorGlyphsWithLinearMeasure
   this->ColorGlyphsWithLinearMeasure();
 
   this->VolumePositionMatrix = NULL;
