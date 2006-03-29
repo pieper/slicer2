@@ -1,6 +1,7 @@
 # Define the tests
 SET(TEST_SRCS
   TestInstance
+  TestBSplineInterpolateImageFunction
   )
 
 FIND_PACKAGE(ITK)
