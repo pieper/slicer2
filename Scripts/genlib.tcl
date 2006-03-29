@@ -688,6 +688,9 @@ if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FI
         eval runcmd $::MAKE -j 8
         cd $SLICER_LIB/NAMICSandBox-build/Distributions
         eval runcmd $::MAKE -j 8
+        cd $SLICER_LIB/NAMICSandBox-build
+        # move the distributions library to the standard build directory
+        file rename -force Distributions/bin/libDistributions.so bin/libDistributions.so
     }
 }
 
