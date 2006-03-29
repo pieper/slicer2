@@ -6,8 +6,8 @@
 # 
 #  Program:   3D Slicer
 #  Module:    $RCSfile: Go.tcl,v $
-#  Date:      $Date: 2006/03/16 22:05:02 $
-#  Version:   $Revision: 1.107.2.7 $
+#  Date:      $Date: 2006/03/29 17:25:50 $
+#  Version:   $Revision: 1.107.2.8 $
 #===============================================================================
 # FILE:        Go.tcl
 # PROCEDURES:  
@@ -370,7 +370,7 @@ proc SplashRaise {} {
     }
     if {[lsearch $winlist ".__tk_*"] != -1} {
         # message is up, don't raise it now, but try later
-        after 100 "after idle SplashRaise"
+        # after 100 "after idle SplashRaise"
     } elseif {[winfo exists .splash]} {
         raise .splash
 
@@ -403,12 +403,17 @@ proc SplashKill {} {
     # clear out the event queue
     update
 
-    # release the grab
-    grab release .splash
+    if {[info command .splash] != ""} {
+        # release the grab
+        grab release .splash
+        catch "destroy .splash" 
+    }
 
-    catch "destroy .splash" 
-    catch "image delete $splashim"
-
+    if {[info exists splashim] } {
+        if { [lsearch [image names] $splashim] != -1} { 
+            catch "image delete $splashim"
+        }
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -927,7 +932,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.107.2.7 2006/03/16 22:05:02 hayes Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.107.2.8 2006/03/29 17:25:50 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
