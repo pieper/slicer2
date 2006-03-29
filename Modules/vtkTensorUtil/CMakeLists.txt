@@ -6,7 +6,8 @@
 # my -> TensorUtil
 
 
-PROJECT (VTKTENSORUTIL)
+SET(MODULE_NAME VTKTENSORUTIL)
+PROJECT (${MODULE_NAME})
 
 #
 # Assume everything is set up correctly for build.
@@ -16,6 +17,7 @@ PROJECT (VTKTENSORUTIL)
 #
 
 SET (VTKTENSORUTIL_CAN_BUILD 1)
+ENABLE_TESTING()
 
 #
 # Load CMake commands that you probably should not modify.
