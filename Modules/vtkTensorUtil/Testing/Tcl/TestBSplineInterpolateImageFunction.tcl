@@ -1,5 +1,4 @@
-package require vtk
-package require vtkinteraction
+package require vtkTensorUtil
 
 # Example demonstrates how to generate a 3D tetrahedra mesh from a volume. This example
 # differs from clipVolume.tcl in that the mesh is generated within a range of contour values.
@@ -17,7 +16,7 @@ vtkSampleFunction sample
 # Program a bandpass filter to clip a range of data. What we do is transform the 
 # scalars so that values lying betweeen (minRange,maxRange) are >= 0.0; all 
 # others are < 0.0,
-vtkBSplineInterpolateImageFunction
+vtkBSplineInterpolateImageFunction dataset
   dataset SetInput [sample GetOutput]
 vtkImplicitWindowFunction window
   window SetImplicitFunction dataset

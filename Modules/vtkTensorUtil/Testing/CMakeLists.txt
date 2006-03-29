@@ -1,3 +1,4 @@
 SUBDIRS(
+  Tcl
   Cxx
   )

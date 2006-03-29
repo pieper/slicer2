@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkBSplineInterpolateImageFunction.h,v $
-  Date:      $Date: 2006/03/29 14:53:27 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/03/29 20:09:53 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,12 +16,15 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkBSplineInterpolateImageFunction.h,v $
   Language:  C++
-  Date:      $Date: 2006/03/29 14:53:27 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/03/29 20:09:53 $
+  Version:   $Revision: 1.8 $
 */
 // .NAME vtkBSplineInterpolateImageFunction - BSpline interpolation of a image dataset of points
 // .SECTION Description
 // vtkBSplineInterpolateImageFunction
+// .SECTION Bugs
+// This class should be rewritten to properly take into account the ImageData. This is
+// not a regular SetInput (not ref count). Also mtime of image is not taken into account...
 
 
 #ifndef __vtkBSplineInterpolateImageFunction_h
