@@ -28,6 +28,7 @@ LINK_DIRECTORIES(
   ${TEEM_BIN_DIR} # for the libair...
   )
 
+# FIXME for some reason ITKNumerics is needed...
 CREATE_TEST_SOURCELIST(TUTests vtkTensorUtilTests.cxx ${TEST_SRCS})
 ADD_EXECUTABLE(vtkTensorUtilTests ${TUTests})
 TARGET_LINK_LIBRARIES(vtkTensorUtilTests vtkTensorUtil)
