@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMLocalSegment.tcl,v $
-#   Date:      $Date: 2006/03/23 18:02:13 $
-#   Version:   $Revision: 1.69 $
+#   Date:      $Date: 2006/03/29 20:13:49 $
+#   Version:   $Revision: 1.70 $
 # 
 #===============================================================================
 # FILE:        EMLocalSegment.tcl
@@ -269,7 +269,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.69 $} {$Date: 2006/03/23 18:02:13 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.70 $} {$Date: 2006/03/29 20:13:49 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -322,6 +322,7 @@ proc EMSegmentInit {} {
     set EMSegment(Alpha)          0.7 
     set EMSegment(SmWidth)        11
     set EMSegment(SmSigma)        5 
+    set EMSegment(RegistrationInterpolationType) 0 
     set EMSegment(DisableMultiThreading)  0 
 
 
@@ -2815,7 +2816,7 @@ proc  EMSegmentCheckCurrentClassParameters {Class {WarningFlag 1}} {
 
     if {$EMSegment(Cattrib,$Class,LocalPriorWeight)} {
     if {[EMSegmentProbabilityDataExists $Class] == 0} {
-        if {[DevYesNo "Prob Data Weight of Class $EMSegment(Cattrib,$Class,Label) is set to $EMSegment(Cattrib,$Class,LocalPriorWeight).However, no spatial priors are defined for this class or its sub-classes. Can Prob Data Weight be set to 0.0 ?"] !=  "yes" } {
+        if {[DevYesNo "Prob Data Weight of Class with Label $EMSegment(Cattrib,$Class,Label) is set to $EMSegment(Cattrib,$Class,LocalPriorWeight).However, no spatial priors are defined for this class or its sub-classes. Can Prob Data Weight be set to 0.0 ?"] !=  "yes" } {
         return 0
         } 
         set EMSegment(Cattrib,$Class,LocalPriorWeight) 0.0
