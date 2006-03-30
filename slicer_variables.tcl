@@ -82,6 +82,7 @@ set ::TEEM_BUILD_DIR  $::SLICER_LIB/teem-build
 set ::VTK_DIR  $::SLICER_LIB/VTK-build
 set ::VTK_SRC_DIR $::SLICER_LIB/VTK
 set ::VTK_BUILD_TYPE ""
+set ::VTK_BUILD_SUBDIR ""
 set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
 set ::KWWIDGETS_DIR  $::SLICER_LIB/Widgets-build
 set ::ITK_BINARY_PATH $::SLICER_LIB/Insight-build
