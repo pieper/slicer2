@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkBSplineInterpolateImageFunction.h,v $
-  Date:      $Date: 2006/03/29 20:09:53 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/03/30 15:54:58 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkBSplineInterpolateImageFunction.h,v $
   Language:  C++
-  Date:      $Date: 2006/03/29 20:09:53 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/03/30 15:54:58 $
+  Version:   $Revision: 1.9 $
 */
 // .NAME vtkBSplineInterpolateImageFunction - BSpline interpolation of a image dataset of points
 // .SECTION Description
@@ -59,8 +59,9 @@ class VTK_TENSORUTIL_EXPORT vtkBSplineInterpolateImageFunction : public vtkImpli
 
 protected:
   vtkBSplineInterpolateImageFunction() {
-    Initialized = 0;
-    SetSplineOrder(3);
+    this->Initialized = 0;
+    this->SplineOrder = 0; // Nasty bug, really calling a Set* function in constructor is bad
+    this->SetSplineOrder(3);
   }
   ~vtkBSplineInterpolateImageFunction() {}
   int                                 DataLength[ImageDimension];  // Image size
@@ -77,21 +78,25 @@ private:
   void operator=(const vtkBSplineInterpolateImageFunction&);  // Not implemented.
 
   /** Determines the weights for interpolation of the value x */
-  void SetInterpolationWeights( vtkFloatingPointType *x, long *evaluateIndex[ImageDimension], double *weights[ImageDimension],unsigned int splineOrder ) const;
+  void SetInterpolationWeights( vtkFloatingPointType *x, long *evaluateIndex[ImageDimension],
+    double *weights[ImageDimension],unsigned int splineOrder ) const;
 
   /** Determines the weights for the derivative portion of the value x */
-  void SetDerivativeWeights( vtkFloatingPointType *x, long *evaluateIndex[ImageDimension], double *weights[ImageDimension], unsigned int splineOrder ) const;
+  void SetDerivativeWeights( vtkFloatingPointType *x, long *evaluateIndex[ImageDimension],
+    double *weights[ImageDimension], unsigned int splineOrder ) const;
 
   /** Precomputation for converting the 1D index of the interpolation neighborhood 
     * to an N-dimensional index. */
   void GeneratePointsToIndex();
 
   /** Determines the indicies to use give the splines region of support */
-  void DetermineRegionOfSupport( long *evaluateIndex[ImageDimension], vtkFloatingPointType x[], unsigned int splineOrder ) const;
+  void DetermineRegionOfSupport( long *evaluateIndex[ImageDimension],
+    vtkFloatingPointType x[], unsigned int splineOrder ) const;
 
   /** Set the indicies in evaluateIndex at the boundaries based on mirror 
     * boundary conditions. */
-  void ApplyMirrorBoundaryConditions(long *evaluateIndex[ImageDimension], unsigned int splineOrder) const;
+  void ApplyMirrorBoundaryConditions(long *evaluateIndex[ImageDimension], 
+    unsigned int splineOrder) const;
 
 
   unsigned int             MaxNumberInterpolationPoints; // number of neighborhood points used for interpolation
