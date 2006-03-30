@@ -38,7 +38,7 @@
 #               /tcl - all tcl libs
 #               /vtk
 #                   /VTK - vtk source (or just Wrapping for distribution)
-#                   /VTK-build - vtk build tree (or just stripped libs in bin/$VTK_BUILD_TYPE for distribution)
+#                   /VTK-build - vtk build tree (or just stripped libs in bin/$VTK_BUILD_SUBDIR for distribution)
 #               /itk
 #                   /ITK-build - itk in bin for distribution
 #           /Darwin
@@ -180,13 +180,13 @@ if {$::env(BUILD) == $solaris ||
         set ::env(DYLD_LIBRARY_PATH) $::env(TEEM_BIN_DIR):$::env(DYLD_LIBRARY_PATH)
     } elseif {$::env(BUILD) == $windows} {
         # add vtk, slicer, and tcl bins
-        set ::env(Path) $::env(VTK_DIR)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
-        set ::env(Path) $::env(KWWIDGETS_DIR)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
-        set ::env(Path) $::env(ITK_BINARY_PATH)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
-        set ::env(Path) $::env(SANDBOX_BIN_DIR)/$::env(VTK_BUILD_TYPE)\;$::env(Path)
-        set ::env(Path) $::env(SANDBOX_BIN_DIR)/../Distributions/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
-        set ::env(Path) $::env(SOV_BINARY_DIR)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
-        set ::env(Path) $::env(SLICER_HOME)/Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
+        set ::env(Path) $::env(VTK_DIR)/bin/$::env(VTK_BUILD_SUBDIR)\;$::env(Path)
+        set ::env(Path) $::env(KWWIDGETS_DIR)/bin/$::env(VTK_BUILD_SUBDIR)\;$::env(Path)
+        set ::env(Path) $::env(ITK_BINARY_PATH)/bin/$::env(VTK_BUILD_SUBDIR)\;$::env(Path)
+        set ::env(Path) $::env(SANDBOX_BIN_DIR)/$::env(VTK_BUILD_SUBDIR)\;$::env(Path)
+        set ::env(Path) $::env(SANDBOX_BIN_DIR)/../Distributions/bin/$::env(VTK_BUILD_SUBDIR)\;$::env(Path)
+        set ::env(Path) $::env(SOV_BINARY_DIR)/bin/$::env(VTK_BUILD_SUBDIR)\;$::env(Path)
+        set ::env(Path) $::env(SLICER_HOME)/Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_SUBDIR)\;$::env(Path)
         set ::env(Path) $::env(TCL_BIN_DIR)\;$::env(Path)
         set ::env(Path) $::env(TEEM_BIN_DIR)\;$::env(Path)
     } else {
@@ -211,8 +211,8 @@ if {$::env(BUILD) == $solaris ||
         set ::env(TCLLIBPATH) "$::env(VTK_DIR)/Wrapping/Tcl $::env(TCLLIBPATH)"
         set ::env(TCLLIBPATH) "$::env(KWWIDGETS_DIR)/Wrapping/Tcl $::env(TCLLIBPATH)"
 } elseif {$::env(BUILD) == $windows} {
-    set ::env(TCLLIBPATH) "$::env(VTK_DIR)/Wrapping/Tcl/$::env(VTK_BUILD_TYPE) $::env(TCLLIBPATH)"
-    set ::env(TCLLIBPATH) "$::env(KWWIDGETS_DIR)/Wrapping/Tcl/$::env(VTK_BUILD_TYPE) $::env(TCLLIBPATH)"
+    set ::env(TCLLIBPATH) "$::env(VTK_DIR)/Wrapping/Tcl/$::env(VTK_BUILD_SUBDIR) $::env(TCLLIBPATH)"
+    set ::env(TCLLIBPATH) "$::env(KWWIDGETS_DIR)/Wrapping/Tcl/$::env(VTK_BUILD_SUBDIR) $::env(TCLLIBPATH)"
 } else {
     puts stderr "TCLLIBPATH: Invalid build $::env(BUILD)"
     exit
@@ -267,7 +267,7 @@ foreach modulePath $modulePaths {
                 set ::env(DYLD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$::env(BUILD)/bin:$::env(DYLD_LIBRARY_PATH)
                 set ::env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $::env(TCLLIBPATH)"
             } elseif {$::env(BUILD) == $windows} {
-                set ::env(Path) $modulePath/$moduleName/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
+                set ::env(Path) $modulePath/$moduleName/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_SUBDIR)\;$::env(Path)
                 set ::env(TCLLIBPATH) "$modulePath/$moduleName/Wrapping/Tcl $::env(TCLLIBPATH)"
             } else {
                     puts stderr "Modules: Invalid build $::env(BUILD)"
