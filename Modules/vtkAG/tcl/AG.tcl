@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: AG.tcl,v $
-#   Date:      $Date: 2006/03/20 12:22:00 $
-#   Version:   $Revision: 1.20 $
+#   Date:      $Date: 2006/03/30 00:08:45 $
+#   Version:   $Revision: 1.21 $
 # 
 #===============================================================================
 # FILE:        AG.tcl
@@ -236,7 +236,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.20 $} {$Date: 2006/03/20 12:22:00 $}]
+        {$Revision: 1.21 $} {$Date: 2006/03/30 00:08:45 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -260,7 +260,7 @@ proc AGInit {} {
     #General options
 
 # set AG(DEBUG) to 1 to display more information.
-    set AG(Debug) 1
+    set AG(Debug) 0
    
     set AG(Linear)    "1"
     set AG(Warp)      "1"
@@ -841,8 +841,8 @@ proc AGBuildExpertFrame {} {
         -text  "Use SSD" -variable AG(SSD) \
         -width 15  -indicatoron 0 } $Gui(WCA)
     grid $f.lUseSSD $f.cUseSSDLabel  -pady 2 -padx $Gui(pad) -sticky w
-    TooltipAdd $f.cUseSSDLabel "Press to set/unset using SSD to stop iterations."
- 
+    TooltipAdd $f.cUseSSDLabel "If set the algorithm halts when it converges. The method convergence when the difference between the Sum Squared Difference (SSD) score of two consecutive iterations is smaller then Epsilon* (SSD of last iteration)"    
+
     eval {label $f.lEstimateBias -text "Bias:"} $Gui(WLA)
     eval {checkbutton $f.cEstimateBias \
         -text  "Estimate Bias" -variable AG(Use_bias) \
@@ -1889,64 +1889,6 @@ proc AGWriteTransform {gt flag it FileName} {
     close $fileid
 }
 
-#-------------------------------------------------------------------------------
-# .PROC AGThresholdedResampledData
-# Compares the max and min values of the Original and resampled Data and defines Output in such a way that it is like ResampledData 
-# but in the same scalar range as OriginalData
-#
-# .ARGS
-# vtkImageData Source
-# vtkImageData Target
-# vtkImageData Output
-# .END
-#-------------------------------------------------------------------------------
-    
-proc AGThresholdedOutput { OriginalData ResampledData Output } {
-
-    vtkImageAccumulate ia
-    ia SetInput $OriginalData
-    ia Update
-    set InputMin [lindex [ia GetMin] 0]
-    set InputMax [lindex [ia GetMax] 0]
-
-    ia SetInput $ResampledData 
-    ia Update
-    set OutputMin [lindex [ia GetMin] 0]
-    set OutputMax [lindex [ia GetMax] 0]
-
-    ia Delete
-
-    set CurrentOutput $ResampledData  
-
-    if {$InputMin  > $OutputMin} {
-    puts "AGThresholdedOutput: Change lower scalar value of data from $OutputMin to $InputMin"
-    vtkImageThreshold lowerThr
-               lowerThr SetInput $CurrentOutput 
-               lowerThr ThresholdByLower $InputMin
-           lowerThr SetInValue $InputMin
-               lowerThr ReplaceOutOff 
-    lowerThr Update
-    set CurrentOutput [lowerThr GetOutput]
-    }
-
-    if {$InputMax  < $OutputMax} {
-    puts "AGThresholdedOutput: Change upper scalar value of data from $OutputMax to $InputMax"
-    vtkImageThreshold upperThr
-               upperThr SetInput $CurrentOutput 
-               upperThr ThresholdByUpper $InputMax
-           upperThr SetInValue $InputMax
-               upperThr ReplaceOutOff 
-    upperThr Update
-    set CurrentOutput [upperThr GetOutput]
-    }
-
-
-    $Output  DeepCopy  $CurrentOutput
-    $CurrentOutput Update
-
-    catch {lowerThr Delete}
-    catch {upperThr Delete}
-}
 
 #-------------------------------------------------------------------------------
 # .PROC RunAG
@@ -2856,7 +2798,7 @@ proc AGPreprocess {Source Target SourceVol TargetVol} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC AGThresholdedResampledData
+# .PROC AGThresholdedOutput
 # Compares the max and min values of the Original and resampled Data and defines Output in such a way that it is like ResampledData 
 # but in the same scalar range as OriginalData
 #
