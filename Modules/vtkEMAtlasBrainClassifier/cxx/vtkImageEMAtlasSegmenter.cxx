@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMAtlasSegmenter.cxx,v $
-  Date:      $Date: 2006/03/23 16:47:29 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/03/30 22:32:16 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 // Since 22-Apr-02 vtkImageEMAtlas3DSegmenter is called vtkImageEMAtlasSegmenter - Kilian
@@ -17,6 +17,7 @@
 #include "vtkObjectFactory.h"
 #include "vtkImageAccumulate.h"
 #include "vtkMultiThreader.h" 
+#include "assert.h"
 
 //------------------------------------------------------------------------------
 // Define Procedures for vtkImageEMAtlasSegmenter
