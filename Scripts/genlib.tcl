@@ -488,7 +488,7 @@ if { ![file exists $::VTK_TEST_FILE] } {
 
     if { $isDarwin } {
         # Darwin will fail on the first make, then succeed on the second
-        catch "eval runcmd $::MAKE -j4"
+        catch "eval runcmd $::MAKE"
         set OpenGLString "-framework OpenGL -lgl"
         runcmd $::CMAKE -G$GENERATOR -DOPENGL_gl_LIBRARY:STRING=$OpenGLString -DVTK_USE_SYSTEM_ZLIB:BOOL=ON ../VTK
     }
@@ -500,7 +500,7 @@ if { ![file exists $::VTK_TEST_FILE] } {
             runcmd $::MAKE VTK.SLN /build  $::VTK_BUILD_TYPE
         }
     } else {
-        eval runcmd $::MAKE -j 8
+        eval runcmd $::MAKE 
     }
 }
 
@@ -564,7 +564,7 @@ if { ![file exists $::TEEM_TEST_FILE] } {
             runcmd $::MAKE teem.SLN /build  $::VTK_BUILD_TYPE
         }
     } else {
-        eval runcmd $::MAKE -j 8
+        eval runcmd $::MAKE 
     }
 }
 
@@ -602,7 +602,7 @@ if { ![file exists $::ITK_TEST_FILE] } {
             runcmd $::MAKE ITK.SLN /build  $::VTK_BUILD_TYPE
         }
     } else {
-        eval runcmd $::MAKE -j 8
+        eval runcmd $::MAKE 
     }
 }
 
@@ -685,12 +685,10 @@ if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FI
         # At some point in the future, the classes in these libraries
         # will become part of ITK and this will no longer be needed.
         cd $SLICER_LIB/NAMICSandBox-build/SlicerTractClusteringImplementation   
-        eval runcmd $::MAKE -j 8
+        eval runcmd $::MAKE 
         cd $SLICER_LIB/NAMICSandBox-build/Distributions
-        eval runcmd $::MAKE -j 8
+        eval runcmd $::MAKE
         cd $SLICER_LIB/NAMICSandBox-build
-        # move the distributions library to the standard build directory
-        file rename -force Distributions/bin/libDistributions.so bin/libDistributions.so
     }
 }
 
