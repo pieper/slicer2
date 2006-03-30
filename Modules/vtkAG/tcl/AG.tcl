@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: AG.tcl,v $
-#   Date:      $Date: 2006/03/30 00:08:45 $
-#   Version:   $Revision: 1.21 $
+#   Date:      $Date: 2006/03/30 20:08:52 $
+#   Version:   $Revision: 1.22 $
 # 
 #===============================================================================
 # FILE:        AG.tcl
@@ -236,7 +236,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.21 $} {$Date: 2006/03/30 00:08:45 $}]
+        {$Revision: 1.22 $} {$Date: 2006/03/30 20:08:52 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -856,7 +856,7 @@ proc AGBuildExpertFrame {} {
         -text  "Interpolate" -variable AG(Interpolation) \
         -width 15  -indicatoron 0 } $Gui(WCA)
     grid $f.lInterpolation $f.cInterpolation  -pady 2 -padx $Gui(pad) -sticky w
-    TooltipAdd $f.cInterpolation "Press to set/unset to estimate bias with intensity transformation." 
+    TooltipAdd $f.cInterpolation "Press to set/unset to cubic interpolation" 
 
 
     eval {checkbutton $f.c2DRegistration \
@@ -1043,22 +1043,22 @@ IntensityTFM {
 
     set AG(IntensityTFMName)  $value
     $AG(mbIntensityTFM) config -text $AG(IntensityTFMName)
-      switch $value {
-"no intensity transform" {
-    set  AG(Intensity_tfm) "none"
-}
-"mono functional" {
-    set AG(Intensity_tfm)  "mono functional"
-
-}
-"piecewise median" {
-    set AG(Intensity_tfm)  "piecewise median"
-
-}
-default {
-    set AG(Intensity_tfm)  "mono functional"
-  
-}
+    switch $value {
+      "no intensity transform" {
+          set  AG(Intensity_tfm) "none"
+      }
+      "mono functional" {
+          set AG(Intensity_tfm)  "mono-functional"
+      
+      }
+      "piecewise median" {
+          set AG(Intensity_tfm)  "piecewise-median"
+      
+      }
+      default {
+          set AG(Intensity_tfm)  "mono-functional"
+        
+      }
     }
 }
 
@@ -1363,7 +1363,7 @@ proc AGIntensityTransform {Source} {
           for {set  f  0}  {$f < $nf} {incr f} {
             tfm SetNumberOfPieces {$f [lindex $np $f]}
             set i 0
-            for {set p 0} {$p <  [lindex $np $f]-1} {incr p}{
+            for {set p 0} {$p <  [lindex $np $f]-1} {incr p} {
               tfm SetBoundary {$f $p [lindex $bounds $i]}
               incr i
             }
