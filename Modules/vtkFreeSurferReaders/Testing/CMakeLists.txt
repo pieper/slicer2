@@ -10,6 +10,3 @@ FOREACH(tclfile ${tclfiles})
     -V Baseline/${fsrtestname}.png)
 ENDFOREACH(tclfile)
 
-SUBDIRS (
-#  Cxx
-  )
