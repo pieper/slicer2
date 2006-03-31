@@ -7,12 +7,17 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkBoolTess.h,v $
-  Date:      $Date: 2006/03/06 19:02:25 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/03/31 18:21:01 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 #ifndef __vtkBoolTess_h
 #define __vtkBoolTess_h
+// .NAME vtkBoolTess -
+// .SECTION Description
+// vtkBoolTess
+// .SECTION Bugs vtkBoolTess uses  a qsort and a global instance of the this pointer
+// this is a problem since you cannot know when this will be deallocated
 
 #include "vtkObject.h"
 #include "vtkSlicer.h"
@@ -70,7 +75,7 @@ protected:
   int NumContours;
   vtkIdType NLoopPts[VTK_BOOL_MAX_CONTOURS];
   vtkIdType *Contours[VTK_BOOL_MAX_CONTOURS];
-  
+
   //BTX - begin tcl exclude
   vtkFloatingPointType (*Points)[3];
   //ETX - end tcl exclude
@@ -80,7 +85,7 @@ protected:
   int SortAxis;
   int YAxis;
   int Orient;
-  
+
   int NumInputEdges;
   int NumNewEdges;
   vtkBoolTessVtx *Vertices;
