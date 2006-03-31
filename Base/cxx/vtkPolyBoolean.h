@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPolyBoolean.h,v $
-  Date:      $Date: 2006/02/22 23:47:17 $
-  Version:   $Revision: 1.19 $
+  Date:      $Date: 2006/03/31 18:20:41 $
+  Version:   $Revision: 1.20 $
 
 =========================================================================auto=*/
 // .NAME vtkPolyBoolean - perform boolean union, subtraction or intersection of volumes
@@ -156,12 +156,12 @@ public:
   vtkGetMacro(AngleResolution,vtkFloatingPointType);
 
   void SPLTestIntersection();
-  
+
   // Description:
   // Set the boolean operation. Default is A-B.
   void SetOperation( int operation );
   vtkGetMacro(Operation,int);
-  
+
   // Description:
   // Override the SetInput functino from vtkPolyDataFilter
   //  void SetInput2( vtkPolyData *input );
@@ -181,7 +181,7 @@ public:
   vtkGetMacro(IntersectionCount,int);
   vtkGetMacro(TriangleCount,int);
   vtkGetMacro(NodeCount,int);
-  
+
   vtkGetMacro(TestCount,int);
 
 
@@ -201,7 +201,7 @@ protected:
                              vtkMatrix4x4 *XformBtoA,
                              void *bool_void);
   void BuildBPoints( vtkMatrix4x4 *XformBtoA );
-  void AddCellTriangles( vtkIdType cellId, vtkIdType *ptIds, int type, 
+  void AddCellTriangles( vtkIdType cellId, vtkIdType *ptIds, int type,
                          vtkIdType numPts, int AorB );
   int IntersectCellPair( int cellIdA, int cellIdB );
   int IntersectBoolTriPair( vtkBoolTri *triA, vtkBoolTri *triB );
@@ -250,7 +250,7 @@ private:
   int IdOffsetNew;
   vtkBoolTess *Tess;
   int TriDirectorySize[2];
-  
+
   // time when Execute method was last called
   vtkTimeStamp ExecuteTime;
 };
