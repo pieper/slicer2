@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlDataVolume.cxx,v $
-  Date:      $Date: 2006/02/27 19:21:52 $
-  Version:   $Revision: 1.28 $
+  Date:      $Date: 2006/03/31 18:20:12 $
+  Version:   $Revision: 1.29 $
 
 =========================================================================auto=*/
 #include "vtkMrmlDataVolume.h"
@@ -199,9 +199,9 @@ void vtkMrmlDataVolume::CheckImageData()
 
     // Make this an empty RGBA image
     vtkImageData *id = vtkImageData::New();
-    id->SetNumberOfScalarComponents(4);
+    id->SetNumberOfScalarComponents(node->GetNumScalars());
     //id->SetScalarType(VTK_UNSIGNED_CHAR);
-    id->SetScalarType(VTK_SHORT);
+    id->SetScalarType(node->GetScalarType());
     id->SetExtent(0, dim[0]-1, 0, dim[1]-1, 0, 0);
     id->SetSpacing(node->GetSpacing());
     id->AllocateScalars();
