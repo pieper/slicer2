@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRIGlyphs.tcl,v $
-#   Date:      $Date: 2006/03/06 21:07:30 $
-#   Version:   $Revision: 1.21 $
+#   Date:      $Date: 2006/04/01 13:35:50 $
+#   Version:   $Revision: 1.22 $
 # 
 #===============================================================================
 # FILE:        DTMRIGlyphs.tcl
@@ -39,7 +39,7 @@ proc DTMRIGlyphsInit {} {
     #------------------------------------
     set m "Glyphs"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.21 $} {$Date: 2006/03/06 21:07:30 $}]
+                                 {$Revision: 1.22 $} {$Date: 2006/04/01 13:35:50 $}]
 
     # type of reformatting
     set DTMRI(mode,reformatType) 0
@@ -182,14 +182,15 @@ proc DTMRIGlyphsBuildGUI {} {
     text $DTMRI(mode,reformatTypeList,text) \
     color $colors \
     width $widths {
-        eval {radiobutton $f.rMode$vis \
+        regsub -all " " $vis "_" winname  ;# remove spaces from value
+        eval {radiobutton $f.rMode$winname \
               -text "$text" -value "$vis" \
               -variable DTMRI(mode,reformatType) \
               -command {DTMRIUpdateReformatType} \
               -indicatoron 0 } $Gui(WCA) \
         {-bg $color -selectcolor $color -width $width}
-        pack $f.rMode$vis -side left -padx 0 -pady 0
-        TooltipAdd  $f.rMode$vis $tip
+        pack $f.rMode$winname -side left -padx 0 -pady 0
+        TooltipAdd  $f.rMode$winname $tip
     }
     
     #-------------------------------------------
