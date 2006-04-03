@@ -6,8 +6,8 @@
 # 
 #  Program:   3D Slicer
 #  Module:    $RCSfile: Go.tcl,v $
-#  Date:      $Date: 2006/03/29 17:25:50 $
-#  Version:   $Revision: 1.107.2.8 $
+#  Date:      $Date: 2006/04/03 15:22:03 $
+#  Version:   $Revision: 1.107.2.9 $
 #===============================================================================
 # FILE:        Go.tcl
 # PROCEDURES:  
@@ -781,7 +781,7 @@ if {$::env(BUILD) == "darwin-ppc"} {
 }
 
 foreach m $::env(SLICER_MODULES_TO_REQUIRE) {
-    if {[lsearch $m $ignored] == -1} {
+    if {[lsearch $ignored $m] == -1} {
         puts "Loading Module $m..."
         if { [catch {package require $m} errVal] } {
             puts stderr "Warning: can't load module $m:\n$errVal"
@@ -932,7 +932,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.107.2.8 2006/03/29 17:25:50 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.107.2.9 2006/04/03 15:22:03 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
