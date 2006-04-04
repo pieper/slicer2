@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainModels.tcl,v $
-#   Date:      $Date: 2006/03/29 20:07:45 $
-#   Version:   $Revision: 1.73 $
+#   Date:      $Date: 2006/04/04 19:41:14 $
+#   Version:   $Revision: 1.74 $
 # 
 #===============================================================================
 # FILE:        MainModels.tcl
@@ -71,7 +71,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.73 $} {$Date: 2006/03/29 20:07:45 $}]
+        {$Revision: 1.74 $} {$Date: 2006/04/04 19:41:14 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -1235,6 +1235,11 @@ proc MainModelsSetVectorScaleFactor {m {value ""}} {
 proc MainModelsSetTensorVisibility {m {value ""}} {
     global Model Module
         
+    # if no tensor vis information, return
+    if {[info exist Model($m,tensorVisibility)] == 0 } {
+        return
+    }
+
     # if no change, return
     if {$Model($m,tensorVisibility) == $value} {
         return
@@ -1324,14 +1329,20 @@ proc MainModelsSetTensorVisibility {m {value ""}} {
 #-------------------------------------------------------------------------------
 proc MainModelsSetTensorScaleFactor {m {value ""}} {
     global Model Module
-        
+     
+    # if no tensor vis information, return
+    if {[info exist Model($m,tensorScaleFactor)] == 0 ||
+        [info exist Model($m,tensorVisibility)] == 0} {
+        return
+    }
+   
     if {$value != ""} {
         set Model($m,tensorScaleFactor) $value
     }
 
     # if our pipeline is set up set the value in the object
     if {$Model($m,tensorVisibility) == 1} {
-    Model($m,tensorGlyph) SetScaleFactor $Model(tensorScaleFactor)
+        Model($m,tensorGlyph) SetScaleFactor $Model(tensorScaleFactor)
     }
 }
 
@@ -1343,7 +1354,12 @@ proc MainModelsSetTensorScaleFactor {m {value ""}} {
 #-------------------------------------------------------------------------------
 proc MainModelsSetTensorColor {} {
     global Model 
-    
+
+    # if no tensor vis information, return
+    if {[info exist Model($m,tensorVisibility)] == 0 } {
+        return
+    }
+
     # display new color type
     $Model(mbTensorGlyphColor) config -text $Model(tensorGlyphColor)
 
