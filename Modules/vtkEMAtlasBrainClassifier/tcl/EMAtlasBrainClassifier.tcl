@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
-#   Date:      $Date: 2006/03/23 16:47:55 $
-#   Version:   $Revision: 1.35 $
+#   Date:      $Date: 2006/04/04 02:29:31 $
+#   Version:   $Revision: 1.36 $
 # 
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
@@ -107,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
    set Module($m,depend) ""
 
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.35 $} {$Date: 2006/03/23 16:47:55 $}]
+       {$Revision: 1.36 $} {$Date: 2006/04/04 02:29:31 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -1519,6 +1519,18 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource NonRigidRegistrationF
       warp SetMinimumStandardDeviation 0.85 
       warp SetMaximumStandardDeviation 1.25     
 
+      ## Kilian: April 06 Activate Intensity transformation to increase robustness of Pipeline
+      ##         Intensity transformation is only used for registration but not resampling
+      set AG(Intensity_tfm) "mono-functional"
+      set AG(Degree)           1
+      set AG(Ratio)            1
+      set AG(Use_bias)         0
+      set AG(Nb_of_functions)  1
+      if { [AGIntensityTransform Source] == 0 } {
+      puts "Intensity transform activated" 
+      warp SetIntensityTransform $AG(tfm)
+      }
+
       # Do it!
       warp Update
 
@@ -1632,14 +1644,12 @@ proc EMAtlasBrainClassifierResample {inTarget inSource outResampled bgValue {Out
     #    Threshold SetOutputScalarType [Target GetScalarType]
     # Threshold Update
     
-    catch "Resampled Delete"
-    vtkImageData Resampled
-
     if {$OutImageDataFlag } {
         # outResampled represents a data volume
         $outResampled DeepCopy [Reslicer GetOutput]  
         $outResampled SetOrigin 0 0 0
     } else { 
+    catch "Resampled Delete"
         vtkImageData Resampled
         Resampled DeepCopy [Reslicer GetOutput]  
         Volume($outResampled,vol) SetImageData  Resampled 
