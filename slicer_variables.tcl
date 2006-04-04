@@ -130,6 +130,7 @@ switch $::tcl_platform(os) {
         set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/libITKCommon.$shared_lib_ext
         set ::TK_EVENT_PATCH $::SLICER_HOME/tkEventPatch.diff
         set ::BLT_PATCH $::SLICER_HOME/blt-patch.diff
+        set ::env(VTK_BUILD_SUBDIR) $::VTK_BUILD_SUBDIR
     }
     "Linux" {
         set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin
@@ -149,6 +150,7 @@ switch $::tcl_platform(os) {
         set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/libITKCommon.$shared_lib_ext
         set ::TK_EVENT_PATCH $::SLICER_HOME/tkEventPatch.diff
         set ::BLT_PATCH $::SLICER_HOME/blt-patch.diff
+        set ::env(VTK_BUILD_SUBDIR) $::VTK_BUILD_SUBDIR
     }
     "Windows NT" {
     # Windows NT currently covers WinNT, Win2000, XP Home, XP Pro
@@ -163,6 +165,7 @@ switch $::tcl_platform(os) {
         set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin/$::VTK_BUILD_TYPE
 
         set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
+        set ::env(VTK_BUILD_SUBDIR) $::VTK_BUILD_SUBDIR
         set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh84.exe
         set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish84.exe
         set ::ITCL_TEST_FILE $::TCL_LIB_DIR/itcl3.2/itcl32.dll
