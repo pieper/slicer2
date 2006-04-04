@@ -34,7 +34,7 @@ exampleObject SetNumberOfSides 18
 # botttom of the cube.
 exampleObject SetStoppingThreshold 0
 exampleObject SetStoppingModeToLinearMeasure
-exampleObject SetMaxCurvature 10
+exampleObject SetRadiusOfCurvature 10
 # Give the seedTracts this object to copy new ones from
 seedTracts SetVtkHyperStreamlinePointsSettings exampleObject
 
