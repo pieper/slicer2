@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainSlices.tcl,v $
-#   Date:      $Date: 2006/03/08 22:11:55 $
-#   Version:   $Revision: 1.64 $
+#   Date:      $Date: 2006/04/07 18:53:57 $
+#   Version:   $Revision: 1.65 $
 # 
 #===============================================================================
 # FILE:        MainSlices.tcl
@@ -86,7 +86,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.64 $} {$Date: 2006/03/08 22:11:55 $}]
+        {$Revision: 1.65 $} {$Date: 2006/04/07 18:53:57 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"
@@ -858,12 +858,16 @@ proc MainSlicesSetVolumeAll {Layer v} {
                 if { [info exists ::IbrowserController(Icanvas)] } {
                     IbrowserDeselectFGIcon $::IbrowserController(Icanvas)
                 }
-                set ::Ibrowser(FGInterval) $::Ibrowser(NoInterval)
+                if { [info exists ::Ibrowser(NoInterval)] } {
+                    set ::Ibrowser(FGInterval) $::Ibrowser(NoInterval)
+                }
             } elseif { $Layer == "back" || $Layer == "Back" } {
                 if { [info exists ::IbrowserController(Icanvas)] } {
                     IbrowserDeselectBGIcon $::IbrowserController(Icanvas)
                 }
-                set ::Ibrowser(BGInterval) $::Ibrowser(NoInterval)
+                if { [info exists ::Ibrowser(NoInterval)] } {
+                    set ::Ibrowser(BGInterval) $::Ibrowser(NoInterval)
+                }
             }
         }
     }
