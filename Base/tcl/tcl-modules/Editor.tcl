@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Editor.tcl,v $
-#   Date:      $Date: 2006/03/03 15:34:30 $
-#   Version:   $Revision: 1.85 $
+#   Date:      $Date: 2006/04/10 21:21:51 $
+#   Version:   $Revision: 1.86 $
 # 
 #===============================================================================
 # FILE:        Editor.tcl
@@ -105,7 +105,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.85 $} {$Date: 2006/03/03 15:34:30 $}]
+        {$Revision: 1.86 $} {$Date: 2006/04/10 21:21:51 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -872,7 +872,7 @@ proc EditorBuildGUI {} {
     
     eval {checkbutton $f.cEditorDisplayLabel \
         -text  "Outline Labelmap" -variable Editor(display,labelOn) \
-        -width 21 -indicatoron 0 -command "EditorResetDisplay"} $Gui(WCA)
+              -width 21 -indicatoron 0 -command "EditorResetDisplay; RenderSlices"} $Gui(WCA)
     pack $f.cEditorDisplayLabel -side right -pady $Gui(pad) -padx $Gui(pad)
     TooltipAdd $f.cEditorDisplayLabel "Press to show/hide the label layer (the outline around your labelmap)."
 
@@ -1957,7 +1957,11 @@ proc EditorShowWorking {} {
     
     set w [EditorGetWorkingID]    
     MainSlicesSetVolumeAll Fore  $w
-    MainSlicesSetVolumeAll Label $w
+    if {$Editor(display,labelOn) == 1} {
+        MainSlicesSetVolumeAll Label $w
+    } else {
+        MainSlicesSetVolumeAll Label $Volume(idNone)
+    }
     
     RenderSlices
 }
