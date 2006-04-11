@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTextureFont.h,v $
-  Date:      $Date: 2005/12/20 22:56:16 $
-  Version:   $Revision: 1.1.8.1 $
+  Date:      $Date: 2006/04/11 20:31:24 $
+  Version:   $Revision: 1.1.8.2 $
 
 =========================================================================auto=*/
 /*===========================================================
@@ -129,11 +129,11 @@ protected:
     void MakeImageData(unsigned char *Alpha, unsigned char *intensity);
 
 //BTX
-    void vtkTextureFont::copyArrayOffset(unsigned char *dst, 
+    void copyArrayOffset(unsigned char *dst, 
                                      unsigned char *src,
                                      int w, int h, int xOff, int yOff);
 
-    void vtkTextureFont::mattArrayOffset(unsigned char *dstAlpha, unsigned char *dstI, 
+    void mattArrayOffset(unsigned char *dstAlpha, unsigned char *dstI, 
                                      unsigned char *srcAlpha, unsigned char srcLevel, 
                                      int w, int h, int xOff, int yOff);
 //ETX

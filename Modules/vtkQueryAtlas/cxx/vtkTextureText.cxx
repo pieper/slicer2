@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTextureText.cxx,v $
-  Date:      $Date: 2005/12/20 22:56:17 $
-  Version:   $Revision: 1.1.8.1 $
+  Date:      $Date: 2006/04/11 20:31:24 $
+  Version:   $Revision: 1.1.8.2 $
 
 =========================================================================auto=*/
 /*===========================================================
@@ -99,7 +99,7 @@ characterPosition::characterPosition(unsigned char c)
 
 
 
-vtkCxxRevisionMacro(vtkTextureText, "$Revision: 1.1.8.1 $");
+vtkCxxRevisionMacro(vtkTextureText, "$Revision: 1.1.8.2 $");
 vtkStandardNewMacro(vtkTextureText);
 
 
@@ -376,7 +376,7 @@ void vtkTextureText::Modified()
     for (unsigned int i = 0; i < mCharacterPositions.size(); i++) {
         cl = mCharacterPositions[i];
         c = (int) cl->character;
-        if (i != mCharacterPositions.size()-1) c2 = (int) mCharacterPositions[i+1];
+        if (i != mCharacterPositions.size()-1) c2 = (int) mCharacterPositions[i+1]->character;
         else c2 = -1;
 
         //vtkRasterizerCharacter *rch = (vtkRasterizerCharacter *)font->mRasterizerCharacters->GetItemAsObject(c - VTK_FONT_CHAR_OFFSET);
@@ -713,7 +713,7 @@ vtkFloatingPointType vtkTextureText::getLineLength(unsigned int _start)
     for(unsigned int i = _start; i < mCharacterPositions.size(); i++) {
         cl = mCharacterPositions[i];
         c = (int) cl->character;
-        if (i != mCharacterPositions.size()-1) c2 = (int) mCharacterPositions[i+1];
+        if (i != mCharacterPositions.size()-1) c2 = (int) mCharacterPositions[i+1]->character;
         else c2 = -1;
 
         if ((c > 32) && ((c-VTK_FONT_CHAR_OFFSET) < (int)font->mRasterizerCharacters->GetNumberOfItems())) {
@@ -786,7 +786,7 @@ vtkFloatingPointType vtkTextureText::getLineWordCount(unsigned int _start, vtkFl
     for(i = _start; i < mCharacterPositions.size(); i++) {
         cl = mCharacterPositions[i];
         c = (int) cl->character;
-        if (i != mCharacterPositions.size()-1) c2 = (int) mCharacterPositions[i+1];
+        if (i != mCharacterPositions.size()-1) c2 = (int) mCharacterPositions[i+1]->character;
         else c2 = -1;
 
         if ((c > 32) && ((c-VTK_FONT_CHAR_OFFSET) < (int)font->mRasterizerCharacters->GetNumberOfItems())) {
