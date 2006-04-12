@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkNRRDReader.cxx,v $
-  Date:      $Date: 2006/03/06 21:07:33 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/04/12 19:00:38 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -50,7 +50,7 @@
 
 #include "teem/ten.h"
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.5 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.6 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -61,6 +61,7 @@ vtkNRRDReader::vtkNRRDReader()
   CurrentFileName = NULL;
   nrrd = nrrdNew();
   UseNativeOrigin = false;
+  ReadStatus = 0;
 }
 
 vtkNRRDReader::~vtkNRRDReader() 
@@ -258,6 +259,8 @@ void vtkNRRDReader::ExecuteInformation()
      vtkErrorMacro("Error reading " << this->GetFileName() << ": " << err);
      free(err); // err points to malloc'd data!!
      //     err = NULL;
+     nio = nrrdIoStateNix(nio);
+     this->ReadStatus = 1;
      return;
    }
 
@@ -281,8 +284,10 @@ void vtkNRRDReader::ExecuteInformation()
 
    if (nrrdTypeBlock == this->nrrd->type)
     {
-    vtkErrorMacro("ReadImageInformation: Cannot currently "
+     vtkErrorMacro("ReadImageInformation: Cannot currently "
                       "handle nrrdTypeBlock");
+    nio = nrrdIoStateNix(nio);
+    this->ReadStatus = 1;
     return;
     }
 
@@ -315,6 +320,8 @@ void vtkNRRDReader::ExecuteInformation()
                       << domainAxisNum << ") doesn't match dimension of space"
                       " in which orientation is defined ("
                       << this->nrrd->spaceDim << "); not currently handled");
+    nio = nrrdIoStateNix(nio);
+    this->ReadStatus = 1;
     return;              
     }    
     
@@ -548,6 +555,8 @@ void vtkNRRDReader::ExecuteInformation()
         case nrrdOriginStatusDirection:
           vtkErrorMacro("ReadImageInformation: Error interpreting "
                             "nrrd origin status");
+          nio = nrrdIoStateNix(nio);
+          this->ReadStatus = 1;
           break;
         }
       }
