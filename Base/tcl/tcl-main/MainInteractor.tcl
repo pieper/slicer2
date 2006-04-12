@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainInteractor.tcl,v $
-#   Date:      $Date: 2006/03/08 22:12:22 $
-#   Version:   $Revision: 1.68 $
+#   Date:      $Date: 2006/04/12 14:44:08 $
+#   Version:   $Revision: 1.69 $
 # 
 #===============================================================================
 # FILE:        MainInteractor.tcl
@@ -149,6 +149,10 @@ proc MainInteractorBind {widget} {
     bind $widget <Control-d>         {MainInteractorKeyPress Ctld %W %x %y}
     # toggle between fore and background volumes
     bind $widget <KeyPress-g>        {MainInteractorKeyPress g %W %x %y}
+
+    # Show the slice full controls when the user holds down the left ALT key in this slice window
+    bind $widget <KeyPress-Alt_L>    {MainInteractorKeyPress Altl %W %x %y}
+    bind $widget <KeyRelease-Alt_L>  {MainInteractorKeyPress Altl_release %W %x %y}
 
     # bind all the digits on the top row and the key pad
     for {set i 0} {$i < 10} {incr i} {
@@ -357,7 +361,7 @@ proc MainInteractorCursor {s xs ys x y {mainSlice 1} {shiftMotion 0}} {
 # Up and Down moves the slice offset.
 # Left and Right calles EditApplyFilter from Edit.tcl
 # .ARGS
-# string key  one of Right, Left, Up, Down, Delete, d, c, 0, g, Ctla, Ctlx, Ctlc, Ctlv, Ctld
+# string key  one of Right, Left, Up, Down, Delete, d, c, 0, g, Ctla, Ctlx, Ctlc, Ctlv, Ctld, Altl, Altl_release
 # windowpath widget
 # int x
 # int y
@@ -521,6 +525,22 @@ proc MainInteractorKeyPress {key widget x y} {
                     }  
                 }  
             }  
+        }
+        "Altl" {
+            # only pop up the slice controls if not in Normal or 3D mode, 
+            # assume MainViewer will deal with duplicate calls
+            if {$::View(mode) != "Normal" &&
+                $::View(mode) != "3D"} {
+                    MainViewerShowSliceControls $s
+                }
+        }
+        "Altl_release" {
+            # only hide slice controls if not in Normal or 3D mode, 
+            # assume MainViewer will deal with duplicate calls
+            if {$::View(mode) != "Normal" &&
+                $::View(mode) != "3D"} {
+                MainViewerHideSliceControls
+            }
         }
     }
 }

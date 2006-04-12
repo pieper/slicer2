@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainViewer.tcl,v $
-#   Date:      $Date: 2006/01/06 17:56:56 $
-#   Version:   $Revision: 1.36 $
+#   Date:      $Date: 2006/04/12 14:44:08 $
+#   Version:   $Revision: 1.37 $
 # 
 #===============================================================================
 # FILE:        MainViewer.tcl
@@ -39,7 +39,7 @@ proc MainViewerInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainViewer \
-    {$Revision: 1.36 $} {$Date: 2006/01/06 17:56:56 $}]
+    {$Revision: 1.37 $} {$Date: 2006/04/12 14:44:08 $}]
 
     # Props
     set Gui(midHeight) 1
@@ -173,7 +173,9 @@ proc MainViewerBuildGUI {} {
         set Slice($s,lOrient) $f.lOrient
 
         # Show the full controls when the mouse enters the thumbnail
-        bind $f.lOrient <Enter>  "MainViewerShowSliceControls $s"
+        # bind $f.lOrient <Enter>  "MainViewerShowSliceControls $s"
+        bind $f.lOrient <ButtonPress-1> "MainViewerShowSliceControls $s"
+
 
         #-------------------------------------------
         # Slice$s->Controls frame
