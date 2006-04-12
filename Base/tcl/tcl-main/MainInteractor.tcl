@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainInteractor.tcl,v $
-#   Date:      $Date: 2006/04/12 14:44:08 $
-#   Version:   $Revision: 1.69 $
+#   Date:      $Date: 2006/04/12 15:10:18 $
+#   Version:   $Revision: 1.70 $
 # 
 #===============================================================================
 # FILE:        MainInteractor.tcl
@@ -149,6 +149,8 @@ proc MainInteractorBind {widget} {
     bind $widget <Control-d>         {MainInteractorKeyPress Ctld %W %x %y}
     # toggle between fore and background volumes
     bind $widget <KeyPress-g>        {MainInteractorKeyPress g %W %x %y}
+    # toggle cross hairs on and off
+    bind $widget <KeyPress-h>        {MainInteractorKeyPress h %W %x %y}
 
     # Show the slice full controls when the user holds down the left ALT key in this slice window
     bind $widget <KeyPress-Alt_L>    {MainInteractorKeyPress Altl %W %x %y}
@@ -541,6 +543,12 @@ proc MainInteractorKeyPress {key widget x y} {
                 $::View(mode) != "3D"} {
                 MainViewerHideSliceControls
             }
+        }
+        "h" {
+            # toggle cross hairs visibility
+            set ::Anno(cross) [expr ! $::Anno(cross)]
+            MainAnnoSetCrossVisibility slices $::Anno(cross)
+            RenderSlices
         }
     }
 }
