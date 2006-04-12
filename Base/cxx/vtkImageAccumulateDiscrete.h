@@ -7,17 +7,16 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageAccumulateDiscrete.h,v $
-  Date:      $Date: 2006/02/27 19:21:48 $
-  Version:   $Revision: 1.20 $
+  Date:      $Date: 2006/04/12 22:28:50 $
+  Version:   $Revision: 1.21 $
 
 =========================================================================auto=*/
-// .NAME vtkImageAccumulateDiscrete - Generalized histograms upto 4 dimensions.
+// .NAME vtkImageAccumulateDiscrete - Generalized histograms up to 4 dimensions.
 // .SECTION Description
 // vtkImageAccumulateDiscrete - This filter divides component space into
 // discrete bins.  It then counts the number of pixels associated
 // with each bin.  The output is this "scatter plot".
 // The input can be any type, but the output is always int.
-
 
 #ifndef __vtkImageAccumulateDiscrete_h
 #define __vtkImageAccumulateDiscrete_h
