@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageCrossHair2D.cxx,v $
-  Date:      $Date: 2006/04/12 22:25:40 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/04/12 22:32:01 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 #include "vtkImageCrossHair2D.h"
@@ -407,16 +407,16 @@ void vtkImageCrossHair2D::PrintSelf(ostream& os, vtkIndent indent)
 {
   Superclass::PrintSelf(os,indent);
 
-  os << indent << "ShowCursor:               " << this->ShowCursor;
-  os << indent << "NumHashes:                " << this->NumHashes;
-  os << indent << "BullsEyeWidth in mm:      " << this->BullsEyeWidth;
-  os << indent << "BullsEye On/Off:          " << this->BullsEye;
-  os << indent << "Length of a Hash Mark:    " << this->HashLength;
-  os << indent << "Cursor Position:          " << this->Cursor[0] << "," << this->Cursor[1];
-  os << indent << "Does the Cross Intersect? " << this->IntersectCross;
-  os << indent << "Magnification:            " << this->Magnification;
-  os << indent << "HashGap:                  " << this->HashGap;
-  os << indent << "HashLength:               " << this->HashLength;
+  os << indent << "ShowCursor:               " << this->ShowCursor << "\n";
+  os << indent << "NumHashes:                " << this->NumHashes << "\n";
+  os << indent << "BullsEyeWidth in mm:      " << this->BullsEyeWidth << "\n";
+  os << indent << "BullsEye On/Off:          " << this->BullsEye << "\n";
+  os << indent << "Length of a Hash Mark:    " << this->HashLength << "\n";
+  os << indent << "Cursor Position:          " << this->Cursor[0] << "," << this->Cursor[1] << "\n";
+  os << indent << "Does the Cross Intersect? " << this->IntersectCross << "\n";
+  os << indent << "Magnification:            " << this->Magnification << "\n";
+  os << indent << "HashGap:                  " << this->HashGap << "\n";
+  os << indent << "HashLength:               " << this->HashLength << "\n";
   os << indent << "Cursor Color:             " 
-    << this->CursorColor[0] << "," << this->CursorColor[2] << "," << this->CursorColor[3];
+    << this->CursorColor[0] << "," << this->CursorColor[2] << "," << this->CursorColor[3] << "\n";
 }
