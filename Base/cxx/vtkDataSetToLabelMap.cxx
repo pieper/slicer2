@@ -7,23 +7,19 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDataSetToLabelMap.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:38 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/04/12 21:53:45 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
-//#include <math.h>
-//#include <stdio.h>
-#include "vtkPointData.h"
-#include "vtkPoints.h"
-#include "vtkCell.h"
 #include "vtkDataSetToLabelMap.h"
-#include "vtkIntArray.h"
+
 #include "vtkObjectFactory.h"
-#include "vtkCell.h"
 #include "vtkPointData.h"
 #include "vtkPoints.h"
-
-
+#include "vtkIntArray.h"
+#include "vtkCell.h"
+#include "vtkShortArray.h"
+#include "vtkStructuredPoints.h"
 
 //------------------------------------------------------------------------------
 vtkDataSetToLabelMap* vtkDataSetToLabelMap::New()
@@ -94,7 +90,7 @@ void vtkDataSetToLabelMap::Execute()
   vtkCell *cell;
   //vtkNormals *normals; 
   vtkDataSet *input=this->GetInput();
-  vtkStructuredPoints *output=this->GetOutput();
+  vtkStructuredPoints *output = this->GetOutput();
   int cellNum;
   int numPts, numCells;
   vtkFloatingPointType insidePoint[3];
@@ -222,9 +218,9 @@ void vtkDataSetToLabelMap::Execute()
  *                                                                          *  
  ****************************************************************************/
 
-void vtkDataSetToLabelMap::BoundaryFill(int i, int j, int k, vtkShortArray *scalars) {
+void vtkDataSetToLabelMap::BoundaryFill(int /*i*/, int /*j*/, int /*k*/, vtkShortArray *scalars) {
 
-  int idx = k *(this->OutputDimensions[0]*this->OutputDimensions[1]) + j*(this->OutputDimensions[0]) + i;
+  //int idx = k *(this->OutputDimensions[0]*this->OutputDimensions[1]) + j*(this->OutputDimensions[0]) + i;
   int kFactor = this->OutputDimensions[0] * this->OutputDimensions[1];
   int jFactor = this->OutputDimensions[0];
   

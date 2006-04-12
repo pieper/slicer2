@@ -7,35 +7,29 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDataSetToLabelMap.h,v $
-  Date:      $Date: 2006/02/22 23:47:15 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/04/12 21:53:46 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
-/* author: Delphine Nain, delfin@ai.mit.edu
- */
-
-// .NAME vtkDataSetToLabelMap - convert arbitrary vtkDataSet to a voxel representation with the following encoding (0 = outside voxel, 1 = surface voxel, 2 = inside voxel) 
+// .NAME vtkDataSetToLabelMap - convert arbitrary vtkDataSet to a voxel representation with 
+// the following encoding (0 = outside voxel, 1 = surface voxel, 2 = inside voxel) 
 // .SECTION Description
 // author: Delphine Nain, delfin@ai.mit.edu
 // vtkDataSetToLabelMap is a filter that converts an arbitrary data set to a
-// structured point (i.e., voxel) representation with the following encoding (0 = outside voxel, 1 = surface voxel, 2 = inside voxel). The output Image has the dimensions and origin of the bounding box of the input DataSet. 
+// structured point (i.e., voxel) representation with the following encoding 
+// (0 = outside voxel, 1 = surface voxel, 2 = inside voxel). 
+// The output Image has the dimensions and origin of the bounding box of the input DataSet. 
 // .SECTION see also
 // vtkImplicitModeller
-
+// .SECTION autho: Delphine Nain, delfin@ai.mit.edu
 
 #ifndef __vtkDataSetToLabelMap_h
-
 #define __vtkDataSetToLabelMap_h
 
 #include "vtkDataSetToStructuredPointsFilter.h"
-#include "vtkShortArray.h"
-#include "vtkIntArray.h"
-#include "vtkFloatArray.h"
-#include "vtkImageData.h"
-#include "vtkStructuredPoints.h"
-#include "vtkImageLogic.h"
 #include "vtkSlicer.h"
 
+class vtkShortArray;
 class VTK_SLICER_BASE_EXPORT vtkDataSetToLabelMap : public vtkDataSetToStructuredPointsFilter
 {
 
@@ -53,30 +47,25 @@ public:
      
   // Description:
   // Compute the ModelBounds based on the input geometry.
-
-
-void ComputeOutputParameters();
- 
-// Description:
-// Set the i-j-k dimensions on which to sample the distance function.
- 
-void SetOutputSpacing(vtkFloatingPointType i, vtkFloatingPointType j, vtkFloatingPointType k);
+  void ComputeOutputParameters();
 
   // Description:
   // Set the i-j-k dimensions on which to sample the distance function.
+  void SetOutputSpacing(vtkFloatingPointType i, vtkFloatingPointType j, vtkFloatingPointType k);
 
-void SetOutputSpacing(vtkFloatingPointType dim[3]);
+  // Description:
+  // Set the i-j-k dimensions on which to sample the distance function.
+  void SetOutputSpacing(vtkFloatingPointType dim[3]);
 
-vtkGetVectorMacro(OutputDimensions,int,3);
-vtkGetVectorMacro(OutputSpacing,vtkFloatingPointType,3);
-vtkGetVectorMacro(OutputOrigin,vtkFloatingPointType,3);
+  vtkGetVectorMacro(OutputDimensions,int,3);
+  vtkGetVectorMacro(OutputSpacing,vtkFloatingPointType,3);
+  vtkGetVectorMacro(OutputOrigin,vtkFloatingPointType,3);
 
- vtkSetMacro(UseBoundaryVoxels,int);
- vtkGetMacro(UseBoundaryVoxels,int);
- 
-vtkGetObjectMacro(InOutScalars,vtkShortArray);
-vtkGetObjectMacro(BoundaryScalars,vtkShortArray);
+  vtkSetMacro(UseBoundaryVoxels,int);
+  vtkGetMacro(UseBoundaryVoxels,int);
 
+  vtkGetObjectMacro(InOutScalars,vtkShortArray);
+  vtkGetObjectMacro(BoundaryScalars,vtkShortArray);
 
   // Description:
   // Write the volume out to a specified filename.
@@ -93,6 +82,7 @@ protected:
   int IsPointInside(vtkFloatingPointType s, vtkFloatingPointType t);
   vtkFloatingPointType ComputeStep(vtkFloatingPointType spacing[3],vtkFloatingPointType vertex0[3],vtkFloatingPointType vertex1[3]);
   void EvaluatePoint(vtkFloatingPointType vo[3], vtkFloatingPointType v1[3], vtkFloatingPointType v2[3], vtkFloatingPointType s, vtkFloatingPointType t,vtkFloatingPointType result[3]);
+  // FIXME: i,jk are not parameters
   void BoundaryFill(int i, int j, int k, vtkShortArray *scalars);
   
   vtkFloatingPointType OutputOrigin[3];
@@ -104,7 +94,6 @@ protected:
   
   int UseBoundaryVoxels;
 };
-
 
 
 #endif
