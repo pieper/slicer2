@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2006/03/10 22:25:55 $
-#   Version:   $Revision: 1.38.12.2.2.1 $
+#   Date:      $Date: 2006/04/12 17:54:23 $
+#   Version:   $Revision: 1.38.12.2.2.2 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -82,14 +82,14 @@ proc LocatorInit {} {
     # Set Default Presets
     set Module(Locator,presets) "0,driver='User' 1,driver='User' 2,driver='User'\
     visibility='0' transverseVisibility='1' guideVisibility='0' normalLen='100' transverseLen='25'\
-     radius='3.0' diffuseColor='0 0.9 0'"
+     radius='1.5' diffuseColor='0 0.9 0'"
 
     # Define Dependencies
     set Module($m,depend) ""
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.1 $} {$Date: 2006/03/10 22:25:55 $}]
+        {$Revision: 1.38.12.2.2.2 $} {$Date: 2006/04/12 17:54:23 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
