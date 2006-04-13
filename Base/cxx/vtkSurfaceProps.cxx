@@ -7,18 +7,46 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSurfaceProps.cxx,v $
-  Date:      $Date: 2006/03/06 19:02:27 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/04/13 19:24:47 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
-#include <math.h>
-#include "vtkMath.h"
 #include "vtkSurfaceProps.h"
+
+#include "vtkObjectFactory.h"
+#include "vtkPolyData.h"
+#include "vtkCellTriMacro.h"
+
+#include "vtkMath.h"
+#include <math.h>
+
+//------------------------------------------------------------------------------
+vtkSurfaceProps* vtkSurfaceProps::New()
+{
+  // First try to create the object from the vtkObjectFactory
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkSurfaceProps");
+  if(ret)
+    {
+    return (vtkSurfaceProps*)ret;
+    }
+  // If the factory was unable to create the object, then create it here.
+  return new vtkSurfaceProps;
+}
+
 
 // Description:
 vtkSurfaceProps::vtkSurfaceProps()
-  {
-  }
+{
+  this->SurfaceArea = 0;
+  this->MinCellArea = 0;
+  this->MaxCellArea = 0;
+  this->Volume = 0;
+  this->VolumeError = 0;
+  this->Test = 0;
+}
+vtkSurfaceProps::~vtkSurfaceProps()
+{
+}
 
 
 void vtkSurfaceProps::Update()
@@ -46,7 +74,7 @@ vtkPolyData *vtkSurfaceProps::GetInput()
     {
     return NULL;
     }
-  
+
   return (vtkPolyData *)(this->Inputs[0]);
 }
 
@@ -54,7 +82,7 @@ vtkPolyData *vtkSurfaceProps::GetInput()
 // Compute Surface Properties for Input vtkPolyData
 //
 void vtkSurfaceProps::Execute()
-  {
+{
   vtkPolyData *input = (vtkPolyData *)this->Inputs[0];
   vtkIdType *ptIds;
   int numCells, jj, kk, type;
@@ -134,5 +162,5 @@ void vtkSurfaceProps::Execute()
     this->VolumeError = tot_vol - tot_vol2;
   else
     this->VolumeError = tot_vol2 - tot_vol;
-  }
+}
 
