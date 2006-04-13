@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainViewer.tcl,v $
-#   Date:      $Date: 2006/04/12 14:44:08 $
-#   Version:   $Revision: 1.37 $
+#   Date:      $Date: 2006/04/13 19:44:53 $
+#   Version:   $Revision: 1.38 $
 # 
 #===============================================================================
 # FILE:        MainViewer.tcl
@@ -39,7 +39,7 @@ proc MainViewerInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainViewer \
-    {$Revision: 1.37 $} {$Date: 2006/04/12 14:44:08 $}]
+    {$Revision: 1.38 $} {$Date: 2006/04/13 19:44:53 $}]
 
     # Props
     set Gui(midHeight) 1
@@ -270,6 +270,8 @@ proc MainViewerHideSliceControls {} {
     lower $Gui(fSlice0).fControls $Gui(fSlice0).fImage
     lower $Gui(fSlice1).fControls $Gui(fSlice1).fImage
     lower $Gui(fSlice2).fControls $Gui(fSlice2).fImage
+
+    RenderSlices
 }
 
 #-------------------------------------------------------------------------------
