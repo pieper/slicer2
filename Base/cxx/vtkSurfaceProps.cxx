@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSurfaceProps.cxx,v $
-  Date:      $Date: 2006/04/13 19:24:47 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/04/13 19:53:53 $
+  Version:   $Revision: 1.15 $
 
 =========================================================================auto=*/
 #include "vtkSurfaceProps.h"
@@ -44,8 +44,21 @@ vtkSurfaceProps::vtkSurfaceProps()
   this->VolumeError = 0;
   this->Test = 0;
 }
+
 vtkSurfaceProps::~vtkSurfaceProps()
 {
+}
+
+void vtkSurfaceProps::PrintSelf(ostream& os, vtkIndent indent)
+{
+  this->Superclass::PrintSelf(os,indent);
+
+  os << indent << "SurfaceArea: " << this->SurfaceArea << endl;
+  os << indent << "MinCellArea: " << this->MinCellArea << endl;
+  os << indent << "MaxCellArea: " << this->MaxCellArea << endl;
+  os << indent << "Volume:      " << this->Volume << endl;
+  os << indent << "VolumeError: " << this->VolumeError << endl;
+  os << indent << "Test:        " << this->Test << endl;
 }
 
 
