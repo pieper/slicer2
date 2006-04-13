@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRICalculateTensors.tcl,v $
-#   Date:      $Date: 2006/03/30 16:23:46 $
-#   Version:   $Revision: 1.38 $
+#   Date:      $Date: 2006/04/13 19:55:08 $
+#   Version:   $Revision: 1.39 $
 # 
 #===============================================================================
 # FILE:        DTMRICalculateTensors.tcl
@@ -45,7 +45,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.38 $} {$Date: 2006/03/30 16:23:46 $}]
+                                 {$Revision: 1.39 $} {$Date: 2006/04/13 19:55:08 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -2094,10 +2094,25 @@ proc DTMRIComputeRasToIjkFromCorners {refnode node extent {spacing ""}} {
 
 
   #Set Translation to center of the output volume.
-  #This is a particular thing of the slicer: all volumes are centered in their centroid.
-  _Ras SetElement 0 3 [expr ([lindex $extent 1] - [lindex $extent 0])/2.0]
-  _Ras SetElement 1 3 [expr ([lindex $extent 3] - [lindex $extent 2])/2.0]
-  _Ras SetElement 2 3 [expr ([lindex $extent 5] - [lindex $extent 4])/2.0]
+  
+  #If refnode volume is centered, set to center
+  #otherwise, use the origin given by refnode
+  
+  #Check if refnode is centered
+  set v [$refnode GetID]
+  set refextent [[Volume($v,vol) GetOutput] GetExtent]
+  set reforiginx [expr ([lindex $refextent 1] - [lindex $refextent 0])/2.0]
+  set reforiginy [expr ([lindex $refextent 3] - [lindex $refextent 2])/2.0]
+  set reforiginz [expr ([lindex $refextent 5] - [lindex $refextent 4])/2.0]
+  
+  if { [_Ras GetElement 0 3] == $reforiginx && \
+       [_Ras GetElement 1 3] == $reforiginy && \
+       [_Ras GetElement 2 3] == $reforiginz } {
+    #This is a particular thing of the slicer: all volumes are centered in their centroid.
+    _Ras SetElement 0 3 [expr ([lindex $extent 1] - [lindex $extent 0])/2.0]
+    _Ras SetElement 1 3 [expr ([lindex $extent 3] - [lindex $extent 2])/2.0]
+    _Ras SetElement 2 3 [expr ([lindex $extent 5] - [lindex $extent 4])/2.0]
+  }
       
   set dims "[expr [lindex $extent 1] - [lindex $extent 0] + 1] \
               [expr [lindex $extent 3] - [lindex $extent 2] + 1] \
