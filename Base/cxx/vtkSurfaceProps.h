@@ -7,10 +7,14 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSurfaceProps.h,v $
-  Date:      $Date: 2006/04/13 19:24:47 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/04/13 19:55:56 $
+  Version:   $Revision: 1.15 $
 
 =========================================================================auto=*/
+// .NAME vtkSurfaceProps - no desc
+// .SECTION Description
+// vtkSurfaceProps is used for measure
+
 #ifndef __vtkSurfaceProps_h
 #define __vtkSurfaceProps_h
 
