@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: gonogo.tcl,v $
-#   Date:      $Date: 2006/03/17 23:15:53 $
-#   Version:   $Revision: 1.14 $
+#   Date:      $Date: 2006/04/13 17:24:57 $
+#   Version:   $Revision: 1.15 $
 # 
 #===============================================================================
 # FILE:        gonogo.tcl
@@ -421,10 +421,11 @@ proc mpForward {view} {
 # .PROC mpOpen
 # 
 # .ARGS
-# int view
+# int view name of the view window
+# str pattern optional file pattern, unix command line style
 # .END
 #-------------------------------------------------------------------------------
-proc mpOpen {view} {
+proc mpOpen {view {pattern ""}} {
     global ROOT MP mp_file mp_out
 
 
@@ -433,14 +434,24 @@ proc mpOpen {view} {
     catch "destroy $w"
     toplevel $w
     wm geometry $w 650x700
+    
+    if {$pattern == ""} {
+        set pattern  $mp_file($view,pattern)
+    }
 
-    pack [isframes $w.isf -filepattern $mp_file($view,pattern)] -fill both -expand true
+    pack [isframes $w.isf -filepattern $pattern] -fill both -expand true
     [$w.isf task] on
     wm protocol $w WM_DELETE_WINDOW "mpClose $view"
 
-    $ROOT.mp.$view.play config -state normal
-    $ROOT.mp.$view.forward config -state normal
-    eval $ROOT.mp.$view.open config -text Close -command [list "mpClose $view"]
+    if {[info command $ROOT.mp.$view.play] != ""} {
+        $ROOT.mp.$view.play config -state normal
+    }
+    if {[info command  $ROOT.mp.$view.forward] != ""} {
+        $ROOT.mp.$view.forward config -state normal
+    }
+    if {[info command $ROOT.mp.$view.open] != ""} {
+        eval $ROOT.mp.$view.open config -text Close -command [list "mpClose $view"]
+    }
 
 }
 
