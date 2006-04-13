@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.cxx,v $
-  Date:      $Date: 2006/03/08 22:14:27 $
-  Version:   $Revision: 1.65 $
+  Date:      $Date: 2006/04/13 18:20:38 $
+  Version:   $Revision: 1.66 $
 
 =========================================================================auto=*/
 #include "vtkMrmlSlicer.h"
@@ -914,22 +914,72 @@ void vtkMrmlSlicer::SetLabelVolume(int s, vtkMrmlDataVolume *vol)
 //----------------------------------------------------------------------------
 // Filter 
 //----------------------------------------------------------------------------
-void vtkMrmlSlicer::SetFirstFilter(int s, vtkSlicerImageAlgorithm *filter)
+void vtkMrmlSlicer::SetFirstFilter(int s, vtkObject *filter)
 {
-  if (this->FirstFilter[s] != filter) 
-  {
-    if (this->FirstFilter[s] != NULL) 
-    { 
-      this->FirstFilter[s]->UnRegister(this); 
+    // for vtk 4.x and 5.x compatibility, see notes in vtkSlicer.h
+#ifdef SLICER_VTK5
+    vtkImageAlgorithm *ia = vtkImageAlgorithm::SafeDownCast(filter);
+    if (ia)
+    {
+        if (this->FirstFilter[s] != ia) 
+        {
+            if (this->FirstFilter[s] != NULL) 
+            { 
+                this->FirstFilter[s]->UnRegister(this); 
+            }
+            this->FirstFilter[s] = ia;
+        }
+    } else {
+        vtkImageToImageFilter *itoi = vtkImageToImageFilter::SafeDownCast(filter);
+        if (itoi)
+        {
+            if (this->FirstFilter[s] != itoi) 
+            {
+                if (this->FirstFilter[s] != NULL) 
+                { 
+                    this->FirstFilter[s]->UnRegister(this); 
+                }
+                this->FirstFilter[s] = itoi;
+                if (this->FirstFilter[s] != NULL) 
+                { 
+                    this->FirstFilter[s]->Register(this); 
+                }
+                this->Modified(); 
+                this->BuildUpperTime.Modified();
+            }
+        }
+        else
+        {
+            vtkGenericWarningMacro( "Problem executing SetFirstFilter: filter isn't one of vtkImageAlgorithm or vtkImageToImageFilter");
+            return;
+        }
     }
-    this->FirstFilter[s] = filter;
-    if (this->FirstFilter[s] != NULL) 
-    { 
-      this->FirstFilter[s]->Register(this); 
+#else
+    vtkImageToImageFilter *itoi = vtkImageToImageFilter::SafeDownCast(filter);
+    if (itoi)
+    {
+        if (this->FirstFilter[s] != itoi) 
+        {
+            if (this->FirstFilter[s] != NULL) 
+            { 
+                this->FirstFilter[s]->UnRegister(this); 
+            }
+            this->FirstFilter[s] = itoi;
+            if (this->FirstFilter[s] != NULL) 
+            { 
+                this->FirstFilter[s]->Register(this); 
+            }
+            this->Modified(); 
+            this->BuildUpperTime.Modified();
+        }
     }
-    this->Modified(); 
-    this->BuildUpperTime.Modified();
-  } 
+    else
+    {
+        vtkGenericWarningMacro( "Problem executing SetFirstFilter: filter isn't vtkImageToImageFilter");
+        return;
+    }
+#endif
+
 }
 //----------------------------------------------------------------------------
 void vtkMrmlSlicer::SetLastFilter(int s, vtkImageSource *filter)

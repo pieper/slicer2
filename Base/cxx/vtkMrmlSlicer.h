@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.h,v $
-  Date:      $Date: 2006/03/06 21:56:41 $
-  Version:   $Revision: 1.51 $
+  Date:      $Date: 2006/04/13 18:20:37 $
+  Version:   $Revision: 1.52 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSlicer - main core of the 3D Slicer
@@ -314,11 +314,12 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   // This is for display only!  It can't be used to actually change
   // the volumes in the slicer.  Use the editor (vtkImageEditorEffects)
   // for that.
-  void SetFirstFilter(int s, vtkSlicerImageAlgorithm *filter);
+    void SetFirstFilter(int s, vtkObject *filter);
+    
   // LastFilter is of type vtkImageSource, a superclass of
   // both vtkImageToImage and vtkMultipleInput filters.
   void SetLastFilter(int s, vtkImageSource *filter);
-  vtkSlicerImageAlgorithm * GetFirstFilter(int s) {return this->FirstFilter[s];};
+  vtkObject * GetFirstFilter(int s) {return this->FirstFilter[s];};
   vtkImageSource* GetLastFilter(int s) {return this->LastFilter[s];};
 
   // Description:
@@ -880,7 +881,7 @@ protected:
   // Colors
   vtkIndirectLookupTable *LabelIndirectLUT;
 
-  vtkSlicerImageAlgorithm *FirstFilter[NUM_SLICES];
+  vtkObject *FirstFilter[NUM_SLICES];
   vtkImageSource *LastFilter[NUM_SLICES];
   int BackFilter;
   int ForeFilter;

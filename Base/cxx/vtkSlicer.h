@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSlicer.h,v $
-  Date:      $Date: 2006/02/27 20:08:45 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2006/04/13 18:20:37 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
 
@@ -47,44 +47,44 @@ typedef float vtkFloatingPointType;
 #include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"
 // Helper functions for the VTK4.4 / VTK5 intermixed. We need to provide an API
-// with vtkAlgorithm since this is the only common class in between the old ImageToImage filters
-// and the new vtkImageAlgorithm one.
-// Unfortunately there is no notion of Input or Output in vtkAlgorithm therefore
+// with vtkObject since this is the only common class in between the old ImageToImage filters
+// and the new vtkImageAlgorithm one in both VTK 4.4 and VTK 5.
+// Unfortunately there is no notion of Input or Output in vtkObject therefore
 // we need to try/cast (guess) the real type of the filter in order to get the output:
-inline vtkImageData *GetImageOutput(vtkAlgorithm *filter)
+inline vtkImageData *GetImageOutput(vtkObject *filter)
 {
   // Is this a pure VTK class that derive from vtkImageAlgorithm
   vtkImageAlgorithm *ia = vtkImageAlgorithm::SafeDownCast(filter);
   if( ia )
-    {
+  {
     return ia->GetOutput();
-    }
+  }
   // else this is a class from Slicer which still derived from vtkImageToImageFilter old layer
   vtkImageToImageFilter *itoi = vtkImageToImageFilter::SafeDownCast(filter);
   if(itoi)
-    {
+  {
     return itoi->GetOutput();
-    }
+  }
   // else
   vtkGenericWarningMacro( "Problem executing GetImageOutput() " );
   return NULL;
 }
-inline void SetImageInput(vtkAlgorithm *filter, vtkImageData *output)
+inline void SetImageInput(vtkObject *filter, vtkImageData *output)
 {
   // Is this a pure VTK class that derive from vtkImageAlgorithm
   vtkImageAlgorithm *ia =  vtkImageAlgorithm::SafeDownCast(filter);
   if( ia )
-    {
+  {
     ia->SetInput(output);
     return;
-    }
+  }
   // else this is a class from Slicer which still derived from vtkImageToImageFilter old layer
   vtkImageToImageFilter *itoi =  vtkImageToImageFilter::SafeDownCast(filter);
   if(itoi)
-    {
+  {
     itoi->SetInput(output);
     return;
-    }
+  }
   // else
   vtkGenericWarningMacro( "Problem executing SetImageInput() " );
 }
@@ -94,13 +94,13 @@ inline void SetImageInput(vtkAlgorithm *filter, vtkImageData *output)
 #include "vtkImageToImageFilter.h"
 #include "vtkImageSpatialFilter.h"
 // Dummy stub. See above
-inline vtkImageData *GetImageOutput(vtkImageToImageFilter *filter)
+inline vtkImageData *GetImageOutput(vtkObject *filter)
 {
-  return filter->GetOutput();
+  return (vtkImageToImageFilter::SafeDownCast(filter)->GetOutput());
 }
-inline void SetImageInput(vtkImageToImageFilter *filter, vtkImageData *output)
+inline void SetImageInput(vtkObject *filter, vtkImageData *output)
 {
-  filter->SetInput(output);
+  (vtkImageToImageFilter::SafeDownCast(filter))->SetInput(output);
 }
 #define vtkSlicerImageAlgorithm vtkImageToImageFilter
 #define vtkSlicerImageAlgorithmCommand vtkImageToImageFilterCommand
