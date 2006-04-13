@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Editor.tcl,v $
-#   Date:      $Date: 2006/04/10 21:21:51 $
-#   Version:   $Revision: 1.86 $
+#   Date:      $Date: 2006/04/13 17:54:19 $
+#   Version:   $Revision: 1.87 $
 # 
 #===============================================================================
 # FILE:        Editor.tcl
@@ -105,7 +105,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.86 $} {$Date: 2006/04/10 21:21:51 $}]
+        {$Revision: 1.87 $} {$Date: 2006/04/13 17:54:19 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -267,7 +267,32 @@ proc EditorUpdateMRML {} {
     #---------------------------------------------------------------------------
     set m $Editor(mOriginal)
     $m delete 0 end
+
+    set volumeList ""
+    set labelList ""
+    # make two lists of volumes, so can have the grey scales or the label maps first 
+    # in the Original and Working Labelmap lists, as appropriate.
     foreach v $Volume(idList) {
+        if {[Volume($v,node) GetLabelMap] == 1} {
+            lappend labelList $v
+        } else {
+            lappend volumeList $v
+        }
+    }
+    if {$::Module(verbose)} {
+        puts "EditorUpdateMRML: built greyscale volume list: $volumeList, and label list: $labelList" 
+    }
+    # greyscales first
+    set greysFirst $volumeList
+    lappend greysFirst $labelList
+    set greysFirst [join $greysFirst]
+
+    # labels first
+    set labelsFirst $labelList
+    lappend labelsFirst $volumeList
+    set labelsFirst [join $labelsFirst]
+
+    foreach v $greysFirst {
         set colbreak [MainVolumesBreakVolumeMenu $m] 
         $m add command -label [Volume($v,node) GetName] \
             -command "EditorSetOriginal $v; RenderAll" \
@@ -279,7 +304,7 @@ proc EditorUpdateMRML {} {
     set m $Editor(mWorking)
     $m delete 0 end
     set idWorking ""
-    foreach v $Volume(idList) {
+    foreach v $labelsFirst {
         if {$v != $Volume(idNone) && $v != $Editor(idComposite)} {
             set colbreak [MainVolumesBreakVolumeMenu $m] 
             $m add command -label [Volume($v,node) GetName] \
