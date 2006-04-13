@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageNeighborhoodFilter.h,v $
-  Date:      $Date: 2006/02/27 19:21:50 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/04/13 19:26:19 $
+  Version:   $Revision: 1.15 $
 
 =========================================================================auto=*/
 // .NAME vtkImageNeighborhoodFilter -  Augments vtkImageSpatialFilter with
@@ -29,7 +29,7 @@ class VTK_SLICER_BASE_EXPORT vtkImageNeighborhoodFilter : public vtkImageSpatial
 public:
   static vtkImageNeighborhoodFilter *New();
   vtkTypeMacro(vtkImageNeighborhoodFilter,vtkImageSpatialFilter);
-    
+
   // Description:
   // Mask that defines area of interest in the neighborhood.
   // Value is 1 for voxels of interest, 0 otherwise.
@@ -42,19 +42,19 @@ public:
   void SetNeighborTo8();
   void SetNeighborTo4();
 
-  // Description: 
+  // Description:
   // Get the neighborhood size
   // (for erode class)
   vtkGetMacro(Neighbor, int);
 
-  // Description: 
+  // Description:
   // Get the neighborhood extent, where the max/min numbers are
   // offsets from the current voxel.  (So these numbers may be negative.)
   // For use when looping through the neighborhood.
   void GetRelativeHoodExtent(int &hoodMin0, int &hoodMax0, int &hoodMin1,
                  int &hoodMax1, int &hoodMin2, int &hoodMax2);
 
-  // Description: 
+  // Description:
   // Get the increments to use when looping through the mask.
   void GetMaskIncrements(int &maskInc0, int &maskInc1, int &maskInc2);
 
@@ -62,7 +62,7 @@ protected:
   vtkImageNeighborhoodFilter();
   ~vtkImageNeighborhoodFilter();
 
-  // Description: 
+  // Description:
   // set size of neighborhood of each pixel
   void SetKernelSize(int size0, int size1, int size2);
 

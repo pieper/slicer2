@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageConnectivity.cxx,v $
-  Date:      $Date: 2006/02/28 18:52:51 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/04/13 19:29:39 $
+  Version:   $Revision: 1.15 $
 
 =========================================================================auto=*/
 #include "vtkImageConnectivity.h"
@@ -41,7 +41,7 @@ vtkImageConnectivity::vtkImageConnectivity()
   this->MinForeground = VTK_SHORT_MIN;
   this->MaxForeground = VTK_SHORT_MAX;
   this->MinSize = 10000;
-  this->function = CONNECTIVITY_MEASURE;
+  this->Function = CONNECTIVITY_MEASURE;
   this->OutputLabel = 1;
   this->SliceBySlice = 0;
   this->LargestIslandSize = this->IslandSize = 0;
@@ -51,8 +51,8 @@ vtkImageConnectivity::vtkImageConnectivity()
 //----------------------------------------------------------------------------
 const char* vtkImageConnectivity::GetFunctionString()
 {
-  switch (this->function) 
-  {
+  switch (this->Function) 
+    {
     case CONNECTIVITY_IDENTIFY:
       return "IdentifyIslands";
     case CONNECTIVITY_REMOVE:
@@ -63,9 +63,9 @@ const char* vtkImageConnectivity::GetFunctionString()
       return "MeasureIsland";
     case CONNECTIVITY_SAVE:
       return "SaveIsland";
-   default:
+    default:
       return "ERROR: Unknown";
-  }
+    }
 }
 
 //************************************************************************
@@ -860,5 +860,5 @@ void vtkImageConnectivity::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Seed[0]:           " << this->Seed[0] << "\n";
   os << indent << "Seed[1]:           " << this->Seed[1] << "\n";
   os << indent << "Seed[2]:           " << this->Seed[2] << "\n";
-  os << indent << "function:          " << this->function << "\n";
+  os << indent << "Function:          " << this->Function << "\n";
 }

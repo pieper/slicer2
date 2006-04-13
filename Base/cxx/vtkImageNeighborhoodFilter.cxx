@@ -7,12 +7,12 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageNeighborhoodFilter.cxx,v $
-  Date:      $Date: 2006/04/12 22:26:55 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/04/13 19:26:19 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 #include "vtkImageNeighborhoodFilter.h"
-#include <time.h>
+
 #include "vtkObjectFactory.h"
 
 //------------------------------------------------------------------------------
@@ -22,7 +22,7 @@ vtkImageNeighborhoodFilter* vtkImageNeighborhoodFilter::New()
   vtkObject* ret = vtkObjectFactory::CreateInstance("vtkImageNeighborhoodFilter");
   if(ret)
     {
-      return (vtkImageNeighborhoodFilter*)ret;
+    return (vtkImageNeighborhoodFilter*)ret;
     }
   // If the factory was unable to create the object, then create it here.
   return new vtkImageNeighborhoodFilter;
@@ -34,7 +34,6 @@ vtkImageNeighborhoodFilter* vtkImageNeighborhoodFilter::New()
 // Constructor sets default values
 vtkImageNeighborhoodFilter::vtkImageNeighborhoodFilter()
 {
-  
   this->Mask = NULL;
   this->HandleBoundaries = 1;
   this->SetNeighborTo4();
@@ -44,12 +43,10 @@ vtkImageNeighborhoodFilter::vtkImageNeighborhoodFilter()
 //----------------------------------------------------------------------------
 vtkImageNeighborhoodFilter::~vtkImageNeighborhoodFilter()
 {
-
   if (this->Mask != NULL)
     {
-      delete [] this->Mask;
+    delete [] this->Mask;
     }
-
 }
 
 
@@ -110,13 +107,13 @@ void vtkImageNeighborhoodFilter::SetNeighborTo4()
   for (int y=-1; y <= 1; y++)
     for (int x=-1; x <= 1; x++)
       if (x*y == 0)
-        Mask[(1+z)*9+(1+y)*3+(1+x)] = 1;
+        this->Mask[(1+z)*9+(1+y)*3+(1+x)] = 1;
 
   // unset center (current) pixel
-  Mask[1*9+1*3+1] = 0;
+  this->Mask[1*9+1*3+1] = 0;
   // set center pix in slice before/after (3D 4-connectivity)
-  Mask[0*9+1*3+1] = 1;
-  Mask[2*9+1*3+1] = 1;
+  this->Mask[0*9+1*3+1] = 1;
+  this->Mask[2*9+1*3+1] = 1;
 
   this->Modified();
 }
@@ -133,7 +130,7 @@ void vtkImageNeighborhoodFilter::SetNeighborTo8()
      this->KernelSize[2]);
 
   // only unset current (center) pixel
-  Mask[1*9+1*3+1] = 0;
+  this->Mask[1*9+1*3+1] = 0;
 
   this->Modified();
 }
@@ -142,8 +139,8 @@ void vtkImageNeighborhoodFilter::SetNeighborTo8()
 // Description:
 // increments to loop through mask.
 void vtkImageNeighborhoodFilter::GetMaskIncrements(int &maskInc0,
-                           int &maskInc1,
-                           int &maskInc2)
+                                                   int &maskInc1,
+                                                   int &maskInc2)
 {
   maskInc0 = 1;
   maskInc1 = this->KernelSize[0];
@@ -155,11 +152,11 @@ void vtkImageNeighborhoodFilter::GetMaskIncrements(int &maskInc0,
 // This is like the extent of the neighborhood, but relative to the
 // current voxel
 void vtkImageNeighborhoodFilter::GetRelativeHoodExtent(int &hoodMin0,
-                               int &hoodMax0,
-                               int &hoodMin1,
-                               int &hoodMax1,
-                               int &hoodMin2,
-                               int &hoodMax2)
+                                                       int &hoodMax0,
+                                                       int &hoodMin1,
+                                                       int &hoodMax1,
+                                                       int &hoodMin2,
+                                                       int &hoodMax2)
 {
   // Neighborhood around current pixel (kernel has radius 1)
   hoodMin0 = - this->KernelMiddle[0];

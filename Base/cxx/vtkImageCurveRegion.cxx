@@ -7,15 +7,15 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageCurveRegion.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:39 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/04/13 19:29:02 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
-#include <stdlib.h>
-#include "vtkMath.h"
-
 #include "vtkImageCurveRegion.h"
+
 #include "vtkObjectFactory.h"
+#include "vtkImageData.h"
+
 
 // ---------------------------------------------------------------------------------------------
 //  -*- Mode: C++;  -*-

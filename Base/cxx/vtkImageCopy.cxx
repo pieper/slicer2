@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageCopy.cxx,v $
-  Date:      $Date: 2006/02/22 22:54:49 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/04/13 19:30:50 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 #include "vtkImageCopy.h"
@@ -154,6 +154,7 @@ void vtkImageCopy::ThreadedExecute(vtkImageData *inData,
     }
 }
 
+//----------------------------------------------------------------------------
 void vtkImageCopy::PrintSelf(ostream& os, vtkIndent indent)
 {
     Superclass::PrintSelf(os,indent);
