@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditor.cxx,v $
-  Date:      $Date: 2006/02/27 19:21:49 $
-  Version:   $Revision: 1.24 $
+  Date:      $Date: 2006/04/13 19:31:49 $
+  Version:   $Revision: 1.25 $
 
 =========================================================================auto=*/
 #include "vtkImageEditor.h"
@@ -58,7 +58,7 @@ vtkImageEditor::vtkImageEditor()
 
   this->UseInput = 1;
   this->Slice = 0;
-  this->Clip = 0;  
+  this->Clip = 0;
   this->UndoDimension = this->Dimension = EDITOR_DIM_3D;
   this->Undoable = 0;
   this->RunTime = 0.0;

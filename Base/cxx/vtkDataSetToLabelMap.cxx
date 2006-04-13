@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDataSetToLabelMap.cxx,v $
-  Date:      $Date: 2006/04/12 21:53:45 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/04/13 19:33:03 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 #include "vtkDataSetToLabelMap.h"
@@ -118,12 +118,14 @@ void vtkDataSetToLabelMap::Execute()
 
   // the inside voxels are 2
   if(this->BoundaryScalars)
+    {
     this->BoundaryScalars->Delete();
+    }
   this->BoundaryScalars = vtkShortArray::New();
   this->BoundaryScalars->SetNumberOfTuples(numPts);
   for (i=0; i<numPts; i++)
     {
-      this->BoundaryScalars->SetTuple1(i,2);
+    this->BoundaryScalars->SetTuple1(i,2);
     }
   
 

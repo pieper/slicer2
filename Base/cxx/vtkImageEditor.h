@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditor.h,v $
-  Date:      $Date: 2006/02/27 19:21:50 $
-  Version:   $Revision: 1.21 $
+  Date:      $Date: 2006/04/13 19:31:49 $
+  Version:   $Revision: 1.22 $
 
 =========================================================================auto=*/
 // .NAME vtkImageEditor - Applies editing effects to volumes.
@@ -50,7 +50,7 @@ public:
   static vtkImageEditor *New();
   vtkTypeMacro(vtkImageEditor,vtkProcessObject);
   void PrintSelf(ostream& os, vtkIndent indent);
-  
+
   // Description:
   // Set/Get the input data set for the image pipeline.
   // Use the UseInput() function to specify whether to use this input.
@@ -79,7 +79,7 @@ public:
   // Specify which slice to edit when the Dimension is set to Single.
   vtkGetMacro(Slice, int);
   vtkSetMacro(Slice, int);
-  
+
   // Description:
   // Set/Get the orientation and scan order of the slices in the input.
   // Possible strings are SI or IS (for axial slices), LR or RL
@@ -149,12 +149,10 @@ public:
   // overhead.
   vtkGetMacro(RunTime, float);
   vtkGetMacro(TotalTime, float);
-    
+
 protected:
   vtkImageEditor();
   ~vtkImageEditor();
-  vtkImageEditor(const vtkImageEditor&);
-  void operator=(const vtkImageEditor&);
 
   // When "Dimension" is "Single", then the input slice is copied
   // to "Region" before the effect is applied.  Then it can be restored
@@ -193,13 +191,16 @@ protected:
   vtkImageData *UndoOutput; // the output if we undo a 3D or Multi slice effect
 
   vtkImageData *Region;     // the output if we undo a Single slice effect
-  vtkIntArray *Indices;     // the indices for how Region was extracted 
+  vtkIntArray *Indices;     // the indices for how Region was extracted
 
   // Callback registered with the ProgressObserver.
   static void ProgressCallbackFunction(vtkObject*, unsigned long, void*,
                                        void*);
   // The observer to report progress from the internal writer.
-  vtkCallbackCommand* ProgressObserver;  
+  vtkCallbackCommand* ProgressObserver;
+private:
+  vtkImageEditor(const vtkImageEditor&);
+  void operator=(const vtkImageEditor&);
 };
 
 #endif
