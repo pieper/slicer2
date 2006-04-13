@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: isframes.tcl,v $
-#   Date:      $Date: 2006/03/17 23:16:12 $
-#   Version:   $Revision: 1.11 $
+#   Date:      $Date: 2006/04/13 21:10:07 $
+#   Version:   $Revision: 1.12 $
 # 
 #===============================================================================
 # FILE:        isframes.tcl
@@ -426,4 +426,20 @@ proc isframes_demo { {type image} } {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC isframes_showMovie
+# Builds a window and displays a series of image files
+# .ARGS
+# str pattern a file pattern to determine the sequence of image files to read in
+# .END
+#-------------------------------------------------------------------------------
+proc isframes_showMovie { pattern start end } {
 
+    catch "destroy .isframesShowMovie"
+    toplevel .isframesShowMovie
+    wm title .isframesShowMovie "Show Slicer Movie"
+    wm geometry .isframesShowMovie 650x700
+    
+    pack [isframes .isframesShowMovie.isf2] -fill both -expand true
+    .isframesShowMovie.isf2 configure -filepattern $pattern -start $start -end $end
+}
