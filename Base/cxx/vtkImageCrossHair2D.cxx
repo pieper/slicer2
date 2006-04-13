@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageCrossHair2D.cxx,v $
-  Date:      $Date: 2006/04/12 22:32:01 $
-  Version:   $Revision: 1.18 $
+  Date:      $Date: 2006/04/13 19:05:48 $
+  Version:   $Revision: 1.19 $
 
 =========================================================================auto=*/
 #include "vtkImageCrossHair2D.h"
@@ -371,7 +371,7 @@ void vtkImageCrossHair2D::ExecuteData(vtkDataObject *out)
 
   // ensure 3 component data
   int x1 = outData->GetNumberOfScalarComponents();
-  if (x1 != 3 || x1 != 4) 
+  if (x1 != 3 && x1 != 4) 
     {
     vtkErrorMacro(<<"Input has "<<x1<<" instead of 3 or 4 components.");
     return;
