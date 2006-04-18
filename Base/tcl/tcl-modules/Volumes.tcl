@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Volumes.tcl,v $
-#   Date:      $Date: 2006/04/18 01:50:58 $
-#   Version:   $Revision: 1.131 $
+#   Date:      $Date: 2006/04/18 15:23:46 $
+#   Version:   $Revision: 1.132 $
 # 
 #===============================================================================
 # FILE:        Volumes.tcl
@@ -101,7 +101,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-             {$Revision: 1.131 $} {$Date: 2006/04/18 01:50:58 $}]
+             {$Revision: 1.132 $} {$Date: 2006/04/18 15:23:46 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -751,6 +751,8 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     TooltipAdd $f.bWrite "Save the Volume."
     pack  $f.bWrite -side bottom -padx $Gui(pad)    
 
+    set Volumes(extentionGenericSave) nhdr
+
     DevAddFileBrowse $f Volumes "prefixGenericSave" "Select Export File:" "" "\$Volumes(extentionGenericSave)" "\$Volume(DefaultDir)" "Save" "Browse for a file location (will save image file and .nhdr file to directory)" "Absolute"
     ## compression option (hint)
 
@@ -774,7 +776,7 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     eval {label $f.l -text "Select File Type"} $Gui(BLA)
     pack $f.l -side left -padx $Gui(pad) -pady 0
 
-    eval {menubutton $f.mbType -text "NRRD(.nrrd)" \
+    eval {menubutton $f.mbType -text "NRRD(.nhdr)" \
             -relief raised -bd 2 -width 20 \
             -menu $f.mbType.m} $Gui(WMBA) 
     eval {menu $f.mbType.m} $Gui(WMA)
