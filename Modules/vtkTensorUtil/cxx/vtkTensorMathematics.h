@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.h,v $
-  Date:      $Date: 2006/03/20 06:41:19 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/04/18 17:01:21 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 // .NAME vtkTensorMathematics - Trace, determinant, anisotropy measures
@@ -50,9 +50,9 @@
 
 #include "vtkTensorUtilConfigure.h"
 #include "vtkImageTwoInputFilter.h"
-#include "vtkMatrix4x4.h"
-#include "vtkImageData.h"
 
+class vtkMatrix4x4;
+class vtkImageData;
 class VTK_TENSORUTIL_EXPORT vtkTensorMathematics : public vtkImageTwoInputFilter
 {
 public:
@@ -163,7 +163,7 @@ public:
   //    just need to rotate each tensor.
   // 3) Set TensorRotationMatrix to this rotation matrix.
   //
-  vtkSetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
+  virtual void SetTensorRotationMatrix(vtkMatrix4x4*);
   vtkGetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
 
   // Description
@@ -175,7 +175,7 @@ public:
 
   // Description:
   // Scalar mask
-  vtkSetObjectMacro(ScalarMask, vtkImageData);
+  virtual void SetScalarMask(vtkImageData*);
   vtkGetObjectMacro(ScalarMask, vtkImageData);
   
 
@@ -210,23 +210,24 @@ public:
 protected:
   vtkTensorMathematics();
   ~vtkTensorMathematics() {};
-  vtkTensorMathematics(const vtkTensorMathematics&);
-  void operator=(const vtkTensorMathematics&);
 
   int Operation; // math operation to perform
-  vtkSetMacro(Operation,int);  
+  vtkSetMacro(Operation,int);
   vtkFloatingPointType ScaleFactor; // Scale factor for output scalars
   int ExtractEigenvalues; // Boolean controls eigenfunction extraction
 
   int MaskWithScalars;
   vtkImageData *ScalarMask;
-  
+
   vtkMatrix4x4 *TensorRotationMatrix;
 
   void ExecuteInformation(vtkImageData **inDatas, vtkImageData *outData);
-  void ExecuteInformation(){this->vtkImageTwoInputFilter::ExecuteInformation();};
+  void ExecuteInformation(){this->Superclass::ExecuteInformation();};
   void ThreadedExecute(vtkImageData **inDatas, vtkImageData *outData,
         int extent[6], int id);
+private:
+  vtkTensorMathematics(const vtkTensorMathematics&);
+  void operator=(const vtkTensorMathematics&);
 };
 
 #endif

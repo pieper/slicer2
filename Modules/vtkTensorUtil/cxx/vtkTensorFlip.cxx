@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorFlip.cxx,v $
-  Date:      $Date: 2006/04/18 15:32:00 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2006/04/18 17:01:20 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
 #include "vtkTensorFlip.h"
@@ -223,7 +223,8 @@ void vtkTensorFlip::ThreadedExecute(vtkImageData *inData,
     return;
 }
 
+//----------------------------------------------------------------------------
 void vtkTensorFlip::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageToImageFilter::PrintSelf(os,indent);
+  this->Superclass::PrintSelf(os,indent);
 }

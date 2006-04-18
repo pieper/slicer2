@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.cxx,v $
-  Date:      $Date: 2006/02/13 16:59:07 $
-  Version:   $Revision: 1.24 $
+  Date:      $Date: 2006/04/18 17:01:19 $
+  Version:   $Revision: 1.25 $
 
 =========================================================================auto=*/
 #include "vtkHyperStreamlineDTMRI.h"
@@ -20,13 +20,15 @@
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 #include "vtkPolyData.h"
+#include "vtkHyperPointandArray.h"
+
 // the superclass had these classes in the vtkHyperStreamline.cxx
 // file: being compiled via CMakeListsLocal.txt
 #if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 3)
 //#include "vtkHyperPointandArray.cxx"
 #endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.24 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.25 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()
@@ -151,12 +153,12 @@ void vtkHyperStreamlineDTMRI::Execute()
   vtkHyperPoint *sPrev, *sPrevPrev;
   vtkFloatingPointType kv1[3], kv2[3], ku1[3], ku2[3], kl1, kl2, kn[3], K;
   // set up working matrices
-  v[0] = v0; v[1] = v1; v[2] = v2; 
-  m[0] = m0; m[1] = m1; m[2] = m2; 
+  v[0] = v0; v[1] = v1; v[2] = v2;
+  m[0] = m0; m[1] = m1; m[2] = m2;
   float meanEV, stop;
-  float sqrt3halves=sqrt((float)3/2);
+  //static const float sqrt3halves = sqrt((float)3/2);
   int keepIntegrating;
-  
+
   vtkDebugMacro(<<"Generating hyperstreamline(s)");
   this->NumberOfStreamers = 0;
 
@@ -184,8 +186,8 @@ void vtkHyperStreamlineDTMRI::Execute()
     cellScalars->SetNumberOfComponents(numComp);
     cellScalars->SetNumberOfTuples(VTK_CELL_SIZE);
     }
-  
-  
+
+
   tol2 = input->GetLength() / 1000.0;
   tol2 = tol2 * tol2;
   iv = this->IntegrationEigenvector;
@@ -195,7 +197,7 @@ void vtkHyperStreamlineDTMRI::Execute()
   // Create starting points
   //
   this->NumberOfStreamers = 1;
- 
+
   if ( this->IntegrationDirection == VTK_INTEGRATE_BOTH_DIRECTIONS )
     {
     this->NumberOfStreamers *= 2;
@@ -257,17 +259,17 @@ void vtkHyperStreamlineDTMRI::Execute()
     vtkTensorMathematics::TeemEigenSolver(m,sPtr->W,sPtr->V);
     FixVectors(NULL, sPtr->V, iv, ix, iy);
 
-    // compute invariants                                                               
+    // compute invariants
     meanEV=(sPtr->W[0]+sPtr->W[1]+sPtr->W[2])/3;
 
-    if ( inScalars ) 
+    if ( inScalars )
       {
       inScalars->GetTuples(cell->PointIds, cellScalars);
       for (sPtr->S=0, i=0; i < cell->GetNumberOfPoints(); i++)
         {
-          sPtr->S += cellScalars->GetTuple(i)[0] * w[i];
-          // for curvature coloring for debugging purposes:
-          //sPtr->S =0;
+        sPtr->S += cellScalars->GetTuple(i)[0] * w[i];
+        // for curvature coloring for debugging purposes:
+        //sPtr->S =0;
         }
       }
 
@@ -306,9 +308,9 @@ void vtkHyperStreamlineDTMRI::Execute()
     // This is the flag for integration to continue if FA, curvature
     // are within limits
     keepIntegrating=1;
-    // init index for curvature calculation 
+    // init index for curvature calculation
     pointCount=0;
-      
+
     //integrate until distance has been exceeded
     while ( sPtr->CellId >= 0 && fabs(sPtr->W[0]) > this->TerminalEigenvalue &&
             sPtr->D < this->MaximumPropagationDistance &&
@@ -317,12 +319,12 @@ void vtkHyperStreamlineDTMRI::Execute()
         // Test curvature
         if ( pointCount > 2 )
           {
- 
+
            // v2=p3-p2;  % vector from point 2 to point 3
             // v1=p2-p1;  % vector from point 1 to point 2
             // u2=v2/norm(v2);  % unit vector in the direction of v2
             // u1=v1/norm(v1);  % unit vector in the direction of v1
-            
+
             // kn is curvature times the unit normal vector
             // it's the change in the unit normal over half the distance 
             // from p1 to p3
@@ -335,27 +337,27 @@ void vtkHyperStreamlineDTMRI::Execute()
             kl1=0;
             for (i=0; i<3; i++)
               {
-                // vectors
-                kv2[i]=sPrevPrev->X[i] - sPrev->X[i];
-                kv1[i]=sPrev->X[i] - sPtr->X[i];
-                // lengths
-                kl2+=kv2[i]*kv2[i];
-                kl1+=kv1[i]*kv1[i];
-              }           
+              // vectors
+              kv2[i]=sPrevPrev->X[i] - sPrev->X[i];
+              kv1[i]=sPrev->X[i] - sPtr->X[i];
+              // lengths
+              kl2+=kv2[i]*kv2[i];
+              kl1+=kv1[i]*kv1[i];
+              }
             kl2=sqrt(kl2);
             kl1=sqrt(kl1);
             // normalize
             for (i=0; i<3; i++)
               {
-                // unit vectors
-                ku2[i]=kv2[i]/kl2;
-                ku1[i]=kv1[i]/kl1;
+              // unit vectors
+              ku2[i]=kv2[i]/kl2;
+              ku1[i]=kv1[i]/kl1;
               }
             // compute curvature
             for (i=0; i<3; i++)
               {
-                kn[i]=2*(ku2[i]-ku1[i])/(kl1+kl2);
-                K+=kn[i]*kn[i];
+              kn[i]=2*(ku2[i]-ku1[i])/(kl1+kl2);
+              K+=kn[i]*kn[i];
               }
             K=sqrt(K);
             // units are radians per mm.
@@ -363,19 +365,18 @@ void vtkHyperStreamlineDTMRI::Execute()
             // and compare to allowed radius.
             if (K != 0)
               {
-                if ((1/K) < this->RadiusOfCurvature) 
-                  {
-                    keepIntegrating=0;
-                  }
+              if ((1/K) < this->RadiusOfCurvature) 
+                {
+                keepIntegrating=0;
+                }
               }
           }
         else 
           {
-            K=0;
+          K=0;
           }
 
 
-        
       //compute updated position using this step (Euler integration)
       for (i=0; i<3; i++)
         {
@@ -396,9 +397,9 @@ void vtkHyperStreamlineDTMRI::Execute()
       for (k=0; k < cell->GetNumberOfPoints(); k++)
         {
         tensor = cellTensors->GetTuple(k);
-        for (j=0; j<3; j++) 
+        for (j=0; j<3; j++)
           {
-          for (i=0; i<3; i++) 
+          for (i=0; i<3; i++)
             {
             m[i][j] += tensor[i+3*j] * w[k];
             }
@@ -470,26 +471,30 @@ void vtkHyperStreamlineDTMRI::Execute()
         vtkTensorMathematics::TeemEigenSolver(m,sNext->W,sNext->V);
         FixVectors(sPtr->V, sNext->V, iv, ix, iy);
 
-        // compute invariants at final position                                         
-        switch (this->GetStoppingMode()) {
-      case VTK_TENS_FRACTIONAL_ANISOTROPY:
-          stop = vtkTensorMathematics::FractionalAnisotropy(sNext->W);
-          break;
-      case VTK_TENS_LINEAR_MEASURE:
-         stop = vtkTensorMathematics::LinearMeasure(sNext->W);
-         break;
-      case VTK_TENS_PLANAR_MEASURE:
-        stop = vtkTensorMathematics::PlanarMeasure(sNext->W);
-        break;
-      case VTK_TENS_SPHERICAL_MEASURE:
-        stop =  vtkTensorMathematics::SphericalMeasure(sNext->W);
+        // compute invariants at final position
+        switch (this->GetStoppingMode())
+          {
+          case VTK_TENS_FRACTIONAL_ANISOTROPY:
+            stop = vtkTensorMathematics::FractionalAnisotropy(sNext->W);
             break;
-    }    
+          case VTK_TENS_LINEAR_MEASURE:
+            stop = vtkTensorMathematics::LinearMeasure(sNext->W);
+            break;
+          case VTK_TENS_PLANAR_MEASURE:
+            stop = vtkTensorMathematics::PlanarMeasure(sNext->W);
+            break;
+          case VTK_TENS_SPHERICAL_MEASURE:
+            stop =  vtkTensorMathematics::SphericalMeasure(sNext->W);
+            break;
+          default:
+            vtkErrorMacro( << "Should not happen" );
+          }
 
-        // test FA cutoff   
-        if (stop < this->StoppingThreshold) {
+        // test FA cutoff
+        if (stop < this->StoppingThreshold)
+          {
           keepIntegrating=0;
-        }
+          }
 
         if ( inScalars )
           {
@@ -517,7 +522,7 @@ void vtkHyperStreamlineDTMRI::Execute()
 
   delete [] w;
   cellTensors->Delete();
-  cellScalars->Delete();  
+  cellScalars->Delete();
 
   // note: these two lines fix memory leak in code copied from vtk
   delete [] this->Streamers;
@@ -558,24 +563,24 @@ void vtkHyperStreamlineDTMRI::BuildLines()
       numIntPts+=this->Streamers[ptId].GetNumberOfPoints();
     }
   newPoints ->Allocate(numIntPts);
-  newLines = vtkCellArray::New(); 
+  newLines = vtkCellArray::New();
 
   if ( input->GetPointData()->GetScalars() )
     {
     newScalars = vtkFloatArray::New();
     newScalars->Allocate(numIntPts);
     }
- 
+
   // index into the whole point array
   int strIdx = 0;
 
   for (int ptId=0; ptId < this->NumberOfStreamers; ptId++)
     {
       // if no points give up
-      if ( (numIntPts=this->Streamers[ptId].GetNumberOfPoints()) < 1 )
-        {
-          continue;
-        }
+    if ( (numIntPts=this->Streamers[ptId].GetNumberOfPoints()) < 1 )
+      {
+      continue;
+      }
 
       // cell indicates line connectivity
       newLines->InsertNextCell(numIntPts);
@@ -619,9 +624,9 @@ void vtkHyperStreamlineDTMRI::BuildLines()
 
   if ( newScalars )
     {
-      int idx = outPD->AddArray(newScalars);
-      outPD->SetActiveAttribute(idx, vtkDataSetAttributes::SCALARS);
-      newScalars->Delete();
+    int idx = outPD->AddArray(newScalars);
+    outPD->SetActiveAttribute(idx, vtkDataSetAttributes::SCALARS);
+    newScalars->Delete();
     }
 
   output->SetLines(newLines);
@@ -635,11 +640,11 @@ void vtkHyperStreamlineDTMRI::BuildLines()
 void vtkHyperStreamlineDTMRI::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
- 
-  os << indent << "Radius of Curvature "
-     << this->RadiusOfCurvature << "\n";
 
- 
+  os << indent << "Radius of Curvature "
+    << this->RadiusOfCurvature << "\n";
+
+
 }
 
 

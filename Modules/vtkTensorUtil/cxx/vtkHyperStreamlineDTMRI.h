@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.h,v $
-  Date:      $Date: 2006/02/10 02:26:06 $
-  Version:   $Revision: 1.10 $
+  Date:      $Date: 2006/04/18 17:01:20 $
+  Version:   $Revision: 1.11 $
 
 =========================================================================auto=*/
 // .NAME vtkHyperStreamlineDTMRI - generate hyperstreamline in arbitrary dataset
@@ -38,12 +38,9 @@
 
 #include "vtkTensorUtilConfigure.h"
 #include "vtkHyperStreamline.h"
-#include "vtkHyperPointandArray.h"
-#include "vtkTensorMathematics.h"
-#include "vtkFloatArray.h"
+#include "vtkTensorMathematics.h" // for VTK_TENS_FRACTIONAL_ANISOTROPY
 
-//class VTK_DTMRI_EXPORT vtkHyperStreamlineDTMRI : public vtkHyperStreamline 
-class VTK_TENSORUTIL_EXPORT vtkHyperStreamlineDTMRI : public vtkHyperStreamline 
+class VTK_TENSORUTIL_EXPORT vtkHyperStreamlineDTMRI : public vtkHyperStreamline
 {
 public:
   vtkTypeRevisionMacro(vtkHyperStreamlineDTMRI,vtkHyperStreamline);
@@ -71,18 +68,18 @@ public:
   // Type of anisotropy used to stop tractography.
   vtkGetMacro(StoppingMode,int);
   vtkSetMacro(StoppingMode,int);
-  void SetStoppingModeToFractionalAnisotropy() 
+  void SetStoppingModeToFractionalAnisotropy()
     {this->SetStoppingMode(VTK_TENS_FRACTIONAL_ANISOTROPY);};
-  void SetStoppingModeToLinearMeasure() 
+  void SetStoppingModeToLinearMeasure()
     {this->SetStoppingMode(VTK_TENS_LINEAR_MEASURE);};
-  void SetStoppingModeToPlanarMeasure() 
+  void SetStoppingModeToPlanarMeasure()
     {this->SetStoppingMode(VTK_TENS_PLANAR_MEASURE);};
-  void SetStoppingModeToSphericalMeasure() 
+  void SetStoppingModeToSphericalMeasure()
     {this->SetStoppingMode(VTK_TENS_SPHERICAL_MEASURE);};
 
 
-  // If StoppingMode criterion becomes smaller than this number, 
-  // tracking stops.       
+  // If StoppingMode criterion becomes smaller than this number,
+  // tracking stops.
   vtkGetMacro(StoppingThreshold,vtkFloatingPointType);
   vtkSetMacro(StoppingThreshold,vtkFloatingPointType);
 

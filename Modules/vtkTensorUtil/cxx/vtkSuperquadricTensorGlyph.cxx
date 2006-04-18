@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricTensorGlyph.cxx,v $
-  Date:      $Date: 2006/04/18 15:31:59 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2006/04/18 17:01:20 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
 #include "vtkSuperquadricTensorGlyph.h"
@@ -614,9 +614,10 @@ void vtkSuperquadricTensorGlyph::Execute()
   cout << "glyph time: " << clock() - tStart << endl;
 }
 
+//----------------------------------------------------------------------------
 void vtkSuperquadricTensorGlyph::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkTensorGlyph::PrintSelf(os,indent);
+  this->Superclass::PrintSelf(os,indent);
 
   //  os << indent << "ColorGlyphsWithAnisotropy: " << this->ColorGlyphsWithAnisotropy << "\n";
 }

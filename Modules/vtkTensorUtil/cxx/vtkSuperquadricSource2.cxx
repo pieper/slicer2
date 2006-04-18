@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricSource2.cxx,v $
-  Date:      $Date: 2006/03/06 21:07:33 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2006/04/18 17:01:20 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 
@@ -24,13 +24,13 @@
 
 #include <math.h>
 
-vtkCxxRevisionMacro(vtkSuperquadricSource2, "$Revision: 1.3 $");
+vtkCxxRevisionMacro(vtkSuperquadricSource2, "$Revision: 1.4 $");
 vtkStandardNewMacro(vtkSuperquadricSource2);
 
-static void evalSuperquadric2(double u, double v, 
+static void evalSuperquadric2(double u, double v,
                              double du, double dv,
                              double n, double e, 
-                             double dims[3],  
+                             double dims[3],
                              double xyz[3], 
                              double nrm[3]);
   
@@ -124,6 +124,8 @@ static const double SQ_SMALL_OFFSET = 0.01;
 
 void vtkSuperquadricSource2::Execute()
 {
+  // get the ouptut
+  vtkPolyData *output = this->GetOutput();
   int i, j;
   vtkIdType numPts;
   vtkPoints *newPoints; 
@@ -146,7 +148,6 @@ void vtkSuperquadricSource2::Execute()
   double texCoord[2];
   double tmp;
 
-  vtkPolyData *output = this->GetOutput();
 
   dims[0] = this->Scale[0] * this->Size;
   dims[1] = this->Scale[1] * this->Size;
@@ -173,7 +174,6 @@ void vtkSuperquadricSource2::Execute()
   phiSubsegs = this->PhiResolution / phiSegs;
   thetaSubsegs = this->ThetaResolution / thetaSegs;
 
-
   numPts = (this->PhiResolution + phiSegs)*(this->ThetaResolution + thetaSegs);
   // creating triangles
   numStrips = this->PhiResolution * thetaSegs;
@@ -197,8 +197,10 @@ void vtkSuperquadricSource2::Execute()
   newPolys->Allocate(newPolys->EstimateSize(numStrips,ptsPerStrip));
 
   // generate!
-  for(iq = 0; iq < phiSegs; iq++) {
-    for(i = 0; i <= phiSubsegs; i++) {
+  for(iq = 0; iq < phiSegs; iq++)
+    {
+    for(i = 0; i <= phiSubsegs; i++)
+      {
       phi = phiLim[0] + deltaPhi*(i + iq*phiSubsegs);
       texCoord[1] = deltaPhiTex*(i + iq*phiSubsegs);
 
@@ -218,8 +220,10 @@ void vtkSuperquadricSource2::Execute()
         phiOffset =  0.0;
         }
       
-      for(jq = 0; jq < thetaSegs; jq++) {
-        for(j = 0; j <= thetaSubsegs; j++) {
+      for(jq = 0; jq < thetaSegs; jq++)
+        {
+        for(j = 0; j <= thetaSubsegs; j++)
+          {
           theta = thetaLim[0] + deltaTheta*(j + jq*thetaSubsegs);
           texCoord[0] = deltaThetaTex*(j + jq*thetaSubsegs);
           
@@ -295,15 +299,19 @@ void vtkSuperquadricSource2::Execute()
   
   rowOffset = this->ThetaResolution+thetaSegs;
   
-  for(iq = 0; iq < phiSegs; iq++) {
-    for(i = 0; i < phiSubsegs; i++) {
+  for(iq = 0; iq < phiSegs; iq++)
+    {
+    for(i = 0; i < phiSubsegs; i++)
+      {
       pbase = rowOffset*(i +iq*(phiSubsegs+1));
-      for(jq = 0; jq < thetaSegs; jq++) {
+      for(jq = 0; jq < thetaSegs; jq++)
+        {
         base = pbase + jq*(thetaSubsegs+1);
-        for(j = 0; j <= thetaSubsegs; j++) {
+        for(j = 0; j <= thetaSubsegs; j++)
+          {
           ptidx[2*j] = base + rowOffset + j;
           ptidx[2*j+1] = base + j;
-        }
+          }
         newPolys->InsertNextCell(ptsPerStrip, ptidx);
       }
     }
