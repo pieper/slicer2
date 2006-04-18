@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: isframes.tcl,v $
-#   Date:      $Date: 2006/04/13 21:10:07 $
-#   Version:   $Revision: 1.12 $
+#   Date:      $Date: 2006/04/18 22:02:43 $
+#   Version:   $Revision: 1.13 $
 # 
 #===============================================================================
 # FILE:        isframes.tcl
@@ -216,7 +216,7 @@ itcl::body isframes::destructor {} {
 itcl::configbody isframes::filepattern {
     set _patternentry_value $itk_option(-filepattern)
     if { [string first "*" $itk_option(-filepattern)] != -1 } {
-        set files [glob $itk_option(-filepattern)]
+        set files [glob -nocomplain $itk_option(-filepattern)]
         set numfiles [llength $files]
         if { $numfiles > 0 } {
             $this configure -start 0
@@ -263,10 +263,14 @@ itcl::configbody isframes::frame {
 
 
     if { [string first "*" $itk_option(-filepattern)] != -1 } {
-        set files [lsort -dictionary [glob $itk_option(-filepattern)]]
+        set files [lsort -dictionary [glob -nocomplain $itk_option(-filepattern)]]
         set filename [lindex $files $itk_option(-frame)]
     } else {
         set filename [format $itk_option(-filepattern) $itk_option(-frame)]
+    }
+    if {$filename == ""} {
+        puts "isframes: no file found for frame $itk_option(-frame) with pattern $itk_option(-filepattern)"
+        return
     }
 
     set filetype $itk_option(-filetype)
@@ -438,7 +442,7 @@ proc isframes_showMovie { pattern start end } {
     catch "destroy .isframesShowMovie"
     toplevel .isframesShowMovie
     wm title .isframesShowMovie "Show Slicer Movie"
-    wm geometry .isframesShowMovie 650x700
+    wm geometry .isframesShowMovie 800x850
     
     pack [isframes .isframesShowMovie.isf2] -fill both -expand true
     .isframesShowMovie.isf2 configure -filepattern $pattern -start $start -end $end
