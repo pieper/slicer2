@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Volumes.tcl,v $
-#   Date:      $Date: 2006/03/06 19:24:24 $
-#   Version:   $Revision: 1.130 $
+#   Date:      $Date: 2006/04/18 01:50:58 $
+#   Version:   $Revision: 1.131 $
 # 
 #===============================================================================
 # FILE:        Volumes.tcl
@@ -101,7 +101,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-             {$Revision: 1.130 $} {$Date: 2006/03/06 19:24:24 $}]
+             {$Revision: 1.131 $} {$Date: 2006/04/18 01:50:58 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -774,8 +774,6 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     eval {label $f.l -text "Select File Type"} $Gui(BLA)
     pack $f.l -side left -padx $Gui(pad) -pady 0
 
-    set Volumes(extentionGenericSave) "nrrd"
-
     eval {menubutton $f.mbType -text "NRRD(.nrrd)" \
             -relief raised -bd 2 -width 20 \
             -menu $f.mbType.m} $Gui(WMBA) 
@@ -784,7 +782,7 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
 
    # Add menu items
     foreach FileType {{hdr} {nrrd} {nhdr} {mhd} {mha} {nii} {img} {img.gz} {vtk}} \
-        name {{"Analyze (.hdr)"} {"NRRD(.nrrd)"} {"NRRD(.nhrd)"} {"Meta (.mhd)"} {"Meta (.mha)"} {"Nifti (.nii)"} {"Nifti (.img)"} {"Nifti (.img.gz)"} {"VTK (.vtk)"}} { 
+        name {{"Analyze (.hdr)"} {"NRRD(.nrrd)"} {"NRRD(.nhdr)"} {"Meta (.mhd)"} {"Meta (.mha)"} {"Nifti (.nii)"} {"Nifti (.img)"} {"Nifti (.img.gz)"} {"VTK (.vtk)"}} { 
             set Volumes($FileType) $name 
             $f.mbType.m add command -label $name \
                 -command "VolumesGenericExportSetFileType $FileType"
