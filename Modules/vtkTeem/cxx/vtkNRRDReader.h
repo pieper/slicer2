@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkNRRDReader.h,v $
-  Date:      $Date: 2005/12/20 22:56:23 $
-  Version:   $Revision: 1.1.2.1 $
+  Date:      $Date: 2006/04/18 21:14:50 $
+  Version:   $Revision: 1.1.2.2 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -99,6 +99,12 @@ public:
     {
       return "NRRD - Nearly Raw Raster Data";
     }
+
+  //Description:
+  // Report the status of the reading process.
+  // If this is different than zero, there have been some error
+  // parsing the complete header information.
+  vtkGetMacro(ReadStatus,int);
 
   // Description:
   // Point data field type
@@ -230,6 +236,8 @@ protected:
 
   Nrrd *nrrd;
 
+  int ReadStatus;
+  
   int PointDataType;
   int DataType;
   int NumberOfComponents;
