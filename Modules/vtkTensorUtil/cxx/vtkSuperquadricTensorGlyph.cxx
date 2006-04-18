@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricTensorGlyph.cxx,v $
-  Date:      $Date: 2006/04/18 17:01:20 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/04/18 17:32:59 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 #include "vtkSuperquadricTensorGlyph.h"
@@ -21,10 +21,16 @@
 #include "vtkPolyData.h"
 #include "vtkPointData.h"
 #include "vtkCellArray.h"
+#include "vtkImageData.h"
 #include "vtkSuperquadricSource2.h"
 #include "vtkTensorMathematics.h"
 #include "vtkInteractiveTensorGlyph.h"
+
 #include <time.h>
+
+vtkCxxSetObjectMacro(vtkSuperquadricTensorGlyph,ScalarMask,vtkImageData);
+vtkCxxSetObjectMacro(vtkSuperquadricTensorGlyph,VolumePositionMatrix,vtkMatrix4x4);
+vtkCxxSetObjectMacro(vtkSuperquadricTensorGlyph,TensorRotationMatrix,vtkMatrix4x4);
 
 //------------------------------------------------------------------------------
 vtkSuperquadricTensorGlyph* vtkSuperquadricTensorGlyph::New()

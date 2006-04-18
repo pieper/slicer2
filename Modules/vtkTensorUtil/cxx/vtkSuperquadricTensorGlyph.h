@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricTensorGlyph.h,v $
-  Date:      $Date: 2006/04/18 15:32:00 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/04/18 17:32:59 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 // .NAME vtkSuperquadricTensorGlyph - scale and orient glyph according to tensor eigenvalues and eigenvectors
@@ -48,17 +48,16 @@
 // coordinate system.
 
 // .SECTION See Also
-// vtkTensorGlyph vtkGlyph3D vtkPointLoad vtkHyperStreamline
+// vtkTensorGlyph vtkGlyph3D vtkPointLoad vtkHyperStreamline vtkInteractiveTensorGlyph
 
 #ifndef __vtkSuperquadricTensorGlyph_h
 #define __vtkSuperquadricTensorGlyph_h
 
 #include "vtkTensorUtilConfigure.h"
 #include "vtkTensorGlyph.h"
-#include "vtkTransform.h"
-#include "vtkMatrix4x4.h"
-#include "vtkImageData.h"
 
+class vtkImageData;
+class vtkMatrix4x4;
 class VTK_TENSORUTIL_EXPORT vtkSuperquadricTensorGlyph : public vtkTensorGlyph
 {
 public:
@@ -80,7 +79,7 @@ public:
   vtkGetMacro(MaskGlyphsWithScalars, int);
 
 
-  vtkSetObjectMacro(ScalarMask, vtkImageData);
+  virtual void SetScalarMask(vtkImageData*);
 
 #define VTK_LINEAR_MEASURE 1
 #define VTK_SPHERICAL_MEASURE 2
@@ -117,7 +116,7 @@ public:
   //    incorrectly rotating the tensors, as would be the 
   //    case if positioning the scene's actor with this matrix.
   // 
-  vtkSetObjectMacro(VolumePositionMatrix, vtkMatrix4x4);
+  virtual void SetVolumePositionMatrix(vtkMatrix4x4*);
   vtkGetObjectMacro(VolumePositionMatrix, vtkMatrix4x4);
 
 
@@ -136,7 +135,7 @@ public:
   //    just need to rotate each tensor.
   // 3) Set TensorRotationMatrix to this rotation matrix.
   //
-  vtkSetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
+  virtual void SetTensorRotationMatrix(vtkMatrix4x4*);
   vtkGetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
 
   // Description:

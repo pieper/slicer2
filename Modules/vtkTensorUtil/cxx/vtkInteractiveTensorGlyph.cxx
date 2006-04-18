@@ -7,21 +7,28 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkInteractiveTensorGlyph.cxx,v $
-  Date:      $Date: 2006/03/29 16:46:58 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/04/18 17:32:59 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 #include "vtkInteractiveTensorGlyph.h"
+
+#include "vtkObjectFactory.h"
 #include "vtkTransform.h"
 #include "vtkMath.h"
-#include "vtkObjectFactory.h"
 #include "vtkTensor.h"
 #include "vtkFloatArray.h"
 #include "vtkPolyData.h"
 #include "vtkPointData.h"
 #include "vtkCellArray.h"
+#include "vtkImageData.h"
 #include "vtkTensorMathematics.h"
+
 #include <time.h>
+
+vtkCxxSetObjectMacro(vtkInteractiveTensorGlyph,ScalarMask,vtkImageData);
+vtkCxxSetObjectMacro(vtkInteractiveTensorGlyph,VolumePositionMatrix,vtkMatrix4x4);
+vtkCxxSetObjectMacro(vtkInteractiveTensorGlyph,TensorRotationMatrix,vtkMatrix4x4);
 
 //------------------------------------------------------------------------------
 vtkInteractiveTensorGlyph* vtkInteractiveTensorGlyph::New()
