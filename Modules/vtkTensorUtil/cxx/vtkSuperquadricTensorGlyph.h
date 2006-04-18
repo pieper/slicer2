@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricTensorGlyph.h,v $
-  Date:      $Date: 2006/02/14 20:54:14 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2006/04/18 15:32:00 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
 // .NAME vtkSuperquadricTensorGlyph - scale and orient glyph according to tensor eigenvalues and eigenvectors
@@ -143,16 +143,8 @@ public:
   // Resolution of the output glyphs. This parameter is a integer value
   // that set the number of points that are skipped before render one glyphs.
   // 1 is the finer level meaning that every input point a glyph is rendered.
-  void SetResolution(int value){
-    if(value<=0) {
-      vtkWarningMacro("Resolution cannot be lower than 1.");
-      value = 1;
-    }
-    this->Resolution=value;  
-    this->Modified();
-  };  
+  vtkSetClampMacro(Resolution,int,1,VTK_LARGE_INTEGER);
   vtkGetMacro(Resolution,int);
-
 
   vtkSetMacro(Gamma,double);
   vtkGetMacro(Gamma,double);
@@ -171,8 +163,6 @@ public:
 protected:
   vtkSuperquadricTensorGlyph();
   ~vtkSuperquadricTensorGlyph();
-  vtkSuperquadricTensorGlyph(const vtkSuperquadricTensorGlyph&);
-  void operator=(const vtkSuperquadricTensorGlyph&);
 
   void Execute();
 
@@ -190,6 +180,9 @@ protected:
   vtkMatrix4x4 *TensorRotationMatrix;
 
   vtkImageData *ScalarMask;
+private:
+  vtkSuperquadricTensorGlyph(const vtkSuperquadricTensorGlyph&);
+  void operator=(const vtkSuperquadricTensorGlyph&);
 };
 
 #endif

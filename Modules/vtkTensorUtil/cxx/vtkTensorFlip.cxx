@@ -7,19 +7,16 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorFlip.cxx,v $
-  Date:      $Date: 2006/01/06 17:58:06 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2006/04/18 15:32:00 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
+#include "vtkTensorFlip.h"
 
-
+#include "vtkObjectFactory.h"
 #include "vtkImageData.h"
 #include "vtkPointData.h"
 #include "vtkFloatArray.h"
-#include "vtkTensorFlip.h"
-#include "vtkMath.h"
-#include "vtkObjectFactory.h"
-
 
 //----------------------------------------------------------------------------
 vtkTensorFlip* vtkTensorFlip::New()
@@ -41,11 +38,10 @@ vtkTensorFlip::vtkTensorFlip()
 }
 
 
-
 //----------------------------------------------------------------------------
-// 
-void vtkTensorFlip::ExecuteInformation(vtkImageData *inData, 
-                         vtkImageData *outData)
+//
+void vtkTensorFlip::ExecuteInformation(vtkImageData *inData,
+                                       vtkImageData *outData)
 {
   int ext[6];
 
@@ -58,7 +54,7 @@ void vtkTensorFlip::ExecuteInformation(vtkImageData *inData,
 // this is for when only tensors are present
 template <class D>
 static void vtkTensorFlipExecute(vtkTensorFlip *self, int ext[6],
-                       vtkImageData *inData, 
+                       vtkImageData *inData,
                        vtkImageData *outData, D *outPtr, int id)
 {
   int num0, num1, num2;
@@ -89,19 +85,19 @@ static void vtkTensorFlipExecute(vtkTensorFlip *self, int ext[6],
   self->GetOutput()->GetIncrements(outInc);
   self->GetOutput()->GetUpdateExtent(outFullUpdateExt); //We are only working over the update extent
   ptId = ((ext[0] - outFullUpdateExt[0]) * outInc[0]
-         + (ext[2] - outFullUpdateExt[2]) * outInc[1]
-         + (ext[4] - outFullUpdateExt[4]) * outInc[2]);
+        + (ext[2] - outFullUpdateExt[2]) * outInc[1]
+        + (ext[4] - outFullUpdateExt[4]) * outInc[2]);
 
   // Get the full size of the output so we can mirror the Y axis
   int *outFullDims = outData->GetDimensions();
   int ptIdOut;
 
-  // Get information to march through data 
+  // Get information to march through data
   outData->GetContinuousIncrements(ext, outInc0, outInc1, outInc2);
   num0 = ext[1] - ext[0] + 1;
   num1 = ext[3] - ext[2] + 1;
   num2 = ext[5] - ext[4] + 1;
-  
+
   target = (unsigned long)(num2*num1/50.0);
   target++;
 
@@ -110,7 +106,7 @@ static void vtkTensorFlipExecute(vtkTensorFlip *self, int ext[6],
     {
     for (idx1 = 0; !self->AbortExecute && idx1 < num1; ++idx1)
       {
-      if (!id) 
+      if (!id)
         {
         if (!(count%target))
           {
@@ -120,7 +116,7 @@ static void vtkTensorFlipExecute(vtkTensorFlip *self, int ext[6],
         }
 
       //
-      // cacluate the corresponding point index for the mirror relative to the full
+      // calculate the corresponding point index for the mirror relative to the full
       // input image (in case the output extent is just a small window)
       //
       int sliceSize = outFullDims[0] * outFullDims[1];
@@ -149,16 +145,16 @@ static void vtkTensorFlipExecute(vtkTensorFlip *self, int ext[6],
         outT[1][0] = -inT[1][0];
         outT[2][0] = -inT[2][0];
 
-          // set the output tensor to the calculated one
+        // set the output tensor to the calculated one
         outTensors->SetTuple(ptIdOut,(vtkFloatingPointType *)outT);
-        
+
         ptId += 1;
         ptIdOut += 1;
         }
-    ptId += outInc1;
+      ptId += outInc1;
+      }
+    ptId += outInc2;
     }
-  ptId += outInc2;
-  }
 }
 
 //----------------------------------------------------------------------------
@@ -173,7 +169,7 @@ void vtkTensorFlip::ExecuteData(vtkDataObject *out)
   // set extent so we know how many tensors to allocate
   output->SetExtent(output->GetUpdateExtent());
 
-  // allocate output tensors -- save them in the 
+  // allocate output tensors -- save them in the
   // instance variable for calculation by the threads
   // otherwise the superclass will overwrite them
   vtkFloatArray* data = vtkFloatArray::New();
@@ -194,13 +190,13 @@ void vtkTensorFlip::ExecuteData(vtkDataObject *out)
 // algorithm to fill the output from the inputs.
 // It just executes a switch statement to call the correct function for
 // the datas data types.
-void vtkTensorFlip::ThreadedExecute(vtkImageData *inData, 
+void vtkTensorFlip::ThreadedExecute(vtkImageData *inData,
                       vtkImageData *outData,
                       int outExt[6], int id)
 {
   void *outPtr;
-  
-  vtkDebugMacro(<< "Execute: inData = " << inData 
+
+  vtkDebugMacro(<< "Execute: inData = " << inData
         << ", outData = " << outData);
 
   if (inData == NULL)
@@ -209,9 +205,8 @@ void vtkTensorFlip::ThreadedExecute(vtkImageData *inData,
       return;
     }
 
-
   outPtr = outData->GetScalarPointerForExtent(outExt);
-  
+
   switch (outData->GetScalarType())
     {
       // we set the output data scalar type depending on the op
@@ -219,7 +214,7 @@ void vtkTensorFlip::ThreadedExecute(vtkImageData *inData,
       // which are float.  So this switch statement on output
       // scalar type is sufficient.
       vtkTemplateMacro6(vtkTensorFlipExecute,
-                this, outExt, inData, outData, 
+                this, outExt, inData, outData,
                 (VTK_TT *)(outPtr), id);
       default:
         vtkErrorMacro(<< "Execute: Unknown ScalarType");

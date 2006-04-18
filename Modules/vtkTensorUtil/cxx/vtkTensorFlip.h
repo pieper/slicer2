@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorFlip.h,v $
-  Date:      $Date: 2006/02/14 20:54:14 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2006/04/18 15:32:00 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
 // .NAME vtkTensorFlip - flip Y axis and negate xy and zy terms
@@ -23,9 +23,9 @@
 
 #include "vtkTensorUtilConfigure.h"
 #include "vtkImageToImageFilter.h"
-#include "vtkFloatArray.h"
-#include "vtkImageData.h"
 
+class vtkFloatArray;
+class vtkImageData;
 class VTK_TENSORUTIL_EXPORT vtkTensorFlip : public vtkImageToImageFilter
 {
 public:
@@ -33,8 +33,7 @@ public:
   vtkTypeMacro(vtkTensorFlip,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-  vtkFloatArray *GetOutTensors() { return (this->OutTensors); }
-  
+  vtkFloatArray *GetOutTensors() { return this->OutTensors; }
 
 protected:
   vtkTensorFlip();
@@ -48,7 +47,7 @@ protected:
         int extent[6], int id);
 
   // We override this in order to allocate output tensors
-  // before threading happens.  This replaces the superclass 
+  // before threading happens.  This replaces the superclass
   // vtkImageMultipleInputFilter's Execute function.
   void ExecuteData(vtkDataObject *out);
 
