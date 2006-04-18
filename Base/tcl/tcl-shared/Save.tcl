@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Save.tcl,v $
-#   Date:      $Date: 2006/03/02 02:51:44 $
-#   Version:   $Revision: 1.18 $
+#   Date:      $Date: 2006/04/18 22:05:06 $
+#   Version:   $Revision: 1.19 $
 # 
 #===============================================================================
 # FILE:        Save.tcl
@@ -64,7 +64,7 @@ proc SaveInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.18 $} {$Date: 2006/03/02 02:51:44 $}]
+            {$Revision: 1.19 $} {$Date: 2006/04/18 22:05:06 $}]
 
     SaveInitTables
 
@@ -76,6 +76,12 @@ proc SaveInit {} {
     set Save(imageOutputZoom) 1
     set Save(imageIncludeSlices) 0
     set Save(stereoDisparityFactor) 1.0
+
+    set Save(movieDirectory) "/tmp"
+    set Save(moviePattern) "slicer-*.png"
+    set Save(movieStartFrame) 1
+    set Save(movieEndFrame) 1
+    
 }
 
 #-------------------------------------------------------------------------------
@@ -446,6 +452,10 @@ proc SaveDisplayOptionsWindow {{toplevelName .saveOptions}} {
     grid $f.lSaveMode -sticky e -padx $Gui(pad)
     GuiApplyStyle WLA $f.lSaveMode
 
+    #
+    # File Options
+    #
+
     grid [tkHorizontalLine $f.line0] -columnspan 2 -pady 5 -sticky we
 
     label $f.lFileOptionsTitle -text "File Options"
@@ -495,6 +505,10 @@ proc SaveDisplayOptionsWindow {{toplevelName .saveOptions}} {
     grid $f.lFileType $f.mbFileType -sticky w  -pady $Gui(pad)
     grid config $f.lFileType -sticky e  -padx $Gui(pad)
 
+    #
+    # Save Options
+    #
+
     grid [tkHorizontalLine $f.line1] -columnspan 2 -pady 5 -sticky we
 
     label $f.lSaveTitle -text "Save Options" -anchor w
@@ -526,6 +540,63 @@ proc SaveDisplayOptionsWindow {{toplevelName .saveOptions}} {
     GuiApplyStyle WCA $f.cIncludeSlices
     grid $f.cIncludeSlices -sticky we -columnspan 2
 
+    #
+    # Review a saved movie
+    #
+    grid [tkHorizontalLine $f.line2] -columnspan 2 -pady 5 -sticky we
+
+    label $f.lMovieTitle -text "View Movie Options" -anchor w
+    GuiApplyStyle WTA $f.lMovieTitle
+    grid $f.lMovieTitle -sticky news -columnspan 1
+    grid [tkSpace $f.spacem0 -height 5] -columnspan 2
+
+
+    label $f.lMovieDir  -text "Directory:"
+    GuiApplyStyle WLA $f.lMovieDir
+    entry $f.eMovieDir  -width 16 -textvariable Save(movieDirectory)
+    GuiApplyStyle WEA $f.eMovieDir
+    grid $f.lMovieDir $f.eMovieDir -sticky w
+    grid config $f.lMovieDir -sticky e -padx $Gui(pad)
+
+    button $f.bChooseMovieDir -text "Browse..." -command SaveMovieDirectory
+    GuiApplyStyle WBA $f.bChooseMovieDir
+    grid [tkSpace $f.spaceMovieDir] $f.bChooseMovieDir -sticky w 
+    grid [tkSpace $f.spaceAfterMovieDir -height 5] -columnspan 2
+
+    label $f.lMoviePattern -text "File pattern:"
+    GuiApplyStyle WLA $f.lMoviePattern
+    TooltipAdd $f.lMoviePattern "A regular expression describing the files to view"
+
+    entry $f.eMoviePattern -width 16 -textvariable Save(moviePattern)
+    GuiApplyStyle WEA $f.eMoviePattern
+
+    grid $f.lMoviePattern $f.eMoviePattern -sticky w
+    grid config $f.lMoviePattern -sticky e -padx $Gui(pad)
+
+
+    label $f.lMovieStartFrame -text "Start frame:"
+    GuiApplyStyle WLA $f.lMovieStartFrame
+    entry $f.eMovieStartFrame -width 6 -textvariable Save(movieStartFrame)
+    GuiApplyStyle WEA $f.eMovieStartFrame
+    grid $f.lMovieStartFrame $f.eMovieStartFrame -sticky w
+    grid config $f.lMovieStartFrame -sticky e -padx $Gui(pad)
+    TooltipAdd $f.lMovieStartFrame "Number in the file name on which to start playback"
+
+    label $f.lMovieEndFrame -text "End frame:"
+    GuiApplyStyle WLA $f.lMovieEndFrame
+    entry $f.eMovieEndFrame -width 6 -textvariable Save(movieEndFrame)
+    GuiApplyStyle WEA $f.eMovieEndFrame
+    grid $f.lMovieEndFrame $f.eMovieEndFrame -sticky w
+    grid config $f.lMovieEndFrame -sticky e -padx $Gui(pad)
+    TooltipAdd $f.lMovieEndFrame "Number in the file name on which to end playback"
+
+    button $f.bMovieReview -text "View" -command "SaveMovieReview"
+    GuiApplyStyle WBA $f.bMovieReview
+    grid $f.bMovieReview -sticky we -padx $Gui(pad) -pady $Gui(pad) -ipadx 2 -ipady 5
+
+    #
+    # Buttons
+    # 
     grid [tkHorizontalLine $f.line10] -columnspan 2 -pady 5 -sticky we
     grid [tkSpace $f.space2 -height 10] -columnspan 2
     button $f.bCloseWindow -text "Close" -command "destroy $root"
@@ -771,4 +842,42 @@ proc Save3DImage {} {
     after idle "puts \"Saved $filename.\""
     $Gui(fViewer) config -cursor {}
     SaveIncrementFrameCounter
+}
+
+#-------------------------------------------------------------------------------
+# .PROC SaveMovieDirectory
+# 
+#  Internal function used to select the movie review directory, that contains files
+# that make up frames of a movie.
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc SaveMovieDirectory {} {
+    global View Save
+    set newdir [tk_chooseDirectory -initialdir $Save(movieDirectory)]
+    if {"$newdir" != ""} {
+        set Save(movieDirectory) $newdir
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC SaveMovieReview
+# 
+#  Pop up an isframes window to render the saved frames.
+#
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc SaveMovieReview {} {
+    global Save
+    if { [catch "package require iSlicer"] } {
+        DevErrorWindow "Cannot review movies without the iSlicer module, use QuickTime Pro to concatenate your files into a movie."
+        return
+    }
+    if {$::Module(verbose)} {
+        puts "Sending file pattern: [file join $Save(movieDirectory) $Save(moviePattern)]"
+    }
+    # subtract one from the input frames to get the 0-(n-1) range that isframes expects
+    isframes_showMovie [file join $Save(movieDirectory) $Save(moviePattern)] [expr $Save(movieStartFrame) - 1] [expr $Save(movieEndFrame) - 1]
 }
