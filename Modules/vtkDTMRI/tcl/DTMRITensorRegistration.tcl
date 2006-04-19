@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITensorRegistration.tcl,v $
-#   Date:      $Date: 2006/03/08 20:58:22 $
-#   Version:   $Revision: 1.27 $
+#   Date:      $Date: 2006/04/19 14:23:56 $
+#   Version:   $Revision: 1.28 $
 # 
 #===============================================================================
 # FILE:        DTMRITensorRegistration.tcl
@@ -68,7 +68,7 @@ proc DTMRITensorRegistrationInit {} {
     #------------------------------------
     set m "TensorRegistration"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.27 $} {$Date: 2006/03/08 20:58:22 $}]
+                                 {$Revision: 1.28 $} {$Date: 2006/04/19 14:23:56 $}]
 
     # Does the AG module exist? If not the registration tab will not be displayed
     if {[catch "package require vtkAG"]} {
@@ -1774,7 +1774,7 @@ proc DTMRIRegRun {} {
       
       # Set the options for the warp
       warp SetVerbose $DTMRI(reg,Verbose)
-      #[warp GetGeneralTransform] SetInput TransformDTMRI
+      [warp GetGeneralTransform] SetInput TransformDTMRI
       warp SetForceType $DTMRI(reg,Force)   
       warp SetMinimumIterations  $DTMRI(reg,Iteration_min) 
       warp SetMaximumIterations $DTMRI(reg,Iteration_max)  
@@ -2122,7 +2122,7 @@ proc DTMRIRegPreprocess {Source Target SourceVol TargetVol} {
   
   $Source  SetOrigin  $origin_0 $origin_1 $origin_2
   
-  set ext [Source GetExtent]
+  set ext [$Source GetExtent]
   for {set i 0} {$i<6} {incr i} {
     set ext$i [lindex $ext $i]
   }
@@ -3106,7 +3106,7 @@ proc DTMRIRegHelpUpdate {initial} {
 #-------------------------------------------------------------------------------
 proc DTMRIRegCommandLine { {targetname} {sourcename} {resultname} } {
   # have args as extra arg
-  global DTMRI
+  global DTMRI Tensor Volume
   
   # read target and source
   set ::Volume(activeID) "NEW"
