@@ -38,7 +38,7 @@
 #               /tcl - all tcl libs
 #               /vtk
 #                   /VTK - vtk source (or just Wrapping for distribution)
-#                   /VTK-build - vtk build tree (or just stripped libs in bin/$VTK_BUILD_TYPE for distribution)
+#                   /VTK-build - vtk build tree (or just stripped libs in bin/$VTK_BUILD_SUBDIR for distribution)
 #               /itk
 #                   /ITK-build - itk in bin for distribution
 #           /Darwin
@@ -129,7 +129,13 @@ foreach v $envVars {
     if {[lsearch $envVarsToSet $v] != -1} {
         # it's not set already, use our values, either from the variables file, 
         # or our defaults set above, ie set env(VTK_DIR) $VTK_DIR
-        set ::env($v) [subst $$v]
+        if { [set $v] == "" } {
+            # need to set empty string to something because setting
+            # env var to "" actually unsets it so it can't be referenced later
+            set ::env($v) ":"
+        } else {
+            set ::env($v) [set $v]
+        }
     } else {
         # it's already been set, don't over-ride
         puts stderr "NOT Overriding current $v $::env($v)"
@@ -146,9 +152,10 @@ foreach v $envVars {
 #
 # set the base library paths for this build 
 # 
-if {$::env(BUILD) == $solaris || 
+if {$::env(BUILD) == $solaris ||
+    $::env(BUILD) == $linux_64 || 
     $::env(BUILD) == $linux} {
-        # add vtk, slicer, and tcl bins
+    # add vtk, slicer, and tcl bins
         set ::env(LD_LIBRARY_PATH) $::env(VTK_DIR)/bin:$::env(LD_LIBRARY_PATH)
         set ::env(LD_LIBRARY_PATH) $::env(KWWIDGETS_DIR)/bin:$::env(LD_LIBRARY_PATH)
         set ::env(LD_LIBRARY_PATH) $::env(ITK_BINARY_PATH)/bin:$::env(LD_LIBRARY_PATH)
@@ -171,16 +178,16 @@ if {$::env(BUILD) == $solaris ||
         set ::env(DYLD_LIBRARY_PATH) $::env(TCL_LIB_DIR):$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(TCL_BIN_DIR):$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(TEEM_BIN_DIR):$::env(DYLD_LIBRARY_PATH)
-        set ::env(BLT_LIBRARY) $::env(TCL_LIB_DIR)/blt2.4
+#        set ::env(BLT_LIBRARY) $::env(TCL_LIB_DIR)/blt2.4
     } elseif {$::env(BUILD) == $windows} {
         # add vtk, slicer, and tcl bins
-        set ::env(Path) $::env(VTK_DIR)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
-        set ::env(Path) $::env(KWWIDGETS_DIR)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
-        set ::env(Path) $::env(ITK_BINARY_PATH)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
-        set ::env(Path) $::env(SANDBOX_BIN_DIR)/$::env(VTK_BUILD_TYPE)\;$::env(Path)
+        set ::env(Path) $::env(VTK_DIR)/bin/$::env(VTK_BUILD_SUBDIR)\;$::env(Path)
+        set ::env(Path) $::env(KWWIDGETS_DIR)/bin/$::env(VTK_BUILD_SUBDIR)\;$::env(Path)
+        set ::env(Path) $::env(ITK_BINARY_PATH)/bin/$::env(VTK_BUILD_SUBDIR)\;$::env(Path)
+        set ::env(Path) $::env(SANDBOX_BIN_DIR)/$::env(VTK_BUILD_SUBDIR)\;$::env(Path)
         set ::env(Path) $::env(SANDBOX_BIN_DIR)/../Distributions/bin/$::env(VTK_BUILD_SUBDIR)\;$::env(Path)
-        set ::env(Path) $::env(SOV_BINARY_DIR)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
-        set ::env(Path) $::env(SLICER_HOME)/Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
+        set ::env(Path) $::env(SOV_BINARY_DIR)/bin/$::env(VTK_BUILD_SUBDIR)\;$::env(Path)
+        set ::env(Path) $::env(SLICER_HOME)/Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_SUBDIR)\;$::env(Path)
         set ::env(Path) $::env(TCL_BIN_DIR)\;$::env(Path)
         set ::env(Path) $::env(TEEM_BIN_DIR)\;$::env(Path)
     } else {
@@ -200,12 +207,13 @@ set ::env(TK_LIBRARY) $::env(TCL_LIB_DIR)/tk8.4
 #
 if {$::env(BUILD) == $solaris || 
     $::env(BUILD) == $linux ||
+    $::env(BUILD) == $linux_64 ||
     $::env(BUILD) == $darwin} {
         set ::env(TCLLIBPATH) "$::env(VTK_DIR)/Wrapping/Tcl $::env(TCLLIBPATH)"
         set ::env(TCLLIBPATH) "$::env(KWWIDGETS_DIR)/Wrapping/Tcl $::env(TCLLIBPATH)"
 } elseif {$::env(BUILD) == $windows} {
-    set ::env(TCLLIBPATH) "$::env(VTK_DIR)/Wrapping/Tcl/$::env(VTK_BUILD_TYPE) $::env(TCLLIBPATH)"
-    set ::env(TCLLIBPATH) "$::env(KWWIDGETS_DIR)/Wrapping/Tcl/$::env(VTK_BUILD_TYPE) $::env(TCLLIBPATH)"
+    set ::env(TCLLIBPATH) "$::env(VTK_DIR)/Wrapping/Tcl/$::env(VTK_BUILD_SUBDIR) $::env(TCLLIBPATH)"
+    set ::env(TCLLIBPATH) "$::env(KWWIDGETS_DIR)/Wrapping/Tcl/$::env(VTK_BUILD_SUBDIR) $::env(TCLLIBPATH)"
 } else {
     puts stderr "TCLLIBPATH: Invalid build $::env(BUILD)"
     exit
@@ -252,6 +260,7 @@ foreach modulePath $modulePaths {
         if {[string first Custom $moduleName] == -1} {
             lappend ::env(SLICER_MODULES_TO_REQUIRE) $moduleName
             if {$::env(BUILD) == $solaris || 
+                $::env(BUILD) == $linux_64 || 
                 $::env(BUILD) == $linux} {
                 set ::env(LD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$::env(BUILD)/bin:$::env(LD_LIBRARY_PATH)
                 set ::env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $::env(TCLLIBPATH)"
@@ -259,7 +268,7 @@ foreach modulePath $modulePaths {
                 set ::env(DYLD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$::env(BUILD)/bin:$::env(DYLD_LIBRARY_PATH)
                 set ::env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $::env(TCLLIBPATH)"
             } elseif {$::env(BUILD) == $windows} {
-                set ::env(Path) $modulePath/$moduleName/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)\;$::env(Path)
+                set ::env(Path) $modulePath/$moduleName/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_SUBDIR)\;$::env(Path)
                 set ::env(TCLLIBPATH) "$modulePath/$moduleName/Wrapping/Tcl $::env(TCLLIBPATH)"
             } else {
                     puts stderr "Modules: Invalid build $::env(BUILD)"
@@ -338,8 +347,9 @@ if { [string match *.tcl $argv0] } {
 #
 if { $::BATCH == "true" } {
     if {$::env(BUILD) == $solaris || 
-            $::env(BUILD) == $darwin ||
-            $::env(BUILD) == $linux} {
+        $::env(BUILD) == $darwin ||
+        $::env(BUILD) == $linux ||
+        $::env(BUILD) == $linux_64} {
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix
         regsub -all "{|}" $argv "\\\"" argv
         set ret [catch "exec $::env(VTK_DIR)/bin/vtk \"$mainscript\" $argv" res]
@@ -396,6 +406,7 @@ set argv $newargv
 
 if {$::env(BUILD) == $solaris || 
     $::env(BUILD) == $darwin ||
+    $::env(BUILD) == $linux_64 ||
     $::env(BUILD) == $linux} {
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix
         # - don't put process in background so that jdemo can track its status

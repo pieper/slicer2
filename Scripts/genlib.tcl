@@ -201,7 +201,8 @@ if { $GENLIB(clean) } {
         if { [file exists $SLICER_HOME/isPatched] } {
             runcmd rm $SLICER_HOME/isPatched
         }
-    if { [file exists $SLICER_HOME/isPatchedBLT] } {
+
+        if { [file exists $SLICER_HOME/isPatchedBLT] } {
             runcmd rm $SLICER_HOME/isPatchedBLT
         }
     } else {
@@ -257,46 +258,6 @@ if { ![file exists $::CMAKE] } {
 
 
 ################################################################################
-# Get and build teem
-#
-
-if { ![file exists $::TEEM_TEST_FILE] } {
-    cd $SLICER_LIB
-
-    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login 
-    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TEEM_TAG teem
-
-    file mkdir $SLICER_LIB/teem-build
-    cd $SLICER_LIB/teem-build
-
-    if { $isDarwin } {
-        set C_FLAGS -DCMAKE_C_FLAGS:STRING=-fno-common \
-    } else {
-        set C_FLAGS ""
-    }
-
-    runcmd $::CMAKE \
-        -G$GENERATOR \
-        -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
-        -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
-        $C_FLAGS \
-        -DBUILD_SHARED_LIBS:BOOL=ON \
-        -DBUILD_TESTING:BOOL=OFF \
-        ../teem
-
-    if {$isWindows} {
-        if { $MSVC6 } {
-            runcmd $::MAKE teem.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
-        } else {
-            runcmd $::MAKE teem.SLN /build  $::VTK_BUILD_TYPE
-        }
-    } else {
-        eval runcmd $::MAKE
-    }
-}
-
-
-################################################################################
 # Get and build tcl, tk, itcl, widgets
 #
 
@@ -319,7 +280,7 @@ if { ![file exists $::TCL_TEST_FILE] } {
     } else {
         cd $SLICER_LIB/tcl/tcl/unix
 
-        runcmd ./configure --enable-threads --prefix=$SLICER_LIB/tcl-build
+        runcmd ./configure --prefix=$SLICER_LIB/tcl-build
         eval runcmd $::MAKE
         eval runcmd $::MAKE install
     }
@@ -436,7 +397,7 @@ if { ![file exists $::BLT_TEST_FILE] } {
         eval runcmd $::MAKE install
     } else {
         cd $SLICER_LIB/tcl/blt
-        runcmd ./configure --with-tcl=$SLICER_LIB/tcl-build --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
+        runcmd ./configure --with-tcl=$SLICER_LIB/tcl/tcl/unix --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
         eval runcmd $::SERIAL_MAKE
         eval runcmd $::SERIAL_MAKE install
     }
@@ -527,7 +488,7 @@ if { ![file exists $::VTK_TEST_FILE] } {
 
     if { $isDarwin } {
         # Darwin will fail on the first make, then succeed on the second
-        catch "eval runcmd $::MAKE -j4"
+        catch "eval runcmd $::MAKE"
         set OpenGLString "-framework OpenGL -lgl"
         runcmd $::CMAKE -G$GENERATOR -DOPENGL_gl_LIBRARY:STRING=$OpenGLString -DVTK_USE_SYSTEM_ZLIB:BOOL=ON ../VTK
     }
@@ -542,6 +503,71 @@ if { ![file exists $::VTK_TEST_FILE] } {
         eval runcmd $::MAKE 
     }
 }
+
+################################################################################
+# Get and build teem
+# -- relies on VTK's png and zlib
+#
+
+if { ![file exists $::TEEM_TEST_FILE] } {
+    cd $SLICER_LIB
+
+    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login 
+    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TEEM_TAG teem
+
+    file mkdir $SLICER_LIB/teem-build
+    cd $SLICER_LIB/teem-build
+
+    if { $isDarwin } {
+        set C_FLAGS -DCMAKE_C_FLAGS:STRING=-fno-common \
+    } else {
+        set C_FLAGS ""
+    }
+
+    switch $::tcl_platform(os) {
+        "SunOS" -
+        "Linux" {
+            set zlib "libvtkzlib.so"
+            set png "libvtkpng.so"
+        }
+        "Darwin" {
+            set zlib "libvtkzlib.dylib"
+            set png "libvtkpng.dylib"
+        }
+        "Windows NT" {
+            set zlib "vtkzlib.lib"
+            set png "vtkpng.lib"
+        }
+    }
+
+    runcmd $::CMAKE \
+        -G$GENERATOR \
+        -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
+        -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+        $C_FLAGS \
+        -DBUILD_SHARED_LIBS:BOOL=ON \
+        -DBUILD_TESTING:BOOL=OFF \
+        -DTEEM_ZLIB:BOOL=ON \
+        -DTEEM_PNG:BOOL=ON \
+        -DZLIB_INCLUDE_DIR:PATH=$::SLICER_LIB/VTK/Utilities/zlib \
+        -DTEEM_ZLIB_DLLCONF_IPATH:PATH=$::SLICER_LIB/VTK-build/Utilities/zlib \
+        -DZLIB_LIBRARY:FILEPATH=$::SLICER_LIB/VTK-build/bin/$::VTK_BUILD_SUBDIR/$zlib \
+        -DPNG_PNG_INCLUDE_DIR:PATH=$::SLICER_LIB/VTK/Utilities/png \
+        -DTEEM_PNG_DLLCONF_IPATH:PATH=$::SLICER_LIB/VTK-build/Utilities/png \
+        -DPNG_LIBRARY:FILEPATH=$::SLICER_LIB/VTK-build/bin/$::VTK_BUILD_SUBDIR/$png \
+        ../teem
+
+    if {$isWindows} {
+        if { $MSVC6 } {
+            runcmd $::MAKE teem.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
+        } else {
+            runcmd $::MAKE teem.SLN /build  $::VTK_BUILD_TYPE
+        }
+    } else {
+        eval runcmd $::MAKE 
+    }
+}
+
 
 ################################################################################
 # Get and build itk
@@ -576,7 +602,7 @@ if { ![file exists $::ITK_TEST_FILE] } {
             runcmd $::MAKE ITK.SLN /build  $::VTK_BUILD_TYPE
         }
     } else {
-        eval runcmd $::MAKE
+        eval runcmd $::MAKE 
     }
 }
 
@@ -585,7 +611,7 @@ if { ![file exists $::ITK_TEST_FILE] } {
 ################################################################################
 # Get and build the sandbox
 
-if { ![file exists $::SANDBOX_TEST_FILE] } {
+if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FILE] } {
     cd $SLICER_LIB
 
     runcmd $::SVN checkout $::SANDBOX_TAG NAMICSandBox 
@@ -662,5 +688,63 @@ if { ![file exists $::SANDBOX_TEST_FILE] } {
         eval runcmd $::MAKE 
         cd $SLICER_LIB/NAMICSandBox-build/Distributions
         eval runcmd $::MAKE
+        cd $SLICER_LIB/NAMICSandBox-build
     }
+}
+
+# Are all the test files present and accounted for?  If not, return error code
+
+if { ![file exists $::CMAKE] } {
+    puts "CMake test file $::CMAKE not found."
+}
+if { ![file exists $::TEEM_TEST_FILE] } {
+    puts "Teem test file $::TEEM_TEST_FILE not found."
+}
+if { ![file exists $::TCL_TEST_FILE] } {
+    puts "Tcl test file $::TCL_TEST_FILE not found."
+}
+if { ![file exists $::TK_TEST_FILE] } {
+    puts "Tk test file $::TK_TEST_FILE not found."
+}
+if { ![file exists $::ITCL_TEST_FILE] } {
+    puts "incrTcl test file $::ITCL_TEST_FILE not found."
+}
+if { ![file exists $::IWIDGETS_TEST_FILE] } {
+    puts "iwidgets test file $::IWIDGETS_TEST_FILE not found."
+}
+if { ![file exists $::BLT_TEST_FILE] } {
+    puts "BLT test file $::BLT_TEST_FILE not found."
+}
+if { ![file exists $::VTK_TEST_FILE] } {
+    puts "VTK test file $::VTK_TEST_FILE not found."
+}
+if { ![file exists $::ITK_TEST_FILE] } {
+    puts "ITK test file $::ITK_TEST_FILE not found."
+}
+if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FILE] } { 
+    if {$isLinux} { 
+    puts "Sandbox test file $::SANDBOX_TEST_FILE or $::ALT_SANDBOX_TEST_FILE not found." 
+    } else { 
+    puts "Sandbox test file $::SANDBOX_TEST_FILE not found." 
+    }
+}
+
+# check for both regular and alternate sandbox file for linux builds
+if { ![file exists $::CMAKE] || \
+         ![file exists $::TEEM_TEST_FILE] || \
+         ![file exists $::TCL_TEST_FILE] || \
+         ![file exists $::TK_TEST_FILE] || \
+         ![file exists $::ITCL_TEST_FILE] || \
+         ![file exists $::IWIDGETS_TEST_FILE] || \
+         ![file exists $::BLT_TEST_FILE] || \
+         ![file exists $::VTK_TEST_FILE] || \
+         ![file exists $::ITK_TEST_FILE] || \
+         ![file exists $::SANDBOX_TEST_FILE] } {
+    if { ![file exists $::ALT_SANDBOX_TEST_FILE] } {
+    puts "Not all packages compiled; check errors and run genlib.tcl again."
+    exit 1 
+    }
+} else { 
+    puts "All packages compiled."
+    exit 0 
 }
