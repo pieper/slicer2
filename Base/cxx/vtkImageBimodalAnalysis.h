@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageBimodalAnalysis.h,v $
-  Date:      $Date: 2006/04/19 19:45:08 $
-  Version:   $Revision: 1.21 $
+  Date:      $Date: 2006/04/19 20:14:09 $
+  Version:   $Revision: 1.22 $
 
 =========================================================================auto=*/
 // .NAME vtkImageBimodalAnalysis - Analysis bimodal histograms
@@ -16,7 +16,6 @@
 // vtkImageBimodalAnalysis - This filter assumes the input comes
 // from vtkImageAccumulateDiscrete, so there.
 // .SECTION Warning
-// FIXME: what is ClipExtent/ SignalRange ?
 // FIXME: only works on output floating point
 // FIXME: should use vtkTemplateMacro
 
@@ -45,22 +44,22 @@ public:
  
   // Description:
   // Get stats
-  vtkSetMacro(Threshold, int);
   vtkGetMacro(Threshold, int);
-  vtkSetMacro(Window, int);
   vtkGetMacro(Window, int);
-  vtkSetMacro(Level, int);
   vtkGetMacro(Level, int);
-  vtkSetMacro(Min, int);
   vtkGetMacro(Min, int);
-  vtkSetMacro(Max, int);
   vtkGetMacro(Max, int);
-
-  // This is only used outside of the class...
   vtkGetVectorMacro(SignalRange, int, 2);
-  vtkSetVector2Macro(SignalRange, int);
-
   vtkGetVectorMacro(ClipExtent, int, 6);
+
+  // Description:
+  // Ideally this should not be public API
+  vtkSetMacro(Threshold, int);
+  vtkSetMacro(Window, int);
+  vtkSetMacro(Level, int);
+  vtkSetMacro(Min, int);
+  vtkSetMacro(Max, int);
+  vtkSetVector2Macro(SignalRange, int);
   vtkSetVectorMacro(ClipExtent, int, 6);
 
 protected:
@@ -74,7 +73,6 @@ protected:
   int Level;
   int Min;
   int Max;
-  // This is only used outside of the class...
   int ClipExtent[6];
   int SignalRange[2];
 
