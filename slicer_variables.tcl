@@ -162,10 +162,13 @@ switch $::tcl_platform(os) {
         #set ::VTK_BUILD_TYPE Release  ;# faster, but no debugging
         set ::VTK_BUILD_TYPE Debug  ;# a good default
 
-        set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin/$::VTK_BUILD_TYPE
+        set ::VTK_BUILD_SUBDIR $::VTK_BUILD_TYPE ;# note this is different on windows
 
         set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
-        set ::env(VTK_BUILD_SUBDIR) $::VTK_BUILD_SUBDIR
+        set ::env(VTK_BUILD_SUBDIR) $::VTK_BUILD_SUBDIR 
+
+        set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin/$::VTK_BUILD_SUBDIR
+
         set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh84.exe
         set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish84.exe
         set ::ITCL_TEST_FILE $::TCL_LIB_DIR/itcl3.2/itcl32.dll
