@@ -68,6 +68,7 @@ SET(SLICER_EXECUTABLE "" CACHE STRING "Path to Slicer executable")
 INCLUDE (Dart)
 
 ENABLE_TESTING()
+SUBDIRS(Testing)
 
 ## Add a test to open each xml file in the TestData directory, then
 ## close it.  Test will fail after timeout specified in
@@ -97,8 +98,6 @@ ENDFOREACH(xmlfile)
 #STRING(REGEX REPLACE "/" "_" dtmritestname "${tclfile}")
 #ADD_TEST("slicer-${dtmritestname}" "${SLICER_EXECUTABLE}" --agree_to_license --no-tkcon --script ${tclfile} --exec exit)
 #ENDFOREACH(tclfile)
-
-ADD_TEST("TestSlicerBase" "${SLICER_EXECUTABLE}" --agree_to_license --no-tkcon --script ${CTEST_SLICER_HOME}/Base/Testing/testSlicerBase.tcl --exec exit)
 
 ADD_TEST("slicer-tarup" "${SLICER_EXECUTABLE}" "--agree_to_license" "--exec" "source" "${CTEST_SLICER_HOME}/Scripts/tarup.tcl" ".," "tarup" "nightly" ".," "exit")
 
