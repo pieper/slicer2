@@ -7,16 +7,17 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageBimodalAnalysis.cxx,v $
-  Date:      $Date: 2006/04/12 22:27:25 $
-  Version:   $Revision: 1.19 $
+  Date:      $Date: 2006/04/19 19:45:08 $
+  Version:   $Revision: 1.20 $
 
 =========================================================================auto=*/
 #include "vtkImageBimodalAnalysis.h"
+
 #include "vtkObjectFactory.h"
 #include "vtkImageData.h"
 
-#include <math.h>
-#include <stdlib.h>
+//#include <math.h>
+//#include <stdlib.h>
 
 //------------------------------------------------------------------------------
 vtkImageBimodalAnalysis* vtkImageBimodalAnalysis::New()
@@ -39,22 +40,9 @@ vtkImageBimodalAnalysis::vtkImageBimodalAnalysis()
 }
 
 //----------------------------------------------------------------------------
-void vtkImageBimodalAnalysis::ExecuteInformation(vtkImageData *vtkNotUsed(input), 
-                                                 vtkImageData *output)
+void vtkImageBimodalAnalysis::ExecuteInformation(vtkImageData *, vtkImageData *output)
 {
   output->SetScalarType(VTK_FLOAT);
-}
-
-//----------------------------------------------------------------------------
-// Get ALL of the input.
-void vtkImageBimodalAnalysis::ComputeInputUpdateExtent(int inExt[6], 
-                                                       int outExt[6])
-{
-  int *wholeExtent;
-
-  outExt = outExt;
-  wholeExtent = this->GetInput()->GetWholeExtent();
-  memcpy(inExt, wholeExtent, 6*sizeof(int));
 }
 
 //----------------------------------------------------------------------------
@@ -73,7 +61,7 @@ static void vtkImageBimodalAnalysisExecute(vtkImageBimodalAnalysis *self,
   int ct = (self->GetModality() == VTK_BIMODAL_MODALITY_CT) ? 1 : 0;
   int centroid, noiseCentroid, trough, window, threshold, min, max;
   vtkFloatingPointType origin[3], spacing[3];
- 
+
   // Process x dimension only
   outData->GetExtent(min0, max0, min1, max1, min2, max2);
   inData->GetOrigin(origin);
@@ -227,14 +215,14 @@ static void vtkImageBimodalAnalysisExecute(vtkImageBimodalAnalysis *self,
 // algorithm to fill the output from the input.
 // It just executes a switch statement to call the correct function for
 // the Datas data types.
-void vtkImageBimodalAnalysis::ExecuteData(vtkDataObject *)
+void vtkImageBimodalAnalysis::ExecuteData(vtkDataObject *out)
 {
+  vtkImageData *outData = vtkImageData::SafeDownCast(out);
   vtkImageData *inData = this->GetInput();
-  vtkImageData *outData = this->GetOutput();
   void *inPtr;
   float *outPtr;
   
-  outData->SetExtent(this->GetOutput()->GetWholeExtent());
+  outData->SetExtent(outData->GetWholeExtent());
   outData->AllocateScalars();
 
   inPtr  = inData->GetScalarPointer();
@@ -250,11 +238,11 @@ void vtkImageBimodalAnalysis::ExecuteData(vtkDataObject *)
 
   // this filter expects that output is type float.
   if (outData->GetScalarType() != VTK_FLOAT)
-  {
+    {
     vtkErrorMacro(<< "ExecuteData: out ScalarType " << outData->GetScalarType()
-          << " must be float\n");
+      << " must be float\n");
     return;
-  }
+    }
   
   switch (inData->GetScalarType())
   {
@@ -307,6 +295,6 @@ void vtkImageBimodalAnalysis::ExecuteData(vtkDataObject *)
 //----------------------------------------------------------------------------
 void vtkImageBimodalAnalysis::PrintSelf(ostream& os, vtkIndent indent)
 {
-  Superclass::PrintSelf(os,indent);
+  this->Superclass::PrintSelf(os,indent);
 }
 

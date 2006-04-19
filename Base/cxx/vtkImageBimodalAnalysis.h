@@ -7,14 +7,18 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageBimodalAnalysis.h,v $
-  Date:      $Date: 2006/02/27 19:21:49 $
-  Version:   $Revision: 1.20 $
+  Date:      $Date: 2006/04/19 19:45:08 $
+  Version:   $Revision: 1.21 $
 
 =========================================================================auto=*/
 // .NAME vtkImageBimodalAnalysis - Analysis bimodal histograms
 // .SECTION Description
 // vtkImageBimodalAnalysis - This filter assumes the input comes
 // from vtkImageAccumulateDiscrete, so there.
+// .SECTION Warning
+// FIXME: what is ClipExtent/ SignalRange ?
+// FIXME: only works on output floating point
+// FIXME: should use vtkTemplateMacro
 
 #ifndef __vtkImageBimodalAnalysis_h
 #define __vtkImageBimodalAnalysis_h
@@ -52,6 +56,7 @@ public:
   vtkSetMacro(Max, int);
   vtkGetMacro(Max, int);
 
+  // This is only used outside of the class...
   vtkGetVectorMacro(SignalRange, int, 2);
   vtkSetVector2Macro(SignalRange, int);
 
@@ -69,12 +74,12 @@ protected:
   int Level;
   int Min;
   int Max;
+  // This is only used outside of the class...
   int ClipExtent[6];
   int SignalRange[2];
 
   void ExecuteInformation(vtkImageData *input, vtkImageData *output);
   void ExecuteInformation(){this->Superclass::ExecuteInformation();};
-  void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
   void ExecuteData(vtkDataObject *);
 
 private:
