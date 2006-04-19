@@ -161,7 +161,7 @@ switch $::tcl_platform(os) {
         #set ::VTK_BUILD_TYPE RelWithDebInfo ;# good if you have the full (expensive) compiler
         #set ::VTK_BUILD_TYPE Release  ;# faster, but no debugging
         set ::VTK_BUILD_TYPE Debug  ;# a good default
-
+        set ::VTK_BUILD_SUBDIR $::VTK_BUILD_TYPE
         set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin/$::VTK_BUILD_TYPE
 
         set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
