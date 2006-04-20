@@ -364,6 +364,14 @@ if { $::BATCH == "true" } {
     # get the actual exit code of the child process
     set code [lindex $::errorCode 2]
     # print the stdout/stderr of the child
+
+    # if the errorCode is not an integer value, set it to 1.
+    if { ![string is integer -strict $code] } {
+        puts "errorCode is: $code"
+        set code 1
+        puts "Non-integer error code returned, setting to 1"
+    }
+    
     puts stdout $res
     # exit with the status
     if { $ret } {
