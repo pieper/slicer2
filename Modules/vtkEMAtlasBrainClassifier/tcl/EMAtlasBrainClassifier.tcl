@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
-#   Date:      $Date: 2006/04/04 02:29:31 $
-#   Version:   $Revision: 1.36 $
+#   Date:      $Date: 2006/04/21 20:08:32 $
+#   Version:   $Revision: 1.37 $
 # 
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
@@ -107,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
    set Module($m,depend) ""
 
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.36 $} {$Date: 2006/04/04 02:29:31 $}]
+       {$Revision: 1.37 $} {$Date: 2006/04/21 20:08:32 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -1237,7 +1237,7 @@ proc EMAtlasBrainClassifier_RegistrationInitialize {RegisterAtlasDirList} {
 # .END
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifier_AtlasRegistration {RegisterAtlasDirList RegisterAtlasNameList } {
-   global EMAtlasBrainClassifier Volume  
+   global EMAtlasBrainClassifier Volume  AG
 
    # ---------------------------------------------------------------
    # Set up Registration 
@@ -1258,7 +1258,9 @@ proc EMAtlasBrainClassifier_AtlasRegistration {RegisterAtlasDirList RegisterAtla
    # ---------------------------------------------------------------
    # Register Atlas SPGR to Normalized SPGR 
    puts "============= Start registeration"  
-  
+
+   # Kilian April 06 - produce qubic interpolation
+   set AG(Interpolation) 1
    EMAtlasBrainClassifierRegistration $VolIDTarget $VolIDSource $EMAtlasBrainClassifier(NonRigidRegistrationFlag)
 
     
@@ -1437,7 +1439,8 @@ proc EMAtlasBrainClassifierRegistration {inTarget inSource NonRigidRegistrationF
     catch "Source Delete"
     vtkImageData Target
     vtkImageData Source
-
+ 
+    # set AG(Debug) 1
     puts "Initialize Source and Target"
     #If source and target have two channels, combine them into one vtkImageData object 
     Target DeepCopy  [ Volume($inTarget,vol) GetOutput]
@@ -1620,7 +1623,9 @@ proc EMAtlasBrainClassifierResample {inTarget inSource outResampled bgValue {Out
     catch "Reslicer Delete"
     vtkImageReslice Reslicer
     Reslicer SetInput [Cast  GetOutput]
-    Reslicer SetInterpolationMode 1
+    # Kilian April 05: Changed it Cubic interpolation to be consistent with AGNormalize 
+    # Reslicer SetInterpolationMode 1
+    Reslicer SetInterpolationModeToCubic 
     
     # We have to invers the transform before we reslice the grid.     
     Reslicer SetResliceTransform [$EMAtlasBrainClassifier(Transform)  GetInverse]
@@ -1646,14 +1651,14 @@ proc EMAtlasBrainClassifierResample {inTarget inSource outResampled bgValue {Out
     
     if {$OutImageDataFlag } {
         # outResampled represents a data volume
-        $outResampled DeepCopy [Reslicer GetOutput]  
+    AGThresholdedOutput [Cast GetOutput] [Reslicer GetOutput] $outResampled 
         $outResampled SetOrigin 0 0 0
     } else { 
-    catch "Resampled Delete"
+       catch "Resampled Delete"
         vtkImageData Resampled
-        Resampled DeepCopy [Reslicer GetOutput]  
-        Volume($outResampled,vol) SetImageData  Resampled 
-        Resampled SetOrigin 0 0 0
+    AGThresholdedOutput [Cast GetOutput] [Reslicer GetOutput] Resampled
+    Resampled SetOrigin 0 0 0
+    Volume($outResampled,vol) SetImageData  Resampled 
     }
     Source Delete
     Target Delete
