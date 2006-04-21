@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: AG.tcl,v $
-#   Date:      $Date: 2006/03/30 20:08:52 $
-#   Version:   $Revision: 1.22 $
+#   Date:      $Date: 2006/04/21 20:05:57 $
+#   Version:   $Revision: 1.23 $
 # 
 #===============================================================================
 # FILE:        AG.tcl
@@ -236,7 +236,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.22 $} {$Date: 2006/03/30 20:08:52 $}]
+        {$Revision: 1.23 $} {$Date: 2006/04/21 20:05:57 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -856,7 +856,7 @@ proc AGBuildExpertFrame {} {
         -text  "Interpolate" -variable AG(Interpolation) \
         -width 15  -indicatoron 0 } $Gui(WCA)
     grid $f.lInterpolation $f.cInterpolation  -pady 2 -padx $Gui(pad) -sticky w
-    TooltipAdd $f.cInterpolation "Press to set/unset to cubic interpolation" 
+    TooltipAdd $f.cInterpolation "Press to set for cubic interpolation or unset (for nearest neighbor)" 
 
 
     eval {checkbutton $f.c2DRegistration \
@@ -2913,8 +2913,14 @@ proc AGResample {Source Target Resampled} {
   } else {
       Reslicer SetInput [Cast GetOutput]      
   }
-
-  Reslicer SetInterpolationMode $ResampleOptions(interp)
+  # Kilian - April 06: This is not consistent with AGNormalize and GUI   
+  # Reslicer SetInterpolationMode $ResampleOptions(interp)
+  # if ResampleOptions(interp) == 0 => Nearest Neighbor
+  # if ResampleOptions(interp) == 1 => Linear 
+  # Now changed it so that ResampleOptions(interp) == 1 => Cubic 
+  if {$ResampleOptions(interp) } {
+      Reslicer SetInterpolationModeToCubic
+  }
 
 # Should it be this way, or inverse in the other way?     
   if {$ResampleOptions(inverse) == 1} {
@@ -2985,15 +2991,23 @@ proc AGResample {Source Target Resampled} {
   }
   
           
-  Cast Delete
+  # Kilian April 06:
+  # used to be $Resampled DeepCopy [Reslicer GetOutput]
 
-  $Resampled DeepCopy [Reslicer GetOutput]
+  # vtkImageReslice with Cubic Interpolation can produce volumes with negative values even though 
+  # input does not have any. The following insures that this does not happen 
+  # If intensity transformation is activated make sure that intensity profile does not exceed target intensity profile
+  if {($ResampleOptions(intens) == 1) && $AG(Warp)} {
+      AGThresholdedOutput $Target [Reslicer GetOutput] $Resampled
+  } else {
+      AGThresholdedOutput [Cast GetOutput] [Reslicer GetOutput] $Resampled
+  }
 
   $Resampled SetUpdateExtentToWholeExtent
-
   #if { ($AG(InputVolSource2) == $Volume(idNone)) || ($AG(InputVolTarget2) == $Volume(idNone)) }  {     
   #   Reslicer UnRegisterAllOutputs
   #}
+  Cast Delete
   catch {ITrans Delete}
   Reslicer Delete
 
@@ -3027,8 +3041,9 @@ proc AGNormalize { SourceImage TargetImage NormalizedSource SourceScanOrder Targ
     vtkImageReslice reslice
    
     if {$AG(Interpolation)} {
-      reslice SetInterpolationModeToCubic
+       reslice SetInterpolationModeToCubic
     }
+
     catch "xform Delete"
     catch "changeinfo Delete"
     vtkTransform xform
