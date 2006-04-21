@@ -3,19 +3,19 @@
 <MRML>
 <Options program='slicer' contents='modules'>
 ordered='Data 
+	Locator 
+	Anno 
 	Volumes 
-	Models 
 	Alignments 
 	Editor 
+	TwinDisplay
+	Models 
 	ModelMaker
-	Locator 
 	Realtime 
 	Guidance 
 	View 
-	Anno 
 	Slices 
 	Colors
-	TwinDisplay
 	EMSegment'
 suppressed='Custom
 	CrossSection'
