@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: VolNrrd.tcl,v $
-#   Date:      $Date: 2006/02/01 23:23:06 $
-#   Version:   $Revision: 1.1.2.3 $
+#   Date:      $Date: 2006/04/21 18:13:54 $
+#   Version:   $Revision: 1.1.2.4 $
 # 
 #===============================================================================
 # FILE:        VolNrrd.tcl
@@ -274,14 +274,18 @@ proc VolNrrdApply {} {
     #set imdata [Volume($i,vol,rw) GetOutput]
     set imdata [nrrdReader GetOutput]
 
+    nrrdReader UpdateInformation
+    
+    if { [nrrdReader GetReadStatus] != 0} {
+            DevErrorWindow "Cannot read file $Volume(VolNrrd,FileName)"
+        MainMrmlDeleteNode Volume $i
+        return;
+    }        
     if {[catch "$imdata UpdateInformation"]} {
         DevErrorWindow "Cannot read file $Volume(VolNrrd,FileName)"
         MainMrmlDeleteNode Volume $i
         return;
     }
-
-    nrrdReader UpdateInformation
-    $imdata UpdateInformation
 
     if {$Module(verbose) == 1} {
         puts "proc VolNrrd: UpdateInformation done"
@@ -461,7 +465,6 @@ proc VolNrrdReaderProc {v} {
 
   
     readerProc_nrrdReader1 SetFileName [Volume($v,node) GetFullPrefix]
-
     readerProc_nrrdReader1 Update
     if { $::Module(verbose) } {
         puts "[[readerProc_nrrdReader1 GetOutput] Print]"
