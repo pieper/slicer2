@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Measure.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:36 $
-#   Version:   $Revision: 1.25.2.2 $
+#   Date:      $Date: 2006/04/21 18:15:48 $
+#   Version:   $Revision: 1.25.2.3 $
 # 
 #===============================================================================
 # FILE:        Measure.tcl
@@ -87,7 +87,7 @@ proc MeasureInit {} {
     
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.25.2.2 $} {$Date: 2005/12/20 22:54:36 $}]
+        {$Revision: 1.25.2.3 $} {$Date: 2006/04/21 18:15:48 $}]
     
     # Initialize module-level variables
     #    set Measure(Model1) $Model(idNone)
@@ -452,11 +452,12 @@ proc UpdateModelSelector {fRoot} {
 
     for {set i 0} {$i < $numModels} {incr i} {
         set currModel [Mrml(dataTree) GetNthModel $i]
-        set currID    [string trimleft [$currModel GetModelID] M]
+        # use regular ID 
+        set currID [$currModel GetID]
         if { $currID == "" } {
-            # ModelID is not set for models created on the fly using ModelMaker
-            # so use regular ID 
-            set currID [$currModel GetID]
+            # the model id from xml may not match up with the slicer 
+            # assigned id, but try it as a backup
+            set currID    [string trimleft [$currModel GetModelID] M]
         }
         if { $currID == "" } {
             puts "Warning: no ID for $currModel"
@@ -468,7 +469,10 @@ proc UpdateModelSelector {fRoot} {
         if { [info exists Model($currID,selected)] == 0 } {
             set Model($currID,selected) 0        
         }
-        
+        if {[info command Model($currID,actor,$r)] == ""} {
+            puts "Warning: current model $currModel id $currID does not have an actor in $r"
+            continue
+        }
         if { [Model($currID,actor,$r) GetVisibility] } {
             set state normal
         } else {
