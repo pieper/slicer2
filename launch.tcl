@@ -351,7 +351,7 @@ if { $::BATCH == "true" } {
         $::env(BUILD) == $linux_64} {
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix
         regsub -all "{|}" $argv "\\\"" argv
-        set ret [catch "exec $::env(VTK_DIR)/bin/vtk \"$mainscript\" $argv" res]
+        set ret [catch "exec $::env(VTK_DIR)/bin/vtk \"$mainscript\" $argv |& cat" res]
     } elseif {$::env(BUILD) == $windows} {
         regsub -all "{|}" $argv "" argv
         puts "exec \"$::env(TCL_BIN_DIR)/wish84.exe\" \"$mainscript\" $argv" 
