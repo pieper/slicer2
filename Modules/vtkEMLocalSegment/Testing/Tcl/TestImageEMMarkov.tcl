@@ -1,5 +1,6 @@
 package require vtk
 package require vtkSlicerBase
+package require vtkEMLocalSegment
 
 # This script allows the direct access of the vtkImageEMMarkov Filter. It is very useful for batch processing.
 # Function can be called through
