@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRICalculateTensors.tcl,v $
-#   Date:      $Date: 2006/04/24 18:11:47 $
-#   Version:   $Revision: 1.41 $
+#   Date:      $Date: 2006/04/24 18:15:30 $
+#   Version:   $Revision: 1.42 $
 # 
 #===============================================================================
 # FILE:        DTMRICalculateTensors.tcl
@@ -45,7 +45,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.41 $} {$Date: 2006/04/24 18:11:47 $}]
+                                 {$Revision: 1.42 $} {$Date: 2006/04/24 18:15:30 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -2201,7 +2201,6 @@ proc DTMRIComputeRasToIjkFromCorners {refnode node extent {spacing ""}} {
   
   #Check if refnode is centered
   regexp {[A-Za-z]*} $refnode nodetype
-  puts "$refnode $nodetype"
   set v [$refnode GetID]
   if {$nodetype == "Tensor"} {
     set refvol "${nodetype}($v,data)"
