@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRICalculateTensors.tcl,v $
-#   Date:      $Date: 2006/04/21 18:29:32 $
-#   Version:   $Revision: 1.35.2.5 $
+#   Date:      $Date: 2006/04/24 18:14:54 $
+#   Version:   $Revision: 1.35.2.6 $
 # 
 #===============================================================================
 # FILE:        DTMRICalculateTensors.tcl
@@ -45,7 +45,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.35.2.5 $} {$Date: 2006/04/21 18:29:32 $}]
+                                 {$Revision: 1.35.2.6 $} {$Date: 2006/04/24 18:14:54 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -1848,8 +1848,14 @@ proc DTMRIComputeRasToIjkFromCorners {refnode node extent {spacing ""}} {
   #otherwise, use the origin given by refnode
   
   #Check if refnode is centered
+  regexp {[A-Za-z]*} $refnode nodetype
   set v [$refnode GetID]
-  set refextent [[Volume($v,vol) GetOutput] GetExtent]
+  if {$nodetype == "Tensor"} {
+    set refvol "${nodetype}($v,data)"
+  } else {
+    set refvol "${nodetype}($v,vol)"
+  }
+  set refextent [[$refvol GetOutput] GetExtent]
   set reforiginx [expr ([lindex $refextent 1] - [lindex $refextent 0])/2.0]
   set reforiginy [expr ([lindex $refextent 3] - [lindex $refextent 2])/2.0]
   set reforiginz [expr ([lindex $refextent 5] - [lindex $refextent 4])/2.0]
