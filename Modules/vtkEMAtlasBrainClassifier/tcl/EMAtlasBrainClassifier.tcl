@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
-#   Date:      $Date: 2006/04/21 20:08:32 $
-#   Version:   $Revision: 1.37 $
+#   Date:      $Date: 2006/04/24 17:07:38 $
+#   Version:   $Revision: 1.38 $
 # 
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
@@ -107,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
    set Module($m,depend) ""
 
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.37 $} {$Date: 2006/04/21 20:08:32 $}]
+       {$Revision: 1.38 $} {$Date: 2006/04/24 17:07:38 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -193,7 +193,7 @@ proc EMAtlasBrainClassifierInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierBuildGUI {} {
-     global Gui EMAtlasBrainClassifier Module Volume 
+     global Gui EMAtlasBrainClassifier Module Volume
      
      set help "The module automatically segments brain MRIs into the tissue classes (white matter, gray matter, and cortical spinal fluid). In order to run the module the following steps have to be completed :"
      set help "$help<BR><B>1. Step: Select Input channels</B>"
@@ -288,25 +288,11 @@ proc EMAtlasBrainClassifierBuildGUI {} {
       pack $f.f$frame -side left -padx 0 -pady $Gui(pad)
     }
 
-    DevAddLabel $f.fLeft.lOutput "  Save Segmentation:" 
-    pack $f.fLeft.lOutput -side top -padx $Gui(pad) -pady 2  -anchor w
-
-    frame $f.fRight.fOutput -bg $Gui(activeWorkspace)
-    TooltipAdd  $f.fRight.fOutput "Automatically save the segmentation results to the working directory" 
-
-    pack $f.fRight.fOutput -side top -padx 0 -pady 2  -anchor w
-
-    foreach value "1 0" text "On Off" width "4 4" {
-    eval {radiobutton $f.fRight.fOutput.r$value -width $width -indicatoron 0\
-          -text "$text" -value "$value" -variable EMAtlasBrainClassifier(Save,Segmentation) } $Gui(WCA)
-    pack $f.fRight.fOutput.r$value -side left -padx 0 -pady 0 
-    }
-
     DevAddLabel $f.fLeft.lModels "  Gernerate 3D Models:" 
     pack $f.fLeft.lModels -side top -padx $Gui(pad) -pady 2  -anchor w
 
     frame $f.fRight.fModels -bg $Gui(activeWorkspace)
-    TooltipAdd  $f.fRight.fModels "Automatically gnerate 3D Models of the segmentations" 
+    TooltipAdd  $f.fRight.fModels "Automatically generate 3D Models of the segmentations" 
 
     pack $f.fRight.fModels -side top -padx 0 -pady 2  -anchor w
 
@@ -329,6 +315,61 @@ proc EMAtlasBrainClassifierBuildGUI {} {
     eval {button $f.fRight.fWorking.bSelect -text "..." -width 2 -command "EMAtlasBrainClassifierDefineWorkingDirectory"} $Gui(WBA)     
     pack $f.fRight.fWorking.eDir  $f.fRight.fWorking.bSelect -side left -padx 0 -pady 0  
 
+    DevAddLabel $f.fLeft.lOutput "  Save Segmentation:" 
+    pack $f.fLeft.lOutput -side top -padx $Gui(pad) -pady 2  -anchor w
+
+    frame $f.fRight.fOutput -bg $Gui(activeWorkspace)
+    TooltipAdd  $f.fRight.fOutput "Automatically save the segmentation results to the working directory" 
+
+    pack $f.fRight.fOutput -side top -padx 0 -pady 2  -anchor w
+
+    foreach value "1 0" text "On Off" width "4 4" {
+    eval {radiobutton $f.fRight.fOutput.r$value -width $width -indicatoron 0\
+          -text "$text" -value "$value" -variable EMAtlasBrainClassifier(Save,Segmentation) } $Gui(WCA)
+    pack $f.fRight.fOutput.r$value -side left -padx 0 -pady 0 
+    }
+
+    DevAddLabel $f.fLeft.lFileType "  Select File Type:" 
+    pack $f.fLeft.lFileType -side top -padx $Gui(pad) -pady 2  -anchor w
+
+    frame $f.fRight.fFileType -bg $Gui(activeWorkspace)
+
+    eval {menubutton $f.fRight.mbType -text "NRRD(.nhdr)    " \
+            -relief raised -bd 2 -width 20 \
+            -menu $f.fRight.mbType.m} $Gui(WMBA) 
+    eval {menu $f.fRight.mbType.m} $Gui(WMA)
+    pack  $f.fRight.mbType -side top -padx 0 -pady 2  -anchor w
+    
+    #  Add menu items
+    foreach FileType {{Standard} {hdr} {nrrd} {nhdr} {mhd} {mha} {nii} {img} {img.gz} {vtk}} \
+         name {{"Headerless"} {"Analyze (.hdr)"} {"NRRD(.nrrd)"} {"NRRD(.nhdr)"} {"Meta (.mhd)"} {"Meta (.mha)"} {"Nifti (.nii)"} {"Nifti (.img)"} {"Nifti (.img.gz)"} {"VTK (.vtk)"}} { 
+            set Editor($FileType) $name 
+            $f.fRight.mbType.m add command -label $name \
+               -command "EMAtlasBrainClassifierVolumesSetFileType $FileType"
+        }
+    set Editor(fileformat) "nhdr"
+    # save menubutton for config
+    set Volume(gui,mbSaveEMAtlasFileType) $f.fRight.mbType
+    # put a tooltip over the menu
+    TooltipAdd $f.fRight.mbType \
+            "Choose file type."
+
+    DevAddLabel $f.fLeft.lCompr "  Use Compression:" 
+    pack $f.fLeft.lCompr -side top -padx $Gui(pad) -pady 2  -anchor w
+
+    frame $f.fRight.fCompr -bg $Gui(activeWorkspace)
+    
+    foreach value "1 0" text "On Off" width "4 4" {
+        eval {radiobutton $f.fRight.fCompr.rComp$value -width $width -indicatoron 0\
+            -text "$text" -value "$value" -variable Volume(UseCompression) \
+            } $Gui(WCA)
+        pack $f.fRight.fCompr.rComp$value -side left -fill x
+    }
+    TooltipAdd $f.fRight.fCompr.rComp1 \
+            "Suggest to the Writer to compress the file if the format supports it."
+    TooltipAdd $f.fRight.fCompr.rComp0 \
+            "Don't compress the file, even if the format supports it."
+    pack $f.fRight.fCompr -side top -padx 0 -pady 2  -anchor w
 
     #-------------------------------------------
     # Run Algorithm
@@ -646,24 +687,29 @@ proc EMAtlasBrainClassifierCreateClasses {SuperClass Number} {
 # .END
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierVolumeWriter {VolID} {
-    global Volume Editor
-
+    global Volume
     set prefix [MainFileGetRelativePrefix [Volume($VolID,node) GetFilePrefix]]
-    set Editor(fileformat) Standard
- 
-    # Note : I changed vtkMrmlDataVolume.cxx so that MainVolumeWrite also works for 
+    #Note : I changed vtkMrmlDataVolume.cxx so that MainVolumeWrite also works for 
     #        for volumes that do not start at slice 1. If it does not get checked into 
     #        the general version just do the following to overcome the problem after
     #        executing MainVolumesWrite:
     #        - Check if largest slice m is present 
     #        - if not => slices start at 1 .. n => move everything to m -n + 1 ,..., m 
-    
     MainVolumesWrite $VolID $prefix 
-    # RM unnecssary xml file 
-    # catch {file delete -force [file join [file dirname [Volume($VolID,node) GetFullPrefix]] [Volume($VolID,node) GetFilePrefix]].xml }
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierVolumesSetFileType
+# Set Editor(fileformat) and update the save file type menu.
+# .ARGS
+# str fileType the type for the file
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifierVolumesSetFileType {fileType} {
+    global Volume Editor
+    set Editor(fileformat) $fileType
+    $Volume(gui,mbSaveEMAtlasFileType) config -text $Editor($fileType)
+}
 
 #-------------------------------------------------------------------------------
 # .PROC EMAtlasBrainClassifierLoadAtlasVolume
@@ -942,9 +988,10 @@ proc EMAtlasBrainClassifier_Normalize { Mode } {
     set EMAtlasBrainClassifier(Volume,Normalized${Mode}) $VolIDOutput
     MainUpdateMRML
     RenderAll
-
+    
     if {$EMAtlasBrainClassifier(Save,$Mode) && ($CalculatedFlag)} {
-       EMAtlasBrainClassifierVolumeWriter $VolIDOutput  
+        
+        EMAtlasBrainClassifierVolumeWriter $VolIDOutput 
     }
 }
 
@@ -1258,11 +1305,12 @@ proc EMAtlasBrainClassifier_AtlasRegistration {RegisterAtlasDirList RegisterAtla
    # ---------------------------------------------------------------
    # Register Atlas SPGR to Normalized SPGR 
    puts "============= Start registeration"  
-
-   # Kilian April 06 - produce qubic interpolation
-   set AG(Interpolation) 1
-   EMAtlasBrainClassifierRegistration $VolIDTarget $VolIDSource $EMAtlasBrainClassifier(NonRigidRegistrationFlag)
-
+   
+    # Kilian April 06 - produce qubic interpolation
+    set AG(Interpolation) 1
+    
+    EMAtlasBrainClassifierRegistration $VolIDTarget $VolIDSource $EMAtlasBrainClassifier(NonRigidRegistrationFlag)
+    puts "EMAtlasBrainClassifierRegistration END"
     
    # Define Registration output volume 
    set VolIDOutput [DevCreateNewCopiedVolume $TemplateIDInput "" "RegisteredSPGR"]
@@ -1431,6 +1479,7 @@ proc EMAtlasBrainClassifierDownloadAtlas { } {
 # int inSource
 # .END
 #-------------------------------------------------------------------------------
+
 proc EMAtlasBrainClassifierRegistration {inTarget inSource NonRigidRegistrationFlag {LinearRegistrationType 2} } {
     global EMAtlasBrainClassifier Volume AG 
    
@@ -1927,7 +1976,7 @@ proc EMAtlasBrainClassifierInitializeValues { } {
           }
           set VolumeName  [SegmenterSuperClass($pid,node) GetLocalPriorName]
           set VolumeIndex [lsearch $VolumeNameList $VolumeName]
-      if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMAtlasBrainClassifier(Cattrib,$NumClass,ProbabilityData) [lindex $Volume(idList) $VolumeIndex]
+          if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMAtlasBrainClassifier(Cattrib,$NumClass,ProbabilityData) [lindex $Volume(idList) $VolumeIndex]
       } else { set EMAtlasBrainClassifier(Cattrib,$NumClass,ProbabilityData) $Volume(idNone) }
 
           set InputChannelWeights [SegmenterSuperClass($pid,node) GetInputChannelWeights]
@@ -2394,19 +2443,19 @@ proc EMAtlasBrainClassifier_DeleteVtkEMAtlasBrainClassifier {EMVersionVariable }
 # .END
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifier_SaveSegmentation { } {
-  global EMAtlasBrainClassifier Volume 
-  if {$EMAtlasBrainClassifier(LatestLabelMap) == $Volume(idNone)} { 
-    DevErrorWindow "Error: Could not segment subject"
-  } else {
-    set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation/EMResult"
-    puts ""
-    puts "Write results to $Prefix"
-    set VolIDOutput $EMAtlasBrainClassifier(LatestLabelMap)
-    Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
-    Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
-    EMAtlasBrainClassifierVolumeWriter $VolIDOutput
-  }
-  # Change xml directory
+    global EMAtlasBrainClassifier Volume 
+    if {$EMAtlasBrainClassifier(LatestLabelMap) == $Volume(idNone)} { 
+        DevErrorWindow "Error: Could not segment subject"
+    } else {
+        set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation/EMResult"
+        puts ""
+        puts "Write results to $Prefix"
+        set VolIDOutput $EMAtlasBrainClassifier(LatestLabelMap)
+        Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
+        Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
+        EMAtlasBrainClassifierVolumeWriter $VolIDOutput
+    }
+    # Change xml directory
   if {$EMAtlasBrainClassifier(Save,XMLFile)}      {MainMrmlWrite  $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation/segmentation.xml}
 }
 
@@ -2416,7 +2465,7 @@ proc EMAtlasBrainClassifier_SaveSegmentation { } {
 ##################
 
 #-------------------------------------------------------------------------------
-# .PROC EMAtlasBrainClassifierStartSegmentation
+# .PROC EAtlasBrainClassifierStartSegmentation
 # This defines the segmentation pipeline
 # .ARGS
 # .END
