@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRICalculateTensors.tcl,v $
-#   Date:      $Date: 2006/04/13 19:55:08 $
-#   Version:   $Revision: 1.39 $
+#   Date:      $Date: 2006/04/24 15:25:32 $
+#   Version:   $Revision: 1.40 $
 # 
 #===============================================================================
 # FILE:        DTMRICalculateTensors.tcl
@@ -45,7 +45,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.39 $} {$Date: 2006/04/13 19:55:08 $}]
+                                 {$Revision: 1.40 $} {$Date: 2006/04/24 15:25:32 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -117,8 +117,10 @@ proc DTMRICalculateTensorsInit {} {
     set DTMRI(convert,nrrd,numberOfGradients) " "
     set DTMRI(convert,nrrd,gradients) " "
     set DTMRI(convert,nrrd,bValues) " "
-    set DTMRI(convert,nrrd,skipFlag) " "
-
+    set DTMRI(convert,nrrd,skip) ""
+    
+    # DWMRI key-value pair version supported by the slicer
+    set DTMRI(convert,nrrd,version) 2
     
     set DTMRI(convert,mask,removeIslands) 0
     set DTMRI(conver,mask,omega) 0.5
@@ -505,7 +507,7 @@ proc DTMRICalculateTensorsBuildGUI {} {
         #-------------------------------------------
         # Convert->Pattern->Gradients frame
         #-------------------------------------------
-    #    set f $fConvert.fPattern.fGradients
+        #    set f $fConvert.fPattern.fGradients
         set f $Page.fGradients
 
 
@@ -581,7 +583,7 @@ proc DTMRIConvertUpdate {} {
   
   set id $DTMRI(convertID)
   
-  #Check if DTMRI headerKeys exits
+  #Check if DTMRI headerKeys exists
   set headerkey [array names Volume "$id,headerKeys,modality"]
   
   set f $Module(DTMRI,fConv).fConvert
@@ -594,7 +596,8 @@ proc DTMRIConvertUpdate {} {
       $f.fAverage.r$vis configure -state normal
     }
     
-    set DTMRI(convert,nrrd) 0  
+    set DTMRI(convert,nrrd) 0
+    set DTMRI(convert,nrrd,skip) ""  
     return
   }
   
@@ -633,22 +636,39 @@ proc DTMRIConvertUpdate {} {
   set gradientkeys [array names Volume "$id,headerKeys,DWMRI_gradient_*" ]
   
   set DTMRI(convert,numberOfGradients) 0
+  set DTMRI(convert,nrrd,skip) ""
   
   set baselinepos 1
   set keyprefix "$id,headerKeys"
   set gradprefix "$keyprefix,DWMRI_gradient_"
   set nexprefix "$keyprefix,DWMRI_NEX_"
-
+  set skipprefix "$keyprefix,DWMRI_skip_"
+  
   set idx 0
   set findfirstbaseline 0
   set findfirstgradient 0
+
   while {1} {
     set grad [format %04d $idx]
     set key "$gradprefix$grad"
-    
-    
+        
     if {![info exists Volume($key)]} {
       break
+    }
+
+    #Check if we have to skip this gradient
+    set keyskip "$skipprefix$grad"
+    set skip 0
+    if {[info exists Volume($keyskip)]} {
+        if {[string tolower [string trimright [string trimleft $Volume($keyskip)]]] == "true"} {
+            set skip 1
+        } else {
+            set skip 0
+        }
+    }
+          
+    if {[string tolower [string trimright [string trimleft $Volume($key)]]] == "n/a"} {
+        set skip 1
     }
     
     #Check for baseline
@@ -670,7 +690,14 @@ proc DTMRIConvertUpdate {} {
                 set findfirstbaseline 1
             }
             set DTMRI(convert,lastNoGradientImage) [expr $idx + $nex]
-            set idx [expr $idx + $nex]
+
+            for {set nidx 0} {$nidx < $nex} {incr nidx} {
+                if {$skip ==1 } {
+                    lappend DTMRI(convert,nrrd,skip) $idx
+                }
+                incr idx
+            }
+            #set idx [expr $idx + $nex]
      } else {
             set keynex "$nexprefix$grad"
             if {[info exists Volume($keynex)]} {
@@ -682,13 +709,17 @@ proc DTMRIConvertUpdate {} {
             if {$findfirstgradient == 0} {
                 set DTMRI(convert,firstGradientImage) [expr $idx + 1]
                 set findfirstgradient 1 
-            }
-      
+            } 
+            
             for {set nidx 0} {$nidx < $nex} {incr nidx} {
                 lappend DTMRI(convert,gradients) [string trimright [string trimleft $Volume($key)]]
                 incr DTMRI(convert,numberOfGradients)
+                if {$skip == 1} {
+                    lappend DTMRI(convert,nrrd,skip) $idx
+                }    
+                incr idx
             }
-            set idx [expr $idx + $nex]    
+            #set idx [expr $idx + $nex]    
     }
     
   }
@@ -722,7 +753,7 @@ proc DTMRIParseNrrdKeyValuePairs {} {
   
   set id $DTMRI(convertID)
   
-  #Check if DTMRI headerKeys exits
+  #Check if DTMRI headerKeys exists
   set headerkey [array names Volume "$id,headerKeys,modality"]
     
   if {[string trimright [string trimleft $Volume($headerkey)]] != "DWMRI"} {
@@ -1211,14 +1242,46 @@ proc ConvertVolumeToTensors {} {
     puts "Slice period: $slicePeriod, Num No grad:$numberOfNoGradientImages" 
     
     set numberOfGradientImages $DTMRI(convert,numberOfGradients) 
-    DTMRI SetNumberOfGradients $numberOfGradientImages
 
+    # Compute skip tables
+    foreach val $offsetsGradient {
+        set skipTableGradient($val) 0
+    }
+    foreach val $offsetsNoGradient {
+        set skipTableNoGradient($val) 0
+    }
+    set skipGradient 0
+    set skipNoGradient 0        
+    foreach val $DTMRI(convert,nrrd,skip) {
+        if {[info exists skipTableGradient($val)]} {
+            set skipTableGradient($val) 1
+            incr skipGradient
+        } else {
+            set skipTableNoGradient($val) 1
+            incr skipNoGradient
+        }
+    }    
+
+
+    if {$skipNoGradient == $numberOfNoGradientImages} {
+       DevErrorWindow "Tensor cannot be computed without a baseline image.\n \
+                        All baseline images are skipped."
+       DTMRI Delete
+       return
+    }
+    
+
+    DTMRI SetNumberOfGradients [expr $numberOfGradientImages - $skipGradient]
+        
     #puts $offsetsGradient 
     #puts $offsetsNoGradient
-
-    for {set i 0} {$i < $DTMRI(convert,numberOfGradients)} {incr i} {
-    #    eval {DTMRI SetDiffusionGradient $i} [lindex DTMRI(convert,gradients) $i]
-        eval {DTMRI SetDiffusionGradient $i} [lindex $DTMRI(convert,gradients) $i]
+    
+    set idx 0
+    foreach val $offsetsGradient grad $DTMRI(convert,gradients) {
+        if {$skipTableGradient($val) == 0} {
+            eval {DTMRI SetDiffusionGradient $idx} $grad
+            incr idx
+        }
     }
 
     # volume we use for input
@@ -1406,9 +1469,11 @@ proc ConvertVolumeToTensors {} {
         extract$slice Update
 
         # pass along in pipeline
-        DTMRI SetDiffusionImage \
-            $inputNum [extract$slice GetOutput]
-        incr inputNum
+        if {$skipTableGradient($slice) == 0} {
+            DTMRI SetDiffusionImage \
+                $inputNum [extract$slice GetOutput]
+            incr inputNum
+        }
         
         # put the filter output into a slicer volume
         # Lauren this should be optional
@@ -1468,23 +1533,27 @@ proc ConvertVolumeToTensors {} {
 
       catch "_cast Delete"
       vtkImageCast _cast
-      _cast SetInput [extract[lindex $offsetsNoGradient 0] GetOutput]
-      _cast SetOutputScalarTypeToFloat
-      _cast Update
-      
       catch "slicebase Delete"
       vtkImageData slicebase 
       slicebase DeepCopy [_cast GetOutput]
       
-      for {set k 1} {$k < $numberOfNoGradientImages} {incr k} {
-        _cast SetInput [extract[lindex $offsetsNoGradient $k] GetOutput]
-        _cast SetOutputScalarTypeToFloat
-        _cast Update
-        set slicechange [_cast GetOutput]
-        _math SetInput 0 slicebase
-        _math SetInput 1 $slicechange
-        _math Update
-        slicebase DeepCopy [_math GetOutput]
+      set firsthit 0
+      foreach k $offsetsNoGradient {
+        if {$skipTableNoGradient($k) == 0} {
+            _cast SetInput [extract$k GetOutput]
+            _cast SetOutputScalarTypeToFloat
+            _cast Update
+            if {$firsthit == 0} {
+                set firsthit 1
+                slicebase DeepCopy [_cast GetOutput]
+                continue
+            }
+            set slicechange [_cast GetOutput]
+            _math SetInput 0 slicebase
+            _math SetInput 1 $slicechange
+            _math Update
+            slicebase DeepCopy [_math GetOutput]
+        }
       }
       slicebase Delete
       catch "_math2 Delete"
