@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRICalculateTensors.tcl,v $
-#   Date:      $Date: 2006/04/24 15:25:32 $
-#   Version:   $Revision: 1.40 $
+#   Date:      $Date: 2006/04/24 18:11:47 $
+#   Version:   $Revision: 1.41 $
 # 
 #===============================================================================
 # FILE:        DTMRICalculateTensors.tcl
@@ -45,7 +45,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.40 $} {$Date: 2006/04/24 15:25:32 $}]
+                                 {$Revision: 1.41 $} {$Date: 2006/04/24 18:11:47 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -604,7 +604,7 @@ proc DTMRIConvertUpdate {} {
   if {[string trimright [string trimleft $Volume($headerkey)]] \
       != "DWMRI"} {
     # Prompt advise
-    puts "Selected volume is not a proper nrrd DWI volume"
+    DevErrorWindow "Selected volume is not a proper nrrd DWI volume"
     return
   }     
   
@@ -613,8 +613,8 @@ proc DTMRIConvertUpdate {} {
   
   if {$headerkeys == ""} {
      #Active protocols frame
-     puts "There is not protocol info. Nrrd header might be corrupted."
-     puts "If you feel conformtable, choose a protocol"
+     DevErrorWindow "There is not protocol info. Nrrd header might be corrupted.\n \
+                     You should choose a protocol."
      return
   }
   
@@ -671,8 +671,13 @@ proc DTMRIConvertUpdate {} {
         set skip 1
     }
     
+    #Error checking: gradient should be a number if it is not skipped
+    if {$skip == 0 && [regexp {[\s.\d]*} $Volume($key)] != 1} {
+        DevErrorWindow "Gradient $grad := $Volume($key) is not a valid vector"
+        return
+    }
+    
     #Check for baseline
-
     set val [string trimright [string trimleft $Volume($key)]]
     if {[lindex $val 0] == 0 && \
         [lindex $val 1] == 0 && \
@@ -758,7 +763,7 @@ proc DTMRIParseNrrdKeyValuePairs {} {
     
   if {[string trimright [string trimleft $Volume($headerkey)]] != "DWMRI"} {
     # Prompt advise
-    puts "Selected volume is not a proper nrrd DWI volume"
+    DevErrorWindow "Selected volume is not a proper nrrd DWI volume"
     return
   }     
   
@@ -767,8 +772,8 @@ proc DTMRIParseNrrdKeyValuePairs {} {
   
   if {$headerkeys == ""} {
      #Active protocols frame
-     puts "There is not protocol info. Nrrd header might be corrupted."
-     puts "If you feel conformtable, choose a protocol"
+     DevErrorWindow "There is not protocol info. Nrrd header might be corrupted.\n \
+                    If you feel conformtable, choose a protocol"
      return
   }
   
@@ -781,6 +786,7 @@ proc DTMRIParseNrrdKeyValuePairs {} {
   set keyprefix "$id,headerKeys"
   set gradprefix "$keyprefix,DWMRI_gradient_"
   set nexprefix "$keyprefix,DWMRI_NEX_"
+  set skipprefix "$keyprefix,DWMRI_skip_"
 
   set keybValue DWMRI_b-value
   set bValueBase [string trimright [string trimleft $Volume($id,headerKeys,$keybValue)]] 
@@ -795,14 +801,40 @@ proc DTMRIParseNrrdKeyValuePairs {} {
       break
     }
     
+    #Check if we have to skip this gradient
+    set keyskip "$skipprefix$grad"
+    set skip 0
+    if {[info exists Volume($keyskip)]} {
+        if {[string tolower [string trimright [string trimleft $Volume($keyskip)]]] == "true"} {
+            set skip 1
+        } else {
+            set skip 0
+        }
+    }
+          
+    if {[string tolower [string trimright [string trimleft $Volume($key)]]] == "n/a"} {
+        set skip 1
+    }
+
+    #Error checking: gradient should be a number if not skip
+    if {$skip == 0 && [regexp {[\s.\d]*} $Volume($key)] != 1} {
+        DevErrorWindow "Gradient $grad := $Volume($key) is not a valid vector"
+        return
+    }    
+    
     set keynex "$nexprefix$grad"
     if {[info exists Volume($keynex)]} {
         set nex [string trimleft [string trimright $Volume($keynex)]]
     } else {
         set nex 1
     }
+    
     for {set nidx 0} {$nidx < $nex} {incr nidx} {
-        set factor [::tclVectorUtils::VLen $Volume($key)]
+        if {$skip == 0} {
+            set factor [::tclVectorUtils::VLen $Volume($key)]
+        } else {
+            set factor 1
+        }
         lappend factorList $factor
         if {$factor > $maxfactor} {
             set maxfactor $factor
@@ -2168,8 +2200,15 @@ proc DTMRIComputeRasToIjkFromCorners {refnode node extent {spacing ""}} {
   #otherwise, use the origin given by refnode
   
   #Check if refnode is centered
+  regexp {[A-Za-z]*} $refnode nodetype
+  puts "$refnode $nodetype"
   set v [$refnode GetID]
-  set refextent [[Volume($v,vol) GetOutput] GetExtent]
+  if {$nodetype == "Tensor"} {
+    set refvol "${nodetype}($v,data)"
+  } else {
+    set refvol "${nodetype}($v,vol)"
+  }
+  set refextent [[$refvol GetOutput] GetExtent]
   set reforiginx [expr ([lindex $refextent 1] - [lindex $refextent 0])/2.0]
   set reforiginy [expr ([lindex $refextent 3] - [lindex $refextent 2])/2.0]
   set reforiginz [expr ([lindex $refextent 5] - [lindex $refextent 4])/2.0]
