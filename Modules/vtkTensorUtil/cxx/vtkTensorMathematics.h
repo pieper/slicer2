@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.h,v $
-  Date:      $Date: 2006/02/15 19:09:57 $
-  Version:   $Revision: 1.9.2.2 $
+  Date:      $Date: 2006/04/25 20:27:56 $
+  Version:   $Revision: 1.9.2.3 $
 
 =========================================================================auto=*/
 // .NAME vtkTensorMathematics - Trace, determinant, anisotropy measures
@@ -44,12 +44,15 @@
 #define VTK_TENS_D33                   13
 #define VTK_TENS_MODE                  14
 #define VTK_TENS_COLOR_MODE            15
+#define VTK_TENS_MAX_EIGENVALUE_PROJX 16
+#define VTK_TENS_MAX_EIGENVALUE_PROJY 17
+#define VTK_TENS_MAX_EIGENVALUE_PROJZ 18
 
 #include "vtkTensorUtilConfigure.h"
 #include "vtkImageTwoInputFilter.h"
-#include "vtkMatrix4x4.h"
-#include "vtkImageData.h"
 
+class vtkMatrix4x4;
+class vtkImageData;
 class VTK_TENSORUTIL_EXPORT vtkTensorMathematics : public vtkImageTwoInputFilter
 {
 public:
@@ -96,6 +99,13 @@ public:
     {this->SetOperation(VTK_TENS_MID_EIGENVALUE);};
   void SetOperationToMinEigenvalue() 
     {this->SetOperation(VTK_TENS_MIN_EIGENVALUE);};
+
+   void SetOperationToMaxEigenvalueProjectionX()
+   {this->SetOperation(VTK_TENS_MAX_EIGENVALUE_PROJX);};
+   void SetOperationToMaxEigenvalueProjectionY()
+   {this->SetOperation(VTK_TENS_MAX_EIGENVALUE_PROJY);};
+   void SetOperationToMaxEigenvalueProjectionZ()
+   {this->SetOperation(VTK_TENS_MAX_EIGENVALUE_PROJZ);};
 
 
   // Description: 
@@ -153,7 +163,7 @@ public:
   //    just need to rotate each tensor.
   // 3) Set TensorRotationMatrix to this rotation matrix.
   //
-  vtkSetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
+  virtual void SetTensorRotationMatrix(vtkMatrix4x4*);
   vtkGetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
 
   // Description
@@ -165,7 +175,7 @@ public:
 
   // Description:
   // Scalar mask
-  vtkSetObjectMacro(ScalarMask, vtkImageData);
+  virtual void SetScalarMask(vtkImageData*);
   vtkGetObjectMacro(ScalarMask, vtkImageData);
   
 
@@ -176,7 +186,7 @@ public:
 
   // Description:
   // Helper functions to perform operations pixel-wise
-  static void FixNegativeEigenvalues(vtkFloatingPointType w[3]);
+  static int FixNegativeEigenvalues(vtkFloatingPointType w[3]);
   static vtkFloatingPointType Determinant(vtkFloatingPointType D[3][3]);
   static vtkFloatingPointType Trace(vtkFloatingPointType D[3][3]);
   static vtkFloatingPointType RelativeAnisotropy(vtkFloatingPointType w[3]);
@@ -187,6 +197,9 @@ public:
   static vtkFloatingPointType MaxEigenvalue(vtkFloatingPointType w[3]);
   static vtkFloatingPointType MiddleEigenvalue(vtkFloatingPointType w[3]);
   static vtkFloatingPointType MinEigenvalue(vtkFloatingPointType w[3]);
+  static vtkFloatingPointType MaxEigenvalueProjectionX(vtkFloatingPointType **v, vtkFloatingPointType w[3]);
+  static vtkFloatingPointType MaxEigenvalueProjectionY(vtkFloatingPointType **v, vtkFloatingPointType w[3]);
+  static vtkFloatingPointType MaxEigenvalueProjectionZ(vtkFloatingPointType **v, vtkFloatingPointType w[3]);
   static vtkFloatingPointType Mode(vtkFloatingPointType w[3]);
   static void ColorByMode(vtkFloatingPointType w[3], vtkFloatingPointType &R,vtkFloatingPointType &G, vtkFloatingPointType &B);
 
@@ -197,23 +210,24 @@ public:
 protected:
   vtkTensorMathematics();
   ~vtkTensorMathematics() {};
-  vtkTensorMathematics(const vtkTensorMathematics&);
-  void operator=(const vtkTensorMathematics&);
 
   int Operation; // math operation to perform
-  vtkSetMacro(Operation,int);  
+  vtkSetMacro(Operation,int);
   vtkFloatingPointType ScaleFactor; // Scale factor for output scalars
   int ExtractEigenvalues; // Boolean controls eigenfunction extraction
 
   int MaskWithScalars;
   vtkImageData *ScalarMask;
-  
+
   vtkMatrix4x4 *TensorRotationMatrix;
 
   void ExecuteInformation(vtkImageData **inDatas, vtkImageData *outData);
-  void ExecuteInformation(){this->vtkImageTwoInputFilter::ExecuteInformation();};
+  void ExecuteInformation(){this->Superclass::ExecuteInformation();};
   void ThreadedExecute(vtkImageData **inDatas, vtkImageData *outData,
         int extent[6], int id);
+private:
+  vtkTensorMathematics(const vtkTensorMathematics&);
+  void operator=(const vtkTensorMathematics&);
 };
 
 #endif
