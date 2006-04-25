@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.h,v $
-  Date:      $Date: 2006/04/18 17:01:21 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/04/25 18:51:24 $
+  Version:   $Revision: 1.15 $
 
 =========================================================================auto=*/
 // .NAME vtkTensorMathematics - Trace, determinant, anisotropy measures
@@ -197,9 +197,9 @@ public:
   static vtkFloatingPointType MaxEigenvalue(vtkFloatingPointType w[3]);
   static vtkFloatingPointType MiddleEigenvalue(vtkFloatingPointType w[3]);
   static vtkFloatingPointType MinEigenvalue(vtkFloatingPointType w[3]);
-  static vtkFloatingPointType MaxEigenvalueProjectionX(vtkFloatingPointType v0[3], vtkFloatingPointType w[3]);
-  static vtkFloatingPointType MaxEigenvalueProjectionY(vtkFloatingPointType v0[3], vtkFloatingPointType w[3]);
-  static vtkFloatingPointType MaxEigenvalueProjectionZ(vtkFloatingPointType v0[3], vtkFloatingPointType w[3]);
+  static vtkFloatingPointType MaxEigenvalueProjectionX(vtkFloatingPointType **v, vtkFloatingPointType w[3]);
+  static vtkFloatingPointType MaxEigenvalueProjectionY(vtkFloatingPointType **v, vtkFloatingPointType w[3]);
+  static vtkFloatingPointType MaxEigenvalueProjectionZ(vtkFloatingPointType **v, vtkFloatingPointType w[3]);
   static vtkFloatingPointType Mode(vtkFloatingPointType w[3]);
   static void ColorByMode(vtkFloatingPointType w[3], vtkFloatingPointType &R,vtkFloatingPointType &G, vtkFloatingPointType &B);
 
