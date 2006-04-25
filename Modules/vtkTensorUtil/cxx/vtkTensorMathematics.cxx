@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.cxx,v $
-  Date:      $Date: 2006/04/25 18:51:23 $
-  Version:   $Revision: 1.34 $
+  Date:      $Date: 2006/04/25 21:20:29 $
+  Version:   $Revision: 1.35 $
 
 =========================================================================auto=*/
 
@@ -857,7 +857,7 @@ void vtkTensorMathematics::ModeToRGB(double Mode, double FA,
    B = FA*B;
 }
 
-inline int vtkTensorMathematics::TeemEigenSolver(double **m, double *w, double **v) 
+int vtkTensorMathematics::TeemEigenSolver(double **m, double *w, double **v) 
 {
     double t[7];
     double evec[9];
