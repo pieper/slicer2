@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkEdgeGradient.h,v $
-  Date:      $Date: 2006/01/06 17:58:00 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/04/25 22:21:51 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 /*===========================================================
@@ -115,11 +115,11 @@ protected:
     void MakeImageData(unsigned char *Alpha, unsigned char *intensity);
 
 //BTX
-    void vtkEdgeGradient::copyArrayOffset(unsigned char *dst, 
+    void copyArrayOffset(unsigned char *dst, 
                                      unsigned char *src,
                                      int w, int h, int xOff, int yOff);
 
-    void vtkEdgeGradient::mattArrayOffset(unsigned char *dstAlpha, unsigned char *dstI, 
+    void mattArrayOffset(unsigned char *dstAlpha, unsigned char *dstI, 
                                      unsigned char *srcAlpha, unsigned char srcLevel, 
                                      int w, int h, int xOff, int yOff);
 //ETX
