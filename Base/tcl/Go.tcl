@@ -6,8 +6,8 @@
 # 
 #  Program:   3D Slicer
 #  Module:    $RCSfile: Go.tcl,v $
-#  Date:      $Date: 2006/03/06 21:21:41 $
-#  Version:   $Revision: 1.107.2.4.2.1 $
+#  Date:      $Date: 2006/04/26 18:49:29 $
+#  Version:   $Revision: 1.107.2.4.2.2 $
 #===============================================================================
 # FILE:        Go.tcl
 # PROCEDURES:  
@@ -88,7 +88,7 @@ set ::SLICER(revision) ""
 # when packaging a release for testing, set state to the date as "-YYYY-MM-DD"
 #  otherwise leave it as "-dev"
 
-set ::SLICER(state) "-rc3"
+set ::SLICER(state) "-rc4"
 
 set ::SLICER(version) "$::SLICER(major_version).$::SLICER(minor_version)$::SLICER(revision)$::SLICER(state)"
 
@@ -370,7 +370,7 @@ proc SplashRaise {} {
     }
     if {[lsearch $winlist ".__tk_*"] != -1} {
         # message is up, don't raise it now, but try later
-        after 100 "after idle SplashRaise"
+        # after 100 "after idle SplashRaise"
     } elseif {[winfo exists .splash]} {
         raise .splash
 
@@ -403,12 +403,17 @@ proc SplashKill {} {
     # clear out the event queue
     update
 
-    # release the grab
-    grab release .splash
+    if {[info command .splash] != ""} {
+        # release the grab
+        grab release .splash
+        catch "destroy .splash" 
+    }
 
-    catch "destroy .splash" 
-    catch "image delete $splashim"
-
+    if {[info exists splashim] } {
+        if { [lsearch [image names] $splashim] != -1} { 
+            catch "image delete $splashim"
+        }
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -776,7 +781,7 @@ if {$::env(BUILD) == "darwin-ppc"} {
 }
 
 foreach m $::env(SLICER_MODULES_TO_REQUIRE) {
-    if {[lsearch $m $ignored] == -1} {
+    if {[lsearch $ignored $m] == -1} {
         puts "Loading Module $m..."
         if { [catch {package require $m} errVal] } {
             puts stderr "Warning: can't load module $m:\n$errVal"
@@ -927,7 +932,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.107.2.4.2.1 2006/03/06 21:21:41 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.107.2.4.2.2 2006/04/26 18:49:29 hliu Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
