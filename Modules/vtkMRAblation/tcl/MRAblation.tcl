@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MRAblation.tcl,v $
-#   Date:      $Date: 2006/03/23 22:50:13 $
-#   Version:   $Revision: 1.1.2.7 $
+#   Date:      $Date: 2006/04/26 17:01:42 $
+#   Version:   $Revision: 1.1.2.8 $
 # 
 #===============================================================================
 # FILE:        MRAblation.tcl
@@ -137,7 +137,7 @@ proc MRAblationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.7 $} {$Date: 2006/03/23 22:50:13 $}]
+        {$Revision: 1.1.2.8 $} {$Date: 2006/04/26 17:01:42 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1006,7 +1006,9 @@ proc MRAblationWatch {} {
     set geFiles [glob -nocomplain -directory $MRAblation(imageDir) -type f I.*]
     set noGeFiles [llength $geFiles]
     # dicom files start wtih a digit 
-    set dcmFiles [glob -nocomplain -directory $MRAblation(imageDir) -type f  {[0-9].*}]
+    # set dcmFiles [glob -nocomplain -directory $MRAblation(imageDir) -type f  {[0-9].*}]
+    # dicom files end wtih IMA 
+    set dcmFiles [glob -nocomplain -directory $MRAblation(imageDir) -type f *.IMA]
     set noDcmFiles [llength $dcmFiles]
  
     if {$noGeFiles > 0} {
