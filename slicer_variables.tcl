@@ -30,6 +30,7 @@ if {[info exists ::env(SLICER_HOME)]} {
 # - solaris can be solaris8 or solaris9
 set solaris "solaris8"
 set linux "linux-x86"
+set linux_64 "linux-x86_64"
 set darwin "darwin-ppc"
 set windows "win32"
 #
@@ -37,7 +38,13 @@ set windows "win32"
 #
 switch $::tcl_platform(os) {
     "SunOS" { set ::env(BUILD) $solaris }
-    "Linux" { set ::env(BUILD) $linux }
+    "Linux" {           
+        if {$::tcl_platform(machine) == "x86_64"} {
+            set ::env(BUILD) $linux_64 
+        } else {
+            set ::env(BUILD) $linux
+        }
+    }       
     "Darwin" { set ::env(BUILD) $darwin }
     default { 
         set ::env(BUILD) $windows 
@@ -59,7 +66,6 @@ puts stderr "SLICER_HOME is $::SLICER_HOME"
 set ::CMAKE_TAG "CMake-2-0-6"
 set ::TEEM_TAG "Teem-1-9-0-patches"
 set ::VTK_TAG "Slicer-2-6"
-# get the latest ITK from CVS using HEAD
 set ::ITK_TAG "Slicer-2-6"
 set ::TCL_TAG "core-8-4-6"
 set ::TK_TAG "core-8-4-6"
@@ -76,6 +82,7 @@ set ::TEEM_BUILD_DIR  $::SLICER_LIB/teem-build
 set ::VTK_DIR  $::SLICER_LIB/VTK-build
 set ::VTK_SRC_DIR $::SLICER_LIB/VTK
 set ::VTK_BUILD_TYPE ""
+set ::VTK_BUILD_SUBDIR ""
 set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
 set ::KWWIDGETS_DIR  $::SLICER_LIB/Widgets-build
 set ::ITK_BINARY_PATH $::SLICER_LIB/Insight-build
@@ -84,7 +91,7 @@ set ::TCL_BIN_DIR $::SLICER_LIB/tcl-build/bin
 set ::TCL_LIB_DIR $::SLICER_LIB/tcl-build/lib
 set ::TCL_INCLUDE_DIR $::SLICER_LIB/tcl-build/include
 set ::CMAKE_PATH $::SLICER_LIB/CMake-build
-set ::SOV_BINARY_DIR " "
+set ::SOV_BINARY_DIR ""
 set ::XVNC_EXECUTABLE " "
 
 
@@ -105,7 +112,6 @@ switch $::tcl_platform(os) {
 
 switch $::tcl_platform(os) {
     "SunOS" -
-    "Linux" -
     "Darwin" {
         set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin
 
@@ -117,12 +123,34 @@ switch $::tcl_platform(os) {
         set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/unu
         set ::VTK_TEST_FILE $::VTK_DIR/bin/vtk
         set ::SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/libSlicerClustering.a
+        set ::ALT_SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/libSlicerClustering.a
         set ::VTK_TCL_LIB $::TCL_LIB_DIR/libtcl8.4.$shared_lib_ext 
         set ::VTK_TK_LIB $::TCL_LIB_DIR/libtk8.4.$shared_lib_ext
         set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh8.4
         set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/libITKCommon.$shared_lib_ext
         set ::TK_EVENT_PATCH $::SLICER_HOME/tkEventPatch.diff
         set ::BLT_PATCH $::SLICER_HOME/blt-patch.diff
+        set ::env(VTK_BUILD_SUBDIR) $::VTK_BUILD_SUBDIR
+    }
+    "Linux" {
+        set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin
+
+        set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh8.4
+        set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish8.4
+        set ::ITCL_TEST_FILE $::TCL_LIB_DIR/libitclstub3.2.a
+        set ::IWIDGETS_TEST_FILE $::TCL_LIB_DIR/iwidgets4.0.1/iwidgets.tcl
+        set ::BLT_TEST_FILE $::TCL_BIN_DIR/bltwish24
+        set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/unu
+        set ::VTK_TEST_FILE $::VTK_DIR/bin/vtk
+        set ::SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/libSlicerClustering.so
+        set ::ALT_SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/libSlicerClustering.a
+        set ::VTK_TCL_LIB $::TCL_LIB_DIR/libtcl8.4.$shared_lib_ext 
+        set ::VTK_TK_LIB $::TCL_LIB_DIR/libtk8.4.$shared_lib_ext
+        set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh8.4
+        set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/libITKCommon.$shared_lib_ext
+        set ::TK_EVENT_PATCH $::SLICER_HOME/tkEventPatch.diff
+        set ::BLT_PATCH $::SLICER_HOME/blt-patch.diff
+        set ::env(VTK_BUILD_SUBDIR) $::VTK_BUILD_SUBDIR
     }
     "Windows NT" {
     # Windows NT currently covers WinNT, Win2000, XP Home, XP Pro
@@ -134,10 +162,13 @@ switch $::tcl_platform(os) {
         #set ::VTK_BUILD_TYPE Release  ;# faster, but no debugging
         set ::VTK_BUILD_TYPE Debug  ;# a good default
 
-        set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin/$::VTK_BUILD_TYPE
+        set ::VTK_BUILD_SUBDIR $::VTK_BUILD_TYPE ;# note this is different on windows
 
-        #  
         set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
+        set ::env(VTK_BUILD_SUBDIR) $::VTK_BUILD_SUBDIR 
+
+        set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin/$::VTK_BUILD_SUBDIR
+
         set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh84.exe
         set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish84.exe
         set ::ITCL_TEST_FILE $::TCL_LIB_DIR/itcl3.2/itcl32.dll
@@ -146,6 +177,7 @@ switch $::tcl_platform(os) {
         set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/unu.exe
         set ::VTK_TEST_FILE $::VTK_DIR/bin/$::VTK_BUILD_TYPE/vtk.exe
         set ::SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/$::VTK_BUILD_TYPE/SlicerClustering.lib
+        set ::ALT_SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/$::VTK_BUILD_TYPE/SlicerClustering.lib
         set ::VTK_TCL_LIB $::TCL_LIB_DIR/tcl84.lib
         set ::VTK_TK_LIB $::TCL_LIB_DIR/tk84.lib
         set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh84.exe
@@ -168,7 +200,7 @@ switch $::tcl_platform(os) {
         set ::COMPILER_PATH "/local/os/bin"
         set ::COMPILER "g++"
         set ::CMAKE $::CMAKE_PATH/bin/cmake
-        set ::MAKE "gmake -j15"
+        set ::MAKE "gmake"
         set ::SERIAL_MAKE "gmake"
     }
     "Linux" {
@@ -178,7 +210,7 @@ switch $::tcl_platform(os) {
         set ::COMPILER_PATH "/usr/bin"
         set ::COMPILER "g++"
         set ::CMAKE $::CMAKE_PATH/bin/cmake
-        set ::MAKE make
+        set ::MAKE "make"
         set ::SERIAL_MAKE "make"
     }
     "Darwin" {
@@ -244,7 +276,7 @@ switch $::tcl_platform(os) {
         if { [file exists "c:/Program Files/Microsoft Visual Studio .NET 2003/Common7/IDE/devenv.exe"] } {
             set ::GENERATOR "Visual Studio 7 .NET 2003" 
             set ::MAKE "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET 2003/Common7/IDE/devenv"
-            set ::COMPILER_PATH "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET 2003/Common7/Vc7/bin"
+            set ::COMPILER_PATH "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET 2003/Vc7/bin"
         }
 
         set ::COMPILER "cl"
