@@ -25,6 +25,8 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #ifndef _EMLOCALREGISTRATIONCOSTFUNCTION_H_INCLUDED
 #define _EMLOCALREGISTRATIONCOSTFUNCTION_H_INCLUDED 1
 
+#include "assert.h"
+
 #include <vtkEMLocalSegmentConfigure.h>
 #include "vtkMultiThreader.h"
 #include "vtkImageEMGenericClass.h" 

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkNRRDReader.cxx,v $
-  Date:      $Date: 2005/12/21 19:13:29 $
-  Version:   $Revision: 1.1.2.4 $
+  Date:      $Date: 2006/04/26 20:56:08 $
+  Version:   $Revision: 1.1.2.4.2.1 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -48,11 +48,9 @@
 #include "vtkDoubleArray.h"
 #include "vtkFloatArray.h" 
 
-extern "C" {
 #include "teem/ten.h"
-}
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.1.2.4 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.1.2.4.2.1 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
@@ -63,6 +61,7 @@ vtkNRRDReader::vtkNRRDReader()
   CurrentFileName = NULL;
   nrrd = nrrdNew();
   UseNativeOrigin = false;
+  ReadStatus = 0;
 }
 
 vtkNRRDReader::~vtkNRRDReader() 
@@ -260,6 +259,8 @@ void vtkNRRDReader::ExecuteInformation()
      vtkErrorMacro("Error reading " << this->GetFileName() << ": " << err);
      free(err); // err points to malloc'd data!!
      //     err = NULL;
+     nio = nrrdIoStateNix(nio);
+     this->ReadStatus = 1;
      return;
    }
 
@@ -283,8 +284,10 @@ void vtkNRRDReader::ExecuteInformation()
 
    if (nrrdTypeBlock == this->nrrd->type)
     {
-    vtkErrorMacro("ReadImageInformation: Cannot currently "
+     vtkErrorMacro("ReadImageInformation: Cannot currently "
                       "handle nrrdTypeBlock");
+    nio = nrrdIoStateNix(nio);
+    this->ReadStatus = 1;
     return;
     }
 
@@ -317,6 +320,8 @@ void vtkNRRDReader::ExecuteInformation()
                       << domainAxisNum << ") doesn't match dimension of space"
                       " in which orientation is defined ("
                       << this->nrrd->spaceDim << "); not currently handled");
+    nio = nrrdIoStateNix(nio);
+    this->ReadStatus = 1;
     return;              
     }    
     
@@ -478,7 +483,7 @@ void vtkNRRDReader::ExecuteInformation()
               break;
             }
 
-          for (int j=0; j<this->nrrd->spaceDim; j++) 
+          for (int j=0; (unsigned int)j<this->nrrd->spaceDim; j++) 
             {
              IjkToRasMatrix->SetElement(j,axii , spaceDir[j]*spacing);
             }  
@@ -550,6 +555,8 @@ void vtkNRRDReader::ExecuteInformation()
         case nrrdOriginStatusDirection:
           vtkErrorMacro("ReadImageInformation: Error interpreting "
                             "nrrd origin status");
+          nio = nrrdIoStateNix(nio);
+          this->ReadStatus = 1;
           break;
         }
       }
@@ -575,7 +582,7 @@ void vtkNRRDReader::ExecuteInformation()
    this->SetDataExtent(dataExtent);
 
    // Push extra key/value pair data into std::map
-   for (i=0; i < nrrdKeyValueSize(this->nrrd); i++) {
+   for (i=0; (unsigned int)i < nrrdKeyValueSize(this->nrrd); i++) {
      nrrdKeyValueIndex(this->nrrd, &key, &val, i);
      HeaderKeyValue[std::string(key)] = std::string(val);
      free(key);  // key and val point to malloc'd data!!

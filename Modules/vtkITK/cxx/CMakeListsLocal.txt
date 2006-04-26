@@ -54,6 +54,7 @@ vtkITKThresholdSegmentationLevelSetImageFilter.h
 vtkITKTobogganImageFilter.h
 vtkITKWatershedImageFilter.cxx
 vtkITKVersion.cxx
+vtkITKNewOtsuThresholdImageFilter.cxx
 )
 
 SET_SOURCE_FILES_PROPERTIES (

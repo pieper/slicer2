@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSorter.h,v $
-  Date:      $Date: 2005/12/20 22:56:16 $
-  Version:   $Revision: 1.1.8.1 $
+  Date:      $Date: 2006/04/26 20:52:23 $
+  Version:   $Revision: 1.1.8.1.2.1 $
 
 =========================================================================auto=*/
 /*===========================================================
@@ -124,7 +124,7 @@ protected:
     int AlwaysResort;
 
 //BTX
-    void vtkSorter::ComputeProjectionVector(vtkCamera *c, vtkFloatingPointType vector[3], vtkFloatingPointType origin[3]);
+    void ComputeProjectionVector(vtkCamera *c, vtkFloatingPointType vector[3], vtkFloatingPointType origin[3]);
 //ETX
 
     vtkCollection *Cards;

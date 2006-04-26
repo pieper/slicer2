@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRICalculateTensors.tcl,v $
-#   Date:      $Date: 2006/03/06 21:21:53 $
-#   Version:   $Revision: 1.35.2.2.2.1 $
+#   Date:      $Date: 2006/04/26 20:39:46 $
+#   Version:   $Revision: 1.35.2.2.2.2 $
 # 
 #===============================================================================
 # FILE:        DTMRICalculateTensors.tcl
@@ -45,7 +45,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.35.2.2.2.1 $} {$Date: 2006/03/06 21:21:53 $}]
+                                 {$Revision: 1.35.2.2.2.2 $} {$Date: 2006/04/26 20:39:46 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -108,10 +108,18 @@ proc DTMRICalculateTensorsInit {} {
     set DTMRI(convert,averageRepetitionsValue) {1 0}
     set DTMRI(convert,averageRepetitionsList,tooltips) [list \
                                  "Average the diffusion weighted images across repetitions."\
-                 "If off having several repetitions means that the first repetition is used to compute the tensor" \
+                 "If off having several repetitdions means that the first repetition is used to compute the tensor" \
                  ]
     set DTMRI(convert,measurementframe) {{1 0 0} {0 1 0} {0 0 1}}
 
+    
+    set DTMRI(convert,mask,removeIslands) 0
+    set DTMRI(conver,mask,omega) 0.5
+    
+    set DTMRI(convert,mask,omega,tooltips) [list \
+                                 "Control the sharpness of the threshold in the Otsu computation."\
+                 "0: lower threshold, 1: higher threhold" \
+                 ]
     
     #This variable is used by Create-Pattern button and indicates weather it has to hide or show the create pattern frame. On status 0 --> show. On status 1 --> hide.
     set DTMRI(convert,show) 0
@@ -155,11 +163,13 @@ proc DTMRICalculateTensorsBuildGUI {} {
     #-------------------------------------------
     set f $fConvert.fConvert
 
-    foreach frame "Title Select Pattern Repetitions Average Apply" {
+    foreach frame "Title Select Pattern Repetitions Average  Mask Apply" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         $f.fTitle configure -bg $Gui(backdrop)
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     }
+    
+    $f.fMask configure -relief groove -bd 1
 
     #-------------------------------------------
     # Convert->Convert->Title frame
@@ -249,7 +259,45 @@ proc DTMRICalculateTensorsBuildGUI {} {
         pack $f.r$vis -side left -padx 0 -pady 0
         TooltipAdd  $f.r$vis $tip     
     }
-              
+     
+#    #-------------------------------------------
+#    # Convert->Convert->Mask frame
+#    #-------------------------------------------         
+      set fMask $fConvert.fConvert.fMask
+      
+      foreach frame "Title Omega RemoveIsland" {
+        frame $fMask.f$frame -bg $Gui(activeWorkspace)
+        pack $fMask.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
+      }
+      
+      set f $fMask.fTitle
+      DevAddLabel $f.l "Automatic Mask Extraction" 
+      pack $f.l
+      
+      set f $fMask.fOmega
+      DevAddLabel $f.l "Weight:"
+       $f.l configure -bg $Gui(backdrop) -fg white
+       eval {entry $f.e -width 3 \
+          -textvariable DTMRI(convert,mask,omega)} \
+        $Gui(WEA)
+       eval {scale $f.s -from 0 \
+                          -to 1    \
+          -variable  DTMRI(convert,mask,omega)\
+          -orient vertical     \
+          -resolution .1      \
+          } $Gui(WSA)      
+      pack $f.l $f.e $f.s -side left -padx $Gui(pad) -pady $Gui(pad)
+      
+      TooltipAdd  $f.l $DTMRI(convert,mask,omega,tooltips)     
+      TooltipAdd  $f.e $DTMRI(convert,mask,omega,tooltips) 
+      TooltipAdd  $f.s $DTMRI(convert,mask,omega,tooltips)        
+
+      set f $fMask.fRemoveIsland
+      eval {checkbutton $f.r \
+               -text "Remove Island" -variable DTMRI(convert,mask,removeIslands) -indicatoron 0 \
+               -width 12} $Gui(WCA)
+      pack $f.r -side left -padx $Gui(pad) -pady $Gui(pad)         
+
 #    #-------------------------------------------
 #    # Convert->Convert->Apply frame
 #    #-------------------------------------------
@@ -1551,7 +1599,7 @@ proc ConvertVolumeToTensors {} {
 proc DTMRIComputeTensorMask {node} {
     global DTMRI
     
-    if {[info command  vtkITKOtsuThresholdImageFilter] == ""} { 
+    if {[info command  vtkITKNewOtsuThresholdImageFilter] == ""} { 
         #Mask cannot be computed
         return;
     }
@@ -1559,12 +1607,14 @@ proc DTMRIComputeTensorMask {node} {
     set id [$node GetID]
      #Create mask based on thersholding of DWI
     catch "_otsu Delete"
-    vtkITKOtsuThresholdImageFilter _otsu
+    vtkITKNewOtsuThresholdImageFilter _otsu
     _otsu SetInput [Volume($id,vol) GetOutput]
+    _otsu SetOmega [expr 1 + $DTMRI(convert,mask,omega)]
     _otsu SetOutsideValue 1
     _otsu SetInsideValue 0
     _otsu Update
     
+    puts "Threshold: [_otsu GetThreshold]"
     #Grab otsu output: avoid bug with vtkITK pipeline output release
     catch "_mask Delete"
     vtkImageData _mask
@@ -1572,90 +1622,68 @@ proc DTMRIComputeTensorMask {node} {
     
     #Free space
     _otsu Delete
-
-    catch "_cast Delete"
-    vtkImageCast _cast
-    _cast SetInput _mask
-    _cast SetOutputScalarTypeToUnsignedChar
-    _cast Update
-   
-   #Buffer image to erode/dilate looping
-   catch "_buffer Delete"
-   vtkImageData _buffer 
-   
-    #Erode mask: try to disconnect from skull
-    catch "_er Delete"
-    vtkImageErode _er
-    _buffer DeepCopy [_cast GetOutput]
-    
-    #Free space
-    _mask Delete
-    _cast Delete
-    
-    for {set i 0} {$i <2} {incr i} {
-        _er SetInput _buffer
-        _er SetForeground 1
-        _er SetBackground 0
-        _er SetNeighborTo8
-        _er Update
-        _buffer DeepCopy [_er GetOutput]
-     }   
-
-    set dims [[_er GetOutput] GetDimensions]
+     
+    set dims [_mask GetDimensions]
     set px [expr round([lindex $dims 0]/2)]
     set py [expr round([lindex $dims 1]/2)]
     set pz [expr round([lindex $dims 2]/2)]
-    
-    #Connected components
-    catch "_con Delete"
-    vtkImageSeedConnectivity _con
-    _con SetInput _buffer
-    _con SetInputConnectValue 1
-    _con SetOutputConnectedValue 1
-    _con SetOutputUnconnectedValue 0
-    _con AddSeed $px $py $pz
-    _con Update
-    
-    #Free space
-    _er Delete
-    
-    #Dilate final mask: conservative approach
-    catch "_er Delete"
-    vtkImageErode _er
-     _buffer DeepCopy [_con GetOutput]
-     
-    #Free space
-    _con Delete     
-     
-     for {set i 0} {$i <3} {incr i} {
-        _er SetInput _buffer
-        _er SetForeground 0
-        _er SetBackground 1
-        if {$i == 2} {
-            _er SetNeighborTo4
-        } else {
-           _er SetNeighborTo8
-        }           
-        _er Update
-        _buffer DeepCopy [_er GetOutput]
+       
+    catch "_cast Delete"
+    vtkImageCast _cast
+     _cast SetInput _mask
+     _cast SetOutputScalarTypeToUnsignedChar
+     _cast Update    
+       
+     _mask Delete  
+     #Connected components
+     catch "_con Delete"
+     vtkImageSeedConnectivity _con
+     _con SetInput [_cast GetOutput]
+     _con SetInputConnectValue 1
+     _con SetOutputConnectedValue 1
+     _con SetOutputUnconnectedValue 0
+     _con AddSeed $px $py $pz
+     _con Update
+
+     _cast Delete
+   
+     catch "_cast Delete"
+     vtkImageCast _cast
+     _cast SetInput [_con GetOutput]
+     _cast SetOutputScalarTypeToShort
+     _cast Update
+       
+     _con Delete
+
+   if { $DTMRI(convert,mask,removeIslands) } {
+
+      catch "_conn Delete"
+      vtkImageConnectivity _conn
+      _conn SetBackground 1
+      _conn SetMinForeground -32768
+      _conn SetMaxForeground 32767
+      _conn SetFunctionToRemoveIslands
+      _conn SetMinSize 10000
+      _conn SliceBySliceOn
+      _conn SetInput [_cast GetOutput]
+   
+      _conn Update 
+
     }
     
-    
-    #Recast to short
-   catch "_cast Delete"
-   vtkImageCast _cast
-   _cast SetInput _buffer
-   _cast SetOutputScalarTypeToShort
-   _cast Update
-  
-    #Free space
-    _buffer Delete
-    _er Delete
-               
+     #Free space
+ 
+     #Grab Output           
     set source_name [$node GetName]
     set name "Tensor_mask-$source_name "
     set description "Mask for volume $name"            
-    set mid [DTMRICreateNewNode $node [_cast GetOutput] $name $description]
+    
+    if {$DTMRI(convert,mask,removeIslands) == 1} {
+        set mid [DTMRICreateNewNode $node [_conn GetOutput] $name $description]
+        _conn Delete
+    } else {
+       set mid [DTMRICreateNewNode $node [_cast GetOutput] $name $description]
+    }
     
     #Set labelmap
     # -1 is id for Label lookup table
@@ -1663,9 +1691,7 @@ proc DTMRIComputeTensorMask {node} {
     Volume($mid,node) SetLUTName -1
     
     #Clean objects
-    _cast SetOutput ""
     _cast Delete
-    
     
     #Return mask id
     return $mid
@@ -1712,7 +1738,7 @@ proc DTMRICreateNewNode {refnode voldata name description} {
          }
        }
        if { $widx < $nitems } {
-         Mrml(dataTree) RemoveItem $widx
+         Mrml(dataTree) RemoveItem $widx         
          Mrml(dataTree) InsertAfterItem $refnode Volume($id,node)
          MainUpdateMRML
       }
@@ -1817,12 +1843,31 @@ proc DTMRIComputeRasToIjkFromCorners {refnode node extent {spacing ""}} {
     _norm Delete
   }
 
-
   #Set Translation to center of the output volume.
-  #This is a particular thing of the slicer: all volumes are centered in their centroid.
-  _Ras SetElement 0 3 [expr ([lindex $extent 1] - [lindex $extent 0])/2.0]
-  _Ras SetElement 1 3 [expr ([lindex $extent 3] - [lindex $extent 2])/2.0]
-  _Ras SetElement 2 3 [expr ([lindex $extent 5] - [lindex $extent 4])/2.0]
+  #If refnode volume is centered, set to center
+  #otherwise, use the origin given by refnode
+  
+  #Check if refnode is centered
+  regexp {[A-Za-z]*} $refnode nodetype
+  set v [$refnode GetID]
+  if {$nodetype == "Tensor"} {
+    set refvol "${nodetype}($v,data)"
+  } else {
+    set refvol "${nodetype}($v,vol)"
+  }
+  set refextent [[$refvol GetOutput] GetExtent]
+  set reforiginx [expr ([lindex $refextent 1] - [lindex $refextent 0])/2.0]
+  set reforiginy [expr ([lindex $refextent 3] - [lindex $refextent 2])/2.0]
+  set reforiginz [expr ([lindex $refextent 5] - [lindex $refextent 4])/2.0]
+  
+  if { [_Ras GetElement 0 3] == $reforiginx && \
+       [_Ras GetElement 1 3] == $reforiginy && \
+       [_Ras GetElement 2 3] == $reforiginz } {
+    #This is a particular thing of the slicer: all volumes are centered in their centroid.
+    _Ras SetElement 0 3 [expr ([lindex $extent 1] - [lindex $extent 0])/2.0]
+    _Ras SetElement 1 3 [expr ([lindex $extent 3] - [lindex $extent 2])/2.0]
+    _Ras SetElement 2 3 [expr ([lindex $extent 5] - [lindex $extent 4])/2.0]
+  }
       
   set dims "[expr [lindex $extent 1] - [lindex $extent 0] + 1] \
               [expr [lindex $extent 3] - [lindex $extent 2] + 1] \
