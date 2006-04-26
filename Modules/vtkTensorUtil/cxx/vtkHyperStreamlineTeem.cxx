@@ -10,7 +10,7 @@
 #include "vtkImageData.h"
 
 
-vtkCxxRevisionMacro(vtkHyperStreamlineTeem, "$Revision: 1.4.4.1 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineTeem, "$Revision: 1.4.4.2 $");
 vtkStandardNewMacro(vtkHyperStreamlineTeem);
 
 

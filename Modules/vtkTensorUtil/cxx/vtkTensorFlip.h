@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorFlip.h,v $
-  Date:      $Date: 2006/03/06 21:22:04 $
-  Version:   $Revision: 1.2.2.1.2.1 $
+  Date:      $Date: 2006/04/26 19:37:35 $
+  Version:   $Revision: 1.2.2.1.2.2 $
 
 =========================================================================auto=*/
 // .NAME vtkTensorFlip - flip Y axis and negate xy and zy terms

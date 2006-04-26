@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkVectorToOuterProductDualBasis.cxx,v $
-  Date:      $Date: 2006/03/06 21:22:05 $
-  Version:   $Revision: 1.7.2.1.2.1 $
+  Date:      $Date: 2006/04/26 19:43:29 $
+  Version:   $Revision: 1.7.2.1.2.2 $
 
 =========================================================================auto=*/
 #include "vtkVectorToOuterProductDualBasis.h"

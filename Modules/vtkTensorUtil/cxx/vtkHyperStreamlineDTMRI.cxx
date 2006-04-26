@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.cxx,v $
-  Date:      $Date: 2006/03/06 21:22:00 $
-  Version:   $Revision: 1.14.2.1.2.1 $
+  Date:      $Date: 2006/04/26 19:18:23 $
+  Version:   $Revision: 1.14.2.1.2.2 $
 
 =========================================================================auto=*/
 #include "vtkHyperStreamlineDTMRI.h"
@@ -26,7 +26,7 @@
 //#include "vtkHyperPointandArray.cxx"
 #endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.14.2.1.2.1 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.14.2.1.2.2 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()

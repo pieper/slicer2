@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricSource2.cxx,v $
-  Date:      $Date: 2006/03/06 21:22:03 $
-  Version:   $Revision: 1.1.2.1.2.1 $
+  Date:      $Date: 2006/04/26 19:33:12 $
+  Version:   $Revision: 1.1.2.1.2.2 $
 
 =========================================================================auto=*/
 
@@ -24,7 +24,7 @@
 
 #include <math.h>
 
-vtkCxxRevisionMacro(vtkSuperquadricSource2, "$Revision: 1.1.2.1.2.1 $");
+vtkCxxRevisionMacro(vtkSuperquadricSource2, "$Revision: 1.1.2.1.2.2 $");
 vtkStandardNewMacro(vtkSuperquadricSource2);
 
 static void evalSuperquadric2(double u, double v, 

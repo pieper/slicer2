@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPreciseHyperArray.h,v $
-  Date:      $Date: 2006/03/06 21:22:02 $
-  Version:   $Revision: 1.3.8.1.2.1 $
+  Date:      $Date: 2006/04/26 19:28:01 $
+  Version:   $Revision: 1.3.8.1.2.2 $
 
 =========================================================================auto=*/
 #ifndef __vtkPreciseHyperArray_h

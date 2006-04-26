@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.cxx,v $
-  Date:      $Date: 2006/03/06 21:22:05 $
-  Version:   $Revision: 1.26.2.1.2.1 $
+  Date:      $Date: 2006/04/26 19:41:43 $
+  Version:   $Revision: 1.26.2.1.2.2 $
 
 =========================================================================auto=*/
 
@@ -29,6 +29,7 @@
 #include "vtkTransform.h"
 #include "vtkFloatArray.h"
 #include "vtkPointData.h"
+#include "vtkMathUtils.h"
 #include "time.h"
 #include "vtkLookupTable.h"
 
@@ -37,6 +38,9 @@ extern "C" {
 }
 
 #define VTK_EPS 10e-15
+
+vtkCxxSetObjectMacro(vtkTensorMathematics,TensorRotationMatrix,vtkMatrix4x4);
+vtkCxxSetObjectMacro(vtkTensorMathematics,ScalarMask,vtkImageData);
 
 //----------------------------------------------------------------------------
 vtkTensorMathematics* vtkTensorMathematics::New()
@@ -83,23 +87,23 @@ void vtkTensorMathematics::ExecuteInformation(vtkImageData **inDatas,
   // We want the whole extent of the tensors, and should
   // allocate the matching size image data.
   vtkDebugMacro(<<"Execute information extent: " << 
-  ext[0] << " " << ext[1] << " " << ext[2] << " " <<
-  ext[3] << " " << ext[4] << " " << ext[5]);
+    ext[0] << " " << ext[1] << " " << ext[2] << " " <<
+    ext[3] << " " << ext[4] << " " << ext[5]);
 
   // We always want to output float, unless it is color
   outData->SetScalarType(VTK_FLOAT);
 
   if (this->Operation == VTK_TENS_COLOR_ORIENTATION)
     {
-      // output color (RGBA)
-      outData->SetNumberOfScalarComponents(4);
-      outData->SetScalarType(VTK_UNSIGNED_CHAR);
+    // output color (RGBA)
+    outData->SetNumberOfScalarComponents(4);
+    outData->SetScalarType(VTK_UNSIGNED_CHAR);
     }
   if (this->Operation == VTK_TENS_COLOR_MODE) 
     {
-      // output color (RGBA)
-      outData->SetNumberOfScalarComponents(4);
-      outData->SetScalarType(VTK_UNSIGNED_CHAR);
+    // output color (RGBA)
+    outData->SetNumberOfScalarComponents(4);
+    outData->SetScalarType(VTK_UNSIGNED_CHAR);
     }
 
   outData->SetWholeExtent(ext);
@@ -155,8 +159,8 @@ static void vtkTensorMathematicsExecute1(vtkTensorMathematics *self,
 
   if ( !inTensors || numPts < 1 )
     {
-      vtkGenericWarningMacro(<<"No input tensor data to filter!");
-      return;
+    vtkGenericWarningMacro(<<"No input tensor data to filter!");
+    return;
     }
 
   // find the output region to loop over
@@ -175,97 +179,99 @@ static void vtkTensorMathematicsExecute1(vtkTensorMathematics *self,
   inInc = in1Data->GetIncrements();
   inFullUpdateExt = in1Data->GetExtent(); //We are only working over the update extent
   inPtId = ((outExt[0] - inFullUpdateExt[0]) * inInc[0]
-     + (outExt[2] - inFullUpdateExt[2]) * inInc[1]
-     + (outExt[4] - inFullUpdateExt[4]) * inInc[2]);
+          + (outExt[2] - inFullUpdateExt[2]) * inInc[1]
+          + (outExt[4] - inFullUpdateExt[4]) * inInc[2]);
   
   int doMasking = 0;
   vtkDataArray *inMask = NULL;
   short * inMaskptr = NULL;
   if (self->GetScalarMask())
     {
-      inMask = self->GetScalarMask()->GetPointData()->GetScalars();
-      inMaskptr = (short *) inMask->GetVoidPointer(0);
+    inMask = self->GetScalarMask()->GetPointData()->GetScalars();
+    inMaskptr = (short *) inMask->GetVoidPointer(0);
     }
 
   if (self->GetMaskWithScalars())
     {
-      if (inMask) {
+    if (inMask) {
       doMasking = 1;
-      }
-      else {
+    }
+    else {
       doMasking = 0;
       //vtkWarningMacro("User has not set input mask, but has requested MaskWithScalars.\n Avoiding masking");
-      }
+    }
     }
 
 
   for (idxZ = 0; idxZ <= maxZ; idxZ++)
     {
-      for (idxY = 0; idxY <= maxY; idxY++)
-    {
+    for (idxY = 0; idxY <= maxY; idxY++)
+      {
       if (!id) 
         {
-          if (!(count%target))
-        {
+        if (!(count%target))
+          {
           self->UpdateProgress(count/(50.0*target));
-        }
-          count++;
+          }
+        count++;
         }
 
       for (idxR = 0; idxR < rowLength; idxR++)
         {
-        
-          if (doMasking && *(inMaskptr+inPtId) == 0) {  
-            *outPtr = 0;
+
+        if (doMasking && *(inMaskptr+inPtId) == 0)
+          {
+          *outPtr = 0;
           }
-          else {   
-          
-            // tensor at this voxel
-            inTensors->GetTuple(inPtId,(vtkFloatingPointType *)tensor);
+        else
+          {
 
-            // pixel operation
-            switch (op)
-                {
-                case VTK_TENS_D11:
-                    *outPtr = (T)(scaleFactor*tensor[0][0]);
-                    break;
+          // tensor at this voxel
+          inTensors->GetTuple(inPtId,(vtkFloatingPointType *)tensor);
 
-                case VTK_TENS_D22:
-                    *outPtr = (T)(scaleFactor*tensor[1][1]);
-                    break;
-
-                case VTK_TENS_D33:
-                    *outPtr = (T)(scaleFactor*tensor[2][2]);
-                    break;
-
-                case VTK_TENS_TRACE:
-                    /////////////////////*outPtr = (T)(scaleFactor*(tensor[0][0]
-                    //               +tensor[1][1]
-                    //               +tensor[2][2]));
-                    *outPtr = static_cast<T> (scaleFactor*vtkTensorMathematics::Trace(tensor));
-                break;
-
-                case VTK_TENS_DETERMINANT:
-                    //*outPtr = 
-                    //  (T)(scaleFactor*(vtkMath::Determinant3x3(tensor)));
-                    *outPtr = static_cast<T> (scaleFactor*vtkTensorMathematics::Determinant(tensor));
-                    break;
-                }
-            }
-
-            if (inPtId > numPts) 
+          // pixel operation
+          switch (op)
             {
-            vtkGenericWarningMacro(<<"not enough input pts for output extent "<<numPts<<" "<<inPtId);
+          case VTK_TENS_D11:
+            *outPtr = (T)(scaleFactor*tensor[0][0]);
+            break;
+
+          case VTK_TENS_D22:
+            *outPtr = (T)(scaleFactor*tensor[1][1]);
+            break;
+
+          case VTK_TENS_D33:
+            *outPtr = (T)(scaleFactor*tensor[2][2]);
+            break;
+
+          case VTK_TENS_TRACE:
+            /////////////////////*outPtr = (T)(scaleFactor*(tensor[0][0]
+            //               +tensor[1][1]
+            //               +tensor[2][2]));
+            *outPtr = static_cast<T> (scaleFactor*vtkTensorMathematics::Trace(tensor));
+            break;
+
+          case VTK_TENS_DETERMINANT:
+            //*outPtr = 
+            //  (T)(scaleFactor*(vtkMath::Determinant3x3(tensor)));
+            *outPtr = static_cast<T> (scaleFactor*vtkTensorMathematics::Determinant(tensor));
+            break;
             }
-            outPtr++;
-            inPtId++;
         }
-        outPtr += outIncY;
-        inPtId += inIncY;
-    }
+
+        if (inPtId > numPts) 
+          {
+          vtkGenericWarningMacro(<<"not enough input pts for output extent "<<numPts<<" "<<inPtId);
+          }
+        outPtr++;
+        inPtId++;
+        }
+      outPtr += outIncY;
+      inPtId += inIncY;
+      }
     outPtr += outIncZ;
     inPtId += outIncZ;
-  }
+    }
 
   //cout << "tensor math time: " << clock() - tStart << endl;
 }
@@ -335,8 +341,8 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
 
   if ( !inTensors || numPts < 1 )
     {
-      vtkGenericWarningMacro(<<"No input tensor data to filter!");
-      return;
+    vtkGenericWarningMacro(<<"No input tensor data to filter!");
+    return;
     }
 
   // find the output region to loop over
@@ -364,8 +370,8 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
   // if the user has set this matrix grab it
   if (self->GetTensorRotationMatrix())
     {
-      trans->SetMatrix(self->GetTensorRotationMatrix());
-      useTransform = 1;
+    trans->SetMatrix(self->GetTensorRotationMatrix());
+    useTransform = 1;
     }
 
   // Check for masking
@@ -373,16 +379,18 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
   vtkDataArray *inMask = NULL;
   if (self->GetScalarMask())
     {
-      inMask = self->GetScalarMask()->GetPointData()->GetScalars();
+    inMask = self->GetScalarMask()->GetPointData()->GetScalars();
     }
 
   if (self->GetMaskWithScalars())
     {
-      if (inMask) {
-        doMasking = 1;
+    if (inMask)
+      {
+      doMasking = 1;
       }
-      else {
-        doMasking = 0;
+    else
+      {
+      doMasking = 0;
       //vtkWarningMacro("User has not set input mask, but has requested MaskWithScalars.\n Avoiding masking");
       }
     }
@@ -394,111 +402,125 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
 
   for (idxZ = 0; idxZ <= maxZ; idxZ++)
     {
-      for (idxY = 0; idxY <= maxY; idxY++)
-    {
+    for (idxY = 0; idxY <= maxY; idxY++)
+      {
       if (!id) 
         {
-          if (!(count%target))
+        if (!(count%target))
           {
-            self->UpdateProgress(count/(50.0*target));
+          self->UpdateProgress(count/(50.0*target));
           }
-          count++;
+        count++;
         }
 
       for (idxR = 0; idxR < rowLength; idxR++)
         {
-         
-         if (doMasking && inMask->GetTuple1(inPtId)==0) {
-            *outPtr = 0;
-            
-            if (op ==  VTK_TENS_COLOR_MODE || 
-                 op == VTK_TENS_COLOR_ORIENTATION) {
-                outPtr++;
-                *outPtr = 0; // green
-                outPtr++;
-                *outPtr = 0; // blue
-                outPtr++;
-                *outPtr = VTK_UNSIGNED_CHAR_MAX ; // alpha
-             }
+
+        if (doMasking && inMask->GetTuple1(inPtId)==0) {
+          *outPtr = 0;
+
+          if (op ==  VTK_TENS_COLOR_MODE || 
+            op == VTK_TENS_COLOR_ORIENTATION) {
+            outPtr++;
+            *outPtr = 0; // green
+            outPtr++;
+            *outPtr = 0; // blue
+            outPtr++;
+            *outPtr = VTK_UNSIGNED_CHAR_MAX ; // alpha
           }
-          else {   
-          
+        }
+        else {   
+
           // tensor at this voxel
           inTensors->GetTuple(inPtId,(vtkFloatingPointType *)tensor);
 
           // get eigenvalues and eigenvectors appropriately
           if (extractEigenvalues) 
-          {
-            for (j=0; j<3; j++)
             {
-              for (i=0; i<3; i++)
+            for (j=0; j<3; j++)
               {
+              for (i=0; i<3; i++)
+                {
                 // transpose
                 m[i][j] = tensor[j][i];
+                }
               }
+            // compute eigensystem
+            //vtkMath::Jacobi(m, w, v);
+            vtkTensorMathematics::TeemEigenSolver(m,w,v);
             }
-          // compute eigensystem
-          //vtkMath::Jacobi(m, w, v);
-           vtkTensorMathematics::TeemEigenSolver(m,w,v);
-          }
           else
-          {
+            {
             // tensor columns are evectors scaled by evals
             for (i=0; i<3; i++)
-            {
+              {
               v0[i] = tensor[i][0];
               v1[i] = tensor[i][1];
               v2[i] = tensor[i][2];
-            }
+              }
             w[0] = vtkMath::Normalize(v0);
             w[1] = vtkMath::Normalize(v1);
             w[2] = vtkMath::Normalize(v2);
-          }
+            }
 
           //Correct for negative eigenvalues. Three possible options:
           //  1. Round to zero
           //  2. Take absolute value
           //  3. Increase eigenvalues by negative part
           // The two first options have been problematic. Try 3 
-          vtkTensorMathematics::FixNegativeEigenvalues(w);
+          if (vtkTensorMathematics::FixNegativeEigenvalues(w)) {
+            cout<<"Warning: Eigenvalues are not properly sorted"<<endl;
+          }   
 
           // pixel operation
           switch (op)
-          {
+            {
           case VTK_TENS_RELATIVE_ANISOTROPY:
-             *outPtr = static_cast<T> (vtkTensorMathematics::RelativeAnisotropy(w));
-          break;
+            *outPtr = static_cast<T> (vtkTensorMathematics::RelativeAnisotropy(w));
+            break;
           case VTK_TENS_FRACTIONAL_ANISOTROPY:
-             *outPtr = static_cast<T> (vtkTensorMathematics::FractionalAnisotropy(w));
-          break;
+            *outPtr = static_cast<T> (vtkTensorMathematics::FractionalAnisotropy(w));
+            break;
 
           case VTK_TENS_LINEAR_MEASURE:
             *outPtr = static_cast<T> (vtkTensorMathematics::LinearMeasure(w));
-          break;
+            break;
 
           case VTK_TENS_PLANAR_MEASURE:
             *outPtr = static_cast<T> (vtkTensorMathematics::PlanarMeasure(w));
-          break;
+            break;
 
           case VTK_TENS_SPHERICAL_MEASURE:
             *outPtr = static_cast<T> (vtkTensorMathematics::SphericalMeasure(w));
-          break;
+            break;
 
           case VTK_TENS_MAX_EIGENVALUE:
             *outPtr = (T)w[0];
-          break;
+            break;
 
           case VTK_TENS_MID_EIGENVALUE:
             *outPtr = (T)w[1];
-          break;
+            break;
 
           case VTK_TENS_MIN_EIGENVALUE:
             *outPtr = (T)w[2];
-          break;
+            break;
+
+          case VTK_TENS_MAX_EIGENVALUE_PROJX:
+            *outPtr = static_cast<T> (vtkTensorMathematics::MaxEigenvalueProjectionX(v,w));
+            break;
+
+          case VTK_TENS_MAX_EIGENVALUE_PROJY:
+            *outPtr = static_cast<T> (vtkTensorMathematics::MaxEigenvalueProjectionY(v,w));
+            break;           
+
+          case VTK_TENS_MAX_EIGENVALUE_PROJZ:
+            *outPtr = static_cast<T> (vtkTensorMathematics::MaxEigenvalueProjectionZ(v,w));
+            break;           
 
           case VTK_TENS_MODE:
             *outPtr = static_cast<T> (vtkTensorMathematics::Mode(w));
-          break;
+            break;
 
           case VTK_TENS_COLOR_MODE:
 
@@ -515,7 +537,7 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
             outPtr++;
             *outPtr = (T)VTK_UNSIGNED_CHAR_MAX; //alpha
 
-          break;
+            break;
 
           case VTK_TENS_COLOR_ORIENTATION:
             // If the user has set the rotation matrix
@@ -527,9 +549,9 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
             v_maj[1]=v[1][0];
             v_maj[2]=v[2][0];
             if (useTransform)
-            {
+              {
               trans->TransformPoint(v_maj,v_maj);
-            }
+              }
             // Color R, G, B depending on max eigenvector
             // scale maps 0..1 values into the range a char takes on
             cl = vtkTensorMathematics::LinearMeasure(w);
@@ -544,18 +566,18 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
             outPtr++;
             *outPtr = (T)VTK_UNSIGNED_CHAR_MAX; //alpha
 
-          break;
+            break;
 
-          }
+            }
 
           // scale vtkFloatingPointType if the user requested this
           if (scaleFactor != 1 && op != VTK_TENS_COLOR_ORIENTATION 
-              && op != VTK_TENS_COLOR_MODE)
-          {
+            && op != VTK_TENS_COLOR_MODE)
+            {
             *outPtr = (T) ((*outPtr) * scaleFactor);
-          }
+            }
         }
-        
+
         outPtr++;
         inPtId++;
         }
@@ -629,6 +651,9 @@ void vtkTensorMathematics::ThreadedExecute(vtkImageData **inData,
     case VTK_TENS_MAX_EIGENVALUE:
     case VTK_TENS_MID_EIGENVALUE:
     case VTK_TENS_MIN_EIGENVALUE:
+    case VTK_TENS_MAX_EIGENVALUE_PROJX:
+    case VTK_TENS_MAX_EIGENVALUE_PROJY:
+    case VTK_TENS_MAX_EIGENVALUE_PROJZ: 
     case VTK_TENS_COLOR_ORIENTATION:
     case VTK_TENS_MODE:
     case VTK_TENS_COLOR_MODE:
@@ -646,20 +671,19 @@ void vtkTensorMathematics::ThreadedExecute(vtkImageData **inData,
 
 }
 
-void  vtkTensorMathematics::FixNegativeEigenvalues(vtkFloatingPointType w[3])
+int vtkTensorMathematics::FixNegativeEigenvalues(vtkFloatingPointType w[3])
 {
-       if(w[2]<0) {
-            w[2] = 0;
-            w[1] += (-w[2]);
-            w[0] += (-w[2]);
-        }
-        if (w[1]<0) {
-            w[1] = 0;
-            w[0] += (-w[1]);
-        }
-        if (w[0] <0) {
-            w[0]=0;
-        }    
+  if(w[2]<0) {
+     w[1] += (-w[2]);
+     w[0] += (-w[2]);
+     w[2] = 0;
+  }
+     
+  if (!((w[0]>= w[1] && w[0]>= w[2]) &&
+      (w[1]>=w[2]) ))  {
+        return -1;
+  }
+  return 0;
 }
 
 vtkFloatingPointType vtkTensorMathematics::Trace(vtkFloatingPointType D[3][3])
@@ -675,7 +699,11 @@ vtkFloatingPointType vtkTensorMathematics::Determinant(vtkFloatingPointType D[3]
 
 vtkFloatingPointType vtkTensorMathematics::RelativeAnisotropy(vtkFloatingPointType w[3]) 
 {
-  vtkFloatingPointType trace = w[0]+w[1]+w[2] + VTK_EPS;   
+  vtkFloatingPointType trace = w[0]+w[1]+w[2];   
+  
+  if (trace < VTK_EPS)
+     trace = trace + VTK_EPS;
+  
   return ((0.70710678)*
                 (sqrt((w[0]-w[1])*(w[0]-w[1]) + 
                       (w[2]-w[1])*(w[2]-w[1]) +
@@ -684,8 +712,11 @@ vtkFloatingPointType vtkTensorMathematics::RelativeAnisotropy(vtkFloatingPointTy
 
 vtkFloatingPointType vtkTensorMathematics::FractionalAnisotropy(vtkFloatingPointType w[3])
 {
-  vtkFloatingPointType norm = sqrt(w[0]*w[0]+ w[1]*w[1] +  w[2]*w[2])+ VTK_EPS; 
-
+  vtkFloatingPointType norm = sqrt(w[0]*w[0]+ w[1]*w[1] +  w[2]*w[2]); 
+   
+   if (norm < VTK_EPS)
+      norm = norm + VTK_EPS;
+  
   return ((0.70710678)*
                 (sqrt((w[0]-w[1])*(w[0]-w[1]) + 
                       (w[2]-w[1])*(w[2]-w[1]) +
@@ -694,17 +725,27 @@ vtkFloatingPointType vtkTensorMathematics::FractionalAnisotropy(vtkFloatingPoint
 
 vtkFloatingPointType vtkTensorMathematics::LinearMeasure(vtkFloatingPointType w[3])
 {
-  return (w[0] - w[1])/(w[0]+VTK_EPS);
+  if (w[0] < VTK_EPS) 
+     return (w[0] - w[1])/(w[0]+VTK_EPS);
+  else
+     return (w[0] - w[1])/(w[0]);
+
 }
 
 vtkFloatingPointType vtkTensorMathematics::PlanarMeasure(vtkFloatingPointType w[3])
 {
-  return (w[1] - w[2])/(w[0]+VTK_EPS);
+  if (w[0] < VTK_EPS)
+     return (w[1] - w[2])/(w[0]+VTK_EPS);
+  else
+     return (w[1] - w[2])/(w[0]);
 }
 
 vtkFloatingPointType vtkTensorMathematics::SphericalMeasure(vtkFloatingPointType w[3])
 {
-  return (w[2])/(w[0]+VTK_EPS);
+  if (w[0] < VTK_EPS)
+     return (w[2])/(w[0]+VTK_EPS);
+  else
+     return  (w[2])/(w[0]);
 }
 
 
@@ -723,6 +764,21 @@ vtkFloatingPointType vtkTensorMathematics::MinEigenvalue(vtkFloatingPointType w[
   return w[2];
 }
 
+vtkFloatingPointType vtkTensorMathematics::MaxEigenvalueProjectionX(vtkFloatingPointType **v, vtkFloatingPointType w[3]) 
+{
+  return fabs(w[0]*v[0][0]);
+}
+
+vtkFloatingPointType vtkTensorMathematics::MaxEigenvalueProjectionY(vtkFloatingPointType **v, vtkFloatingPointType w[3]) 
+{
+  return fabs(w[0]*v[1][0]);
+}
+
+vtkFloatingPointType vtkTensorMathematics::MaxEigenvalueProjectionZ(vtkFloatingPointType **v, vtkFloatingPointType w[3]) 
+{
+  return fabs(w[0]*v[2][0]);
+}
+
 vtkFloatingPointType vtkTensorMathematics::Mode(vtkFloatingPointType w[3])
 {
 
@@ -733,7 +789,8 @@ vtkFloatingPointType vtkTensorMathematics::Mode(vtkFloatingPointType w[3])
                   (w[2] - mean)*(w[2] - mean))/3;
   norm = sqrt(norm);
   norm = norm*norm*norm;
-  norm += VTK_EPS;
+  if (norm < VTK_EPS)
+     norm += VTK_EPS;
   // multiply by sqrt 2: range from -1 to 1
   return  (M_SQRT2*((w[0] + w[1] - 2*w[2]) * 
                          (2*w[0] - w[1] - w[2]) * 
@@ -744,8 +801,8 @@ void vtkTensorMathematics::ColorByMode(vtkFloatingPointType w[3], vtkFloatingPoi
                                                        vtkFloatingPointType &G, vtkFloatingPointType &B)
 {
   // see PhD thesis, Gordon Kindlmann
-  // Compute FA for amount of gray 
-  vtkFloatingPointType fa = vtkTensorMathematics::FractionalAnisotropy(w);      
+  // Compute FA for amount of gray
+  vtkFloatingPointType fa = vtkTensorMathematics::FractionalAnisotropy(w);
   // Compute mode
   vtkFloatingPointType mode = vtkTensorMathematics::Mode(w);
   // Calculate RGB value for this mode and FA
@@ -755,30 +812,28 @@ void vtkTensorMathematics::ColorByMode(vtkFloatingPointType w[3], vtkFloatingPoi
 
 void vtkTensorMathematics::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageTwoInputFilter::PrintSelf(os,indent);
+  this->Superclass::PrintSelf(os,indent);
 
   os << indent << "Operation: " << this->Operation << "\n";
 }
 
 // Colormap: convert our mode value (-1..1) to RGB
 void vtkTensorMathematics::ModeToRGB(double Mode, double FA,
-                                     double &R, double &G, double &B) 
+                                     double &R, double &G, double &B)
 {
 
    double Hue, frac;
    int sextant;
 
    // Mode is clamped to [-1,1]
-   Mode = (Mode < -1
-           ? -1
-           : (Mode > 1
-              ? 1
+   Mode = (Mode < -0.9999
+           ? -0.9999
+           : (Mode > 0.9999
+              ? 0.9999
               : Mode));
    // invert mode to get desired colormap effect
    // negative (blue) up to positive (red)
    Mode = -Mode;
-   // Mode is limited to [-1,1)
-   Mode = (1 == Mode ? -1 : Mode);
    // Hue is in [0, 6)
    Hue = 3*(Mode+1);
    // to avoid using last two sextants
@@ -815,12 +870,12 @@ inline int vtkTensorMathematics::TeemEigenSolver(double **m, double *w, double *
      t[4] = m[1][1];
      t[5] = m[1][2];
      t[6] = m[2][2];
-       
+
     if (v == NULL)
         res=tenEigensolve_d(eval,NULL,t);
-    else 
+    else
          res=tenEigensolve_d(eval,evec,t);
-         
+
     //Asigned output eigenvalues
     if (v != NULL) {
         v[0][0] = evec[0]; v[1][0] = evec[1]; v[2][0] = evec[2];
@@ -830,6 +885,6 @@ inline int vtkTensorMathematics::TeemEigenSolver(double **m, double *w, double *
     w[0]=eval[0];
     w[1]=eval[1];
     w[2]=eval[2];
-    return res;    
+    return res;
 
-}      
+}

@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMLocalSegment.tcl,v $
-#   Date:      $Date: 2006/03/06 21:21:57 $
-#   Version:   $Revision: 1.65.2.2.2.1 $
+#   Date:      $Date: 2006/04/26 19:05:58 $
+#   Version:   $Revision: 1.65.2.2.2.2 $
 # 
 #===============================================================================
 # FILE:        EMLocalSegment.tcl
@@ -266,7 +266,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.65.2.2.2.1 $} {$Date: 2006/03/06 21:21:57 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.65.2.2.2.2 $} {$Date: 2006/04/26 19:05:58 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -319,8 +319,8 @@ proc EMSegmentInit {} {
     set EMSegment(Alpha)          0.7 
     set EMSegment(SmWidth)        11
     set EMSegment(SmSigma)        5 
+    set EMSegment(RegistrationInterpolationType) 0 
     set EMSegment(DisableMultiThreading)  0 
-
 
     set EMSegment(SegmentationBoundaryMin,0) 1
     set EMSegment(SegmentationBoundaryMin,1) 1
@@ -2806,7 +2806,7 @@ proc  EMSegmentCheckCurrentClassParameters {Class {WarningFlag 1}} {
 
     if {$EMSegment(Cattrib,$Class,LocalPriorWeight)} {
     if {[EMSegmentProbabilityDataExists $Class] == 0} {
-        if {[DevYesNo "Prob Data Weight of Class $EMSegment(Cattrib,$Class,Label) is set to $EMSegment(Cattrib,$Class,LocalPriorWeight).However, no spatial priors are defined for this class or its sub-classes. Can Prob Data Weight be set to 0.0 ?"] !=  "yes" } {
+        if {[DevYesNo "Prob Data Weight of Class with Label $EMSegment(Cattrib,$Class,Label) is set to $EMSegment(Cattrib,$Class,LocalPriorWeight).However, no spatial priors are defined for this class or its sub-classes. Can Prob Data Weight be set to 0.0 ?"] !=  "yes" } {
         return 0
         } 
         set EMSegment(Cattrib,$Class,LocalPriorWeight) 0.0
