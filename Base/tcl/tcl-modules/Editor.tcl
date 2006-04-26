@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Editor.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:33 $
-#   Version:   $Revision: 1.83.2.1 $
+#   Date:      $Date: 2006/04/26 20:05:27 $
+#   Version:   $Revision: 1.83.2.1.2.1 $
 # 
 #===============================================================================
 # FILE:        Editor.tcl
@@ -105,7 +105,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.83.2.1 $} {$Date: 2005/12/20 22:54:33 $}]
+        {$Revision: 1.83.2.1.2.1 $} {$Date: 2006/04/26 20:05:27 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -122,7 +122,7 @@ proc EditorInit {} {
     set Editor(nameWorking) Working
     set Editor(nameComposite) Composite
     set Editor(eventManager)  {  }
-    set Editor(fileformat) "Standard"
+    set Editor(fileformat) nhdr
 
     # add display settings for editor here: 
     # whether to keep the label layer visible at all times
@@ -783,35 +783,93 @@ proc EditorBuildGUI {} {
     #-------------------------------------------
     # Volumes->TabbedFrame->File->Vol->Prefix
     #-------------------------------------------
-    set f $fVolumes.fTabbedFrame.fFile.fVol.fPrefix
+    frame $fVolumes.fTabbedFrame.fFile.fVol.fSave -bg $Gui(activeWorkspace)
+    pack $fVolumes.fTabbedFrame.fFile.fVol.fSave -side top -padx 0 -pady $Gui(pad)
+
+    set f $fVolumes.fTabbedFrame.fFile.fVol.fSave
+    foreach frame "Left Right" {
+        frame $f.f$frame -bg $Gui(activeWorkspace)
+        pack $f.f$frame -side left -padx 0 
+        #-pady $Gui(pad)
+    }
+    DevAddLabel $f.fLeft.lPrefix "     Filename Prefix:" 
+    pack $f.fLeft.lPrefix -side top -padx 3 -pady 3 -anchor w
+    eval {entry $f.fRight.ePrefix -textvariable Editor(prefixSave)} $Gui(WEA)
+    TooltipAdd $f.fRight.ePrefix "To save the Volume, enter the prefix here or just click Save."
+    pack $f.fRight.ePrefix -side top -pady 3 -padx 5 -anchor w
+
+    #set f $fVolumes.fTabbedFrame.fFile.fVol.fPrefix
     
-    eval {label $f.l -text "Filename Prefix:"} $Gui(WLA)
-    eval {entry $f.e -textvariable Editor(prefixSave)} $Gui(WEA)
-    TooltipAdd $f.e "To save the Volume, enter the prefix here or just click Save."
-    pack $f.l -padx 3 -side left
-    pack $f.e -padx 3 -side left -expand 1 -fill x
+    #eval {label $f.l -text "Filename Prefix:"} $Gui(WLA)
+    #eval {entry $f.e -textvariable Editor(prefixSave)} $Gui(WEA)
+    #TooltipAdd $f.e "To save the Volume, enter the prefix here or just click Save."
+    #pack $f.l -padx 3 -side left
+    #pack $f.e -padx 3 -side left -expand 1 -fill x
 
     #-------------------------------------------
     # Volumes->TabbedFrame->File->Vol->Btns
     #-------------------------------------------
-    set f $fVolumes.fTabbedFrame.fFile.fVol.fBtns
+    #set f $fVolumes.fTabbedFrame.fFile.fVol.fBtns
     
-    eval {label $f.l -text "Pick Format"} $Gui(WLA)
-    eval {menubutton $f.mbFormat -text $Editor(fileformat) -relief raised \
-        -bd 2 -width 12 -menu $f.mbFormat.m} $Gui(WMBA)
-    eval {menu $f.mbFormat.m} $Gui(WMA)
-    set formatMenu $f.mbFormat.m
-    $formatMenu add command -label "Standard" \
-        -command "set Editor(fileformat) Standard; \
-                  $f.mbFormat config -text Standard"
-    $formatMenu add command -label ".pts" \
-        -command "set Editor(fileformat) .pts; \
-                  $f.mbFormat config -text .pts"
+    #eval {label $f.l -text "Pick Format"} $Gui(WLA)
+    #eval {menubutton $f.mbFormat -text $Editor(fileformat) -relief raised \
+    #    -bd 2 -width 12 -menu $f.mbFormat.m} $Gui(WMBA)
+    #eval {menu $f.mbFormat.m} $Gui(WMA)
+    #set formatMenu $f.mbFormat.m
+    #$formatMenu add command -label "Standard" \
+    #    -command "set Editor(fileformat) Standard; \
+    #              $f.mbFormat config -text Standard"
+    #$formatMenu add command -label ".pts" \
+    #    -command "set Editor(fileformat) .pts; \
+    #              $f.mbFormat config -text .pts"
 
-    eval {button $f.bWrite -text "Save" -width 5 \
-        -command "EditorWriteVolume"} $Gui(WBA)
-    TooltipAdd $f.bWrite "Save the Volume."
-    pack  $f.l $f.mbFormat $f.bWrite -side left -padx $Gui(pad)    
+    #eval {button $f.bWrite -text "Save" -width 5 \
+    #    -command "EditorWriteVolume"} $Gui(WBA)
+    #TooltipAdd $f.bWrite "Save the Volume."
+    #pack  $f.l $f.mbFormat $f.bWrite -side left -padx $Gui(pad)    
+
+    eval {label $f.fLeft.lFormat -text "         Pick Format:"} $Gui(WLA)
+    pack $f.fLeft.lFormat -side top -padx $Gui(pad) -pady 2  -anchor w
+    
+    eval {menubutton $f.fRight.mbFormat -text "NRRD(.nhdr)" -relief raised \
+              -bd 2 -width 12 -menu $f.fRight.mbFormat.m} $Gui(WMBA)
+    eval {menu $f.fRight.mbFormat.m} $Gui(WMA)
+    set Editor(formatMenu) $f.fRight.mbFormat     
+    
+    #  Add menu items
+    foreach FileType {{Standard} {.pts} {hdr} {nrrd} {nhdr} {mhd} {mha} {nii} {img} {img.gz} {vtk}} \
+        name {{Headerless} {.pts} {Analyze (.hdr)} {NRRD(.nrrd)} {NRRD(.nhdr)} \
+                  {Meta (.mhd)} {Meta (.mha)} {Nifti (.nii)} {Nifti (.img)} {Nifti (.img.gz)} {VTK (.vtk)}} { 
+                      set Editor($FileType) $name
+                      $f.fRight.mbFormat.m add command -label $name \
+                          -command "EditorExportSetFileType $FileType"
+                  }  
+   
+    pack $f.fRight.mbFormat -side top -padx 0 -pady 2  -anchor w
+    EditorExportSetFileType nhdr 
+    eval {label $f.fLeft.lComp -text "       Compression:"} $Gui(WLA)
+    pack $f.fLeft.lComp -side top -padx $Gui(pad) -pady 2  -anchor w
+    frame $f.fRight.fComp -bg $Gui(activeWorkspace)
+    pack $f.fRight.fComp -side top -padx 0 -pady 2  -anchor w   
+    foreach value "1 0" text "On Off" width "4 4" {
+        eval {radiobutton $f.fRight.fComp.rComp$value -width $width -indicatoron 0\
+                  -text "$text" -value "$value" -variable Volume(UseCompression) \
+              } $Gui(WCA)
+        pack $f.fRight.fComp.rComp$value -side left -fill x
+    }
+    TooltipAdd $f.fRight.fComp.rComp1 \
+        "Suggest to the Writer to compress the file if the format supports it."
+    TooltipAdd $f.fRight.fComp.rComp0 \
+        "Don't compress the file, even if the format supports it."
+    
+    frame $fVolumes.fTabbedFrame.fFile.fVol.fSaveButton -bg $Gui(activeWorkspace)
+    pack $fVolumes.fTabbedFrame.fFile.fVol.fSaveButton -side top -padx 0 -pady 3
+    
+    eval {button $fVolumes.fTabbedFrame.fFile.fVol.fSaveButton.bWrite -text "Save" -width 5 \
+              -command "EditorWriteVolume"} $Gui(WBA)
+    TooltipAdd $fVolumes.fTabbedFrame.fFile.fVol.fSaveButton.bWrite "Save the Volume."
+    pack $fVolumes.fTabbedFrame.fFile.fVol.fSaveButton.bWrite -side top -padx 2 -pady 2     
+   
 
     ############################################################################
     #                                 Effects
@@ -2483,6 +2541,21 @@ proc EditorSetSaveVolume {} {
     # update File (Save) GUI
     set Editor(prefixSave) [MainFileGetRelativePrefix \
         [Volume($v,node) GetFilePrefix]]
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC EditorExportSetFileType
+# Set Editor(fileformat) and update the save file type menu.
+# .ARGS
+# str fileType the type for the file
+# .END
+#-------------------------------------------------------------------------------
+proc EditorExportSetFileType {fileType} {
+    global Editor Volumes    
+    
+    set Editor(fileformat) $fileType
+    $Editor(formatMenu) config -text $Editor($fileType)
 }
 
 #-------------------------------------------------------------------------------

@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainVolumes.tcl,v $
-#   Date:      $Date: 2006/03/06 21:21:42 $
-#   Version:   $Revision: 1.91.2.2.2.1 $
+#   Date:      $Date: 2006/04/26 20:03:36 $
+#   Version:   $Revision: 1.91.2.2.2.2 $
 # 
 #===============================================================================
 # FILE:        MainVolumes.tcl
@@ -54,7 +54,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.91.2.2.2.1 $} {$Date: 2006/03/06 21:21:42 $}]
+    {$Revision: 1.91.2.2.2.2 $} {$Date: 2006/04/26 20:03:36 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -540,7 +540,7 @@ proc MainVolumesWrite {v prefix} {
             } else {
                 Volume($v,node) SetLittleEndian 0
             }
-
+            Volume($v,node) SetName [Volume($v,node) GetFilePrefix]
             # Write volume data
             set Gui(progressText) "Writing [Volume($v,node) GetName]"
             puts "Writing '$fileFull' ..."
@@ -575,6 +575,13 @@ proc MainVolumesWrite {v prefix} {
             volumeTree RemoveAllItems
             volumeTree Delete
             puts "Saved MRML file: $filename"
+            # Reset the pathnames to be relative to Mrml(dir)
+            Volume($v,node) SetFilePrefix $filePrefix
+            if {$::Module(verbose)} {
+                puts "MainVolumesWrite: setting full prefix to $fileFull"
+            }
+            Volume($v,node) SetFullPrefix $fileFull
+            
         }
         ".pts" {
             # Determine if littleEndian
@@ -583,7 +590,7 @@ proc MainVolumesWrite {v prefix} {
             } else {
                 Volume($v,node) SetLittleEndian 0
             }
-
+            
             # Write volume data
             set Gui(progressText) "Writing [Volume($v,node) GetName]"
             puts "Writing '$fileFull.pts' ..."
@@ -592,16 +599,57 @@ proc MainVolumesWrite {v prefix} {
             set order [Volume($u,node) GetScanOrder]
             set asl [Slicer GetActiveSlice]
             Volume($v,vol) WritePTSFromStack $fileFull.pts $rasijk $order $asl
+   
+            # Reset the pathnames to be relative to Mrml(dir)
+            Volume($v,node) SetFilePrefix $filePrefix
+            if {$::Module(verbose)} {
+                puts "MainVolumesWrite: setting full prefix to $fileFull"
+            }
+            Volume($v,node) SetFullPrefix $fileFull
+            
+        }
+        default {
+            Volume($v,node) SetFilePattern "%s"       
+            # Determine if littleEndian
+            if {$tcl_platform(byteOrder) == "littleEndian"} {
+                Volume($v,node) SetLittleEndian 1
+            } else {
+                Volume($v,node) SetLittleEndian 0
+            }
+            Volume($v,node) SetFileType "Generic"  
+            Volume($v,node) SetName [Volume($v,node) GetFilePrefix]
+
+            set newFilePrefix $prefix
+            #append newFilePrefix . Volumes(extentionSave)             
+            append newFilePrefix . $Editor(fileformat)             
+            Volume($v,node) SetFilePrefix $newFilePrefix
+ 
+            set newFullPrefix [Volume($v,node) GetFullPrefix]
+            #append newFullPrefix . Volumes(extentionSave)   
+            append newFullPrefix . $Editor(fileformat)             
+            Volume($v,node) SetFullPrefix  $newFullPrefix
+            
+            #catch "export_matrix Delete"
+            vtkMatrix4x4 export_matrix
+            eval export_matrix DeepCopy [Volume($v,node) GetRasToIjkMatrix]
+
+            #catch "export_iwriter Delete"
+            vtkITKImageWriter export_iwriter 
+            export_iwriter SetInput [Volume($v,vol) GetOutput]
+            export_iwriter SetFileName [Volume($v,node) GetFilePrefix]
+            export_iwriter SetRasToIJKMatrix export_matrix
+            export_iwriter SetUseCompression $Volume(UseCompression)
+                      
+            # Write volume data
+            set Gui(progressText) "Writing [Volume($v,node) GetName]"
+            puts "Writing '$newFullPrefix' ..."
+            export_iwriter Write
+            export_iwriter Delete
+            export_matrix Delete
+            puts " ...done."    
         }
     }
-
-    # Reset the pathnames to be relative to Mrml(dir)
-    Volume($v,node) SetFilePrefix $filePrefix
-    if {$::Module(verbose)} {
-        puts "MainVolumesWrite: setting full prefix to $fileFull"
-    }
-    Volume($v,node) SetFullPrefix $fileFull
-
+    MainUpdateMRML
     # Wrote it, so not dirty (changed since read/wrote)
     set Volume($v,dirty) 0
 }

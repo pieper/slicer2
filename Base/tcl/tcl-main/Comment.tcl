@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Comment.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:25 $
-#   Version:   $Revision: 1.21.2.1 $
+#   Date:      $Date: 2006/04/26 20:01:18 $
+#   Version:   $Revision: 1.21.2.1.2.1 $
 # 
 #===============================================================================
 # FILE:        Comment.tcl
@@ -230,20 +230,26 @@ proc CommentFile {filename {verbose 0}} {
         "CommentFile: $errmsg"
         exit
     }
-    puts $fid "#=auto=========================================================================="
-    # it's a tcl file, so last arg is 1
-    PrintCopyright $fid 1
-    puts $fid "#==============================================================================="
-    puts $fid "# FILE:        [file tail $filename]"
-    puts $fid "# PROCEDURES:  "
-    foreach i $Comments(idList) {
-        puts -nonewline $fid "#   $Comments($i,proc)"
-        foreach a $Comments($i,argList) {
-            puts -nonewline $fid " $Comments($i,$a,name)"
+
+    if { [string range $data 0 1] != "#!" } {
+        # only add the comment to the start if this isn't meant to be an executable script
+
+        puts $fid "#=auto=========================================================================="
+        # it's a tcl file, so last arg is 1
+        PrintCopyright $fid 1
+        puts $fid "#==============================================================================="
+        puts $fid "# FILE:        [file tail $filename]"
+        puts $fid "# PROCEDURES:  "
+        foreach i $Comments(idList) {
+            puts -nonewline $fid "#   $Comments($i,proc)"
+            foreach a $Comments($i,argList) {
+                puts -nonewline $fid " $Comments($i,$a,name)"
+            }
+            puts $fid ""
         }
-        puts $fid ""
+        puts $fid "#==========================================================================auto="
     }
-    puts $fid "#==========================================================================auto="
+
     puts -nonewline $fid $data
     if {[catch {close $fid} errorMessage]} {
        tk_messageBox -type ok -message "The following error occurred saving a file: ${errorMessage}" 
