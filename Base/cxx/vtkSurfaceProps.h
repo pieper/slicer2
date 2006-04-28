@@ -7,13 +7,16 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSurfaceProps.h,v $
-  Date:      $Date: 2006/04/13 19:55:56 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/04/28 19:33:41 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 // .NAME vtkSurfaceProps - no desc
 // .SECTION Description
 // vtkSurfaceProps is used for measure
+// .SECTION Feature
+// If you do not EXPLICITELY update the pipeline before this filter
+// expect the unexpected...
 
 #ifndef __vtkSurfaceProps_h
 #define __vtkSurfaceProps_h
