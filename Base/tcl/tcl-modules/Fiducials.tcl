@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Fiducials.tcl,v $
-#   Date:      $Date: 2006/03/29 22:01:05 $
-#   Version:   $Revision: 1.65.2.5 $
+#   Date:      $Date: 2006/04/28 22:12:10 $
+#   Version:   $Revision: 1.65.2.6 $
 # 
 #===============================================================================
 # FILE:        Fiducials.tcl
@@ -96,7 +96,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.65.2.5 $} {$Date: 2006/03/29 22:01:05 $}]
+        {$Revision: 1.65.2.6 $} {$Date: 2006/04/28 22:12:10 $}]
     
     # Initialize module-level variables
     set Fiducials(renList) "viewRen matRen"
@@ -152,13 +152,14 @@ To delete a Fiducial: point to the Fiducial that you want to delete with the mou
 NOTE: it is important to press 'p' and not 'P', 'd' and not 'D' and 'q' and not 'Q'. "
 
 set Fiducials(help) "
+Short cuts: <B>p</B> to create, <B>q</B> to select, <B>d</B> to delete. 
+<BR>
 <BR> Fiducial points can be added by the user on any models or any actor in the 2D slice screens or the 3D screens. Fiducial points are useful for measuring distances and angles, as well as for other modules (i.e slice reformatting)
 <BR>
 <BR> Fiducial points are grouped in lists. Each Fiducial list has a name. You have to select a list before creating a Fiducial. 
 If you want to create a new list, go to the Fiducials module.
 <BR>
 <BR> You can add Fiducial points on the volume in the 2D slice windows or on any models in the 3D View. Here is how to do it:
-<BR>
 <BR> <LI><B>To create a Fiducial point </B>: point to the location with the mouse and press 'p' on the keyboard
 <BR> <LI><B> To select/unselect a Fiducial </B>: point to the Fiducial that you want to select/unselect with the mouse and press 'q' on the keyboard. You can also select/unselect Fiducials points in the scrolled textbox.
 <BR> <LI> <B> To delete a Fiducial </B>: point to the Fiducial that you want to delete with the mouse and press 'd' on the keyboard. "
@@ -201,18 +202,50 @@ proc FiducialsDescriptionActiveUpdated {} {
     global Fiducials Point
 
     set listExists [array names Fiducials $Fiducials(activeListID),pointIdList]
-    if { $listExists=="" } { return }
 
-    if {[lsearch $Fiducials($Fiducials(activeListID),selectedPointIdList) $Fiducials(activePointID)] != -1} { 
-
-        Point($Fiducials(activePointID),node) SetName $Fiducials(activeName)
-        Point($Fiducials(activePointID),node) SetDescription $Fiducials(activeDescription)
-        if {$::Module(verbose)} {
-            puts "\n\nFiducialsDescriptionActiveUpdated: about to set Fiducials($Fiducials(activeListID),selectedPointIdList) to empty list...\n"
-        }
-        set Fiducials($Fiducials(activeListID),selectedPointIdList) ""
-        FiducialsUpdateMRML
+    if {$::Module(verbose)} {
+        puts "FiducialsDescriptionActiveUpdated: active list id = $Fiducials(activeListID), active point id = $Fiducials(activePointID)"
+        puts "FiducialsDescriptionActiveUpdated: list exists = $listExists"
     }
+
+    if { $listExists == "" } { 
+        if {$::Module(verbose)} {
+            puts "FiducialsDescriptionActiveUpdated: list exists is empty, returning"
+        }
+        return 
+    }
+
+    if {$::Module(verbose)} {
+        puts "FiducialsDescriptionActiveUpdated: changing name in the node to $Fiducials(activeName), description to $Fiducials(activeDescription)"
+    }
+    # find and rename the entries for this fiducial
+    set counter 0
+    foreach cb  $Fiducials(scrollActiveList) {
+        # get the current name to use
+        set menu [lindex $Fiducials(mbActiveList) $counter]    
+        set name [$menu cget -text]
+        # if the name is valid
+        if {[lsearch $Fiducials(listOfNames) $name] != -1} {
+            # find the old named one and delete it
+            set cbindex [$cb index "[Point($Fiducials(activePointID),node) GetName]"]
+            if {$cbindex != -1} {
+                if {$::Module(verbose) && [regexp ".*Fiducials.*" $cb] != 0} {
+                    puts "Found point $Fiducials(activePointID) in the menu $cb at index $cbindex, renaming"
+                }
+                $cb buttonrename $cbindex $Fiducials(activeName)
+            } else {
+                puts "FiducialsDescriptionActiveUpdated: didn't find point $Fiducials(activePointID) in the menu $cb"
+            }
+        }
+    }
+    
+    # now change the node name and description
+    Point($Fiducials(activePointID),node) SetName $Fiducials(activeName)
+    Point($Fiducials(activePointID),node) SetDescription $Fiducials(activeDescription)
+    
+    FiducialsUpdateMRML
+    # now call this to update the list of fiducials in the data module so the name change propagates
+    DataUpdateMRML
 }
 
 #-------------------------------------------------------------------------------
@@ -1440,7 +1473,7 @@ proc FiducialsUpdateMRML {} {
                     $cb add "[Point($pid,node) GetName]" -text "[Point($pid,node) GetName]" \
                         -command "FiducialsSelectionFromCheckbox $menu $cb no $pid"
                     if {$::Module(verbose)} {
-                        puts "FiducialsUpdateMrml: added command for point $pid:\n\tFiducialsSelectionFromCheckbox menu = $menu, cb = $cb no , pid = $pid"
+                        puts "FiducialsUpdateMrml: didn't find [Point($pid,node) GetName] via cb index,\n\tadded command for point $pid:\n\tFiducialsSelectionFromCheckbox menu = $menu, cb = $cb no , pid = $pid"
                     }
                 } else { 
                 }
