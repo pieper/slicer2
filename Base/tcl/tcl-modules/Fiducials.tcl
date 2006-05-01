@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Fiducials.tcl,v $
-#   Date:      $Date: 2006/04/28 22:12:10 $
-#   Version:   $Revision: 1.65.2.6 $
+#   Date:      $Date: 2006/05/01 21:45:06 $
+#   Version:   $Revision: 1.65.2.7 $
 # 
 #===============================================================================
 # FILE:        Fiducials.tcl
@@ -96,7 +96,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.65.2.6 $} {$Date: 2006/04/28 22:12:10 $}]
+        {$Revision: 1.65.2.7 $} {$Date: 2006/05/01 21:45:06 $}]
     
     # Initialize module-level variables
     set Fiducials(renList) "viewRen matRen"
@@ -2138,9 +2138,9 @@ proc FiducialsDeletePoint {fid pid {noUpdate 0}} {
         }
     }
     if { [FiducialsUseTextureText] } {
-        Point($pid,mapper) Delete
+        catch "Point($pid,mapper) Delete"
     }
-    Point($pid,text) Delete
+    catch "Point($pid,text) Delete"
 
     unset Point($pid,actor)
     unset Point($pid,cellId)
