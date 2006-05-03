@@ -644,12 +644,12 @@ puts "uploadFlag = $uploadFlag"
             }
             default { 
                 catch "exec curl --connect-timeout 120 --show-error --upload-file $curlfile $curldest" error
-        puts $error
+                puts $error
             }
         }
         puts "See http://www.na-mic.org/Slicer/Download, in the $uploadFlag directory, for the uploaded file."
-#    puts "curlfile is $curlfile"
-#    puts "curldest is $curldest"
+        # puts "curlfile is $curlfile"
+        # puts "curldest is $curldest"
     } else {
         puts "Archive complete: ${curlfile}"
     }
