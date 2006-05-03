@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainViewer.tcl,v $
-#   Date:      $Date: 2006/05/03 18:56:28 $
-#   Version:   $Revision: 1.39 $
+#   Date:      $Date: 2006/05/03 20:39:21 $
+#   Version:   $Revision: 1.40 $
 # 
 #===============================================================================
 # FILE:        MainViewer.tcl
@@ -39,7 +39,7 @@ proc MainViewerInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainViewer \
-    {$Revision: 1.39 $} {$Date: 2006/05/03 18:56:28 $}]
+    {$Revision: 1.40 $} {$Date: 2006/05/03 20:39:21 $}]
 
     # Props
     set Gui(midHeight) 1
@@ -421,7 +421,7 @@ proc MainViewerSetMode {{mode ""} {verbose ""}} {
         if {$mode == "Normal" || $mode == "Quad256"  || $mode == "Quad512" \
             || $mode == "3D" || $mode == "Single512"
             || $mode == "Single512COR" || $mode == "Single512SAG" 
-            || $mode == "MRT"} {
+            || $mode == "MRT" || $mode == "MRT640x480"} {
             set View(mode) $mode
         } else {
             if {$::Module(verbose)} { puts "MainViewerSetMode: invalid mode $mode" }
@@ -598,6 +598,26 @@ proc MainViewerSetMode {{mode ""} {verbose ""}} {
                 MainViewerAnno $s 256
             }
         }
+        "MRT640x480" {            
+puts "MRT 640 by 480 with 480^2 3d, and 160^2 2d"
+            pack $f.fSlice0 $f.fSlice1 $f.fSlice2  -in $Gui(fBot) -side top 
+            pack $Gui(fTop) -side left -anchor n
+            pack $Gui(fBot) -side right -anchor n
+            pack $f.fViewWin -in $Gui(fTop) -side top -anchor n
+
+            wm geometry .tViewer 640x480
+            $Gui(fViewWin) config -width 480 -height 480
+            $Gui(fSl0Win) config -width 160 -height 160
+            $Gui(fSl1Win) config -width 160 -height 160
+            $Gui(fSl2Win) config -width 160 -height 160  
+
+            MainViewerAddViewsSeparation 160 160
+
+            foreach s $Slice(idList) {
+                raise $Gui(fSlice$s).fThumb
+                MainViewerAnno $s 160
+            }
+        }
         "default" {
             puts "Warning: no defined geometry for view mode $View(mode)"
         }
@@ -642,6 +662,11 @@ proc MainViewerSetMode {{mode ""} {verbose ""}} {
         foreach s $Slice(idList) {
             Slicer SetDouble $s 0
             Slicer SetCursorPosition $s 128 128
+        }
+    } elseif {$View(mode) == "MRT640x480"} {
+        foreach s $Slice(idList) {
+            Slicer SetDouble $s 2
+            Slicer SetCursorPosition $s 80 80
         }
     } else {
         puts "Warning: no slice size adjustment for view mode $View(mode)"

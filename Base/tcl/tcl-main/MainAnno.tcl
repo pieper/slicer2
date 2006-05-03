@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainAnno.tcl,v $
-#   Date:      $Date: 2006/03/03 22:52:41 $
-#   Version:   $Revision: 1.27 $
+#   Date:      $Date: 2006/05/03 20:39:20 $
+#   Version:   $Revision: 1.28 $
 # 
 #===============================================================================
 # FILE:        MainAnno.tcl
@@ -43,7 +43,7 @@ proc MainAnnoInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainAnno \
-        {$Revision: 1.27 $} {$Date: 2006/03/03 22:52:41 $}]
+        {$Revision: 1.28 $} {$Date: 2006/05/03 20:39:20 $}]
 
     # Preset Defaults
     set Module(Anno,presets) "box='1' axes='0' outline='0' letters='1' cross='0'\
@@ -88,6 +88,9 @@ hashes='1' mouse='1'"
     set Anno(mouseList) "cur1 cur2 cur3 msg curBack curFore"
     set Anno(y256) "237 219 201 40 22 4"
     set Anno(y512) "492 474 456 40 22 4"
+    # for MRT size
+    set Anno(y160) "140 123 105 40 22 4"
+    set Anno(y480) "460 443 423 40 22 4"
 
     # Orient anno: top bot left right
     #---------------------------------------------
@@ -96,6 +99,11 @@ hashes='1' mouse='1'"
     set Anno(orient,x512) "258 258 496 1"
     set Anno(orient,y256) "240 4 131 131"
     set Anno(orient,y512) "495 4 259 259"
+    # for MRT
+    set Anno(orient,x160) "78 78 144 1"
+    set Anno(orient,y160) "144 4 82 82"
+    set Anno(orient,x480) "241 241 464 1"
+    set Anno(orient,y480) "464 4 242 242"
 }
 
 #-------------------------------------------------------------------------------
