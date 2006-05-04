@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricSource2.h,v $
-  Date:      $Date: 2006/03/06 21:07:33 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2006/05/04 20:03:01 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
 // .NAME vtkSuperquadricSource2 - create a polygonal superquadric centered 
@@ -28,12 +28,12 @@
 // in "Graphics Gems III", David Kirk, ed., Academic Press, 1992.
 //
 // .SECTION Caveats
-// Resolution means the number of latitude or longitude lines for a complete 
+// Resolution means the number of latitude or longitude lines for a complete
 // superquadric. The resolution parameters are rounded to the nearest 4
-// in phi and 8 in theta.  
+// in phi and 8 in theta.
 //
 // Texture coordinates are not equally distributed around all superquadrics.
-// 
+//
 // The Size and Thickness parameters control coefficients of superquadric
 // generation, and may do not exactly describe the size of the superquadric.
 //
@@ -52,7 +52,7 @@ class VTK_TENSORUTIL_EXPORT vtkSuperquadricSource2 : public vtkPolyDataSource
 {
 public:
   // Description:
-  // Create a default superquadric with a radius of 0.5, non-toroidal, 
+  // Create a default superquadric with a radius of 0.5, non-toroidal,
   // spherical, and centered at the origin.
   static vtkSuperquadricSource2 *New();
 
@@ -91,10 +91,10 @@ public:
   vtkSetClampMacro(Thickness,double,VTK_MIN_SUPERQUADRIC_THICKNESS,1.0);
 
   // Description:
-  // Set/Get Superquadric north/south roundness. 
+  // Set/Get Superquadric north/south roundness.
   // Values range from 0 (rectangular) to 1 (circular) to higher orders.
   vtkGetMacro(PhiRoundness,double);
-  void SetPhiRoundness(double e); 
+  void SetPhiRoundness(double e);
 
   // Description:
   // Set/Get Superquadric east/west roundness.
@@ -113,6 +113,7 @@ protected:
   vtkSuperquadricSource2(int res=16);
   ~vtkSuperquadricSource2() {};
 
+  int Toroidal;
   int AxisOfSymmetry;
   double Thickness;
   double Size;
@@ -130,5 +131,4 @@ private:
 };
 
 #endif
-
 
