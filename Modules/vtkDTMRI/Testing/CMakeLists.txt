@@ -3,7 +3,7 @@ FOREACH(tclfile ${tclfiles})
   STRING(REGEX REPLACE ".*/" "" dtmritestname "${tclfile}")
   STRING(REGEX REPLACE ".*\\\\" "" dtmritestname "${dtmritestname}")
   ADD_TEST("${MODULE_NAME}.${dtmritestname}" "${SLICER_EXECUTABLE}"
-    --agree_to_license
+    --batch
     "${CTEST_SLICER_HOME}/Scripts/ImageRegressionTest.tcl"
     "${tclfile}"
     -D "${CMAKE_CURRENT_SOURCE_DIR}"
