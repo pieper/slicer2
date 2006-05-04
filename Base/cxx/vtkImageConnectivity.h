@@ -7,13 +7,15 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageConnectivity.h,v $
-  Date:      $Date: 2006/04/13 19:29:39 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/05/04 16:48:17 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 // .NAME vtkImageConnectivity - Identify and process islands of similar pixels
 // .SECTION Description
 //  The input data type must be shorts.
+// .SECTION Warning
+// You need to explicitely call Update
 
 #ifndef __vtkImageConnectivity_h
 #define __vtkImageConnectivity_h

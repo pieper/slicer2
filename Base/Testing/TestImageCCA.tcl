@@ -31,6 +31,7 @@ cca SetBackground 155
 #cca SetMinForeground
 #cca SetMaxForeground 
 cca SetLargestIslandSize 15000
+cca Update
 
 vtkImageViewer viewer
 viewer SetInput [cca GetOutput]
