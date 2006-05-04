@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainViewer.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:30 $
-#   Version:   $Revision: 1.35.8.2 $
+#   Date:      $Date: 2006/05/04 19:14:22 $
+#   Version:   $Revision: 1.35.8.2.2.1 $
 # 
 #===============================================================================
 # FILE:        MainViewer.tcl
@@ -39,7 +39,7 @@ proc MainViewerInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainViewer \
-    {$Revision: 1.35.8.2 $} {$Date: 2005/12/20 22:54:30 $}]
+    {$Revision: 1.35.8.2.2.1 $} {$Date: 2006/05/04 19:14:22 $}]
 
     # Props
     set Gui(midHeight) 1
@@ -173,7 +173,9 @@ proc MainViewerBuildGUI {} {
         set Slice($s,lOrient) $f.lOrient
 
         # Show the full controls when the mouse enters the thumbnail
-        bind $f.lOrient <Enter>  "MainViewerShowSliceControls $s"
+        # bind $f.lOrient <Enter>  "MainViewerShowSliceControls $s"
+        bind $f.lOrient <ButtonPress-1> "MainViewerShowSliceControls $s"
+
 
         #-------------------------------------------
         # Slice$s->Controls frame
@@ -268,6 +270,8 @@ proc MainViewerHideSliceControls {} {
     lower $Gui(fSlice0).fControls $Gui(fSlice0).fImage
     lower $Gui(fSlice1).fControls $Gui(fSlice1).fImage
     lower $Gui(fSlice2).fControls $Gui(fSlice2).fImage
+
+    RenderSlices
 }
 
 #-------------------------------------------------------------------------------
@@ -416,7 +420,8 @@ proc MainViewerSetMode {{mode ""} {verbose ""}} {
     if {$mode != ""} {
         if {$mode == "Normal" || $mode == "Quad256"  || $mode == "Quad512" \
             || $mode == "3D" || $mode == "Single512"
-            || $mode == "Single512COR" || $mode == "Single512SAG"} {
+            || $mode == "Single512COR" || $mode == "Single512SAG" 
+            || $mode == "MRT" || $mode == "MRT640x480"} {
             set View(mode) $mode
         } else {
             if {$::Module(verbose)} { puts "MainViewerSetMode: invalid mode $mode" }
@@ -572,6 +577,50 @@ proc MainViewerSetMode {{mode ""} {verbose ""}} {
             }
             MainViewerAnno 1 512
         }
+        "MRT" {
+            pack $f.fSlice1 $f.fSlice2   -in $Gui(fBot) -side top 
+            pack $Gui(fTop) -side left -anchor n
+            pack $Gui(fBot) -side right -anchor n
+            pack $f.fViewWin -in $Gui(fTop) -side top -anchor n
+        
+            # wm geometry .tViewer 768x768
+            # without one slice
+            wm geometry .tViewer 768x512
+            $Gui(fViewWin) config -width 512 -height 512
+            $Gui(fSl1Win) config -width 256 -height 256
+            $Gui(fSl2Win) config -width 256 -height 256            
+            # $Gui(fSl0Win) config -width 256 -height 256
+            
+            MainViewerAddViewsSeparation 256 256
+                
+            foreach s $Slice(idList) {
+                raise $Gui(fSlice$s).fThumb
+                MainViewerAnno $s 256
+            }
+        }
+        "MRT640x480" {            
+puts "MRT 640 by 480 with 480^2 3d, and 160^2 2d"
+            pack $f.fSlice0 $f.fSlice1 $f.fSlice2  -in $Gui(fBot) -side top 
+            pack $Gui(fTop) -side left -anchor n
+            pack $Gui(fBot) -side right -anchor n
+            pack $f.fViewWin -in $Gui(fTop) -side top -anchor n
+
+            wm geometry .tViewer 640x480
+            $Gui(fViewWin) config -width 480 -height 480
+            $Gui(fSl0Win) config -width 160 -height 160
+            $Gui(fSl1Win) config -width 160 -height 160
+            $Gui(fSl2Win) config -width 160 -height 160  
+
+            MainViewerAddViewsSeparation 160 160
+
+            foreach s $Slice(idList) {
+                raise $Gui(fSlice$s).fThumb
+                MainViewerAnno $s 160
+            }
+        }
+        "default" {
+            puts "Warning: no defined geometry for view mode $View(mode)"
+        }
     }
     # Double the slice size in 512 mode
 
@@ -609,7 +658,20 @@ proc MainViewerSetMode {{mode ""} {verbose ""}} {
         set s 1
         Slicer SetDouble $s 1
         Slicer SetCursorPosition $s 256 256
+    } elseif {$View(mode) == "MRT"} {
+        foreach s $Slice(idList) {
+            Slicer SetDouble $s 0
+            Slicer SetCursorPosition $s 128 128
+        }
+    } elseif {$View(mode) == "MRT640x480"} {
+        foreach s $Slice(idList) {
+            Slicer SetDouble $s 2
+            Slicer SetCursorPosition $s 80 80
+        }
+    } else {
+        puts "Warning: no slice size adjustment for view mode $View(mode)"
     }
+        
     
     Slicer Update
 

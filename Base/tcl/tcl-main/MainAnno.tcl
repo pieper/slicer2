@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainAnno.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:26 $
-#   Version:   $Revision: 1.25.2.1 $
+#   Date:      $Date: 2006/05/04 19:13:58 $
+#   Version:   $Revision: 1.25.2.1.2.1 $
 # 
 #===============================================================================
 # FILE:        MainAnno.tcl
@@ -43,7 +43,7 @@ proc MainAnnoInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainAnno \
-        {$Revision: 1.25.2.1 $} {$Date: 2005/12/20 22:54:26 $}]
+        {$Revision: 1.25.2.1.2.1 $} {$Date: 2006/05/04 19:13:58 $}]
 
     # Preset Defaults
     set Module(Anno,presets) "box='1' axes='0' outline='0' letters='1' cross='0'\
@@ -64,6 +64,8 @@ hashes='1' mouse='1'"
     set Anno(numHashes) 5
     set Anno(boxFollowFocalPoint) 1
     set Anno(axesFollowFocalPoint) 0
+    set Anno(useCubeAxes) 0
+    set Anno(cubeAxesRadius) 0.01
     set Anno(letterSize) 0.05
     set Anno(cursorMode) RAS
     set Anno(cursorModePrev) RAS
@@ -86,6 +88,9 @@ hashes='1' mouse='1'"
     set Anno(mouseList) "cur1 cur2 cur3 msg curBack curFore"
     set Anno(y256) "237 219 201 40 22 4"
     set Anno(y512) "492 474 456 40 22 4"
+    # for MRT size
+    set Anno(y160) "140 123 105 40 22 4"
+    set Anno(y480) "460 443 423 40 22 4"
 
     # Orient anno: top bot left right
     #---------------------------------------------
@@ -94,6 +99,11 @@ hashes='1' mouse='1'"
     set Anno(orient,x512) "258 258 496 1"
     set Anno(orient,y256) "240 4 131 131"
     set Anno(orient,y512) "495 4 259 259"
+    # for MRT
+    set Anno(orient,x160) "78 78 144 1"
+    set Anno(orient,y160) "144 4 82 82"
+    set Anno(orient,x480) "241 241 464 1"
+    set Anno(orient,y480) "464 4 242 242"
 }
 
 #-------------------------------------------------------------------------------
@@ -124,8 +134,13 @@ proc MainAnnoBuildVTK {} {
     # Axes
     #---------------------#
     foreach axis "x y z" {
-        vtkLineSource ${axis}Axis
+        if {$Anno(useCubeAxes) == 0} {
+            vtkLineSource ${axis}Axis
             ${axis}Axis SetResolution 10
+        } else {
+            vtkCubeSource ${axis}Axis
+        }
+
         vtkPolyDataMapper ${axis}AxisMapper
             ${axis}AxisMapper SetInput [${axis}Axis GetOutput]
         vtkActor ${axis}AxisActor
@@ -133,17 +148,23 @@ proc MainAnnoBuildVTK {} {
             ${axis}AxisActor SetScale $fov2 $fov2 $fov2
             ${axis}AxisActor SetPickable 0
             [${axis}AxisActor GetProperty] SetColor 1.0 0.0 1.0
-
+            if {$Anno(useCubeAxes)} { [${axis}AxisActor GetProperty] SetOpacity 0.5 }
         MainAddActor ${axis}AxisActor
     }
     set pos  1.2
     set neg -1.2
-    xAxis SetPoint1 $neg 0    0
-    xAxis SetPoint2 $pos 0    0
-    yAxis SetPoint1 0    $neg 0
-    yAxis SetPoint2 0    $pos 0
-    zAxis SetPoint1 0    0    $neg
-    zAxis SetPoint2 0    0    $pos
+    if {$Anno(useCubeAxes) == 0} {
+        xAxis SetPoint1 $neg 0    0
+        xAxis SetPoint2 $pos 0    0
+        yAxis SetPoint1 0    $neg 0
+        yAxis SetPoint2 0    $pos 0
+        zAxis SetPoint1 0    0    $neg
+        zAxis SetPoint2 0    0    $pos
+    } else {
+        xAxis SetBounds $neg $pos -$Anno(cubeAxesRadius) $Anno(cubeAxesRadius) -$Anno(cubeAxesRadius) $Anno(cubeAxesRadius)
+        yAxis SetBounds -$Anno(cubeAxesRadius) $Anno(cubeAxesRadius) $neg $pos -$Anno(cubeAxesRadius) $Anno(cubeAxesRadius)
+        zAxis SetBounds -$Anno(cubeAxesRadius) $Anno(cubeAxesRadius) -$Anno(cubeAxesRadius) $Anno(cubeAxesRadius) $neg $pos
+    }
 
     #---------------------#
     # RAS axis labels
@@ -526,5 +547,29 @@ proc MainAnnoSetPixelDisplayFormat {mode} {
     "full" {        
         set Anno(pixelDispFormat) %f
     } 
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainAnnoUpdateAxesPosition
+# Updates the axes actor position from the current slicer RAS position.
+# If inputs are not set, get the world point from the active slicer.
+# .ARGS
+# float rRas optional world coordinate
+# float aRas optional world coordinate
+# float sRas optional world coordinate
+# .END
+#-------------------------------------------------------------------------------
+proc MainAnnoUpdateAxesPosition { {rRas ""} {aRas ""} {sRas ""} } {
+    global Anno Interactor
+    if {$Anno(axesFollowCrossHairs)} {
+        if {$rRas == "" || $aRas == "" ||  $sRas == ""} {
+            scan [$Interactor(activeSlicer) GetWldPoint] "%g %g %g" rRas aRas sRas 
+        }
+        xAxisActor SetPosition $rRas $aRas $sRas
+        yAxisActor SetPosition $rRas $aRas $sRas
+        zAxisActor SetPosition $rRas $aRas $sRas
+    } else {
+        MainAnnoUpdateFocalPoint
     }
 }
