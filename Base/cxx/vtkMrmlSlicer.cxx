@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:30 $
-  Version:   $Revision: 1.56.2.1 $
+  Date:      $Date: 2006/05/04 19:12:42 $
+  Version:   $Revision: 1.56.2.1.2.1 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -591,58 +591,71 @@ void vtkMrmlSlicer::DeepCopy(vtkMrmlSlicer *src)
 // jc June 2005 - moved the definition from *.h to here
 //----------------------------------------------------------------------------
 void  vtkMrmlSlicer::SetDouble(int s, int yes) {
-  if(this->DrawDoubleApproach == 0)
+    if(this->DrawDoubleApproach == 0)
     {
-      this->DoubleSliceSize[s] = yes;
-      this->BackReformat[s]->SetResolution(256);
-      this->ForeReformat[s]->SetResolution(256);
-      this->LabelReformat[s]->SetResolution(256);
-    }
-  else
-    {
-      this->DoubleSliceSize[s] = 0;
-      vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) this->BackVolume[s]->GetMrmlNode();
-      int *dimension =node->GetDimensions();
-      int resolution;
-      if (dimension[0]>dimension[1]){
-        resolution = dimension[0];
-      }
-      else {
-        resolution= dimension[1];
-      }
-      if(yes == 1)
-    {
-
-          if (resolution>512){
-            this->BackReformat[s]->SetResolution( 1024);
-            this->ForeReformat[s]->SetResolution( 1024);
-            this->LabelReformat[s]->SetResolution(1024);
-          }
-      else
-      if (resolution>256){
-        this->BackReformat[s]->SetResolution( 512);
-        this->ForeReformat[s]->SetResolution( 512);
-        this->LabelReformat[s]->SetResolution(512);
-      }
-      else{
         this->DoubleSliceSize[s] = yes;
         this->BackReformat[s]->SetResolution(256);
         this->ForeReformat[s]->SetResolution(256);
         this->LabelReformat[s]->SetResolution(256);
-      }
     }
-      else
+    else
     {
-      this->BackReformat[s]->SetResolution(256);
-      this->ForeReformat[s]->SetResolution(256);
-      this->LabelReformat[s]->SetResolution(256);
-    }
-    }
-  
-  this->BuildLowerTime.Modified();
-}
-//----------------------------------------------------------------------------
+        this->DoubleSliceSize[s] = 0;
+        vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) this->BackVolume[s]->GetMrmlNode();
+        int *dimension =node->GetDimensions();
+        int resolution;
+        if (dimension[0]>dimension[1])
+        {
+            resolution = dimension[0];
+        }
+        else 
+        {
+            resolution= dimension[1];
+        }
 
+        if(yes == 1)
+        {
+            if (resolution>512)
+            {
+                this->BackReformat[s]->SetResolution( 1024);
+                this->ForeReformat[s]->SetResolution( 1024);
+                this->LabelReformat[s]->SetResolution(1024);
+            }
+            else
+            {
+                if (resolution>256)
+                {
+                    this->BackReformat[s]->SetResolution( 512);
+                    this->ForeReformat[s]->SetResolution( 512);
+                    this->LabelReformat[s]->SetResolution(512);
+                }
+                else
+                {
+                    this->DoubleSliceSize[s] = yes;
+                    this->BackReformat[s]->SetResolution(256);
+                    this->ForeReformat[s]->SetResolution(256);
+                    this->LabelReformat[s]->SetResolution(256);
+                }
+            }
+        }
+        else if (yes == 0)
+        {
+            this->BackReformat[s]->SetResolution(256);
+            this->ForeReformat[s]->SetResolution(256);
+            this->LabelReformat[s]->SetResolution(256);
+        }
+        else if (yes == 2)
+        {
+            //hack for vga mode, 640x480 screen with 160x160 slices
+            this->BackReformat[s]->SetResolution(160);
+            this->ForeReformat[s]->SetResolution(160);
+            this->LabelReformat[s]->SetResolution(160);
+        }
+    }
+    this->BuildLowerTime.Modified();
+}
+
+//----------------------------------------------------------------------------
 void vtkMrmlSlicer::SetNoneVolume(vtkMrmlDataVolume *vol)
 {
   int s;
