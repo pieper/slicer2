@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMLocalSegment.tcl,v $
-#   Date:      $Date: 2006/03/29 20:13:49 $
-#   Version:   $Revision: 1.70 $
+#   Date:      $Date: 2006/05/11 22:05:17 $
+#   Version:   $Revision: 1.71 $
 # 
 #===============================================================================
 # FILE:        EMLocalSegment.tcl
@@ -163,13 +163,13 @@ proc EMSegmentInit {} {
     # Public Version  = 0
     # Private Version = 1
    
-    #if { [catch "package require vtkEMPrivateSegment"] } {
-    #  set EMSegment(SegmentMode) 0
-    #} else {
-    #  puts "Load Private EM-Version"
-    #  set EMSegment(SegmentMode) 1
-    #} 
-    set EMSegment(SegmentMode) 0
+    if { [catch "package require vtkEMPrivateSegment"] } {
+      set EMSegment(SegmentMode) 0
+    } else {
+      puts "Load Private EM-Version"
+      set EMSegment(SegmentMode) 1
+    } 
+    # set EMSegment(SegmentMode) 0
     # If you segment images with EM method defined by EMAtlasBrainClassifier
     set EMSegment(EMAtlasBrainClassifierFlag) 0
 
@@ -269,7 +269,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.70 $} {$Date: 2006/03/29 20:13:49 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.71 $} {$Date: 2006/05/11 22:05:17 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -587,6 +587,16 @@ proc EMSegmentInit {} {
 #-------------------------------------------------------------------------------
 proc EMSegmentBuildGUI {} {
     global Gui EMSegment Module Volume Model
+    # Kilian : This is for my own debugging purposes
+
+    if {[file exists [file join $::env(SLICER_HOME) Modules/vtkEMPrivateSegment]]} {
+    # Add button to Volume Gui so that I do not have to enter it all the time 
+       
+        
+    catch {DevAddButton $Volume(fVolHeader).bKilian "Tumor Default" "set Volume(pixelWidth)  0.78125;set Volume(pixelHeight) 0.78125;set Volume(sliceThickness) 1.0;set Volume(littleEndian) 1;  VolumesSetScanOrder IS" 16}
+        pack $Volume(fVolHeader).bKilian 
+    }
+
     # This has to be done here otherwise reboot does not work correctly
     set EMSegment(DisplaySampleFlag) 0
     # puts "EMSegmentBuildGUI Start"

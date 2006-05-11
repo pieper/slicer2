@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMSegmentAlgorithm.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:34 $
-#   Version:   $Revision: 1.54 $
+#   Date:      $Date: 2006/05/11 22:05:18 $
+#   Version:   $Revision: 1.55 $
 # 
 #===============================================================================
 # FILE:        EMSegmentAlgorithm.tcl
@@ -79,7 +79,12 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass} {
   # puts "EMSegmentSetVtkPrivateSuperClassSetting $SuperClass $EMSegment(Cattrib,$SuperClass,Name)"
   catch { EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) Delete}
   if {$EMSegment(SegmentMode)} {
-    vtkImageEMPrivateSuperClass EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass)      
+
+    vtkImageEMPrivateSuperClass EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass)     
+    EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetParameterInitSubClass $EMSegment(Cattrib,$SuperClass,ParameterInitSubClass)
+    EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetParameterSaveToFile $EMSegment(Cattrib,$SuperClass,ParameterSaveToFile)
+    EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetParameterSetFromFile $EMSegment(Cattrib,$SuperClass,ParameterSetFromFile)
+    EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPredefinedLabelID $EMSegment(Cattrib,$SuperClass,PredefinedLabelID)
   } else {
     vtkImageEMLocalSuperClass EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass)      
   }
