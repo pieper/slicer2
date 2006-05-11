@@ -151,6 +151,7 @@ puts "uploadFlag = $uploadFlag"
         "darwin-ppc" { set target darwin-ppc }
         "redhat7.3" -
         "linux-x86" { set target linux-x86 }
+        "linux-x86_64" { set target linux-x86 }
         "win32" { set target win32 ; set exe .exe}
         default {error "unknown build target $::env(BUILD)"}
     }
@@ -171,7 +172,7 @@ puts "uploadFlag = $uploadFlag"
         } else {
             switch $::env(BUILD) {
                 "solaris8" { set archivedir /tmp }
-                "Darwin" - "darwin-ppc" - "linux-x86" - "redhat7.3" { set archivedir /var/tmp }
+                "Darwin" - "darwin-ppc" - "linux-x86" - "linux-x86_64" - "redhat7.3" { set archivedir /var/tmp }
                 "win32" { set archivedir c:/Temp }
             }
         }
