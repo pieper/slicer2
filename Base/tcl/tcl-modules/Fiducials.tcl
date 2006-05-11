@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Fiducials.tcl,v $
-#   Date:      $Date: 2006/05/11 22:45:24 $
-#   Version:   $Revision: 1.65.2.8 $
+#   Date:      $Date: 2006/05/11 22:53:04 $
+#   Version:   $Revision: 1.65.2.9 $
 # 
 #===============================================================================
 # FILE:        Fiducials.tcl
@@ -96,7 +96,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.65.2.8 $} {$Date: 2006/05/11 22:45:24 $}]
+        {$Revision: 1.65.2.9 $} {$Date: 2006/05/11 22:53:04 $}]
     
     # Initialize module-level variables
     set Fiducials(renList) "viewRen matRen"
@@ -2467,6 +2467,12 @@ proc FiducialsSetActiveList {name {menu ""} {cb ""}} {
             set menulist $Fiducials(mbActiveList)
         } else {
             set menulist $menu
+        }
+        if {$menu == ""} {
+            if {$::Module(verbose)} {
+                puts "SetActiveList: empty menu!"
+            }
+            return
         }
         set menuindex 0
         foreach s $cblist {
