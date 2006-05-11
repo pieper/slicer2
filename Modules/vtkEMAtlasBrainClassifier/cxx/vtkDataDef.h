@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDataDef.h,v $
-  Date:      $Date: 2006/04/21 20:11:09 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/05/11 22:00:32 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 #ifndef __vtkDataDef_h
@@ -103,37 +103,58 @@ public:
 
   void SaveDataToFile(char *FileName) {
     char VolumeFileName[1024];
-    sprintf(VolumeFileName,"%s.tmp",FileName); 
+    sprintf(VolumeFileName,"%s.img",FileName); 
     FILE *File= fopen(VolumeFileName, "wb");
     // Could not open file
     assert(File); 
     fwrite(this->Data, sizeof(float),this->MaxXYZ, File);
     fflush(File);
     fclose(File);
+
+#ifndef _WIN32
+    // Compress file 
+    char command[1024];
+    sprintf(command,"gzip --fast -f \"%s\"",VolumeFileName);
+    assert(system(command) == 0); 
+#endif
   }
  
 
  void ReadDataFromFile(char *FileName) {
     char VolumeFileName[1024];
-    sprintf(VolumeFileName,"%s.tmp",FileName);
 
+#ifndef _WIN32
+    // First uncompress file
+    char command[1024];
+    sprintf(command,"gunzip --fast -f \"%s.img.gz\"",FileName);
+    // Do not quite here bc could have been unzipped before - if file does not exist next assert will catch it 
+    system(command); 
+#endif
+
+    sprintf(VolumeFileName,"%s.img",FileName);
     FILE *File= fopen(VolumeFileName, "rb");
     // Could not open file
     assert(File);
-    // Determine size of file 
-    //fseek (File , 0 , SEEK_END);
-    //long lSize = ftell(File);
-    //rewind (File);
-    //assert(lSize, sizeof(float)*this->MAXXYZ);
-    // copy the file into the buffer.
     fread (this->Data,sizeof(float),this->MaxXYZ,File);
     // terminate
     fclose (File);
+
+#ifndef _WIN32
+    // Compress it back 
+    sprintf(command,"gzip --fast -f \"%s\"",VolumeFileName);
+    assert(system(command) == 0); 
+#endif
+
  }
 
  void EraseDataFile(char *FileName) {
     char VolumeFileName[1024];
-    sprintf(VolumeFileName,"%s.tmp",FileName);
+#ifndef _WIN32
+    // Compress it back 
+    sprintf(VolumeFileName,"%s.img.gz",FileName);
+#else 
+    sprintf(VolumeFileName,"%s.img",FileName);
+#endif
     assert(!remove(VolumeFileName));
  }
 
