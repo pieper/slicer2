@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup_sort.tcl,v $
-#   Date:      $Date: 2006/03/17 22:00:20 $
-#   Version:   $Revision: 1.22 $
+#   Date:      $Date: 2006/05/11 15:40:43 $
+#   Version:   $Revision: 1.23 $
 # 
 #===============================================================================
 # FILE:        dup_sort.tcl
@@ -199,8 +199,7 @@ itcl::body dup_sort::fill {dir} {
     # - first be sure that the entry exists for this birn id
     # - then pull the value from the table
     #
-
-    set birnid_manager [$parent cget -birndup_dir]/bin/birnid_man.jar
+    set birnid_manager [file normalize [$parent cget -birndup_dir]/birnid_gen/bin/birnid_gen.sh]
     puts $birnid_manager
     set linktable [$parent pref LINKTABLE]
     set inst [$parent pref INSTITUTION]
@@ -214,20 +213,19 @@ itcl::body dup_sort::fill {dir} {
         }
     }
 
-    puts "ProgramName: java -jar $birnid_manager ProgramArguments: -create -p $inst -l $linktable -c $patient TimeStamp: [clock format [clock seconds] -format \"%D-%T-%Z\"] User: $::env(USER) Machine: $::tcl_platform(machine)"
-    if { [catch "exec java -jar $birnid_manager -create -p $inst -l $linktable -c $patient" resp] } {
+    if { [catch "exec $birnid_manager --all-info -create -p $inst -l $linktable -c $patient" resp] } {
         dup_DevErrorWindow "Cannot execute BIRN ID manager.  Ensure that Java is installed on your machine.\n\n$resp"
     } else {
-
-        puts "ProgramName: java -jar $birnid_manager ProgramArguments: -find -l $linktable -c $patient TimeStamp: [clock format [clock seconds] -format \"%D-%T-%Z\"] User: $::env(USER) Machine: $::tcl_platform(machine)"
-        if { [catch "exec java -jar $birnid_manager -find -l $linktable -c $patient" resp] } {
+        puts $resp
+        if { [catch "exec $birnid_manager --all-info -find -l $linktable -c $patient" resp] } {
             dup_DevErrorWindow "Cannot execute BIRN ID manager to access BIRN ID.  Ensure that LINKTABLE preference is correct.\n\n$resp"
             set birnid ""
         } else {
+            puts $resp
             set birnid ""
-            scan $resp {Birn ID=%[^,]s} birnid
-
-            if { $birnid == "" } {
+            #scan $resp {Birn ID=%[^,]s} birnid
+            set retval [regexp {Birn ID=([a-zA-Z]+[0-9]+)} $resp matchVar birnid]
+            if { $retval == 0 || $birnid == "" } {
                 dup_DevErrorWindow "Cannot parse BIRN ID.  Response is: \n$resp"
                 puts stderr "Cannot parse BIRN ID.  Response is: \n$resp"
             }
