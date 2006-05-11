@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Fiducials.tcl,v $
-#   Date:      $Date: 2006/05/01 21:45:06 $
-#   Version:   $Revision: 1.65.2.7 $
+#   Date:      $Date: 2006/05/11 22:45:24 $
+#   Version:   $Revision: 1.65.2.8 $
 # 
 #===============================================================================
 # FILE:        Fiducials.tcl
@@ -96,7 +96,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.65.2.7 $} {$Date: 2006/05/01 21:45:06 $}]
+        {$Revision: 1.65.2.8 $} {$Date: 2006/05/11 22:45:24 $}]
     
     # Initialize module-level variables
     set Fiducials(renList) "viewRen matRen"
@@ -175,19 +175,34 @@ If you want to create a new list, go to the Fiducials module.
 proc FiducialsDisplayDescriptionActive {} {
     global Fiducials Point
 
+    if {$::Module(verbose)} {
+        puts "FiducialsDisplayDescriptionActive: active list id  $Fiducials(activeListID), active point id = $Fiducials(activePointID), updating name etc"
+    }
     set listExists [array names Fiducials $Fiducials(activeListID),pointIdList]
     if { $listExists=="" } { return }
 
-    if {[lsearch $Fiducials($Fiducials(activeListID),selectedPointIdList) $Fiducials(activePointID)] != -1} { 
+    # change : update even if it's not selected (taking it out for retesting)
+    if {[lsearch $Fiducials($Fiducials(activeListID),pointIdList) $Fiducials(activePointID)] != -1} { 
         if { [info command Point($Fiducials(activePointID),node)] != "" } {
             set Fiducials(activeName) [Point($Fiducials(activePointID),node) GetName]
+            if {$::Module(verbose)} {
+                puts "FiducialsDisplayDescriptionActive:  setting the name $Fiducials(activeName)"
+            }
             foreach {x y z} [Point($Fiducials(activePointID),node) GetXYZ] { break }
             set Fiducials(activeXYZ) [format "(%.2f, %.2f, %.2f)" $x $y $z]
-
+            
             foreach {x y s o} [Point($Fiducials(activePointID),node) GetXYSO] { break }
             set Fiducials(activeXY) [format "(%d, %d, win %d, offset %d)" $x $y $s $o]
-
+            
             set Fiducials(activeDescription) [Point($Fiducials(activePointID),node) GetDescription]
+        } else {
+            if {$::Module(verbose)} {
+            puts "FiducialsDisplayDescriptionActive: Point node for pid $Fiducials(activePointID) doesn't exist, didn't update the active description"
+            }
+        }
+    } else {
+        if {$::Module(verbose)} {
+            puts "FiducialsDisplayDescriptionActive: active point $Fiducials(activePointID) not on active list $Fiducials(activeListID) point list"
         }
     }
 }
@@ -197,9 +212,10 @@ proc FiducialsDisplayDescriptionActive {} {
 # Check for an active updated fiducial and set the Point name and description.
 # .ARGS 
 # .END
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
 proc FiducialsDescriptionActiveUpdated {} {
     global Fiducials Point
+
 
     set listExists [array names Fiducials $Fiducials(activeListID),pointIdList]
 
@@ -215,6 +231,20 @@ proc FiducialsDescriptionActiveUpdated {} {
         return 
     }
 
+    # does the point node exist?
+    if {[info command Point($Fiducials(activePointID),node)] == ""} {
+        puts "Warning: tried to update a point that doesn't exist, id = $Fiducials(activePointID)"
+        return
+    }
+
+    # is this name already in use in this list?
+    foreach checkPID $Fiducials($Fiducials(activeListID),pointIdList) {
+        if {[Point($checkPID,node) GetName] == $Fiducials(activeName)} {
+            DevErrorWindow "Cannot use the name $Fiducials(activeName) as it is already in use"
+            return
+        }
+    }
+
     if {$::Module(verbose)} {
         puts "FiducialsDescriptionActiveUpdated: changing name in the node to $Fiducials(activeName), description to $Fiducials(activeDescription)"
     }
@@ -226,7 +256,7 @@ proc FiducialsDescriptionActiveUpdated {} {
         set name [$menu cget -text]
         # if the name is valid
         if {[lsearch $Fiducials(listOfNames) $name] != -1} {
-            # find the old named one and delete it
+            # find the old named one and rename it
             set cbindex [$cb index "[Point($Fiducials(activePointID),node) GetName]"]
             if {$cbindex != -1} {
                 if {$::Module(verbose) && [regexp ".*Fiducials.*" $cb] != 0} {
@@ -235,14 +265,15 @@ proc FiducialsDescriptionActiveUpdated {} {
                 $cb buttonrename $cbindex $Fiducials(activeName)
             } else {
                 puts "FiducialsDescriptionActiveUpdated: didn't find point $Fiducials(activePointID) in the menu $cb"
-            }
+            } 
+       
         }
     }
     
     # now change the node name and description
     Point($Fiducials(activePointID),node) SetName $Fiducials(activeName)
     Point($Fiducials(activePointID),node) SetDescription $Fiducials(activeDescription)
-    
+ 
     FiducialsUpdateMRML
     # now call this to update the list of fiducials in the data module so the name change propagates
     DataUpdateMRML
@@ -965,6 +996,9 @@ proc FiducialsVTKUpdatePoints {fid symbolSize textSize} {
     # now do it for the 2d points
     FiducialsVTKUpdatePoints2D $fid
 
+    if {$::Module(verbose)} {
+        puts "FiducialsVTKUpdatePoints: calling FiducialsDisplayDescriptionActive for list $fid, active point = $Fiducials(activePointID)"
+    }
     FiducialsDisplayDescriptionActive
 
     Fiducials($fid,pointsPD) Modified
@@ -1114,7 +1148,11 @@ proc FiducialsSetTxtScale { id {val ""} } {
 
     foreach pid $Fiducials($id,pointIdList) {
         foreach r $Fiducials(renList) {
-            Point($pid,follower,$r) SetScale $val
+            if {[info command Point($pid,follower,$r)] == ""} {
+                puts "ERROR: FiducialsSetTxtScale: no follower for point $pid in renderer $r"
+            } else {
+                Point($pid,follower,$r) SetScale $val
+            }
         }
     }
     Fiducials($id,node) SetTextSize $val
@@ -1275,6 +1313,9 @@ proc FiducialsUpdateMRML {} {
 
             if {[info exist fid] == 1} {
                 lappend Fiducials($fid,pointIdList) $pid
+                if {$::Module(verbose)} {
+                    puts "FidUpdateMrml: added $pid to $fid's point list: $Fiducials($fid,pointIdList) "
+                }
                 #set its index based on its position in the list
                 Point($pid,node) SetIndex [lsearch $Fiducials($fid,pointIdList) $pid]
 
@@ -1287,7 +1328,10 @@ proc FiducialsUpdateMRML {} {
                 FiducialsVTKCreatePoint $fid $pid $visibility
                 set Fiducials($fid,pointsExist) 1
             } else {
-                DevErrorWindow "No fiducials list exists to add this point to!\n(no vtkMrmlFiducialsNode found before this point)"
+               # DevErrorWindow "No fiducials list exists to add this point to!\n(no vtkMrmlFiducialsNode found before this point)"
+                if {$::Module(verbose)} {
+                    puts "No fiducials list exists to add this point to!\n(no vtkMrmlFiducialsNode found before this point)"
+                }
             }
         }
         if { [$item GetClassName] == "vtkMrmlEndFiducialsNode" } {
@@ -1428,14 +1472,14 @@ proc FiducialsUpdateMRML {} {
         set mb [lindex $Fiducials(mbActiveList) $index]
         $m delete 0 end
         foreach v $Fiducials(idList) {
-            $m add command -label [Fiducials($v,node) GetName] \
-                -command "FiducialsSetActiveList [Fiducials($v,node) GetName] $mb $cb"
+            $m add command -label [Fiducials($v,node) GetName] -command "FiducialsSetActiveList [Fiducials($v,node) GetName]"
+               # -command "FiducialsSetActiveList [Fiducials($v,node) GetName] $mb $cb"
         }
         foreach d $Fiducials(defaultNames) {
             # if this default name doesn't exist in the list of fiducials in the mrml tree
             if {[lsearch $Fiducials(listOfNames) $d] == -1} {
-                $m add command -label $d \
-                    -command "FiducialsSetActiveList $d $mb $cb"
+                $m add command -label $d -command "FiducialsSetActiveList $d"
+                #    -command "FiducialsSetActiveList $d $mb $cb"
             }
         }
         incr index
@@ -1777,7 +1821,6 @@ proc FiducialsCreateFiducialsList {type name {textSize "6"} {symbolSize "6"}} {
 proc FiducialsCreatePointFromWorldXYZ { type x y z  {listName ""} {name ""} {selected 1} } {
 
     global Fiducials Point Module Select
-
     if {$::Module(verbose)} {
         puts "FiducialsCreatePointFromWorldXYZ x $x, y $y, z $z"
     }
@@ -1796,6 +1839,7 @@ proc FiducialsCreatePointFromWorldXYZ { type x y z  {listName ""} {name ""} {sel
         set cellId ""
     }
 
+    # make sure that there's a list to add the new point into
     if {$listName != ""} {
         # check that the name exists, if not, create new list
         if { [lsearch $Fiducials(listOfNames) $listName] == -1 } {
@@ -1840,8 +1884,9 @@ proc FiducialsCreatePointFromWorldXYZ { type x y z  {listName ""} {name ""} {sel
 
     Point($pid,node) SetXYZ $x $y $z
     Point($pid,node) SetIndex $index
-    # Point($pid,node) SetName [concat $Fiducials($fid,name) $index]
-    Point($pid,node) SetName "$Fiducials($fid,name)$index"
+    # this won't work correctly if points were deleted from the list (will reuse names)
+    # Point($pid,node) SetName "$Fiducials($fid,name)$index"
+    Point($pid,node) SetName [FiducialsNewPointName $fid]
 
     # save actor and cell - TODO: this isn't saved in MRML
     set Point($pid,actor) $actor
@@ -1849,7 +1894,7 @@ proc FiducialsCreatePointFromWorldXYZ { type x y z  {listName ""} {name ""} {sel
     
     # calculate FXYZ
     # if the actor and cell Id is not empty, get the normal of that cell
-    if {$actor != ""} {
+    if {$actor != "" && $cellId != ""} {
        set normals [[[[$actor GetMapper] GetInput] GetPointData] GetNormals]
        if {$normals != ""} {
            set cell [[[$actor GetMapper] GetInput] GetCell $cellId]
@@ -1913,7 +1958,18 @@ proc FiducialsCreatePointFromWorldXYZ { type x y z  {listName ""} {name ""} {sel
     }
 
     # select fiducial after creation
+    if {$::Module(verbose)} {
+        puts "FiducialsCreatePointFromWorldXYZ: calling FiducialsSelectionUpdate $fid $pid $selected"
+    }
     FiducialsSelectionUpdate $fid $pid $selected
+
+    if {0} {
+        # set the active point id now so that it's active once all updates are done
+        if {$::Module(verbose)} {
+            puts "FiducialsCreatePointFromWorldXYZ: setting the active point now to $pid"
+        }
+        set Fiducials(activePointID) $pid
+    }
 
    # callback for modules who wish to know a point was created
    foreach m $Module(idList) {
@@ -2004,8 +2060,10 @@ proc FiducialsInsertPointFromWorldXYZ {type previousPid x y z  {listName ""} {na
     Point($pid,node) SetXYZ $x $y $z
     Point($pid,node) SetIndex $index
     #Point($pid,node) SetName [concat $Fiducials($fid,name) $index]
-    Point($pid,node) SetName "$Fiducials($fid,name)${index}"
-    
+    # this won't work if points were deleted from the list
+    # Point($pid,node) SetName "$Fiducials($fid,name)${index}"
+    Point($pid,node) SetName [FiducialsNewPointName $fid]
+
     # calculate FXYZ
     # if the actor and cell Id is not empty, get the normal of that cell
     if {$actor != ""} {
@@ -2060,6 +2118,21 @@ proc FiducialsInsertPointFromWorldXYZ {type previousPid x y z  {listName ""} {na
 ############################## DELETION ################################
 
 #-------------------------------------------------------------------------------
+# .PROC FiducialsDeleteActivePoint
+# Delete the active point on the active list, calls FiducialsDeletePoint
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsDeleteActivePoint {} {
+    global Fiducials
+
+    if {$::Module(verbose)} {
+        puts "FiducialsDeleteActivePoint active list = $Fiducials(activeListID), active point = $Fiducials(activePointID).\n\tcalling FiducialsDeletePoint and then FiducialsDisplayDescriptionActive"
+    }
+    FiducialsDeletePoint $Fiducials(activeListID) $Fiducials(activePointID)
+}
+
+#-------------------------------------------------------------------------------
 # .PROC FiducialsDeletePoint
 # Delete from Mrml/vtk the selected Point
 # .ARGS 
@@ -2073,6 +2146,11 @@ proc FiducialsDeletePoint {fid pid {noUpdate 0}} {
     global Fiducials Point
     if {$::Module(verbose)} {
         puts "FiducialsDeletePoint: fid = $fid, pid = $pid, noUpdate = $noUpdate"
+    }
+
+    if {$fid == "None" || $pid == "None"} {
+        puts "Select a fiducial to delete, first."
+        return
     }
 
     # first check if the ID of the Point to be deleted is in the selected 
@@ -2131,10 +2209,12 @@ proc FiducialsDeletePoint {fid pid {noUpdate 0}} {
     
 
     foreach r $Fiducials(renList) {
-        $r RemoveActor Point($pid,follower,$r)
-        Point($pid,follower,$r) Delete
-        if {$::Module(verbose)} {
-            puts "FiducialsDeletePoint: removed actor Point($pid,follower,$r) and deleted it"
+        if {[info command Point($pid,follower,$r)] != ""} {
+            $r RemoveActor Point($pid,follower,$r)
+            Point($pid,follower,$r) Delete
+            if {$::Module(verbose)} {
+                puts "FiducialsDeletePoint: removed actor Point($pid,follower,$r) and deleted it"
+            }
         }
     }
     if { [FiducialsUseTextureText] } {
@@ -2142,8 +2222,8 @@ proc FiducialsDeletePoint {fid pid {noUpdate 0}} {
     }
     catch "Point($pid,text) Delete"
 
-    unset Point($pid,actor)
-    unset Point($pid,cellId)
+    catch "unset Point($pid,actor)"
+    catch "unset Point($pid,cellId)"
 
     # check to see if this was the last point on the list
     if {[llength $Fiducials($fid,pointIdList)] == 0} {
@@ -2171,6 +2251,19 @@ proc FiducialsDeletePoint {fid pid {noUpdate 0}} {
     # reset the delete flag, it triggered deleting the vtk vars in FiducialsResetVariables
     # from the call in FiducialsUpdateMrml if this was the last point on the list 
     set Fiducials(deleteFlag) 0
+
+    # if it was the active point, pick a new one
+    if {$pid == $Fiducials(activePointID)} {
+        # set a new active point, last on the active list
+        if {[llength $Fiducials($Fiducials(activeListID),pointIdList)] > 0} {
+            set Fiducials(activePointID) [lindex $Fiducials($Fiducials(activeListID),pointIdList) end]
+            if {$::Module(verbose)} {
+                puts "FiducialsDeletePoint: resetting active point to $Fiducials(activePointID)"
+            }
+        }
+        # now update the description of the active point because it's out of date now
+        FiducialsDisplayDescriptionActive
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -2346,6 +2439,10 @@ proc FiducialsSetActiveList {name {menu ""} {cb ""}} {
     
     global Fiducials Point Module
 
+    if {$::Module(verbose)} {
+        puts "FiducialsSetActiveList:\nname = $name\nmenu = $menu\ncb = $cb"
+    }
+
     if { [FiducialsCheckListExistence $name] == 1} {
         set Fiducials(activeList) $name
         if { $menu == "" } {
@@ -2381,7 +2478,13 @@ proc FiducialsSetActiveList {name {menu ""} {cb ""}} {
             if {[info exists Fiducials($name,fid)] == 1} {
                 set fid $Fiducials($name,fid)
             }
+
+            if {$::Module(verbose)} {
+                puts "SetActiveList: name = $name, list = [FiducialsGetPointIdListFromName $name]"
+            }
+
             foreach pid [FiducialsGetPointIdListFromName $name] {
+                set pidsList $name
                 if {[$s index "[Point($pid,node) GetName]"] == -1} {
                     # add it
                     if {$::Module(verbose)} { puts "SetActiveList: Adding a fid $pid, selected id list = $Fiducials($fid,selectedPointIdList)\n\tmenu = $menu\n\ts = $s"}                        
@@ -2431,7 +2534,21 @@ proc FiducialsSetActiveList {name {menu ""} {cb ""}} {
                 }    
             }
         }
-    
+        if {![info exist pid]} {
+            puts "ERROR: FiducialsSetActiveList: No points found\n\t$menu"
+            return
+        }
+        # if this point is on a new list, can't make it active just yet
+        # as the active list id hasn't been updated yet, so FiducialsDisplayDescriptionActive won't do anything
+        # puts "SetActiveList, current active list = $Fiducials(activeListID), passed in list id = $fid, this point $pid is on list $pidsList [lindex $Fiducials(listOfIds) [lsearch $Fiducials(listOfNames) $pidsList]] - don't change it here, as "
+        if {0 && $Fiducials(activeListID) != $pidsList} {
+            if {$::Module(verbose)} {
+                puts "FiducialsSetActiveList setting last point on newly active list (pid = $pid, [Point($pid,node) GetName]) to be active"
+            }
+            set Fiducials(activePointID) $pid
+            FiducialsDisplayDescriptionActive
+        }
+
         # callback in case any module wants to know the name of the active list    
         if {$name == "None"} {
             foreach m $Module(idList) {
@@ -2491,6 +2608,9 @@ proc FiducialsSelectionUpdate {fid pid on} {
         set index [lsearch $Fiducials($fid,selectedPointIdList) $pid]
         if { $index == -1} {
             lappend Fiducials($fid,selectedPointIdList) $pid
+            if {$::Module(verbose)} {
+                puts "added $pid to selected point id list $Fiducials($fid,selectedPointIdList), point id list = $Fiducials($fid,pointIdList)"
+            }
             # tell procedure who want to know about it
             # callback 
             foreach m $Module(idList) {
@@ -2504,6 +2624,9 @@ proc FiducialsSelectionUpdate {fid pid on} {
             
         } else {
             # if it is already selected, do nothing
+            if {$::Module(verbose)} {
+                puts "FiducialsSelectionUpdate: already selected, returning"
+            }
             return
         }
     }
@@ -2517,11 +2640,18 @@ proc FiducialsSelectionUpdate {fid pid on} {
             set Fiducials($fid,selectedPointIdList) [lreplace $Fiducials($fid,selectedPointIdList) $index $index]
         } else {
             # if it is already deselected, do nothing
+            if {$::Module(verbose)} {
+                puts "FiducialsSelectionUpdate: already deselected, returning"
+            }
             return 
         }
     }
     FiducialsUpdateAllCheckBoxes $fid $pid $on
-    FiducialsUpdateSelectionForActor $fid
+    if {$::Module(verbose)} {
+        puts "SelectionUpdate: calling FiducialsUpdateSelectionForActor on fid list $fid (pt list = $Fiducials($fid,pointIdList))"
+        puts "FiducialsSelectionUpdate: calling FiducialsUpdateSelectionForActor with a pid $pid"
+    }
+    FiducialsUpdateSelectionForActor $fid $pid
 }
 
 #-------------------------------------------------------------------------------
@@ -2619,6 +2749,7 @@ proc FiducialsSelectionFromPicker {actor cellId} {
             }
         }
     }
+    puts "Unable to determine which fiducial was selected, please try again."
     return 0
 }
 
@@ -2654,7 +2785,7 @@ proc FiducialsSelectionFromCheckbox {menu cb focusOnActiveFiducial pid} {
         # is point that changed sel or unsel?
         set selind [$cb getselind]
         if {$::Module(verbose)} {
-            puts "FiducialsUpdateSelectionFromCheckbox: selected = $selind, pid = $pid"
+            puts "FiducialsSelectionFromCheckbox: selected = $selind, pid = $pid"
         }
         if {[info exists Fiducials($fid,selectedPointIdList)] == 0} {
             set Fiducials($fid,selectedPointIdList) ""
@@ -2696,7 +2827,7 @@ proc FiducialsSelectionFromCheckbox {menu cb focusOnActiveFiducial pid} {
         }
         # and now update the scroll selection
         if {$::Module(verbose)} {
-            puts "\t\t**FiducialsUpdateSelectionFromCheckbox calling FiducialsSelectionFromScroll"
+            puts "\t\t**FiducialsSelectionFromCheckbox calling FiducialsSelectionFromScroll"
         }
         FiducialsSelectionFromScroll $menu $cb $focusOnActiveFiducial $pid
 
@@ -2794,18 +2925,34 @@ proc FiducialsUpdateSelectionForActor {fid {pid -1}} {
         if {[info exists Fiducials($fid,selectedPointIdList)] == 0} {
             set Fiducials($fid,selectedPointIdList) ""
         }
+
+        # change 2006-05-04: even when deselecting, make it the active point, if it's on the active list
+        # puts "FiducialsUpdateSelectionForActor: active list id = $Fiducials(activeListID), this list id = $fid (pid = $pid)"
+        if {0 && $Fiducials(activeListID) == $fid} {
+            if {$::Module(verbose)} {
+                puts "FiducialsUpdateSelectionForActor: setting active list id to $fid, active point id to $pid"
+            }
+#            set Fiducials(activeListID)  $fid
+            set Fiducials(activePointID) $pid
+        }
+
         if {$::Module(verbose)} { puts "\tis the pt $pid in $Fiducials($fid,selectedPointIdList)?" }
         if {[lsearch $Fiducials($fid,selectedPointIdList) $pid] != -1} { 
-            if {$::Module(verbose)} { puts "\t\tyes" }
+            if {$::Module(verbose)} { puts "\t\tyes (scalar id from point id = [FiducialsScalarIdFromPointId $fid $pid] )" }
             set Fiducials(activeListID)  $fid
             set Fiducials(activePointID) $pid
 
 
             # color the point to show it is selected
-            Fiducials($fid,scalars) SetTuple1 [FiducialsScalarIdFromPointId $fid $pid] 1
+            set scalarIndex [FiducialsScalarIdFromPointId $fid $pid]
+            if {$scalarIndex >= 0 && $scalarIndex < [Fiducials($fid,scalars) GetNumberOfTuples]} {
+                Fiducials($fid,scalars) SetTuple1 $scalarIndex 1
+            }
             # color the text
             foreach r $Fiducials(renList) {
-                eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textSelColor)
+                if {[info command Point($pid,follower,$r)] != ""} {
+                    eval [Point($pid,follower,$r) GetProperty] SetColor $Fiducials(textSelColor)
+                }
             }
 
             # do the same for 2d point
@@ -2832,6 +2979,7 @@ proc FiducialsUpdateSelectionForActor {fid {pid -1}} {
               eval [Point($pid,follower,$r) GetProperty] SetColor [Fiducials($fid,node) GetColor]
             }
 
+            
             # for 2d case
             set s [lindex [Point($pid,node) GetXYSO] 2]
             set r [FiducialsSliceNumberToRendererName $s]
@@ -2846,7 +2994,9 @@ proc FiducialsUpdateSelectionForActor {fid {pid -1}} {
         }
     }
     
-    
+    if {$::Module(verbose)} {
+        puts "FiducialsUpdateSelectionForActor: calling FiducialsDisplayDescriptionActive fid = $fid, pid = $pid"
+    }
     FiducialsDisplayDescriptionActive
 
     Fiducials($fid,pointsPD) Modified
@@ -3097,9 +3247,15 @@ proc FiducialsAddActiveListFrame {frame scrollHeight scrollWidth {defaultNames "
     bind $cb <Control-ButtonRelease-1> "FiducialsSelectionFromScroll $frame.fmenu.mbActive $cb yes" 
     bind $cb <ButtonRelease-1> "FiducialsSelectionFromScroll $frame.fmenu.mbActive $cb no" 
 
-    eval {entry $f.nameEntry -width 25 -textvariable Fiducials(activeName) } $Gui(WEA)
-    bind $f.nameEntry <Return> {FiducialsDescriptionActiveUpdated}
+    frame $f.fName -bg $Gui(activeWorkspace)
+   
+    eval {label $f.fName.lName -text "Rename:"} $Gui(WLA)
+    eval {entry $f.fName.nameEntry -width 15 -textvariable Fiducials(activeName) } $Gui(WEA)
+    bind $f.fName.nameEntry <Return> {FiducialsDescriptionActiveUpdated}
+    eval {button $f.fName.bDelete -text "Delete" -command "FiducialsDeleteActivePoint"} $Gui(WBA)
     
+    TooltipAdd $f.fName.bDelete "Delete the active point"
+
     eval {label $f.xyzLabel -textvariable Fiducials(activeXYZ) } $Gui(WLA) 
     eval {label $f.xyLabel -textvariable Fiducials(activeXY) } $Gui(WLA)
 
@@ -3115,13 +3271,17 @@ proc FiducialsAddActiveListFrame {frame scrollHeight scrollWidth {defaultNames "
 #    pack $f.list $f.nameEntry $f.xyzLabel $f.xyLabel $f.xyzEditButton $f.xyzEditButtonSlices $f.descriptionEntry -side top
     pack $cb  \
         -side top -expand true -fill both
-    pack $f.nameEntry $f.xyzLabel $f.xyLabel $f.xyzEditButton $f.xyzEditButtonSlices $f.descriptionEntry \
+#    pack $f.lName $f.nameEntry -side top
+    pack $f.fName -side top
+    pack $f.fName.lName $f.fName.nameEntry $f.fName.bDelete -side left
+
+    pack $f.xyzLabel $f.xyLabel $f.xyzEditButton $f.xyzEditButtonSlices $f.descriptionEntry \
         -side top
 
     # if there any default names specified, add them to the list
     foreach d $defaultNames {
-        $frame.fmenu.mbActive.m add command -label $d \
-            -command "FiducialsSetActiveList $d $frame.fmenu.mbActive $cb"
+        $frame.fmenu.mbActive.m add command -label $d -command "FiducialsSetActiveList $d"
+            # -command "FiducialsSetActiveList $d $frame.fmenu.mbActive $cb"
         lappend Fiducials(defaultNames) $d
     }
 } 
@@ -3537,4 +3697,43 @@ proc FiducialsUseTextureText {} {
         return 1
     }
     return 0
+}
+
+#-------------------------------------------------------------------------------
+# .PROC FiducialsNewPointName
+# Generates a new point name, for use in the fiducial list box and 3d glyph. Works
+# correctly even if points have been deleted from the fiducial list.
+# Returns the list name concatenated with a number larger than the integers at the end
+# of all the other names on the list.
+# .ARGS
+# int fid the id of the fiducials list for which a new name is to be generated
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsNewPointName { fid } {
+    global Fiducials
+
+    set listLength [llength $Fiducials($fid,pointIdList)]
+    if {$::Module(verbose)} {
+        puts "FiducialsNewPointName: fid = $fid, length of the fid list = $listLength"
+    }
+
+    if {$listLength == 0} {
+        return "$Fiducials($fid,name)0"
+    }
+    set highest 0
+    foreach pid $Fiducials($fid,pointIdList) {
+        set name [Point($pid,node) GetName]
+        if {[regexp {([0-9]+)$} $name matchVar thisNum] == 1} {
+            if {$thisNum > $highest} {
+                set highest $thisNum
+            }
+        }
+    }
+    # highest currently holds the largest number at the end of a point name, increment it by one and use it
+    set highest [incr highest]
+    if {$::Module(verbose)} {
+        puts "FiducialsNewPointName: returning $highest"
+    }
+
+    return "$Fiducials($fid,name)$highest"
 }
