@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterSuperClassNode.cxx,v $
-  Date:      $Date: 2006/03/23 18:02:13 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/05/11 22:02:12 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 //#include <stdio.h>
@@ -49,6 +49,10 @@ vtkMrmlSegmenterSuperClassNode::vtkMrmlSegmenterSuperClassNode() {
   this->RegistrationIndependentSubClassFlag = 0;
   this->AtlasNode = vtkMrmlSegmenterAtlasSuperClassNode::New();
 
+  this->ParameterInitSubClass =  0;
+  this->ParameterSaveToFile   =  0;
+  this->ParameterSetFromFile  =  0;
+
   this->PredefinedLabelID = -1;
 }
 
@@ -61,18 +65,21 @@ void vtkMrmlSegmenterSuperClassNode::Write(ofstream& of, int nIndent)
   this->vtkMrmlSegmenterGenericClassNode::Write(of);
   this->AtlasNode->Write(of);
 
-  of << " PrintEMLabelMapConvergence='" << this->PrintEMLabelMapConvergence <<  "'";
-  of << " PrintEMWeightsConvergence='" << this->PrintEMWeightsConvergence  <<  "'";
-  of << " PrintMFALabelMapConvergence='" << this->PrintMFALabelMapConvergence <<  "'";
-  of << " PrintMFAWeightsConvergence='" << this->PrintMFAWeightsConvergence  <<  "'";
+  if (this->PrintEMLabelMapConvergence)  of << " PrintEMLabelMapConvergence='" << this->PrintEMLabelMapConvergence <<  "'";
+  if (this->PrintEMWeightsConvergence)   of << " PrintEMWeightsConvergence='" << this->PrintEMWeightsConvergence  <<  "'";
+  if (this->PrintMFALabelMapConvergence) of << " PrintMFALabelMapConvergence='" << this->PrintMFALabelMapConvergence <<  "'";
+  if (this->PrintMFAWeightsConvergence)   of << " PrintMFAWeightsConvergence='" << this->PrintMFAWeightsConvergence  <<  "'";
 
-  of << " RegistrationType='" << this->RegistrationType << "' ";
-  of << " StopStopBiasCalculation='" << this->StopBiasCalculation <<  "'";
-  of << " GenerateBackgroundProbability='" << this->GenerateBackgroundProbability <<  "'";
-  of << " PrintShapeSimularityMeasure='" << this->PrintShapeSimularityMeasure << "'";
-  of << " PCAShapeModelType='" << this->PCAShapeModelType << "'";
-  of << " RegistrationIndependentSubClassFlag='" << this->RegistrationIndependentSubClassFlag << "'";
+  if (this->RegistrationType)                    of << " RegistrationType='" << this->RegistrationType << "' ";
+  if (this->StopBiasCalculation > -1)            of << " StopStopBiasCalculation='" << this->StopBiasCalculation <<  "'";
+  if (this->GenerateBackgroundProbability)       of << " GenerateBackgroundProbability='" << this->GenerateBackgroundProbability <<  "'";
+  if (this->PrintShapeSimularityMeasure)          of << " PrintShapeSimularityMeasure='" << this->PrintShapeSimularityMeasure << "'";
+  if (this->PCAShapeModelType)                   of << " PCAShapeModelType='" << this->PCAShapeModelType << "'";
+  if (this->RegistrationIndependentSubClassFlag) of << " RegistrationIndependentSubClassFlag='" << this->RegistrationIndependentSubClassFlag << "'";
   if (this->PredefinedLabelID > -1) of << " PredefinedLabelID ='" << this->PredefinedLabelID << "'";
+  if (this->ParameterInitSubClass)  of << " ParameterInitSubClass='"<< this->ParameterInitSubClass << "'";
+  if (this->ParameterSaveToFile)    of << " ParameterSaveToFile='"<< this->ParameterSaveToFile << "'";
+  if (this->ParameterSetFromFile)   of << " ParameterSetFromFile='"<< this->ParameterSetFromFile << "'";
   of << ">\n";
 
 }
@@ -97,7 +104,10 @@ void vtkMrmlSegmenterSuperClassNode::Copy(vtkMrmlNode *anode)
   this->PrintShapeSimularityMeasure   = node->PrintShapeSimularityMeasure;
   this->PCAShapeModelType             = node->PCAShapeModelType;
   this->RegistrationIndependentSubClassFlag = node->RegistrationIndependentSubClassFlag;
-  this->PredefinedLabelID        = node->PredefinedLabelID;
+  this->PredefinedLabelID             = node->PredefinedLabelID;
+  this->ParameterInitSubClass         = node->ParameterInitSubClass;
+  this->ParameterSaveToFile           = node->ParameterSaveToFile;
+  this->ParameterSetFromFile           = node->ParameterSetFromFile;
 }
 
 //----------------------------------------------------------------------------
@@ -118,4 +128,7 @@ void vtkMrmlSegmenterSuperClassNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "PCAShapeModelType:             " << this->PCAShapeModelType << "\n";
   os << indent << "RegistrationIndependentSubClassFlag: " << this->RegistrationIndependentSubClassFlag << "\n";
   os << indent << "PredefinedLabelID:             " << this->PredefinedLabelID << "\n";
+  os << indent << "ParameterInitSubClass:         " << this->ParameterInitSubClass << "\n";
+  os << indent << "ParameterSaveToFile:           " << this->ParameterSaveToFile << "\n";
+  os << indent << "ParameterSetFromFile:          " << this->ParameterSetFromFile << "\n";
 }

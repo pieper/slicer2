@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterClassNode.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:33 $
-  Version:   $Revision: 1.18 $
+  Date:      $Date: 2006/05/11 22:02:12 $
+  Version:   $Revision: 1.19 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -42,7 +42,12 @@ vtkMrmlSegmenterClassNode::vtkMrmlSegmenterClassNode()
   this->PCALogisticMax   = 20.0;
   this->PCALogisticBoundary = 9.5;
   this->PrintPCA            = 0;
+
+  this->SamplingLogMean          = NULL;
+  this->SamplingLogCovariance    = NULL;
+
   this->AtlasClassNode = vtkMrmlSegmenterAtlasClassNode::New();
+
 }
 
 //----------------------------------------------------------------------------
@@ -53,7 +58,18 @@ vtkMrmlSegmenterClassNode::~vtkMrmlSegmenterClassNode()
     delete [] this->PCAMeanName;
     this->PCAMeanName = NULL;
   }
-  
+ 
+  if (this->SamplingLogMean)
+  {
+    delete [] this->SamplingLogMean;
+    this->SamplingLogMean = NULL;
+  }
+  if (this->SamplingLogCovariance)
+  {
+    delete [] this->SamplingLogCovariance;
+    this->SamplingLogCovariance = NULL;
+  }
+
   this->AtlasClassNode->Delete();
 }
 
@@ -79,6 +95,9 @@ void vtkMrmlSegmenterClassNode::Write(ofstream& of, int nIndent)
   of << " PCALogisticBoundary ='" << this->PCALogisticBoundary << "'"; 
   of << " PrintPCA='" << this->PrintPCA << "'";
 
+  if (this->SamplingLogMean && strcmp(this->SamplingLogMean, "")) of << " SamplingLogMean='" << this->SamplingLogMean << "'";
+  if (this->SamplingLogCovariance && strcmp(this->SamplingLogCovariance, ""))  of << " SamplingLogCovariance='" << this->SamplingLogCovariance << "'";
+
   of << ">\n";
 }
 
@@ -97,6 +116,10 @@ void vtkMrmlSegmenterClassNode::Copy(vtkMrmlNode *anode)
   this->SetPCALogisticMax(node->PCALogisticMax);
   this->SetPCALogisticBoundary(node->PCALogisticBoundary);
   this->SetPrintPCA(node->PrintPCA);
+
+  this->SetSamplingLogMean(node->SamplingLogMean);
+  this->SetSamplingLogCovariance(node->SamplingLogCovariance);
+
 }
 
 //----------------------------------------------------------------------------
@@ -110,4 +133,6 @@ void vtkMrmlSegmenterClassNode::PrintSelf(ostream& os, vtkIndent indent)
    os << indent << "PCALogisticMin:            " << this->PCALogisticMin << "\n"; 
    os << indent << "PCALogisticMax:            " << this->PCALogisticMax << "\n"; 
    os << indent << "PCALogisticBoundary:       " << this->PCALogisticBoundary << "\n"; 
+   os << indent << "SamplingLogMean:           " << (this->SamplingLogMean ? this->SamplingLogMean : "(none)") << "\n";
+   os << indent << "SamplingLogCovariance:     " << (this->SamplingLogCovariance ? this->SamplingLogCovariance : "(none)") << "\n";
 }

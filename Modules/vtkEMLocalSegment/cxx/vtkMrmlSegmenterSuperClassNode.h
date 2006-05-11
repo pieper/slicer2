@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterSuperClassNode.h,v $
-  Date:      $Date: 2006/03/23 18:02:13 $
-  Version:   $Revision: 1.19 $
+  Date:      $Date: 2006/05/11 22:02:12 $
+  Version:   $Revision: 1.20 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSegmenterClassNode - MRML node to represent transformation matrices.
@@ -138,6 +138,14 @@ public:
   void  SetInitialBiasFilePrefix(char* init) { AtlasNode->SetInitialBiasFilePrefix(init);}
 
   // Description:
+  // Kilian April 06: Initialize the segmentation of all subclasses with the same parameter settting (that of this superclass). The following types are available: 
+  // 0 = disable initialization     - be carefull parallel subtrees can influence each other
+  // 1 = save to/load from file     - reading from file can slow down segmentation slightly
+  // 2 = write to/read from memory  - make sure you have enough mem as this can eat up a lot of memory 
+  vtkSetMacro(ParameterInitSubClass,int); 
+  vtkGetMacro(ParameterInitSubClass,int); 
+
+  // Description:
   // Kilian: Jan06: This allows you to "jump" over the hirarchical segmentation level by providing an already existing 
   // labelmap of the region of interes 
   char* GetPredefinedLabelMapPrefix() {return AtlasNode->GetPredefinedLabelMapPrefix();}
@@ -204,6 +212,11 @@ protected:
   int PCAShapeModelType;
   int RegistrationIndependentSubClassFlag;
   int PredefinedLabelID;
+
+  int ParameterInitSubClass;
+  int ParameterSaveToFile; 
+  int ParameterSetFromFile; 
+
 private:
   vtkMrmlSegmenterSuperClassNode(const vtkMrmlSegmenterSuperClassNode&);
   void operator=(const vtkMrmlSegmenterSuperClassNode&);
