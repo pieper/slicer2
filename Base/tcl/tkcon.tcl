@@ -137,7 +137,7 @@ proc ::tkcon::Init {args} {
         debugPrompt        {(level \#$level) debug [history nextid] > }
         dead                {}
         edit                edit
-        expandorder        {Pathname Variable Procname}
+        expandorder        {Pathname Variable Xotcl Procname}
         font                {}
         history                48
         hoterrors        1
@@ -192,7 +192,7 @@ proc ::tkcon::Init {args} {
             alias clear dir dump echo idebug lremove
             tkcon_puts tkcon_gets observe observe_var unalias which what
         }
-        RCS                {RCS: @(#) $Id: tkcon.tcl,v 1.8 2006/05/12 14:23:17 pieper Exp $}
+        RCS                {RCS: @(#) $Id: tkcon.tcl,v 1.9 2006/05/12 20:03:40 pieper Exp $}
         HEADURL                {http://cvs.sourceforge.net/viewcvs.py/*checkout*/tkcon/tkcon/tkcon.tcl?rev=HEAD}
 
         docs                "http://tkcon.sourceforge.net/"
@@ -4981,8 +4981,11 @@ proc ::tkcon::Bindings {} {
     bind TkConsole <Control-Key-o> {}
 
     ## Now make all our virtual event bindings
+
+    ## SLICER: make it harder to exit by mistake 
+    ## - removed the following
+    ##  <<TkCon_Exit>>                <Shift-Control-q>
     foreach {ev key} [subst -nocommand -noback {
-        <<TkCon_Exit>>                <Control-q>
         <<TkCon_New>>                <Control-N>
         <<TkCon_NewTab>>        <Control-T>
         <<TkCon_NextTab>>        <Control-Key-Tab>
@@ -4998,6 +5001,7 @@ proc ::tkcon::Bindings {} {
         <<TkCon_ExpandFile>>        <Key-Escape>
         <<TkCon_ExpandProc>>        <Control-P>
         <<TkCon_ExpandVar>>        <Control-V>
+        <<TkCon_ExpandSubcommand>>        <Shift-Tab>
         <<TkCon_Tab>>                <Control-i>
         <<TkCon_Tab>>                <$PRIV(meta)-i>
         <<TkCon_Newline>>        <Control-o>
@@ -5151,6 +5155,9 @@ proc ::tkcon::Bindings {} {
     }
     bind TkConsole <<TkCon_Expand>> {
         if {[%W compare insert > limit]} {::tkcon::Expand %W}
+    }
+    bind TkConsole <<TkCon_ExpandSubcommand>> {
+        if {[%W compare insert > limit]} {::tkcon::ExpandSubcommand %W}
     }
     bind TkConsole <<TkCon_Tab>> {
         if {[%W compare insert >= limit]} {
@@ -5701,6 +5708,58 @@ proc ::tkcon::ExpandXotcl str {
         regsub -all {([^\\]) } $match {\1\\ } match
     }
     return $match
+}
+
+
+## SLICER specific:
+## ::tkcon::VTKMethods - convert the output of ListMethods
+## into a form that Expand needs
+# ARGS: methods - the output of ListMethods class
+#       pattern - the substring to match
+# Calls:
+# Returns: a list of methods
+## 
+proc ::tkcon::VTKMethods {methods pattern} {
+
+    set mm [split $methods "\n"]
+    set methods ""
+    foreach m $mm {
+        set m [string trim $m]
+        if { [string length $m] == 0 } { continue }
+        if { [string match "Methods from*" $m] } { continue }
+        if { [string match $pattern $m] } { lappend methods [lindex $m 0] } 
+    }
+    return $methods
+}
+
+
+## ::tkcon::ExpandSubcommand - look at the current string on the 
+##  command line and see if it is a complete command, and if so 
+## try to figure out the subcommands for that command
+# ARGS: w - the text window to get the command from
+# Calls: 
+# Returns: list containing longest unique match followed by all the
+#  possible further matches
+## 
+proc ::tkcon::ExpandSubcommand w {
+    # in a first step, get the cmd to check, if we should handle subcommands
+    set cmd [::tkcon::CmdGet $::tkcon::PRIV(console)]
+    set obj [lindex $cmd 0]
+    set sub [lindex $cmd 1]
+    set match [::tkcon::VTKMethods [EvalAttached [list $obj ListMethods]] $sub*]
+    if {[llength $match] > 1} {
+        set best [ExpandBestMatch $match $sub]
+    } else {
+        set best $match
+    }
+    set new [string range $best [string length $sub] end]
+    $w insert end $new
+
+    if {[llength $match] > 1} {
+        if {$::tkcon::OPT(showmultiple) } {
+            puts stdout [lsort -dictionary $match]
+        }
+    }
 }
 
 ## ::tkcon::ExpandVariable - expand a tcl variable name based on $str
