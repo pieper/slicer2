@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: CompareModule.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:23 $
-#   Version:   $Revision: 1.2 $
+#   Date:      $Date: 2006/05/12 22:45:02 $
+#   Version:   $Revision: 1.3 $
 # 
 #===============================================================================
 # FILE:        CompareModule.tcl
@@ -38,7 +38,7 @@ proc CompareModuleInit {} {
     set m CompareModule
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.2 $} {$Date: 2006/01/06 17:57:23 $}]
+        {$Revision: 1.3 $} {$Date: 2006/05/12 22:45:02 $}]
 
     # Module Summary Info
     #------------------------------------
@@ -59,6 +59,32 @@ proc CompareModuleInit {} {
     set Module($m,procGUI) CompareModuleBuildGUI
     set Module($m,procVTK) CompareModuleBuildVTK
     set Module($m,procEnter) CompareModuleEnter
+
+    # Presets Procedures
+    #------------------------------------
+    lappend Module(procStorePresets) CompareModuleStorePresets
+    lappend Module(procRecallPresets) CompareModuleRecallPresets
+
+    # Presets defaults
+    set Module(CompareModule,presets) "opacity='0.5' \
+    0,backVolID='0' 0,foreVolID='0' 0,labelVolID='0' \
+    0,orient='Axial' 0,offset='0' 0,zoom='1.0'\
+    1,backVolID='0' 1,foreVolID='0' 1,labelVolID='0' \
+    1,orient='Axial' 1,offset='0' 1,zoom='1.0'\
+    2,backVolID='0' 2,foreVolID='0' 2,labelVolID='0' \
+    2,orient='Axial' 2,offset='0' 2,zoom='1.0'\
+    3,backVolID='0' 3,foreVolID='0' 3,labelVolID='0' \
+    3,orient='Axial' 3,offset='0' 3,zoom='1.0'\
+    4,backVolID='0' 4,foreVolID='0' 4,labelVolID='0' \
+    4,orient='Axial' 4,offset='0' 4,zoom='1.0'\
+    5,backVolID='0' 5,foreVolID='0' 5,labelVolID='0' \
+    5,orient='Axial' 5,offset='0' 5,zoom='1.0'\
+    6,backVolID='0' 6,foreVolID='0' 6,labelVolID='0' \
+    6,orient='Axial' 6,offset='0' 6,zoom='1.0'\
+    7,backVolID='0' 7,foreVolID='0' 7,labelVolID='0' \
+    7,orient='Axial' 7,offset='0' 7,zoom='1.0'\
+    8,backVolID='0' 8,foreVolID='0' 8,labelVolID='0' \
+    8,orient='Axial' 8,offset='0' 8,zoom='1.0'"
 
     # calls init procedures for the other module files
     CompareAnnoInit
@@ -888,4 +914,54 @@ proc CompareModuleEnableLinkControls {} {
     $Module(CompareModule,fDisplay).fLinking.fOrientation.fChooseOrient.mbOrient \
     configure -state disabled
   }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC CompareModuleStorePresets
+# Save current settings to preset global variables
+# .ARGS
+# int p the scene number
+# .END
+#-------------------------------------------------------------------------------
+proc CompareModuleStorePresets {p} {
+    global Preset CompareSlice
+
+    if {$::Module(verbose)} {
+        puts "---> Storing CompareModule presets p = $p"
+    }
+
+    foreach s $CompareSlice(idList) {
+        set Preset(CompareModule,$p,$s,orient)     $CompareSlice($s,orient)
+        set Preset(CompareModule,$p,$s,offset)     $CompareSlice($s,offset)
+        set Preset(CompareModule,$p,$s,zoom)       $CompareSlice($s,zoom)
+        set Preset(CompareModule,$p,$s,backVolID)  $CompareSlice($s,backVolID)
+        set Preset(CompareModule,$p,$s,foreVolID)  $CompareSlice($s,foreVolID)
+        set Preset(CompareModule,$p,$s,labelVolID) $CompareSlice($s,labelVolID)
+    }
+    set Preset(CompareModule,$p,opacity) $CompareSlice(opacity)
+}
+
+#-------------------------------------------------------------------------------
+# .PROC CompareModuleRecallPresets
+# Set current settings from preset global variables
+# .ARGS
+# int p the scene number
+# .END
+#-------------------------------------------------------------------------------
+proc CompareModuleRecallPresets {p} {
+    global Preset CompareSlice
+
+    if {$::Module(verbose)} {
+        puts "---> Recalling CompareSlices presets  p = $p"
+    }
+
+    foreach s $CompareSlice(idList) {
+        CompareSlicesSetVolume Back $s $Preset(CompareModule,$p,$s,backVolID)
+        CompareSlicesSetVolume Fore $s $Preset(CompareModule,$p,$s,foreVolID)
+        CompareSlicesSetVolume Label $s $Preset(CompareModule,$p,$s,labelVolID)
+        CompareSlicesSetOrient $s $Preset(CompareModule,$p,$s,orient)
+        CompareSlicesSetOffset $s $Preset(CompareModule,$p,$s,offset)
+        CompareSlicesSetZoom $s $Preset(CompareModule,$p,$s,zoom)
+    }
+    CompareSlicesSetOpacityAll $Preset(CompareModule,$p,opacity)
 }
