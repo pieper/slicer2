@@ -192,7 +192,7 @@ proc ::tkcon::Init {args} {
             alias clear dir dump echo idebug lremove
             tkcon_puts tkcon_gets observe observe_var unalias which what
         }
-        RCS                {RCS: @(#) $Id: tkcon.tcl,v 1.9 2006/05/12 20:03:40 pieper Exp $}
+        RCS                {RCS: @(#) $Id: tkcon.tcl,v 1.10 2006/05/12 20:51:58 pieper Exp $}
         HEADURL                {http://cvs.sourceforge.net/viewcvs.py/*checkout*/tkcon/tkcon/tkcon.tcl?rev=HEAD}
 
         docs                "http://tkcon.sourceforge.net/"
@@ -5738,15 +5738,31 @@ proc ::tkcon::VTKMethods {methods pattern} {
 ## try to figure out the subcommands for that command
 # ARGS: w - the text window to get the command from
 # Calls: 
-# Returns: list containing longest unique match followed by all the
-#  possible further matches
+# Returns: nothing.
+# Side Effects: the best substring is inserted, and the remaining
+#   options are printed
 ## 
 proc ::tkcon::ExpandSubcommand w {
-    # in a first step, get the cmd to check, if we should handle subcommands
+
+    # get the obj whose methods we want to probe and the 
+    # partial subcommand (sub) to complete
     set cmd [::tkcon::CmdGet $::tkcon::PRIV(console)]
-    set obj [lindex $cmd 0]
-    set sub [lindex $cmd 1]
-    set match [::tkcon::VTKMethods [EvalAttached [list $obj ListMethods]] $sub*]
+    if { [string index $cmd end] == " " } {
+        set sub ""
+    } else {
+        set sub [lindex $cmd end]
+    }
+    set obj [string trim [string range $cmd 0 end-[string length $sub]]]
+
+    # evaluate the obj in the global space (in case it's a variable 
+    # reference or a command in brackets) and then get the list
+    # of methods that match the current partial subcommand 
+    eval set substres [namespace eval :: subst [list $obj]]
+    set vtklist [namespace eval :: $substres ListMethods]
+    set match [::tkcon::VTKMethods $vtklist $sub*]
+
+    # create the longest common substring of methods
+    # that match the substring and insert it in the command
     if {[llength $match] > 1} {
         set best [ExpandBestMatch $match $sub]
     } else {
@@ -5755,6 +5771,7 @@ proc ::tkcon::ExpandSubcommand w {
     set new [string range $best [string length $sub] end]
     $w insert end $new
 
+    # show the possible completion options
     if {[llength $match] > 1} {
         if {$::tkcon::OPT(showmultiple) } {
             puts stdout [lsort -dictionary $match]
