@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSceneOptionsNode.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:48 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/05/12 22:50:48 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -35,6 +35,7 @@ vtkMrmlSceneOptionsNode* vtkMrmlSceneOptionsNode::New()
 vtkMrmlSceneOptionsNode::vtkMrmlSceneOptionsNode()
 {
   // Strings
+    this->Name = NULL;
   this->ViewUp = NULL;
   this->Position = NULL;
   this->FocalPoint = NULL;
@@ -59,11 +60,17 @@ vtkMrmlSceneOptionsNode::vtkMrmlSceneOptionsNode()
   this->DICOMPreviewWidth = 64;
   this->DICOMPreviewHeight = 64;
   this->DICOMPreviewHighestValue = 2048;
+  this->FOV = 240.0;
 }
 
 //----------------------------------------------------------------------------
 vtkMrmlSceneOptionsNode::~vtkMrmlSceneOptionsNode()
 {
+    if (this->Name)
+    {
+        delete [] this->Name;
+        this->Name=NULL;
+    }
   if (this->ViewUp)
   {
     delete [] this->ViewUp;
@@ -126,6 +133,7 @@ void vtkMrmlSceneOptionsNode::Write(ofstream& of, int nIndent)
   of << i1 << "<SceneOptions";
   
   //Strings
+  // skip the name, it's read in from the Scenes node
   if (this->ViewUp && strcmp(this->ViewUp,""))
   {
     of << " viewUp='" << this->ViewUp << "'";
@@ -216,7 +224,7 @@ void vtkMrmlSceneOptionsNode::Write(ofstream& of, int nIndent)
   {
     of << " DICOMPreviewHighestValue='" << this->DICOMPreviewHighestValue << "'";
   }
-  
+  of << " fov='" << this->FOV << "'";
   of << "></SceneOptions>\n";
 }
 
@@ -228,6 +236,7 @@ void vtkMrmlSceneOptionsNode::Copy(vtkMrmlNode *anode)
   vtkMrmlSceneOptionsNode *node = (vtkMrmlSceneOptionsNode *) anode;
 
   // Strings
+  this->SetName(node->Name);
   this->SetViewUp(node->ViewUp);
   this->SetPosition(node->Position);
   this->SetFocalPoint(node->FocalPoint);
@@ -252,6 +261,8 @@ void vtkMrmlSceneOptionsNode::Copy(vtkMrmlNode *anode)
   this->SetDICOMPreviewWidth(node->DICOMPreviewWidth);
   this->SetDICOMPreviewHeight(node->DICOMPreviewHeight);
   this->SetDICOMPreviewHighestValue(node->DICOMPreviewHighestValue);
+
+  this->SetFOV(node->FOV);
 }
 
 //----------------------------------------------------------------------------
@@ -259,7 +270,7 @@ void vtkMrmlSceneOptionsNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   
   vtkMrmlNode::PrintSelf(os,indent);
-
+  os << indent << "Name: "  << (this->Name ? this->Name : "(none)") << "\n";
   os << indent << "ViewUp: " << (this->ViewUp ? this->ViewUp : "(none)") << "\n";
   os << indent << "Position: " << (this->Position ? this->Position : "(none)") << "\n";
   os << indent << "FocalPoint: " << (this->FocalPoint ? this->FocalPoint : "(none)") << "\n";
@@ -282,4 +293,5 @@ void vtkMrmlSceneOptionsNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "DICOMPreviewWidth: " << this->DICOMPreviewWidth << "\n";
   os << indent << "DICOMPreviewHeight: " << this->DICOMPreviewHeight << "\n";
   os << indent << "DICOMPreviewHighestValue: " << this->DICOMPreviewHighestValue << "\n";
+  os << indent << "FOV: " << this->FOV << "\n";
 }

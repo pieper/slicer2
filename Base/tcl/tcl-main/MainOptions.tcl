@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainOptions.tcl,v $
-#   Date:      $Date: 2006/01/06 17:56:55 $
-#   Version:   $Revision: 1.29 $
+#   Date:      $Date: 2006/05/12 22:50:47 $
+#   Version:   $Revision: 1.30 $
 # 
 #===============================================================================
 # FILE:        MainOptions.tcl
@@ -56,7 +56,7 @@ proc MainOptionsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainOptions \
-    {$Revision: 1.29 $} {$Date: 2006/01/06 17:56:55 $}]
+    {$Revision: 1.30 $} {$Date: 2006/05/12 22:50:47 $}]
 
     # Props
     set Options(program) "slicer"
@@ -245,6 +245,8 @@ proc MainOptionsParsePresets {attr} {
     foreach a $attr {
         set key [lindex $a 0]
         set val [lreplace $a 0 0]
+
+puts "MainOptionsParsePresets: key = $key, val = $val\nfrom a = $a"
 
         set Preset($key) $val
     }
@@ -443,6 +445,7 @@ proc MainOptionsRetrievePresetValues {} {
             set Preset(Volumes,$currentScene,DICOMPreviewHeight) [$node GetDICOMPreviewHeight]
             set Preset(Volumes,$currentScene,DICOMPreviewHighestValue) [$node GetDICOMPreviewHighestValue]
             set Preset(Volumes,$currentScene,DICOMDataDictFile) [$node GetDICOMDataDictFile]
+            set Preset(View,$currentScene,fov) [$node GetFOV]
         }
         
         set node [Mrml(dataTree) GetNextItem]
@@ -640,6 +643,7 @@ proc MainOptionsUnparsePresets {{presetNum ""}} {
         $node SetDICOMPreviewHeight $Preset(Volumes,$p,DICOMPreviewHeight)
         $node SetDICOMPreviewHighestValue $Preset(Volumes,$p,DICOMPreviewHighestValue)
                 
+        $node SetFOV $Preset(View,$p,fov)
 
         # Models are a special case since the keys are not known ahead of time.
         # Use the current settings as the "defaults" to see if it is necessary

@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Volumes.tcl,v $
-#   Date:      $Date: 2006/04/18 15:23:46 $
-#   Version:   $Revision: 1.132 $
+#   Date:      $Date: 2006/05/12 22:50:46 $
+#   Version:   $Revision: 1.133 $
 # 
 #===============================================================================
 # FILE:        Volumes.tcl
@@ -101,7 +101,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-             {$Revision: 1.132 $} {$Date: 2006/04/18 15:23:46 $}]
+             {$Revision: 1.133 $} {$Date: 2006/05/12 22:50:46 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -1257,8 +1257,8 @@ proc VolumesPropsApply {} {
                 set fov $newfov
             }
         }
-        set View(fov) $fov
-        MainViewSetFov
+        # set View(fov) $fov
+        MainViewSetFov "default" $fov
 
         # display the new volume in the background of all slices
         MainSlicesSetVolumeAll Back $newID
