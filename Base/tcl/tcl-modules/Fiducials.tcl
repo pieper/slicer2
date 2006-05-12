@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Fiducials.tcl,v $
-#   Date:      $Date: 2006/05/11 22:53:04 $
-#   Version:   $Revision: 1.65.2.9 $
+#   Date:      $Date: 2006/05/12 17:41:56 $
+#   Version:   $Revision: 1.65.2.10 $
 # 
 #===============================================================================
 # FILE:        Fiducials.tcl
@@ -96,7 +96,7 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.65.2.9 $} {$Date: 2006/05/11 22:53:04 $}]
+        {$Revision: 1.65.2.10 $} {$Date: 2006/05/12 17:41:56 $}]
     
     # Initialize module-level variables
     set Fiducials(renList) "viewRen matRen"
@@ -2472,7 +2472,7 @@ proc FiducialsSetActiveList {name {menu ""} {cb ""}} {
             if {$::Module(verbose)} {
                 puts "SetActiveList: empty menu!"
             }
-            return
+#            return
         }
         set menuindex 0
         foreach s $cblist {
@@ -2541,8 +2541,10 @@ proc FiducialsSetActiveList {name {menu ""} {cb ""}} {
             }
         }
         if {![info exist pid]} {
-            puts "ERROR: FiducialsSetActiveList: No points found\n\t$menu"
-            return
+            # could be the first call when the list is created
+            if {$::Module(verbose)} {
+                puts "FiducialsSetActiveList: No points found on menu:\n\t$menu"
+            }
         }
         # if this point is on a new list, can't make it active just yet
         # as the active list id hasn't been updated yet, so FiducialsDisplayDescriptionActive won't do anything
@@ -3723,13 +3725,15 @@ proc FiducialsNewPointName { fid } {
         puts "FiducialsNewPointName: fid = $fid, length of the fid list = $listLength"
     }
 
+    set listName $Fiducials($fid,name)
     if {$listLength == 0} {
-        return "$Fiducials($fid,name)0"
+        return "${listName}0"
     }
     set highest 0
     foreach pid $Fiducials($fid,pointIdList) {
         set name [Point($pid,node) GetName]
-        if {[regexp {([0-9]+)$} $name matchVar thisNum] == 1} {
+        # deals with the case of a number at the end of the list name
+        if {[regexp "${listName}(\[0-9\]\+)\$" $name matchVar thisNum] == 1} {
             if {$thisNum > $highest} {
                 set highest $thisNum
             }
