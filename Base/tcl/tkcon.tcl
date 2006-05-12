@@ -152,7 +152,7 @@ proc ::tkcon::Init {args} {
         scrollypos        right
         showmenu        1
         showmultiple        1
-        showstatusbar        1
+        showstatusbar        1 
         slaveeval        {}
         slaveexit        close
         subhistory        1
@@ -165,6 +165,8 @@ proc ::tkcon::Init {args} {
     } {
         if {![info exists OPT($key)]} { set OPT($key) $default }
     }
+
+    set OPT(showstatusbar) 0   ;# SLICER - prefer no status bar
 
     foreach {key default} {
         app                {}
@@ -190,7 +192,7 @@ proc ::tkcon::Init {args} {
             alias clear dir dump echo idebug lremove
             tkcon_puts tkcon_gets observe observe_var unalias which what
         }
-        RCS                {RCS: @(#) $Id: tkcon.tcl,v 1.7 2006/05/12 14:16:04 pieper Exp $}
+        RCS                {RCS: @(#) $Id: tkcon.tcl,v 1.8 2006/05/12 14:23:17 pieper Exp $}
         HEADURL                {http://cvs.sourceforge.net/viewcvs.py/*checkout*/tkcon/tkcon/tkcon.tcl?rev=HEAD}
 
         docs                "http://tkcon.sourceforge.net/"
