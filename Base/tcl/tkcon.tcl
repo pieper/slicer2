@@ -192,7 +192,7 @@ proc ::tkcon::Init {args} {
             alias clear dir dump echo idebug lremove
             tkcon_puts tkcon_gets observe observe_var unalias which what
         }
-        RCS                {RCS: @(#) $Id: tkcon.tcl,v 1.10 2006/05/12 20:51:58 pieper Exp $}
+        RCS                {RCS: @(#) $Id: tkcon.tcl,v 1.11 2006/05/13 14:40:07 pieper Exp $}
         HEADURL                {http://cvs.sourceforge.net/viewcvs.py/*checkout*/tkcon/tkcon/tkcon.tcl?rev=HEAD}
 
         docs                "http://tkcon.sourceforge.net/"
@@ -4985,6 +4985,7 @@ proc ::tkcon::Bindings {} {
     ## SLICER: make it harder to exit by mistake 
     ## - removed the following
     ##  <<TkCon_Exit>>                <Shift-Control-q>
+    ## - also addition of BracketPair to put matching [ and ]
     foreach {ev key} [subst -nocommand -noback {
         <<TkCon_New>>                <Control-N>
         <<TkCon_NewTab>>        <Control-T>
@@ -5021,6 +5022,7 @@ proc ::tkcon::Bindings {} {
         <<TkCon_ClearLine>>        <Control-u>
         <<TkCon_SaveCommand>>        <Control-z>
         <<TkCon_Popup>>                <Button-3>
+        <<TkCon_BracketPair>>          <Control-]>
     }] {
         event add $ev $key
         ## Make sure the specific key won't be defined
@@ -5157,6 +5159,7 @@ proc ::tkcon::Bindings {} {
         if {[%W compare insert > limit]} {::tkcon::Expand %W}
     }
     bind TkConsole <<TkCon_ExpandSubcommand>> {
+        # SLICER
         if {[%W compare insert > limit]} {::tkcon::ExpandSubcommand %W}
     }
     bind TkConsole <<TkCon_Tab>> {
@@ -5172,6 +5175,15 @@ proc ::tkcon::Bindings {} {
     bind TkConsole <<TkCon_Eval>> {
         ::tkcon::Eval %W
     }
+
+    # SLICER
+    bind TkConsole <<TkCon_BracketPair>> {
+            tkTextSetCursor %W {limit}
+            ::tkcon::Insert %W {[}
+            tkTextSetCursor %W {end}
+            ::tkcon::Insert %W {] }
+    }
+
     bind TkConsole <Delete> {
         if {[llength [%W tag nextrange sel 1.0 end]] \
                 && [%W compare sel.first >= limit]} {
@@ -5712,17 +5724,20 @@ proc ::tkcon::ExpandXotcl str {
 
 
 ## SLICER specific:
-## ::tkcon::VTKMethods - convert the output of ListMethods
+## ::tkcon::VTKMethods - helper to convert the output of ListMethods
 ## into a form that Expand needs
 # ARGS: methods - the output of ListMethods class
 #       pattern - the substring to match
 # Calls:
-# Returns: a list of methods
+# Returns: a tcl list of methods
 ## 
 proc ::tkcon::VTKMethods {methods pattern} {
 
     set mm [split $methods "\n"]
     set methods ""
+    if { [llength $mm] > 0 } {
+        set mm [concat $mm Print ListMethods New]
+    }
     foreach m $mm {
         set m [string trim $m]
         if { [string length $m] == 0 } { continue }
@@ -5757,8 +5772,9 @@ proc ::tkcon::ExpandSubcommand w {
     # evaluate the obj in the global space (in case it's a variable 
     # reference or a command in brackets) and then get the list
     # of methods that match the current partial subcommand 
-    eval set substres [namespace eval :: subst [list $obj]]
-    set vtklist [namespace eval :: $substres ListMethods]
+    # - note VTK specific subcommand 'ListMethods'
+    eval set substres [EvalSlave subst [list $obj]]
+    set vtklist [EvalSlave $substres ListMethods]
     set match [::tkcon::VTKMethods $vtklist $sub*]
 
     # create the longest common substring of methods
