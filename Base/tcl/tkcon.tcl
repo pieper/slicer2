@@ -192,7 +192,7 @@ proc ::tkcon::Init {args} {
             alias clear dir dump echo idebug lremove
             tkcon_puts tkcon_gets observe observe_var unalias which what
         }
-        RCS                {RCS: @(#) $Id: tkcon.tcl,v 1.11 2006/05/13 14:40:07 pieper Exp $}
+        RCS                {RCS: @(#) $Id: tkcon.tcl,v 1.12 2006/05/13 20:16:19 pieper Exp $}
         HEADURL                {http://cvs.sourceforge.net/viewcvs.py/*checkout*/tkcon/tkcon/tkcon.tcl?rev=HEAD}
 
         docs                "http://tkcon.sourceforge.net/"
@@ -1437,7 +1437,10 @@ proc ::tkcon::InitMenus {w title} {
                 -command ::tkcon::NewTab
         $m add command -label "Delete Tab"        -underline 0 \
                 -command ::tkcon::DeleteTab -state disabled
-        $m add command -label "Close Console"        -underline 0 -accel Ctrl-w \
+        # SLICER: remove accel to make it harder to close application by mistake
+        # $m add command -label "Close Console"        -underline 0 -accel Ctrl-w \
+        #       -command ::tkcon::Destroy
+        $m add command -label "Close Console"        -underline 0 \
                 -command ::tkcon::Destroy
         $m add command -label "Clear Console"        -underline 1 -accel Ctrl-l \
                 -command { clear; ::tkcon::Prompt }
@@ -3788,8 +3791,9 @@ proc edit {args} {
         $m add separator
         $m add command -label "Dismiss" -underline 0 -accel "Ctrl-w" \
                 -command [list destroy $w]
-        bind $w <Control-w>                        [list destroy $w]
-        bind $w <$::tkcon::PRIV(meta)-w>        [list destroy $w]
+        # SLICER: make it harder to close app by mistake, so remove these bindings
+        #bind $w <Control-w>                        [list destroy $w]
+        #bind $w <$::tkcon::PRIV(meta)-w>        [list destroy $w]
 
         ## Edit Menu
         ##
@@ -4985,13 +4989,13 @@ proc ::tkcon::Bindings {} {
     ## SLICER: make it harder to exit by mistake 
     ## - removed the following
     ##  <<TkCon_Exit>>                <Shift-Control-q>
+    ##  <<TkCon_Close>>                <Control-w>
     ## - also addition of BracketPair to put matching [ and ]
     foreach {ev key} [subst -nocommand -noback {
         <<TkCon_New>>                <Control-N>
         <<TkCon_NewTab>>        <Control-T>
         <<TkCon_NextTab>>        <Control-Key-Tab>
         <<TkCon_PrevTab>>        <Control-Shift-Key-Tab>
-        <<TkCon_Close>>                <Control-w>
         <<TkCon_About>>                <Control-A>
         <<TkCon_Help>>                <Control-H>
         <<TkCon_Find>>                <Control-F>
