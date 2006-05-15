@@ -192,7 +192,7 @@ proc ::tkcon::Init {args} {
             alias clear dir dump echo idebug lremove
             tkcon_puts tkcon_gets observe observe_var unalias which what
         }
-        RCS                {RCS: @(#) $Id: tkcon.tcl,v 1.12 2006/05/13 20:16:19 pieper Exp $}
+        RCS                {RCS: @(#) $Id: tkcon.tcl,v 1.13 2006/05/15 20:34:45 pieper Exp $}
         HEADURL                {http://cvs.sourceforge.net/viewcvs.py/*checkout*/tkcon/tkcon/tkcon.tcl?rev=HEAD}
 
         docs                "http://tkcon.sourceforge.net/"
@@ -5026,7 +5026,7 @@ proc ::tkcon::Bindings {} {
         <<TkCon_ClearLine>>        <Control-u>
         <<TkCon_SaveCommand>>        <Control-z>
         <<TkCon_Popup>>                <Button-3>
-        <<TkCon_BracketPair>>          <Control-]>
+        <<TkCon_BracketPair>>          <Control-bracketright>
     }] {
         event add $ev $key
         ## Make sure the specific key won't be defined
