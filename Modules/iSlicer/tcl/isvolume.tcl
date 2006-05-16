@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: isvolume.tcl,v $
-#   Date:      $Date: 2006/01/17 20:36:06 $
-#   Version:   $Revision: 1.41 $
+#   Date:      $Date: 2006/05/16 22:11:18 $
+#   Version:   $Revision: 1.42 $
 # 
 #===============================================================================
 # FILE:        isvolume.tcl
@@ -59,6 +59,7 @@ option add *isvolume.slice 128 widgetDefault
 option add *isvolume.interpolation linear widgetDefault
 option add *isvolume.resolution 256 widgetDefault
 option add *isvolume.transform "" widgetDefault
+option add *isvolume.tensor "false" widgetDefault
 
 #
 # The class definition - define if needed (not when re-sourcing)
@@ -84,6 +85,7 @@ if { [itcl::find class isvolume] == "" } {
         itk_option define -interpolation interpolation Interpolation {linear}
         itk_option define -resolution resolution Resolution {256}
         itk_option define -transform transform Transform {}
+        itk_option define -tensor tensor Tensor {false}
         
         # widgets for the control area
         variable _controls
@@ -104,6 +106,7 @@ if { [itcl::find class isvolume] == "" } {
         # vtk objects for reslicing
         variable _ijkmatrix
         variable _reslice
+        variable _resliceST
         variable _xform
         variable _changeinfo
         variable _spacing
@@ -121,6 +124,7 @@ if { [itcl::find class isvolume] == "" } {
         method actor  {}   {return $_actor}
         method mapper {}   {return $_mapper}
         method reslice {}  {return $_reslice}
+        method resliceST {}  {return $_resliceST}
         method ren    {}   {return $_ren}
         method tkrw   {}   {return $_tkrw}
         method controls {} {return $_controls}
@@ -129,12 +133,19 @@ if { [itcl::find class isvolume] == "" } {
         method dimensions{}   {return $_dimensions}
         
         # Note: use SetUpdateExtent to get full volume in the imagedata
-        method imagedata {} {return [$_reslice GetOutput]}
+        method imagedata {} {
+            if { $itk_option(-tensor) == "true" } {
+                return [$_resliceST GetOutput]
+            } else {
+                return [$_reslice GetOutput]
+            }
+        }
         
         method screensave { filename {imagetype "PNM"} } {} ;# TODO should be moved to superclass
         method volmenu_update {} {}
         method transform_update {} {}
         method slicer_volume { {name ""} {label_map "false"} } {}
+        method slicer_tensor { {name ""} } {}
         method set_spacing  {spacingI spacingJ spacingK} {}
         method set_dimensions  {dimensionI dimensionJ dimensionK} {}
         method scanorder{} {}
@@ -262,22 +273,32 @@ itcl::body isvolume::constructor {args} {
     # for reslicing
     set _ijkmatrix ::ijkmatrix_$_name
     set _reslice ::reslice_$_name
+    set _resliceST ::resliceST_$_name
     set _xform ::xform_$_name
     set _changeinfo ::changeinfo_$_name
     catch "$_ijkmatrix Delete"
     catch "$_reslice Delete"
+    catch "$_resliceST Delete"
     catch "$_xform Delete"
     catch "$_changeinfo Delete"
 
     vtkMatrix4x4 $_ijkmatrix
+    if { [info command vtkImageResliceST] == "" } {
+        # if no ST, try regular reslice
+        vtkImageReslice $_resliceST
+    } else {
+        vtkImageResliceST $_resliceST
+    }
     vtkImageReslice $_reslice
       $_reslice SetInterpolationModeToLinear
+      $_resliceST SetInterpolationModeToLinear
     vtkGeneralTransform $_xform
     vtkImageChangeInformation $_changeinfo
       $_changeinfo SetInput $_None_ImageData
       $_changeinfo CenterImageOn
 
     $_reslice SetInput [$_changeinfo GetOutput]
+    $_resliceST SetInput [$_changeinfo GetOutput]
 
     #
     # Initialize the widget based on the command line options.
@@ -519,6 +540,7 @@ itcl::configbody isvolume::interpolation {
         }
     }
     $_reslice SetInterpolationModeTo$mode
+    $_resliceST SetInterpolationModeTo$mode
     $this expose
 }
 
@@ -538,11 +560,13 @@ itcl::configbody isvolume::resolution {
     set _spacing {$spacing $spacing $spacing}
 
     $_reslice SetOutputSpacing $spacing $spacing $spacing 
+    $_resliceST SetOutputSpacing $spacing $spacing $spacing 
     set ext [expr $res -1]
 
     set _dimensions {$res $res $res}
 
     $_reslice SetOutputExtent 0 $ext 0 $ext 0 $ext
+    $_resliceST SetOutputExtent 0 $ext 0 $ext 0 $ext
 
     $this transform_update
 
@@ -874,6 +898,7 @@ itcl::body isvolume::transform_update {} {
     flip2 Delete
 
     $_reslice SetResliceTransform $_xform 
+    $_resliceST SetResliceTransform $_xform 
     
 }
 
@@ -929,6 +954,10 @@ itcl::body isvolume::slicer_volume { {name ""} {label_map "false"} } {
 
     if { [info command MainMrmlAddNode] == "" } {
         error "cannot create slicer volume outside of slicer"
+    }
+
+    if { $itk_option(-tensor) == "true" } {
+        return [$this slicer_tensor $name]
     }
 
     # add a mrml node
@@ -994,6 +1023,67 @@ itcl::body isvolume::slicer_volume { {name ""} {label_map "false"} } {
     RenderAll
 
     return $i
+
+
+}
+
+itcl::body isvolume::slicer_tensor { {name ""} } {
+
+    if { [info command MainMrmlAddNode] == "" } {
+        error "cannot create slicer volume outside of slicer"
+    }
+
+    # find a name for the image data that hasn't been taken yet
+    while {1} {
+        set id id_$_name$_volume_serial
+        if { [info command $id] == "" } {
+            break ;# found a free name
+        } else {
+            incr _volume_serial ;# need to try again
+        }
+    }
+
+    set newvol [MainMrmlAddNode Volume Tensor]
+    $newvol SetDescription "transformed DTMRI volume"
+    $newvol SetName $name
+    set t2 [$newvol GetID]
+    
+    TensorCreateNew $t2 
+
+    # set the name and description of the volume
+    if { $name == "" } { 
+        $newvol SetName isvolume-$_volume_serial
+    } else {
+        $newvol SetName $name
+    }
+    $newvol SetDescription "Resampled volume"
+    incr _volume_serial
+
+    $this transform_update
+    $_reslice Update
+
+    vtkImageData $id
+    eval [$this imagedata] SetUpdateExtent [[$this imagedata] GetWholeExtent]
+    [$this imagedata] Update
+    $id DeepCopy [$this imagedata]
+
+    $newvol SetNumScalars 1
+    $newvol SetScalarType [$id GetScalarType]
+
+    eval $newvol SetSpacing [$id GetSpacing]
+    
+    $newvol SetScanOrder $itk_option(-orientation)
+    $newvol SetDimensions [lindex [$id GetDimensions] 0] [lindex [$id GetDimensions] 1]
+    $newvol SetImageRange 1 [lindex $_dimensions 2]
+
+    $newvol SetLabelMap 0
+    
+    Tensor($t2,data) SetImageData $id
+
+    MainUpdateMRML
+    DTMRISetActive $t2
+
+    return $t2
 
 
 }

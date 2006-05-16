@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: TransformVolume.tcl,v $
-#   Date:      $Date: 2006/03/10 22:43:52 $
-#   Version:   $Revision: 1.29 $
+#   Date:      $Date: 2006/05/16 22:11:17 $
+#   Version:   $Revision: 1.30 $
 # 
 #===============================================================================
 # FILE:        TransformVolume.tcl
@@ -157,7 +157,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.29 $} {$Date: 2006/03/10 22:43:52 $}]
+        {$Revision: 1.30 $} {$Date: 2006/05/16 22:11:17 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -598,24 +598,38 @@ proc TransformVolumeRun {} {
     $isv volmenu_update
 
     set TransformVolume(VolIDs) [TransformVolumeGetVolumes [$TransformVolume(transform) selectedID]]
-    foreach v $TransformVolume(VolIDs) {
+    set nodes [TransformVolumeGetVolumesAndTensors [$TransformVolume(transform) selectedID]]
+    foreach n $nodes {
         
-        puts " TransformVolume : transforming volume [Volume($v,node) GetName]"
+        puts " TransformVolume : transforming volume [$n GetName]"
         
-        $isv configure -volume [Volume($v,node) GetID]
-        
-        $isv configure -orientation $TransformVolume(OutputOrientation)
+        # create result name
+        set id [$n GetID]
+        set resVolName $TransformVolume(ResultPrefix)
 
-        if {[Volume($v,node) GetInterpolate] != 0} {
+
+        # check for Tensor
+        if { [string match "Tensor*" $n"] } {
+            append resVolName "_" [Tensor($id,node) GetName]
+            $isv configure -volume [Tensor($id,data) GetOutput] -tensor "true"
             $isv configure -interpolation $TransformVolume(InterpolationMode)
-        } else {
-            $isv configure -interpolation "NearestNeighbor"
-        }
-        if {[Volume($v,node) GetLabelMap] != 0} {
-            set label_map "true"
-        } else {
             set label_map "false"
+        } else {
+            $isv configure -volume [Volume($id,node) GetID] -tensor "false"
+            if {[Volume($id,node) GetInterpolate] != 0} {
+                $isv configure -interpolation $TransformVolume(InterpolationMode)
+            } else {
+                $isv configure -interpolation "NearestNeighbor"
+            }
+            if {[Volume($id,node) GetLabelMap] != 0} {
+                set label_map "true"
+            } else {
+                set label_map "false"
+            }
+            append resVolName "_" [Volume($id,node) GetName]
         }
+
+        $isv configure -orientation $TransformVolume(OutputOrientation)
 
         TransformVolumePermuteDimensions
         TransformVolumePermuteSpacing
@@ -634,9 +648,6 @@ proc TransformVolumeRun {} {
             $isv configure -warpvolume $Volume(idNone)
         }
         
-        # create result name
-        set resVolName $TransformVolume(ResultPrefix)
-        append resVolName "_" [Volume($v,node) GetName]
         
         # check if the result name exists already
         set exists [TransformVolumeVolumeExists $resVolName]
@@ -719,6 +730,60 @@ proc TransformVolumeGetVolumes {transformId} {
     return $volIDs
 }
 
+#-------------------------------------------------------------------------------
+# .PROC TransformVolumeGetVolumesAndTensors
+# 
+# .ARGS
+# int transformId
+# Returns - list of volume and tensor nodes
+# .END
+#-------------------------------------------------------------------------------
+proc TransformVolumeGetVolumesAndTensors {transformId} {
+    global Data Mrml Transform EndTransform
+    
+    set nodes ""
+
+    if {$transformId != ""} {
+        set tree Mrml(dataTree)
+        $tree InitTraversal
+        set node [$tree GetNextItem]
+        
+        set insideTransform 0
+        set done 0
+        set inside 0
+        while {$node != ""} {
+            
+            set nodeClass [$node GetClassName]
+            
+            switch $nodeClass {
+                "vtkMrmlVolumeNode" {
+                    if {$inside} {
+                        lappend nodes $node
+                    }
+                }
+                "vtkMrmlTransformNode" {
+                    if {[$node GetName] == [Transform($transformId,node) GetName]} {
+                        incr insideTransform
+                        set inside 1
+                    }
+                }
+                "vtkMrmlEndTransformNode" {
+                    if {$inside } {
+                        incr insideTransform -1
+                        if {$insideTransform == 0} {
+                            set done 1
+                        }
+                    }
+                }
+            }
+            if {$done} {
+                break
+            }
+            set node [$tree GetNextItem]
+        }
+    }
+    return $nodes
+}
 #-----------------------------
 
 #-------------------------------------------------------------------------------
