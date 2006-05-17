@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: VolGeneric.tcl,v $
-#   Date:      $Date: 2006/03/06 21:07:32 $
-#   Version:   $Revision: 1.23 $
+#   Date:      $Date: 2006/05/17 21:22:06 $
+#   Version:   $Revision: 1.24 $
 # 
 #===============================================================================
 # FILE:        VolGeneric.tcl
@@ -461,9 +461,9 @@ proc VolGenericApply {} {
     set dim     [lindex [Volume($i,node) GetDimensions] 0]
     set spacing [lindex [Volume($i,node) GetSpacing] 0]
     set fov     [expr $dim*$spacing]
-    set View(fov) $fov
-
-    MainViewSetFov
+    # set View(fov) $fov
+    # let main view set it so that it doesn't override other volume's setting
+    MainViewSetFov $fov
 
 
     # display the new volume in the background of all slices if not a label map
