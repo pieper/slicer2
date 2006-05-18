@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: VolNrrd.tcl,v $
-#   Date:      $Date: 2006/04/12 19:01:15 $
-#   Version:   $Revision: 1.4 $
+#   Date:      $Date: 2006/05/18 18:53:05 $
+#   Version:   $Revision: 1.5 $
 # 
 #===============================================================================
 # FILE:        VolNrrd.tcl
@@ -418,9 +418,9 @@ proc VolNrrdApply {} {
     set dim     [lindex [Volume($i,node) GetDimensions] 0]
     set spacing [lindex [Volume($i,node) GetSpacing] 0]
     set fov     [expr $dim*$spacing]
-    set View(fov) $fov
-
-    MainViewSetFov
+#    set View(fov) $fov
+    # let MainView set it so that it doesn't improperly override
+    MainViewSetFov "default" $fov
 
 
     # display the new volume in the background of all slices if not a label map
