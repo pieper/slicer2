@@ -146,13 +146,15 @@ puts "uploadFlag = $uploadFlag"
     }
 
     set exe ""
+    set suffix ""
+
     switch $::env(BUILD) {
         "solaris8" { set target solaris-sparc }
         "darwin-ppc" { set target darwin-ppc }
         "redhat7.3" -
         "linux-x86" { set target linux-x86 }
         "linux-x86_64" { set target linux-x86 }
-        "win32" { set target win32 ; set exe .exe}
+        "win32" { set target win32 ; set suffix -x86 ; set exe .exe}
         default {error "unknown build target $::env(BUILD)"}
     }
 
@@ -163,7 +165,6 @@ puts "uploadFlag = $uploadFlag"
         set do_upload "true"
     }
 
-    set suffix ""
     if { [info exists ::env(TMPDIR)] } {
         set archivedir [file normalize $::env(TMPDIR)]
     } else {
