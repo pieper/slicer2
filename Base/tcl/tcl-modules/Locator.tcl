@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2006/04/12 17:54:23 $
-#   Version:   $Revision: 1.38.12.2.2.2 $
+#   Date:      $Date: 2006/05/23 19:47:23 $
+#   Version:   $Revision: 1.38.12.2.2.3 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -89,7 +89,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.2 $} {$Date: 2006/04/12 17:54:23 $}]
+        {$Revision: 1.38.12.2.2.3 $} {$Date: 2006/05/23 19:47:23 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -152,7 +152,7 @@ proc LocatorInit {} {
     set Locator(File,fid)    ""
     # Flashpoint
     set Locator(Flashpoint,msPoll) 100
-    set Locator(Flashpoint,port)   20000
+    set Locator(Flashpoint,port)   30000
     set Locator(Flashpoint,host)   mrtws 
     # Images
     set Locator(Images,msPoll)   1000
