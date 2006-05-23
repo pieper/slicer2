@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MRAblation.tcl,v $
-#   Date:      $Date: 2006/04/26 17:01:42 $
-#   Version:   $Revision: 1.1.2.8 $
+#   Date:      $Date: 2006/05/23 21:06:41 $
+#   Version:   $Revision: 1.1.2.9 $
 # 
 #===============================================================================
 # FILE:        MRAblation.tcl
@@ -137,7 +137,7 @@ proc MRAblationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.8 $} {$Date: 2006/04/26 17:01:42 $}]
+        {$Revision: 1.1.2.9 $} {$Date: 2006/05/23 21:06:41 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -750,12 +750,20 @@ proc MRAblationCompute {hot} {
         Volume($i,node) SetLowerThreshold $low 
         Volume($i,node) SetUpperThreshold $high 
 
+        # If AutoWindowLevel is ON, 
+        # we can't set new values for window and level.
+        Volume($i,node) AutoWindowLevelOff
+        # For the thermal volumes, we set the following 
+        # window and level values for now. We may have 
+        # better way to do it in the future.
+        Volume($i,node) SetWindow 50 
+        Volume($i,node) SetLevel  25 
 
         MainSlicesSetVolumeAll Fore $i
         MainVolumesSetActive $i
 
         # set the act volume to the color of FMRI 
-        MainVolumesSetParam LutID 2 
+        MainVolumesSetParam LutID 6 
 
         MainUpdateMRML
         RenderAll
@@ -1006,9 +1014,10 @@ proc MRAblationWatch {} {
     set geFiles [glob -nocomplain -directory $MRAblation(imageDir) -type f I.*]
     set noGeFiles [llength $geFiles]
     # dicom files start wtih a digit 
-    # set dcmFiles [glob -nocomplain -directory $MRAblation(imageDir) -type f  {[0-9].*}]
     # dicom files end wtih IMA 
-    set dcmFiles [glob -nocomplain -directory $MRAblation(imageDir) -type f *.IMA]
+    # dicom files starts wtih MR 
+    # Combine different dicom naming conventions:
+    set dcmFiles [glob -nocomplain -directory $MRAblation(imageDir) -type f {MR.* *.IMA [0-9].*}]
     set noDcmFiles [llength $dcmFiles]
  
     if {$noGeFiles > 0} {
