@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MRAblation.tcl,v $
-#   Date:      $Date: 2006/05/23 21:06:41 $
-#   Version:   $Revision: 1.1.2.9 $
+#   Date:      $Date: 2006/05/23 21:22:35 $
+#   Version:   $Revision: 1.1.2.10 $
 # 
 #===============================================================================
 # FILE:        MRAblation.tcl
@@ -137,7 +137,7 @@ proc MRAblationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.9 $} {$Date: 2006/05/23 21:06:41 $}]
+        {$Revision: 1.1.2.10 $} {$Date: 2006/05/23 21:22:35 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -157,6 +157,7 @@ proc MRAblationInit {} {
     set MRAblation(sequenceList) ""
     set MRAblation(updateComputeTab) 1 
     set MRAblation(scanIndex) 0 
+    set MRAblation(waitingMsgUpdated) 0
 
     # Source all appropriate tcl files here. 
     source "$MRAblation(modulePath)/tcl/MRAblationHelpText.tcl"
@@ -1041,7 +1042,7 @@ proc MRAblationWatch {} {
         }
  
         MRAblationCompute $MRAblation(phaseCount)
- 
+        set MRAblation(waitingMsgUpdated) 0 
 
         if {$MRAblation(phaseCount) == $MRAblation(phase)} {
             set MRAblation(updateComputeTab) 1 
@@ -1050,11 +1051,14 @@ proc MRAblationWatch {} {
         }
 
         incr MRAblation(phaseCount)
-    } else {
  
-        set Gui(progressText) "Waiting images for phase #$MRAblation(phaseCount)..."
-        puts $Gui(progressText)
+    } else {
 
+        if {! $MRAblation(waitingMsgUpdated)} {
+            set Gui(progressText) "Waiting images for timepoint #$MRAblation(phaseCount)..."
+            puts $Gui(progressText)
+            set MRAblation(waitingMsgUpdated) 1 
+        }
     } 
 
     after 3000 "MRAblationWatch"
