@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITensorRegistration.tcl,v $
-#   Date:      $Date: 2006/04/19 14:23:56 $
-#   Version:   $Revision: 1.28 $
+#   Date:      $Date: 2006/05/24 13:04:57 $
+#   Version:   $Revision: 1.29 $
 # 
 #===============================================================================
 # FILE:        DTMRITensorRegistration.tcl
@@ -68,7 +68,7 @@ proc DTMRITensorRegistrationInit {} {
     #------------------------------------
     set m "TensorRegistration"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.28 $} {$Date: 2006/04/19 14:23:56 $}]
+                                 {$Revision: 1.29 $} {$Date: 2006/05/24 13:04:57 $}]
 
     # Does the AG module exist? If not the registration tab will not be displayed
     if {[catch "package require vtkAG"]} {
@@ -111,12 +111,12 @@ proc DTMRITensorRegistrationInit {} {
     set DTMRI(reg,Channels) "1"
     set DTMRI(reg,Tensors)  "1"
     set DTMRI(reg,Interpolation) "1"
-    set DTMRI(reg,Iteration_min) "15"
+    set DTMRI(reg,Iteration_min) "10"
     set DTMRI(reg,Iteration_max)  "50"
     set DTMRI(reg,Level_min)  "-1"
     set DTMRI(reg,Level_max)  "-1"
-    set DTMRI(reg,Epsilon)    "1e-4"
-    set DTMRI(reg,Stddev_min) "0.85"
+    set DTMRI(reg,Epsilon)    "5e-4"
+    set DTMRI(reg,Stddev_min) "1"
     # [expr sqrt(-1./(2.*log(.5)))] = 0.85
     set DTMRI(reg,Stddev_max) "1"
     set DTMRI(reg,SSD)    "1" 
@@ -1592,8 +1592,8 @@ proc DTMRIRegRun {} {
       
       # Initial transform is handled in preprocessing, so commented here
       
-      #GCR SetInput  __dummy_transform  
-      #[GCR GetGeneralTransform] SetInput TransformDTMRI
+      GCR SetInput  __dummy_transform  
+      [GCR GetGeneralTransform] SetInput TransformDTMRI
       
       GCR SetCriterion $DTMRI(reg,Gcr_criterion)
       GCR SetTransformDomain $DTMRI(reg,Linear_group)
@@ -2546,9 +2546,9 @@ proc DTMRIRegNormalize { SourceImage TargetImage NormalizedSource SourceScanOrde
     gentrans Concatenate xform
     
     # Also apply initial transform, if requested.
-    if {$DTMRI(reg,Initial_tfm)} {
-      gentrans Concatenate [TransformDTMRI GetInverse]
-    }
+    #if {$DTMRI(reg,Initial_tfm)} {
+    #  gentrans Concatenate [TransformDTMRI GetInverse]
+    #}
 
     reslice SetResliceTransform gentrans
     
