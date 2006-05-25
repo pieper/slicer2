@@ -166,6 +166,7 @@ if {$::env(BUILD) == $solaris ||
         set ::env(LD_LIBRARY_PATH) $::env(TCL_LIB_DIR):$::env(LD_LIBRARY_PATH)
         set ::env(LD_LIBRARY_PATH) $::env(TCL_BIN_DIR):$::env(LD_LIBRARY_PATH)
         set ::env(LD_LIBRARY_PATH) $::env(TEEM_BIN_DIR):$::env(LD_LIBRARY_PATH)
+        set ::env(PATH) $::env(TEEM_BIN_DIR):$::env(PATH)
     } elseif {$::env(BUILD) ==  $darwin} { 
         # add vtk, slicer, and tcl bins
         set ::env(DYLD_LIBRARY_PATH) $::env(VTK_DIR)/bin:$::env(DYLD_LIBRARY_PATH)
@@ -178,6 +179,7 @@ if {$::env(BUILD) == $solaris ||
         set ::env(DYLD_LIBRARY_PATH) $::env(TCL_LIB_DIR):$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(TCL_BIN_DIR):$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(TEEM_BIN_DIR):$::env(DYLD_LIBRARY_PATH)
+        set ::env(PATH) $::env(TEEM_BIN_DIR):$::env(PATH)
     } elseif {$::env(BUILD) == $windows} {
         # add vtk, slicer, and tcl bins
         set ::env(Path) $::env(VTK_DIR)/bin/$::env(VTK_BUILD_SUBDIR)\;$::env(Path)
