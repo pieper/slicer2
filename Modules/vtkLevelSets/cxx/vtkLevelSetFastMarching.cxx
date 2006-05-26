@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkLevelSetFastMarching.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:55 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/05/26 19:54:50 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 /*  ==================================================
@@ -43,15 +43,6 @@
    The full GNU Lesser General Public License file is in vtkLevelSets/LesserGPL_license.txt
 */
 
- /*=========================================================================
-
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkLevelSetFastMarching.cxx,v $
-  Language:  C++
-  Date:      $Date: 2006/01/06 17:57:55 $
-  Version:   $Revision: 1.8 $
-
-=========================================================================*/
 #include "vtkLevelSetFastMarching.h"
 #include "vtkObjectFactory.h"
 #include "vtkStructuredPointsWriter.h"

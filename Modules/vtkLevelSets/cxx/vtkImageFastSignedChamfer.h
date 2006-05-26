@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageFastSignedChamfer.h,v $
-  Date:      $Date: 2006/01/06 17:57:54 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2006/05/26 19:54:49 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 /*  ==================================================
@@ -43,16 +43,6 @@
    The full GNU Lesser General Public License file is in vtkLevelSets/LesserGPL_license.txt
 */
 
-/*=========================================================================
-
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkImageFastSignedChamfer.h,v $
-  Language:  C++
-  Date:      $Date: 2006/01/06 17:57:54 $
-  Version:   $Revision: 1.3 $
-  Author:    Karl Krissian
-
-=========================================================================*/
 // .NAME vtkImageIsoContourDist - short description
 
 // .SECTION Description
