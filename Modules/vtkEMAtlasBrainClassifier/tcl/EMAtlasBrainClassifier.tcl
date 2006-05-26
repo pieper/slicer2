@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
-#   Date:      $Date: 2006/04/24 17:07:38 $
-#   Version:   $Revision: 1.38 $
+#   Date:      $Date: 2006/05/26 19:36:19 $
+#   Version:   $Revision: 1.39 $
 # 
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
@@ -107,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
    set Module($m,depend) ""
 
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.38 $} {$Date: 2006/04/24 17:07:38 $}]
+       {$Revision: 1.39 $} {$Date: 2006/05/26 19:36:19 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -193,7 +193,7 @@ proc EMAtlasBrainClassifierInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierBuildGUI {} {
-     global Gui EMAtlasBrainClassifier Module Volume
+     global Gui EMAtlasBrainClassifier Module Volume 
      
      set help "The module automatically segments brain MRIs into the tissue classes (white matter, gray matter, and cortical spinal fluid). In order to run the module the following steps have to be completed :"
      set help "$help<BR><B>1. Step: Select Input channels</B>"
@@ -288,33 +288,32 @@ proc EMAtlasBrainClassifierBuildGUI {} {
       pack $f.f$frame -side left -padx 0 -pady $Gui(pad)
     }
 
-    DevAddLabel $f.fLeft.lModels "  Gernerate 3D Models:" 
+    DevAddLabel $f.fLeft.lModels "  Generate 3D Models:" 
     pack $f.fLeft.lModels -side top -padx $Gui(pad) -pady 2  -anchor w
 
     frame $f.fRight.fModels -bg $Gui(activeWorkspace)
     TooltipAdd  $f.fRight.fModels "Automatically generate 3D Models of the segmentations" 
 
     pack $f.fRight.fModels -side top -padx 0 -pady 2  -anchor w
-
+       
     foreach value "1 0" text "On Off" width "4 4" {
-    eval {radiobutton $f.fRight.fModels.r$value -width $width -indicatoron 0\
-          -text "$text" -value "$value" -variable EMAtlasBrainClassifier(GenerateModels) } $Gui(WCA)
-    pack $f.fRight.fModels.r$value -side left -padx 0 -pady 0 
+        eval {radiobutton $f.fRight.fModels.r$value -width $width -indicatoron 0\
+                  -text "$text" -value "$value" -variable EMAtlasBrainClassifier(GenerateModels) } $Gui(WCA)
+        pack $f.fRight.fModels.r$value -side left -padx 0 -pady 0 
     }
-
-
+    
     # Now define working directory
     DevAddLabel $f.fLeft.lWorking "  Working Directory:" 
     pack $f.fLeft.lWorking -side top -padx $Gui(pad) -pady 2  -anchor w
-
+    
     frame $f.fRight.fWorking -bg $Gui(activeWorkspace)
     TooltipAdd  $f.fRight.fWorking "Working directory in which any results of the segmentations should be saved in" 
     pack $f.fRight.fWorking -side top -padx 0 -pady 2 -anchor w
-
+    
     eval {entry  $f.fRight.fWorking.eDir   -width 15 -textvariable EMAtlasBrainClassifier(WorkingDirectory) } $Gui(WEA)
     eval {button $f.fRight.fWorking.bSelect -text "..." -width 2 -command "EMAtlasBrainClassifierDefineWorkingDirectory"} $Gui(WBA)     
     pack $f.fRight.fWorking.eDir  $f.fRight.fWorking.bSelect -side left -padx 0 -pady 0  
-
+    
     DevAddLabel $f.fLeft.lOutput "  Save Segmentation:" 
     pack $f.fLeft.lOutput -side top -padx $Gui(pad) -pady 2  -anchor w
 
@@ -324,10 +323,11 @@ proc EMAtlasBrainClassifierBuildGUI {} {
     pack $f.fRight.fOutput -side top -padx 0 -pady 2  -anchor w
 
     foreach value "1 0" text "On Off" width "4 4" {
-    eval {radiobutton $f.fRight.fOutput.r$value -width $width -indicatoron 0\
-          -text "$text" -value "$value" -variable EMAtlasBrainClassifier(Save,Segmentation) } $Gui(WCA)
-    pack $f.fRight.fOutput.r$value -side left -padx 0 -pady 0 
+        eval {radiobutton $f.fRight.fOutput.r$value -width $width -indicatoron 0\
+                  -text "$text" -value "$value" -variable EMAtlasBrainClassifier(Save,Segmentation) } $Gui(WCA)
+        pack $f.fRight.fOutput.r$value -side left -padx 0 -pady 0 
     }
+
 
     DevAddLabel $f.fLeft.lFileType "  Select File Type:" 
     pack $f.fLeft.lFileType -side top -padx $Gui(pad) -pady 2  -anchor w
@@ -688,8 +688,10 @@ proc EMAtlasBrainClassifierCreateClasses {SuperClass Number} {
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierVolumeWriter {VolID} {
     global Volume
+
     set prefix [MainFileGetRelativePrefix [Volume($VolID,node) GetFilePrefix]]
-    #Note : I changed vtkMrmlDataVolume.cxx so that MainVolumeWrite also works for 
+ 
+    # Note : I changed vtkMrmlDataVolume.cxx so that MainVolumeWrite also works for 
     #        for volumes that do not start at slice 1. If it does not get checked into 
     #        the general version just do the following to overcome the problem after
     #        executing MainVolumesWrite:
@@ -1028,25 +1030,13 @@ proc EMAtlasBrainClassifier_NormalizeVolume { Vol OutVol Mode} {
 
     # Get maximum image value 
     set max [lindex [ia GetMax] 0]
-    set min [lindex [ia GetMin] 0]
 
-    puts "=========== Start Normalize Image ============ "
-    puts "Image Information:" 
-    puts "  Input Channel:    $Mode"
-    puts "  Number Of Scalar: [$Vol GetNumberOfScalarComponents]" 
-    puts "  Absolute Min:     $min"
-    puts "  Absolute Max:     $max"
-
-    # Notre: The next line used to be  ia SetComponentExtent 0 1000 0 0 0 0
-    # No change for image with intensities samller 1000
-    # bc 1000 defines the number of bins and first component of origin (0) + 1000 determines max of histogram, which is 1000
-    # For images greater 1000 the function would crash later bc of [hist GetScalarComponentAsFloat [expr $i - $trough] 0 0 0] with $i - $trough > 1000
+    puts "Absolute Max: $max"
 
     ia SetComponentExtent 0 $max 0 0 0 0
     ia Update
     hist DeepCopy [ia GetOutput]
   
-
     set count 0
     set i 0
 
@@ -1232,7 +1222,7 @@ proc EMAtlasBrainClassifier_RegistrationInitialize {RegisterAtlasDirList} {
         set UploadNeeded 1
             break
             }
-        }
+        }  
         if {$UploadNeeded && ([EMAtlasBrainClassifierDownloadAtlas] == 0)} { return -1}
     }
 
@@ -1403,6 +1393,38 @@ proc EMAtlasBrainClassifier_LoadAtlas {RegisterAtlasDirList RegisterAtlasNameLis
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierDownloadAtlas { } {
     global EMAtlasBrainClassifier tcl_platform
+
+    if {$tcl_platform(os) == "Linux" || 
+        $tcl_platform(os) == "SunOS" ||
+        $tcl_platform(os) == "Darwin"} { 
+        set urlAddress "http://na-mic.org/Wiki/images/8/8d/VtkEMAtlasBrainClassifier_AtlasDefault.tar.gz" 
+        set outputFile "[file dirname $EMAtlasBrainClassifier(AtlasDir)]/atlas.tar.gz"
+    } else {
+        set urlAddress "http://na-mic.org/Wiki/images/5/57/VtkEMAtlasBrainClassifier_AtlasDefault.zip"
+        set outputFile "[file dirname $EMAtlasBrainClassifier(AtlasDir)]/atlas.zip"
+    }
+
+    # temporary message to prompt the user to download and extract the file themselves.
+    set text "The module did not detect an atlas at the default location. An atlas can be"
+    set text "$text\ndownloaded from:\n$urlAddress\nand saved to:\n$outputFile"
+    set text "$text\nThen extract the atlas directory as\n${EMAtlasBrainClassifier(AtlasDir)}"
+    set text "$text\nand restart the segmentation."
+    if {[info command .topAtlas] != ""} {
+        wm deiconify .topAtlas
+        return 0
+    }
+    # otherwise build a frame with the info in it
+    global Gui
+    toplevel .topAtlas
+    wm title .topAtlas "Atlas not found"
+    frame .topAtlas.f1 -bg $::Gui(activeWorkspace)
+    pack .topAtlas.f1 -side top -padx $::Gui(pad) -pady $::Gui(pad) -fill x
+    set f .topAtlas.f1
+    eval {label $f.l -text $text} $::Gui(WLA)
+    DevAddButton $f.bClose "Close" "wm withdraw .topAtlas"
+    pack $f.l $f.bClose -side top -pady $::Gui(pad) -expand 1
+    return 0
+
     set text "The module did not detect an atlas at the default location. An atlas can be"
     set text "$text\ndownloaded by pressing the \"\OK\" button. This might take a while! "
     set text "$text\nIf you want to continue and you have PROBLEMS downloading the data please do the following:"
@@ -1413,10 +1435,10 @@ proc EMAtlasBrainClassifierDownloadAtlas { } {
     set text "${text}detail at http://na-mic.org/Wiki/index.php/Slicer:Data_EMAtlas."
 
      if {$EMAtlasBrainClassifier(BatchMode)} {
-      puts "$text"
-    } else {
-    if {[DevOKCancel "$text" ] != "ok"} { return 0}
-    }
+         puts "$text"
+     } else {
+         if {[DevOKCancel "$text" ] != "ok"} { return 0}
+     }
 
     DownloadInit
 
@@ -1432,40 +1454,42 @@ proc EMAtlasBrainClassifierDownloadAtlas { } {
     catch {exec rm -rf $EMAtlasBrainClassifier(AtlasDir)}
 
     if {[DownloadFile "$urlAddress" "$outputFile"] == 0} {
-      return 0
+        return 0
     }
 
     puts "Start extracting $outputFile ...." 
-    if {$tcl_platform(os) == "Linux"} { 
-    catch {exec rm -f [file rootname $outputFile]}
-    puts "exec gunzip $outputFile"
-    set OKFlag [catch {exec gunzip -f $outputFile} errormsg]
-    if {$OKFlag == 0} {
-        catch {exec rm -f atlas}
-        puts "exec tar xf [file rootname $outputFile]]"
-        set OKFlag [catch {exec tar xf [file rootname $outputFile]} errormsg]
+    if {$tcl_platform(os) == "Linux" || 
+        $tcl_platform(os) == "SunOS" ||
+        $tcl_platform(os) == "Darwin"} { 
+        catch {exec rm -f [file rootname $outputFile]}
+        puts "exec gunzip $outputFile"
+        set OKFlag [catch {exec gunzip -f $outputFile} errormsg]
         if {$OKFlag == 0} {
-        puts "exec mv atlas ${EMAtlasBrainClassifier(AtlasDir)}/"
-        set OKFlag [catch {exec mv atlas ${EMAtlasBrainClassifier(AtlasDir)}/}  errormsg]
+            catch {exec rm -f atlas}
+            puts "exec tar xf [file rootname $outputFile]]"
+            set OKFlag [catch {exec tar xf [file rootname $outputFile]} errormsg]
+            if {$OKFlag == 0} {
+                puts "exec mv atlas ${EMAtlasBrainClassifier(AtlasDir)}/"
+                set OKFlag [catch {exec mv atlas ${EMAtlasBrainClassifier(AtlasDir)}/}  errormsg]
+            }
         }
-    }
-    set RMFile [file rootname $outputFile]
+        set RMFile [file rootname $outputFile]
     } else {
-    set OKFlag [catch {exec unzip -o -qq $outputFile}  errormsg] 
-    set RMFile $outputFile
+        set OKFlag [catch {exec unzip -o -qq $outputFile}  errormsg] 
+        set RMFile $outputFile
     } 
     puts "... finished extracting"
     if {$OKFlag == 1} {
-      DevErrorWindow "Could not uncompress $outputFile because of the following error message:\n$errormsg\nPlease manually uncompress the file."
-      return 0
+        DevErrorWindow "Could not uncompress $outputFile because of the following error message:\n$errormsg\nPlease manually uncompress the file."
+        return 0
     } 
-
+    
     if {$EMAtlasBrainClassifier(BatchMode)} {
-    puts "Atlas installation completed!" 
+        puts "Atlas installation completed!" 
     } else {
-    DevInfoWindow "Atlas installation completed!" 
+        DevInfoWindow "Atlas installation completed!" 
     }
-
+    
     catch {exec rm -f $RMFile} 
     return 1
 }
@@ -1479,7 +1503,6 @@ proc EMAtlasBrainClassifierDownloadAtlas { } {
 # int inSource
 # .END
 #-------------------------------------------------------------------------------
-
 proc EMAtlasBrainClassifierRegistration {inTarget inSource NonRigidRegistrationFlag {LinearRegistrationType 2} } {
     global EMAtlasBrainClassifier Volume AG 
    
@@ -1700,14 +1723,14 @@ proc EMAtlasBrainClassifierResample {inTarget inSource outResampled bgValue {Out
     
     if {$OutImageDataFlag } {
         # outResampled represents a data volume
-    AGThresholdedOutput [Cast GetOutput] [Reslicer GetOutput] $outResampled 
+        AGThresholdedOutput [Cast GetOutput] [Reslicer GetOutput] $outResampled 
         $outResampled SetOrigin 0 0 0
     } else { 
-       catch "Resampled Delete"
+        catch "Resampled Delete"
         vtkImageData Resampled
-    AGThresholdedOutput [Cast GetOutput] [Reslicer GetOutput] Resampled
-    Resampled SetOrigin 0 0 0
-    Volume($outResampled,vol) SetImageData  Resampled 
+        AGThresholdedOutput [Cast GetOutput] [Reslicer GetOutput] Resampled
+        Resampled SetOrigin 0 0 0
+        Volume($outResampled,vol) SetImageData  Resampled 
     }
     Source Delete
     Target Delete
