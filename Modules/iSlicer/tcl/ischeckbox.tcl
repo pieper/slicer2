@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: ischeckbox.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:08 $
-#   Version:   $Revision: 1.2 $
+#   Date:      $Date: 2006/05/26 19:18:43 $
+#   Version:   $Revision: 1.3 $
 # 
 #===============================================================================
 # FILE:        ischeckbox.tcl
@@ -101,6 +101,7 @@ if { [itcl::find class ::iwidgets::ischeckbox] == "" } {
             method toggle {index}
             method buttonconfigure {index args}
             # additional useful methods
+            method buttonrename {index newName}
             method getbuttons {}
             method getnumbuttons {}
         }
@@ -464,6 +465,52 @@ itcl::body iwidgets::ischeckbox::buttonconfigure {index args} {
         eval $itk_component($tag) configure $args
     }
 }
+
+# ------------------------------------------------------------------
+# METHOD: buttonrename index newName
+#
+# Configure the specified checkbutton so that the text, tag and variable
+# use the new name.  This method allows configuration 
+# of checkbuttons from the ischeckbox level. 
+# ------------------------------------------------------------------
+itcl::body iwidgets::ischeckbox::buttonrename {index newName} {
+    set tag [gettag $index]
+    if {$_verbose} {
+        puts "buttonrename at index $index to $newName" 
+        puts "buttonrename: tag = $tag"
+        puts "buttonrename: deleting and adding a new one"
+    }
+
+    if {$tag == ""} {
+        puts "buttonrename: ERROR: no tag for button index $index, cannot rename to $newName"
+        return
+    }
+    if { [info exists buttonVar($this,"$tag")] == 1 } {
+        set savedval $buttonVar($this,"$tag")
+    }
+    set savedcmd [$itk_component($tag) cget -command]
+
+    delete $index
+
+    if {$_verbose} {
+        puts "buttonrename: inserting $newName at $index with saved command $savedcmd"
+        puts "\tlength of list = [llength $_buttons]"
+    }
+    # make sure that its' nto the last one, if so, need to use add instead
+    if {$index < [llength $_buttons]} {
+        insert $index "$newName" -text "$newName" -command $savedcmd
+    } else {
+        # add it to the end
+        add "$newName" -text "$newName" -command $savedcmd
+    }
+    if { [info exists buttonVar($this,"$newName")] == 1 } {
+        if {$_verbose} {
+            puts "buttonrename: resetting the buttonvar to saved value $savedval"
+        }
+        set buttonVar($this,"$newName") $savedval
+    }
+}
+
 
 # ------------------------------------------------------------------
 # METHOD: gettag index
