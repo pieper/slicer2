@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: AG.tcl,v $
-#   Date:      $Date: 2006/04/21 20:05:57 $
-#   Version:   $Revision: 1.23 $
+#   Date:      $Date: 2006/05/26 19:21:41 $
+#   Version:   $Revision: 1.24 $
 # 
 #===============================================================================
 # FILE:        AG.tcl
@@ -62,48 +62,6 @@
 #   AGColorComparison
 #   AGCommandLine
 #==========================================================================auto=
-#===============================================================================
-# FILE:        AG.tcl   
-# PROCEDURES:  
-#   AGInit
-#   AGUpdateMRML
-#   AGBuildGUI
-#   AGStartCNIWebPage 
-#   AGBuildHelpFrame
-#   AGBuildMainFrame
-#   AGBuildTransformFrame
-#   AGBuildExpertFrame
-#   Test
-#   ModifyOptions
-#   AGEnter
-#   AGExit
-#   AGPrepareResult
-#   AGPrepareResultVolume
-#   AGWritevtkImageData image filename
-#   AGIntensityTransform Source
-#   AGTransformScale Source Target
-#   AGWriteHomogeneous
-#   AGWriteGrid
-#   WritePWConstant it fid
-#   WritePolynomial it fileid
-#   WriteIntensityTransform it fileid
-#   AGWriteTransform gt flag it FileName
-#   RunAG
-#   AGBatchProcessResampling
-#   AGCoregister
-#   AGTransformOneVolume SouceVolume TargetVolume
-#   AGPreprocess Source Target SourceVol TargetVol
-#   AGResample Source Target
-#   AGNormalize SourceImage TargetImage NormalizeSource SourceScanOrder TargetScanOrder
-#   AGTestWriting
-#   AGReadvtkImageData
-#   AGTestReadvtkImageData
-#   AGUpdateInitial
-#   AGTurnInitialOff
-#   AGCreateLinMat
-#   AGSaveGridTransform
-#   AGColorComparison
-
 #   ==================================================
 #   Module: vtkAG
 #   Author: Lifeng Liu
@@ -236,7 +194,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.23 $} {$Date: 2006/04/21 20:05:57 $}]
+        {$Revision: 1.24 $} {$Date: 2006/05/26 19:21:41 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1889,6 +1847,63 @@ proc AGWriteTransform {gt flag it FileName} {
     close $fileid
 }
 
+#-------------------------------------------------------------------------------
+# .PROC AGThresholdedOutput
+# Compares the max and min values of the Original and resampled Data and defines Output in such a way that it is like ResampledData 
+# but in the same scalar range as OriginalData
+#
+# .ARGS
+# vtkImageData OriginalData
+# vtkImageData ResampledData
+# vtkImageData Output
+# .END
+#-------------------------------------------------------------------------------  
+proc AGThresholdedOutput { OriginalData ResampledData Output } {
+
+    vtkImageAccumulate ia
+    ia SetInput $OriginalData
+    ia Update
+    set InputMin [lindex [ia GetMin] 0]
+    set InputMax [lindex [ia GetMax] 0]
+
+    ia SetInput $ResampledData 
+    ia Update
+    set OutputMin [lindex [ia GetMin] 0]
+    set OutputMax [lindex [ia GetMax] 0]
+
+    ia Delete
+
+    set CurrentOutput $ResampledData  
+
+    if {$InputMin  > $OutputMin} {
+    puts "AGThresholdedOutput: Change lower scalar value of data from $OutputMin to $InputMin"
+    vtkImageThreshold lowerThr
+               lowerThr SetInput $CurrentOutput 
+               lowerThr ThresholdByLower $InputMin
+           lowerThr SetInValue $InputMin
+               lowerThr ReplaceOutOff 
+    lowerThr Update
+    set CurrentOutput [lowerThr GetOutput]
+    }
+
+    if {$InputMax  < $OutputMax} {
+    puts "AGThresholdedOutput: Change upper scalar value of data from $OutputMax to $InputMax"
+    vtkImageThreshold upperThr
+               upperThr SetInput $CurrentOutput 
+               upperThr ThresholdByUpper $InputMax
+           upperThr SetInValue $InputMax
+               upperThr ReplaceOutOff 
+    upperThr Update
+    set CurrentOutput [upperThr GetOutput]
+    }
+
+
+    $Output  DeepCopy  $CurrentOutput
+    $CurrentOutput Update
+
+    catch {lowerThr Delete}
+    catch {upperThr Delete}
+}
 
 #-------------------------------------------------------------------------------
 # .PROC RunAG
@@ -2797,8 +2812,10 @@ proc AGPreprocess {Source Target SourceVol TargetVol} {
   }
 }
 
+
+
 #-------------------------------------------------------------------------------
-# .PROC AGThresholdedOutput
+# .PROC AGThresholdedResampledData
 # Compares the max and min values of the Original and resampled Data and defines Output in such a way that it is like ResampledData 
 # but in the same scalar range as OriginalData
 #
@@ -3007,7 +3024,7 @@ proc AGResample {Source Target Resampled} {
   #if { ($AG(InputVolSource2) == $Volume(idNone)) || ($AG(InputVolTarget2) == $Volume(idNone)) }  {     
   #   Reslicer UnRegisterAllOutputs
   #}
-  Cast Delete
+  catch {Cast Delete}
   catch {ITrans Delete}
   Reslicer Delete
 
