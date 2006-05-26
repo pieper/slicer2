@@ -7,18 +7,10 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkBSplineInterpolateImageFunction.h,v $
-  Date:      $Date: 2006/03/30 15:54:58 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/05/26 20:02:42 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
-/*=========================================================================
-
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkBSplineInterpolateImageFunction.h,v $
-  Language:  C++
-  Date:      $Date: 2006/03/30 15:54:58 $
-  Version:   $Revision: 1.9 $
-*/
 // .NAME vtkBSplineInterpolateImageFunction - BSpline interpolation of a image dataset of points
 // .SECTION Description
 // vtkBSplineInterpolateImageFunction
