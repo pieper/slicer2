@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRICalculateScalars.tcl,v $
-#   Date:      $Date: 2006/03/16 21:29:43 $
-#   Version:   $Revision: 1.25 $
+#   Date:      $Date: 2006/05/26 19:28:37 $
+#   Version:   $Revision: 1.26 $
 # 
 #===============================================================================
 # FILE:        DTMRICalculateScalars.tcl
@@ -36,7 +36,7 @@ proc DTMRICalculateScalarsInit {} {
     #------------------------------------
     set m "CalculateScalars"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                         {$Revision: 1.25 $} {$Date: 2006/03/16 21:29:43 $}]
+                         {$Revision: 1.26 $} {$Date: 2006/05/26 19:28:37 $}]
 
 
     #------------------------------------
@@ -333,12 +333,12 @@ proc DTMRIDoMath {{operation ""}} {
     # removed this hard-coded reset of the user's selected scale value after reviewing with LMI folks (sp - for slicer 2.6
     if { 0 } { 
         switch -regexp -- $operation {
-            {^(Trace|Determinant|D11|D22|D33|MaxEigenvalue|MiddleEigenvalue|MinEigenvalue)$} {
+        {^(Trace|Determinant|D11|D22|D33|MaxEigenvalue|MiddleEigenvalue|MinEigenvalue)$} {
                 set DTMRI(scalars,scaleFactor) 1000
-            }
-            {^(RelativeAnisotropy|FractionalAnisotropy|Mode|LinearMeasure|PlanarMeasure|SphericalMeasure|ColorByOrientation|ColorByMode)$} {
+        }
+        {^(RelativeAnisotropy|FractionalAnisotropy|Mode|LinearMeasure|PlanarMeasure|SphericalMeasure|ColorByOrientation|ColorByMode)$} {
                 set DTMRI(scalars,scaleFactor) 1000
-            }
+        }
         }
     }
     
