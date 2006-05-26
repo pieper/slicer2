@@ -7,19 +7,10 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSSurfaceScalarReader.h,v $
-  Date:      $Date: 2006/01/06 17:57:41 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/05/26 19:40:15 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
-/*=========================================================================
-
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkFSSurfaceScalarReader.h,v $
-  Language:  C++
-  Date:      $Date: 2006/01/06 17:57:41 $
-  Version:   $Revision: 1.8 $
-
-=========================================================================*/
 // .NAME vtkFSSurfaceScalarReader - read a surface scalar file from
 // Freesurfer tools
 // .SECTION Description

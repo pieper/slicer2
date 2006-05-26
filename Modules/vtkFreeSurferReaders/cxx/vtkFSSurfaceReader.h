@@ -7,19 +7,10 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSSurfaceReader.h,v $
-  Date:      $Date: 2006/01/31 17:52:54 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/05/26 19:40:14 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
-/*=========================================================================
-
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkFSSurfaceReader.h,v $
-  Language:  C++
-  Date:      $Date: 2006/01/31 17:52:54 $
-  Version:   $Revision: 1.8 $
-
-=========================================================================*/
 // .NAME vtkFSSurfaceReader - read a surface file from Freesurfer tools
 // .SECTION Description
 // Reads a surface file from FreeSurfer and output PolyData. Use the

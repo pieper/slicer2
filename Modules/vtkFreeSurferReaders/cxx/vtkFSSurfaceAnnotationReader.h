@@ -7,19 +7,10 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSSurfaceAnnotationReader.h,v $
-  Date:      $Date: 2006/01/06 17:57:41 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2006/05/26 19:40:14 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
-/*=========================================================================
-
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkFSSurfaceAnnotationReader.h,v $
-  Language:  C++
-  Date:      $Date: 2006/01/06 17:57:41 $
-  Version:   $Revision: 1.4 $
-
-=========================================================================*/
 // .NAME vtkFSSurfaceAnnotationReader - read a surface annotation and
 // color table file from
 // Freesurfer tools

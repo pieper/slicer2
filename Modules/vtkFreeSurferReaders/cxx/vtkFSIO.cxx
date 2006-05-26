@@ -7,20 +7,10 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSIO.cxx,v $
-  Date:      $Date: 2006/03/06 21:07:32 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/05/26 19:40:13 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
-/*=========================================================================
-
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkFSIO.cxx,v $
-  Language:  C++
-  Date:      $Date: 2006/03/06 21:07:32 $
-  Version:   $Revision: 1.6 $
-
-=========================================================================*/
-
 #include "vtkFSIO.h"
 #include "vtkByteSwap.h"
 

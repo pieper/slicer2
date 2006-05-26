@@ -7,19 +7,10 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSSurfaceReader.cxx,v $
-  Date:      $Date: 2006/01/31 22:53:27 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2006/05/26 19:40:14 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
-/*=========================================================================
-
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkFSSurfaceReader.cxx,v $
-  Language:  C++
-  Date:      $Date: 2006/01/31 22:53:27 $
-  Version:   $Revision: 1.12 $
-
-=========================================================================*/
 #include "vtkFSSurfaceReader.h"
 #include "vtkObjectFactory.h"
 #include "vtkByteSwap.h"

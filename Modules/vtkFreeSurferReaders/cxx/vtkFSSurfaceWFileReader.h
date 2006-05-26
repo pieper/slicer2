@@ -7,20 +7,10 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSSurfaceWFileReader.h,v $
-  Date:      $Date: 2006/01/06 17:57:41 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2006/05/26 19:40:15 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
-/*=========================================================================
-
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkFSSurfaceWFileReader.h,v $
-  Language:  C++
-  Date:      $Date: 2006/01/06 17:57:41 $
-  Version:   $Revision: 1.4 $
-
-=========================================================================*/
-
 // .NAME vtkFSSurfaceWFileReader - read a surface w file (*.w) file
 // from Freesurfer tools
 // .SECTION Description

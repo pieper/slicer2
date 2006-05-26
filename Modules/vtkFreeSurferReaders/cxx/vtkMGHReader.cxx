@@ -7,19 +7,11 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMGHReader.cxx,v $
-  Date:      $Date: 2006/02/27 19:21:54 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2006/05/26 19:40:15 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
-/*=========================================================================
 
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkMGHReader.cxx,v $
-  Language:  C++
-  Date:      $Date: 2006/02/27 19:21:54 $
-  Version:   $Revision: 1.11 $
-
-=========================================================================*/
 #include "vtkMGHReader.h"
 #include "vtkShortArray.h"
 #include "vtkUnsignedCharArray.h"

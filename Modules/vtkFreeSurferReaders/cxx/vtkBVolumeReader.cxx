@@ -7,19 +7,10 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkBVolumeReader.cxx,v $
-  Date:      $Date: 2006/03/06 21:07:32 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/05/26 19:40:13 $
+  Version:   $Revision: 1.15 $
 
 =========================================================================auto=*/
-/*=========================================================================
-
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkBVolumeReader.cxx,v $
-  Language:  C++
-  Date:      $Date: 2006/03/06 21:07:32 $
-  Version:   $Revision: 1.14 $
-
-=========================================================================*/
 #include "vtkBVolumeReader.h"
 #include "vtkObjectFactory.h"
 #include "vtkShortArray.h"

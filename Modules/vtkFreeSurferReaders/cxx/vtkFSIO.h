@@ -7,19 +7,10 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSIO.h,v $
-  Date:      $Date: 2006/02/28 21:07:11 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/05/26 19:40:13 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
-/*=========================================================================
-
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkFSIO.h,v $
-  Language:  C++
-  Date:      $Date: 2006/02/28 21:07:11 $
-  Version:   $Revision: 1.8 $
-
-=========================================================================*/
 // .NAME vtkFSIO - Some IO functions for irregular FreeSurface files.
 // .SECTION Description
 // Some simple functions for doing silly things like reading three
