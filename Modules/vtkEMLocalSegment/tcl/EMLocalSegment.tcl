@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMLocalSegment.tcl,v $
-#   Date:      $Date: 2006/05/11 22:05:17 $
-#   Version:   $Revision: 1.71 $
+#   Date:      $Date: 2006/05/26 19:37:37 $
+#   Version:   $Revision: 1.72 $
 # 
 #===============================================================================
 # FILE:        EMLocalSegment.tcl
@@ -269,7 +269,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.71 $} {$Date: 2006/05/11 22:05:17 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.72 $} {$Date: 2006/05/26 19:37:37 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -324,7 +324,6 @@ proc EMSegmentInit {} {
     set EMSegment(SmSigma)        5 
     set EMSegment(RegistrationInterpolationType) 0 
     set EMSegment(DisableMultiThreading)  0 
-
 
     set EMSegment(SegmentationBoundaryMin,0) 1
     set EMSegment(SegmentationBoundaryMin,1) 1
@@ -2950,13 +2949,13 @@ proc EMSegmentStartEM { {save_mode "save"} } {
      foreach v $Volume(idList) {lappend EMSegment(VolumeNameList)  [Volume($v,node) GetName]}
 
      if { $EMSegment(EMAtlasBrainClassifierFlag) } {
-     set NumInputImagesSet [EMAtlasBrainClassifier_AlgorithmStart EMSegment]
-     set vtkEMSegment EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier)
+         set NumInputImagesSet [EMAtlasBrainClassifier_AlgorithmStart EMSegment]
+         set vtkEMSegment EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier)
      } else {
-     set NumInputImagesSet [EMSegmentAlgorithmStart] 
-     set vtkEMSegment EMSegment(vtkEMSegment)
-
+         set NumInputImagesSet [EMSegmentAlgorithmStart] 
+         set vtkEMSegment EMSegment(vtkEMSegment)
      }
+
      # For debugging
      # puts [$vtkEMSegment Print]
      if {$NumInputImagesSet} {
@@ -5818,7 +5817,7 @@ proc EMSegmentMakeModels { } {
 
    set data [histo GetOutput]
    for {set i 0} {$i <= $bins} {incr i} {
-       set val [$data $::getScalarComponent $i 0 0 0]
+       set val [$data $::getScalarComponentAs $i 0 0 0]
        set Label(label)  [expr $i + $min]  
        if {$val >0 &&  $Label(label) != 0} {
           
