@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Volumes.tcl,v $
-#   Date:      $Date: 2006/05/12 22:50:46 $
-#   Version:   $Revision: 1.133 $
+#   Date:      $Date: 2006/05/26 18:54:50 $
+#   Version:   $Revision: 1.134 $
 # 
 #===============================================================================
 # FILE:        Volumes.tcl
@@ -101,7 +101,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-             {$Revision: 1.133 $} {$Date: 2006/05/12 22:50:46 $}]
+             {$Revision: 1.134 $} {$Date: 2006/05/26 18:54:50 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -775,6 +775,8 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     set f $fExport.fGenericFile.fType
     eval {label $f.l -text "Select File Type"} $Gui(BLA)
     pack $f.l -side left -padx $Gui(pad) -pady 0
+
+    set Volumes(extentionGenericSave) nhdr
 
     eval {menubutton $f.mbType -text "NRRD(.nhdr)" \
             -relief raised -bd 2 -width 20 \

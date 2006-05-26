@@ -1,5 +1,4 @@
 #=auto==========================================================================
-
 #   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 # 
 #   See Doc/copyright/copyright.txt
@@ -7,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainColors.tcl,v $
-#   Date:      $Date: 2006/03/06 19:22:49 $
-#   Version:   $Revision: 1.22 $
+#   Date:      $Date: 2006/05/26 18:54:46 $
+#   Version:   $Revision: 1.23 $
 # 
 #===============================================================================
 # FILE:        MainColors.tcl
@@ -35,7 +34,7 @@ proc MainColorsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainColors \
-        {$Revision: 1.22 $} {$Date: 2006/03/06 19:22:49 $}]
+        {$Revision: 1.23 $} {$Date: 2006/05/26 18:54:46 $}]
 
     set Color(activeID) ""
     set Color(name) ""

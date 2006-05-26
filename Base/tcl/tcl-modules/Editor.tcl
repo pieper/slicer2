@@ -1,4 +1,3 @@
-
 #=auto==========================================================================
 #   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
 # 
@@ -7,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Editor.tcl,v $
-#   Date:      $Date: 2006/04/18 14:58:32 $
-#   Version:   $Revision: 1.88 $
+#   Date:      $Date: 2006/05/26 18:54:48 $
+#   Version:   $Revision: 1.89 $
 # 
 #===============================================================================
 # FILE:        Editor.tcl
@@ -106,7 +105,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.88 $} {$Date: 2006/04/18 14:58:32 $}]
+        {$Revision: 1.89 $} {$Date: 2006/05/26 18:54:48 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -824,6 +823,7 @@ proc EditorBuildGUI {} {
     DevAddLabel $f.fLeft.lPrefix "     Filename Prefix:" 
     pack $f.fLeft.lPrefix -side top -padx 3 -pady 3 -anchor w
     eval {entry $f.fRight.ePrefix -textvariable Editor(prefixSave)} $Gui(WEA)
+    TooltipAdd $f.fRight.ePrefix "To save the Volume, enter the prefix here or just click Save."
     pack $f.fRight.ePrefix -side top -pady 3 -padx 5 -anchor w
 
     #-------------------------------------------
@@ -2552,10 +2552,9 @@ proc EditorSetSaveVolume {} {
                                 [Volume($v,node) GetFilePrefix]]
 }
 
-
 #-------------------------------------------------------------------------------
-# .PROC VolumesGenericExportSetFileType
-# Set Volumes(extentionSave) and update the save file type menu.
+# .PROC EditorExportSetFileType
+# Set Editor(fileformat) and update the save file type menu.
 # .ARGS
 # str fileType the type for the file
 # .END
@@ -2563,11 +2562,9 @@ proc EditorSetSaveVolume {} {
 proc EditorExportSetFileType {fileType} {
     global Editor Volumes    
     
-    #set Volumes(extentionSave) $fileType
     set Editor(fileformat) $fileType
     $Editor(formatMenu) config -text $Editor($fileType)
 }
-
 
 #-------------------------------------------------------------------------------
 # .PROC EditorWriteVolume

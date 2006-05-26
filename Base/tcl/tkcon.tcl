@@ -192,7 +192,7 @@ proc ::tkcon::Init {args} {
             alias clear dir dump echo idebug lremove
             tkcon_puts tkcon_gets observe observe_var unalias which what
         }
-        RCS                {RCS: @(#) $Id: tkcon.tcl,v 1.13 2006/05/15 20:34:45 pieper Exp $}
+        RCS                {RCS: @(#) $Id: tkcon.tcl,v 1.14 2006/05/26 18:54:45 nicole Exp $}
         HEADURL                {http://cvs.sourceforge.net/viewcvs.py/*checkout*/tkcon/tkcon/tkcon.tcl?rev=HEAD}
 
         docs                "http://tkcon.sourceforge.net/"
@@ -663,7 +663,7 @@ proc ::tkcon::InitUI {title} {
     }
 
     if {!$PRIV(WWW)} {
-        wm title $root "tkcon $PRIV(version) $title"
+        wm title $root "tkcon $title"
         if {$PRIV(showOnStartup)} { wm deiconify $root }
     }
     if {$PRIV(showOnStartup)} { focus -force $PRIV(console) }

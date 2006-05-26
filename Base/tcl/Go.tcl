@@ -6,8 +6,8 @@
 # 
 #  Program:   3D Slicer
 #  Module:    $RCSfile: Go.tcl,v $
-#  Date:      $Date: 2006/04/03 15:21:01 $
-#  Version:   $Revision: 1.120 $
+#  Date:      $Date: 2006/05/26 18:54:45 $
+#  Version:   $Revision: 1.121 $
 #===============================================================================
 # FILE:        Go.tcl
 # PROCEDURES:  
@@ -83,7 +83,7 @@ set ::SLICER(minor_version) 7
 
 set ::SLICER(revision) ""
 
-# when packaging a release for distribution, set state to ""
+# when packaging a release for distribution, set state to "-opt"
 # when packaging a release candidate, set state to "-rc#" with the candidate number
 # when packaging a release for testing, set state to the date as "-YYYY-MM-DD"
 #  otherwise leave it as "-dev"
@@ -449,7 +449,6 @@ proc SplashKill {} {
             image delete $splashim
         }
     }
-
 }
 
 #-------------------------------------------------------------------------------
@@ -990,7 +989,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.120 2006/04/03 15:21:01 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.121 2006/05/26 18:54:45 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
