@@ -2,6 +2,21 @@
 # the next line restarts using tclsh \
 exec tclsh "$0" "$@"
 
+#=auto==========================================================================
+#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+# 
+#   See Doc/copyright/copyright.txt
+#   or http://www.slicer.org/copyright/copyright.txt for details.
+# 
+#   Program:   3D Slicer
+#   Module:    $RCSfile: slicerput.tcl,v $
+#   Date:      $Date: 2006/05/26 19:58:14 $
+#   Version:   $Revision: 1.5 $
+# 
+#===============================================================================
+# FILE:        slicerput.tcl
+# PROCEDURES:  
+#==========================================================================auto=
 
 #
 # slicerput - sp 2005-09-23

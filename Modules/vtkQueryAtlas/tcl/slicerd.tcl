@@ -6,26 +6,13 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: slicerd.tcl,v $
-#   Date:      $Date: 2006/01/30 20:47:46 $
-#   Version:   $Revision: 1.10 $
+#   Date:      $Date: 2006/05/26 19:58:13 $
+#   Version:   $Revision: 1.11 $
 # 
 #===============================================================================
 # FILE:        slicerd.tcl
 # PROCEDURES:  
 #==========================================================================auto=
-
-#=auto==========================================================================
-# Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
-# 
-#  See Doc/copyright/copyright.txt
-#  or http://www.slicer.org/copyright/copyright.txt for details.
-# 
-#  Program:   3D Slicer
-#  Module:    $RCSfile: slicerd.tcl,v $
-#  Date:      $Date: 2006/01/30 20:47:46 $
-#  Version:   $Revision: 1.10 $
-#===============================================================================
-
 #
 # experimental slicer daemon - sp 2005-09-23 
 # - meant to be as simple as possible
