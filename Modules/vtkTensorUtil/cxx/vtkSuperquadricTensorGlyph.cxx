@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricTensorGlyph.cxx,v $
-  Date:      $Date: 2006/04/18 17:32:59 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/05/26 20:04:17 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 #include "vtkSuperquadricTensorGlyph.h"
@@ -369,12 +369,13 @@ void vtkSuperquadricTensorGlyph::Execute()
           yv[i] = tensor[1][i];
           zv[i] = tensor[2][i];
           }
-        w[0] = vtkMath::Normalize(xv);
-        w[1] = vtkMath::Normalize(yv);
-        w[2] = vtkMath::Normalize(zv);
+
+          w[0] = vtkMath::Normalize(xv);
+          w[1] = vtkMath::Normalize(yv);
+          w[2] = vtkMath::Normalize(zv);
         }
-
-
+    
+    
       double cl = vtkTensorMathematics::LinearMeasure(w);
       double cp = vtkTensorMathematics::PlanarMeasure(w);
       double alpha;
@@ -475,8 +476,8 @@ void vtkSuperquadricTensorGlyph::Execute()
           v_maj[2]=v[2][0];
           if (this->TensorRotationMatrix)
             {
-            rotate->SetMatrix(this->TensorRotationMatrix);
-            rotate->TransformPoint(v_maj,v_maj);
+              rotate->SetMatrix(this->TensorRotationMatrix);
+              rotate->TransformPoint(v_maj,v_maj);
             }
 
           vtkInteractiveTensorGlyph::RGBToIndex(fabs(v_maj[0]),fabs(v_maj[1]),fabs(v_maj[2]),s);
@@ -574,7 +575,7 @@ void vtkSuperquadricTensorGlyph::Execute()
       sourceNormals=pd->GetNormals();
       if ( newNormals )
         {
-        trans->TransformNormals(sourceNormals,newNormals);
+          trans->TransformNormals(sourceNormals,newNormals);
         }
 
       ptOffset += numSourcePts;

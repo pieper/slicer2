@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.cxx,v $
-  Date:      $Date: 2006/04/18 17:01:19 $
-  Version:   $Revision: 1.25 $
+  Date:      $Date: 2006/05/26 20:04:17 $
+  Version:   $Revision: 1.26 $
 
 =========================================================================auto=*/
 #include "vtkHyperStreamlineDTMRI.h"
@@ -28,7 +28,7 @@
 //#include "vtkHyperPointandArray.cxx"
 #endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.25 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.26 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()
@@ -365,10 +365,10 @@ void vtkHyperStreamlineDTMRI::Execute()
             // and compare to allowed radius.
             if (K != 0)
               {
-              if ((1/K) < this->RadiusOfCurvature) 
-                {
-                keepIntegrating=0;
-                }
+                if ((1/K) < this->RadiusOfCurvature) 
+                  {
+                    keepIntegrating=0;
+                  }
               }
           }
         else 
@@ -471,24 +471,23 @@ void vtkHyperStreamlineDTMRI::Execute()
         vtkTensorMathematics::TeemEigenSolver(m,sNext->W,sNext->V);
         FixVectors(sPtr->V, sNext->V, iv, ix, iy);
 
-        // compute invariants at final position
-        switch (this->GetStoppingMode())
-          {
-          case VTK_TENS_FRACTIONAL_ANISOTROPY:
+        // compute invariants at final position                                         
+        switch (this->GetStoppingMode()) {
+        case VTK_TENS_FRACTIONAL_ANISOTROPY:
             stop = vtkTensorMathematics::FractionalAnisotropy(sNext->W);
             break;
-          case VTK_TENS_LINEAR_MEASURE:
+        case VTK_TENS_LINEAR_MEASURE:
             stop = vtkTensorMathematics::LinearMeasure(sNext->W);
             break;
-          case VTK_TENS_PLANAR_MEASURE:
+        case VTK_TENS_PLANAR_MEASURE:
             stop = vtkTensorMathematics::PlanarMeasure(sNext->W);
             break;
-          case VTK_TENS_SPHERICAL_MEASURE:
+        case VTK_TENS_SPHERICAL_MEASURE:
             stop =  vtkTensorMathematics::SphericalMeasure(sNext->W);
             break;
-          default:
+        default:
             vtkErrorMacro( << "Should not happen" );
-          }
+        }
 
         // test FA cutoff
         if (stop < this->StoppingThreshold)
@@ -643,8 +642,6 @@ void vtkHyperStreamlineDTMRI::PrintSelf(ostream& os, vtkIndent indent)
 
   os << indent << "Radius of Curvature "
     << this->RadiusOfCurvature << "\n";
-
-
 }
 
 
