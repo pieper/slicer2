@@ -644,8 +644,7 @@ puts "uploadFlag = $uploadFlag"
                 exec /usr/X11R6/bin/xterm -e curl --connect-timeout 120 --silent --show-error --upload-file $curlfile $curldest
             }
             default { 
-                catch "exec curl --connect-timeout 120 --show-error --upload-file $curlfile $curldest" error
-                puts $error
+                exec curl --connect-timeout 120 --silent --show-error --upload-file $curlfile $curldest
             }
         }
         puts "See http://www.na-mic.org/Slicer/Download, in the $uploadFlag directory, for the uploaded file."
