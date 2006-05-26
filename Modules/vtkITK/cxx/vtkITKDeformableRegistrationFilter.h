@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKDeformableRegistrationFilter.h,v $
-  Date:      $Date: 2006/01/06 17:57:45 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2006/05/26 19:52:12 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
 // .NAME vtkITKImageToImageFilter - Abstract base class for connecting ITK and VTK
@@ -99,9 +99,6 @@ private:
   vtkITKDeformableRegistrationFilter(const vtkITKDeformableRegistrationFilter&);  // Not implemented.
   void operator=(const vtkITKDeformableRegistrationFilter&);  // Not implemented.
 };
-
-//vtkCxxRevisionMacro(vtkITKDeformableRegistrationFilter, "$Revision: 1.4 $");
-//vtkStandardNewMacro(vtkITKDeformableRegistrationFilter);
 
 #endif
 

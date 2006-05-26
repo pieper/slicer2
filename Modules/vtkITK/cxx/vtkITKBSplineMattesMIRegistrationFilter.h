@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKBSplineMattesMIRegistrationFilter.h,v $
-  Date:      $Date: 2006/01/06 17:57:44 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2006/05/26 19:52:12 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
 // .NAME vtkITKImageToImageFilter - Abstract base class for connecting ITK and VTK
@@ -159,8 +159,6 @@ private:
   void operator=(const vtkITKBSplineMattesMIRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKBSplineMattesMIRegistrationFilter, "$Revision: 1.4 $");
-//vtkStandardNewMacro(vtkITKBSplineMattesMIRegistrationFilter);
 vtkRegistrationNewMacro(vtkITKBSplineMattesMIRegistrationFilter);
 
 
