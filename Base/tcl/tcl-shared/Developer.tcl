@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Developer.tcl,v $
-#   Date:      $Date: 2006/03/20 06:45:19 $
-#   Version:   $Revision: 1.54 $
+#   Date:      $Date: 2006/05/26 21:51:20 $
+#   Version:   $Revision: 1.55 $
 # 
 #===============================================================================
 # FILE:        Developer.tcl
@@ -1349,3 +1349,17 @@ proc DevNewInstance { class {prefix ""} } {
     
 }
 
+#-------------------------------------------------------------------------------
+# .PROC DevPrintTrace
+# Use when setting a trace on a global variable, to print out the value:<br>
+# trace variable varname wru DevPrintTrace
+# .ARGS
+# str name the array name
+# str el the element in the array
+# str opt w if the variable was written, r if it was read, u if unset
+# .END
+#-------------------------------------------------------------------------------
+proc DevPrintTrace { name el opt} {
+    global $name
+    puts "$opt ${name}(${el}) = [subst $${name}(${el})]"
+}
