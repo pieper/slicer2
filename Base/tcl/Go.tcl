@@ -6,8 +6,8 @@
 # 
 #  Program:   3D Slicer
 #  Module:    $RCSfile: Go.tcl,v $
-#  Date:      $Date: 2006/05/26 18:54:45 $
-#  Version:   $Revision: 1.121 $
+#  Date:      $Date: 2006/05/27 15:55:55 $
+#  Version:   $Revision: 1.122 $
 #===============================================================================
 # FILE:        Go.tcl
 # PROCEDURES:  
@@ -505,7 +505,9 @@ if { $::SLICER(eval) == "" && $::SLICER(exec) == "" && $::SLICER(script) == "" }
 if { $::SLICER(tkcon) == "true" } { 
     set av $argv; set argv "" ;# keep tkcon from trying to interpret command line args
     source $prog/tkcon.tcl
-    ::tkcon::Init -root .tkcon
+    if { ![winfo exists .tkcon] } {
+        ::tkcon::Init -root .tkcon
+    }
     tkcon attach main
     wm geometry .tkcon +10-90
     set argv $av
@@ -989,7 +991,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.121 2006/05/26 18:54:45 nicole Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.122 2006/05/27 15:55:55 pieper Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
