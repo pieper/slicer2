@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEngineHelpText.tcl,v $
-#   Date:      $Date: 2006/03/02 22:22:51 $
-#   Version:   $Revision: 1.24 $
+#   Date:      $Date: 2006/05/30 19:45:57 $
+#   Version:   $Revision: 1.25 $
 # 
 #===============================================================================
 # FILE:        fMRIEngineHelpText.tcl
@@ -35,6 +35,11 @@
 #   fMRIEngineHelpViewHighPassFiltering
 #   fMRIEngineHelpViewPlotting
 #   fMRIEngineHelpSelectLabels  
+#   fMRIEngineHelpPriorsLoadLabelmap
+#   fMRIEngineHelpPriorsDensityEstimation
+#   fMRIEngineHelpPriorsProbability
+#   fMRIEngineHelpPriorsTransitionMatrix
+#   fMRIEngineHelpPriorsMeanfieldApproximation
 #==========================================================================auto=
 
 proc fMRIEngineGetHelpWinID { } {
@@ -504,3 +509,81 @@ proc fMRIEngineHelpSetDOF { } {
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
 }
 
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpPriorsLoadLabelmap
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineHelpPriorsLoadLabelmap { } {
+    #--- Priors ->Anatomical label map
+    set i [ fMRIEngineGetHelpWinID ]    
+    set txt "<H3>Loading anatomical label maps</H3>
+<P> Bla."
+    DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
+
+
+}
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpPriorsDensityEstimation
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineHelpPriorsDensityEstimation { } {
+    #--- Priors ->Density estimation
+    set i [ fMRIEngineGetHelpWinID ]    
+    set txt "<H3>Choosing a density estimation</H3>
+<P> Bla."
+    DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
+}
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpPriorsProbability
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineHelpPriorsProbability { } {
+    #--- Priors ->Meanfield p(class|label)
+    set i [ fMRIEngineGetHelpWinID ]    
+    set txt "<H3>Loading p(class|label)</H3>
+<P><B>Creating a p(class|label) text file</B>
+<P> Bla.
+<P><B>Loading a p(class|label) text file</B>
+<P> Bla."
+    DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
+}
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpPriorsTransitionMatrix
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineHelpPriorsTransitionMatrix { } {
+    #--- Priors ->Meanfield transition matrix
+    set i [ fMRIEngineGetHelpWinID ]    
+    set txt "<H3>Loading a transition matrix</H3>
+<P><B>Creating a transition matrix text file</B>
+<P> Bla.
+<P><B>Loading a transition matrix text file</B>
+<P> Bla."
+    DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
+}
+
+#-------------------------------------------------------------------------------
+# .PROC fMRIEngineHelpPriorsMeanfieldApproximation
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc fMRIEngineHelpPriorsMeanfieldApproximation { } {
+    #--- Priors ->Meanfield approximation
+    set i [ fMRIEngineGetHelpWinID ]    
+    set txt "<H3>The meanfield algorithm</H3>
+<P><B>Choosing a number of iterations</B>
+<P> Bla."
+    DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt
+}

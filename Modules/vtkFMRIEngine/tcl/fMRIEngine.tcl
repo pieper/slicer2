@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEngine.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:37 $
-#   Version:   $Revision: 1.28 $
+#   Date:      $Date: 2006/05/30 19:45:32 $
+#   Version:   $Revision: 1.29 $
 # 
 #===============================================================================
 # FILE:        fMRIEngine.tcl
@@ -88,8 +88,8 @@ proc fMRIEngineInit {} {
     #   row2Name = like row1
     #   row2,tab = like row1 
     #
-    set Module($m,row1List) "Help Sequence Setup Detect ROI View"
-    set Module($m,row1Name) "{Help} {Sequence} {Set Up} {Detect} {ROI} {View}"
+    set Module($m,row1List) "Help Sequence Setup Detect Priors ROI View"
+    set Module($m,row1Name) "{Help} {Sequence} {Set Up} {Detect} {Priors} {ROI} {View}"
     set Module($m,row1,tab) Sequence 
 
     # Define Procedures
@@ -146,7 +146,7 @@ proc fMRIEngineInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.28 $} {$Date: 2006/01/06 17:57:37 $}]
+        {$Revision: 1.29 $} {$Date: 2006/05/30 19:45:32 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -183,6 +183,7 @@ proc fMRIEngineInit {} {
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineRegionAnalysis.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineUserInputForModelView.tcl"
     source "$fMRIEngine(modulePath)/tcl/fMRIEngineSaveAndLoadParadigm.tcl"
+    source "$fMRIEngine(modulePath)/tcl/fMRIEnginePriors.tcl"
 
   
 }
@@ -257,6 +258,8 @@ proc fMRIEngineBuildGUI {} {
     <BR>
     <B>Detect</B> lets you to choose contrast(s) to compute \
     activation volume(s).
+    <BR>
+    <B>Priors</B> 
     <BR>
     <B>ROI</B> enables you to create a labelmap, to perform region of interest \
     analysis, and to view the stats results out of the defined roi.
@@ -336,6 +339,14 @@ proc fMRIEngineBuildGUI {} {
     fMRIEngineBuildUIForSetupTab $fSetup
     set b $Module(fMRIEngine,bSetup)
     bind $b <1> "fMRIEngineUpdateSetupTab" 
+
+    #-------------------------------------------
+    # Priors tab 
+    #-------------------------------------------
+    set fPriors $Module(fMRIEngine,fPriors)
+    fMRIEngineBuildUIForPriorsTab $fPriors
+    set b $Module(fMRIEngine,bPriors)
+    bind $b <1> "fMRIEngineUpdatePriorsTab $fPriors" 
 
     #-------------------------------------------
     # ROI tab 
