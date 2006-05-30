@@ -56,7 +56,11 @@ vtkActivationVolumeCaster.cxx
 vtkActivationRegionStats.cxx
 vtkLabelMapWhitening.cxx
 vtkActivationFalseDiscoveryRate.cxx
-
+vtkIsingActivationThreshold.cxx
+vtkIsingActivationTissue.cxx
+vtkParzenDensityEstimation.cxx
+vtkIsingConditionalDistribution.cxx
+vtkIsingMeanfieldApproximation.cxx
 )
 
 ## classes that one does not want tcl wrapped
