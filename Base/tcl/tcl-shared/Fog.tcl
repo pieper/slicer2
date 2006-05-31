@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Fog.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:05 $
-#   Version:   $Revision: 1.9 $
+#   Date:      $Date: 2006/05/31 19:14:24 $
+#   Version:   $Revision: 1.10 $
 # 
 #===============================================================================
 # FILE:        Fog.tcl
@@ -78,6 +78,9 @@ proc FogApply {renwin} {
 
   if { [info command vtkFog] == "" } {
       # no fog support compiled in, skip it
+      if {$Fog(Enabled) == "On"} {
+          DevErrorWindow "No fog support in this version."
+      }
       return;
   }
   #  set bounds [boxActor GetBounds]
