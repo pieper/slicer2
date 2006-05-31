@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Fog.tcl,v $
-#   Date:      $Date: 2006/05/31 19:14:24 $
-#   Version:   $Revision: 1.10 $
+#   Date:      $Date: 2006/05/31 21:54:38 $
+#   Version:   $Revision: 1.11 $
 # 
 #===============================================================================
 # FILE:        Fog.tcl
@@ -51,6 +51,7 @@ proc FogCheckGlobal {} {
   if {![info exist Fog(mode)   ]}   {    set Fog(mode)    linear }
   if {![info exist Fog(start)  ]}   {    set Fog(start)   0.5    }
   if {![info exist Fog(end)    ]}   {    set Fog(end)     1      }
+  if {![info exist Fog(noSupportWarningGiven)]} { set Fog(noSupportWarningGiven) 0 }
 
   if {$Fog(start) < 0} { set Fog(start) 0 }
   if {$Fog(start) > 1} { set Fog(start) 1 }
@@ -78,8 +79,10 @@ proc FogApply {renwin} {
 
   if { [info command vtkFog] == "" } {
       # no fog support compiled in, skip it
-      if {$Fog(Enabled) == "On"} {
+      if {$Fog(Enabled) == "On" && $Fog(noSupportWarningGiven) != 1} {
+          set Fog(noSupportWarningGiven) 1
           DevErrorWindow "No fog support in this version."
+          
       }
       return;
   }
