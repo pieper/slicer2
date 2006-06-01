@@ -74,6 +74,22 @@ You can explore TK window hierarchies using the winfo command:
 winfo children .tViewer
 </p>
 
+With newer versions of Slicer's tkcon (added to cvs May 12, 2006) you can autocomplete the methods for VTK classes using Shift-Tab.  
+<p class=code>
+(slicer2) 51 % vtkImageData id
+(slicer2) 51 % id Up<Shift-Tab>
+Update UpdateData UpdateInformation UpdateInformation
+(slicer2) 52 % id Update
+(slicer2) 52 % id UpdateD<Shift-Tab>
+(slicer2) 52 % id UpdateData
+</p>
+
+Also added with the Shift-Tab is the Control-] command, to wrap the current command line in square brackets.  This short cut is helpful when building long command that use accessors to get to VTK class instantces.
+<p class=code>
+(slicer2) 51 % myclass GetOutput<Control-]>
+(slicer2) 51 % [myclass GetOutput] 
+</p>
+
 </li>
 
 
