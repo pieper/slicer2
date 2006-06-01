@@ -27,11 +27,10 @@ source Base/tcl/Go.tcl
 <p>
 The TK console allows you to call tcl procedures and cxx methods, as well as some inspection methods.
 <br>
-You can declare variables, print the current value of the class members, find out which methods defined for a variable, and set and get values, and call methods:
+You can declare variables, print the current value of the class members, and set and get values, and call methods:
 <p class=code>
 vtkThreshold mythresh<br>
 mythresh Print<br>
-mythresh ListMethods<br>
 mythresh AllScalarsOff<br>
 mythresh GetAllScalars<br>
 mythresh ThresholdBetween 128 200
@@ -77,10 +76,10 @@ winfo children .tViewer
 With newer versions of Slicer's tkcon (added to cvs May 12, 2006) you can autocomplete the methods for VTK classes using Shift-Tab.  
 <p class=code>
 (slicer2) 51 % vtkImageData id<br>
-(slicer2) 51 % id Up<Shift-Tab><br>
+(slicer2) 51 % id Up&#9001;Shift-Tab&#9002;<br>
 Update UpdateData UpdateInformation UpdateInformation<br>
 (slicer2) 52 % id Update<br>
-(slicer2) 52 % id UpdateD<Shift-Tab><br>
+(slicer2) 52 % id UpdateD&#9001;Shift-Tab&#9002;<br>
 (slicer2) 52 % id UpdateData<br>
 </p>
 
