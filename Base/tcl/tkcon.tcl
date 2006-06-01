@@ -192,7 +192,7 @@ proc ::tkcon::Init {args} {
             alias clear dir dump echo idebug lremove
             tkcon_puts tkcon_gets observe observe_var unalias which what
         }
-        RCS                {RCS: @(#) $Id: tkcon.tcl,v 1.14 2006/05/26 18:54:45 nicole Exp $}
+        RCS                {RCS: @(#) $Id: tkcon.tcl,v 1.15 2006/06/01 16:56:18 pieper Exp $}
         HEADURL                {http://cvs.sourceforge.net/viewcvs.py/*checkout*/tkcon/tkcon/tkcon.tcl?rev=HEAD}
 
         docs                "http://tkcon.sourceforge.net/"
@@ -5778,6 +5778,7 @@ proc ::tkcon::ExpandSubcommand w {
     # of methods that match the current partial subcommand 
     # - note VTK specific subcommand 'ListMethods'
     eval set substres [EvalSlave subst [list $obj]]
+    if { [EvalSlave info command $substres] == "" } return
     set vtklist [EvalSlave $substres ListMethods]
     set match [::tkcon::VTKMethods $vtklist $sub*]
 
