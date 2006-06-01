@@ -76,17 +76,17 @@ winfo children .tViewer
 
 With newer versions of Slicer's tkcon (added to cvs May 12, 2006) you can autocomplete the methods for VTK classes using Shift-Tab.  
 <p class=code>
-(slicer2) 51 % vtkImageData id
-(slicer2) 51 % id Up<Shift-Tab>
-Update UpdateData UpdateInformation UpdateInformation
-(slicer2) 52 % id Update
-(slicer2) 52 % id UpdateD<Shift-Tab>
-(slicer2) 52 % id UpdateData
+(slicer2) 51 % vtkImageData id<br>
+(slicer2) 51 % id Up<Shift-Tab><br>
+Update UpdateData UpdateInformation UpdateInformation<br>
+(slicer2) 52 % id Update<br>
+(slicer2) 52 % id UpdateD<Shift-Tab><br>
+(slicer2) 52 % id UpdateData<br>
 </p>
 
-Also added with the Shift-Tab is the Control-] command, to wrap the current command line in square brackets.  This short cut is helpful when building long command that use accessors to get to VTK class instantces.
+Also added with the Shift-Tab is the Control-] command, to wrap the current command line in square brackets.  This short cut is helpful when building long command that use accessors to get to VTK class instances.
 <p class=code>
-(slicer2) 51 % myclass GetOutput<Control-]>
+(slicer2) 51 % myclass GetOutput&#9001;Control-]&#9002; <br>
 (slicer2) 51 % [myclass GetOutput] 
 </p>
 
