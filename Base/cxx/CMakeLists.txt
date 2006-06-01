@@ -4,10 +4,6 @@
 # Here is where you can add the name of your local core classes.
 #
 
-
-# not compatible with VTK 5:
-        #vtkFog.cxx 
-
 SET (Base_SRCS
 	vtkBoolTess.cxx vtkDCMLister.cxx vtkDCMParser.cxx 
 	vtkFastCellPicker.cxx 
@@ -30,7 +26,7 @@ SET (Base_SRCS
 	vtkImageNeighborhoodFilter.cxx vtkImageOverlay.cxx vtkImagePlot.cxx
 	vtkImageRealtimeScan.cxx vtkImageReformat.cxx vtkImageReformatIJK.cxx
 	vtkImageReplaceRegion.cxx vtkImageResize.cxx vtkImageStatistics.cxx
-	 vtkImageWeightedSum.cxx vtkImageZoom2D.cxx
+	  vtkImageZoom2D.cxx
 	vtkIndirectLookupTable.cxx vtkMathUtils.cxx vtkMrmlColorNode.cxx
 	vtkMrmlCrossSectionNode.cxx vtkMrmlData.cxx vtkMrmlDataTetraMesh.cxx
 	vtkMrmlDataVolume.cxx vtkMrmlEndFiducialsNode.cxx vtkMrmlEndHierarchyNode.cxx
@@ -61,6 +57,17 @@ SET (Base_SRCS
     vtkXDisplayWindow.cxx
 )
 
+# vtkImageWeightedSum was added to VTK at 5.1, don't compile our copy unless it's not in VTK
+IF("${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}" LESS 5.1)
+  SET (Base_SRCS ${Base_SRCS} vtkImageWeightedSum.cxx)
+  MESSAGE(STATUS "Adding vtkImageWeightedSum.cxx to source list")
+ENDIF("${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}" LESS 5.1)
+
+# vtkFog is not compatible with VTK 5+
+IF("${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}" LESS 5.0)
+  SET (Base_SRCS ${Base_SRCS} vtkFog.cxx)
+  MESSAGE(STATUS "Adding vtkFog to source list")
+ENDIF("${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}" LESS 5.0)
 
 # --------------------------------------------------------------------------
 # You probably do not need to modify anything below this line
