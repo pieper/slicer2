@@ -103,7 +103,8 @@ void vtkIsingConditionalDistribution::SimpleExecute(vtkImageData *input, vtkImag
 
   // Parzen density estimation
   if (densityEstimate == 1) {    
-    float trainingDataPar[size+1];
+    float *trainingDataPar;
+    trainingDataPar = new float[size+1];
     
     for (int n=0; n<nType; n++){
       vtkFloatArray *trainingUseC = vtkFloatArray::New();  
@@ -123,6 +124,7 @@ void vtkIsingConditionalDistribution::SimpleExecute(vtkImageData *input, vtkImag
           trainingUseC->InsertNextValue(trainingDataPar[i]);
         entryNumber = maxTraining;
       }
+      delete [] trainingDataPar;
       if (entryNumber != 0) {
         vtkParzenDensityEstimation *parzenDensity = vtkParzenDensityEstimation::New();
         parzenDensity->SetInput(this->GetInput(1));

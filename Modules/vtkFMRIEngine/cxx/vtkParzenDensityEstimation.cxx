@@ -171,7 +171,7 @@ void vtkParzenDensityEstimation::SimpleExecute(vtkImageData *input, vtkImageData
       register int j, n;
       for (int j=0; j<numTrData; j++){  
         for (int n=0; n<numVdData; n++){ 
-          power = pow(((trData->GetValue(j))-(vdData->GetValue(n))),2);      
+          power = pow((float)((trData->GetValue(j))-(vdData->GetValue(n))),2);      
           pX->SetValue(n, (pX->GetValue(n)) + 1/(numTrData*pow(2*pi,0.5)*h[i])*exp(-0.5*power/pow(h[i],2)));          
         }  
       }        
@@ -215,8 +215,8 @@ void vtkParzenDensityEstimation::SimpleExecute(vtkImageData *input, vtkImageData
   // calculation of probability density     
   for (unsigned long int j=0; j<numTrData; j++){
     for (unsigned long int n=0; n<size; n++){    
-      power = pow(((trainingUse->GetValue(j))-(inputArray->GetValue(n))),2);
-      outputArray->SetValue(n, (outputArray->GetValue(n)) + 1/(numTrData*pow(2*pi,0.5)*hBest)*exp(-0.5*power/pow(hBest,2)));           
+      power = pow((float)((trainingUse->GetValue(j))-(inputArray->GetValue(n))),2);
+      outputArray->SetValue(n, (outputArray->GetValue(n)) + 1/(numTrData*pow(2*pi,0.5)*hBest)*exp(-0.5*power/pow((float)hBest,2)));           
     }
     UpdateProgress((j+1) * (1.0/numTrData));
   } 
