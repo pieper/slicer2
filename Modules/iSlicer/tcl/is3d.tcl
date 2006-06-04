@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: is3d.tcl,v $
-#   Date:      $Date: 2006/03/15 00:17:50 $
-#   Version:   $Revision: 1.16 $
+#   Date:      $Date: 2006/06/04 01:27:12 $
+#   Version:   $Revision: 1.17 $
 # 
 #===============================================================================
 # FILE:        is3d.tcl
@@ -60,6 +60,7 @@ option add *is3d.longitude 0 widgetDefault
 option add *is3d.latitude 0 widgetDefault
 option add *is3d.distance 800 widgetDefault
 option add *is3d.focalpoint "0 0 0" widgetDefault
+option add *is3d.up "z" widgetDefault
 option add *is3d.colorscheme "gray" widgetDefault
 option add *is3d.rotationgain "1." widgetDefault
 option add *is3d.scalegain "1." widgetDefault
@@ -91,6 +92,7 @@ if { [itcl::find class is3d] == "" } {
       itk_option define -latitude latitude Latitude {0}
       itk_option define -distance distance Distance {800}
       itk_option define -focalpoint focalpoint Focalpoint {0 0 0}
+      itk_option define -up up Up {z}
       itk_option define -colorscheme colorscheme Colorscheme {gray}
       itk_option define -rotationgain rotationgain Rotationgain {1}
       itk_option define -scalegain scalegain Scalegain {1}
@@ -662,9 +664,17 @@ itcl::body is3d::longlatdist { {long 0} {lat 0} {dist 0} } {
     set z [expr $dist * sin($lat)]
 
     eval [$this camera] SetFocalPoint $itk_option(-focalpoint)
-    [$this camera] SetPosition $x $y $z
-    [$this camera] SetViewUp 0 0 1
-
+    switch $itk_option(-up) {
+      "y" {
+        [$this camera] SetPosition [expr -1 * $x] $z $y
+        [$this camera] SetViewUp 0 1 0
+      }
+      default -
+      "z" {
+        [$this camera] SetPosition $x $y $z
+        [$this camera] SetViewUp 0 0 1
+      }
+    }
 }
 
 itcl::body is3d::screensave { filename {imagetype "PNM"} } {
@@ -839,7 +849,7 @@ proc is3d_demo_kw_spgr {} {
 proc is3d_demo_kw_face {} {
     catch "dcmr Delete"
     vtkDICOMImageReader dcmr
-    dcmr SetDirectoryName d:/data/pieper-face-2005-05-11/1.2.840.113619.2.135.3596.6358736.5118.1115807980.182.uid/000019.SER/
+    dcmr SetDirectoryName d:/data/pieper-face-2005-05-11/1.2.840.113619.2.135.3596.6358736.5118.1115807980.182.uid/0000$series.SER/
     dcmr Update
 
     set f1 [[vsplit GetFrame1] GetWidgetName]
