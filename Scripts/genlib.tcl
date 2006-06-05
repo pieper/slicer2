@@ -675,8 +675,8 @@ if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FI
             runcmd $::MAKE Distributions.SLN /build  $::VTK_BUILD_TYPE
 
             # building SlicerIO
-            cd $SLICER_LIB/NAMICSandBox-build/SlicerIO
-            runcmd $::MAKE SlicerIO.SLN /build  $::VTK_BUILD_TYPE
+            # cd $SLICER_LIB/NAMICSandBox-build/SlicerIO
+            # runcmd $::MAKE SlicerIO.SLN /build  $::VTK_BUILD_TYPE
         }
     } else {
 
@@ -692,8 +692,8 @@ if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FI
         eval runcmd $::MAKE 
         cd $SLICER_LIB/NAMICSandBox-build/Distributions
         eval runcmd $::MAKE
-        cd $SLICER_LIB/NAMICSandBox-build/SlicerIO
-        eval runcmd $::MAKE
+        # cd $SLICER_LIB/NAMICSandBox-build/SlicerIO
+        # eval runcmd $::MAKE
         cd $SLICER_LIB/NAMICSandBox-build
     }
 }
