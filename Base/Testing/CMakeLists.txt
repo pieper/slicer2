@@ -14,3 +14,14 @@ FOREACH(test ${TESTS_BASE_SRCS})
     -V "Baseline/${test}.png")
 ENDFOREACH(test)
 
+SET(TCL_TESTS   
+  TestMeasureVol
+   )                    
+
+FOREACH(tclfile ${TCL_TESTS})
+  ADD_TEST("SLICERBASE.${tclfile}" "${SLICER_EXECUTABLE}"
+    --batch
+    "${CTEST_SLICER_HOME}/Scripts/ImageRegressionTest.tcl"
+    "${CTEST_SLICER_HOME}/Base/Testing/${tclfile}.tcl"     
+    -D "${CMAKE_CURRENT_SOURCE_DIR}")
+ENDFOREACH(tclfile)     
