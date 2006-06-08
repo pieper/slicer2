@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EdDraw.tcl,v $
-#   Date:      $Date: 2006/03/03 15:05:01 $
-#   Version:   $Revision: 1.37 $
+#   Date:      $Date: 2006/06/08 21:59:15 $
+#   Version:   $Revision: 1.38 $
 # 
 #===============================================================================
 # FILE:        EdDraw.tcl
@@ -128,10 +128,19 @@ proc EdDrawBuildGUI {} {
     eval {entry $f.eName -width 14 \
         -textvariable Label(name)} $Gui(WEA) \
         {-bg $Gui(activeWorkspace) -state disabled}
-    grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
-    grid $f.eOutput $f.eName -sticky w
 
     lappend Label(colorWidgetList) $f.eName
+
+    set Editor(toggleAutoSample) 0
+    eval {checkbutton $f.cAuto -width 4 -indicatoron 0 \
+        -variable Editor(toggleAutoSample) \
+        -text "Auto" } $Gui(WCA) 
+    grid $f.cAuto -padx $Gui(pad) -pady $Gui(pad)
+    TooltipAdd  $f.cAuto "Automatically set label value depending on location of first click."
+
+    grid $f.bOutput $f.eOutput $f.eName $f.cAuto -padx 2 -pady $Gui(pad)
+    grid $f.eOutput $f.eName -sticky w
+
 
     # Radius
     eval {label $f.lRadius -text "Point Radius:"} $Gui(WLA)
@@ -178,7 +187,7 @@ proc EdDrawBuildGUI {} {
     set Editor(toggleWorking) 0
     eval {checkbutton $f.cW -width 21 -indicatoron 0 \
         -variable Editor(toggleWorking) \
-        -text "peek under labelmap"  \
+        -text "Peek under labelmap"  \
         -command EditorToggleWorking} $Gui(WCA) 
     pack $f.cW -side top -padx $Gui(pad) -pady $Gui(pad)
 
@@ -332,6 +341,12 @@ proc EdDrawUpdate {type} {
         "-" {
             $Ed(EdDraw,frame).fGrid.eOutput delete 0 end
         }
+        "CurrentSample" -
+        "\\\\" {
+            $Ed(EdDraw,frame).fGrid.eOutput delete 0 end
+            $Ed(EdDraw,frame).fGrid.eOutput insert end $::Anno(curForePix)
+            EdDrawLabel
+        }
         SelectAll {
             Slicer DrawSelectAll
             set Ed($e,mode) Move
@@ -373,11 +388,11 @@ proc EdDrawApply { {delete_pending true} } {
  
     # Validate input
     if {[ValidateInt $Label(label)] == 0} {
-        tk_messageBox -message "Output label is not an integer."
+        DevErrorWindow "Output label is not an integer."
         return
     }
     if {[ValidateInt $Ed($e,radius)] == 0} {
-        tk_messageBox -message "Point Radius is not an integer."
+        DevErrorWindow "Point Radius is not an integer."
         return
     }
 

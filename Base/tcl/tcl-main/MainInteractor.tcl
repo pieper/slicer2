@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainInteractor.tcl,v $
-#   Date:      $Date: 2006/04/12 15:10:18 $
-#   Version:   $Revision: 1.70 $
+#   Date:      $Date: 2006/06/08 21:59:13 $
+#   Version:   $Revision: 1.71 $
 # 
 #===============================================================================
 # FILE:        MainInteractor.tcl
@@ -142,6 +142,7 @@ proc MainInteractorBind {widget} {
     bind $widget <KeyPress-c>        {MainInteractorKeyPress c %W %x %y}
     bind $widget <KeyPress-equal>    {MainInteractorKeyPress = %W %x %y}
     bind $widget <KeyPress-minus>    {MainInteractorKeyPress - %W %x %y}
+    bind $widget <KeyPress-backslash>    {MainInteractorKeyPress \\ %W %x %y}
     bind $widget <Control-a>         {MainInteractorKeyPress Ctla %W %x %y}
     bind $widget <Control-x>         {MainInteractorKeyPress Ctlx %W %x %y}
     bind $widget <Control-c>         {MainInteractorKeyPress Ctlc %W %x %y}
@@ -318,6 +319,7 @@ proc MainInteractorCursor {s xs ys x y {mainSlice 1} {shiftMotion 0}} {
         }
         set forenode [[$Interactor(activeSlicer) GetForeVolume $s] GetMrmlNode]
         set ::Anno(curFore,label) ""
+        set ::Anno(curForePix) $forePix
         if { [$forenode GetLUTName] == -1 } {
             set curtext [Anno($s,curFore,mapper) GetInput] 
             set labelid [MainColorsGetColorFromLabel $forePix]
@@ -371,6 +373,7 @@ proc MainInteractorCursor {s xs ys x y {mainSlice 1} {shiftMotion 0}} {
 #-------------------------------------------------------------------------------
 proc MainInteractorKeyPress {key widget x y} {
     global View Slice Interactor Module Editor
+
 
     focus $widget
 
@@ -448,6 +451,7 @@ proc MainInteractorKeyPress {key widget x y} {
          }
          "=" - 
          "-" - 
+         "\\\\" - 
          "\[0-9\]" {
             switch $Module(activeID) {
                 "Editor" {

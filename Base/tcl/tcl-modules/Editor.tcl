@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Editor.tcl,v $
-#   Date:      $Date: 2006/05/26 18:54:48 $
-#   Version:   $Revision: 1.89 $
+#   Date:      $Date: 2006/06/08 21:59:14 $
+#   Version:   $Revision: 1.90 $
 # 
 #===============================================================================
 # FILE:        Editor.tcl
@@ -105,7 +105,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.89 $} {$Date: 2006/05/26 18:54:48 $}]
+        {$Revision: 1.90 $} {$Date: 2006/06/08 21:59:14 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -1306,6 +1306,14 @@ proc EditorB1 {x y} {
                 }
                 "Select" {
                     Slicer DrawStartSelectBox $x $y
+                }
+            }
+
+            if { $::Editor(toggleAutoSample) } {
+                if { [[Slicer DrawGetPoints] GetNumberOfPoints] == "1" } {
+                    # if this is the first point clicked and you are in Auto mode, 
+                    # then update the color to be the current foreground color
+                    EdDrawUpdate "CurrentSample"
                 }
             }
         }
