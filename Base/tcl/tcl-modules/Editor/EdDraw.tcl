@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EdDraw.tcl,v $
-#   Date:      $Date: 2006/06/08 21:59:15 $
-#   Version:   $Revision: 1.38 $
+#   Date:      $Date: 2006/06/08 22:14:14 $
+#   Version:   $Revision: 1.39 $
 # 
 #===============================================================================
 # FILE:        EdDraw.tcl
@@ -135,15 +135,14 @@ proc EdDrawBuildGUI {} {
     eval {checkbutton $f.cAuto -width 4 -indicatoron 0 \
         -variable Editor(toggleAutoSample) \
         -text "Auto" } $Gui(WCA) 
-    grid $f.cAuto -padx $Gui(pad) -pady $Gui(pad)
     TooltipAdd  $f.cAuto "Automatically set label value depending on location of first click."
 
-    grid $f.bOutput $f.eOutput $f.eName $f.cAuto -padx 2 -pady $Gui(pad)
-    grid $f.eOutput $f.eName -sticky w
+    grid $f.bOutput $f.eOutput $f.eName $f.cAuto -padx 0 -pady $Gui(pad)
+    #grid $f.eOutput $f.eName -sticky w
 
 
     # Radius
-    eval {label $f.lRadius -text "Point Radius:"} $Gui(WLA)
+    eval {label $f.lRadius -text "Pt Radius:"} $Gui(WLA)
     eval {entry $f.eRadius -width 6 \
         -textvariable Ed(EdDraw,radius)} $Gui(WEA)
         bind $f.eRadius <Return> "EdDrawUpdate SetRadius; RenderActive"
