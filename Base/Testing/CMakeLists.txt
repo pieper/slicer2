@@ -1,6 +1,7 @@
 # Test
 SET(TESTS_BASE_SRCS
   testSlicerBase
+  testDataProvenance
   TestPlot
   TestImageCCA
   )
