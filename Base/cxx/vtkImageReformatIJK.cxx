@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageReformatIJK.cxx,v $
-  Date:      $Date: 2006/03/06 19:02:26 $
-  Version:   $Revision: 1.18 $
+  Date:      $Date: 2006/06/09 16:05:16 $
+  Version:   $Revision: 1.19 $
 
 =========================================================================auto=*/
 #include "vtkImageReformatIJK.h"
@@ -64,7 +64,11 @@ vtkImageReformatIJK::vtkImageReformatIJK()
 //----------------------------------------------------------------------------
 vtkImageReformatIJK::~vtkImageReformatIJK()
 {
-    this->Indices->Delete();
+    if (this->Indices)
+    {
+        this->Indices->UnRegister(this);
+        this->Indices->Delete();
+    }
     if (this->tran)
     {
         this->tran->Delete();
