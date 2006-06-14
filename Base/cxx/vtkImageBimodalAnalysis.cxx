@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageBimodalAnalysis.cxx,v $
-  Date:      $Date: 2006/04/19 19:45:08 $
-  Version:   $Revision: 1.20 $
+  Date:      $Date: 2006/06/14 20:44:14 $
+  Version:   $Revision: 1.21 $
 
 =========================================================================auto=*/
 #include "vtkImageBimodalAnalysis.h"
@@ -66,6 +66,7 @@ static void vtkImageBimodalAnalysisExecute(vtkImageBimodalAnalysis *self,
   outData->GetExtent(min0, max0, min1, max1, min2, max2);
   inData->GetOrigin(origin);
   inData->GetSpacing(spacing);
+
   offset = (int)origin[0];
 
   // Zero output
@@ -195,6 +196,7 @@ static void vtkImageBimodalAnalysisExecute(vtkImageBimodalAnalysis *self,
     }
 
   // Record findings
+  self->SetOffset(offset);
   self->SetThreshold(threshold + offset);
   self->SetMin(min + offset);
   self->SetMax(max + offset);
@@ -243,7 +245,6 @@ void vtkImageBimodalAnalysis::ExecuteData(vtkDataObject *out)
       << " must be float\n");
     return;
     }
-  
   switch (inData->GetScalarType())
   {
     case VTK_CHAR:
@@ -296,5 +297,16 @@ void vtkImageBimodalAnalysis::ExecuteData(vtkDataObject *out)
 void vtkImageBimodalAnalysis::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
+
+  os << indent << "Modality: " << this->Modality << " (" << (this->Modality == VTK_BIMODAL_MODALITY_CT ? "CT" : "MR") << ")\n";
+  os << indent << "Offset: " << this->Offset << "\n";
+  os << indent << "Threshold: " << this->Threshold << "\n";
+  os << indent << "Window: " << this->Window << "\n";
+  os << indent << "Level: " << this->Level << "\n";
+  os << indent << "Min: " << this->Min << "\n";
+  os << indent << "Max: " << this->Max << "\n";
+  os << indent << "ClipExtent: " << this->ClipExtent[0] << "," << this->ClipExtent[1] << "," << this->ClipExtent[2] << "," << this->ClipExtent[3] << "," << this->ClipExtent[4] << "," << this->ClipExtent[5] << "\n";
+  os << indent << "SignalRange: " << this->SignalRange[0] << "," << this->SignalRange[1] << "\n";
+    
 }
 

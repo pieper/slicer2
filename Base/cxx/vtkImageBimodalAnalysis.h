@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageBimodalAnalysis.h,v $
-  Date:      $Date: 2006/04/19 20:14:09 $
-  Version:   $Revision: 1.22 $
+  Date:      $Date: 2006/06/14 20:44:13 $
+  Version:   $Revision: 1.23 $
 
 =========================================================================auto=*/
 // .NAME vtkImageBimodalAnalysis - Analysis bimodal histograms
@@ -52,6 +52,9 @@ public:
   vtkGetVectorMacro(SignalRange, int, 2);
   vtkGetVectorMacro(ClipExtent, int, 6);
 
+    vtkGetMacro(Offset, int);
+    vtkSetMacro(Offset, int);
+    
   // Description:
   // Ideally this should not be public API
   vtkSetMacro(Threshold, int);
@@ -75,6 +78,8 @@ protected:
   int Max;
   int ClipExtent[6];
   int SignalRange[2];
+
+    int Offset;
 
   void ExecuteInformation(vtkImageData *input, vtkImageData *output);
   void ExecuteInformation(){this->Superclass::ExecuteInformation();};
