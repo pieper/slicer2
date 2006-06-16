@@ -17,6 +17,7 @@ ENDFOREACH(test)
 
 SET(TCL_TESTS   
   TestMeasureVol
+  TestMaskStat
    )                    
 
 FOREACH(tclfile ${TCL_TESTS})
