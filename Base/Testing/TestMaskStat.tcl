@@ -78,7 +78,7 @@ VolumeMathInit
 
 # set MaskStat input
 # ------------------
-set VolumeMath(fileName) "/projects/schiz/guest/kquintus/slicer-nightly-may-19/Base/Testing/TestOutput/maskStat.hist.txt"
+set VolumeMath(fileName) [file join $::env(SLICER_HOME) Base/Testing/TestOutput/maskStat.hist.txt]
 set VolumeMath(maskLabel) 4
 set VolumeMath(MathType) "MaskStat"
 
