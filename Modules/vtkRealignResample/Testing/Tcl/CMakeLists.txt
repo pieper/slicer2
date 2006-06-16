@@ -3,7 +3,7 @@ SET(TCL_TESTS
    )
 
 FOREACH(tclfile ${TCL_TESTS})
-  ADD_TEST("${MODULE_NAME}.${tclfile}"
+  ADD_TEST("${tclfile}"
   "${CTEST_SLICER_HOME}/Scripts/runvnc" "--Xvnc"
   "${CTEST_XVNC_EXECUTABLE}" "-d" "44" "--not-secure" "--" 
   "${SLICER_EXECUTABLE}" "--batch"
