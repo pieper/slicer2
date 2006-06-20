@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: isvolumeoption.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:08 $
-#   Version:   $Revision: 1.3 $
+#   Date:      $Date: 2006/06/20 22:00:42 $
+#   Version:   $Revision: 1.4 $
 # 
 #===============================================================================
 # FILE:        isvolumeoption.tcl
@@ -74,6 +74,8 @@ itcl::body isvolumeoption::constructor {args} {
 
 itcl::body isvolumeoption::initSelection {} {
     global Volume
+    
+    set selected [$this selectedID]
 
     $this delete 0 end
     set volumeNames ""
@@ -92,6 +94,9 @@ itcl::body isvolumeoption::initSelection {} {
         foreach n $volumeNames {
             $this insert end $n
         }
+    }
+    foreach v $selected {
+        $this select $v
     }
 }
 
