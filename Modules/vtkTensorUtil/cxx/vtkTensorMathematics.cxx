@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.cxx,v $
-  Date:      $Date: 2006/06/19 22:44:06 $
-  Version:   $Revision: 1.36 $
+  Date:      $Date: 2006/06/20 14:49:25 $
+  Version:   $Revision: 1.37 $
 
 =========================================================================auto=*/
 
@@ -766,17 +766,17 @@ vtkFloatingPointType vtkTensorMathematics::MinEigenvalue(vtkFloatingPointType w[
 
 vtkFloatingPointType vtkTensorMathematics::MaxEigenvalueProjectionX(vtkFloatingPointType **v, vtkFloatingPointType w[3]) 
 {
-  return fabs(w[0]*v[0][0])*vtkTensorMathematics::RelativeAnisotropy(w[3]);
+  return fabs(w[0]*v[0][0])*vtkTensorMathematics::RelativeAnisotropy(w);
 }
 
 vtkFloatingPointType vtkTensorMathematics::MaxEigenvalueProjectionY(vtkFloatingPointType **v, vtkFloatingPointType w[3]) 
 {
-  return fabs(w[0]*v[1][0])*vtkTensorMathematics::RelativeAnisotropy(w[3]);
+  return fabs(w[0]*v[1][0])*vtkTensorMathematics::RelativeAnisotropy(w);
 }
 
 vtkFloatingPointType vtkTensorMathematics::MaxEigenvalueProjectionZ(vtkFloatingPointType **v, vtkFloatingPointType w[3]) 
 {
-  return fabs(w[0]*v[2][0])*vtkTensorMathematics::RelativeAnisotropy(w[3]);
+  return fabs(w[0]*v[2][0])*vtkTensorMathematics::RelativeAnisotropy(w);
 }
 
 vtkFloatingPointType vtkTensorMathematics::Mode(vtkFloatingPointType w[3])
