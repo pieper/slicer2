@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainVolumes.tcl,v $
-#   Date:      $Date: 2006/04/18 01:44:26 $
-#   Version:   $Revision: 1.95 $
+#   Date:      $Date: 2006/06/21 20:27:16 $
+#   Version:   $Revision: 1.96 $
 # 
 #===============================================================================
 # FILE:        MainVolumes.tcl
@@ -54,7 +54,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.95 $} {$Date: 2006/04/18 01:44:26 $}]
+    {$Revision: 1.96 $} {$Date: 2006/06/21 20:27:16 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -631,11 +631,11 @@ proc MainVolumesWrite {v prefix} {
             append newFullPrefix . $Editor(fileformat)             
             Volume($v,node) SetFullPrefix  $newFullPrefix
             
-            #catch "export_matrix Delete"
+            catch "export_matrix Delete"
             vtkMatrix4x4 export_matrix
             eval export_matrix DeepCopy [Volume($v,node) GetRasToIjkMatrix]
 
-            #catch "export_iwriter Delete"
+            catch "export_iwriter Delete"
             vtkITKImageWriter export_iwriter 
             export_iwriter SetInput [Volume($v,vol) GetOutput]
             export_iwriter SetFileName [Volume($v,node) GetFilePrefix]
@@ -925,6 +925,7 @@ proc MainVolumesUpdate {v} {
     # The BuildUpper() function reset the offsets to be in the middle of
     # the volume, so I need to set them to what's on the GUI:
     foreach s $Slice(idList) {
+puts "MainVolumesUpdate: setting slice offset $s $Slice($s,offset)"
         Slicer SetOffset $s $Slice($s,offset)
     }
 
