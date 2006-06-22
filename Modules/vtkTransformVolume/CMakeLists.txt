@@ -16,7 +16,7 @@ PROJECT (VTKTRANSFORMVOLUME)
 #
 
 SET (VTKTRANSFORMVOLUME_CAN_BUILD 1)
-
+ENABLE_TESTING()
 #
 # Load CMake commands that you probably should not modify.
 #
@@ -59,6 +59,7 @@ IF (VTKTRANSFORMVOLUME_CAN_BUILD)
 
   SUBDIRS (
     cxx
+    Testing
   )
 
   #
