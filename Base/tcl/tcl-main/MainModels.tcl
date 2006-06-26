@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainModels.tcl,v $
-#   Date:      $Date: 2006/04/04 19:41:14 $
-#   Version:   $Revision: 1.74 $
+#   Date:      $Date: 2006/06/26 02:16:50 $
+#   Version:   $Revision: 1.75 $
 # 
 #===============================================================================
 # FILE:        MainModels.tcl
@@ -71,7 +71,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.74 $} {$Date: 2006/04/04 19:41:14 $}]
+        {$Revision: 1.75 $} {$Date: 2006/06/26 02:16:50 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -1355,6 +1355,8 @@ proc MainModelsSetTensorScaleFactor {m {value ""}} {
 proc MainModelsSetTensorColor {} {
     global Model 
 
+    set m $Model(activeID)
+
     # if no tensor vis information, return
     if {[info exist Model($m,tensorVisibility)] == 0 } {
         return
@@ -1363,7 +1365,7 @@ proc MainModelsSetTensorColor {} {
     # display new color type
     $Model(mbTensorGlyphColor) config -text $Model(tensorGlyphColor)
 
-    set m $Model(activeID)
+
     if {$Model($m,tensorVisibility) == 1} {
 
         if {$Model(tensorGlyphColor) == "SolidColor"} {
