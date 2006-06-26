@@ -158,10 +158,18 @@ puts $fd "SUBDIRS(Base/builds/$env(BUILD))"
 puts $fd "SUBDIRS(Modules)"
 close $fd
 
-set fd [open "${baseModulePath}/DartTestfile.txt" "w"]
+set fd1 [open "${baseModulePath}/DartTestfile.txt" "w"]
+
 foreach dir $modulePaths {
-  puts $fd "SUBDIRS (\"[file root [file tail $dir]]/builds/$env(BUILD)\")"
+    if { [file exists "${baseModulePath}/[file root [file tail $dir]]/cxx/CMakeLists.txt" ] } {
+        puts $fd1 "SUBDIRS (\"[file root [file tail $dir]]/builds/$env(BUILD)\")"
+    } else {
+        if { [file exists "${baseModulePath}/[file root [file tail $dir]]/Testing/Tcl" ] } {
+            puts $fd1 "SUBDIRS (\"[file root [file tail $dir]]/builds/$env(BUILD)\")"
+        }
+    }
 }
+close $fd1
 
 set TARGETS ""
 foreach dir $modulePaths {
@@ -175,7 +183,6 @@ foreach dir $modulePaths {
            && [file exists $dir/cxx] 
            && [file exists $dir/cxx/CMakeListsLocal.txt]
            && [llength [glob -nocomplain $dir/cxx/*.cxx]] > 0 } {
-
         #
         # if there's a cmaker_local.tcl file, it means
         # the module depends on other modules, so put it at
@@ -187,7 +194,12 @@ foreach dir $modulePaths {
             set TARGETS "$dir $TARGETS"
         }
     } else {
-        puts "Skipping module $moduleName...no compilation needed."
+        # if there are Tcl testing files, module needs to be added to targets
+        if { ![string match [glob -nocomplain ${dir}/Testing/Tcl] ""] } {
+            lappend TARGETS $dir
+        } else {
+            puts "Skipping module $moduleName...no compilation needed."
+        }
     }
 }
 
