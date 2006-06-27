@@ -7,19 +7,20 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorFlip.h,v $
-  Date:      $Date: 2006/04/18 15:32:00 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/06/27 20:53:19 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 // .NAME vtkTensorFlip - flip Y axis and negate xy and zy terms
 // .SECTION Description
 // Make tend estim generated vtk files compatible with slicer
-//
+// .SECTION Warning
+// The filter will always output floating point (loose precision)
+// explicit use of vtkFloatArray
 
 
 #ifndef __vtkTensorFlip_h
 #define __vtkTensorFlip_h
-
 
 #include "vtkTensorUtilConfigure.h"
 #include "vtkImageToImageFilter.h"
@@ -42,7 +43,7 @@ protected:
   void operator=(const vtkTensorFlip&);
 
   void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
-  void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
+  void ExecuteInformation(){this->Superclass::ExecuteInformation();};
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,
         int extent[6], int id);
 

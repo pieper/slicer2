@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorFlip.cxx,v $
-  Date:      $Date: 2006/04/18 17:01:20 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/06/27 20:53:19 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 #include "vtkTensorFlip.h"
@@ -179,7 +179,7 @@ void vtkTensorFlip::ExecuteData(vtkDataObject *out)
   this->OutTensors = data;
 
   // jump back into normal pipeline: call standard superclass method here
-  this->vtkImageToImageFilter::ExecuteData(out);
+  this->Superclass::ExecuteData(out);
 
   output->GetPointData()->SetTensors(data);
   data->Delete();
