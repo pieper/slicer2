@@ -49,8 +49,8 @@ int TestSuperquadricSource2(int, char *[])
   renWin->Render();
 
   // render the image
-  iren->Initialize();
-  iren->Start();
+  //iren->Initialize();
+  //iren->Start();
   
   squad2->Delete();
   actor->Delete();
@@ -58,6 +58,7 @@ int TestSuperquadricSource2(int, char *[])
   renWin->Delete();
   mapper->Delete();
   iren->Delete();
+
   return 0;
 }
 

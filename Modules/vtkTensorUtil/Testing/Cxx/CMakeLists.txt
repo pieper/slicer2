@@ -4,6 +4,9 @@ SET(TEST_SRCS
   TestBSplineInterpolateImageFunction
   #TestTensorImplicitFunctionToFunctionSet
   TestImageGetTensorComponents
+  TestSuperquadricSource2
+  TestTensorFlip
+  TestTensorMask
   )
 
 FIND_PACKAGE(ITK)
@@ -25,6 +28,17 @@ INCLUDE_DIRECTORIES(
   #${SANDBOX_SRC_DIR}/SlicerTractClusteringImplementation/Code
   #${SANDBOX_SRC_DIR}/SpectralClustering
   )
+
+IF(DEBUG_POLY)
+  INCLUDE_DIRECTORIES(
+    ${VTKSLICERBASE_SOURCE_DIR}/cxx
+    ${VTKSLICERBASE_BUILD_DIR}
+    )
+  SET(TEST_SRCS
+    ${TEST_SRCS}
+    TestPoly
+    )
+ENDIF(DEBUG_POLY)
 
 LINK_DIRECTORIES(
   #${SANDBOX_BUILD_DIR}
