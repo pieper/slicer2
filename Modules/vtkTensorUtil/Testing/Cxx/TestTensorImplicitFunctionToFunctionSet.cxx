@@ -35,7 +35,7 @@
 #include "vtkTesting.h"
 #include "vtkRegressionTestImage.h"
 
-int TestGenericStreamTracer(int argc, char* argv[])
+int TestTensorImplicitFunctionToFunctionSet(int argc, char* argv[])
 {
   // Standard rendering classes
   vtkRenderer *renderer = vtkRenderer::New();
