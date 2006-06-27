@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricSource2.h,v $
-  Date:      $Date: 2006/05/04 20:03:01 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/06/27 20:50:51 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 // .NAME vtkSuperquadricSource2 - create a polygonal superquadric centered 
@@ -107,7 +107,11 @@ public:
   vtkSetMacro(Size,double);
   vtkGetMacro(Size,double);
 
-
+  // Description:
+  // Set/Get whether or not the superquadric is toroidal (1) or ellipsoidal (0).
+  vtkBooleanMacro(Toroidal,int);
+  vtkGetMacro(Toroidal,int);
+  vtkSetMacro(Toroidal,int);
 
 protected:
   vtkSuperquadricSource2(int res=16);

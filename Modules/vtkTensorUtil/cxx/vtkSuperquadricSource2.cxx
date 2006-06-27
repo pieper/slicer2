@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricSource2.cxx,v $
-  Date:      $Date: 2006/05/04 20:03:01 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/06/27 20:50:51 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 
@@ -24,7 +24,7 @@
 
 #include <math.h>
 
-vtkCxxRevisionMacro(vtkSuperquadricSource2, "$Revision: 1.5 $");
+vtkCxxRevisionMacro(vtkSuperquadricSource2, "$Revision: 1.6 $");
 vtkStandardNewMacro(vtkSuperquadricSource2);
 
 static void evalSuperquadric2(double u, double v,
@@ -401,12 +401,12 @@ static void evalSuperquadric2(double theta, double phi,  // parametric coords
 
   cf1 = cf(phi, rphi, alpha);
   xyz[0] = dims[0] * cf1 * sf(theta, rtheta);
-  xyz[1] = dims[1] * cf1 * cf(theta, rtheta);
-  xyz[2] = dims[2]       * sf(phi, rphi);
+  xyz[1] = dims[1]       * sf(phi, rphi);
+  xyz[2] = dims[2] * cf1 * cf(theta, rtheta);
 
   cf2 = cf(phi+dphi, 2.0-rphi);
   nrm[0] = 1.0/dims[0] * cf2 * sf(theta+dtheta, 2.0-rtheta);
-  nrm[1] = 1.0/dims[1] * cf2 * cf(theta+dtheta,2.0-rtheta);
-  nrm[2] = 1.0/dims[2]       * sf(phi+dphi,2.0-rphi);
+  nrm[1] = 1.0/dims[1]       * sf(phi+dphi,2.0-rphi);
+  nrm[2] = 1.0/dims[2] * cf2 * cf(theta+dtheta,2.0-rtheta);
 }
 
