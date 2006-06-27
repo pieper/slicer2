@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterSuperClassNode.h,v $
-  Date:      $Date: 2006/05/11 22:02:12 $
-  Version:   $Revision: 1.20 $
+  Date:      $Date: 2006/06/27 14:00:03 $
+  Version:   $Revision: 1.21 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSegmenterClassNode - MRML node to represent transformation matrices.
@@ -144,6 +144,16 @@ public:
   // 2 = write to/read from memory  - make sure you have enough mem as this can eat up a lot of memory 
   vtkSetMacro(ParameterInitSubClass,int); 
   vtkGetMacro(ParameterInitSubClass,int); 
+
+  // Description:
+  // Save all parameters after segmenting the super class to a file (bias and labelmap)  
+  vtkSetMacro(ParameterSaveToFile,int); 
+  vtkGetMacro(ParameterSaveToFile,int); 
+
+  // Description:
+  // Instead of segmenting the superclass we load them from a file (see also ParameterSaveToFile) 
+  vtkSetMacro(ParameterSetFromFile,int); 
+  vtkGetMacro(ParameterSetFromFile,int); 
 
   // Description:
   // Kilian: Jan06: This allows you to "jump" over the hirarchical segmentation level by providing an already existing 
