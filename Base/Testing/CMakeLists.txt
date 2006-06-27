@@ -4,6 +4,7 @@ SET(TESTS_BASE_SRCS
   testDataProvenance
   TestPlot
   TestImageCCA
+  #TestPolyBoolean
   )
 
 FOREACH(test ${TESTS_BASE_SRCS})
