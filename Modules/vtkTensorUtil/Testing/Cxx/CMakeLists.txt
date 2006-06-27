@@ -2,6 +2,8 @@
 SET(TEST_SRCS
   TestInstance
   TestBSplineInterpolateImageFunction
+  #TestTensorImplicitFunctionToFunctionSet
+  TestImageGetTensorComponents
   )
 
 FIND_PACKAGE(ITK)
