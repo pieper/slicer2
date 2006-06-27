@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.h,v $
-  Date:      $Date: 2006/04/25 18:51:24 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/06/27 20:54:06 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 // .NAME vtkTensorMathematics - Trace, determinant, anisotropy measures
@@ -44,9 +44,9 @@
 #define VTK_TENS_D33                   13
 #define VTK_TENS_MODE                  14
 #define VTK_TENS_COLOR_MODE            15
-#define VTK_TENS_MAX_EIGENVALUE_PROJX 16
-#define VTK_TENS_MAX_EIGENVALUE_PROJY 17
-#define VTK_TENS_MAX_EIGENVALUE_PROJZ 18
+#define VTK_TENS_MAX_EIGENVALUE_PROJX  16
+#define VTK_TENS_MAX_EIGENVALUE_PROJY  17
+#define VTK_TENS_MAX_EIGENVALUE_PROJZ  18
 
 #include "vtkTensorUtilConfigure.h"
 #include "vtkImageTwoInputFilter.h"
