@@ -52,6 +52,12 @@ int TestSuperquadricSource2(int, char *[])
   iren->Initialize();
   iren->Start();
   
+  squad2->Delete();
+  actor->Delete();
+  ren->Delete();
+  renWin->Delete();
+  mapper->Delete();
+  iren->Delete();
   return 0;
 }
 

@@ -35,14 +35,10 @@ int TestTensorFlip(int, char *[])
   math->SetInput2( flip->GetOutput() );
   math->SetOperationToSubtract();
 
-  vtkStructuredPointsWriter *writer = vtkStructuredPointsWriter::New();
-  writer->SetInput( math->GetOutput() );
-  writer->SetFileName( "/tmp/flip.vtk" );
-  writer->Write();
-
   tensors->Delete();
   flip->Delete();
   img->Delete();
+  math->Delete();
 
   return 0;
 }
