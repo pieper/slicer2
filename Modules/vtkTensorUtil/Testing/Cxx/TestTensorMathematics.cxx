@@ -1,6 +1,8 @@
 #include "vtkTensorMathematics.h"
-int TestTensorMathematics()
+
+int TestTensorMathematics(int, char *[])
 {
-vtkTensorMathematics * t = vtkTensorMathematics::New();
+  vtkTensorMathematics * t = vtkTensorMathematics::New();
+
   return 0;
 }

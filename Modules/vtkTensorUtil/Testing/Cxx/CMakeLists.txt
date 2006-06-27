@@ -7,6 +7,7 @@ SET(TEST_SRCS
   TestSuperquadricSource2
   TestTensorFlip
   TestTensorMask
+  TestTensorMathematics
   )
 
 FIND_PACKAGE(ITK)
