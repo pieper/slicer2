@@ -79,6 +79,8 @@ AlignmentsInit
 # stubs
 proc MainShowProgress {filter} {}
 proc MainEndProgress {} {}
+
+#Read the xml file
 MainMrmlRead [file join $::env(SLICER_HOME) Modules/vtkTransformVolume/Testing/TestInput/TransformVolume.xml]
 MainUpdateMRML
 
@@ -122,6 +124,7 @@ proc RenderAll {} {}
 
 iwidgets::pushbutton  .brun
 set TransformVolume(brun) .brun
+
 TransformVolumeRun
 
 # Save Volume
@@ -149,7 +152,6 @@ Mrml(dataTree) RemoveItem $node
 set nodeBefore [Volume(2,vol) GetMrmlNode]
 Mrml(dataTree) InsertAfterItem $nodeBefore $node
 MainUpdateMRML
-
 
 set subtrahend 2
 
@@ -183,6 +185,7 @@ set min [stat GetMin]
 set max [stat GetMax]
 set mean [stat GetAverage]
 set std [stat GetStdev]
+stat Delete
 puts "The nightly AG-Result has been saved in [file join $::env(SLICER_HOME) Modules/vtkTransformVolume/Testing/TestOutput/nightly_AG_Result.nhdr]."
 puts "Difference between baseline and nightly AG-Result has been saved in [file join $::env(SLICER_HOME) Modules/vtkTransformVolume/Testing/TestOutput/difference.nhdr]."
 puts "Statistics of the difference image:"
@@ -195,5 +198,7 @@ if {$min == 0 && $max == 0} {
 } else {
     set exitCode 1
 }
+
+TransformVolumeExit
 
 exit $exitCode
