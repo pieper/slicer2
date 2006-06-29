@@ -70,7 +70,7 @@ puts stderr "SLICER_HOME is $::SLICER_HOME"
 # changes in the "Files to test if library has already been built"
 # section below, or genlib will happily build the library again.
 
-if { $darwin_x86 != "" } {
+if { $::env(BUILD) == "darwin-x86" } {
   set ::CMAKE_TAG "CMake-2-4-2"
 } else {
   set ::CMAKE_TAG "CMake-2-0-6"
@@ -229,7 +229,7 @@ switch $::tcl_platform(os) {
         set ::VTKSLICERBASE_BUILD_TCL_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/vtkSlicerBaseTCL.dylib
         set ::GENERATOR "Unix Makefiles" 
         set ::COMPILER_PATH "/usr/bin"
-        if { $darwin_x86 != "" } {
+        if { $::env(BUILD) == "darwin-x86" } {
           set ::COMPILER "g++"
         } else {
           set ::COMPILER "g++-3.3"
