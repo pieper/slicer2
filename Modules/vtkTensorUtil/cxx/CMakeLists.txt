@@ -147,6 +147,8 @@ TARGET_LINK_LIBRARIES (
   vtkImaging 
   vtkFiltering
   vtkCommon
+  nrrd
+  vtkzlib
 )
 
 IF (VTK_USE_HYBRID)
