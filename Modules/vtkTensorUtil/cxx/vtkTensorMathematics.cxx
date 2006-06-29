@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.cxx,v $
-  Date:      $Date: 2006/06/29 13:46:25 $
-  Version:   $Revision: 1.38 $
+  Date:      $Date: 2006/06/29 19:47:36 $
+  Version:   $Revision: 1.39 $
 
 =========================================================================auto=*/
 
@@ -407,7 +407,7 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
     }
 
 
-  cout<<"Do masking: "<<doMasking<<endl;
+  //vtkGenericWarningMacro( "Do masking: " << doMasking );
 
   // Loop through output pixels and input points
 
@@ -479,9 +479,10 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
           //  2. Take absolute value
           //  3. Increase eigenvalues by negative part
           // The two first options have been problematic. Try 3 
-          if (vtkTensorMathematics::FixNegativeEigenvalues(w)) {
-            cout<<"Warning: Eigenvalues are not properly sorted"<<endl;
-          }   
+          if (vtkTensorMathematics::FixNegativeEigenvalues(w))
+            {
+            vtkGenericWarningMacro( "Warning: Eigenvalues are not properly sorted" );
+            }   
 
           // pixel operation
           switch (op)
