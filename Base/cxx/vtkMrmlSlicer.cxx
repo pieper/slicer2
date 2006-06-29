@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.cxx,v $
-  Date:      $Date: 2006/05/03 20:40:22 $
-  Version:   $Revision: 1.67 $
+  Date:      $Date: 2006/06/29 16:49:12 $
+  Version:   $Revision: 1.68 $
 
 =========================================================================auto=*/
 #include "vtkMrmlSlicer.h"
@@ -42,8 +42,10 @@ extern "C"
 {
   void oft_initSlicerBase() 
   {
+#if __GNUC__ < 4
   extern void _ZNSt8ios_base4InitC4Ev();
   _ZNSt8ios_base4InitC4Ev();
+#endif
   }
 }
 #endif
