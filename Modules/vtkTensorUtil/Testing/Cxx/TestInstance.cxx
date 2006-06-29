@@ -20,16 +20,13 @@
 int TestInstance(int argc, char *argv[])
 {
   vtkBSplineInterpolateImageFunction::New()->Delete();
-  //vtkHyperPointandArray::New()->Delete();
   vtkHyperStreamlineDTMRI::New()->Delete();
-  //vtkHyperStreamlineTeem::New()->Delete();
   vtkImageGetTensorComponents::New()->Delete();
   vtkImageSetTensorComponents::New()->Delete();
   vtkInteractiveTensorGlyph::New()->Delete();
-  //vtkPreciseHyperArray::New()->Delete();
-  //vtkPreciseHyperPoint::New()->Delete();
   vtkPreciseHyperStreamline::New()->Delete();
   vtkPreciseHyperStreamlinePoints::New()->Delete();
+
   vtkSuperquadricSource2::New()->Delete();
   vtkSuperquadricTensorGlyph::New()->Delete();
   vtkTensorFlip::New()->Delete();
@@ -43,6 +40,10 @@ int TestInstance(int argc, char *argv[])
   vtkPreciseHyperArray b;
   vtkHyperPoint c;
   vtkHyperArray d;
+  //vtkHyperPointandArray::New()->Delete();
+  //vtkHyperStreamlineTeem::New()->Delete();
+  //vtkPreciseHyperArray::New()->Delete();
+  //vtkPreciseHyperPoint::New()->Delete();
 
   return 0;
 }

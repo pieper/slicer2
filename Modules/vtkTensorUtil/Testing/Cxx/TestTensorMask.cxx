@@ -20,9 +20,23 @@ int TestTensorMask(int, char *[])
   img->Print ( cout );
   memset( tensors->GetPointer(0), 0, 9*numPts*sizeof(double));
 
+  vtkImageEllipsoidSource *sphere = vtkImageEllipsoidSource::New();
+  sphere->SetWholeExtent (0, 511, 0, 255, 0, 0);
+  sphere->SetCenter (128, 128, 0);
+  sphere->SetRadius (80, 80, 1);
 
+  vtkTensorMask *mask = vtkTensorMask::New();
+  mask->SetImageInput ( img );
+  mask->SetMaskInput ( sphere->GetOutput() );
+  mask->SetMaskedOutputValue (100, 128, 200);
+  mask->NotMaskOn();
+  mask->Update();
+
+
+  sphere->Delete();
   tensors->Delete();
   img->Delete();
+  mask->Delete();
 
   return 0;
 }
