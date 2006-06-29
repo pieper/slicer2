@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.h,v $
-  Date:      $Date: 2006/06/29 13:46:25 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/06/29 18:55:28 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 // .NAME vtkTensorMathematics - Trace, determinant, anisotropy measures
@@ -63,6 +63,7 @@ public:
   // Description:
   // Get the Operation to perform.
   vtkGetMacro(Operation,int);
+  vtkSetClampMacro(Operation,int, VTK_TENS_TRACE, VTK_TENS_MAX_EIGENVALUE_PROJZ);
 
   // Description:
   // Output the trace (sum of eigenvalues = sum along diagonal)
@@ -212,7 +213,6 @@ protected:
   ~vtkTensorMathematics();
 
   int Operation; // math operation to perform
-  vtkSetMacro(Operation,int);
   vtkFloatingPointType ScaleFactor; // Scale factor for output scalars
   int ExtractEigenvalues; // Boolean controls eigenfunction extraction
 
