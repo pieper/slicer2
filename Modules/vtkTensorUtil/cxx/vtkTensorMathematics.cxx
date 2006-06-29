@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.cxx,v $
-  Date:      $Date: 2006/06/20 14:49:25 $
-  Version:   $Revision: 1.37 $
+  Date:      $Date: 2006/06/29 13:46:25 $
+  Version:   $Revision: 1.38 $
 
 =========================================================================auto=*/
 
@@ -72,7 +72,18 @@ vtkTensorMathematics::vtkTensorMathematics()
   this->MaskWithScalars = 0;
 }
 
-
+//----------------------------------------------------------------------------
+vtkTensorMathematics::~vtkTensorMathematics()
+{
+  if( this->TensorRotationMatrix )
+    {
+    this->TensorRotationMatrix->Delete();
+    }
+  if( this->ScalarMask )
+    {
+    this->ScalarMask->Delete();
+    }
+}
 
 //----------------------------------------------------------------------------
 // 
@@ -588,6 +599,8 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
     inPtId += outIncZ;
     }
 
+  // Cleanup
+  trans->Delete();
   //cout << "tensor math time: " << clock() - tStart << endl;
 }
 
