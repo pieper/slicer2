@@ -247,6 +247,7 @@ for {set i 0} {$i < $argc} {incr i} {
         "--stop-on-errors" {  
             puts "Stop on build errors"
             set STOP_ON_ERRORS 1
+            set AttributeFlag 1
         }
         "--verbose" { 
             puts "Compiling in verbose mode"
