@@ -36,3 +36,7 @@ file rename -force slicer2.exe ../../slicer2-win32.exe
 puts "making darwin..."
 exec  tclkitsh starkit${starkitRelease}/sdx.kit wrap slicer2.exe -runtime starkit${starkitRelease}/tclkit-darwin-ppc
 file rename -force slicer2.exe ../../slicer2-darwin-ppc
+
+puts "making darwin x86..."
+exec  tclkitsh starkit${starkitRelease}/sdx.kit wrap slicer2.exe -runtime starkit${starkitRelease}/tclkit-darwin-x86
+file rename -force slicer2.exe ../../slicer2-darwin-x86
