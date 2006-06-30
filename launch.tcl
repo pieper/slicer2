@@ -97,7 +97,7 @@ if {[catch {
         puts stderr "LD_LIBRARY_PATH is an empty string."
         set ::env(LD_LIBRARY_PATH) " " 
     }} ex]} {
-    if { $::env(BUILD) != $windows && $::env(BUILD) != $darwin } {
+    if { $::env(BUILD) != $windows && $::env(BUILD) != $darwin && $::env(BUILD) != $darwin_x86 } {
         puts "Setting LD_LIBRARY_PATH to \" \"."  
         puts "Warning: You may need to set your LD_LIBRARY_PATH environment variable to pick up system libraries such as libstdc++.so"
     }
@@ -113,7 +113,7 @@ if {[catch {
 }
 
 # if it is an empty string or doesn't exist, set the DYLD_LIBRARY_PATH 
-if { $::env(BUILD) == $darwin && [catch {
+if { ($::env(BUILD) == $darwin || $::env(BUILD) == $darwin_x86) && [catch {
     if {$::env(DYLD_LIBRARY_PATH) == ""} { 
         set ::env(DYLD_LIBRARY_PATH) " " 
     }} ex]} {
@@ -167,7 +167,7 @@ if {$::env(BUILD) == $solaris ||
         set ::env(LD_LIBRARY_PATH) $::env(TCL_BIN_DIR):$::env(LD_LIBRARY_PATH)
         set ::env(LD_LIBRARY_PATH) $::env(TEEM_BIN_DIR):$::env(LD_LIBRARY_PATH)
         set ::env(PATH) $::env(TEEM_BIN_DIR):$::env(PATH)
-    } elseif {$::env(BUILD) ==  $darwin} { 
+    } elseif {$::env(BUILD) ==  $darwin ||$::env(BUILD) == $darwin_x86} { 
         # add vtk, slicer, and tcl bins
         set ::env(DYLD_LIBRARY_PATH) $::env(VTK_DIR)/bin:$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(KWWIDGETS_DIR)/bin:$::env(DYLD_LIBRARY_PATH)
@@ -209,6 +209,7 @@ set ::env(TK_LIBRARY) $::env(TCL_LIB_DIR)/tk8.4
 if {$::env(BUILD) == $solaris || 
     $::env(BUILD) == $linux ||
     $::env(BUILD) == $linux_64 ||
+    $::env(BUILD) == $darwin_x86 ||
     $::env(BUILD) == $darwin} {
         set ::env(TCLLIBPATH) "$::env(VTK_DIR)/Wrapping/Tcl $::env(TCLLIBPATH)"
         set ::env(TCLLIBPATH) "$::env(KWWIDGETS_DIR)/Wrapping/Tcl $::env(TCLLIBPATH)"
@@ -265,7 +266,7 @@ foreach modulePath $modulePaths {
                 $::env(BUILD) == $linux} {
                 set ::env(LD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$::env(BUILD)/bin:$::env(LD_LIBRARY_PATH)
                 set ::env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $::env(TCLLIBPATH)"
-            } elseif {$::env(BUILD) == $darwin} {
+            } elseif {$::env(BUILD) == $darwin || $::env(BUILD) == $darwin_x86} {
                 set ::env(DYLD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$::env(BUILD)/bin:$::env(DYLD_LIBRARY_PATH)
                 set ::env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $::env(TCLLIBPATH)"
             } elseif {$::env(BUILD) == $windows} {
@@ -280,7 +281,7 @@ foreach modulePath $modulePaths {
 }
 
 
-if { $::env(BUILD) == $darwin } {
+if { $::env(BUILD) == $darwin || $::env(BUILD) == $darwin_x86 } {
     # vtk uses the LD_ version to do it's own search for what to load
     # so need to set this even though MAC OSX uses the DYLD_ version
     set ::env(LD_LIBRARY_PATH) $::env(DYLD_LIBRARY_PATH)
@@ -349,6 +350,7 @@ if { [string match *.tcl $argv0] } {
 if { $::BATCH == "true" } {
     if {$::env(BUILD) == $solaris || 
         $::env(BUILD) == $darwin ||
+        $::env(BUILD) == $darwin_x86 ||
         $::env(BUILD) == $linux ||
         $::env(BUILD) == $linux_64} {
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix
@@ -415,6 +417,7 @@ set argv $newargv
 
 if {$::env(BUILD) == $solaris || 
     $::env(BUILD) == $darwin ||
+    $::env(BUILD) == $darwin_x86 ||
     $::env(BUILD) == $linux_64 ||
     $::env(BUILD) == $linux} {
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix
