@@ -14,7 +14,7 @@ INCLUDE (${VTKFSLREADER_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 # Create the vtkFSLReader C++ library
 #
 # (Doesn't work here because of a CMake bug)
-# ADD_LIBRARY (vtkFSLReader LOCAL_MODULE_SRCS)
+# ADD_LIBRARY (vtkFSLReader ${LOCAL_MODULE_SRCS})
 
 #
 # Create the vtkFSLReader Tcl library
@@ -22,9 +22,10 @@ INCLUDE (${VTKFSLREADER_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 
 IF (VTK_WRAP_TCL AND VTKFSLREADER_WRAP_TCL)
 
-  VTK_WRAP_TCL (vtkFSLReaderTCL FSLReaderTCL_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkFSLReaderTCL FSLReaderTCL_SRCS)
+  VTK_WRAP_TCL (vtkFSLReaderTCL FSLReaderTCL_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkFSLReaderTCL ${FSLReaderTCL_SRCS})
   TARGET_LINK_LIBRARIES (vtkFSLReaderTCL 
+                         vtkFSLReader
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
@@ -55,16 +56,17 @@ ENDIF (VTK_WRAP_TCL AND VTKFSLREADER_WRAP_TCL)
 
 IF (VTK_WRAP_PYTHON AND VTKFSLREADER_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkFSLReaderPython FSLReaderPython_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_PYTHON (vtkFSLReaderPython FSLReaderPython_SRCS ${LOCAL_MODULE_SRCS})
 
   IF (APPLE)
-    ADD_LIBRARY (vtkFSLReaderPython MODULE FSLReaderPython_SRCS)
+    ADD_LIBRARY (vtkFSLReaderPython MODULE ${FSLReaderPython_SRCS})
   ELSE (APPLE)
-    ADD_LIBRARY (vtkFSLReaderPython SHARED FSLReaderPython_SRCS)
+    ADD_LIBRARY (vtkFSLReaderPython SHARED ${FSLReaderPython_SRCS})
   ENDIF (APPLE)
 
   IF (WIN32)
     TARGET_LINK_LIBRARIES (vtkFSLReaderPython 
+                           vtkFSLReader
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -74,6 +76,7 @@ IF (VTK_WRAP_PYTHON AND VTKFSLREADER_WRAP_PYTHON)
                            optimized ${PYTHON_LIBRARY})
   ELSE (WIN32)
     TARGET_LINK_LIBRARIES (vtkFSLReaderPython 
+                           vtkFSLReaderPython 
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -106,9 +109,10 @@ ENDIF (VTK_WRAP_PYTHON AND VTKFSLREADER_WRAP_PYTHON)
 
 IF (VTK_WRAP_JAVA AND VTKFSLREADER_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkFSLReaderJava FSLReaderJava_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkFSLReaderJava SHARED FSLReaderJava_SRCS)
+  VTK_WRAP_JAVA (vtkFSLReaderJava FSLReaderJava_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkFSLReaderJava SHARED ${FSLReaderJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkFSLReaderJava 
+                         vtkFSLReader
                          vtkIOJava
                          vtkGraphicsJava
                          vtkImagingJava 
@@ -136,7 +140,7 @@ ENDIF (VTK_WRAP_JAVA AND VTKFSLREADER_WRAP_JAVA)
 # Link to VTK and local
 #
 
-LINK_LIBRARIES (
+TARGET_LINK_LIBRARIES (
   vtkFSLReader
   vtkIO
   vtkGraphics
@@ -146,17 +150,17 @@ LINK_LIBRARIES (
 )
 
 IF (VTK_USE_HYBRID)
-  LINK_LIBRARIES (vtkHybrid)
+  TARGET_LINK_LIBRARIES (vtkFSLReader vtkHybrid)
 ENDIF (VTK_USE_HYBRID)
 
 IF (VTK_USE_PARALLEL)
-  LINK_LIBRARIES (vtkParallel)
+  TARGET_LINK_LIBRARIES (vtkFSLReader vtkParallel)
 ENDIF (VTK_USE_PARALLEL)
 
 IF (VTK_USE_PATENTED)
-  LINK_LIBRARIES (vtkPatented)
+  TARGET_LINK_LIBRARIES (vtkFSLReader vtkPatented)
 ENDIF (VTK_USE_PATENTED)
 
 IF (VTK_USE_RENDERING)
-  LINK_LIBRARIES (vtkRendering)
+  TARGET_LINK_LIBRARIES (vtkFSLReader vtkRendering)
 ENDIF (VTK_USE_RENDERING)

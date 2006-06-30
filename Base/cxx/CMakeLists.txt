@@ -84,7 +84,8 @@ IF (VTK_WRAP_TCL AND VTKSLICER_WRAP_TCL)
   ELSE (APPLE)
     ADD_LIBRARY (vtkSlicerBaseTCL SHARED ${BaseTCL_SRCS})
   ENDIF(APPLE)
-  TARGET_LINK_LIBRARIES (vtkSlicerBaseTCL 
+  TARGET_LINK_LIBRARIES (vtkSlicerBaseTCL
+                         vtkSlicerBase
                          vtkCommonTCL
                          vtkIOTCL 
                          vtkGraphicsTCL 
@@ -130,6 +131,7 @@ IF (VTK_WRAP_PYTHON AND VTKSLICER_WRAP_PYTHON)
 
   IF (WIN32)
     TARGET_LINK_LIBRARIES (vtkSlicerBasePython 
+                           vtkSlicerBase
                            vtkCommonPython
                            vtkIOPython
                            vtkGraphicsPython
@@ -139,6 +141,7 @@ IF (VTK_WRAP_PYTHON AND VTKSLICER_WRAP_PYTHON)
                            optimized ${PYTHON_LIBRARY})
   ELSE (WIN32)
     TARGET_LINK_LIBRARIES (vtkSlicerBasePython 
+                           vtkSlicerBase
                            vtkCommonPython
                            vtkIOPython
                            vtkGraphicsPython
@@ -174,6 +177,7 @@ IF (VTK_WRAP_JAVA AND VTKSLICER_WRAP_JAVA)
   VTK_WRAP_JAVA (vtkSlicerBaseJava BaseJava_SRCS ${Base_SRCS})
   ADD_LIBRARY (vtkSlicerBaseJava SHARED ${BaseJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkSlicerBaseJava
+                         vtkSlicerBase
                          vtkCommonJava 
                          vtkIOJava
                          vtkGraphicsJava
@@ -202,7 +206,7 @@ ENDIF (VTK_WRAP_JAVA AND VTKSLICER_WRAP_JAVA)
 # Link to VTK and local
 #
 
-LINK_LIBRARIES (
+TARGET_LINK_LIBRARIES (
   vtkSlicerBase
   vtkCommon
   vtkIO
@@ -215,17 +219,17 @@ LINK_LIBRARIES (
   ENDIF(APPLE)
 
 IF (VTK_USE_HYBRID)
-  LINK_LIBRARIES (vtkHybrid)
+  TARGET_LINK_LIBRARIES (vtkSlicerBase vtkHybrid)
 ENDIF (VTK_USE_HYBRID)
 
 IF (VTK_USE_PARALLEL)
-  LINK_LIBRARIES (vtkParallel)
+  TARGET_LINK_LIBRARIES (vtkSlicerBase vtkParallel)
 ENDIF (VTK_USE_PARALLEL)
 
 IF (VTK_USE_PATENTED)
-  LINK_LIBRARIES (vtkPatented)
+  TARGET_LINK_LIBRARIES (vtkSlicerBase vtkPatented)
 ENDIF (VTK_USE_PATENTED)
 
 IF (VTK_USE_RENDERING)
-  LINK_LIBRARIES (vtkRendering)
+  TARGET_LINK_LIBRARIES (vtkSlicerBase vtkRendering)
 ENDIF (VTK_USE_RENDERING)

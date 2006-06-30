@@ -14,7 +14,7 @@ INCLUDE (${VTKIBROWSER_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 # Create the vtkIbrowser C++ library
 #
 # (Doesn't work here because of a CMake bug)
-# ADD_LIBRARY (vtkIbrowser LOCAL_MODULE_SRCS)
+# ADD_LIBRARY (vtkIbrowser ${LOCAL_MODULE_SRCS})
 
 #
 # Create the vtkIbrowser Tcl library
@@ -22,9 +22,10 @@ INCLUDE (${VTKIBROWSER_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 
 IF (VTK_WRAP_TCL AND VTKIBROWSER_WRAP_TCL)
 
-  VTK_WRAP_TCL (vtkIbrowserTCL IbrowserTCL_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkIbrowserTCL IbrowserTCL_SRCS)
+  VTK_WRAP_TCL (vtkIbrowserTCL IbrowserTCL_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkIbrowserTCL ${IbrowserTCL_SRCS})
   TARGET_LINK_LIBRARIES (vtkIbrowserTCL 
+                         vtkIbrowser
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
@@ -55,16 +56,17 @@ ENDIF (VTK_WRAP_TCL AND VTKIBROWSER_WRAP_TCL)
 
 IF (VTK_WRAP_PYTHON AND VTKIBROWSER_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkIbrowserPython IbrowserPython_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_PYTHON (vtkIbrowserPython IbrowserPython_SRCS ${LOCAL_MODULE_SRCS})
 
   IF (APPLE)
-    ADD_LIBRARY (vtkIbrowserPython MODULE IbrowserPython_SRCS)
+    ADD_LIBRARY (vtkIbrowserPython MODULE ${IbrowserPython_SRCS})
   ELSE (APPLE)
-    ADD_LIBRARY (vtkIbrowserPython SHARED IbrowserPython_SRCS)
+    ADD_LIBRARY (vtkIbrowserPython SHARED ${IbrowserPython_SRCS})
   ENDIF (APPLE)
 
   IF (WIN32)
     TARGET_LINK_LIBRARIES (vtkIbrowserPython 
+                           vtkIbrowser
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -74,6 +76,7 @@ IF (VTK_WRAP_PYTHON AND VTKIBROWSER_WRAP_PYTHON)
                            optimized ${PYTHON_LIBRARY})
   ELSE (WIN32)
     TARGET_LINK_LIBRARIES (vtkIbrowserPython 
+                           vtkIbrowserPython 
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -106,9 +109,10 @@ ENDIF (VTK_WRAP_PYTHON AND VTKIBROWSER_WRAP_PYTHON)
 
 IF (VTK_WRAP_JAVA AND VTKIBROWSER_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkIbrowserJava IbrowserJava_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkIbrowserJava SHARED IbrowserJava_SRCS)
+  VTK_WRAP_JAVA (vtkIbrowserJava IbrowserJava_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkIbrowserJava SHARED ${IbrowserJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkIbrowserJava 
+                         vtkIbrowser
                          vtkIOJava
                          vtkGraphicsJava
                          vtkImagingJava 
@@ -136,7 +140,7 @@ ENDIF (VTK_WRAP_JAVA AND VTKIBROWSER_WRAP_JAVA)
 # Link to VTK and local
 #
 
-LINK_LIBRARIES (
+TARGET_LINK_LIBRARIES (
   vtkIbrowser
   vtkIO
   vtkGraphics
@@ -146,17 +150,17 @@ LINK_LIBRARIES (
 )
 
 IF (VTK_USE_HYBRID)
-  LINK_LIBRARIES (vtkHybrid)
+  TARGET_LINK_LIBRARIES (vtkIbrowser vtkHybrid)
 ENDIF (VTK_USE_HYBRID)
 
 IF (VTK_USE_PARALLEL)
-  LINK_LIBRARIES (vtkParallel)
+  TARGET_LINK_LIBRARIES (vtkIbrowser vtkParallel)
 ENDIF (VTK_USE_PARALLEL)
 
 IF (VTK_USE_PATENTED)
-  LINK_LIBRARIES (vtkPatented)
+  TARGET_LINK_LIBRARIES (vtkIbrowser vtkPatented)
 ENDIF (VTK_USE_PATENTED)
 
 IF (VTK_USE_RENDERING)
-  LINK_LIBRARIES (vtkRendering)
+  TARGET_LINK_LIBRARIES (vtkIbrowser vtkRendering)
 ENDIF (VTK_USE_RENDERING)

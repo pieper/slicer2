@@ -14,7 +14,7 @@ INCLUDE (${VTKEMATLASBRAINCLASSIFIER_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 # Create the vtkEMAtlasBrainClassifier C++ library
 #
 # (Doesn't work here because of a CMake bug)
-# ADD_LIBRARY (vtkEMAtlasBrainClassifier LOCAL_MODULE_SRCS)
+# ADD_LIBRARY (vtkEMAtlasBrainClassifier ${LOCAL_MODULE_SRCS})
 
 #
 # Create the vtkEMAtlasBrainClassifier Tcl library
@@ -22,9 +22,10 @@ INCLUDE (${VTKEMATLASBRAINCLASSIFIER_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 
 IF (VTK_WRAP_TCL AND VTKEMATLASBRAINCLASSIFIER_WRAP_TCL)
 
-  VTK_WRAP_TCL (vtkEMAtlasBrainClassifierTCL EMAtlasBrainClassifierTCL_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkEMAtlasBrainClassifierTCL EMAtlasBrainClassifierTCL_SRCS)
+  VTK_WRAP_TCL (vtkEMAtlasBrainClassifierTCL EMAtlasBrainClassifierTCL_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkEMAtlasBrainClassifierTCL ${EMAtlasBrainClassifierTCL_SRCS})
   TARGET_LINK_LIBRARIES (vtkEMAtlasBrainClassifierTCL 
+                         vtkEMAtlasBrainClassifier
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
@@ -55,16 +56,17 @@ ENDIF (VTK_WRAP_TCL AND VTKEMATLASBRAINCLASSIFIER_WRAP_TCL)
 
 IF (VTK_WRAP_PYTHON AND VTKEMATLASBRAINCLASSIFIER_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkEMAtlasBrainClassifierPython EMAtlasBrainClassifierPython_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_PYTHON (vtkEMAtlasBrainClassifierPython EMAtlasBrainClassifierPython_SRCS ${LOCAL_MODULE_SRCS})
 
   IF (APPLE)
-    ADD_LIBRARY (vtkEMAtlasBrainClassifierPython MODULE EMAtlasBrainClassifierPython_SRCS)
+    ADD_LIBRARY (vtkEMAtlasBrainClassifierPython MODULE ${EMAtlasBrainClassifierPython_SRCS})
   ELSE (APPLE)
-    ADD_LIBRARY (vtkEMAtlasBrainClassifierPython SHARED EMAtlasBrainClassifierPython_SRCS)
+    ADD_LIBRARY (vtkEMAtlasBrainClassifierPython SHARED ${EMAtlasBrainClassifierPython_SRCS})
   ENDIF (APPLE)
 
   IF (WIN32)
     TARGET_LINK_LIBRARIES (vtkEMAtlasBrainClassifierPython 
+                           vtkEMAtlasBrainClassifier
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -74,6 +76,7 @@ IF (VTK_WRAP_PYTHON AND VTKEMATLASBRAINCLASSIFIER_WRAP_PYTHON)
                            optimized ${PYTHON_LIBRARY})
   ELSE (WIN32)
     TARGET_LINK_LIBRARIES (vtkEMAtlasBrainClassifierPython 
+                           vtkEMAtlasBrainClassifierPython 
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -106,9 +109,10 @@ ENDIF (VTK_WRAP_PYTHON AND VTKEMATLASBRAINCLASSIFIER_WRAP_PYTHON)
 
 IF (VTK_WRAP_JAVA AND VTKEMATLASBRAINCLASSIFIER_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkEMAtlasBrainClassifierJava EMAtlasBrainClassifierJava_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkEMAtlasBrainClassifierJava SHARED EMAtlasBrainClassifierJava_SRCS)
+  VTK_WRAP_JAVA (vtkEMAtlasBrainClassifierJava EMAtlasBrainClassifierJava_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkEMAtlasBrainClassifierJava SHARED ${EMAtlasBrainClassifierJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkEMAtlasBrainClassifierJava 
+                         vtkEMAtlasBrainClassifier
                          vtkIOJava
                          vtkGraphicsJava
                          vtkImagingJava 
@@ -136,7 +140,7 @@ ENDIF (VTK_WRAP_JAVA AND VTKEMATLASBRAINCLASSIFIER_WRAP_JAVA)
 # Link to VTK and local
 #
 
-LINK_LIBRARIES (
+TARGET_LINK_LIBRARIES (
   vtkEMAtlasBrainClassifier
   vtkIO
   vtkGraphics
@@ -146,17 +150,17 @@ LINK_LIBRARIES (
 )
 
 IF (VTK_USE_HYBRID)
-  LINK_LIBRARIES (vtkHybrid)
+  TARGET_LINK_LIBRARIES (vtkEMAtlasBrainClassifier vtkHybrid)
 ENDIF (VTK_USE_HYBRID)
 
 IF (VTK_USE_PARALLEL)
-  LINK_LIBRARIES (vtkParallel)
+  TARGET_LINK_LIBRARIES (vtkEMAtlasBrainClassifier vtkParallel)
 ENDIF (VTK_USE_PARALLEL)
 
 IF (VTK_USE_PATENTED)
-  LINK_LIBRARIES (vtkPatented)
+  TARGET_LINK_LIBRARIES (vtkEMAtlasBrainClassifier vtkPatented)
 ENDIF (VTK_USE_PATENTED)
 
 IF (VTK_USE_RENDERING)
-  LINK_LIBRARIES (vtkRendering)
+  TARGET_LINK_LIBRARIES (vtkEMAtlasBrainClassifier vtkRendering)
 ENDIF (VTK_USE_RENDERING)

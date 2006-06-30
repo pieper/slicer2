@@ -32,6 +32,7 @@ set solaris "solaris8"
 set linux "linux-x86"
 set linux_64 "linux-x86_64"
 set darwin "darwin-ppc"
+set darwin_x86 "darwin-x86"
 set windows "win32"
 #
 # set the default locations for the main components
@@ -45,7 +46,13 @@ switch $::tcl_platform(os) {
             set ::env(BUILD) $linux
         }
     }       
-    "Darwin" { set ::env(BUILD) $darwin }
+    "Darwin" {
+        if {$::tcl_platform(machine) == "i386"} {
+            set ::env(BUILD) $darwin_x86
+        } else {
+            set ::env(BUILD) $darwin
+        }
+    }
     default { 
         set ::env(BUILD) $windows 
         set ::SLICER_HOME [file attributes $::SLICER_HOME -shortname]
@@ -63,7 +70,11 @@ puts stderr "SLICER_HOME is $::SLICER_HOME"
 # changes in the "Files to test if library has already been built"
 # section below, or genlib will happily build the library again.
 
-set ::CMAKE_TAG "CMake-2-0-6"
+if { $darwin_x86 != "" } {
+  set ::CMAKE_TAG "CMake-2-4-2"
+} else {
+  set ::CMAKE_TAG "CMake-2-0-6"
+}
 set ::TEEM_TAG "Teem-1-9-0-patches"
 set ::VTK_TAG "Slicer-2-6"
 set ::ITK_TAG "Slicer-2-6"
@@ -218,7 +229,11 @@ switch $::tcl_platform(os) {
         set ::VTKSLICERBASE_BUILD_TCL_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/vtkSlicerBaseTCL.dylib
         set ::GENERATOR "Unix Makefiles" 
         set ::COMPILER_PATH "/usr/bin"
-        set ::COMPILER "g++-3.3"
+        if { $darwin_x86 != "" } {
+          set ::COMPILER "g++"
+        } else {
+          set ::COMPILER "g++-3.3"
+        }
         set ::CMAKE $::CMAKE_PATH/bin/cmake
         set ::MAKE make
         set ::SERIAL_MAKE make

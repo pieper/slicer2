@@ -3,7 +3,9 @@
 #include <stdio.h>
 void oft_initSlicerBaseOSXInit() 
 {
+#if __GNUC__ < 4
   extern void _ZNSt8ios_base4InitC4Ev();
   _ZNSt8ios_base4InitC4Ev();
+#endif
 }
 

@@ -14,7 +14,7 @@ INCLUDE (${VTKEMLOCALSEGMENT_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 # Create the vtkEMLocalSegment C++ library
 #
 # (Doesn't work here because of a CMake bug)
-# ADD_LIBRARY (vtkEMLocalSegment LOCAL_MODULE_SRCS)
+# ADD_LIBRARY (vtkEMLocalSegment ${LOCAL_MODULE_SRCS})
 
 #
 # Create the vtkEMLocalSegment Tcl library
@@ -22,9 +22,10 @@ INCLUDE (${VTKEMLOCALSEGMENT_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 
 IF (VTK_WRAP_TCL AND VTKEMLOCALSEGMENT_WRAP_TCL)
 
-  VTK_WRAP_TCL (vtkEMLocalSegmentTCL EMLocalSegmentTCL_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkEMLocalSegmentTCL EMLocalSegmentTCL_SRCS)
+  VTK_WRAP_TCL (vtkEMLocalSegmentTCL EMLocalSegmentTCL_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkEMLocalSegmentTCL ${EMLocalSegmentTCL_SRCS})
   TARGET_LINK_LIBRARIES (vtkEMLocalSegmentTCL 
+                         vtkEMLocalSegment
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
@@ -55,16 +56,17 @@ ENDIF (VTK_WRAP_TCL AND VTKEMLOCALSEGMENT_WRAP_TCL)
 
 IF (VTK_WRAP_PYTHON AND VTKEMLOCALSEGMENT_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkEMLocalSegmentPython EMLocalSegmentPython_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_PYTHON (vtkEMLocalSegmentPython EMLocalSegmentPython_SRCS ${LOCAL_MODULE_SRCS})
 
   IF (APPLE)
-    ADD_LIBRARY (vtkEMLocalSegmentPython MODULE EMLocalSegmentPython_SRCS)
+    ADD_LIBRARY (vtkEMLocalSegmentPython MODULE ${EMLocalSegmentPython_SRCS})
   ELSE (APPLE)
-    ADD_LIBRARY (vtkEMLocalSegmentPython SHARED EMLocalSegmentPython_SRCS)
+    ADD_LIBRARY (vtkEMLocalSegmentPython SHARED ${EMLocalSegmentPython_SRCS})
   ENDIF (APPLE)
 
   IF (WIN32)
     TARGET_LINK_LIBRARIES (vtkEMLocalSegmentPython 
+                           vtkEMLocalSegment
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -74,6 +76,7 @@ IF (VTK_WRAP_PYTHON AND VTKEMLOCALSEGMENT_WRAP_PYTHON)
                            optimized ${PYTHON_LIBRARY})
   ELSE (WIN32)
     TARGET_LINK_LIBRARIES (vtkEMLocalSegmentPython 
+                           vtkEMLocalSegmentPython 
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -106,9 +109,10 @@ ENDIF (VTK_WRAP_PYTHON AND VTKEMLOCALSEGMENT_WRAP_PYTHON)
 
 IF (VTK_WRAP_JAVA AND VTKEMLOCALSEGMENT_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkEMLocalSegmentJava EMLocalSegmentJava_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkEMLocalSegmentJava SHARED EMLocalSegmentJava_SRCS)
+  VTK_WRAP_JAVA (vtkEMLocalSegmentJava EMLocalSegmentJava_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkEMLocalSegmentJava SHARED ${EMLocalSegmentJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkEMLocalSegmentJava 
+                         vtkEMLocalSegment
                          vtkIOJava
                          vtkGraphicsJava
                          vtkImagingJava 
@@ -136,7 +140,7 @@ ENDIF (VTK_WRAP_JAVA AND VTKEMLOCALSEGMENT_WRAP_JAVA)
 # Link to VTK and local
 #
 
-LINK_LIBRARIES (
+TARGET_LINK_LIBRARIES (
   vtkEMLocalSegment
   vtkIO
   vtkGraphics
@@ -146,17 +150,17 @@ LINK_LIBRARIES (
 )
 
 IF (VTK_USE_HYBRID)
-  LINK_LIBRARIES (vtkHybrid)
+  TARGET_LINK_LIBRARIES (vtkEMLocalSegment vtkHybrid)
 ENDIF (VTK_USE_HYBRID)
 
 IF (VTK_USE_PARALLEL)
-  LINK_LIBRARIES (vtkParallel)
+  TARGET_LINK_LIBRARIES (vtkEMLocalSegment vtkParallel)
 ENDIF (VTK_USE_PARALLEL)
 
 IF (VTK_USE_PATENTED)
-  LINK_LIBRARIES (vtkPatented)
+  TARGET_LINK_LIBRARIES (vtkEMLocalSegment vtkPatented)
 ENDIF (VTK_USE_PATENTED)
 
 IF (VTK_USE_RENDERING)
-  LINK_LIBRARIES (vtkRendering)
+  TARGET_LINK_LIBRARIES (vtkEMLocalSegment vtkRendering)
 ENDIF (VTK_USE_RENDERING)

@@ -210,6 +210,7 @@ if {$tcl_platform(byteOrder) == "littleEndian"} {
 
 set CLEANFLAG 0
 set NOCMAKEFLAG 0
+set STOP_ON_ERRORS 0
 set VTK_ARG_VERBOSE "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
 set VTK_ARG_DEBUG   "-DCMAKE_BUILD_TYPE:STRING=$::env(VTK_BUILD_TYPE)"
 
@@ -229,6 +230,11 @@ for {set i 0} {$i < $argc} {incr i} {
         "--no-cmake" {  
             puts "Skipping cmake"
             set NOCMAKEFLAG 1
+            set AttributeFlag 1
+        }
+        "--stop-on-errors" {  
+            puts "Stop on build errors"
+            set STOP_ON_ERRORS 1
             set AttributeFlag 1
         }
         "--verbose" { 
@@ -252,7 +258,7 @@ for {set i 0} {$i < $argc} {incr i} {
         default {
             if {[string range $a 0 1 ] == "--"} { 
                 puts stderr "Do not know option $a. Currently the following attributes are defined: "
-                puts stderr " --clean: Removing build directories \n --no-cmake: Skipping cmake \n --verbose: Compiling in verbose mode \n --debug: Compiling in debug mode (-g flag)\n --relwithdebinfo: Compiling in relwithdebinfo mode" 
+                puts stderr " --clean: Removing build directories \n --no-cmake: Skipping cmake \n --stop-on-errors: Stop the buld if there are any build errors \n --verbose: Compiling in verbose mode \n --debug: Compiling in debug mode (-g flag)\n --relwithdebinfo: Compiling in relwithdebinfo mode" 
                 exit 1
             }  
         }
@@ -359,6 +365,9 @@ foreach target $TARGETS {
             if { [catch "close $fp" res] } {
                 lappend failed [file tail $target]
                 puts $res
+                if { $STOP_ON_ERRORS } {
+                  exit 3
+                }
             }
         }
         default {

@@ -14,7 +14,7 @@ INCLUDE (${VTKFMRIENGINE_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 # Create the vtkFMRIEngine C++ library
 #
 # (Doesn't work here because of a CMake bug)
-# ADD_LIBRARY (vtkFMRIEngine LOCAL_MODULE_SRCS)
+# ADD_LIBRARY (vtkFMRIEngine ${LOCAL_MODULE_SRCS})
 
 #
 # Create the vtkFMRIEngine Tcl library
@@ -22,9 +22,10 @@ INCLUDE (${VTKFMRIENGINE_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 
 IF (VTK_WRAP_TCL AND VTKFMRIENGINE_WRAP_TCL)
 
-  VTK_WRAP_TCL (vtkFMRIEngineTCL FMRIEngineTCL_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkFMRIEngineTCL FMRIEngineTCL_SRCS)
+  VTK_WRAP_TCL (vtkFMRIEngineTCL FMRIEngineTCL_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkFMRIEngineTCL ${FMRIEngineTCL_SRCS})
   TARGET_LINK_LIBRARIES (vtkFMRIEngineTCL 
+                         vtkFMRIEngine
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
@@ -55,16 +56,17 @@ ENDIF (VTK_WRAP_TCL AND VTKFMRIENGINE_WRAP_TCL)
 
 IF (VTK_WRAP_PYTHON AND VTKFMRIENGINE_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkFMRIEnginePython FMRIEnginePython_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_PYTHON (vtkFMRIEnginePython FMRIEnginePython_SRCS ${LOCAL_MODULE_SRCS})
 
   IF (APPLE)
-    ADD_LIBRARY (vtkFMRIEnginePython MODULE FMRIEnginePython_SRCS)
+    ADD_LIBRARY (vtkFMRIEnginePython MODULE ${FMRIEnginePython_SRCS})
   ELSE (APPLE)
-    ADD_LIBRARY (vtkFMRIEnginePython SHARED FMRIEnginePython_SRCS)
+    ADD_LIBRARY (vtkFMRIEnginePython SHARED ${FMRIEnginePython_SRCS})
   ENDIF (APPLE)
 
   IF (WIN32)
     TARGET_LINK_LIBRARIES (vtkFMRIEnginePython 
+                           vtkFMRIEngine
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -74,6 +76,7 @@ IF (VTK_WRAP_PYTHON AND VTKFMRIENGINE_WRAP_PYTHON)
                            optimized ${PYTHON_LIBRARY})
   ELSE (WIN32)
     TARGET_LINK_LIBRARIES (vtkFMRIEnginePython 
+                           vtkFMRIEnginePython 
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -106,9 +109,10 @@ ENDIF (VTK_WRAP_PYTHON AND VTKFMRIENGINE_WRAP_PYTHON)
 
 IF (VTK_WRAP_JAVA AND VTKFMRIENGINE_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkFMRIEngineJava FMRIEngineJava_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkFMRIEngineJava SHARED FMRIEngineJava_SRCS)
+  VTK_WRAP_JAVA (vtkFMRIEngineJava FMRIEngineJava_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkFMRIEngineJava SHARED ${FMRIEngineJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkFMRIEngineJava 
+                         vtkFMRIEngine
                          vtkIOJava
                          vtkGraphicsJava
                          vtkImagingJava 
@@ -136,7 +140,7 @@ ENDIF (VTK_WRAP_JAVA AND VTKFMRIENGINE_WRAP_JAVA)
 # Link to VTK and local
 #
 
-LINK_LIBRARIES (
+TARGET_LINK_LIBRARIES (
   vtkFMRIEngine
   vtkIO
   vtkGraphics
@@ -146,17 +150,17 @@ LINK_LIBRARIES (
 )
 
 IF (VTK_USE_HYBRID)
-  LINK_LIBRARIES (vtkHybrid)
+  TARGET_LINK_LIBRARIES (vtkFMRIEngine vtkHybrid)
 ENDIF (VTK_USE_HYBRID)
 
 IF (VTK_USE_PARALLEL)
-  LINK_LIBRARIES (vtkParallel)
+  TARGET_LINK_LIBRARIES (vtkFMRIEngine vtkParallel)
 ENDIF (VTK_USE_PARALLEL)
 
 IF (VTK_USE_PATENTED)
-  LINK_LIBRARIES (vtkPatented)
+  TARGET_LINK_LIBRARIES (vtkFMRIEngine vtkPatented)
 ENDIF (VTK_USE_PATENTED)
 
 IF (VTK_USE_RENDERING)
-  LINK_LIBRARIES (vtkRendering)
+  TARGET_LINK_LIBRARIES (vtkFMRIEngine vtkRendering)
 ENDIF (VTK_USE_RENDERING)

@@ -14,7 +14,7 @@ INCLUDE (${VTKIMAGESMOOTH_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 # Create the vtkImageSmooth C++ library
 #
 # (Doesn't work here because of a CMake bug)
-# ADD_LIBRARY (vtkImageSmooth LOCAL_MODULE_SRCS)
+# ADD_LIBRARY (vtkImageSmooth ${LOCAL_MODULE_SRCS})
 
 #
 # Create the vtkImageSmooth Tcl library
@@ -22,9 +22,10 @@ INCLUDE (${VTKIMAGESMOOTH_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 
 IF (VTK_WRAP_TCL AND VTKIMAGESMOOTH_WRAP_TCL)
 
-  VTK_WRAP_TCL (vtkImageSmoothTCL ImageSmoothTCL_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkImageSmoothTCL ImageSmoothTCL_SRCS)
+  VTK_WRAP_TCL (vtkImageSmoothTCL ImageSmoothTCL_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkImageSmoothTCL ${ImageSmoothTCL_SRCS})
   TARGET_LINK_LIBRARIES (vtkImageSmoothTCL 
+                         vtkImageSmooth
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
@@ -55,16 +56,17 @@ ENDIF (VTK_WRAP_TCL AND VTKIMAGESMOOTH_WRAP_TCL)
 
 IF (VTK_WRAP_PYTHON AND VTKIMAGESMOOTH_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkImageSmoothPython ImageSmoothPython_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_PYTHON (vtkImageSmoothPython ImageSmoothPython_SRCS ${LOCAL_MODULE_SRCS})
 
   IF (APPLE)
-    ADD_LIBRARY (vtkImageSmoothPython MODULE ImageSmoothPython_SRCS)
+    ADD_LIBRARY (vtkImageSmoothPython MODULE ${ImageSmoothPython_SRCS})
   ELSE (APPLE)
-    ADD_LIBRARY (vtkImageSmoothPython SHARED ImageSmoothPython_SRCS)
+    ADD_LIBRARY (vtkImageSmoothPython SHARED ${ImageSmoothPython_SRCS})
   ENDIF (APPLE)
 
   IF (WIN32)
     TARGET_LINK_LIBRARIES (vtkImageSmoothPython 
+                           vtkImageSmooth
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -74,6 +76,7 @@ IF (VTK_WRAP_PYTHON AND VTKIMAGESMOOTH_WRAP_PYTHON)
                            optimized ${PYTHON_LIBRARY})
   ELSE (WIN32)
     TARGET_LINK_LIBRARIES (vtkImageSmoothPython 
+                           vtkImageSmoothPython 
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -106,9 +109,10 @@ ENDIF (VTK_WRAP_PYTHON AND VTKIMAGESMOOTH_WRAP_PYTHON)
 
 IF (VTK_WRAP_JAVA AND VTKIMAGESMOOTH_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkImageSmoothJava ImageSmoothJava_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkImageSmoothJava SHARED ImageSmoothJava_SRCS)
+  VTK_WRAP_JAVA (vtkImageSmoothJava ImageSmoothJava_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkImageSmoothJava SHARED ${ImageSmoothJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkImageSmoothJava 
+                         vtkImageSmooth
                          vtkIOJava
                          vtkGraphicsJava
                          vtkImagingJava 
@@ -136,7 +140,7 @@ ENDIF (VTK_WRAP_JAVA AND VTKIMAGESMOOTH_WRAP_JAVA)
 # Link to VTK and local
 #
 
-LINK_LIBRARIES (
+TARGET_LINK_LIBRARIES (
   vtkImageSmooth
   vtkIO
   vtkGraphics
@@ -146,17 +150,17 @@ LINK_LIBRARIES (
 )
 
 IF (VTK_USE_HYBRID)
-  LINK_LIBRARIES (vtkHybrid)
+  TARGET_LINK_LIBRARIES (vtkImageSmooth vtkHybrid)
 ENDIF (VTK_USE_HYBRID)
 
 IF (VTK_USE_PARALLEL)
-  LINK_LIBRARIES (vtkParallel)
+  TARGET_LINK_LIBRARIES (vtkImageSmooth vtkParallel)
 ENDIF (VTK_USE_PARALLEL)
 
 IF (VTK_USE_PATENTED)
-  LINK_LIBRARIES (vtkPatented)
+  TARGET_LINK_LIBRARIES (vtkImageSmooth vtkPatented)
 ENDIF (VTK_USE_PATENTED)
 
 IF (VTK_USE_RENDERING)
-  LINK_LIBRARIES (vtkRendering)
+  TARGET_LINK_LIBRARIES (vtkImageSmooth vtkRendering)
 ENDIF (VTK_USE_RENDERING)

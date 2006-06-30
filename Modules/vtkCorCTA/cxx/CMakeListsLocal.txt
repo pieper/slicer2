@@ -43,9 +43,9 @@ ${VTKCORCTA_SOURCE_DIR}
 
 
 # Add additional directories to look in for libraries
-LINK_DIRECTORIES(
-${VTKCORCTA_SOURCE_DIR}/lib
-)
+#LINK_DIRECTORIES(
+#${VTKCORCTA_SOURCE_DIR}/lib
+#)
 
 
 
@@ -59,4 +59,4 @@ ${VTKCORCTA_SOURCE_DIR}/lib
 # It should happen in the CMakeLists.txt file that includes this one,
 # but because of a CMake bug that doesn't work.
 #
-ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} LOCAL_MODULE_SRCS)
+ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} ${LOCAL_MODULE_SRCS})

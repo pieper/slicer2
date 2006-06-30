@@ -14,7 +14,7 @@ INCLUDE (${VTKVOLUMETEXTUREMAPPING_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 # Create the vtkVolumeTextureMapping C++ library
 #
 # (Doesn't work here because of a CMake bug)
-# ADD_LIBRARY (vtkVolumeTextureMapping LOCAL_MODULE_SRCS)
+# ADD_LIBRARY (vtkVolumeTextureMapping ${LOCAL_MODULE_SRCS})
 
 #
 # Create the vtkVolumeTextureMapping Tcl library
@@ -22,9 +22,10 @@ INCLUDE (${VTKVOLUMETEXTUREMAPPING_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 
 IF (VTK_WRAP_TCL AND VTKVOLUMETEXTUREMAPPING_WRAP_TCL)
 
-  VTK_WRAP_TCL (vtkVolumeTextureMappingTCL VolumeTextureMappingTCL_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkVolumeTextureMappingTCL VolumeTextureMappingTCL_SRCS)
+  VTK_WRAP_TCL (vtkVolumeTextureMappingTCL VolumeTextureMappingTCL_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkVolumeTextureMappingTCL ${VolumeTextureMappingTCL_SRCS})
   TARGET_LINK_LIBRARIES (vtkVolumeTextureMappingTCL 
+                         vtkVolumeTextureMapping
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
@@ -55,16 +56,17 @@ ENDIF (VTK_WRAP_TCL AND VTKVOLUMETEXTUREMAPPING_WRAP_TCL)
 
 IF (VTK_WRAP_PYTHON AND VTKVOLUMETEXTUREMAPPING_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkVolumeTextureMappingPython VolumeTextureMappingPython_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_PYTHON (vtkVolumeTextureMappingPython VolumeTextureMappingPython_SRCS ${LOCAL_MODULE_SRCS})
 
   IF (APPLE)
-    ADD_LIBRARY (vtkVolumeTextureMappingPython MODULE VolumeTextureMappingPython_SRCS)
+    ADD_LIBRARY (vtkVolumeTextureMappingPython MODULE ${VolumeTextureMappingPython_SRCS})
   ELSE (APPLE)
-    ADD_LIBRARY (vtkVolumeTextureMappingPython SHARED VolumeTextureMappingPython_SRCS)
+    ADD_LIBRARY (vtkVolumeTextureMappingPython SHARED ${VolumeTextureMappingPython_SRCS})
   ENDIF (APPLE)
 
   IF (WIN32)
     TARGET_LINK_LIBRARIES (vtkVolumeTextureMappingPython 
+                           vtkVolumeTextureMapping
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -74,6 +76,7 @@ IF (VTK_WRAP_PYTHON AND VTKVOLUMETEXTUREMAPPING_WRAP_PYTHON)
                            optimized ${PYTHON_LIBRARY})
   ELSE (WIN32)
     TARGET_LINK_LIBRARIES (vtkVolumeTextureMappingPython 
+                           vtkVolumeTextureMappingPython 
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -106,9 +109,10 @@ ENDIF (VTK_WRAP_PYTHON AND VTKVOLUMETEXTUREMAPPING_WRAP_PYTHON)
 
 IF (VTK_WRAP_JAVA AND VTKVOLUMETEXTUREMAPPING_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkVolumeTextureMappingJava VolumeTextureMappingJava_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkVolumeTextureMappingJava SHARED VolumeTextureMappingJava_SRCS)
+  VTK_WRAP_JAVA (vtkVolumeTextureMappingJava VolumeTextureMappingJava_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkVolumeTextureMappingJava SHARED ${VolumeTextureMappingJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkVolumeTextureMappingJava 
+                         vtkVolumeTextureMapping
                          vtkIOJava
                          vtkGraphicsJava
                          vtkImagingJava 
@@ -136,7 +140,7 @@ ENDIF (VTK_WRAP_JAVA AND VTKVOLUMETEXTUREMAPPING_WRAP_JAVA)
 # Link to VTK and local
 #
 
-LINK_LIBRARIES (
+TARGET_LINK_LIBRARIES (
   vtkVolumeTextureMapping
   vtkIO
   vtkGraphics
@@ -146,17 +150,17 @@ LINK_LIBRARIES (
 )
 
 IF (VTK_USE_HYBRID)
-  LINK_LIBRARIES (vtkHybrid)
+  TARGET_LINK_LIBRARIES (vtkVolumeTextureMapping vtkHybrid)
 ENDIF (VTK_USE_HYBRID)
 
 IF (VTK_USE_PARALLEL)
-  LINK_LIBRARIES (vtkParallel)
+  TARGET_LINK_LIBRARIES (vtkVolumeTextureMapping vtkParallel)
 ENDIF (VTK_USE_PARALLEL)
 
 IF (VTK_USE_PATENTED)
-  LINK_LIBRARIES (vtkPatented)
+  TARGET_LINK_LIBRARIES (vtkVolumeTextureMapping vtkPatented)
 ENDIF (VTK_USE_PATENTED)
 
 IF (VTK_USE_RENDERING)
-  LINK_LIBRARIES (vtkRendering)
+  TARGET_LINK_LIBRARIES (vtkVolumeTextureMapping vtkRendering)
 ENDIF (VTK_USE_RENDERING)

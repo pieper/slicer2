@@ -14,7 +14,7 @@ INCLUDE (${VTKDTMRI_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 # Create the vtkDTMRI C++ library
 #
 # (Doesn't work here because of a CMake bug)
-# ADD_LIBRARY (vtkDTMRI LOCAL_MODULE_SRCS)
+# ADD_LIBRARY (vtkDTMRI ${LOCAL_MODULE_SRCS})
 
 #
 # Create the vtkDTMRI Tcl library
@@ -25,6 +25,7 @@ IF (VTK_WRAP_TCL AND VTKDTMRI_WRAP_TCL)
   VTK_WRAP_TCL (vtkDTMRITCL DTMRITCL_SRCS ${LOCAL_MODULE_SRCS})
   ADD_LIBRARY (vtkDTMRITCL ${DTMRITCL_SRCS})
   TARGET_LINK_LIBRARIES (vtkDTMRITCL 
+                         vtkDTMRI
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
@@ -65,6 +66,7 @@ IF (VTK_WRAP_PYTHON AND VTKDTMRI_WRAP_PYTHON)
 
   IF (WIN32)
     TARGET_LINK_LIBRARIES (vtkDTMRIPython 
+                           vtkDTMRI
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -74,6 +76,7 @@ IF (VTK_WRAP_PYTHON AND VTKDTMRI_WRAP_PYTHON)
                            optimized ${PYTHON_LIBRARY})
   ELSE (WIN32)
     TARGET_LINK_LIBRARIES (vtkDTMRIPython 
+                           vtkDTMRIPython 
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -109,6 +112,7 @@ IF (VTK_WRAP_JAVA AND VTKDTMRI_WRAP_JAVA)
   VTK_WRAP_JAVA (vtkDTMRIJava DTMRIJava_SRCS ${LOCAL_MODULE_SRCS})
   ADD_LIBRARY (vtkDTMRIJava SHARED ${DTMRIJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkDTMRIJava 
+                         vtkDTMRI
                          vtkIOJava
                          vtkGraphicsJava
                          vtkImagingJava 
@@ -136,7 +140,7 @@ ENDIF (VTK_WRAP_JAVA AND VTKDTMRI_WRAP_JAVA)
 # Link to VTK and local
 #
 
-LINK_LIBRARIES (
+TARGET_LINK_LIBRARIES (
   vtkDTMRI
   vtkIO
   vtkGraphics
@@ -146,17 +150,17 @@ LINK_LIBRARIES (
 )
 
 IF (VTK_USE_HYBRID)
-  LINK_LIBRARIES (vtkHybrid)
+  TARGET_LINK_LIBRARIES (vtkDTMRI vtkHybrid)
 ENDIF (VTK_USE_HYBRID)
 
 IF (VTK_USE_PARALLEL)
-  LINK_LIBRARIES (vtkParallel)
+  TARGET_LINK_LIBRARIES (vtkDTMRI vtkParallel)
 ENDIF (VTK_USE_PARALLEL)
 
 IF (VTK_USE_PATENTED)
-  LINK_LIBRARIES (vtkPatented)
+  TARGET_LINK_LIBRARIES (vtkDTMRI vtkPatented)
 ENDIF (VTK_USE_PATENTED)
 
 IF (VTK_USE_RENDERING)
-  LINK_LIBRARIES (vtkRendering)
+  TARGET_LINK_LIBRARIES (vtkDTMRI vtkRendering)
 ENDIF (VTK_USE_RENDERING)

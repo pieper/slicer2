@@ -14,7 +14,7 @@ INCLUDE (${VTKCOMPAREMODULE_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 # Create the vtkCompareModule C++ library
 #
 # (Doesn't work here because of a CMake bug)
-# ADD_LIBRARY (vtkCompareModule LOCAL_MODULE_SRCS)
+# ADD_LIBRARY (vtkCompareModule ${LOCAL_MODULE_SRCS})
 
 #
 # Create the vtkCompareModule Tcl library
@@ -22,9 +22,10 @@ INCLUDE (${VTKCOMPAREMODULE_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 
 IF (VTK_WRAP_TCL AND VTKCOMPAREMODULE_WRAP_TCL)
 
-  VTK_WRAP_TCL (vtkCompareModuleTCL CompareModuleTCL_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkCompareModuleTCL CompareModuleTCL_SRCS)
+  VTK_WRAP_TCL (vtkCompareModuleTCL CompareModuleTCL_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkCompareModuleTCL ${CompareModuleTCL_SRCS})
   TARGET_LINK_LIBRARIES (vtkCompareModuleTCL 
+                         vtkCompareModule
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
@@ -55,16 +56,17 @@ ENDIF (VTK_WRAP_TCL AND VTKCOMPAREMODULE_WRAP_TCL)
 
 IF (VTK_WRAP_PYTHON AND VTKCOMPAREMODULE_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkCompareModulePython CompareModulePython_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_PYTHON (vtkCompareModulePython CompareModulePython_SRCS ${LOCAL_MODULE_SRCS})
 
   IF (APPLE)
-    ADD_LIBRARY (vtkCompareModulePython MODULE CompareModulePython_SRCS)
+    ADD_LIBRARY (vtkCompareModulePython MODULE ${CompareModulePython_SRCS})
   ELSE (APPLE)
-    ADD_LIBRARY (vtkCompareModulePython SHARED CompareModulePython_SRCS)
+    ADD_LIBRARY (vtkCompareModulePython SHARED ${CompareModulePython_SRCS})
   ENDIF (APPLE)
 
   IF (WIN32)
     TARGET_LINK_LIBRARIES (vtkCompareModulePython 
+                           vtkCompareModule
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -74,6 +76,7 @@ IF (VTK_WRAP_PYTHON AND VTKCOMPAREMODULE_WRAP_PYTHON)
                            optimized ${PYTHON_LIBRARY})
   ELSE (WIN32)
     TARGET_LINK_LIBRARIES (vtkCompareModulePython 
+                           vtkCompareModulePython 
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -106,9 +109,10 @@ ENDIF (VTK_WRAP_PYTHON AND VTKCOMPAREMODULE_WRAP_PYTHON)
 
 IF (VTK_WRAP_JAVA AND VTKCOMPAREMODULE_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkCompareModuleJava CompareModuleJava_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkCompareModuleJava SHARED CompareModuleJava_SRCS)
+  VTK_WRAP_JAVA (vtkCompareModuleJava CompareModuleJava_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkCompareModuleJava SHARED ${CompareModuleJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkCompareModuleJava 
+                         vtkCompareModule
                          vtkIOJava
                          vtkGraphicsJava
                          vtkImagingJava 
@@ -136,7 +140,7 @@ ENDIF (VTK_WRAP_JAVA AND VTKCOMPAREMODULE_WRAP_JAVA)
 # Link to VTK and local
 #
 
-LINK_LIBRARIES (
+TARGET_LINK_LIBRARIES (
   vtkCompareModule
   vtkIO
   vtkGraphics
@@ -146,17 +150,17 @@ LINK_LIBRARIES (
 )
 
 IF (VTK_USE_HYBRID)
-  LINK_LIBRARIES (vtkHybrid)
+  TARGET_LINK_LIBRARIES (vtkCompareModule vtkHybrid)
 ENDIF (VTK_USE_HYBRID)
 
 IF (VTK_USE_PARALLEL)
-  LINK_LIBRARIES (vtkParallel)
+  TARGET_LINK_LIBRARIES (vtkCompareModule vtkParallel)
 ENDIF (VTK_USE_PARALLEL)
 
 IF (VTK_USE_PATENTED)
-  LINK_LIBRARIES (vtkPatented)
+  TARGET_LINK_LIBRARIES (vtkCompareModule vtkPatented)
 ENDIF (VTK_USE_PATENTED)
 
 IF (VTK_USE_RENDERING)
-  LINK_LIBRARIES (vtkRendering)
+  TARGET_LINK_LIBRARIES (vtkCompareModule vtkRendering)
 ENDIF (VTK_USE_RENDERING)
