@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.cxx,v $
-  Date:      $Date: 2006/06/29 19:47:36 $
-  Version:   $Revision: 1.39 $
+  Date:      $Date: 2006/07/03 18:45:40 $
+  Version:   $Revision: 1.40 $
 
 =========================================================================auto=*/
 
@@ -72,18 +72,7 @@ vtkTensorMathematics::vtkTensorMathematics()
   this->MaskWithScalars = 0;
 }
 
-//----------------------------------------------------------------------------
-vtkTensorMathematics::~vtkTensorMathematics()
-{
-  if( this->TensorRotationMatrix )
-    {
-    this->TensorRotationMatrix->Delete();
-    }
-  if( this->ScalarMask )
-    {
-    this->ScalarMask->Delete();
-    }
-}
+
 
 //----------------------------------------------------------------------------
 // 
@@ -407,7 +396,7 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
     }
 
 
-  //vtkGenericWarningMacro( "Do masking: " << doMasking );
+  cout<<"Do masking: "<<doMasking<<endl;
 
   // Loop through output pixels and input points
 
@@ -479,10 +468,9 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
           //  2. Take absolute value
           //  3. Increase eigenvalues by negative part
           // The two first options have been problematic. Try 3 
-          if (vtkTensorMathematics::FixNegativeEigenvalues(w))
-            {
-            vtkGenericWarningMacro( "Warning: Eigenvalues are not properly sorted" );
-            }   
+          if (vtkTensorMathematics::FixNegativeEigenvalues(w)) {
+            cout<<"Warning: Eigenvalues are not properly sorted"<<endl;
+          }   
 
           // pixel operation
           switch (op)
@@ -600,8 +588,6 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
     inPtId += outIncZ;
     }
 
-  // Cleanup
-  trans->Delete();
   //cout << "tensor math time: " << clock() - tStart << endl;
 }
 
@@ -780,17 +766,20 @@ vtkFloatingPointType vtkTensorMathematics::MinEigenvalue(vtkFloatingPointType w[
 
 vtkFloatingPointType vtkTensorMathematics::MaxEigenvalueProjectionX(vtkFloatingPointType **v, vtkFloatingPointType w[3]) 
 {
-  return fabs(w[0]*v[0][0])*vtkTensorMathematics::RelativeAnisotropy(w);
+  //  return fabs(w[0]*v[0][0]);
+  return (fabs(v[0][0])*RelativeAnisotropy(w));
 }
 
 vtkFloatingPointType vtkTensorMathematics::MaxEigenvalueProjectionY(vtkFloatingPointType **v, vtkFloatingPointType w[3]) 
 {
-  return fabs(w[0]*v[1][0])*vtkTensorMathematics::RelativeAnisotropy(w);
+  //  return fabs(w[0]*v[1][0]);
+  return (fabs(v[1][0])*RelativeAnisotropy(w));
 }
 
 vtkFloatingPointType vtkTensorMathematics::MaxEigenvalueProjectionZ(vtkFloatingPointType **v, vtkFloatingPointType w[3]) 
 {
-  return fabs(w[0]*v[2][0])*vtkTensorMathematics::RelativeAnisotropy(w);
+  //  return fabs(w[0]*v[2][0]);
+  return (fabs(v[2][0])*RelativeAnisotropy(w));
 }
 
 vtkFloatingPointType vtkTensorMathematics::Mode(vtkFloatingPointType w[3])
