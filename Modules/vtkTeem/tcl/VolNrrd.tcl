@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: VolNrrd.tcl,v $
-#   Date:      $Date: 2006/05/18 18:53:05 $
-#   Version:   $Revision: 1.5 $
+#   Date:      $Date: 2006/07/03 18:50:05 $
+#   Version:   $Revision: 1.6 $
 # 
 #===============================================================================
 # FILE:        VolNrrd.tcl
@@ -469,7 +469,30 @@ proc VolNrrdReaderProc {v} {
     if { $::Module(verbose) } {
         puts "[[readerProc_nrrdReader1 GetOutput] Print]"
     }
+
+
+    # Filling headerKeys in the volume array. This key might eventually belong to the MrmlNode
+    #
+    puts "Header Keys = [readerProc_nrrdReader1 GetHeaderKeys]"
+    foreach key [readerProc_nrrdReader1 GetHeaderKeys] {
+        set Volume($v,headerKeys,$key) [readerProc_nrrdReader1 GetHeaderValue $key]
+    }
     
+    #
+    # Setting measurement frame as a key value. This might eventually be part of the MrmlNode
+    set mframe ""
+    foreach r "0 1 2" {
+      set axis ""
+      foreach c "0 1 2" {
+        lappend axis [[readerProc_nrrdReader1 GetMeasurementFrameMatrix] GetElement $r $c]
+      }
+      lappend mframe $axis
+    }
+    puts "Measurement frame: $mframe"
+    
+    set Volume($v,headerKeys,measurementframe) $mframe    
+    # Done filling header keys
+
     #Check if we need to create Volume node or Tensor node
     
     if {[[[readerProc_nrrdReader1 GetOutput] GetPointData] GetScalars] != ""} {
