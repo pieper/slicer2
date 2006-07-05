@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
-#   Date:      $Date: 2006/05/26 19:36:19 $
-#   Version:   $Revision: 1.39 $
+#   Date:      $Date: 2006/07/05 18:08:27 $
+#   Version:   $Revision: 1.40 $
 # 
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
@@ -107,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
    set Module($m,depend) ""
 
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.39 $} {$Date: 2006/05/26 19:36:19 $}]
+       {$Revision: 1.40 $} {$Date: 2006/07/05 18:08:27 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -687,7 +687,7 @@ proc EMAtlasBrainClassifierCreateClasses {SuperClass Number} {
 # .END
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierVolumeWriter {VolID} {
-    global Volume
+    global Volume  Editor 
 
     set prefix [MainFileGetRelativePrefix [Volume($VolID,node) GetFilePrefix]]
  
@@ -697,7 +697,18 @@ proc EMAtlasBrainClassifierVolumeWriter {VolID} {
     #        executing MainVolumesWrite:
     #        - Check if largest slice m is present 
     #        - if not => slices start at 1 .. n => move everything to m -n + 1 ,..., m 
+
+    set FileFormat $Editor(fileformat)
+    set Editor(fileformat) "Standard" 
+
+    set Name [Volume($VolID,node) GetName]
+
     MainVolumesWrite $VolID $prefix 
+ 
+    # Kilian: MainVolumesWrite changes name 
+    Volume($VolID,node) SetName "$Name"
+ 
+    set Editor(fileformat) $FileFormat
 }
 
 #-------------------------------------------------------------------------------
@@ -1409,6 +1420,16 @@ proc EMAtlasBrainClassifierDownloadAtlas { } {
     set text "$text\ndownloaded from:\n$urlAddress\nand saved to:\n$outputFile"
     set text "$text\nThen extract the atlas directory as\n${EMAtlasBrainClassifier(AtlasDir)}"
     set text "$text\nand restart the segmentation."
+
+    if {$EMAtlasBrainClassifier(BatchMode)} {
+      puts "================== Warning ==============="
+      puts "$text"
+      puts "=========================================="
+
+      return 0
+    }
+
+
     if {[info command .topAtlas] != ""} {
         wm deiconify .topAtlas
         return 0
@@ -1423,6 +1444,9 @@ proc EMAtlasBrainClassifierDownloadAtlas { } {
     eval {label $f.l -text $text} $::Gui(WLA)
     DevAddButton $f.bClose "Close" "wm withdraw .topAtlas"
     pack $f.l $f.bClose -side top -pady $::Gui(pad) -expand 1
+
+    # -------------------------------------------------
+    # Disabled bc it does not work on all platforms 
     return 0
 
     set text "The module did not detect an atlas at the default location. An atlas can be"
@@ -2597,7 +2621,7 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
 # .PROC EMAtlasBrainClassifier_BatchMode 
 # Run it from batch mode 
 # The function automatically segments MR images into background, skin, CSF, white matter, and gray matter"
-# Execute: slicer2-... <XML-File> --exec "EMAtlasBrainClassifier_BatchMode <SegmentationMode>"
+# Execute: slicer2-... <XML-File> --exec "EMAtlasBrainClassifier_BatchMode"
 # <XML-File> = The first volume defines the spgr image and the second volume defines the aligned t2w images"
 #             The directory of the XML-File defines the working directory" 
 # <AlgorithmVersion>  = Optional - the pipeline can be run in different version. Look at EMAtlasBrainClassifierChangeAlgorithm 
