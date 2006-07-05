@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
-#   Date:      $Date: 2006/04/27 19:09:42 $
-#   Version:   $Revision: 1.26.2.5 $
+#   Date:      $Date: 2006/07/05 17:42:47 $
+#   Version:   $Revision: 1.26.2.6 $
 # 
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
@@ -107,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
    set Module($m,depend) ""
 
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.26.2.5 $} {$Date: 2006/04/27 19:09:42 $}]
+       {$Revision: 1.26.2.6 $} {$Date: 2006/07/05 17:42:47 $}]
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
     set EMAtlasBrainClassifier(Volume,T2W)  $Volume(idNone)
@@ -557,7 +557,7 @@ proc EMAtlasBrainClassifierDefineNodeAttributeList {MrmlNodeType} {
 #-------------------------------------------------------------------------------
     proc EMAtlasBrainClassifierChangeAlgorithm { } { 
     global EMAtlasBrainClassifier env
- 
+
     switch $EMAtlasBrainClassifier(AlgorithmVersion) {
     "Standard" { set EMAtlasBrainClassifier(NonRigidRegistrationFlag)  1
                  set EMAtlasBrainClassifier(SegmentationMode) "EMAtlasBrainClassifier"
@@ -686,7 +686,7 @@ proc EMAtlasBrainClassifierCreateClasses {SuperClass Number} {
 # .END
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierVolumeWriter {VolID} {
-    global Volume
+    global Volume Editor 
 
     set prefix [MainFileGetRelativePrefix [Volume($VolID,node) GetFilePrefix]]
  
@@ -696,8 +696,15 @@ proc EMAtlasBrainClassifierVolumeWriter {VolID} {
     #        executing MainVolumesWrite:
     #        - Check if largest slice m is present 
     #        - if not => slices start at 1 .. n => move everything to m -n + 1 ,..., m 
-    
+    set FileFormat $Editor(fileformat)
+    set Editor(fileformat) "Standard" 
+
+    set Name [Volume($VolID,node) GetName]
     MainVolumesWrite $VolID $prefix 
+    # Kilian: MainVolumesWrite changes name 
+    Volume($VolID,node) SetName "$Name"
+
+    set Editor(fileformat) $FileFormat
     # RM unnecssary xml file 
     # catch {file delete -force [file join [file dirname [Volume($VolID,node) GetFullPrefix]] [Volume($VolID,node) GetFilePrefix]].xml }
 }
@@ -991,7 +998,9 @@ proc EMAtlasBrainClassifier_Normalize { Mode } {
     if {$EMAtlasBrainClassifier(Save,$Mode)} {
        EMAtlasBrainClassifierVolumeWriter $VolIDOutput  
     }
+    
 }
+
 
 #-------------------------------------------------------------------------------
 # .PROC EMAtlasBrainClassifier_NormalizeVolume
@@ -1192,14 +1201,14 @@ proc EMAtlasBrainClassifier_RegistrationInitialize {RegisterAtlasDirList} {
     # ---------------------------------------------------------------
     # Check if we load the module for the first time 
     if {$EMAtlasBrainClassifier(AtlasDir) == $EMAtlasBrainClassifier(DefaultAtlasDir)} {
-    set UploadNeeded 0 
-    foreach atlas "spgr $RegisterAtlasDirList" {
+      set UploadNeeded 0 
+      foreach atlas "spgr $RegisterAtlasDirList" {
         if {[file exists [file join $EMAtlasBrainClassifier(AtlasDir) $atlas I.001]] == 0} {
-        set UploadNeeded 1
+            set UploadNeeded 1
             break
-            }
-        }  
-        if {$UploadNeeded && ([EMAtlasBrainClassifierDownloadAtlas] == 0)} { return -1}
+        }
+      }  
+      if {$UploadNeeded && ([EMAtlasBrainClassifierDownloadAtlas] == 0)} { return -1}
     }
 
     # ---------------------------------------------------------------
@@ -1271,7 +1280,6 @@ proc EMAtlasBrainClassifier_AtlasRegistration {RegisterAtlasDirList RegisterAtla
    # ---------------------------------------------------------------
    # Register Atlas SPGR to Normalized SPGR 
    puts "============= Start registeration"  
-  
    EMAtlasBrainClassifierRegistration $VolIDTarget $VolIDSource $EMAtlasBrainClassifier(NonRigidRegistrationFlag)
 
     
@@ -1382,21 +1390,33 @@ proc EMAtlasBrainClassifierDownloadAtlas { } {
     set text "$text\ndownloaded from:\n$urlAddress\nand saved to:\n$outputFile"
     set text "$text\nThen extract the atlas directory as\n${EMAtlasBrainClassifier(AtlasDir)}"
     set text "$text\nand restart the segmentation."
+
+    if {$EMAtlasBrainClassifier(BatchMode)} {
+     puts "================== Warning ==============="
+         puts "$text"
+     puts "========================== ==============="
+     return 0
+    } else {
     if {[info command .topAtlas] != ""} {
         wm deiconify .topAtlas
         return 0
     }
-    # otherwise build a frame with the info in it
-    global Gui
-    toplevel .topAtlas
-    wm title .topAtlas "Atlas not found"
-    frame .topAtlas.f1 -bg $::Gui(activeWorkspace)
-    pack .topAtlas.f1 -side top -padx $::Gui(pad) -pady $::Gui(pad) -fill x
-    set f .topAtlas.f1
-    eval {label $f.l -text $text} $::Gui(WLA)
-    DevAddButton $f.bClose "Close" "wm withdraw .topAtlas"
-    pack $f.l $f.bClose -side top -pady $::Gui(pad) -expand 1
+
+        # otherwise build a frame with the info in it
+        global Gui
+        toplevel .topAtlas
+        wm title .topAtlas "Atlas not found"
+        frame .topAtlas.f1 -bg $::Gui(activeWorkspace)
+        pack .topAtlas.f1 -side top -padx $::Gui(pad) -pady $::Gui(pad) -fill x
+        set f .topAtlas.f1
+        eval {label $f.l -text $text} $::Gui(WLA)
+        DevAddButton $f.bClose "Close" "wm withdraw .topAtlas"
+        pack $f.l $f.bClose -side top -pady $::Gui(pad) -expand 1
     return 0
+    }
+
+    # -------------------------------------------------
+    # Disabled bc it does not work on all platforms 
 
     set text "The module did not detect an atlas at the default location. An atlas can be"
     set text "$text\ndownloaded by pressing the \"\OK\" button. This might take a while! "
@@ -1406,8 +1426,7 @@ proc EMAtlasBrainClassifierDownloadAtlas { } {
     set text "$text\nand uncompress the file.\n"      
     set text "$text\nBy pressing the \"OK\" button I agree with the copyright restriction explained in further "
     set text "${text}detail at http://na-mic.org/Wiki/index.php/Slicer:Data_EMAtlas."
-
-     if {$EMAtlasBrainClassifier(BatchMode)} {
+      if {$EMAtlasBrainClassifier(BatchMode)} {
          puts "$text"
      } else {
          if {[DevOKCancel "$text" ] != "ok"} { return 0}
@@ -1421,7 +1440,6 @@ proc EMAtlasBrainClassifierDownloadAtlas { } {
     if {[DownloadFile "$urlAddress" "$outputFile"] == 0} {
         return 0
     }
-
     puts "Start extracting $outputFile ...." 
     if {$tcl_platform(os) == "Linux" || 
         $tcl_platform(os) == "SunOS" ||
@@ -1454,7 +1472,6 @@ proc EMAtlasBrainClassifierDownloadAtlas { } {
     } else {
         DevInfoWindow "Atlas installation completed!" 
     }
-    
     catch {exec rm -f $RMFile} 
     return 1
 }
@@ -1811,6 +1828,7 @@ proc EMAtlasBrainClassifierDeleteClasses {SuperClass} {
 # .END
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierInitializeValues { } { 
+    puts "EMAtlasBrainClassifierInitializeValues Stert "
     global EMAtlasBrainClassifier Mrml Volume Gui env
     # Current Desing of Node structure : (order is important !) 
     # Segmenter
@@ -2414,21 +2432,21 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     # ---------------------------------------------------------------
     # Align T2 to T1 
     if {$EMAtlasBrainClassifier(AlignInput) } {
-    # Just perform rigid registration
-    EMAtlasBrainClassifierRegistration $EMAtlasBrainClassifier(Volume,SPGR) $EMAtlasBrainClassifier(Volume,T2W) 0 0 
-    set VolIDOutput [DevCreateNewCopiedVolume $EMAtlasBrainClassifier(Volume,SPGR) "" "AlignedT2W"]
+      # Just perform rigid registration
+      EMAtlasBrainClassifierRegistration $EMAtlasBrainClassifier(Volume,SPGR) $EMAtlasBrainClassifier(Volume,T2W) 0 0 
+      set VolIDOutput [DevCreateNewCopiedVolume $EMAtlasBrainClassifier(Volume,SPGR) "" "AlignedT2W"]
 
-    # Resample the Atlas SPGR
-    EMAtlasBrainClassifierResample   $EMAtlasBrainClassifier(Volume,SPGR) $EMAtlasBrainClassifier(Volume,T2W) $VolIDOutput 0 
+      # Resample the Atlas SPGR
+      EMAtlasBrainClassifierResample   $EMAtlasBrainClassifier(Volume,SPGR) $EMAtlasBrainClassifier(Volume,T2W) $VolIDOutput 0 
     
-    set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/t2w-aligned/I"
-    Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
-    Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
-    Volume($VolIDOutput,node) SetLittleEndian $EMAtlasBrainClassifier(LittleEndian)
-    if {$EMAtlasBrainClassifier(Save,AlignedT2)} {
+      set Prefix "$EMAtlasBrainClassifier(WorkingDirectory)/t2w-aligned/I"
+      Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
+      Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
+      Volume($VolIDOutput,node) SetLittleEndian $EMAtlasBrainClassifier(LittleEndian)
+      if {$EMAtlasBrainClassifier(Save,AlignedT2)} {
         EMAtlasBrainClassifierVolumeWriter $VolIDOutput
-    }
-        set EMAtlasBrainClassifier(Volume,T2W) $VolIDOutput
+      }
+      set EMAtlasBrainClassifier(Volume,T2W) $VolIDOutput
     }
     
     # ---------------------------------------------------------------
@@ -2436,7 +2454,7 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     foreach input "SPGR T2W" {
       EMAtlasBrainClassifier_Normalize $input
     }
-
+    
     # ---------------------------------------------------------------
     # Determine list of atlas 
     # (to be registered and resampled from template file)
@@ -2449,15 +2467,15 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     if {$RegisterAtlasDirList != "" } {
        set RunRegistrationFlag [EMAtlasBrainClassifier_RegistrationInitialize "$RegisterAtlasDirList" ] 
        if {$RunRegistrationFlag < 0} {return} 
+
        if {$RunRegistrationFlag} { 
           EMAtlasBrainClassifier_AtlasRegistration "$RegisterAtlasDirList" "$RegisterAtlasNameList"
        } else {
           puts "============= Skip registration - For Debugging - Only works if little endian of machine is the same as when the atlas was resampled" 
           EMAtlasBrainClassifier_LoadAtlas "$RegisterAtlasDirList" "$RegisterAtlasNameList"
        }
+       
     }
-
-
     # ---------------------------------------------------------------------- 
     # Segment Image 
 
