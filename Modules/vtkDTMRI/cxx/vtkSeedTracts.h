@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.h,v $
-  Date:      $Date: 2006/02/15 08:54:18 $
-  Version:   $Revision: 1.10 $
+  Date:      $Date: 2006/07/06 22:37:18 $
+  Version:   $Revision: 1.11 $
 
 =========================================================================auto=*/
 // .NAME vtkSeedTracts - 
@@ -131,6 +131,20 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   vtkSetObjectMacro(WorldToTensorScaledIJK, vtkTransform);
   vtkGetObjectMacro(WorldToTensorScaledIJK, vtkTransform);
 
+
+  // Description
+  // Whether to seed once in each voxel or isotropically 
+  // (evenly on a IsotropicSeedingResolution resolution grid)
+  vtkSetMacro(IsotropicSeeding,int)
+  vtkGetMacro(IsotropicSeeding,int)
+  vtkBooleanMacro(IsotropicSeeding,int)
+
+  // Description
+  // If IsotropicSeeding is true, seed in the ROI at this resolution. 
+  vtkSetMacro(IsotropicSeedingResolution,double)
+  vtkGetMacro(IsotropicSeedingResolution,double)
+
+
   // Description
   // List of the output vtkHyperStreamlines (or subclasses)
   vtkSetObjectMacro(Streamlines, vtkCollection);
@@ -210,6 +224,9 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   vtkTransform *ROIToWorld;
   vtkTransform *ROI2ToWorld;
   vtkTransform *WorldToTensorScaledIJK;
+
+  int IsotropicSeeding;
+  double IsotropicSeedingResolution;
 
   vtkImageData *InputTensorField;
   vtkImageData *InputROI;

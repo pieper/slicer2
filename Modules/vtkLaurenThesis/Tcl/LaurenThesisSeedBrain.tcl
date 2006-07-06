@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: LaurenThesisSeedBrain.tcl,v $
-#   Date:      $Date: 2006/06/26 02:10:42 $
-#   Version:   $Revision: 1.1 $
+#   Date:      $Date: 2006/07/06 22:40:46 $
+#   Version:   $Revision: 1.2 $
 # 
 #===============================================================================
 # FILE:        LaurenThesisSeedBrain.tcl
@@ -35,6 +35,7 @@ proc LaurenThesisSeedBrainInit {} {
 
     set LaurenThesis(lengthThreshold) 25
 
+    set LaurenThesis(seedResolution) 2
 
     set LaurenThesis(doErosion) No
 
@@ -71,7 +72,7 @@ proc LaurenThesisSeedBrainBuildGUI {} {
     # SeedBrain->Middle frame
     #-------------------------------------------
     set f $fSeedBrain.fMiddle
-    foreach frame "Tensor Mask Name Seed Stop Length Erode Scalars" {
+    foreach frame "Tensor Mask Name Seed Stop Isotropic Length Erode Scalars" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     }
@@ -151,6 +152,18 @@ proc LaurenThesisSeedBrainBuildGUI {} {
     TooltipAdd  $f.eStopThresh $tip
     TooltipAdd  $f.lStopThresh $tip
 
+
+    #-------------------------------------------
+    # SeedBrain->Middle->Isotropic frame
+    #-------------------------------------------
+    set f $fSeedBrain.fMiddle.fIsotropic
+
+    DevAddLabel $f.lSeedRes "Seeding Resolution (mm)"
+    eval {entry $f.eSeedRes -width 4 \
+              -textvariable LaurenThesis(seedResolution)} $Gui(WEA)
+    
+    pack $f.lSeedRes $f.eSeedRes -side left \
+        -padx $Gui(pad) -pady $Gui(pad)
 
     #-------------------------------------------
     # SeedBrain->Middle->Length frame
@@ -307,6 +320,23 @@ proc LaurenThesisValidateParametersAndRunDataset {} {
         return
     }
 
+
+
+    puts "Seed resolution: $LaurenThesis(seedResolution)"
+
+
+    if {[ValidateFloat $LaurenThesis(seedResolution)] == 0} {
+        puts "Seed resolution must be a floating point number between 0.5 and 5"
+        return
+    }
+
+
+    if {$LaurenThesis(seedResolution) < 0.5  || $LaurenThesis(seedResolution) > 5} {
+        puts "Seed resolution must be between 0.5 and 5"
+        return
+    }
+
+
     puts "Length threshold: $LaurenThesis(lengthThreshold)"
 
     if {[ValidateFloat $LaurenThesis(lengthThreshold)] == 0} {
@@ -334,6 +364,7 @@ proc LaurenThesisValidateParametersAndRunDataset {} {
         $LaurenThesis(subjectID) \
         $LaurenThesis(seedThreshold) \
         $LaurenThesis(stopThreshold) \
+        $LaurenThesis(seedResolution) \
         $LaurenThesis(lengthThreshold) \
         $doErosion \
         $LaurenThesis(savecL) \
@@ -344,7 +375,7 @@ proc LaurenThesisValidateParametersAndRunDataset {} {
 }
 
 
-proc LaurenThesisRunWholeDatasetFromTensors {tTensor vICCMask dataSetName seedThreshold stopThreshold lengthThreshold doErosion {savecL 0} {saveFA 0} {saveB0 0}} {
+proc LaurenThesisRunWholeDatasetFromTensors {tTensor vICCMask dataSetName seedThreshold stopThreshold seedResolution lengthThreshold doErosion {savecL 0} {saveFA 0} {saveB0 0}} {
 
     # find the label for the intercranial cavity mask
     set maskLabel [LaurenThesisFindMaskLabelValue $vICCMask]
@@ -353,7 +384,7 @@ proc LaurenThesisRunWholeDatasetFromTensors {tTensor vICCMask dataSetName seedTh
     set vLMMask [LaurenThesisCreateLMMask $vICCMask $maskLabel $tTensor $seedThreshold $doErosion]
 
     # seed everywhere in this mask (second mask is for cL/FA volume creation)
-    LaurenThesisSeedEverywhere $vLMMask $tTensor $dataSetName $stopThreshold $lengthThreshold $savecL $saveFA $vICCMask $saveB0 $doErosion
+    LaurenThesisSeedEverywhere $vLMMask $tTensor $dataSetName $stopThreshold $seedResolution $lengthThreshold $savecL $saveFA $vICCMask $saveB0 $doErosion
 
     # Save our settings
     set fid [open "TractographySettings_$dataSetName.txt" w]
@@ -361,6 +392,7 @@ proc LaurenThesisRunWholeDatasetFromTensors {tTensor vICCMask dataSetName seedTh
     puts $fid "subjectID: $dataSetName"
     puts $fid "seedThreshold: $seedThreshold"
     puts $fid "stopThreshold: $stopThreshold"
+    puts $fid "seedResolution: $seedResolution"
     puts $fid "lengthThreshold: $lengthThreshold"
 
     close $fid
@@ -735,7 +767,7 @@ proc LaurenThesisSaveScalarVolume {volumeType tTensor vBrainMask directory {doEr
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc LaurenThesisSeedEverywhere {vSeedMask tTensor dataSetName stopThreshold lengthThreshold {savecL 0} {saveFA 0} {vBrainMask -1} {saveB0 0} {doErosion 0}} {
+proc LaurenThesisSeedEverywhere {vSeedMask tTensor dataSetName stopThreshold seedResolution lengthThreshold {savecL 0} {saveFA 0} {vBrainMask -1} {saveB0 0} {doErosion 0}} {
     global DTMRI
     
 
@@ -751,6 +783,11 @@ proc LaurenThesisSeedEverywhere {vSeedMask tTensor dataSetName stopThreshold len
     #set DTMRI(stream,StoppingThreshold) 0.25
     set DTMRI(stream,StoppingThreshold) $stopThreshold
 
+
+    # Directly set the seeding resolution in the vtk object
+    [DTMRI(vtk,streamlineControl) GetSeedTracts] IsotropicSeedingOn
+    [DTMRI(vtk,streamlineControl) GetSeedTracts] SetIsotropicSeedingResolution \
+        $seedResolution
 
     # Directly set the length threshold in the vtk object
     [DTMRI(vtk,streamlineControl) GetSeedTracts] SetMinimumPathLength \
