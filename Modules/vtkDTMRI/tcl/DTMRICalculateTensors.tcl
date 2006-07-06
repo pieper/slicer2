@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRICalculateTensors.tcl,v $
-#   Date:      $Date: 2006/04/24 18:15:30 $
-#   Version:   $Revision: 1.42 $
+#   Date:      $Date: 2006/07/06 17:38:17 $
+#   Version:   $Revision: 1.43 $
 # 
 #===============================================================================
 # FILE:        DTMRICalculateTensors.tcl
@@ -45,7 +45,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.42 $} {$Date: 2006/04/24 18:15:30 $}]
+                                 {$Revision: 1.43 $} {$Date: 2006/07/06 17:38:17 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -1226,8 +1226,6 @@ proc ConvertVolumeToTensors {} {
         set DTMRI(convert,gradients) [lindex $DTMRI($DTMRI(selectedpattern),parameters) 6]
         set DTMRI(convert,order) [lindex $DTMRI($DTMRI(selectedpattern),parameters) 7]
         
-        #Set b-factor
-        DTMRI SetB $DTMRI(convert,lebihan)
         
     } else {
         DevErrorWindow "Please select a protocol"
@@ -1237,6 +1235,8 @@ proc ConvertVolumeToTensors {} {
     }
     
     }   
+    #Set b-factor
+    DTMRI SetB $DTMRI(convert,lebihan)
 
 # define if the conversion is volume interleaved or slice interleaved depending on the pattern
 
