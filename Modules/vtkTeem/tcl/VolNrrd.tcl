@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: VolNrrd.tcl,v $
-#   Date:      $Date: 2006/07/03 18:50:05 $
-#   Version:   $Revision: 1.6 $
+#   Date:      $Date: 2006/07/06 16:06:34 $
+#   Version:   $Revision: 1.7 $
 # 
 #===============================================================================
 # FILE:        VolNrrd.tcl
@@ -78,7 +78,7 @@ proc VolNrrdBuildGUI {parentFrame} {
 
     set f $parentFrame.fVolume
 
-    DevAddFileBrowse $f Volume "VolNrrd,FileName" "Nrrd File:" "VolNrrdSetFileName" "nhdr nrrd" "\$Volume(DefaultDir)" "Open" "Browse for a Nrrd file (.nhdr that has matching .img)" "Absolute"
+    DevAddFileBrowse $f Volume "VolNrrd,FileName" "Nrrd File:" "VolNrrdSetFileName" "nhdr nrrd" "\$Volume(DefaultDir)" "Open" "Browse for a Nrrd File" "Browse for a Nrrd file (.nhdr that has matching .img)" "Absolute"
 
     frame $f.fLabelMap -bg $Gui(activeWorkspace)
 
