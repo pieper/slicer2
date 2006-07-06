@@ -233,6 +233,8 @@ switch $::tcl_platform(os) {
         set ::COMPILER_PATH "/usr/bin"
         if { $::env(BUILD) == "darwin-x86" } {
           set ::COMPILER "g++"
+        }  elseif { $::tcl_platform(os) == "Darwin" && $::tcl_platform(osVersion) >= 8 } {
+          set ::COMPILER "g++"
         } else {
           set ::COMPILER "g++-3.3"
         }
