@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRICalculateScalars.tcl,v $
-#   Date:      $Date: 2006/05/26 19:28:37 $
-#   Version:   $Revision: 1.26 $
+#   Date:      $Date: 2006/07/06 21:05:33 $
+#   Version:   $Revision: 1.27 $
 # 
 #===============================================================================
 # FILE:        DTMRICalculateScalars.tcl
@@ -36,7 +36,7 @@ proc DTMRICalculateScalarsInit {} {
     #------------------------------------
     set m "CalculateScalars"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                         {$Revision: 1.26 $} {$Date: 2006/05/26 19:28:37 $}]
+                         {$Revision: 1.27 $} {$Date: 2006/07/06 21:05:33 $}]
 
 
     #------------------------------------
@@ -50,7 +50,8 @@ proc DTMRICalculateScalarsInit {} {
                       PlanarMeasure SphericalMeasure MaxEigenvalue \
                       MiddleEigenvalue MinEigenvalue ColorByOrientation \
                       ColorByMode  MaxEigenvalueProjectionX \
-                      MaxEigenvalueProjectionY MaxEigenvalueProjectionZ D11 D22 D33]
+                      MaxEigenvalueProjectionY MaxEigenvalueProjectionZ \
+              RAIMaxEigenvecX RAIMaxEigenvecY RAIMaxEigenvecZ D11 D22 D33]
 
     set DTMRI(scalars,operationList,tooltip) "Produce a scalar volume from DTMRI data.\nTrace, Determinant, Anisotropy, and Eigenvalues produce grayscale volumes,\nwhile Orientation produces a 3-component (Color) volume that is best viewed in the 3D window."
 
