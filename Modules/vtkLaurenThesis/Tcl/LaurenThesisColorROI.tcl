@@ -1,4 +1,29 @@
 
+# Don't use the improved MainColorsGetColorIDFromName.
+# How annoying, this new function returns an ID rather than 
+# the label value. So you *still* don't know what the voxel
+# value is!!
+proc LaurenThesisGetLabelValuesFromColorName {colorName} {
+    
+    global Color Mrml
+    
+    set tree Mrml(colorTree)
+    set node [$tree InitColorTraversal]
+    while {$node != ""} {
+        set name [$node GetName]
+        
+        if {$name == $colorName} {
+            
+            # return list of labels that correspond to this color
+            return [$node GetLabels]
+            
+        }
+        
+        set node [$tree GetNextColor]
+    }
+    return -1
+}
+
 proc LaurenThesisColorROIInit {} {
 
     global LaurenThesis Volume
@@ -22,8 +47,8 @@ proc LaurenThesisColorROIBuildGUI {} {
     set f $fColorROI
     
     foreach frame "Top Middle Bottom" {
-        frame $f.f$frame -bg $Gui(activeWorkspace)
-        pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
+    frame $f.f$frame -bg $Gui(activeWorkspace)
+    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
     
     #-------------------------------------------
@@ -261,7 +286,7 @@ proc LaurenThesisColorROIValidateParametersAndApply {} {
         puts "Model group indices: $LaurenThesis(colorROI,modelGroup,modelIDs,$name)"
     }
 
-    LaurenThesisColorROI $LaurenThesis(vROI) $LaurenThesis(colorROI,modelGroupName)
+    LaurenThesisColorROI $LaurenThesis(vROI) $LaurenThesis(colorROI,modelGroupName) $LaurenThesis(colorROI,colorBy)
 
 }
 
@@ -277,7 +302,7 @@ proc LaurenThesisPrintModelGroups {} {
 }
 
 
-proc LaurenThesisColorROI {vROI modelGroupName} {
+proc LaurenThesisColorROI {vROI modelGroupName colorBy} {
 
     global Model LaurenThesis
 
@@ -312,11 +337,11 @@ proc LaurenThesisColorROI {vROI modelGroupName} {
         modelCollection AddItem $Model($m,polyData)
 
         # Get labels for model or modelGroup color
-        set labels [MainColorsGetLabelFromColorName [Model($m,node) GetColor]]
+        set labels [LaurenThesisGetLabelValuesFromColorName [Model($m,node) GetColor]]
 
         # Replace labels with model group color, if it's in a group
         # and the user wants to color by group.
-        if {$LaurenThesis(colorROI,colorBy)  == "ModelGroups"} {
+        if {$colorBy  == "ModelGroups"} {
 
             # find the model group this one is in, if any
             foreach node $LaurenThesis(colorROI,modelGroupNodes) {
@@ -330,7 +355,7 @@ proc LaurenThesisColorROI {vROI modelGroupName} {
                 if {[lsearch -inline -integer $modelIDs $m] != ""} {
                     # we have found the group.
                     # find its color now.
-                    set labels [MainColorsGetLabelFromColorName [$node GetColor]]
+                    set labels [LaurenThesisGetLabelValuesFromColorName [$node GetColor]]
                 }
             }
         }
@@ -394,7 +419,7 @@ proc LaurenThesisColorROI {vROI modelGroupName} {
     colorROI Delete
     modelCollection Delete
     modelLabels Delete
-    transform Delete
+    catch {transform Delete}
     
     puts "Done labeling voxels from tracts. New volume name is $volumeName"
 }
