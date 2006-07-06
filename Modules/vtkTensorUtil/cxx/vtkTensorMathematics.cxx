@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.cxx,v $
-  Date:      $Date: 2006/07/05 17:04:34 $
-  Version:   $Revision: 1.41 $
+  Date:      $Date: 2006/07/06 21:01:16 $
+  Version:   $Revision: 1.42 $
 
 =========================================================================auto=*/
 
@@ -530,7 +530,19 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
             *outPtr = static_cast<T> (vtkTensorMathematics::MaxEigenvalueProjectionZ(v,w));
             break;           
 
-          case VTK_TENS_MODE:
+      case VTK_TENS_RAI_MAX_EIGENVEC_PROJX:
+        *outPtr = static_cast<T> (vtkTensorMathematics::RAIMaxEigenvecX(v,w));
+        break;
+
+      case VTK_TENS_RAI_MAX_EIGENVEC_PROJY:
+            *outPtr = static_cast<T> (vtkTensorMathematics::RAIMaxEigenvecY(v,w));
+            break;
+
+      case VTK_TENS_RAI_MAX_EIGENVEC_PROJZ:
+            *outPtr = static_cast<T> (vtkTensorMathematics::RAIMaxEigenvecZ(v,w));
+            break;
+
+      case VTK_TENS_MODE:
             *outPtr = static_cast<T> (vtkTensorMathematics::Mode(w));
             break;
 
@@ -668,6 +680,9 @@ void vtkTensorMathematics::ThreadedExecute(vtkImageData **inData,
     case VTK_TENS_MAX_EIGENVALUE_PROJX:
     case VTK_TENS_MAX_EIGENVALUE_PROJY:
     case VTK_TENS_MAX_EIGENVALUE_PROJZ: 
+    case VTK_TENS_RAI_MAX_EIGENVEC_PROJX:
+    case VTK_TENS_RAI_MAX_EIGENVEC_PROJY:
+    case VTK_TENS_RAI_MAX_EIGENVEC_PROJZ:
     case VTK_TENS_COLOR_ORIENTATION:
     case VTK_TENS_MODE:
     case VTK_TENS_COLOR_MODE:
@@ -778,22 +793,34 @@ vtkFloatingPointType vtkTensorMathematics::MinEigenvalue(vtkFloatingPointType w[
   return w[2];
 }
 
+vtkFloatingPointType vtkTensorMathematics::RAIMaxEigenvecX(vtkFloatingPointType **v, vtkFloatingPointType w[3]) 
+{
+  return (fabs(v[0][0])*vtkTensorMathematics::RelativeAnisotropy(w));
+}
+
+vtkFloatingPointType vtkTensorMathematics::RAIMaxEigenvecY(vtkFloatingPointType **v, vtkFloatingPointType w[3])
+{
+  return (fabs(v[1][0])*vtkTensorMathematics::RelativeAnisotropy(w));
+}
+
+vtkFloatingPointType vtkTensorMathematics::RAIMaxEigenvecZ(vtkFloatingPointType **v, vtkFloatingPointType w[3])
+{
+  return (fabs(v[2][0])*vtkTensorMathematics::RelativeAnisotropy(w));
+}
+
 vtkFloatingPointType vtkTensorMathematics::MaxEigenvalueProjectionX(vtkFloatingPointType **v, vtkFloatingPointType w[3]) 
 {
-  //  return fabs(w[0]*v[0][0]);
-  return (fabs(v[0][0])*vtkTensorMathematics::RelativeAnisotropy(w));
+  return (w[0]*fabs(v[0][0]));
 }
 
 vtkFloatingPointType vtkTensorMathematics::MaxEigenvalueProjectionY(vtkFloatingPointType **v, vtkFloatingPointType w[3]) 
 {
-  //  return fabs(w[0]*v[1][0]);
-  return (fabs(v[1][0])*vtkTensorMathematics::RelativeAnisotropy(w));
+  return (w[0]*fabs(v[1][0]));
 }
 
 vtkFloatingPointType vtkTensorMathematics::MaxEigenvalueProjectionZ(vtkFloatingPointType **v, vtkFloatingPointType w[3]) 
 {
-  //  return fabs(w[0]*v[2][0]);
-  return (fabs(v[2][0])*vtkTensorMathematics::RelativeAnisotropy(w));
+  return (w[0]*fabs(v[2][0]));
 }
 
 vtkFloatingPointType vtkTensorMathematics::Mode(vtkFloatingPointType w[3])
