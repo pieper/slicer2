@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkStreamlineConvolve.h,v $
-  Date:      $Date: 2006/03/06 21:21:51 $
-  Version:   $Revision: 1.2.8.2.2.1 $
+  Date:      $Date: 2006/07/07 18:27:00 $
+  Version:   $Revision: 1.2.8.2.2.2 $
 
 =========================================================================auto=*/
 // .NAME vtkStreamlineConvolve - extracts points whose scalar value satisfies threshold criterion

@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRICalculateScalars.tcl,v $
-#   Date:      $Date: 2006/04/26 20:39:08 $
-#   Version:   $Revision: 1.18.2.3.2.2 $
+#   Date:      $Date: 2006/07/07 18:32:09 $
+#   Version:   $Revision: 1.18.2.3.2.3 $
 # 
 #===============================================================================
 # FILE:        DTMRICalculateScalars.tcl
@@ -36,7 +36,7 @@ proc DTMRICalculateScalarsInit {} {
     #------------------------------------
     set m "CalculateScalars"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                         {$Revision: 1.18.2.3.2.2 $} {$Date: 2006/04/26 20:39:08 $}]
+                         {$Revision: 1.18.2.3.2.3 $} {$Date: 2006/07/07 18:32:09 $}]
 
     #------------------------------------
     # Variables for producing scalar volumes

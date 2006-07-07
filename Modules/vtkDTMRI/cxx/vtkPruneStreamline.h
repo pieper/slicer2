@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPruneStreamline.h,v $
-  Date:      $Date: 2006/03/06 21:21:50 $
-  Version:   $Revision: 1.4.2.1.2.1 $
+  Date:      $Date: 2006/07/07 18:21:13 $
+  Version:   $Revision: 1.4.2.1.2.2 $
 
 =========================================================================auto=*/
 

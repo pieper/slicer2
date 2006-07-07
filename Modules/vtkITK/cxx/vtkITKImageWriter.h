@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKImageWriter.h,v $
-  Date:      $Date: 2006/04/26 19:10:57 $
-  Version:   $Revision: 1.2.2.1.2.2 $
+  Date:      $Date: 2006/07/07 19:02:43 $
+  Version:   $Revision: 1.2.2.1.2.3 $
 
 =========================================================================auto=*/
 // .NAME vtkITKImageToImageFilter - Abstract base class for connecting ITK and VTK
@@ -74,7 +74,7 @@ private:
   void operator=(const vtkITKImageWriter&);  // Not implemented.
 };
 
-vtkCxxRevisionMacro(vtkITKImageWriter, "$Revision: 1.2.2.1.2.2 $")
+vtkCxxRevisionMacro(vtkITKImageWriter, "$Revision: 1.2.2.1.2.3 $")
 vtkStandardNewMacro(vtkITKImageWriter)
 
 #endif

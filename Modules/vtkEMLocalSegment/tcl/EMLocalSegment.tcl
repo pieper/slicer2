@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMLocalSegment.tcl,v $
-#   Date:      $Date: 2006/04/26 19:05:58 $
-#   Version:   $Revision: 1.65.2.2.2.2 $
+#   Date:      $Date: 2006/07/07 18:49:54 $
+#   Version:   $Revision: 1.65.2.2.2.3 $
 # 
 #===============================================================================
 # FILE:        EMLocalSegment.tcl
@@ -266,7 +266,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.65.2.2.2.2 $} {$Date: 2006/04/26 19:05:58 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.65.2.2.2.3 $} {$Date: 2006/07/07 18:49:54 $}]}
 
     # Initialize module-level variables
     #------------------------------------

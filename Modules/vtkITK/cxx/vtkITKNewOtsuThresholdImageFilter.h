@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKNewOtsuThresholdImageFilter.h,v $
-  Date:      $Date: 2006/04/27 15:53:02 $
-  Version:   $Revision: 1.1.4.1 $
+  Date:      $Date: 2006/07/07 19:04:29 $
+  Version:   $Revision: 1.1.4.2 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKNewOtsuThresholdImageFilter.h,v $
   Language:  C++
-  Date:      $Date: 2006/04/27 15:53:02 $
-  Version:   $Revision: 1.1.4.1 $
+  Date:      $Date: 2006/07/07 19:04:29 $
+  Version:   $Revision: 1.1.4.2 $
 */
 // .NAME vtkITKNewOtsuThresholdImageFilter - Wrapper class around itk::NewOtsuThresholdImageFilter
 // .SECTION Description
@@ -89,7 +89,7 @@ private:
   void operator=(const vtkITKNewOtsuThresholdImageFilter&);  // Not implemented.
 };
 
-vtkCxxRevisionMacro(vtkITKNewOtsuThresholdImageFilter, "$Revision: 1.1.4.1 $");
+vtkCxxRevisionMacro(vtkITKNewOtsuThresholdImageFilter, "$Revision: 1.1.4.2 $");
 vtkStandardNewMacro(vtkITKNewOtsuThresholdImageFilter);
 
 #endif

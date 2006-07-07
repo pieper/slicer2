@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
-#   Date:      $Date: 2006/04/26 20:45:00 $
-#   Version:   $Revision: 1.26.2.3.2.1 $
+#   Date:      $Date: 2006/07/07 18:42:27 $
+#   Version:   $Revision: 1.26.2.3.2.2 $
 # 
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
@@ -107,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
    set Module($m,depend) ""
 
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.26.2.3.2.1 $} {$Date: 2006/04/26 20:45:00 $}]
+       {$Revision: 1.26.2.3.2.2 $} {$Date: 2006/07/07 18:42:27 $}]
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
     set EMAtlasBrainClassifier(Volume,T2W)  $Volume(idNone)
@@ -286,7 +286,33 @@ proc EMAtlasBrainClassifierBuildGUI {} {
       frame $f.f$frame -bg $Gui(activeWorkspace)
       pack $f.f$frame -side left -padx 0 -pady $Gui(pad)
     }
+    
+    DevAddLabel $f.fLeft.lModels "  Gernerate 3D Models:" 
+    pack $f.fLeft.lModels -side top -padx $Gui(pad) -pady 2  -anchor w
 
+    frame $f.fRight.fModels -bg $Gui(activeWorkspace)
+    TooltipAdd  $f.fRight.fModels "Automatically generate 3D Models of the segmentations" 
+
+    pack $f.fRight.fModels -side top -padx 0 -pady 2  -anchor w
+       
+    foreach value "1 0" text "On Off" width "4 4" {
+        eval {radiobutton $f.fRight.fModels.r$value -width $width -indicatoron 0\
+                  -text "$text" -value "$value" -variable EMAtlasBrainClassifier(GenerateModels) } $Gui(WCA)
+        pack $f.fRight.fModels.r$value -side left -padx 0 -pady 0 
+    }
+    
+    # Now define working directory
+    DevAddLabel $f.fLeft.lWorking "  Working Directory:" 
+    pack $f.fLeft.lWorking -side top -padx $Gui(pad) -pady 2  -anchor w
+    
+    frame $f.fRight.fWorking -bg $Gui(activeWorkspace)
+    TooltipAdd  $f.fRight.fWorking "Working directory in which any results of the segmentations should be saved in" 
+    pack $f.fRight.fWorking -side top -padx 0 -pady 2 -anchor w
+    
+    eval {entry  $f.fRight.fWorking.eDir   -width 15 -textvariable EMAtlasBrainClassifier(WorkingDirectory) } $Gui(WEA)
+    eval {button $f.fRight.fWorking.bSelect -text "..." -width 2 -command "EMAtlasBrainClassifierDefineWorkingDirectory"} $Gui(WBA)     
+    pack $f.fRight.fWorking.eDir  $f.fRight.fWorking.bSelect -side left -padx 0 -pady 0  
+    
     DevAddLabel $f.fLeft.lOutput "  Save Segmentation:" 
     pack $f.fLeft.lOutput -side top -padx $Gui(pad) -pady 2  -anchor w
 
@@ -296,38 +322,53 @@ proc EMAtlasBrainClassifierBuildGUI {} {
     pack $f.fRight.fOutput -side top -padx 0 -pady 2  -anchor w
 
     foreach value "1 0" text "On Off" width "4 4" {
-    eval {radiobutton $f.fRight.fOutput.r$value -width $width -indicatoron 0\
-          -text "$text" -value "$value" -variable EMAtlasBrainClassifier(Save,Segmentation) } $Gui(WCA)
-    pack $f.fRight.fOutput.r$value -side left -padx 0 -pady 0 
+        eval {radiobutton $f.fRight.fOutput.r$value -width $width -indicatoron 0\
+                  -text "$text" -value "$value" -variable EMAtlasBrainClassifier(Save,Segmentation) } $Gui(WCA)
+        pack $f.fRight.fOutput.r$value -side left -padx 0 -pady 0 
     }
 
-    DevAddLabel $f.fLeft.lModels "  Gernerate 3D Models:" 
-    pack $f.fLeft.lModels -side top -padx $Gui(pad) -pady 2  -anchor w
 
-    frame $f.fRight.fModels -bg $Gui(activeWorkspace)
-    TooltipAdd  $f.fRight.fModels "Automatically gnerate 3D Models of the segmentations" 
+    DevAddLabel $f.fLeft.lFileType "  Select File Type:" 
+    pack $f.fLeft.lFileType -side top -padx $Gui(pad) -pady 2  -anchor w
 
-    pack $f.fRight.fModels -side top -padx 0 -pady 2  -anchor w
+    frame $f.fRight.fFileType -bg $Gui(activeWorkspace)
 
+    eval {menubutton $f.fRight.mbType -text "NRRD(.nhdr)    " \
+            -relief raised -bd 2 -width 20 \
+            -menu $f.fRight.mbType.m} $Gui(WMBA) 
+    eval {menu $f.fRight.mbType.m} $Gui(WMA)
+    pack  $f.fRight.mbType -side top -padx 0 -pady 2  -anchor w
+    
+    #  Add menu items
+    foreach FileType {{Standard} {hdr} {nrrd} {nhdr} {mhd} {mha} {nii} {img} {img.gz} {vtk}} \
+         name {{"Headerless"} {"Analyze (.hdr)"} {"NRRD(.nrrd)"} {"NRRD(.nhdr)"} {"Meta (.mhd)"} {"Meta (.mha)"} {"Nifti (.nii)"} {"Nifti (.img)"} {"Nifti (.img.gz)"} {"VTK (.vtk)"}} { 
+            set Editor($FileType) $name 
+            $f.fRight.mbType.m add command -label $name \
+               -command "EMAtlasBrainClassifierVolumesSetFileType $FileType"
+        }
+    set Editor(fileformat) "nhdr"
+    # save menubutton for config
+    set Volume(gui,mbSaveEMAtlasFileType) $f.fRight.mbType
+    # put a tooltip over the menu
+    TooltipAdd $f.fRight.mbType \
+            "Choose file type."
+
+    DevAddLabel $f.fLeft.lCompr "  Use Compression:" 
+    pack $f.fLeft.lCompr -side top -padx $Gui(pad) -pady 2  -anchor w
+
+    frame $f.fRight.fCompr -bg $Gui(activeWorkspace)
+    
     foreach value "1 0" text "On Off" width "4 4" {
-    eval {radiobutton $f.fRight.fModels.r$value -width $width -indicatoron 0\
-          -text "$text" -value "$value" -variable EMAtlasBrainClassifier(GenerateModels) } $Gui(WCA)
-    pack $f.fRight.fModels.r$value -side left -padx 0 -pady 0 
+        eval {radiobutton $f.fRight.fCompr.rComp$value -width $width -indicatoron 0\
+            -text "$text" -value "$value" -variable Volume(UseCompression) \
+            } $Gui(WCA)
+        pack $f.fRight.fCompr.rComp$value -side left -fill x
     }
-
-
-    # Now define working directory
-    DevAddLabel $f.fLeft.lWorking "  Working Directory:" 
-    pack $f.fLeft.lWorking -side top -padx $Gui(pad) -pady 2  -anchor w
-
-    frame $f.fRight.fWorking -bg $Gui(activeWorkspace)
-    TooltipAdd  $f.fRight.fWorking "Working directory in which any results of the segmentations should be saved in" 
-    pack $f.fRight.fWorking -side top -padx 0 -pady 2 -anchor w
-
-    eval {entry  $f.fRight.fWorking.eDir   -width 15 -textvariable EMAtlasBrainClassifier(WorkingDirectory) } $Gui(WEA)
-    eval {button $f.fRight.fWorking.bSelect -text "..." -width 2 -command "EMAtlasBrainClassifierDefineWorkingDirectory"} $Gui(WBA)     
-    pack $f.fRight.fWorking.eDir  $f.fRight.fWorking.bSelect -side left -padx 0 -pady 0  
-
+    TooltipAdd $f.fRight.fCompr.rComp1 \
+            "Suggest to the Writer to compress the file if the format supports it."
+    TooltipAdd $f.fRight.fCompr.rComp0 \
+            "Don't compress the file, even if the format supports it."
+    pack $f.fRight.fCompr -side top -padx 0 -pady 2  -anchor w
 
     #-------------------------------------------
     # Run Algorithm
@@ -645,10 +686,9 @@ proc EMAtlasBrainClassifierCreateClasses {SuperClass Number} {
 # .END
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierVolumeWriter {VolID} {
-    global Volume Editor
+    global Volume
 
     set prefix [MainFileGetRelativePrefix [Volume($VolID,node) GetFilePrefix]]
-    set Editor(fileformat) Standard
  
     # Note : I changed vtkMrmlDataVolume.cxx so that MainVolumeWrite also works for 
     #        for volumes that do not start at slice 1. If it does not get checked into 
@@ -663,6 +703,18 @@ proc EMAtlasBrainClassifierVolumeWriter {VolID} {
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC EMAtlasBrainClassifierVolumesSetFileType
+# Set Editor(fileformat) and update the save file type menu.
+# .ARGS
+# str fileType the type for the file
+# .END
+#-------------------------------------------------------------------------------
+proc EMAtlasBrainClassifierVolumesSetFileType {fileType} {
+    global Volume Editor
+    set Editor(fileformat) $fileType
+    $Volume(gui,mbSaveEMAtlasFileType) config -text $Editor($fileType)
+}
 
 #-------------------------------------------------------------------------------
 # .PROC EMAtlasBrainClassifierLoadAtlasVolume

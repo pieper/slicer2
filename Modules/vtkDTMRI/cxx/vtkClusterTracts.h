@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkClusterTracts.h,v $
-  Date:      $Date: 2006/03/06 21:21:47 $
-  Version:   $Revision: 1.5.2.1.2.1 $
+  Date:      $Date: 2006/07/07 18:04:05 $
+  Version:   $Revision: 1.5.2.1.2.2 $
 
 =========================================================================auto=*/
 // .NAME vtkClusterTracts - Cluster paths obtained through tractography.

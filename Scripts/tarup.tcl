@@ -146,12 +146,15 @@ puts "uploadFlag = $uploadFlag"
     }
 
     set exe ""
+    set suffix ""
+
     switch $::env(BUILD) {
         "solaris8" { set target solaris-sparc }
         "darwin-ppc" { set target darwin-ppc }
         "redhat7.3" -
         "linux-x86" { set target linux-x86 }
-        "win32" { set target win32 ; set exe .exe}
+        "linux-x86_64" { set target linux-x86 }
+        "win32" { set target win32 ; set suffix -x86 ; set exe .exe}
         default {error "unknown build target $::env(BUILD)"}
     }
 
@@ -162,7 +165,6 @@ puts "uploadFlag = $uploadFlag"
         set do_upload "true"
     }
 
-    set suffix ""
     if { [info exists ::env(TMPDIR)] } {
         set archivedir [file normalize $::env(TMPDIR)]
     } else {
@@ -171,7 +173,7 @@ puts "uploadFlag = $uploadFlag"
         } else {
             switch $::env(BUILD) {
                 "solaris8" { set archivedir /tmp }
-                "Darwin" - "darwin-ppc" - "linux-x86" - "redhat7.3" { set archivedir /var/tmp }
+                "Darwin" - "darwin-ppc" - "linux-x86" - "linux-x86_64" - "redhat7.3" { set archivedir /var/tmp }
                 "win32" { set archivedir c:/Temp }
             }
         }
@@ -641,7 +643,7 @@ puts "uploadFlag = $uploadFlag"
                 exec /usr/X11R6/bin/xterm -e curl --connect-timeout 120 --silent --show-error --upload-file $curlfile $curldest
             }
             default { 
-                exec rxvt -e curl --connect-timeout 120 --silent --show-error --upload-file $curlfile $curldest
+                exec curl --connect-timeout 120 --silent --show-error --upload-file $curlfile $curldest
             }
         }
         puts "See http://www.na-mic.org/Slicer/Download, in the $uploadFlag directory, for the uploaded file."

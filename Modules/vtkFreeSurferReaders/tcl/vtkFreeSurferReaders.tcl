@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: vtkFreeSurferReaders.tcl,v $
-#   Date:      $Date: 2005/12/20 22:55:39 $
-#   Version:   $Revision: 1.48.2.3 $
+#   Date:      $Date: 2006/07/07 18:54:25 $
+#   Version:   $Revision: 1.48.2.3.2.1 $
 # 
 #===============================================================================
 # FILE:        vtkFreeSurferReaders.tcl
@@ -328,7 +328,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.48.2.3 $} {$Date: 2005/12/20 22:55:39 $}]
+        {$Revision: 1.48.2.3.2.1 $} {$Date: 2006/07/07 18:54:25 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -5902,7 +5902,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set timemsg [join [split $timemsg] "-"]
     # make up the message with single quotes between each one for easy parsing later, 
     # leave out ones on the end as will get empty strings there
-    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.48.2.3 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
+    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.48.2.3.2.1 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -7405,7 +7405,7 @@ proc vtkFreeSurferReadersReadScalars { m {fileName ""} } {
         if {$::Module(verbose)} {
             # puts "Reading in from file(s), starting with scalar number $numScalars"
         }
-        set scalarFileList $fileName
+        lappend scalarFileList $fileName
         set numScalars [llength $scalarFileList]
         if {$::Module(verbose)} {
             puts "Adding $numScalars for this model"

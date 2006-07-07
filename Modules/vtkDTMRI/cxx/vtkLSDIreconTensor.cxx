@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkLSDIreconTensor.cxx,v $
-  Date:      $Date: 2006/03/06 21:21:48 $
-  Version:   $Revision: 1.4.8.1.2.1 $
+  Date:      $Date: 2006/07/07 18:13:36 $
+  Version:   $Revision: 1.4.8.1.2.2 $
 
 =========================================================================auto=*/
 #include "vtkLSDIreconTensor.h"

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKNewOtsuThresholdImageFilter.cxx,v $
-  Date:      $Date: 2006/04/27 15:53:15 $
-  Version:   $Revision: 1.1.4.1 $
+  Date:      $Date: 2006/07/07 19:04:24 $
+  Version:   $Revision: 1.1.4.2 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: vtkITKNewOtsuThresholdImageFilter.cxx,v $
   Language:  C++
-  Date:      $Date: 2006/04/27 15:53:15 $
-  Version:   $Revision: 1.1.4.1 $
+  Date:      $Date: 2006/07/07 19:04:24 $
+  Version:   $Revision: 1.1.4.2 $
 
   Copyright (c) 2002 Insight Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.

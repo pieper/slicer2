@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTractShapeFeatures.cxx,v $
-  Date:      $Date: 2006/03/06 21:21:52 $
-  Version:   $Revision: 1.11.2.1.2.1 $
+  Date:      $Date: 2006/07/07 18:28:35 $
+  Version:   $Revision: 1.11.2.1.2.2 $
 
 =========================================================================auto=*/
 // for vtk objects we use here
@@ -33,7 +33,7 @@
 // for debug output of features
 #include "vtkImageData.h"
 
-vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.11.2.1.2.1 $");
+vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.11.2.1.2.2 $");
 vtkStandardNewMacro(vtkTractShapeFeatures);
 
 vtkCxxSetObjectMacro(vtkTractShapeFeatures, InputStreamlines, vtkCollection);

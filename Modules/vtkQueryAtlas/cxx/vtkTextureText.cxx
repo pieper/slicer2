@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTextureText.cxx,v $
-  Date:      $Date: 2006/04/26 20:53:10 $
-  Version:   $Revision: 1.1.8.1.2.1 $
+  Date:      $Date: 2006/07/07 19:10:11 $
+  Version:   $Revision: 1.1.8.1.2.2 $
 
 =========================================================================auto=*/
 /*===========================================================
@@ -99,7 +99,7 @@ characterPosition::characterPosition(unsigned char c)
 
 
 
-vtkCxxRevisionMacro(vtkTextureText, "$Revision: 1.1.8.1.2.1 $");
+vtkCxxRevisionMacro(vtkTextureText, "$Revision: 1.1.8.1.2.2 $");
 vtkStandardNewMacro(vtkTextureText);
 
 

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDisplayTracts.cxx,v $
-  Date:      $Date: 2006/03/06 21:21:47 $
-  Version:   $Revision: 1.6.2.2.2.1 $
+  Date:      $Date: 2006/07/07 18:08:15 $
+  Version:   $Revision: 1.6.2.2.2.2 $
 
 =========================================================================auto=*/
 #include "vtkDisplayTracts.h"

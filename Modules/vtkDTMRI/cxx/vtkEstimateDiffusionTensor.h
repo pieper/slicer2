@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkEstimateDiffusionTensor.h,v $
-  Date:      $Date: 2006/03/06 21:21:48 $
-  Version:   $Revision: 1.1.2.1.2.1 $
+  Date:      $Date: 2006/07/07 18:09:38 $
+  Version:   $Revision: 1.1.2.1.2.2 $
 
 =========================================================================auto=*/
 // .NAME vtkEstimateDiffusionTensor - 

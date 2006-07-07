@@ -210,7 +210,7 @@ void EMLocalRegistrationCostFunction::ClassInvCovariance_Print() {
 }
 
 // All cordinates are given in absolute parameteres
-inline void EMLocalRegistrationCostFunction::DefineRegistrationParametersForThreadedCostFunction(int initROI_MinX, int initROI_MinY, int initROI_MinZ, int initROI_MaxX, int initROI_MaxY, int initROI_MaxZ) const {
+void EMLocalRegistrationCostFunction::DefineRegistrationParametersForThreadedCostFunction(int initROI_MinX, int initROI_MinY, int initROI_MinZ, int initROI_MaxX, int initROI_MaxY, int initROI_MaxZ) const {
   int Boundary_MinX = this->Boundary_Min[0];
   int Boundary_MinY = this->Boundary_Min[1];
   int Boundary_MinZ = this->Boundary_Min[2];

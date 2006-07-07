@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRIODF.tcl,v $
-#   Date:      $Date: 2006/03/06 21:21:54 $
-#   Version:   $Revision: 1.8.2.1.2.1 $
+#   Date:      $Date: 2006/07/07 18:35:24 $
+#   Version:   $Revision: 1.8.2.1.2.2 $
 # 
 #===============================================================================
 # FILE:        DTMRIODF.tcl
@@ -36,7 +36,7 @@ proc DTMRIODFInit {} {
     #------------------------------------
     set m "ODF"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.8.2.1.2.1 $} {$Date: 2006/03/06 21:21:54 $}]
+                                 {$Revision: 1.8.2.1.2.2 $} {$Date: 2006/07/07 18:35:24 $}]
 
   set DTMRI(InputODF) $Volume(idNone)
   set DTMRI(ODF,scaleFactor) 2

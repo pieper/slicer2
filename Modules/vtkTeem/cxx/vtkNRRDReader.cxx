@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkNRRDReader.cxx,v $
-  Date:      $Date: 2006/04/26 20:56:08 $
-  Version:   $Revision: 1.1.2.4.2.1 $
+  Date:      $Date: 2006/07/07 19:15:37 $
+  Version:   $Revision: 1.1.2.4.2.2 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -50,7 +50,7 @@
 
 #include "teem/ten.h"
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.1.2.4.2.1 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.1.2.4.2.2 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 

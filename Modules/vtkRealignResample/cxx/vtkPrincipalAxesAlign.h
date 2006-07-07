@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPrincipalAxesAlign.h,v $
-  Date:      $Date: 2006/04/26 19:15:02 $
-  Version:   $Revision: 1.1.2.1.2.2 $
+  Date:      $Date: 2006/07/07 19:13:30 $
+  Version:   $Revision: 1.1.2.1.2.3 $
 
 =========================================================================auto=*/
 #ifndef __vtk_principal_axes_align_h

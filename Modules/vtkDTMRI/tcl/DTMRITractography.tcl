@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITractography.tcl,v $
-#   Date:      $Date: 2006/04/26 18:58:00 $
-#   Version:   $Revision: 1.42.2.4.2.2 $
+#   Date:      $Date: 2006/07/07 18:38:52 $
+#   Version:   $Revision: 1.42.2.4.2.3 $
 # 
 #===============================================================================
 # FILE:        DTMRITractography.tcl
@@ -58,7 +58,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.42.2.4.2.2 $} {$Date: 2006/04/26 18:58:00 $}]
+                                 {$Revision: 1.42.2.4.2.3 $} {$Date: 2006/07/07 18:38:52 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)

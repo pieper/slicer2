@@ -10,8 +10,8 @@ exec tclsh "$0" "$@"
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: slicerput.tcl,v $
-#   Date:      $Date: 2006/04/26 20:54:39 $
-#   Version:   $Revision: 1.2.2.1.2.1 $
+#   Date:      $Date: 2006/07/07 19:11:33 $
+#   Version:   $Revision: 1.2.2.1.2.2 $
 # 
 #===============================================================================
 # FILE:        slicerput.tcl
