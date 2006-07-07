@@ -94,7 +94,7 @@ set ::SLICER_LIB $::SLICER_HOME/Lib/$::env(BUILD)
 set ::TEEM_SRC_DIR  $::SLICER_LIB/teem
 set ::TEEM_BUILD_DIR  $::SLICER_LIB/teem-build
 set ::VTK_DIR  $::SLICER_LIB/VTK-build
-puts "VTK_DIR: $VTK_DIR"
+puts "VTK_DIR: $::VTK_DIR"
 set ::VTK_SRC_DIR $::SLICER_LIB/VTK
 set ::VTK_BUILD_TYPE "Release"
 set ::VTK_BUILD_SUBDIR ""
