@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EdThreshold.tcl,v $
-#   Date:      $Date: 2006/03/06 21:21:44 $
-#   Version:   $Revision: 1.22.16.1.2.1 $
+#   Date:      $Date: 2006/07/07 17:47:03 $
+#   Version:   $Revision: 1.22.16.1.2.2 $
 # 
 #===============================================================================
 # FILE:        EdThreshold.tcl

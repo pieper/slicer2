@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Measure.tcl,v $
-#   Date:      $Date: 2006/04/26 20:06:35 $
-#   Version:   $Revision: 1.25.2.2.2.1 $
+#   Date:      $Date: 2006/07/07 17:43:59 $
+#   Version:   $Revision: 1.25.2.2.2.2 $
 # 
 #===============================================================================
 # FILE:        Measure.tcl
@@ -87,7 +87,7 @@ proc MeasureInit {} {
     
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.25.2.2.2.1 $} {$Date: 2006/04/26 20:06:35 $}]
+        {$Revision: 1.25.2.2.2.2 $} {$Date: 2006/07/07 17:43:59 $}]
     
     # Initialize module-level variables
     #    set Measure(Model1) $Model(idNone)
