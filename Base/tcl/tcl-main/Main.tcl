@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Main.tcl,v $
-#   Date:      $Date: 2006/05/04 19:13:39 $
-#   Version:   $Revision: 1.128.2.6.2.2 $
+#   Date:      $Date: 2006/07/07 17:23:48 $
+#   Version:   $Revision: 1.128.2.6.2.3 $
 # 
 #===============================================================================
 # FILE:        Main.tcl
@@ -441,7 +441,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.128.2.6.2.2 $} {$Date: 2006/05/04 19:13:39 $}]
+        {$Revision: 1.128.2.6.2.3 $} {$Date: 2006/07/07 17:23:48 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------

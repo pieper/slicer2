@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlVolumeNode.cxx,v $
-  Date:      $Date: 2006/03/06 21:21:40 $
-  Version:   $Revision: 1.62.2.1.2.1 $
+  Date:      $Date: 2006/07/07 17:15:00 $
+  Version:   $Revision: 1.62.2.1.2.2 $
 
 =========================================================================auto=*/
 #include <stdio.h>

@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainVolumes.tcl,v $
-#   Date:      $Date: 2006/04/26 20:03:36 $
-#   Version:   $Revision: 1.91.2.2.2.2 $
+#   Date:      $Date: 2006/07/07 17:26:50 $
+#   Version:   $Revision: 1.91.2.2.2.3 $
 # 
 #===============================================================================
 # FILE:        MainVolumes.tcl
@@ -54,7 +54,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.91.2.2.2.2 $} {$Date: 2006/04/26 20:03:36 $}]
+    {$Revision: 1.91.2.2.2.3 $} {$Date: 2006/07/07 17:26:50 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 

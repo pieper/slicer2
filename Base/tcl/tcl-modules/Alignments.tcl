@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Alignments.tcl,v $
-#   Date:      $Date: 2006/03/06 21:21:43 $
-#   Version:   $Revision: 1.35.2.1.2.1 $
+#   Date:      $Date: 2006/07/07 17:30:10 $
+#   Version:   $Revision: 1.35.2.1.2.2 $
 # 
 #===============================================================================
 # FILE:        Alignments.tcl
@@ -126,7 +126,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.35.2.1.2.1 $} {$Date: 2006/03/06 21:21:43 $}]
+            {$Revision: 1.35.2.1.2.2 $} {$Date: 2006/07/07 17:30:10 $}]
 
     # Props
     set Matrix(propertyType) Basic
