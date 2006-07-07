@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Developer.tcl,v $
-#   Date:      $Date: 2006/03/06 21:21:44 $
-#   Version:   $Revision: 1.51.2.3.2.1 $
+#   Date:      $Date: 2006/07/07 17:53:06 $
+#   Version:   $Revision: 1.51.2.3.2.2 $
 # 
 #===============================================================================
 # FILE:        Developer.tcl

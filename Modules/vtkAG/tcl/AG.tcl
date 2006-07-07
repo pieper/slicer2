@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: AG.tcl,v $
-#   Date:      $Date: 2006/04/26 20:09:51 $
-#   Version:   $Revision: 1.16.2.2.2.1 $
+#   Date:      $Date: 2006/07/07 17:57:01 $
+#   Version:   $Revision: 1.16.2.2.2.2 $
 # 
 #===============================================================================
 # FILE:        AG.tcl
@@ -235,7 +235,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.16.2.2.2.1 $} {$Date: 2006/04/26 20:09:51 $}]
+        {$Revision: 1.16.2.2.2.2 $} {$Date: 2006/07/07 17:57:01 $}]
 
     # Initialize module-level variables
     #------------------------------------
