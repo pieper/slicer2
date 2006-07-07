@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMask.h,v $
-  Date:      $Date: 2006/04/26 19:40:55 $
-  Version:   $Revision: 1.2.8.1.2.2 $
+  Date:      $Date: 2006/07/07 19:42:08 $
+  Version:   $Revision: 1.2.8.1.2.3 $
 
 =========================================================================auto=*/
 // .NAME vtkTensorMask - Combines a mask and an image.

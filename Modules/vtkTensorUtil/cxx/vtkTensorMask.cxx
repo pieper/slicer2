@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMask.cxx,v $
-  Date:      $Date: 2006/04/26 19:40:16 $
-  Version:   $Revision: 1.4.2.1.2.2 $
+  Date:      $Date: 2006/07/07 19:42:03 $
+  Version:   $Revision: 1.4.2.1.2.3 $
 
 =========================================================================auto=*/
 #include "vtkTensorMask.h"

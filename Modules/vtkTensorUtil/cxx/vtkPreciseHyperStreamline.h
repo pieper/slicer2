@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPreciseHyperStreamline.h,v $
-  Date:      $Date: 2006/04/26 19:30:41 $
-  Version:   $Revision: 1.4.8.1.2.2 $
+  Date:      $Date: 2006/07/07 19:34:57 $
+  Version:   $Revision: 1.4.8.1.2.3 $
 
 =========================================================================auto=*/
 // .NAME vtkPreciseHyperStreamline - generate hyperstreamline in arbitrary dataset

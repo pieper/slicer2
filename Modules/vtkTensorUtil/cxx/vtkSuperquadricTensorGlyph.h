@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricTensorGlyph.h,v $
-  Date:      $Date: 2006/04/26 19:36:11 $
-  Version:   $Revision: 1.2.8.1.2.2 $
+  Date:      $Date: 2006/07/07 19:38:29 $
+  Version:   $Revision: 1.2.8.1.2.3 $
 
 =========================================================================auto=*/
 // .NAME vtkSuperquadricTensorGlyph - scale and orient glyph according to tensor eigenvalues and eigenvectors

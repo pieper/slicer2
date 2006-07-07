@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricSource2.h,v $
-  Date:      $Date: 2006/04/26 19:34:19 $
-  Version:   $Revision: 1.2.2.1.2.2 $
+  Date:      $Date: 2006/07/07 19:37:22 $
+  Version:   $Revision: 1.2.2.1.2.3 $
 
 =========================================================================auto=*/
 // .NAME vtkSuperquadricSource2 - create a polygonal superquadric centered 

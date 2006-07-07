@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.h,v $
-  Date:      $Date: 2006/04/26 19:42:19 $
-  Version:   $Revision: 1.9.2.1.2.2 $
+  Date:      $Date: 2006/07/07 19:43:15 $
+  Version:   $Revision: 1.9.2.1.2.3 $
 
 =========================================================================auto=*/
 // .NAME vtkTensorMathematics - Trace, determinant, anisotropy measures
