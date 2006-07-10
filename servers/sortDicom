@@ -1,0 +1,85 @@
+#!/bin/sh
+# the next line restarts using tclsh \
+exec tclsh "$0" "$@"
+
+proc uniqkey {} {
+    set key [expr { pow(2,31) + [clock clicks]}]
+    set key [string range $key end-8 end-3]
+    set key [clock seconds]$key
+    return $key
+}
+
+
+proc sleep {ms} {
+    set uniq [uniqkey]
+    set ::__sleep__tmp__$uniq 0
+    after $ms set ::__sleep__tmp__$uniq 1
+    vwait ::__sleep__tmp__$uniq
+    unset ::__sleep__tmp__$uniq
+}
+
+proc DicomWatch {dir} {
+    # all dicom files are saved in /usr/local/data/dcmImages
+    set imageDir "$dir/dcmImages"
+    if {! [file exists $imageDir] || 
+        ! [file isdirectory $imageDir]} {
+        puts "Directory doesn't exist: $imageDir"
+        exit
+    }
+
+    set files [glob -nocomplain -directory $imageDir *.*]
+    set size [llength $files]
+    if {$size > 0} {
+        foreach f $files {
+            # get image date
+            set date [exec get_dicom_info -attvalue 0008 0023 $f]
+            set year [string range $date 0 3]
+            set month [string range $date 4 5]
+            set day [string range $date 6 7]
+            set datePart "$year-$month-$day"
+
+            # get patient name 
+            set name [exec get_dicom_info -pname $f]
+            set names [split $name ","]
+            set lName [string trim [lindex $names 0]]
+            regsub -all " " $lName {.} lName 
+            set fName [string trim [lindex $names 1]]
+            regsub -all " " $fName {.} fName 
+            set namePart $lName-$fName
+
+            # make patient directory
+            set patientDir $datePart-$namePart
+            set abPatientDir "$dir/$patientDir"
+            if {! [file exists $abPatientDir] || 
+                ! [file isdirectory $abPatientDir]} {
+                # set abPatientDir "test"
+                exec mkdir $abPatientDir
+            } 
+ 
+            # make series directory
+            set series [exec get_dicom_info -series $f]
+            set series [string trim $series]
+            set seriesDir "$abPatientDir/$series" 
+            if {! [file exists $seriesDir] || 
+                ! [file isdirectory $seriesDir]} {
+                exec mkdir $seriesDir
+            } 
+
+            # copy image to the series directory
+            exec mv $f $seriesDir
+        }
+    }
+}
+
+set dir "/usr/local/data"
+if {! [file exists $dir] || 
+    ! [file isdirectory $dir]} {
+    puts "Directory doesn't exist: $dir"
+    exit
+}
+
+while {1} {
+    DicomWatch $dir
+    sleep 10000
+}
+

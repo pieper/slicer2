@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# storescp is part of dcmtk
+cd /usr/local/data/dcmImages
+storescp -aet SCLP_DIC1 4104
+
