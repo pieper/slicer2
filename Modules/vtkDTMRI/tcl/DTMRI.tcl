@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRI.tcl,v $
-#   Date:      $Date: 2006/02/10 22:53:11 $
-#   Version:   $Revision: 1.131 $
+#   Date:      $Date: 2006/07/10 18:23:43 $
+#   Version:   $Revision: 1.132 $
 # 
 #===============================================================================
 # FILE:        DTMRI.tcl
@@ -90,7 +90,7 @@ proc TensorCreateNew {t} {
     # See if this data object already exists
     #--------------------------------------------------------
     if {[info command $data] != ""} {
-        puts "Tensor $d data exists"
+        puts "Tensor $t data exists"
         return 0
     }
 
@@ -481,7 +481,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.131 $} {$Date: 2006/02/10 22:53:11 $}]
+                  {$Revision: 1.132 $} {$Date: 2006/07/10 18:23:43 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
