@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: VolGeneric.tcl,v $
-#   Date:      $Date: 2006/07/07 19:05:25 $
-#   Version:   $Revision: 1.19.2.2.2.3 $
+#   Date:      $Date: 2006/07/10 16:20:49 $
+#   Version:   $Revision: 1.19.2.2.2.4 $
 # 
 #===============================================================================
 # FILE:        VolGeneric.tcl
@@ -46,7 +46,7 @@ proc VolGenericInit {} {
     # for closing out a scene
     set Volume(VolGeneric,idList) ""
     set Module($e,procMainFileCloseUpdateEntered) VolGenericMainFileCloseUpdate
-    set Volume(imageCentered) 1
+    set Volume(imageCentered) 0 
     # register the procedures in this file that will read in volumes
     set Module(Volumes,readerProc,Generic) VolGenericReaderProc
 }
