@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Volumes.tcl,v $
-#   Date:      $Date: 2006/05/26 18:54:50 $
-#   Version:   $Revision: 1.134 $
+#   Date:      $Date: 2006/07/11 03:50:27 $
+#   Version:   $Revision: 1.135 $
 # 
 #===============================================================================
 # FILE:        Volumes.tcl
@@ -101,7 +101,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-             {$Revision: 1.134 $} {$Date: 2006/05/26 18:54:50 $}]
+             {$Revision: 1.135 $} {$Date: 2006/07/11 03:50:27 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -998,13 +998,6 @@ proc VolumesManualSetPropertyType {n} {
     $n SetTilt $Volume(gantryDetectorTilt)
     $n ComputeRasToIjkFromScanOrder $Volume(scanOrder)
 
-    # added by odonnell for DTI data: will move to submodule
-    if {$Volume(tensors,DTIdata) == 1} {
-        #$n UseFrequencyPhaseSwapOn
-        $n SetFrequencyPhaseSwap $Volume(tensors,pfSwap)
-        # recompute 
-        $n ComputeRasToIjkFromScanOrder $Volume(scanOrder)
-    }
 }
 
 

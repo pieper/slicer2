@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: VolHeader.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:04 $
-#   Version:   $Revision: 1.6 $
+#   Date:      $Date: 2006/07/11 03:50:27 $
+#   Version:   $Revision: 1.7 $
 # 
 #===============================================================================
 # FILE:        VolHeader.tcl
@@ -218,29 +218,6 @@ proc VolHeaderBuildGUI {parentFrame} {
         pack $f.f.r$value -side left -fill x
     }
 
-        # odonnell Diffusion tensors (DTI data)
-        set f $parentFrame.fEntry
-        frame $f.fTensor -bg $Gui(activeWorkspace)
-        pack $f.fTensor -side top -fill x -pady 2       
-        set f $f.fTensor
-
-        eval {checkbutton $f.cTensor \
-                -text "DTI data" -variable Volume(tensors,DTIdata) \
-                -indicatoron 0} $Gui(WCA)
-        pack $f.cTensor -side left -padx $Gui(pad)
-        TooltipAdd $f.cTensor "Diffusion tensor data"
-
-        foreach value "1 0" text "{Swap} {No Swap}" \
-                tip {{Phase/Frequency Swapped DTI data (PF swap)} \
-                {No Phase/Frequency Swap in DTI data}} {
-            eval {radiobutton $f.r$value \
-                        -indicatoron 0 -text $text -value $value \
-                        -variable Volume(tensors,pfSwap) } $Gui(WCA)
-            pack $f.r$value -side left -fill x
-            TooltipAdd  $f.r$value $tip
-        }
-
-
     #-------------------------------------------
     # Props->Bot->Header->Apply frame
     #-------------------------------------------
@@ -290,6 +267,5 @@ proc VolHeaderCopyParameters {} {
     set Volume(gantryDetectorTilt) [Volume($fromID,node) GetTilt]
     set Volume(numScalars) [Volume($fromID,node) GetNumScalars]
     set Volume(littleEndian) [Volume($fromID,node) GetLittleEndian]
-    set Volume(tensors,pfSwap) [Volume($fromID,node) GetFrequencyPhaseSwap]
     
 }
