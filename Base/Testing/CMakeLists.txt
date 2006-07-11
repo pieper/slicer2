@@ -1,7 +1,6 @@
 # Test
 SET(TESTS_BASE_SRCS
   testSlicerBase
-  testDataProvenance
   TestPlot
   TestImageCCA
   #TestPolyBoolean
@@ -19,6 +18,7 @@ ENDFOREACH(test)
 SET(TCL_TESTS   
   TestMeasureVol
   TestMaskStat
+  testDataProvenance
    )                    
 
 FOREACH(tclfile ${TCL_TESTS})
