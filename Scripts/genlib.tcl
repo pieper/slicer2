@@ -226,6 +226,14 @@ if {$isWindows} {
     }
 }
 
+################################################################################
+# If Darwin, don't use cvs compression 
+#
+if {$isDarwin} {
+    set CVS_FLAG ""
+} else {
+    set CVS_FLAG "-z3"
+}
 
 
 ################################################################################
@@ -243,7 +251,7 @@ if { ![file exists $::CMAKE] } {
         exit
     } else {
         runcmd $::CVS -d :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login
-        runcmd $::CVS -z3 -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $::CMAKE_TAG CMake
+        runcmd $::CVS $CVS_FLAG -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $::CMAKE_TAG CMake
 
         cd $::CMAKE_PATH
         if { $isSolaris } {
@@ -273,7 +281,7 @@ if { ![file exists $::TCL_TEST_FILE] } {
     cd $SLICER_LIB/tcl
 
     runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TCL_TAG tcl
+    runcmd $::CVS $CVS_FLAG -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TCL_TAG tcl
 
     if {$isWindows} {
         # can't do windows
@@ -290,7 +298,7 @@ if { ![file exists $::TK_TEST_FILE] } {
     cd $SLICER_LIB/tcl
 
     runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TK_TAG tk
+    runcmd $::CVS $CVS_FLAG -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TK_TAG tk
 
     if {$isDarwin} {
         if { ![file exists $SLICER_HOME/isPatched] } {
@@ -323,7 +331,7 @@ if { ![file exists $::ITCL_TEST_FILE] } {
     cd $SLICER_LIB/tcl
 
     runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::ITCL_TAG incrTcl
+    runcmd $::CVS $CVS_FLAG -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::ITCL_TAG incrTcl
 
     cd $SLICER_LIB/tcl/incrTcl
 
@@ -348,7 +356,7 @@ if { ![file exists $::IWIDGETS_TEST_FILE] } {
     cd $SLICER_LIB/tcl
 
     runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::IWIDGETS_TAG iwidgets
+    runcmd $::CVS $CVS_FLAG -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::IWIDGETS_TAG iwidgets
 
 
     if {$isWindows} {
@@ -372,7 +380,7 @@ if { ![file exists $::BLT_TEST_FILE] } {
     cd $SLICER_LIB/tcl
     
     runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co -r $::BLT_TAG blt 
+    runcmd $::CVS $CVS_FLAG -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co -r $::BLT_TAG blt 
 
     if { $isWindows } {
         # can't do Windows
@@ -412,7 +420,7 @@ if { ![file exists $::VTK_TEST_FILE] } {
     cd $SLICER_LIB
 
     runcmd $::CVS -d :pserver:anonymous:vtk@public.kitware.com:/cvsroot/VTK login
-    runcmd $::CVS -z3 -d :pserver:anonymous@public.kitware.com:/cvsroot/VTK checkout -r $::VTK_TAG VTK
+    runcmd $::CVS $CVS_FLAG -d :pserver:anonymous@public.kitware.com:/cvsroot/VTK checkout -r $::VTK_TAG VTK
 
     # Andy's temporary hack to get around wrong permissions in VTK cvs repository
     # catch statement is to make file attributes work with RH 7.3
@@ -537,7 +545,7 @@ if { ![file exists $::TEEM_TEST_FILE] } {
     cd $SLICER_LIB
 
     runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login 
-    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TEEM_TAG teem
+    runcmd $::CVS $CVS_FLAG -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TEEM_TAG teem
 
     file mkdir $SLICER_LIB/teem-build
     cd $SLICER_LIB/teem-build
@@ -624,7 +632,7 @@ if { ![file exists $::ITK_TEST_FILE] } {
     cd $SLICER_LIB
 
     runcmd $::CVS -d :pserver:anoncvs:@www.vtk.org:/cvsroot/Insight login
-    runcmd $::CVS -z3 -d :pserver:anoncvs@www.vtk.org:/cvsroot/Insight checkout -r $::ITK_TAG Insight
+    runcmd $::CVS $CVS_FLAG -d :pserver:anoncvs@www.vtk.org:/cvsroot/Insight checkout -r $::ITK_TAG Insight
 
     file mkdir $SLICER_LIB/Insight-build
     cd $SLICER_LIB/Insight-build
