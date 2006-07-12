@@ -46,7 +46,13 @@ switch $::tcl_platform(os) {
             set ::env(BUILD) $linux
         }
     }       
-    "Darwin" { set ::env(BUILD) $darwin }
+    "Darwin" {
+        if {$::tcl_platform(machine) == "i386"} {
+            set ::env(BUILD) $darwin_x86
+        } else {
+            set ::env(BUILD) $darwin
+        }
+    }
     default { 
         set ::env(BUILD) $windows 
         set ::SLICER_HOME [file attributes $::SLICER_HOME -shortname]
@@ -225,7 +231,7 @@ switch $::tcl_platform(os) {
         set ::VTKSLICERBASE_BUILD_TCL_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/vtkSlicerBaseTCL.dylib
         set ::GENERATOR "Unix Makefiles" 
         set ::COMPILER_PATH "/usr/bin"
-        set ::COMPILER "g++-3.3"
+        set ::COMPILER "g++"
         set ::CMAKE $::CMAKE_PATH/bin/cmake
         set ::MAKE make
         set ::SERIAL_MAKE make
