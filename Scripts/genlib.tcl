@@ -27,7 +27,7 @@
 #
 
 if {[info exists ::env(CVS)]} {
-    set ::CVS $::env(CVS)
+    set ::CVS "{$::env(CVS)}"
 } else {
     set ::CVS cvs
 }
