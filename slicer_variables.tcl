@@ -32,6 +32,7 @@ set solaris "solaris8"
 set linux "linux-x86"
 set linux_64 "linux-x86_64"
 set darwin "darwin-ppc"
+set darwin_x86 "darwin-x86"
 set windows "win32"
 #
 # set the default locations for the main components
@@ -63,7 +64,13 @@ puts stderr "SLICER_HOME is $::SLICER_HOME"
 # changes in the "Files to test if library has already been built"
 # section below, or genlib will happily build the library again.
 
-set ::CMAKE_TAG "CMake-2-0-6"
+if { $::env(BUILD) == "darwin-x86" } {
+    set ::CMAKE_TAG "CMake-2-4-2"
+} elseif { $::tcl_platform(os) == "Darwin" && $::tcl_platform(osVersion) >= 8 } {
+    set ::CMAKE_TAG "CMake-2-4-2"
+} else {
+    set ::CMAKE_TAG "CMake-2-0-6"
+}
 set ::TEEM_TAG "Teem-1-9-0-patches"
 set ::VTK_TAG "Slicer-2-6"
 set ::ITK_TAG "Slicer-2-6"
