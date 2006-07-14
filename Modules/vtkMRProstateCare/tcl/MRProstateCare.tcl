@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.1 $} {$Date: 2006/07/14 15:15:37 $}]
+        {$Revision: 1.1.2.2 $} {$Date: 2006/07/14 20:05:05 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -121,9 +121,22 @@ proc MRProstateCareInit {} {
     set MRProstateCare(Model1)  $Model(idNone)
     set MRProstateCare(FileName)  ""
 
-    set MRProstateCare(Flashpoint,msPoll) 100
-    set MRProstateCare(Flashpoint,port)   40000
-    set MRProstateCare(Flashpoint,host)   mrtws
+    set MRProstateCare(msPoll) 100
+    set MRProstateCare(port)   15000
+    set MRProstateCare(host)   mrtws
+    set MRProstateCare(connect) 0
+    set MRProstateCare(pause) 0
+    set MRProstateCare(loop) 0
+
+    # Patient/Table position
+    set MRProstateCare(tblPosList)   "Front Side"
+    set MRProstateCare(patEntryList) "Head-first Feet-first"
+    set MRProstateCare(patPosList)   "Supine Prone Left-decub Right-decub"
+    set MRProstateCare(tblPos)       [lindex $MRProstateCare(tblPosList) 0]
+    set MRProstateCare(patEntry)     [lindex $MRProstateCare(patEntryList) 0]
+    set MRProstateCare(patPos)       [lindex $MRProstateCare(patPosList) 0]
+
+
 }
 
 # NAMING CONVENTION:
@@ -194,18 +207,25 @@ proc MRProstateCareBuildGUI {} {
     set fServer $Module(MRProstateCare,fServer)
     set f $fServer
 
-    frame $f.fTop -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    frame $f.fTop -bg $Gui(activeWorkspace) 
     pack $f.fTop -side top -pady 7 
+    frame $f.fMid -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    pack $f.fMid -side top -pady 3 
     frame $f.fBot -bg $Gui(activeWorkspace)
     pack $f.fBot -side top 
 
-    set f $f.fTop
-    set s Flashpoint
+    set f $fServer.fTop
+    eval {label $f.lConnectTitle -text "Connection status:"} $Gui(WTA)
+    eval {label $f.lConnectStatus -text "None" -width 8} $Gui(WLA)
+    grid $f.lConnectTitle $f.lConnectStatus -pady 1 -padx $Gui(pad)
+    set MRProstateCare(connectStatus) $f.lConnectStatus
+
+    set f $fServer.fMid
     foreach x "host port msPoll" text \
         "{Host name} {Port number} {Update period (ms)}" {
 
         DevAddLabel $f.l$x "${text}:" 
-        eval {entry $f.e$x -textvariable MRProstateCare($s,$x) -width 17} $Gui(WEA)
+        eval {entry $f.e$x -textvariable MRProstateCare($x) -width 17} $Gui(WEA)
         grid $f.l$x $f.e$x -pady 3 -padx $Gui(pad) -sticky e
         grid $f.e$x -sticky w
     }
@@ -382,7 +402,6 @@ proc MRProstateCareBuildGUI {} {
 
         incr i
     }
-
 }
 
 
@@ -435,7 +454,7 @@ proc MRProstateCareBuildGUIForLevel3 {parent} {
 
     DevAddLabel $f.lTitle "Displayed images:"
     DevAddLabel $f.lImage1Label "Image 1:"
-    DevAddLabel $f.lImage1Value "realtime"
+    DevAddLabel $f.lImage1Value "Realtime"
 
     # Build pulldown menu for volumes 
     DevAddLabel $f.lVolume "Image 2:"
@@ -719,13 +738,288 @@ proc MRProstateCareAcceptTemplateCornerCoords {} {
 }
 
 
-proc MRProstateCareConnect {} {
+proc MRProstateCareLoop {} {
+    global Slice Volume MRProstateCare
+    
+    if {$MRProstateCare(loop) == 0} {
+        return
+    }
+    if {$MRProstateCare(pause) == 1} {
+        return
+    }
+
+    set status [MRProstateCare(src) PollRealtime]
+
+    if {$status == -1} {
+        puts "ERROR: PollRealtime"
+        MRProstateCareConnect 0
+        return
+    }
+
+    set newImage   [MRProstateCare(src) GetNewImage]
+    set newLocator [MRProstateCare(src) GetNewLocator]
+
+    #----------------    
+    # NEW locator 
+    #----------------
+    if {$newLocator != 0} {
+        set locStatus [MRProstateCare(src) GetLocatorStatus]
+        set locMatrix [MRProstateCare(src) GetLocatorMatrix]
+            
+if {0} {
+        # Report status to user
+        if {$locStatus == 0} {
+            set locText "OK"
+            set MRProstateCare(bellCount) 0
+        } else {
+            set locText "BLOCKED"
+            set rem [expr $MRProstateCare(bellCount) % 50]
+            if {$rem == 0} {
+                # Every 5 seconds ring the bell if MRProstateCare is not available
+                bell
+            }
+
+            incr MRProstateCare(bellCount)
+        }
+        $MRProstateCare(lLocStatus) config -text $locText
+}
+
+        # Read matrix
+        set MRProstateCare(px) [$locMatrix GetElement 0 0]
+        set MRProstateCare(py) [$locMatrix GetElement 1 0]
+        set MRProstateCare(pz) [$locMatrix GetElement 2 0]
+        set MRProstateCare(nx) [$locMatrix GetElement 0 1]
+        set MRProstateCare(ny) [$locMatrix GetElement 1 1]
+        set MRProstateCare(nz) [$locMatrix GetElement 2 1]
+        set MRProstateCare(tx) [$locMatrix GetElement 0 2]
+        set MRProstateCare(ty) [$locMatrix GetElement 1 2]
+        set MRProstateCare(tz) [$locMatrix GetElement 2 2]
+
+        # display the new locator; we don't display locator
+        # for prostate care
+        # MRProstateCareUseLocatorMatrix
+    }
+
+    #----------------    
+    # NEW IMAGE
+    #----------------
+    if {$newImage != 0} {
+        
+        # Force an update so I can read the new matrix
+        MRProstateCare(src) Modified
+        MRProstateCare(src) Update
+    
+        # Update patient position
+        set MRProstateCare(tblPos)   [lindex $MRProstateCare(tblPosList) \
+            [MRProstateCare(src) GetTablePosition]]
+        set MRProstateCare(patEntry) [lindex $MRProstateCare(patEntryList) \
+            [MRProstateCare(src) GetPatientEntry]]
+        set MRProstateCare(patPos)   [lindex $MRProstateCare(patPosList) \
+            [MRProstateCare(Flashpoint,src) GetPatientPosition]]
+
+        # MRProstateCareSetPatientPosition
+
+        # Get other header values
+        set MRProstateCare(recon)    [MRProstateCare(src) GetRecon]
+        set MRProstateCare(imageNum) [MRProstateCare(src) GetImageNum]
+        set minVal [MRProstateCare(src) GetMinValue]
+        set maxVal [MRProstateCare(src) GetMaxValue]
+        set imgMatrix [MRProstateCare(src) GetImageMatrix]
+        puts "imgNo = $MRProstateCare(imageNum), recon = $MRProstateCare(recon), range = $minVal $maxVal"
+
+        # Copy the image to the Realtime volume
+        set v [MRProstateCareGetRealtimeID]
+        vtkImageCopy copy
+        copy SetInput [MRProstateCare(src) GetOutput]
+        copy Update
+        copy SetInput ""
+        Volume($v,vol) SetImageData [copy GetOutput]
+        copy SetOutput ""
+        copy Delete
+
+        # Set the header info
+        set n Volume($v,node)
+        $n SetImageRange $MRProstateCare(imageNum) $MRProstateCare(imageNum)
+        $n SetDescription "recon=$MRProstateCare(recon)"
+        set str [$n GetMatrixToString $imgMatrix]
+        $n SetRasToVtkMatrix $str
+        $n UseRasToVtkMatrixOn
+
+        # Update pipeline and GUI
+        MainVolumesUpdate $v
+
+        # If this Realtime volume is inside transforms, then
+        # compute the registration:
+        MainUpdateMRML
+
+        # Perform realtime image processing
+        # foreach cb $MRProstateCare(callbackList) {
+        #    $cb
+        # }
+    }
+
+    # Render the slices that the MRProstateCare is driving.
+    if {$newImage != 0 || $newLocator != 0} {
+        RenderAll
+    }
+
+    # Call update instead of update idletasks so that we
+    # process user input like changing slice orientation
+    update
+    if {[ValidateInt $MRProstateCare(msPoll)] == 0} {
+        set MRProstateCare(msPoll) 100
+    }
+    after $MRProstateCare(msPoll) MRProstateCareLoop
+}
+
+
+proc MRProstateCareSetRealtime {v} {
+    global MRProstateCare Volume
+
+    set MRProstateCare(idRealtime) $v
+    
+    # Change button text, and show file prefix
+if {0} {
+    if {$v == "NEW"} {
+        $MRProstateCare(mbRealtime) config -text $v
+        set MRProstateCare(prefixRealtime) ""
+    } else {
+        $MRProstateCare(mbRealtime) config -text [Volume($v,node) GetName]
+        set MRProstateCare(prefixRealtime) [MainFileGetRelativePrefix \
+            [Volume($v,node) GetFilePrefix]]
+    }
+} 
+}
+
+proc MRProstateCareGetRealtimeID {} {
+    global MRProstateCare Volume Lut
+        
+    # If there is no Realtime volume, then create one
+    if {$MRProstateCare(idRealtime) != "NEW"} {
+        return $MRProstateCare(idRealtime)
+    }
+    
+    # Create the node
+    set n [MainMrmlAddNode Volume]
+    set v [$n GetID]
+    $n SetDescription "Realtime Volume"
+    $n SetName        "Realtime"
+
+    # Create the volume
+    MainVolumesCreate $v
+
+    MRProstateCareSetRealtime $v
+
+    MainUpdateMRML
+
+    return $v
+}
+
+
+proc MRProstateCareUseLocatorMatrix {} {
+    global MRProstateCare Slice
+
+    foreach p "normalOffset transverseOffset crossOffset" {
+        if {[ValidateFloat $MRProstateCare($p)] == 0} {
+            tk_messageBox -message "$p must be a floating point number."
+            return
+        }
+    }
+
+    # Form arrays so we can use vector processing functions
+    set P(x) $MRProstateCare(px)
+    set P(y) $MRProstateCare(py)
+    set P(z) $MRProstateCare(pz)
+    set N(x) $MRProstateCare(nx)
+    set N(y) $MRProstateCare(ny)
+    set N(z) $MRProstateCare(nz)
+    set T(x) $MRProstateCare(tx)
+    set T(y) $MRProstateCare(ty)
+    set T(z) $MRProstateCare(tz)
+
+    # Ensure N, T orthogonal:
+    #    C = N x T
+    #    T = C x N
+    Cross C N T
+    Cross T C N
+
+    # Ensure vectors are normalized
+    Normalize N
+    Normalize T
+    Normalize C
+
+    # Offset the Locator
+    set n $MRProstateCare(normalOffset)
+    set t $MRProstateCare(transverseOffset)
+    set c $MRProstateCare(crossOffset)
+    set MRProstateCare(px) [expr $P(x) + $N(x)*$n + $T(x)*$t + $C(x)*$c]
+    set MRProstateCare(py) [expr $P(y) + $N(y)*$n + $T(y)*$t + $C(y)*$c]
+    set MRProstateCare(pz) [expr $P(z) + $N(z)*$n + $T(z)*$t + $C(z)*$c]
+    set MRProstateCare(nx) $N(x)
+    set MRProstateCare(ny) $N(y)
+    set MRProstateCare(nz) $N(z)
+    set MRProstateCare(tx) $T(x)
+    set MRProstateCare(ty) $T(y)
+    set MRProstateCare(tz) $T(z)
+
+    # Format display
+    MRProstateCareFormat
+                
+    # Position the rendered locator
+    MRProstateCareSetMatrices
+            
+    # Find slices with their input set to locator.
+    # and set the slice matrix with the new locator data
+
+    Slicer SetDirectNTP \
+        $MRProstateCare(nx) $MRProstateCare(ny) $MRProstateCare(nz) \
+        $MRProstateCare(tx) $MRProstateCare(ty) $MRProstateCare(tz) \
+        $MRProstateCare(px) $MRProstateCare(py) $MRProstateCare(pz) 
+}
+
+
+proc MRProstateCareConnect {{value ""}} {
+    global Gui MRProstateCare Mrml
+
+    if {$value != ""} {
+        set MRProstateCare(connect) $value
+    }
+
+    # CONNECT
+    if {$MRProstateCare(connect) == "1"} {
+            # You have to actually connect, dumbo
+            set status [MRProstateCare(src) OpenConnection \
+                $MRProstateCare(host) $MRProstateCare(port)]
+            if {$status == -1} {
+                tk_messageBox -icon error -type ok -title $Gui(title) \
+                    -message "Make sure spl_server is running on the mrt workstation: host='$MRProstateCare(host)' port='$MRProstateCare(port)'"
+                set MRProstateCare(loop) 0
+                set MRProstateCare(connect) 0
+                return
+            }
+
+            $MRProstateCare(connectStatus) config -text "OK" 
+
+            set MRProstateCare(loop) 1
+            MRProstateCareLoop
+    } else {
+        set MRProstateCare(loop) 0
+        set MRProstateCare(imageNum) ""
+        MRProstateCare(src) CloseConnection
+        $MRProstateCare(connectStatus) config -text "None" 
+    }
 
 }
 
 
 proc MRProstateCarePause {} {
+    global MRProstateCare
 
+    if {$MRProstateCare(pause) == 0 && $MRProstateCare(connect) == 1} {
+        MRProstateCareLoop
+    }
+
+    $MRProstateCare(connectStatus) config -text "None" 
 }
 
 
@@ -736,6 +1030,21 @@ proc MRProstateCarePause {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRProstateCareBuildVTK {} {
+    global Gui MRProstateCare View Slice Target Volume Lut 
+
+    #------------------------#
+    # Realtime image source
+    #------------------------#
+    set os -1
+    switch $::tcl_platform(os) {
+        "SunOS"  {set os 1}
+        "Linux"  {set os 2}
+        "Darwin" {set os 3}
+        default  {set os 4}
+    }
+    vtkImageRealtimeScan MRProstateCare(src)
+    MRProstateCare(src) SetOperatingSystem $os
+
 
 }
 
