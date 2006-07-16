@@ -5,6 +5,7 @@ proc LaurenThesisProbeClustersInit {} {
     
     set LaurenThesis(tTensor2) -1
 
+    set LaurenThesis(clusterDirectory) ""
 }
 
 proc LaurenThesisProbeClustersBuildGUI {} {
@@ -26,7 +27,7 @@ proc LaurenThesisProbeClustersBuildGUI {} {
     # ProbeClusters->Top frame
     #-------------------------------------------
     set f $fProbeClusters.fTop
-    DevAddLabel $f.lHelp "Sample tensors at all points in a model"
+    DevAddLabel $f.lHelp "Sample tensors at all points in tract clusters."
 
     pack $f.lHelp -side top -padx $Gui(pad) -pady $Gui(pad)
 
@@ -34,7 +35,7 @@ proc LaurenThesisProbeClustersBuildGUI {} {
     # ProbeClusters->Middle frame
     #-------------------------------------------
     set f $fProbeClusters.fMiddle
-    foreach frame "Tensor" {
+    foreach frame "Tensor Directory" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     }
@@ -51,6 +52,42 @@ proc LaurenThesisProbeClustersBuildGUI {} {
         "Tensor volume data to sample with clusters" \
         25
 
+    #-------------------------------------------
+    # ProbeClusters->Middle->Directory frame
+    #-------------------------------------------
+    set f $fProbeClusters.fMiddle.fDirectory
+
+    eval {button $f.b -text "Cluster directory:" -width 16 \
+        -command "LaurenThesisSelectDirectory"} $Gui(WBA)
+    eval {entry $f.e -textvariable LaurenThesis(clusterDirectory) -width 51} $Gui(WEA)
+    bind $f.e <Return> {LaurenThesisSelectDirectory}
+    pack $f.b -side left -padx $Gui(pad)
+    pack $f.e -side left -padx $Gui(pad) -fill x -expand 1
+
+    #-------------------------------------------
+    # ProbeClusters->Bottom frame
+    #-------------------------------------------
+    set f $fProbeClusters.fBottom
+
+    DevAddButton $f.bApply "Apply" \
+        LaurenThesisValidateParametersAndProbeClusters
+    pack $f.bApply -side top -padx $Gui(pad) -pady $Gui(pad)
+    TooltipAdd  $f.bApply "Sample tensors at all points in the tract cluster models. Save new models."
+
+}
+
+proc LaurenThesisSelectDirectory {} {
+    global LaurenThesis
+
+    set dir $LaurenThesis(clusterDirectory)
+
+    if {[catch {set filename [tk_chooseDirectory -title "Cluster Directory" \
+                                  -initialdir "$dir"]} errMsg] == 1} {
+        DevErrorWindow "LaurenThesisSelectDirectory: error selecting cluster directory:\n$errMsg"
+        return ""
+    }
+
+    set LaurenThesis(clusterDirectory) $filename
 }
 
 
@@ -66,6 +103,15 @@ proc LaurenThesisProbeClustersUpdateMRML {} {
 
 }
 
+
+proc LaurenThesisValidateParametersAndProbeClusters {} {
+    global LaurenThesis
+
+    LaurenThesisProbeTensorsWithClustersInDirectory $LaurenThesis(tTensor2) $LaurenThesis(clusterDirectory)
+
+}
+
+
 proc LaurenThesisProbeTensorsWithClustersInDirectory {tTensor directory} {
 
     # Load all models in the directory of the form
@@ -74,6 +120,11 @@ proc LaurenThesisProbeTensorsWithClustersInDirectory {tTensor directory} {
     set pattern "tract_\[0-9\]\[0-9\]\[0-9\]\[0-9\]\[0-9\].vtk"
 
     set models [lsort [glob -nocomplain -directory $directory $pattern]]
+
+    if {$models == ""} {
+        puts "ERROR: No models with filenames tract_*.vtk were found in the directory"
+        return
+    }
 
     foreach model $models {
         puts $model
