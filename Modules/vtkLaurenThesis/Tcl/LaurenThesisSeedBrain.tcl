@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: LaurenThesisSeedBrain.tcl,v $
-#   Date:      $Date: 2006/07/06 22:40:46 $
-#   Version:   $Revision: 1.2 $
+#   Date:      $Date: 2006/07/16 13:40:39 $
+#   Version:   $Revision: 1.3 $
 # 
 #===============================================================================
 # FILE:        LaurenThesisSeedBrain.tcl
@@ -30,17 +30,17 @@ proc LaurenThesisSeedBrainInit {} {
 
     set LaurenThesis(subjectID) caseXXX
 
-    set LaurenThesis(seedThreshold) 0.35
-    set LaurenThesis(stopThreshold) 0.20
+    set LaurenThesis(seedThreshold) 0.3
+    set LaurenThesis(stopThreshold) 0.15
 
-    set LaurenThesis(lengthThreshold) 25
+    set LaurenThesis(lengthThreshold) 20
 
     set LaurenThesis(seedResolution) 2
 
-    set LaurenThesis(doErosion) No
+    set LaurenThesis(doErosion) Yes
 
     set LaurenThesis(savecL) 0
-    set LaurenThesis(saveFA) 0
+    set LaurenThesis(saveFA) 1
     set LaurenThesis(saveB0) 0
 
 }
@@ -384,10 +384,10 @@ proc LaurenThesisRunWholeDatasetFromTensors {tTensor vICCMask dataSetName seedTh
     set vLMMask [LaurenThesisCreateLMMask $vICCMask $maskLabel $tTensor $seedThreshold $doErosion]
 
     # seed everywhere in this mask (second mask is for cL/FA volume creation)
-    LaurenThesisSeedEverywhere $vLMMask $tTensor $dataSetName $stopThreshold $seedResolution $lengthThreshold $savecL $saveFA $vICCMask $saveB0 $doErosion
+    set directory [LaurenThesisSeedEverywhere $vLMMask $tTensor $dataSetName $stopThreshold $seedResolution $lengthThreshold $savecL $saveFA $vICCMask $saveB0 $doErosion]
 
     # Save our settings
-    set fid [open "TractographySettings_$dataSetName.txt" w]
+    set fid [open [file join $directory "TractographySettings_$dataSetName.txt"] w]
 
     puts $fid "subjectID: $dataSetName"
     puts $fid "seedThreshold: $seedThreshold"
@@ -813,12 +813,14 @@ proc LaurenThesisSeedEverywhere {vSeedMask tTensor dataSetName stopThreshold see
 proc LaurenThesisSeedAndSaveStreamlinesFromSegmentation {t v {filename ""} {savecL 0} {saveFA 0} {vBrainMask -1} {saveB0 0} {doErosion 0} {verbose 0}} {
     global DTMRI Label Tensor Volume
 
+    set returnValue ""
+
     # make sure they are using a segmentation (labelmap)
     if {[Volume($v,node) GetLabelMap] != 1} {
         set name [Volume($v,node) GetName]
         set msg "The volume $name is not a label map (segmented ROI). Continue anyway?"
         if {[tk_messageBox -type yesno -message $msg] == "no"} {
-            return
+            return $returnValue
         }
 
     }
@@ -827,7 +829,7 @@ proc LaurenThesisSeedAndSaveStreamlinesFromSegmentation {t v {filename ""} {save
         # set base filename for all stored files
         set filename [tk_getSaveFile  -title "Save Tracts: Choose Initial Filename"]
         if { $filename == "" } {
-            return
+            return $returnValue
         }
     }
 
@@ -850,12 +852,15 @@ proc LaurenThesisSeedAndSaveStreamlinesFromSegmentation {t v {filename ""} {save
     file mkdir $newdir2
     set filename2 [file join $newdir2 $name]
 
+    # Return the directory we created
+    set returnValue $newdir
+
     # ask for user confirmation first
     if {$verbose == "1"} {
         set name [Volume($v,node) GetName]
         set msg "About to seed streamlines in all labelled voxels of volume $name.  This may take a while, so make sure the Tracts settings are what you want first. Go ahead?"
         if {[tk_messageBox -type yesno -message $msg] == "no"} {
-            return
+            return $returnValue
         }
     }
 
@@ -908,6 +913,9 @@ proc LaurenThesisSeedAndSaveStreamlinesFromSegmentation {t v {filename ""} {save
     }
 
     castVSeedROI Delete
+
+    # return directory name for saving settings file(s)
+    return $returnValue
 }
 
 
