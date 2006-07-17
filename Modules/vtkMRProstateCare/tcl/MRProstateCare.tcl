@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.2 $} {$Date: 2006/07/14 20:05:05 $}]
+        {$Revision: 1.1.2.3 $} {$Date: 2006/07/17 21:19:57 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -135,6 +135,14 @@ proc MRProstateCareInit {} {
     set MRProstateCare(tblPos)       [lindex $MRProstateCare(tblPosList) 0]
     set MRProstateCare(patEntry)     [lindex $MRProstateCare(patEntryList) 0]
     set MRProstateCare(patPos)       [lindex $MRProstateCare(patPosList) 0]
+
+    set MRProstateCare(currentTab) 1 
+    set MRProstateCare(countTarget) 0
+    set MRProstateCare(countSextant) 0
+    set MRProstateCare(countPenn) 0
+
+    # Creates bindings
+    MRProstateCareCreateBindings 
 
 
 }
@@ -201,9 +209,14 @@ proc MRProstateCareBuildGUI {} {
     MainHelpApplyTags MRProstateCare $help
     MainHelpBuildGUI MRProstateCare
 
+    set b $Module(MRProstateCare,bHelp)
+    bind $b <1> "MRProstateCareSetCurrentTab 0" 
+ 
     #-------------------------------------------
     # Server frame
     #-------------------------------------------
+    set b $Module(MRProstateCare,bServer)
+    bind $b <1> "MRProstateCareSetCurrentTab 1" 
     set fServer $Module(MRProstateCare,fServer)
     set f $fServer
 
@@ -243,6 +256,8 @@ proc MRProstateCareBuildGUI {} {
     #-------------------------------------------
     # Template frame
     #-------------------------------------------
+    set b $Module(MRProstateCare,bTemplate)
+    bind $b <1> "MRProstateCareSetCurrentTab 2" 
     set fTemplate $Module(MRProstateCare,fTemplate)
     set f $fTemplate
 
@@ -254,31 +269,30 @@ proc MRProstateCareBuildGUI {} {
     pack $f.fBot -side top -pady 7
 
     set f $fTemplate.fTop
-    set s Template 
-    foreach x "PDate Name ID Step" text \
+    foreach x "PDate PName PID Step" text \
         "{Date} {Patient Name} {Patient ID} {Step}" {
 
        DevAddLabel $f.l$x "${text}:" 
-       eval {entry $f.e$x -textvariable MRProstateCare($s,entry,$x) -width 23} $Gui(WEA)
+       eval {entry $f.e$x -textvariable MRProstateCare(entry,$x) -width 23} $Gui(WEA)
  
        grid $f.l$x $f.e$x -pady 3 -padx 2 -sticky e
        grid $f.e$x -sticky w
     }
-    set MRProstateCare($s,entry,$x) 5.0
+    set MRProstateCare(entry,$x) 5.0
     set var [clock format [clock seconds] -format "%D"]
-    set MRProstateCare($s,entry,PDate) $var 
+    set MRProstateCare(entry,PDate) $var 
  
     set f $fTemplate.fMid
-    DevAddLabel $f.lTitle "RSA coords of corner points:" 
+    DevAddLabel $f.lTitle "RSA coords of the corner points:" 
     grid $f.lTitle -row 0 -column 0 -columnspan 3 -pady 10 -sticky news
 
     foreach x "AR PR PL AL" text \
         "{Anterior  Right} {Posterior Right} {Posterior Left} {Anterior Left}" {
 
        DevAddLabel $f.l$x "${text}:" 
-       eval {entry $f.e$x -textvariable MRProstateCare($s,entry,$x) -width 15} $Gui(WEA)
+       eval {entry $f.e$x -textvariable MRProstateCare(entry,$x) -width 15} $Gui(WEA)
        DevAddButton $f.b$x "Query" "MRProstateCareQuery$x" 5 
-       set MRProstateCare($s,button,$x) $f.b$x
+       set MRProstateCare(button,$x) $f.b$x
  
        grid $f.l$x $f.e$x $f.b$x -pady 3 -padx 2 -sticky e
        grid $f.e$x -sticky w
@@ -286,13 +300,15 @@ proc MRProstateCareBuildGUI {} {
     }
 
     set f $fTemplate.fBot
-    DevAddButton $f.bCheck "Check" "MRProstateCareAcceptTemplateCornerCoords" 10 
+    DevAddButton $f.bCheck "Check" "MRProstateCareCheckTemplate" 10 
     pack $f.bCheck -side top
 
 
     #-------------------------------------------
     # Targets frame
     #-------------------------------------------
+    set b $Module(MRProstateCare,bTargets)
+    bind $b <1> "MRProstateCareSetCurrentTab 3" 
     set fTargets $Module(MRProstateCare,fTargets)
     set f $fTargets
     frame $f.fTop -bg $Gui(activeWorkspace) -relief groove -bd 2 
@@ -304,19 +320,31 @@ proc MRProstateCareBuildGUI {} {
     # Top frame
     #-------------------------
     set f $fTargets.fTop
-    foreach x "1 2" {
+    foreach x "1 2 3" {
         frame $f.f$x -bg $Gui(activeWorkspace) -relief groove -bd 2 
         pack $f.f$x -side top -pady 2 -padx 2 
     }
 
     set f $fTargets.fTop.f1
-    DevAddLabel $f.lTitle "Targets/sextant biopsy positions:"
+    foreach x "Target Sextant Penn" \
+        text "{Add a target} {Add a sextant position} {Add an aux point}" {
+        eval {radiobutton $f.r$x -width 30 -text $text \
+            -variable MRProstateCare(category) -value $x \
+            -relief raised -offrelief raised -overrelief raised \
+            -command "" \
+            -selectcolor white} $Gui(WEA)
+        pack $f.r$x -side top -pady 2 
+    } 
+    $f.rTarget select
+    $f.rTarget configure -state normal 
 
-    set s Targets
-    eval {label $f.ltitle -text "Name:"} $Gui(WLA)
-    eval {entry $f.etitle -width 25 -textvariable MRProstateCare($s,entry,Name)} $Gui(WEA)
+    set f $fTargets.fTop.f2
+    DevAddLabel $f.lTitle "Describe a point:"
+
+    eval {label $f.ltitle -text "Title:"} $Gui(WLA)
+    eval {entry $f.etitle -width 20 -textvariable MRProstateCare(entry,Title)} $Gui(WEA)
     eval {label $f.lonsets -text "Coords (RSA):"} $Gui(WLA)
-    eval {entry $f.eonsets -width 25 -textvariable MRProstateCare($s,entry,Coords)} $Gui(WEA)
+    eval {entry $f.eonsets -width 20 -textvariable MRProstateCare(entry,Coords)} $Gui(WEA)
     DevAddButton $f.bOK "OK" "MRProstateCareAddOrEditTarget" 8 
 
     blt::table $f \
@@ -327,43 +355,45 @@ proc MRProstateCareBuildGUI {} {
         2,1 $f.eonsets -padx 2 -pady 1 -anchor w \
         3,1 $f.bOK -padx 2 -pady 3 -anchor w
 
-    set f $fTargets.fTop.f2
+    set f $fTargets.fTop.f3
     foreach x "Up Down" {
         frame $f.f$x -bg $Gui(activeWorkspace) 
         pack $f.f$x -side top 
     }
 
-    set f $fTargets.fTop.f2.fUp
-    DevAddLabel $f.lTitle "Defined targets/positions:"
+    set f $fTargets.fTop.f3.fUp
+    DevAddLabel $f.lTitle "Defined points:"
     scrollbar $f.vs -orient vertical -bg $Gui(activeWorkspace)
     set MRProstateCare(targetsVerScroll) $f.vs
     listbox $f.lb -height 5 -width 24 -bg $Gui(activeWorkspace) \
         -yscrollcommand {$::MRProstateCare(targetsVerScroll) set}
-    set MRProstateCare(targetsListBox) $f.lb
-    $MRProstateCare(targetsVerScroll) configure -command {$MRProstateCare(targetsListBox) yview}
+    set MRProstateCare(pointListBox) $f.lb
+    $MRProstateCare(targetsVerScroll) configure -command {$MRProstateCare(pointListBox) yview}
 
     blt::table $f \
         0,0 $f.lTitle -padx 10 -pady 7 \
-        1,0 $MRProstateCare(targetsListBox) -padx 2 -pady 1 -fill x \
+        1,0 $MRProstateCare(pointListBox) -padx 2 -pady 1 -fill x \
         1,1 $MRProstateCare(targetsVerScroll) -fill y -padx 2 -pady 1
 
-    set f $fTargets.fTop.f2.fDown
-    DevAddButton $f.bDelete "Delete" "MRProstateCareDeleteTarget" 8 
-    DevAddButton $f.bEdit "Edit" "MRProstateCareShowTargetToEdit" 8 
+    set f $fTargets.fTop.f3.fDown
+    DevAddButton $f.bDelete "Delete" "MRProstateCareDeletePoint" 8 
+    DevAddButton $f.bEdit "Edit" "MRProstateCareShowPointToEdit" 8 
     grid $f.bEdit $f.bDelete -padx 1 -pady 2
 
     #-------------------------
     # Bottom frame
     #-------------------------
     set f $fTargets.fBot
-    DevAddButton $f.bSave "Save" "MRProstateCareSaveUserInput"  10 
-    DevAddButton $f.bRegister "Register" "MRProstateCareRegisterTemplate"  10 
-    DevAddButton $f.bView "View" "MRProstateCareViewResult"  10 
-    grid $f.bSave $f.bRegister $f.bView -padx 1 -pady 5 
+    DevAddButton $f.bLoad "Load" "MRProstateCareLoad"  10 
+    DevAddButton $f.bSave "Save" "MRProstateCareSave"  10 
+    DevAddButton $f.bView "View" "MRProstateCareView"  10 
+    grid $f.bLoad $f.bSave $f.bView -padx 1 -pady 5 
 
     #-------------------------------------------
     # Navigation frame
     #-------------------------------------------
+    set b $Module(MRProstateCare,bNavigation)
+    bind $b <1> "MRProstateCareSetCurrentTab 4" 
     set fNav $Module(MRProstateCare,fNavigation)
     set f $fNav
 
@@ -545,7 +575,7 @@ proc MRProstateCareBuildGUIForLevel2 {parent} {
 
     DevAddLabel $f.lTitle "Displayed images:"
     DevAddLabel $f.lImage1Label "Image 1:"
-    DevAddLabel $f.lImage1Value "realtime"
+    DevAddLabel $f.lImage1Value "Realtime"
 
     # Build pulldown menu for volumes 
     DevAddLabel $f.lVolume "Image 2:"
@@ -636,7 +666,7 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
 
     DevAddLabel $f.lTitle "Displayed images:"
     DevAddLabel $f.lImage1Label "Image 1:"
-    DevAddLabel $f.lImage1Value "realtime"
+    DevAddLabel $f.lImage1Value "Realtime"
 
     # Build pulldown menu for volumes 
     DevAddLabel $f.lVolume "Image 2:"
@@ -700,13 +730,13 @@ proc MRProstateCareSelectTarget {m} {
 
 }
 
-proc MRProstatCareRegisterTemplate {} {
+proc MRProstatCareLoad {} {
     global MRProstateCare 
 
 }
 
 
-proc MRProstateCareSaveUserInput {} {
+proc MRProstateCareSave {} {
     global MRProstateCare 
 
     set fileType {{"Text" *.txt}}
@@ -718,23 +748,110 @@ proc MRProstateCareSaveUserInput {} {
 }
 
 
-proc MRProstateCareShowTargetToEdit {} {
+proc MRProstatCareView {} {
+    global MRProstateCare 
 
 }
 
 
-proc MRProstateCareDeleteTarget {} {
+proc MRProstateCareShowPointToEdit {} {
+    global MRProstateCare 
+
 
 }
 
 
-proc MRProstateCareAddOrEditTarget {} {
+proc MRProstateCareDeletePoint {} {
+    global MRProstateCare 
+
+    set curs [$MRProstateCare(pointListBox) curselection]
+    if {$curs != ""} {
+        set point [$MRProstateCare(pointListBox) get $curs] 
+        if {$point != ""} {
+            $MRProstateCare(pointListBox) delete $curs 
+            set found [lsearch -exact $MRProstateCare(pointList) $point]
+            if {$found >= 0} {
+                lreplace $MRProstateCare(pointList) $found $found
+            }
+        }
+    } else {
+        DevErrorWindow "Select a point to delete."
+    }
+}
+
+
+proc MRProstateCareAddOrEditPoint {} {
+    global MRProstateCare 
+
 
 }
 
 
-proc MRProstateCareAcceptTemplateCornerCoords {} {
+proc MRProstateCareCheckTemplateCornerCoords {} {
+    global MRProstateCare
 
+    # check the user input on Template tab
+
+    # the date field
+    set date $MRProstateCare(entry,PDate)
+    set date [string trim $date]
+    if {$date == ""} {
+        DevErrorWindow "Must have the date set (e.g. 07/15/06)."
+        return
+    }
+
+    # the patient name field
+    set name $MRProstateCare(entry,PName)
+    set name [string trim $name]
+    if {$name == ""} {
+        DevErrorWindow "Must have the patient name set."
+        return
+    }
+
+    # the patient id field
+    set id $MRProstateCare(entry,PID)
+    set id [string trim $id]
+    if {$id == ""} {
+        DevErrorWindow "Must have the patient id set."
+        return
+    }
+
+    # the step field
+    set step $MRProstateCare(entry,Step)
+    set step [string trim $step]
+    if {$step == ""} {
+        DevErrorWindow "Must have the step set."
+        return
+    }
+    if {[ValidateInt $step] == 0 &&
+        [ValidateFloat $step] == 0} {
+        DevErrorWindow "Value of step must be either integer or float."
+        return
+    }
+
+    # corner coordinates
+    foreach x "AR PR PL AL" text \
+        "{anterior  right} {posterior right} {posterior left} {anterior left}" {
+        set v $MRProstateCare(entry,$x)
+        set v [string trim $v]
+        if {$v == ""} {
+            DevErrorWindow "Must have the ${text} corner set."
+            return
+        }
+
+        set vl [split $v " "]
+        if {[llength $vl] != 3} {
+            DevErrorWindow "Input 3 integer/float values for the ${text} corner."
+            return
+        }
+        foreach x $vl {
+            if {[ValidateInt $x] == 0 &&
+                [ValidateFloat $x] == 0} {
+                DevErrorWindow "Input 3 integer/float values for the ${text} corner."
+                return
+            }
+        }
+    }
 }
 
 
@@ -1058,7 +1175,11 @@ proc MRProstateCareBuildVTK {} {
 
 proc MRProstateCareEnter {} {
     global MRProstateCare
-    
+   
+
+    #--- push all event bindings onto the stack.
+    MRProstateCarePushBindings
+
     # Push event manager
     #------------------------------------
     # Description:
@@ -1076,6 +1197,22 @@ proc MRProstateCareEnter {} {
 }
 
 
+proc MRProstateCarePushBindings {} {
+   global Ev Csys
+
+    EvActivateBindingSet MRPCSlice0Events
+    EvActivateBindingSet MRPCSlice1Events
+    EvActivateBindingSet MRPCSlice2Events
+}
+
+proc MRProstateCarePopBindings {} {
+    global Ev Csys
+
+    EvDeactivateBindingSet MRPCSlice0Events
+    EvDeactivateBindingSet MRPCSlice1Events
+    EvDeactivateBindingSet MRPCSlice2Events
+}
+
 #-------------------------------------------------------------------------------
 # .PROC MRProstateCareExit
 # Called when this module is exited by the user.  Pops the event manager
@@ -1085,6 +1222,9 @@ proc MRProstateCareEnter {} {
 #-------------------------------------------------------------------------------
 proc MRProstateCareExit {} {
 
+    # pop event bindings
+    MRProstateCarePopBindings
+
     # Pop event manager
     #------------------------------------
     # Description:
@@ -1093,4 +1233,80 @@ proc MRProstateCareExit {} {
     #   previous ones.
     #
     popEventManager
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MRProstateCareCreateBindings  
+# Creates MRProstateCare event bindings for the three slice windows 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MRProstateCareCreateBindings {} {
+    global Gui Ev
+
+    EvDeclareEventHandler MRProstateCareSlicesEvents <1> \
+        {set xc %x; set yc %y; MRProstateCareProcessMouseEvent $xc $yc}
+
+    EvAddWidgetToBindingSet MRPCSlice0Events \
+        $Gui(fSl0Win) {MRProstateCareSlicesEvents}
+    EvAddWidgetToBindingSet MRPCSlice1Events \
+        $Gui(fSl1Win) {MRProstateCareSlicesEvents}
+    EvAddWidgetToBindingSet MRPCSlice2Events \
+        $Gui(fSl2Win) {MRProstateCareSlicesEvents}    
+}
+
+proc MRProstateCareProcessMouseEvent {x y} {
+    global MRProstateCare Interactor Anno
+
+    if {$MRProstateCare(currentTab) != 3} {
+        # Only on Targets tab are we interested in 
+        # this mouse event.
+        return 
+    }
+
+    # Which slice was picked?
+    set s $Interactor(s)
+    if {$s == ""} {
+        DevErrorWindow "No slice was picked."
+        return
+    }
+
+    # Get RAS and IJK coordinates
+    set R [Anno($s,cur1,mapper) GetInput]
+    set rl [split $R " "]
+    set R [lindex $rl 1]
+
+    set A [Anno($s,cur2,mapper) GetInput]
+    set al [split $A " "]
+    set A [lindex $al 1]
+
+    set S [Anno($s,cur3,mapper) GetInput]
+    set sl [split $S " "]
+    set S [lindex $sl 1]
+
+    # One point
+    set cat $MRProstateCare(category)
+    set count [incr MRProstateCare(count$cat)]
+
+    set MRProstateCare(entry,Title) $cat
+    append MRProstateCare(entry,Title) "_$count"
+    set MRProstateCare(entry,Coords) "$R $S $A"
+
+    # Keep and sort the point in a list
+    set item "$MRProstateCare(entry,Title) : ($MRProstateCare(entry,Coords))"
+    lappend MRProstateCare(pointList) $item
+    set MRProstateCare(pointList) [lsort -dictionary $MRProstateCare(pointList)]  
+
+    # Add it into the list box
+    $MRProstateCare(pointListBox) delete 0 end
+    foreach x $MRProstateCare(pointList) {
+        $MRProstateCare(pointListBox) insert end $x 
+    }
+
+}
+
+proc MRProstateCareSetCurrentTab {index} {
+    global MRProstateCare
+
+    set MRProstateCare(currentTab) $index
 }
