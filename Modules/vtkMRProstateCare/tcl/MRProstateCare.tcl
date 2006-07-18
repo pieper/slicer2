@@ -49,8 +49,8 @@ proc MRProstateCareInit {} {
     #   row2,tab = like row1 
     #
 
-    set Module($m,row1List) "Help Server Template Targets Navigation"
-    set Module($m,row1Name) "{Help} {Server} {Template} {Targets} {Navigation}"
+    set Module($m,row1List) "Help Server Template Points Navigation"
+    set Module($m,row1Name) "{Help} {Server} {Template} {Points} {Navigation}"
     set Module($m,row1,tab) Server 
 
     # Define Procedures
@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.3 $} {$Date: 2006/07/17 21:19:57 $}]
+        {$Revision: 1.1.2.4 $} {$Date: 2006/07/18 17:11:26 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -140,7 +140,8 @@ proc MRProstateCareInit {} {
     set MRProstateCare(countTarget) 0
     set MRProstateCare(countSextant) 0
     set MRProstateCare(countPenn) 0
-
+    set MRProstateCare(editIndex) -1 
+ 
     # Creates bindings
     MRProstateCareCreateBindings 
 
@@ -305,12 +306,12 @@ proc MRProstateCareBuildGUI {} {
 
 
     #-------------------------------------------
-    # Targets frame
+    # Points frame
     #-------------------------------------------
-    set b $Module(MRProstateCare,bTargets)
+    set b $Module(MRProstateCare,bPoints)
     bind $b <1> "MRProstateCareSetCurrentTab 3" 
-    set fTargets $Module(MRProstateCare,fTargets)
-    set f $fTargets
+    set fPoints $Module(MRProstateCare,fPoints)
+    set f $fPoints
     frame $f.fTop -bg $Gui(activeWorkspace) -relief groove -bd 2 
     pack $f.fTop -side top -pady 3 
     frame $f.fBot -bg $Gui(activeWorkspace)
@@ -319,13 +320,13 @@ proc MRProstateCareBuildGUI {} {
     #-------------------------
     # Top frame
     #-------------------------
-    set f $fTargets.fTop
+    set f $fPoints.fTop
     foreach x "1 2 3" {
         frame $f.f$x -bg $Gui(activeWorkspace) -relief groove -bd 2 
         pack $f.f$x -side top -pady 2 -padx 2 
     }
 
-    set f $fTargets.fTop.f1
+    set f $fPoints.fTop.f1
     foreach x "Target Sextant Penn" \
         text "{Add a target} {Add a sextant position} {Add an aux point}" {
         eval {radiobutton $f.r$x -width 30 -text $text \
@@ -338,14 +339,14 @@ proc MRProstateCareBuildGUI {} {
     $f.rTarget select
     $f.rTarget configure -state normal 
 
-    set f $fTargets.fTop.f2
+    set f $fPoints.fTop.f2
     DevAddLabel $f.lTitle "Describe a point:"
 
     eval {label $f.ltitle -text "Title:"} $Gui(WLA)
     eval {entry $f.etitle -width 20 -textvariable MRProstateCare(entry,Title)} $Gui(WEA)
     eval {label $f.lonsets -text "Coords (RSA):"} $Gui(WLA)
     eval {entry $f.eonsets -width 20 -textvariable MRProstateCare(entry,Coords)} $Gui(WEA)
-    DevAddButton $f.bOK "OK" "MRProstateCareAddOrEditTarget" 8 
+    DevAddButton $f.bOK "OK" "MRProstateCareAddOrEditPoint" 8 
 
     blt::table $f \
         0,0 $f.lTitle -padx 2 -pady 7 -fill x -cspan 2 \
@@ -355,27 +356,27 @@ proc MRProstateCareBuildGUI {} {
         2,1 $f.eonsets -padx 2 -pady 1 -anchor w \
         3,1 $f.bOK -padx 2 -pady 3 -anchor w
 
-    set f $fTargets.fTop.f3
+    set f $fPoints.fTop.f3
     foreach x "Up Down" {
         frame $f.f$x -bg $Gui(activeWorkspace) 
         pack $f.f$x -side top 
     }
 
-    set f $fTargets.fTop.f3.fUp
+    set f $fPoints.fTop.f3.fUp
     DevAddLabel $f.lTitle "Defined points:"
     scrollbar $f.vs -orient vertical -bg $Gui(activeWorkspace)
-    set MRProstateCare(targetsVerScroll) $f.vs
-    listbox $f.lb -height 5 -width 24 -bg $Gui(activeWorkspace) \
-        -yscrollcommand {$::MRProstateCare(targetsVerScroll) set}
+    set MRProstateCare(PointsVerScroll) $f.vs
+    listbox $f.lb -height 6 -width 24 -bg $Gui(activeWorkspace) \
+        -yscrollcommand {$::MRProstateCare(PointsVerScroll) set}
     set MRProstateCare(pointListBox) $f.lb
-    $MRProstateCare(targetsVerScroll) configure -command {$MRProstateCare(pointListBox) yview}
+    $MRProstateCare(PointsVerScroll) configure -command {$MRProstateCare(pointListBox) yview}
 
     blt::table $f \
         0,0 $f.lTitle -padx 10 -pady 7 \
         1,0 $MRProstateCare(pointListBox) -padx 2 -pady 1 -fill x \
-        1,1 $MRProstateCare(targetsVerScroll) -fill y -padx 2 -pady 1
+        1,1 $MRProstateCare(PointsVerScroll) -fill y -padx 2 -pady 1
 
-    set f $fTargets.fTop.f3.fDown
+    set f $fPoints.fTop.f3.fDown
     DevAddButton $f.bDelete "Delete" "MRProstateCareDeletePoint" 8 
     DevAddButton $f.bEdit "Edit" "MRProstateCareShowPointToEdit" 8 
     grid $f.bEdit $f.bDelete -padx 1 -pady 2
@@ -383,7 +384,7 @@ proc MRProstateCareBuildGUI {} {
     #-------------------------
     # Bottom frame
     #-------------------------
-    set f $fTargets.fBot
+    set f $fPoints.fBot
     DevAddButton $f.bLoad "Load" "MRProstateCareLoad"  10 
     DevAddButton $f.bSave "Save" "MRProstateCareSave"  10 
     DevAddButton $f.bView "View" "MRProstateCareView"  10 
@@ -451,7 +452,7 @@ proc MRProstateCareBuildGUIForLevel3 {parent} {
     #-------------------------
     set f $parent.fTop
  
-    # Build pulldown menu for all targets 
+    # Build pulldown menu for all Points 
     DevAddLabel $f.lTarget "Current target:"
 
     set tList [list {none}]
@@ -461,7 +462,7 @@ proc MRProstateCareBuildGUIForLevel3 {parent} {
           -indicatoron 1 \
           -menu $f.mbType.m} $Gui(WMBA)
     eval {menu $f.mbType.m} $Gui(WMA)
-    bind $f.mbType <1> "MRProstateCareUpdateTargets"
+    bind $f.mbType <1> "MRProstateCareUpdatePoints"
     
     foreach m $tList  {
         $f.mbType.m add command -label $m \
@@ -542,7 +543,7 @@ proc MRProstateCareBuildGUIForLevel2 {parent} {
     #-------------------------
     set f $parent.fTop
  
-    # Build pulldown menu for all targets 
+    # Build pulldown menu for all Points 
     DevAddLabel $f.lTarget "Current target:"
 
     set tList [list {none}]
@@ -552,7 +553,7 @@ proc MRProstateCareBuildGUIForLevel2 {parent} {
           -indicatoron 1 \
           -menu $f.mbType.m} $Gui(WMBA)
     eval {menu $f.mbType.m} $Gui(WMA)
-    bind $f.mbType <1> "MRProstateCareUpdateTargets"
+    bind $f.mbType <1> "MRProstateCareUpdatePoints"
     
     foreach m $tList  {
         $f.mbType.m add command -label $m \
@@ -633,7 +634,7 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
     #-------------------------
     set f $parent.fTop
  
-    # Build pulldown menu for all targets 
+    # Build pulldown menu for all Points 
     DevAddLabel $f.lTarget "Current target:"
 
     set tList [list {none}]
@@ -643,7 +644,7 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
           -indicatoron 1 \
           -menu $f.mbType.m} $Gui(WMBA)
     eval {menu $f.mbType.m} $Gui(WMA)
-    bind $f.mbType <1> "MRProstateCareUpdateTargets"
+    bind $f.mbType <1> "MRProstateCareUpdatePoints"
     
     foreach m $tList  {
         $f.mbType.m add command -label $m \
@@ -719,7 +720,7 @@ proc MRProstateCareSelectVolume {m} {
 }
 
 
-proc MRProstateCareUpdateTargets {} {
+proc MRProstateCareUpdatePoints {} {
     global MRProstateCare 
 
 }
@@ -730,9 +731,26 @@ proc MRProstateCareSelectTarget {m} {
 
 }
 
-proc MRProstatCareLoad {} {
+proc MRProstateCareLoad {} {
     global MRProstateCare 
 
+    # read data from file
+    set fileType {{"Text" *.txt}}
+    set fileName [tk_getOpenFile -filetypes $fileType -parent .]
+
+    # if user just wanted to cancel
+    if {[string length $fileName] <= 0} {
+        return
+    }
+    
+    set fd [open $fileName r]
+    set data [read $fd]
+    set lines [split $data "\n"]
+    foreach line $lines {
+        set line [string trim $line]
+        eval $line
+    }
+    close $fd
 }
 
 
@@ -742,9 +760,90 @@ proc MRProstateCareSave {} {
     set fileType {{"Text" *.txt}}
     set fileName [tk_getSaveFile -filetypes $fileType -parent .]
 
-    if {[string length $fileName]} {
-        # write data into a file
+    set len [string length $fileName]
+    if {$len == 0} {
+        DevErrorWindow "Specify a file name for writing."
+        return
     }
+    
+    #-------------------------------------------------------
+    # Write user inputs into file which can be loaded later
+    # by clicking the Load button
+    #-------------------------------------------------------
+ 
+    set txt ".txt"
+    set ext [file extension $fileName]
+    if {$ext != $txt} {
+        set fileName "$fileName$txt"
+    }
+
+    # Check the user input before we writing to file
+    MRProstateCareCheckTemplateCornerCoords
+    if {! [info exists MRProstateCare(pointList)] ||
+        ! [llength $MRProstateCare(pointList)]} {
+        DevErrorWindow "No point has been specified."
+        return  
+    }
+
+    set fd [open $fileName w]
+    set comment "# This text file saves the user input. Do not edit it.\n"
+    puts $fd $comment
+
+    set comment "# date"
+    puts $fd $comment
+    set str "set MRProstateCare(entry,PDate) $MRProstateCare(entry,PDate)\n"
+    puts $fd $str
+
+    set comment "# patient name"
+    puts $fd $comment
+    set str "set MRProstateCare(entry,PName) $MRProstateCare(entry,PName)\n"
+    puts $fd $str
+
+    set comment "# patient id"
+    puts $fd $comment
+    set str "set MRProstateCare(entry,PID) $MRProstateCare(entry,PID)\n"
+    puts $fd $str
+
+    set comment "# step"
+    puts $fd $comment
+    set str "set MRProstateCare(entry,Step) $MRProstateCare(entry,Step)\n"
+    puts $fd $str
+
+    set comment "# anterior right"
+    puts $fd $comment
+    set str "set MRProstateCare(entry,AR) \{$MRProstateCare(entry,AR)\}\n"
+    puts $fd $str
+
+    set comment "# posterior right"
+    puts $fd $comment
+    set str "set MRProstateCare(entry,PR) \{$MRProstateCare(entry,PR)\}\n"
+    puts $fd $str
+
+    set comment "# posterior left"
+    puts $fd $comment
+    set str "set MRProstateCare(entry,PL) \{$MRProstateCare(entry,PL)\}\n"
+    puts $fd $str
+
+    set comment "# anterior left"
+    puts $fd $comment
+    set str "set MRProstateCare(entry,AL) \{$MRProstateCare(entry,AL)\}\n"
+    puts $fd $str
+
+    set comment "# the point list"
+    puts $fd $comment
+    set str "set MRProstateCare(pointList) \"\"\n"
+    puts $fd $str
+    set str "\$MRProstateCare(pointListBox) delete 0 end\n"
+    puts $fd $str
+
+    foreach x $MRProstateCare(pointList) {
+        set str "lappend MRProstateCare(pointList) \{$x\}\n"
+        puts $fd $str
+        set str "\$MRProstateCare(pointListBox) insert end \{$x\}\n" 
+        puts $fd $str
+    }
+
+    close $fd
 }
 
 
@@ -757,7 +856,26 @@ proc MRProstatCareView {} {
 proc MRProstateCareShowPointToEdit {} {
     global MRProstateCare 
 
+    set curs [$MRProstateCare(pointListBox) curselection]
+    if {$curs != ""} {
+        set point [$MRProstateCare(pointListBox) get $curs] 
+        if {$point != ""} {
+            set i 0 
+            set i2 [string first ":" $point]
+            set title [string range $point $i [expr $i2-1]] 
+            set rsa [string range $point [expr $i2+3] end-1] 
 
+            set rsa [string trim $rsa]
+            set title [string trim $title]
+
+            set MRProstateCare(entry,Title) $title
+            set MRProstateCare(entry,Coords) $rsa 
+            set MRProstateCare(editIndex) $curs
+       }
+    } else {
+        set MRProstateCare(editIndex) -1 
+        DevErrorWindow "Select a point to edit."
+    }
 }
 
 
@@ -765,15 +883,13 @@ proc MRProstateCareDeletePoint {} {
     global MRProstateCare 
 
     set curs [$MRProstateCare(pointListBox) curselection]
-    if {$curs != ""} {
-        set point [$MRProstateCare(pointListBox) get $curs] 
-        if {$point != ""} {
-            $MRProstateCare(pointListBox) delete $curs 
-            set found [lsearch -exact $MRProstateCare(pointList) $point]
-            if {$found >= 0} {
-                lreplace $MRProstateCare(pointList) $found $found
-            }
-        }
+    if {$curs >= 0} {
+        $MRProstateCare(pointListBox) delete $curs 
+        set size [llength $MRProstateCare(pointList)]
+        set MRProstateCare(pointList) \
+            [lreplace $MRProstateCare(pointList) $curs $curs]
+        set size [llength $MRProstateCare(pointList)]
+ 
     } else {
         DevErrorWindow "Select a point to delete."
     }
@@ -783,7 +899,61 @@ proc MRProstateCareDeletePoint {} {
 proc MRProstateCareAddOrEditPoint {} {
     global MRProstateCare 
 
+    set title $MRProstateCare(entry,Title)
+    set title [string trim $title]
+    if {$title == ""} {
+        DevErrorWindow "Must have the point title set."
+        return
+    }
 
+    set rsa $MRProstateCare(entry,Coords)
+    set rsa [string trim $rsa]
+    if {$rsa == ""} {
+        DevErrorWindow "Must have the point coords (RSA) set."
+        return
+    }
+
+    # Replace multiple spaces in the middle of 
+    # the string by one space
+    regsub -all {( )+} $rsa " " rsa 
+    set vl [split $rsa " "]
+    if {[llength $vl] != 3} {
+        DevErrorWindow "Input 3 integer/float values for the coords."
+        return
+    }
+    foreach x $vl {
+        if {[ValidateInt $x] == 0 &&
+            [ValidateFloat $x] == 0} {
+            DevErrorWindow "Input 3 integer/float values for the coords."
+            return
+        }
+    }
+
+    # remove the old point from the list
+    if {$MRProstateCare(editIndex) >= 0} { 
+        set MRProstateCare(pointList) \
+            [lreplace $MRProstateCare(pointList) \
+            $MRProstateCare(editIndex) \
+            $MRProstateCare(editIndex)]
+    }
+
+    set item "$title : ($rsa)"
+    set index [lsearch -exact $MRProstateCare(pointList) $item]
+    if {$index != -1} { 
+        DevErrorWindow "The point is already added in."
+        return
+    }
+
+    # Keep and sort the new point in the point list
+    lappend MRProstateCare(pointList) $item
+    set MRProstateCare(pointList) \
+        [lsort -dictionary $MRProstateCare(pointList)]  
+
+    # Put the point list into the list box
+    $MRProstateCare(pointListBox) delete 0 end
+    foreach x $MRProstateCare(pointList) {
+        $MRProstateCare(pointListBox) insert end $x 
+    }
 }
 
 
@@ -831,7 +1001,7 @@ proc MRProstateCareCheckTemplateCornerCoords {} {
 
     # corner coordinates
     foreach x "AR PR PL AL" text \
-        "{anterior  right} {posterior right} {posterior left} {anterior left}" {
+        "{anterior right} {posterior right} {posterior left} {anterior left}" {
         set v $MRProstateCare(entry,$x)
         set v [string trim $v]
         if {$v == ""} {
@@ -839,6 +1009,9 @@ proc MRProstateCareCheckTemplateCornerCoords {} {
             return
         }
 
+        # Replace multiple spaces in the middle of 
+        # the string by one space
+        regsub -all {( )+} $v " " v 
         set vl [split $v " "]
         if {[llength $vl] != 3} {
             DevErrorWindow "Input 3 integer/float values for the ${text} corner."
@@ -1259,7 +1432,7 @@ proc MRProstateCareProcessMouseEvent {x y} {
     global MRProstateCare Interactor Anno
 
     if {$MRProstateCare(currentTab) != 3} {
-        # Only on Targets tab are we interested in 
+        # Only on Points tab are we interested in 
         # this mouse event.
         return 
     }
@@ -1271,7 +1444,7 @@ proc MRProstateCareProcessMouseEvent {x y} {
         return
     }
 
-    # Get RAS and IJK coordinates
+    # Get RAS coordinates
     set R [Anno($s,cur1,mapper) GetInput]
     set rl [split $R " "]
     set R [lindex $rl 1]
@@ -1296,13 +1469,11 @@ proc MRProstateCareProcessMouseEvent {x y} {
     set item "$MRProstateCare(entry,Title) : ($MRProstateCare(entry,Coords))"
     lappend MRProstateCare(pointList) $item
     set MRProstateCare(pointList) [lsort -dictionary $MRProstateCare(pointList)]  
-
     # Add it into the list box
     $MRProstateCare(pointListBox) delete 0 end
     foreach x $MRProstateCare(pointList) {
         $MRProstateCare(pointListBox) insert end $x 
     }
-
 }
 
 proc MRProstateCareSetCurrentTab {index} {
