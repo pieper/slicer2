@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.4 $} {$Date: 2006/07/18 17:11:26 $}]
+        {$Revision: 1.1.2.5 $} {$Date: 2006/07/20 18:24:46 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -141,6 +141,7 @@ proc MRProstateCareInit {} {
     set MRProstateCare(countSextant) 0
     set MRProstateCare(countPenn) 0
     set MRProstateCare(editIndex) -1 
+    set MRProstateCare(pointList) "" 
  
     # Creates bindings
     MRProstateCareCreateBindings 
@@ -288,11 +289,11 @@ proc MRProstateCareBuildGUI {} {
     grid $f.lTitle -row 0 -column 0 -columnspan 3 -pady 10 -sticky news
 
     foreach x "AR PR PL AL" text \
-        "{Anterior  Right} {Posterior Right} {Posterior Left} {Anterior Left}" {
+        "{Anterior Right} {Posterior Right} {Posterior Left} {Anterior Left}" {
 
        DevAddLabel $f.l$x "${text}:" 
        eval {entry $f.e$x -textvariable MRProstateCare(entry,$x) -width 15} $Gui(WEA)
-       DevAddButton $f.b$x "Query" "MRProstateCareQuery$x" 5 
+       DevAddButton $f.b$x "Query" "MRProstateCareQuery $x" 5 
        set MRProstateCare(button,$x) $f.b$x
  
        grid $f.l$x $f.e$x $f.b$x -pady 3 -padx 2 -sticky e
@@ -433,6 +434,17 @@ proc MRProstateCareBuildGUI {} {
 
         incr i
     }
+}
+
+
+proc MRProstateCareQuery {field} {
+    global MRProstateCare Locator 
+
+    set r $Locator(px)
+    set a $Locator(py)
+    set s $Locator(pz)
+
+    set MRProstateCare(entry,$field) "$r $s $a"
 }
 
 
@@ -841,6 +853,94 @@ proc MRProstateCareSave {} {
         puts $fd $str
         set str "\$MRProstateCare(pointListBox) insert end \{$x\}\n" 
         puts $fd $str
+    }
+
+    close $fd
+
+    #-------------------------------------------------------
+    # Write user inputs into file for Steve Haker's 
+    # template computation
+    #-------------------------------------------------------
+    set name $MRProstateCare(entry,PName)
+    set name [string trim $name]
+    # replace all spaces in the middle of name
+    regsub -all { +} $name "_" name 
+    # replace all , in the middle of name
+    regsub -all {,+} $name "_" name 
+
+    set dir [file dirname $fileName]
+    set inName $name
+    set outName $name
+    append inName "_in.txt" 
+    append outName "_out.txt" 
+    set inFileName [file join $dir $inName]
+    set outFileName [file join $dir $outName]
+
+    MRProstateCareWrite $inFileName
+
+    vtkProstateCoords pc
+    pc SetFileName 1 $inFileName
+    pc SetFileName 0 $outFileName
+    pc Run
+    pc Delete
+}
+
+
+proc MRProstateCareWrite {fn} {
+    global MRProstateCare 
+
+    set fd [open $fn w]
+    puts $fd "\n\n\n\n\n"
+ 
+    set comment "# This text file saves the user input. Do not edit it.\n"
+    puts $fd $comment
+
+    set name $MRProstateCare(entry,PName)
+    set name [string trim $name]
+    puts $fd "patient_name = $name\n\n"
+
+    set id $MRProstateCare(entry,PID)
+    set id [string trim $id]
+    puts $fd "patient_id = $id\n\n"
+
+    set date $MRProstateCare(entry,PDate)
+    set date [string trim $date]
+    puts $fd "date = $date\n\n\n"
+
+    set v $MRProstateCare(entry,AR)
+    set v [string trim $v]
+    puts $fd "1) Anterior  Right (RSA) = $v\n\n"
+
+    set v $MRProstateCare(entry,PR)
+    set v [string trim $v]
+    puts $fd "2) Posterior Right (RSA) = $v\n\n"
+
+    set v $MRProstateCare(entry,PL)
+    set v [string trim $v]
+    puts $fd "3) Posterior Left  (RSA) = $v\n\n"
+
+    set v $MRProstateCare(entry,AL)
+    set v [string trim $v]
+    puts $fd "4) Anterior  Left  (RSA) = $v\n\n\n"
+
+    set step $MRProstateCare(entry,Step)
+    set step [string trim $step]
+    puts $fd "Step = $step\n\n\n"
+    puts $fd "Points           R       S       A    Col    Row    Depth(cm)\n"
+    puts $fd "-------------------------------------------------------------\n\n"
+
+    foreach x $MRProstateCare(pointList) {
+        if {$x != ""} {
+            set i 0 
+            set i2 [string first ":" $x]
+            set title [string range $x $i [expr $i2-1]] 
+            set rsa [string range $x [expr $i2+3] end-1] 
+
+            set rsa [string trim $rsa]
+            set title [string trim $title]
+
+            puts $fd "$title  $rsa \n\n"
+        }
     }
 
     close $fd
