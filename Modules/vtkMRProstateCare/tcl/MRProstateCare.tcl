@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.5 $} {$Date: 2006/07/20 18:24:46 $}]
+        {$Revision: 1.1.2.6 $} {$Date: 2006/07/20 21:24:55 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -647,7 +647,7 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
     set f $parent.fTop
  
     # Build pulldown menu for all Points 
-    DevAddLabel $f.lTarget "Current target:"
+    DevAddLabel $f.lTarget "Current point:"
 
     set tList [list {none}]
     set df [lindex $tList 0] 
@@ -656,16 +656,15 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
           -indicatoron 1 \
           -menu $f.mbType.m} $Gui(WMBA)
     eval {menu $f.mbType.m} $Gui(WMA)
-    bind $f.mbType <1> "MRProstateCareUpdatePoints"
     
     foreach m $tList  {
         $f.mbType.m add command -label $m \
-            -command "MRProstateCareSelectTarget $m"
+            -command "MRProstateCareSelectPoint $m"
     }
 
     # Save menubutton for config
-    set MRProstateCare(gui,targetButton) $f.mbType
-    set MRProstateCare(gui,targetMenu) $f.mbType.m
+    set MRProstateCare(gui,level1PointButton) $f.mbType
+    set MRProstateCare(gui,level1PointMenu) $f.mbType.m
 
     blt::table $f \
         0,0 $f.lTarget -padx 2 -pady 2 -anchor e \
@@ -738,10 +737,14 @@ proc MRProstateCareUpdatePoints {} {
 }
 
 
-proc MRProstateCareSelectTarget {m} {
+proc MRProstateCareSelectPoint {m} {
     global MRProstateCare 
 
+    # configure menubutton
+    $MRProstateCare(gui,level1PointButton) config -text $m 
+    set MRProstateCare(currentPoint) $m
 }
+
 
 proc MRProstateCareLoad {} {
     global MRProstateCare 
@@ -875,6 +878,7 @@ proc MRProstateCareSave {} {
     append outName "_out.txt" 
     set inFileName [file join $dir $inName]
     set outFileName [file join $dir $outName]
+    set MRProstateCare(outFileName) $outFileName
 
     MRProstateCareWrite $inFileName
 
@@ -947,11 +951,97 @@ proc MRProstateCareWrite {fn} {
 }
 
 
-proc MRProstatCareView {} {
+proc MRProstateCareView {} {
     global MRProstateCare 
 
+    if {! [info exists MRProstateCare(outFileName)] ||
+        ! [file exists $MRProstateCare(outFileName)]} {
+        puts "Output file doesn't exist: $MRProstateCare(outFileName)"
+        return
+    }
+ 
+    if {! [info exists MRProstateCare(newID)]} {
+        set MRProstateCare(newID) 0
+    }
+    incr MRProstateCare(newID)
+
+    set txt "<H3>Point coords with respect to the template</H3>"
+    append txt "<P>\n"
+
+    set fd [open $MRProstateCare(outFileName) r]
+    set data [read $fd]
+    close $fd
+
+    set lines [split $data "\n"]
+    set isPreEmpty 0
+    foreach line $lines {
+        set line [string trim $line]
+        if {$line != "" || ($line == "" && ! $isPreEmpty)} {
+            append txt "<BR>\n"
+            append txt $line
+
+            set isPreEmpty [expr {$line == "" ? 1 : 0}]
+        }
+    }
+
+    MRProstateCareCreateTextPopup infowin$MRProstateCare(newID) \
+        "Point Coords" 400 100 25 $txt
 }
 
+
+proc MRProstateCareCreateTextPopup {topicWinName title x y textBoxHit txt} {
+    set w .w$topicWinName
+    #--- if .w$topicWinName exists,
+    #--- destroy it, and create a new one
+    #--- containing new requested text.
+    if { [info exists $w] } {
+        -command "destroy $w"
+    }
+    
+    #--- format text.
+    regsub -all "\n" $txt {} txt
+    DevApplyTextTags $txt
+    if { ![info exists ::Dev(TextFormat,tagList)] } {
+        set ::Dev(TextFormat,tagList) ""
+    }
+    
+    #--- create popup window and configure
+    toplevel $w -class Dialog -background #FFFFFF
+    wm title $w $title
+    wm iconname $w Dialog
+    wm geometry $w +$x+$y
+    focus $w
+
+    set dismissButtonHit 4
+    set minWinHit [ expr $textBoxHit + $dismissButtonHit ]
+    wm minsize $w 40 $minWinHit
+    frame $w.fMsg -background #FFFFFF
+    frame $w.fButton -background #FFFFFF
+    pack $w.fMsg -fill both -expand true
+    pack $w.fButton -side top -pady 4 -padx 4
+
+    #--- make scrolled text widget to contain text
+    set f $w.fMsg
+    set helpt [ text $f.tMessage -height $textBoxHit -width 35 -setgrid true -wrap word \
+                -yscrollcommand "$f.sy set" -cursor arrow -insertontime 0 -bg #FFFFFF ]
+    scrollbar $f.sy -orient vert -command "$f.tMessage yview" -background #DDDDDD \
+                    -activebackground #DDDDDD
+    pack $f.sy -side right -anchor e -fill y
+    pack $f.tMessage -side left -fill both -expand true -padx 4 -pady 4
+    
+    #--- make button to dismiss the window
+    set f $w.fButton
+    button $f.bDismiss -text "close" -width 6 -bg #DDDDDD \
+        -command "destroy $w"
+    pack $f.bDismiss -padx 4 -pady 4 -side bottom
+    
+    #--- set the font to be 10 point helvetica
+    $f.bDismiss config -font "-Adobe-Helvetica-Normal-R-Normal-*-10-*-*-*-*-*-*-*"
+
+    #--- insert the text and raise window.
+    DevInsertPopupText $helpt
+#    DevRaisePopup $w
+}
 
 proc MRProstateCareShowPointToEdit {} {
     global MRProstateCare 
@@ -1580,4 +1670,23 @@ proc MRProstateCareSetCurrentTab {index} {
     global MRProstateCare
 
     set MRProstateCare(currentTab) $index
+
+    if {$index == 4} {
+        # Inside the Navigation tab update the point list
+        $MRProstateCare(gui,level1PointMenu) delete 0 end 
+        set size [llength $MRProstateCare(pointList)]
+        if {$size == 0} {
+            MRProstateCareSelectPoint none
+            $MRProstateCare(gui,level1PointMenu) add command -label none \
+                -command "MRProstateCareSelectPoint none"
+        } else {
+            foreach x $MRProstateCare(pointList) {
+                $MRProstateCare(gui,level1PointMenu) add command \
+                    -label $x \
+                    -command "MRProstateCareSelectPoint \{$x\}"
+            }
+            set x [lindex $MRProstateCare(pointList) 0]
+            MRProstateCareSelectPoint "$x" 
+        }
+    }
 }
