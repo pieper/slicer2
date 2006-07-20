@@ -58,6 +58,7 @@ IF (VTKMRPROSTATECARE_CAN_BUILD)
   #
 
   SUBDIRS (
+    lib
     cxx
   )
 
