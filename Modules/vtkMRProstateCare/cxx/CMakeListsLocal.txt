@@ -20,26 +20,29 @@ ENDIF(USE_ITK_FILE)
 
 INCLUDE_DIRECTORIES(
         ${VTKSLICERBASE_SOURCE_DIR}/cxx 
+        ${VTKMRPROSTATECARE_SOURCE_DIR}/lib
 )
 
 SET(MRPROSTATECARE_LOCAL_LIBS
+    coords
 )
 
 # note: - SET replaced SOURCE_FILES for cmake 1.6
 SET(LOCAL_MODULE_SRCS
-vtkMultipleInputsImageFilter.cxx
-
+vtkProstateCoords.cxx
 )
 
+## classes that one does not want tcl wrapped
+SET (LOCAL_NO_WRAP_SRCS
+)
 
 # Place names of abstract class implementations here. No file suffixes.
 # Comment this out if there are no abstracts.
 
 # replaced ABSTRACT_FILES from cmake before 1.6
-SET_SOURCE_FILES_PROPERTIES (
-vtkMultipleInputsImageFilter.cxx
-ABSTRACT
-)
+# SET_SOURCE_FILES_PROPERTIES (
+# ABSTRACT
+#)
 
 #### if you code depends on SlicerBase, uncomment the 
 #### INCLUDE_DIRECTORIES and LINK_LIBRARIES
