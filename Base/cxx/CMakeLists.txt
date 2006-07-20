@@ -55,6 +55,7 @@ SET (Base_SRCS
 	vtkImageDijkstra.cxx vtkDataSetToLabelMap.cxx
     # for the Twin module
     vtkXDisplayWindow.cxx
+    vtkMrmlModuleNode.cxx
 )
 
 # vtkImageWeightedSum was added to VTK at 5.1, don't compile our copy unless it's not in VTK
