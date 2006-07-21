@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.6 $} {$Date: 2006/07/20 21:24:55 $}]
+        {$Revision: 1.1.2.7 $} {$Date: 2006/07/21 16:02:14 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -430,7 +430,7 @@ proc MRProstateCareBuildGUI {} {
         $f.tsNotebook tab configure $t -activebackground $::Gui(activeWorkspace)
         $f.tsNotebook tab configure $t -selectbackground $::Gui(activeWorkspace)
         $f.tsNotebook tab configure $t -background $::Gui(activeWorkspace)
-        $f.tsNotebook tab configure $t -fill both -padx $::Gui(pad) -pady 1 
+        $f.tsNotebook tab configure $t -fill both -padx 2 -pady 1 
 
         incr i
     }
@@ -465,7 +465,7 @@ proc MRProstateCareBuildGUIForLevel3 {parent} {
     set f $parent.fTop
  
     # Build pulldown menu for all Points 
-    DevAddLabel $f.lTarget "Current target:"
+    DevAddLabel $f.lPosition "Current target:"
 
     set tList [list {none}]
     set df [lindex $tList 0] 
@@ -474,7 +474,6 @@ proc MRProstateCareBuildGUIForLevel3 {parent} {
           -indicatoron 1 \
           -menu $f.mbType.m} $Gui(WMBA)
     eval {menu $f.mbType.m} $Gui(WMA)
-    bind $f.mbType <1> "MRProstateCareUpdatePoints"
     
     foreach m $tList  {
         $f.mbType.m add command -label $m \
@@ -486,7 +485,7 @@ proc MRProstateCareBuildGUIForLevel3 {parent} {
     set MRProstateCare(gui,targetMenu) $f.mbType.m
 
     blt::table $f \
-        0,0 $f.lTarget -padx 2 -pady 2 -anchor e \
+        0,0 $f.lPosition -padx 2 -pady 2 -anchor e \
         0,1 $f.mbType -fill x -padx 2 -pady 2 -anchor w
 
 
@@ -494,7 +493,7 @@ proc MRProstateCareBuildGUIForLevel3 {parent} {
     # Mid frame
     #-------------------------
     set f $parent.fMid
-
+ 
     DevAddLabel $f.lTitle "Displayed images:"
     DevAddLabel $f.lImage1Label "Image 1:"
     DevAddLabel $f.lImage1Value "Realtime"
@@ -635,7 +634,7 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
 
     set f $parent
     frame $f.fTop -bg $Gui(activeWorkspace)
-    pack $f.fTop -side top -pady 3 
+    pack $f.fTop -side top -pady 0 
     frame $f.fMid -bg $Gui(activeWorkspace) -relief groove -bd 2 
     pack $f.fMid -side top -pady 3 
     frame $f.fBot -bg $Gui(activeWorkspace)
@@ -647,12 +646,12 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
     set f $parent.fTop
  
     # Build pulldown menu for all Points 
-    DevAddLabel $f.lTarget "Current point:"
+    DevAddLabel $f.lPosition "Select a point:"
 
     set tList [list {none}]
     set df [lindex $tList 0] 
     eval {menubutton $f.mbType -text $df \
-          -relief raised -bd 2 -width 18 \
+          -relief raised -bd 2 -width 29 \
           -indicatoron 1 \
           -menu $f.mbType.m} $Gui(WMBA)
     eval {menu $f.mbType.m} $Gui(WMA)
@@ -667,8 +666,8 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
     set MRProstateCare(gui,level1PointMenu) $f.mbType.m
 
     blt::table $f \
-        0,0 $f.lTarget -padx 2 -pady 2 -anchor e \
-        0,1 $f.mbType -fill x -padx 2 -pady 2 -anchor w
+        0,0 $f.lPosition -padx 2 -pady 4 \
+        1,0 $f.mbType -fill x -padx 1 -pady 2 
 
 
     #-------------------------
@@ -698,8 +697,8 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
     }
 
     # Save menubutton for config
-    set MRProstateCare(gui,volumeButton) $f.mbType
-    set MRProstateCare(gui,volumeMenu) $f.mbType.m
+    set MRProstateCare(gui,level1VolumeButton) $f.mbType
+    set MRProstateCare(gui,level1VolumeMenu) $f.mbType.m
 
     blt::table $f \
         0,0 $f.lTitle -padx 2 -pady 2 -cspan 2 \
@@ -725,12 +724,6 @@ proc MRProstateCareUpdateVolumes {} {
 }
 
 
-proc MRProstateCareSelectVolume {m} {
-    global MRProstateCare 
-
-}
-
-
 proc MRProstateCareUpdatePoints {} {
     global MRProstateCare 
 
@@ -743,6 +736,21 @@ proc MRProstateCareSelectPoint {m} {
     # configure menubutton
     $MRProstateCare(gui,level1PointButton) config -text $m 
     set MRProstateCare(currentPoint) $m
+}
+
+
+proc MRProstateCareSelectVolume {v} {
+    global MRProstateCare Volume 
+
+    set name [Volume($v,node) GetName] 
+
+    # configure menubutton
+    $MRProstateCare(gui,level1VolumeButton) config -text $name 
+    set MRProstateCare(currentVolume) $v
+
+    MainSlicesSetVolumeAll Back $v
+    MainVolumesSetActive $v
+    MainVolumesRender
 }
 
 
@@ -1539,6 +1547,7 @@ proc MRProstateCareBuildVTK {} {
 proc MRProstateCareEnter {} {
     global MRProstateCare
    
+    MRProstateCareUpdateNavigationTab
 
     #--- push all event bindings onto the stack.
     MRProstateCarePushBindings
@@ -1672,21 +1681,38 @@ proc MRProstateCareSetCurrentTab {index} {
     set MRProstateCare(currentTab) $index
 
     if {$index == 4} {
-        # Inside the Navigation tab update the point list
-        $MRProstateCare(gui,level1PointMenu) delete 0 end 
-        set size [llength $MRProstateCare(pointList)]
-        if {$size == 0} {
-            MRProstateCareSelectPoint none
-            $MRProstateCare(gui,level1PointMenu) add command -label none \
-                -command "MRProstateCareSelectPoint none"
-        } else {
-            foreach x $MRProstateCare(pointList) {
-                $MRProstateCare(gui,level1PointMenu) add command \
-                    -label $x \
-                    -command "MRProstateCareSelectPoint \{$x\}"
-            }
-            set x [lindex $MRProstateCare(pointList) 0]
-            MRProstateCareSelectPoint "$x" 
-        }
+        MRProstateCareUpdateNavigationTab
     }
 }
+
+proc MRProstateCareUpdateNavigationTab {} {
+    global MRProstateCare Volume
+
+    # Inside the Navigation tab update the point list
+    $MRProstateCare(gui,level1PointMenu) delete 0 end 
+    set size [llength $MRProstateCare(pointList)]
+    if {$size == 0} {
+        MRProstateCareSelectPoint none
+        $MRProstateCare(gui,level1PointMenu) add command -label none \
+            -command "MRProstateCareSelectPoint none"
+    } else {
+        foreach x $MRProstateCare(pointList) {
+            $MRProstateCare(gui,level1PointMenu) add command \
+                -label $x \
+                -command "MRProstateCareSelectPoint \{$x\}"
+        }
+        set x [lindex $MRProstateCare(pointList) 0]
+        MRProstateCareSelectPoint "$x" 
+    }
+
+    # Inside the Navigation tab update the volume list
+    # for image2
+    $MRProstateCare(gui,level1VolumeMenu) delete 0 end 
+    foreach v $Volume(idList) {
+        $MRProstateCare(gui,level1VolumeMenu) add command \
+            -label [Volume($v,node) GetName] \
+            -command "MRProstateCareSelectVolume $v"
+    }
+}
+
+
