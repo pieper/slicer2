@@ -62,7 +62,7 @@ Authors: Michael McKenna, David Small, Steve Pieper.
 #include "vtkCollection.h"
 
 
-vtkCxxRevisionMacro(vtkTextureFont, "$Revision: 1.1 $");
+vtkCxxRevisionMacro(vtkTextureFont, "$Revision: 1.1.2.1 $");
 vtkStandardNewMacro(vtkTextureFont);
 
 
@@ -357,7 +357,7 @@ vtkTextureFont *vtkTextureFont::filter_image(unsigned char *src, unsigned char *
     
     if (filter > max_filter) filter = max_filter;
     
-    maxdist = (int) (2*sqrt(filter*filter + filter*filter));
+    maxdist = (int) (2*sqrt((float)(filter*filter + filter*filter)));
     
     div = 0;
     count = 0;
@@ -366,7 +366,7 @@ vtkTextureFont *vtkTextureFont::filter_image(unsigned char *src, unsigned char *
     for(yy=-filter; yy<filter; yy++) {
         for(xx=-filter; xx<filter; xx++) {
             count++;
-            *kernal_ptr = maxdist - (int) (2*sqrt(xx*xx + yy*yy));
+            *kernal_ptr = maxdist - (int) (2*sqrt((float)(xx*xx + yy*yy)));
             div += *kernal_ptr;
             kernal_ptr++;
         }
