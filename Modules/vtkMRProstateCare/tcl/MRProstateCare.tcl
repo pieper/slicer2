@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.7 $} {$Date: 2006/07/21 16:02:14 $}]
+        {$Revision: 1.1.2.8 $} {$Date: 2006/07/21 20:03:47 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -405,7 +405,7 @@ proc MRProstateCareBuildGUI {} {
 
     #--- notebook configure
     $f.tsNotebook configure -width 250
-    $f.tsNotebook configure -height 310 
+    $f.tsNotebook configure -height 350 
     $f.tsNotebook configure -background $::Gui(activeWorkspace)
     $f.tsNotebook configure -activebackground $::Gui(activeWorkspace)
     $f.tsNotebook configure -selectbackground $::Gui(activeWorkspace)
@@ -633,17 +633,30 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
     global MRProstateCare Gui 
 
     set f $parent
-    frame $f.fTop -bg $Gui(activeWorkspace)
-    pack $f.fTop -side top -pady 0 
-    frame $f.fMid -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.fMid -side top -pady 3 
-    frame $f.fBot -bg $Gui(activeWorkspace)
-    pack $f.fBot -side top -pady 3 
+    frame $f.f1 -bg $Gui(activeWorkspace) 
+    pack $f.f1 -side top -pady 0 
+    frame $f.f2 -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    pack $f.f2 -side top -pady 3 
+    frame $f.f3 -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    pack $f.f3 -side top -pady 3 
+    frame $f.f4 -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    pack $f.f4 -side top -pady 3 
+    frame $f.f5 -bg $Gui(activeWorkspace)
+    pack $f.f5 -side top -pady 3 
 
     #-------------------------
-    # Top frame
+    # Frame 1 
     #-------------------------
-    set f $parent.fTop
+    set f $parent.f1
+    DevAddLabel $f.lPatient "Patient name:"
+    DevAddLabel $f.lPatName "None"
+    grid $f.lPatient $f.lPatName -padx 5 -pady 5 
+    set MRProstateCare(patientNameLabel) $f.lPatName
+
+    #-------------------------
+    # Frame 2 
+    #-------------------------
+    set f $parent.f2
  
     # Build pulldown menu for all Points 
     DevAddLabel $f.lPosition "Select a point:"
@@ -651,7 +664,7 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
     set tList [list {none}]
     set df [lindex $tList 0] 
     eval {menubutton $f.mbType -text $df \
-          -relief raised -bd 2 -width 29 \
+          -relief raised -bd 2 -width 28 \
           -indicatoron 1 \
           -menu $f.mbType.m} $Gui(WMBA)
     eval {menu $f.mbType.m} $Gui(WMA)
@@ -667,13 +680,33 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
 
     blt::table $f \
         0,0 $f.lPosition -padx 2 -pady 4 \
-        1,0 $f.mbType -fill x -padx 1 -pady 2 
+        1,0 $f.mbType -fill x -padx 3 -pady 3 
+
+    #-------------------------
+    # Frame 3
+    #-------------------------
+    set f $parent.f3
+    DevAddLabel $f.lTitle "Image orientation:"
+ 
+    foreach x "Axial Sagittal Coronal" \
+        text "{Axial} {Sagittal} {Coronal}" {
+        eval {radiobutton $f.r$x -width 7 -text $text \
+            -variable MRProstateCare(orientation) -value $x \
+            -relief raised -offrelief raised -overrelief raised \
+            -command "" \
+            -selectcolor white} $Gui(WEA)
+    } 
+    $f.rAxial select
+    $f.rAxial configure -state normal 
+
+    grid $f.lTitle -row 0 -column 0 -columnspan 3 -pady 5 -sticky news
+    grid $f.rAxial $f.rSagittal $f.rCoronal -pady 2 -padx 1 
 
 
     #-------------------------
-    # Mid frame
+    # Frame 4 
     #-------------------------
-    set f $parent.fMid
+    set f $parent.f4
 
     DevAddLabel $f.lTitle "Displayed images:"
     DevAddLabel $f.lImage1Label "Image 1:"
@@ -705,13 +738,13 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
         1,0 $f.lImage1Label -padx 2 -pady 2 -anchor e \
         1,1 $f.lImage1Value -fill x -padx 2 -pady 2 -anchor w \
         2,0 $f.lVolume -padx 2 -pady 2 -anchor e \
-        2,1 $f.mbType -fill x -padx 2 -pady 2 -anchor w
+        2,1 $f.mbType -fill x -padx 3 -pady 3 -anchor w
 
  
     #-------------------------
-    # Bot frame
+    # Frame 5 
     #-------------------------
-    set f $parent.fBot
+    set f $parent.f5
     DevAddButton $f.bStart "Start" "MRProstateCareStartNav"  10 
     DevAddButton $f.bStop "Stop" "MRProstateCareStopNav"  10 
     grid $f.bStart $f.bStop -padx 1 -pady 5 
@@ -964,7 +997,7 @@ proc MRProstateCareView {} {
 
     if {! [info exists MRProstateCare(outFileName)] ||
         ! [file exists $MRProstateCare(outFileName)]} {
-        puts "Output file doesn't exist: $MRProstateCare(outFileName)"
+        DevErrorWindow "Output file doesn't exist."
         return
     }
  
@@ -1687,6 +1720,14 @@ proc MRProstateCareSetCurrentTab {index} {
 
 proc MRProstateCareUpdateNavigationTab {} {
     global MRProstateCare Volume
+
+    # Update patient name
+    set pname [string trim $MRProstateCare(entry,PName)]
+    if {$pname == ""} {
+        $MRProstateCare(patientNameLabel) config -text None 
+    } else {
+        $MRProstateCare(patientNameLabel) config -text $pname 
+    }
 
     # Inside the Navigation tab update the point list
     $MRProstateCare(gui,level1PointMenu) delete 0 end 
