@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkStreamlineConvolve.cxx,v $
-  Date:      $Date: 2006/03/06 21:07:30 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/07/24 15:32:18 $
+  Version:   $Revision: 1.8 $
 =========================================================================auto=*/
 
 #include "vtkStreamlineConvolve.h"
@@ -22,7 +22,7 @@
 #include "vtkPolyData.h"
 #include "math.h"
 
-vtkCxxRevisionMacro(vtkStreamlineConvolve, "$Revision: 1.7 $");
+vtkCxxRevisionMacro(vtkStreamlineConvolve, "$Revision: 1.8 $");
 vtkStandardNewMacro(vtkStreamlineConvolve);
 
 // Construct with lower threshold=0, upper threshold=1, and threshold 
@@ -270,7 +270,7 @@ void vtkStreamlineConvolveExecute(vtkStreamlineConvolve *self,
     if (inPtr == NULL) {
        //Point outside buffer. Set result to zero
        outScalars->SetValue(ptId,0.0);
-       break;
+       continue;
     }   
         
     // loop through neighborhood pixels
