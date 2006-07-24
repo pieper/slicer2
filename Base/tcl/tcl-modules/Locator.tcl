@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2006/05/23 19:47:23 $
-#   Version:   $Revision: 1.38.12.2.2.3 $
+#   Date:      $Date: 2006/07/24 20:35:48 $
+#   Version:   $Revision: 1.38.12.2.2.4 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -89,7 +89,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.3 $} {$Date: 2006/05/23 19:47:23 $}]
+        {$Revision: 1.38.12.2.2.4 $} {$Date: 2006/07/24 20:35:48 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -118,7 +118,7 @@ proc LocatorInit {} {
     set Locator(guideSteps) 5 ;# only settable at startup time
     set Locator(normalLen) 100
     set Locator(transverseLen) 25
-    set Locator(radius) 3.0
+    set Locator(radius) 1.5 
     set Locator(normalOffset) 0
     set Locator(transverseOffset) 0
     set Locator(crossOffset) 0
@@ -264,6 +264,25 @@ proc LocatorBuildVTK {} {
         eval [${actor}Actor GetProperty] SetColor $Locator(diffuseColor)
         ${actor}Actor SetUserMatrix Locator(normalMatrix)
 
+    # On the locator, we show the location of 
+    # the opening of the biopsy needle.
+    # The opening starts 5 mm away from the tip 
+    # and it's 10 mm long.
+    set actor opening 
+    MakeVTKObject Cylinder $actor
+        ${actor}Source SetRadius $Locator(radius) 
+        ${actor}Source SetHeight 10.
+        # expr {$Locator(normalLen) / -2.0 + 3.64} is 
+        # the tip location. Adding 5 mm moves the opening
+        # to the right place.
+        ${actor}Actor SetPosition 0 \
+                                  [expr $Locator(normalLen) / -2. + 3.64 + 5.0] \
+                                  0
+        # 1.0 1.0 0.0 = yellow
+        eval [${actor}Actor GetProperty] SetColor "1.0 1.0 0.0"
+        ${actor}Actor SetUserMatrix Locator(normalMatrix)
+        lappend Locator(actors) $actor
+
     for {set i 0} {$i < $::Locator(guideSteps)} {incr i} {
         set actor guide$i
         MakeVTKObject Cylinder ${actor}
@@ -285,7 +304,7 @@ proc LocatorBuildVTK {} {
     
     set actor tip
     MakeVTKObject Sphere ${actor}
-        ${actor}Source SetRadius [expr 1.5 * $Locator(radius)] 
+        ${actor}Source SetRadius [expr 1.0 * $Locator(radius)] 
         eval [${actor}Actor GetProperty] SetColor $Locator(diffuseColor)
         ${actor}Actor SetUserMatrix Locator(tipMatrix)
     
@@ -1014,7 +1033,11 @@ proc LocatorSetColor {{value ""}} {
 
     set Locator(diffuseColor) "$Locator(red) $Locator(green) $Locator(blue)"
     foreach actor $Locator(actors) {
-        eval [${actor}Actor GetProperty] SetColor $Locator(diffuseColor)
+        if {$actor == "opening"} {
+            eval [${actor}Actor GetProperty] SetColor "1.0 1.0 0.0" 
+        } else {
+            eval [${actor}Actor GetProperty] SetColor $Locator(diffuseColor)
+        }
     }
 
     foreach slider "Red Green Blue" {
@@ -1048,7 +1071,7 @@ proc LocatorSetSize {} {
     normalSource SetHeight $Locator(normalLen)
     transverseSource SetRadius $Locator(radius) 
     transverseSource SetHeight [expr $Locator(transverseLen)]
-    tipSource SetRadius [expr 1.5 * $Locator(radius)] 
+    tipSource SetRadius [expr 1.0 * $Locator(radius)] 
 }
 
 #-------------------------------------------------------------------------------
