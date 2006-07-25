@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.cxx,v $
-  Date:      $Date: 2006/02/15 19:47:41 $
-  Version:   $Revision: 1.9.2.2 $
+  Date:      $Date: 2006/07/25 14:03:39 $
+  Version:   $Revision: 1.9.2.2.2.1 $
 
 =========================================================================auto=*/
 
@@ -55,6 +55,8 @@ vtkSeedTracts::vtkSeedTracts()
   this->InputROIValue = -1;
   this->InputMultipleROIValues = NULL;
   this->InputROI2 = NULL;
+  this->IsotropicSeeding = 0;
+  this->IsotropicSeedingResolution = 2;
 
   // if the user doesn't set these they will be ignored
   this->VtkHyperStreamlineSettings=NULL;
@@ -72,6 +74,7 @@ vtkSeedTracts::vtkSeedTracts()
   // Streamline parameters for all streamlines
   this->IntegrationDirection = VTK_INTEGRATE_BOTH_DIRECTIONS;
 
+  this->MinimumPathLength = 15;
 }
 
 //----------------------------------------------------------------------------
@@ -85,7 +88,7 @@ vtkSeedTracts::~vtkSeedTracts()
   // volumes
   if (this->InputTensorField) this->InputTensorField->Delete();
   if (this->InputROI) this->InputROI->Delete();
-  if (this->InputROI2) this->InputROI->Delete();
+  if (this->InputROI2) this->InputROI2->Delete();
 
   // settings
   if (this->VtkHyperStreamlineSettings) 
@@ -755,7 +758,7 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
                           short *tmp = (short *) this->InputROI2->GetScalarPointer(pt);
                           if (tmp != NULL)
                             {
-                              if (*tmp > 0) {
+                              if (*tmp == this->InputROI2Value) {
                                 intersects = 1;
                               }
                             }
@@ -797,19 +800,15 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
 // Seed each streamline, cause it to Update, save its info to disk
 // and then Delete it.  This is a way to seed in the whole brain
 // without running out of memory. Nothing is displayed in the renderers.
-// Some defaults for deciding when to save (min length) are hard-coded
-// here for now.
 //----------------------------------------------------------------------------
 void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *modelFilename)
 {
-  int idxX, idxY, idxZ;
-  int maxX, maxY, maxZ;
-  int inIncX, inIncY, inIncZ;
+  float idxX, idxY, idxZ;
+  float maxX, maxY, maxZ;
+  float gridIncX, gridIncY, gridIncZ;
   int inExt[6];
   double point[3], point2[3];
-  unsigned long count = 0;
-  unsigned long target;
-  int count2 = 0;
+
   short *inPtr;
   vtkHyperStreamlineDTMRI *newStreamline;
   vtkTransform *transform;
@@ -865,8 +864,10 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   // leaving them in scaled IJK. This way the output
   // can be transformed into Lilla Zollei's coordinate
   // system so we can use her registration.
+  // Also we save the world to scaled IJK transform,
+  // now that paths are stored in world coords.
+
   // Open file
-  // Save all points to the same text file.
   fileNameStr << pointsFilename << ".coords";
   fileCoordinateSystemInfo.open(fileNameStr.str().c_str());
   if (fileCoordinateSystemInfo.fail())
@@ -885,13 +886,21 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   fileCoordinateSystemInfo << "voxel dimensions of tensor volume" << endl; 
   this->InputTensorField->GetSpacing(spacing);
   fileCoordinateSystemInfo << spacing[0] << " " << spacing[1] << " " << spacing[2] << endl;
-  
+  fileCoordinateSystemInfo << "world to scaled IJK transform" << endl; 
+  for (int idxI = 0; idxI < 4; idxI++)
+    {
+      for (int idxJ = 0; idxJ < 4; idxJ++)
+        {
+          fileCoordinateSystemInfo << this->WorldToTensorScaledIJK->GetMatrix()->GetElement(idxI,idxJ) << " ";
+        }
+    }
+  fileCoordinateSystemInfo << endl;
+
   writer = vtkPolyDataWriter::New();
 
   // currently this filter is not multithreaded, though in the future 
   // it could be (especially if it inherits from an image filter class)
   this->InputROI->GetWholeExtent(inExt);
-  this->InputROI->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
 
   // find the region to loop over
   maxX = inExt[1] - inExt[0];
@@ -901,7 +910,25 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   //cout << "Dims: " << maxX << " " << maxY << " " << maxZ << endl;
   //cout << "Incr: " << inIncX << " " << inIncY << " " << inIncZ << endl;
 
-
+  // If we are iterating over a non-voxel (isotropic) grid, change the increments
+  // to reflect this.  So we want to iterate in voxel (IJK) space still, but with
+  // increments corresponding to the desired seed resolution.  The points are
+  // then converted to world space and to tensor IJK for seeding.  So for example if
+  // we want to seed at 2mm resolution, and in the x direction the voxel size is 0.85
+  // mm, then we want the increment of 2/0.85 = 2.35 voxel units in the x direction.
+  if (this->IsotropicSeeding) 
+    {
+      gridIncX = this->IsotropicSeedingResolution/spacing[0];
+      gridIncY = this->IsotropicSeedingResolution/spacing[1];
+      gridIncZ = this->IsotropicSeedingResolution/spacing[2];
+    } 
+  else 
+    {
+      gridIncX = 1;
+      gridIncY = 1;
+      gridIncZ = 1;
+    }
+  
   // Save all points to the same text file.
   fileNameStr.str("");
   fileNameStr << pointsFilename << ".3dpts";
@@ -916,34 +943,28 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
       return;
     }                   
 
-  // for progress notification
-  target = (unsigned long)((maxZ+1)*(maxY+1)/50.0);
-  target++;
-
-  // start point in input integer field
-  inPtr = (short *) this->InputROI->GetScalarPointerForExtent(inExt);
-
   // filename index
   idx=0;
 
-  for (idxZ = 0; idxZ <= maxZ; idxZ++)
+  for (idxZ = 0; idxZ <= maxZ; idxZ+=gridIncZ)
     {
+      // just output (fractional or integer) current slice number
+      std::cout << idxZ << " / " << maxZ << endl;
+
       //for (idxY = 0; !this->AbortExecute && idxY <= maxY; idxY++)
-      for (idxY = 0; idxY <= maxY; idxY++)
+      for (idxY = 0; idxY <= maxY; idxY+=gridIncY)
         {
-          if (!(count%target)) 
-            {
-              //this->UpdateProgress(count/(50.0*target) + (maxZ+1)*(maxY+1));
-              //cout << (count/(50.0*target) + (maxZ+1)*(maxY+1)) << endl;
-              //cout << "progress: " << count << endl;
-              // just output numbers from 1 to 50.
-              std::cout << count2 << endl;
-              count2++;
-            }
-          count++;
           
-          for (idxX = 0; idxX <= maxX; idxX++)
+          for (idxX = 0; idxX <= maxX; idxX+=gridIncX)
             {
+
+              // get the pointer to the nearest voxel at this location
+              int pt[3];
+              pt[0]= (int) floor(idxX + 0.5);
+              pt[1]= (int) floor(idxY + 0.5);
+              pt[2]= (int) floor(idxZ + 0.5);
+              inPtr = (short *) this->InputROI->GetScalarPointer(pt);
+      
               // If the point is equal to the ROI value then seed here.
               if (*inPtr == this->InputROIValue)
                 {
@@ -974,7 +995,13 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
                       newStreamline->Update();
 
                       // See if we like it enough to write
-                      if (newStreamline->GetOutput()->GetNumberOfPoints() > 30)
+                      // This relies on the fact that the step length is in units of
+                      // length (unlike fractions of a cell in vtkHyperStreamline).
+                      double length = 
+                        (newStreamline->GetOutput()->GetNumberOfPoints() - 1) * 
+                        newStreamline->GetIntegrationStepLength();
+ 
+                      if (length > this->MinimumPathLength)
                         {
                           
                           // transform model
@@ -1001,12 +1028,11 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
 
                     }
                 }
-              inPtr++;
-              inPtr += inIncX;
+
             }
-          inPtr += inIncY;
+
         }
-      inPtr += inIncZ;
+
     }
 
   transform->Delete();
