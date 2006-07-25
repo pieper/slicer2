@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.cxx,v $
-  Date:      $Date: 2006/07/25 02:18:16 $
-  Version:   $Revision: 1.21 $
+  Date:      $Date: 2006/07/25 13:48:04 $
+  Version:   $Revision: 1.22 $
 
 =========================================================================auto=*/
 
@@ -758,7 +758,7 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
                           short *tmp = (short *) this->InputROI2->GetScalarPointer(pt);
                           if (tmp != NULL)
                             {
-                              if (*tmp > 0) {
+                              if (*tmp == this->InputROI2Value) {
                                 intersects = 1;
                               }
                             }
