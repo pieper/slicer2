@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.cxx,v $
-  Date:      $Date: 2006/07/06 22:37:18 $
-  Version:   $Revision: 1.20 $
+  Date:      $Date: 2006/07/25 02:18:16 $
+  Version:   $Revision: 1.21 $
 
 =========================================================================auto=*/
 
@@ -88,7 +88,7 @@ vtkSeedTracts::~vtkSeedTracts()
   // volumes
   if (this->InputTensorField) this->InputTensorField->Delete();
   if (this->InputROI) this->InputROI->Delete();
-  if (this->InputROI2) this->InputROI->Delete();
+  if (this->InputROI2) this->InputROI2->Delete();
 
   // settings
   if (this->VtkHyperStreamlineSettings) 
