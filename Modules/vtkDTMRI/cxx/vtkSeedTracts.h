@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.h,v $
-  Date:      $Date: 2006/02/15 19:47:41 $
-  Version:   $Revision: 1.5.2.2 $
+  Date:      $Date: 2006/07/25 14:02:52 $
+  Version:   $Revision: 1.5.2.2.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkSeedTracts - 
@@ -131,6 +131,20 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   vtkSetObjectMacro(WorldToTensorScaledIJK, vtkTransform);
   vtkGetObjectMacro(WorldToTensorScaledIJK, vtkTransform);
 
+
+  // Description
+  // Whether to seed once in each voxel or isotropically 
+  // (evenly on a IsotropicSeedingResolution resolution grid)
+  vtkSetMacro(IsotropicSeeding,int)
+  vtkGetMacro(IsotropicSeeding,int)
+  vtkBooleanMacro(IsotropicSeeding,int)
+
+  // Description
+  // If IsotropicSeeding is true, seed in the ROI at this resolution. 
+  vtkSetMacro(IsotropicSeedingResolution,double)
+  vtkGetMacro(IsotropicSeedingResolution,double)
+
+
   // Description
   // List of the output vtkHyperStreamlines (or subclasses)
   vtkSetObjectMacro(Streamlines, vtkCollection);
@@ -190,6 +204,12 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
  // which the user can modify. 
  void UpdateAllHyperStreamlineSettings();
 
+ // Description
+ // Minimum length in mm for a path (otherwise the path will be deleted).
+ // Currently only used in SeedAndSaveStreamlinesInROI.
+ vtkGetMacro(MinimumPathLength,double);
+ vtkSetMacro(MinimumPathLength,double);
+
  protected:
   vtkSeedTracts();
   ~vtkSeedTracts();
@@ -205,6 +225,9 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   vtkTransform *ROI2ToWorld;
   vtkTransform *WorldToTensorScaledIJK;
 
+  int IsotropicSeeding;
+  double IsotropicSeedingResolution;
+
   vtkImageData *InputTensorField;
   vtkImageData *InputROI;
   vtkImageData *InputROI2;
@@ -213,6 +236,8 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   int InputROI2Value;
   vtkShortArray *InputMultipleROIValues;
   
+  double MinimumPathLength;
+
   int PointWithinTensorData(double *point, double *pointw);
   
   int TypeOfHyperStreamline;
