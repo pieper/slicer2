@@ -35,13 +35,18 @@ void write_output(char *fileName, bio_struct *bs)
     fprintf(out,"Step = %7.1f\n",bs->grid_step);
     fprintf(out,"\n");
     fprintf(out,"\n");
-    fprintf(out,"Points           R       S       A    Col    Row    Depth(cm)\n");
-    fprintf(out,"-------------------------------------------------------------\n");
-    for(i=0;i<bs->target_count;i++)
-        fprintf(out,"\n%s %7.1f %7.1f %7.1f  %5.1f  %5.1f  %7.1f\n",
+
+    if (bs->target_count > 0)
+    {
+        fprintf(out,"Points           R       S       A    Col    Row    Depth(cm)\n");
+        fprintf(out,"-------------------------------------------------------------\n");
+        for(i=0;i<bs->target_count;i++)
+            fprintf(out,"\n%s %7.1f %7.1f %7.1f  %5.1f  %5.1f  %7.1f\n",
                 (bs->target_names)+i*256,
                 (bs->targetsRSA)[0+4*i],(bs->targetsRSA)[1+4*i],(bs->targetsRSA)[2+4*i],
                 (bs->targetsCRD)[0+4*i],(bs->targetsCRD)[1+4*i],(bs->targetsCRD)[2+4*i]);
+    }
+
     for(i=0;i<4;i++) fprintf(out,"\n");
     fprintf(out,"Corrections to Make By Corner - SqError\n");
     fprintf(out,"---------------------------------------\n");  
