@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Volumes.tcl,v $
-#   Date:      $Date: 2006/04/21 18:45:41 $
-#   Version:   $Revision: 1.127.2.5 $
+#   Date:      $Date: 2006/07/26 21:41:12 $
+#   Version:   $Revision: 1.127.2.6 $
 # 
 #===============================================================================
 # FILE:        Volumes.tcl
@@ -101,7 +101,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-             {$Revision: 1.127.2.5 $} {$Date: 2006/04/21 18:45:41 $}]
+             {$Revision: 1.127.2.6 $} {$Date: 2006/07/26 21:41:12 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -751,7 +751,7 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     TooltipAdd $f.bWrite "Save the Volume."
     pack  $f.bWrite -side bottom -padx $Gui(pad)    
 
-    DevAddFileBrowse $f Volumes "prefixGenericSave" "Select Export File:" "" "\$Volumes(extentionGenericSave)" "\$Volume(DefaultDir)" "Save" "Browse for a file location (will save image file and .nhdr file to directory)" "Absolute"
+    DevAddFileBrowse $f Volumes "prefixGenericSave" "Select Export File:" "" "\$Volumes(extentionGenericSave)" "\$Volume(DefaultDir)" "Save" "Browse for a Nrrd file" "Browse for a file location (will save image file and .nhdr file to directory)" "Absolute"
     ## compression option (hint)
 
     set f $fExport.fGenericFile.fCompression
