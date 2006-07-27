@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.11 $} {$Date: 2006/07/27 20:47:18 $}]
+        {$Revision: 1.1.2.12 $} {$Date: 2006/07/27 21:29:30 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -825,7 +825,7 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
 
 
 proc MRProstateCareNavLoop {} { 
-    global MRProstateCare 
+    global MRProstateCare Slice 
 
     if {! $MRProstateCare(servLoop)} {
         return
@@ -836,9 +836,8 @@ proc MRProstateCareNavLoop {} {
         return
     }
 
-    set both [expr {$MRProstateCare(image1,currentVolumeID) > 0  && \ 
-        $MRProstateCare(image2,currentVolumeID) > 0}] 
-    if {! both} {
+    set both [expr {$MRProstateCare(image1,currentVolumeID) > 0  && $MRProstateCare(image2,currentVolumeID) > 0}] 
+    if {! $both} {
         DevErrorWindow "Please have both images valid for display."
         return
     } 
@@ -852,6 +851,32 @@ proc MRProstateCareNavLoop {} {
         set MRProstateCare(displayedImage) "image2" 
     }
         
+    switch $MRProstateCare(orientation) {
+        "Axial" {
+            set Slice(0,visibility) 1 
+            set Slice(1,visibility) 0 
+            set Slice(2,visibility) 0 
+            set s 0
+        }
+        "Sagittal" {
+            set Slice(0,visibility) 0 
+            set Slice(1,visibility) 1 
+            set Slice(2,visibility) 0 
+            set s 1 
+        }
+        "Coronal" {
+            set Slice(0,visibility) 0 
+            set Slice(1,visibility) 0 
+            set Slice(2,visibility) 1 
+            set s 2 
+        }
+
+        MainSlicesSetVisibilityAll ${s}
+        RenderAll
+        # MainViewerHideSliceControls 
+        # Render3D
+    }
+
 
     after $MRProstateCare(navTime) MRProstateCareNavLoop
 }
