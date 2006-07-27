@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainViewer.tcl,v $
-#   Date:      $Date: 2006/07/27 17:59:19 $
-#   Version:   $Revision: 1.41 $
+#   Date:      $Date: 2006/07/27 20:17:16 $
+#   Version:   $Revision: 1.42 $
 # 
 #===============================================================================
 # FILE:        MainViewer.tcl
@@ -39,7 +39,7 @@ proc MainViewerInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainViewer \
-    {$Revision: 1.41 $} {$Date: 2006/07/27 17:59:19 $}]
+    {$Revision: 1.42 $} {$Date: 2006/07/27 20:17:16 $}]
 
     # Props
     set Gui(midHeight) 1
@@ -419,9 +419,9 @@ proc MainViewerSetMode {{mode ""} {verbose ""}} {
     # if the view mode hasn't changed, return
     if {$View(mode) == $mode} {
         if {$::Module(verbose)} {
-            puts "MainViewerSetMode: No change in view mode ($mode), returning."
+            puts "MainViewerSetMode: No change in view mode ($mode)..."
         }
-        return
+#        return
     }
 
     # set View(mode) if called with an argument
