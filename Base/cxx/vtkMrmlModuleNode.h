@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlModuleNode.h,v $
-  Date:      $Date: 2006/07/20 22:28:08 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2006/07/27 15:59:52 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlModuleNode - generic MRML node for representing options that
@@ -63,6 +63,10 @@ public:
     //Description:
     // For debugging, return a string with all keys
     const char * GetKeys();
+
+    //Description:
+    // Override the vtkMrmlNode so we can return a useful title for display
+    const char * GetTitle();
     
 protected:
   vtkMrmlModuleNode();

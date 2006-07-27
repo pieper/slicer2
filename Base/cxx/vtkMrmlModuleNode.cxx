@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlModuleNode.cxx,v $
-  Date:      $Date: 2006/07/20 22:28:09 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2006/07/27 15:59:52 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -205,4 +205,37 @@ const char * vtkMrmlModuleNode::GetKeys()
         }
     }
     return returnString.c_str();
+}
+
+// Overriding the vtkMrmlNode's GetTitle, so that we can return the module ref
+// id as well as the node's name
+const char * vtkMrmlModuleNode::GetTitle()
+{
+    char tmp[200], classname[100], nickname[100];
+    int len;
+
+    // make sure we have a name
+    if (this->Name == NULL) 
+    {
+      this->SetName("");
+    }
+    if (this->ModuleRefID == NULL)
+    {
+        this->SetModuleRefID("");
+    }
+    // Create title from current name (if not blank) and module reference id
+    if (strcmp(this->ModuleRefID, this->Name) != 0)
+    {
+        // not the same
+        sprintf(tmp, "Module: %s %s", this->ModuleRefID, this->Name);
+    }
+    else
+    {
+        // just use one
+        sprintf(tmp, "Module: %s", this->ModuleRefID);
+    }
+    this->SetTitle(tmp);
+
+  // return the current title
+  return this->Title;
 }
