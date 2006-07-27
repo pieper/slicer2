@@ -151,7 +151,12 @@ foreach v $envVars {
 #
 #
 # set the base library paths for this build 
-# 
+#
+if { ![info exists ::env(PATH)] } {
+    puts "Your PATH variable is not set.  Exiting."
+    exit
+}
+ 
 if {$::env(BUILD) == $solaris ||
     $::env(BUILD) == $linux_64 || 
     $::env(BUILD) == $linux} {
