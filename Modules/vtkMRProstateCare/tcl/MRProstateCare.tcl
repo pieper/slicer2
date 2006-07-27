@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.10 $} {$Date: 2006/07/27 15:45:46 $}]
+        {$Revision: 1.1.2.11 $} {$Date: 2006/07/27 20:47:18 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -124,7 +124,7 @@ proc MRProstateCareInit {} {
     set MRProstateCare(port)   60000
     set MRProstateCare(connect) 0
     set MRProstateCare(pause) 0
-    set MRProstateCare(loop) 0
+    set MRProstateCare(servLoop) 0
     set MRProstateCare(logTime) 10000
 
     # Patient/Table position
@@ -144,6 +144,14 @@ proc MRProstateCareInit {} {
 
     set MRProstateCare(tempDir) "/tmp"
     set MRProstateCare(logFile) "MRProstateCareLog.txt"
+    set MRProstateCare(navLoop) 0 
+    set MRProstateCare(navTime) 8000
+    set MRProstateCare(image1,currentVolumeID) 0 
+    set MRProstateCare(image2,currentVolumeID) 0 
+
+    # volume ID of currently displayed volume
+    set MRProstateCare(currentDisplayedVolumeID) 0 
+    set MRProstateCare(displayedImage) "" 
 
  
     # Creates bindings
@@ -745,11 +753,42 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
     # Frame 4 
     #-------------------------
     set f $parent.f4
+    foreach x "Top Mid Bot" {
+        frame $f.f$x -bg $Gui(activeWorkspace) 
+        pack $f.f$x -side top -pady 1 
+    }
 
+    set f $parent.f4.fTop
     eval {label $f.lTitle -text "Displayed images:"} $Gui(WTA)
-    DevAddLabel $f.lImage1Label "Image 1:"
-    DevAddLabel $f.lImage1Value "Realtime"
+    pack $f.lTitle -side top -pady 2 
+ 
+    set f $parent.f4.fMid
+    # Build pulldown menu for volumes of image 1 
+    DevAddLabel $f.lVolume "Image 1:"
 
+    set mList [list {none}]
+    set df [lindex $mList 0] 
+    eval {menubutton $f.mbType -text $df \
+          -relief raised -bd 2 -width 20 \
+          -indicatoron 1 \
+          -menu $f.mbType.m} $Gui(WMBA)
+    eval {menu $f.mbType.m} $Gui(WMA)
+    
+    foreach m $tList  {
+        $f.mbType.m add command -label $m \
+            -command "MRProstateCareSelectVolume 1 $m"
+    }
+
+    # Save menubutton for config
+    set MRProstateCare(gui,level1Image1VolumeButton) $f.mbType
+    set MRProstateCare(gui,level1Image1VolumeMenu) $f.mbType.m
+
+    blt::table $f \
+        0,0 $f.lVolume -padx 2 -pady 2 -anchor e \
+        0,1 $f.mbType -fill x -padx 3 -pady 2 -anchor w
+
+
+    set f $parent.f4.fBot
     # Build pulldown menu for volumes 
     DevAddLabel $f.lVolume "Image 2:"
 
@@ -760,32 +799,68 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
           -indicatoron 1 \
           -menu $f.mbType.m} $Gui(WMBA)
     eval {menu $f.mbType.m} $Gui(WMA)
-    bind $f.mbType <1> "MRProstateCareUpdateVolumes"
     
     foreach m $tList  {
         $f.mbType.m add command -label $m \
-            -command "MRProstateCareSelectVolume $m"
+            -command "MRProstateCareSelectVolume 2 $m"
     }
 
     # Save menubutton for config
-    set MRProstateCare(gui,level1VolumeButton) $f.mbType
-    set MRProstateCare(gui,level1VolumeMenu) $f.mbType.m
+    set MRProstateCare(gui,level1Image2VolumeButton) $f.mbType
+    set MRProstateCare(gui,level1Image2VolumeMenu) $f.mbType.m
 
     blt::table $f \
-        0,0 $f.lTitle -padx 2 -pady 2 -cspan 2 \
-        1,0 $f.lImage1Label -padx 2 -pady 2 -anchor e \
-        1,1 $f.lImage1Value -fill x -padx 2 -pady 2 -anchor w \
-        2,0 $f.lVolume -padx 2 -pady 2 -anchor e \
-        2,1 $f.mbType -fill x -padx 3 -pady 3 -anchor w
+        0,0 $f.lVolume -padx 2 -pady 2 -anchor e \
+        0,1 $f.mbType -fill x -padx 3 -pady 2 -anchor w
 
  
     #-------------------------
     # Frame 5 
     #-------------------------
     set f $parent.f5
-    DevAddButton $f.bStart "Start" "MRProstateCareStartNav"  10 
+    DevAddButton $f.bStart "Start" "MRProstateCareNavLoop"  10 
     DevAddButton $f.bStop "Stop" "MRProstateCareStopNav"  10 
     grid $f.bStart $f.bStop -padx 1 -pady 5 
+}
+
+
+proc MRProstateCareNavLoop {} { 
+    global MRProstateCare 
+
+    if {! $MRProstateCare(servLoop)} {
+        return
+    }
+
+    if {$MRProstateCare(currentPoint) == "none"} {
+        DevErrorWindow "Please select a valid point to display."
+        return
+    }
+
+    set both [expr {$MRProstateCare(image1,currentVolumeID) > 0  && \ 
+        $MRProstateCare(image2,currentVolumeID) > 0}] 
+    if {! both} {
+        DevErrorWindow "Please have both images valid for display."
+        return
+    } 
+
+    if {$MRProstateCare(displayedImage) == "" ||
+        $MRProstateCare(displayedImage) == "image2"} { 
+        set MRProstateCare(currentDisplayedVolumeID) $MRProstateCare(image1,currentVolumeID)
+        set MRProstateCare(displayedImage) "image1" 
+    } else {
+        set MRProstateCare(currentDisplayedVolumeID) $MRProstateCare(image2,currentVolumeID)
+        set MRProstateCare(displayedImage) "image2" 
+    }
+        
+
+    after $MRProstateCare(navTime) MRProstateCareNavLoop
+}
+ 
+
+proc MRProstateCareStopNav {} { 
+    global MRProstateCare 
+
+    set MRProstateCare(servLoop) 0
 }
 
 
@@ -810,14 +885,19 @@ proc MRProstateCareSelectPoint {m} {
 }
 
 
-proc MRProstateCareSelectVolume {v} {
+proc MRProstateCareSelectVolume {which v} {
     global MRProstateCare Volume 
 
     set name [Volume($v,node) GetName] 
 
     # configure menubutton
-    $MRProstateCare(gui,level1VolumeButton) config -text $name 
-    set MRProstateCare(currentVolume) $v
+    if {$which == 1} {
+        $MRProstateCare(gui,level1Image1VolumeButton) config -text $name 
+        set MRProstateCare(image1,currentVolumeID) $v
+    } else {
+        $MRProstateCare(gui,level1Image2VolumeButton) config -text $name 
+        set MRProstateCare(image2,currentVolumeID) $v
+    }
 
     MainSlicesSetVolumeAll Back $v
     MainVolumesSetActive $v
@@ -886,10 +966,10 @@ proc MRProstateCareVerify {all} {
 }
 
 
-proc MRProstateCareLoopLog {} {
+proc MRProstateCareLogLoop {} {
     global MRProstateCare Locator 
 
-    if {! $MRProstateCare(loop)} {
+    if {! $MRProstateCare(servLoop)} {
         return
     }
 
@@ -975,7 +1055,7 @@ proc MRProstateCareLoopLog {} {
 
     close $fd
 
-    after $MRProstateCare(logTime) MRProstateCareLoopLog
+    after $MRProstateCare(logTime) MRProstateCareLogLoop
 }
 
 
@@ -1492,8 +1572,8 @@ proc MRProstateCareEnter {} {
         file copy -force $fileName $bak
     }
  
-    set MRProstateCare(loop) 1 
-    MRProstateCareLoopLog
+    set MRProstateCare(servLoop) 1 
+    MRProstateCareLogLoop
 
     # default connectiong port is 60000
     set Locator(Flashpoint,port) $MRProstateCare(port)
@@ -1548,7 +1628,7 @@ proc MRProstateCareExit {} {
     # pop event bindings
     MRProstateCarePopBindings
 
-    set MRProstateCare(loop) 0
+    set MRProstateCare(servLoop) 0
 
     # Pop event manager
     #------------------------------------
@@ -1667,12 +1747,20 @@ proc MRProstateCareUpdateNavigationTab {} {
     }
 
     # Inside the Navigation tab update the volume list
-    # for image2
-    $MRProstateCare(gui,level1VolumeMenu) delete 0 end 
+    # for image1
+    $MRProstateCare(gui,level1Image1VolumeMenu) delete 0 end 
     foreach v $Volume(idList) {
-        $MRProstateCare(gui,level1VolumeMenu) add command \
+        $MRProstateCare(gui,level1Image1VolumeMenu) add command \
             -label [Volume($v,node) GetName] \
-            -command "MRProstateCareSelectVolume $v"
+            -command "MRProstateCareSelectVolume 1 $v"
+    }
+
+    # for image2
+    $MRProstateCare(gui,level1Image2VolumeMenu) delete 0 end 
+    foreach v $Volume(idList) {
+        $MRProstateCare(gui,level1Image2VolumeMenu) add command \
+            -label [Volume($v,node) GetName] \
+            -command "MRProstateCareSelectVolume 2 $v"
     }
 }
 
