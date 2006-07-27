@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.9 $} {$Date: 2006/07/27 15:30:31 $}]
+        {$Revision: 1.1.2.10 $} {$Date: 2006/07/27 15:45:46 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -337,7 +337,7 @@ proc MRProstateCareBuildGUI {} {
 
     set f $fTemplate.f5
     DevAddButton $f.bCheck "Check" "MRProstateCareCheckTemplateUserInput;\
-                                    MRProstateCareVerifyFourCorners; \
+                                    MRProstateCareVerify 0; \
                                     MRProstateCareView" 10 
     grid $f.bCheck -pady 5 -padx 1 
 
@@ -377,8 +377,8 @@ proc MRProstateCareBuildGUI {} {
     $f.rTarget configure -state normal 
 
     set f $fPoints.fTop.f2
-    DevAddLabel $f.lTitle "Describe a point:"
-
+    eval {label $f.lTitle -text "Describe a point:"} $Gui(WTA)
+ 
     eval {label $f.ltitle -text "Title:"} $Gui(WLA)
     eval {entry $f.etitle -width 20 -textvariable MRProstateCare(entry,Title)} $Gui(WEA)
     eval {label $f.lonsets -text "Coords (RSA):"} $Gui(WLA)
@@ -400,7 +400,7 @@ proc MRProstateCareBuildGUI {} {
     }
 
     set f $fPoints.fTop.f3.fUp
-    DevAddLabel $f.lTitle "Defined points:"
+    eval {label $f.lTitle -text "Defined points:"} $Gui(WTA)
     scrollbar $f.vs -orient vertical -bg $Gui(activeWorkspace)
     set MRProstateCare(PointsVerScroll) $f.vs
     listbox $f.lb -height 6 -width 24 -bg $Gui(activeWorkspace) \
@@ -422,7 +422,10 @@ proc MRProstateCareBuildGUI {} {
     # Bottom frame
     #-------------------------
     set f $fPoints.fBot
-    DevAddButton $f.bView "View" "MRProstateCareView"  10 
+    DevAddButton $f.bView "View" "MRProstateCareCheckTemplateUserInput;\
+                                  MRProstateCareVerify 1; \
+                                  MRProstateCareView" 10 
+ 
     grid $f.bView -padx 1 -pady 5 
 
     #-------------------------------------------
@@ -683,7 +686,7 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
     # Frame 1 
     #-------------------------
     set f $parent.f1
-    DevAddLabel $f.lPatient "Patient name:"
+    eval {label $f.lPatient -text "Patient name:"} $Gui(WTA)
     DevAddLabel $f.lPatName "None"
     grid $f.lPatient $f.lPatName -padx 5 -pady 5 
     set MRProstateCare(patientNameLabel) $f.lPatName
@@ -694,8 +697,8 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
     set f $parent.f2
  
     # Build pulldown menu for all Points 
-    DevAddLabel $f.lPosition "Select a point:"
-
+    eval {label $f.lTitle -text "Select a point:"} $Gui(WTA)
+ 
     set tList [list {none}]
     set df [lindex $tList 0] 
     eval {menubutton $f.mbType -text $df \
@@ -714,14 +717,14 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
     set MRProstateCare(gui,level1PointMenu) $f.mbType.m
 
     blt::table $f \
-        0,0 $f.lPosition -padx 2 -pady 4 \
+        0,0 $f.lTitle -padx 2 -pady 4 \
         1,0 $f.mbType -fill x -padx 3 -pady 3 
 
     #-------------------------
     # Frame 3
     #-------------------------
     set f $parent.f3
-    DevAddLabel $f.lTitle "Image orientation:"
+    eval {label $f.lTitle -text "Image orientation:"} $Gui(WTA)
  
     foreach x "Axial Sagittal Coronal" \
         text "{Axial} {Sagittal} {Coronal}" {
@@ -743,7 +746,7 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
     #-------------------------
     set f $parent.f4
 
-    DevAddLabel $f.lTitle "Displayed images:"
+    eval {label $f.lTitle -text "Displayed images:"} $Gui(WTA)
     DevAddLabel $f.lImage1Label "Image 1:"
     DevAddLabel $f.lImage1Value "Realtime"
 
@@ -845,7 +848,7 @@ proc MRProstateCareLoad {} {
 }
 
 
-proc MRProstateCareVerifyFourCorners {} {
+proc MRProstateCareVerify {all} {
     global MRProstateCare 
 
     if {$MRProstateCare(userInputError)} {
@@ -871,7 +874,9 @@ proc MRProstateCareVerifyFourCorners {} {
     set outFileName [file join $MRProstateCare(tempDir) $outName]
     set MRProstateCare(outFileName) $outFileName
 
-    MRProstateCareWriteFourCorners $inFileName
+    # all = 1: four corners and all points
+    # all = 0: only verify four corners
+    MRProstateCareWrite $inFileName $all
 
     vtkProstateCoords pc
     pc SetFileName 1 $inFileName
@@ -974,128 +979,7 @@ proc MRProstateCareLoopLog {} {
 }
 
 
-proc MRProstateCareSave {} {
-    global MRProstateCare 
-
-    set fileType {{"Text" *.txt}}
-    set fileName [tk_getSaveFile -filetypes $fileType -parent .]
-
-    set len [string length $fileName]
-    if {$len == 0} {
-        DevErrorWindow "Specify a file name for writing."
-        return
-    }
-    
-    #-------------------------------------------------------
-    # Write user inputs into file which can be loaded later
-    # by clicking the Load button
-    #-------------------------------------------------------
- 
-    set txt ".txt"
-    set ext [file extension $fileName]
-    if {$ext != $txt} {
-        set fileName "$fileName$txt"
-    }
-
-    # Check the user input before we writing to file
-    MRProstateCareCheckTemplateUserInput
-    if {! [info exists MRProstateCare(pointList)] ||
-        ! [llength $MRProstateCare(pointList)]} {
-        DevErrorWindow "No point has been specified."
-        return  
-    }
-
-    set fd [open $fileName w]
-    set comment "# This text file saves the user input. Do not edit it.\n"
-    puts $fd $comment
-
-    set comment "# date"
-    puts $fd $comment
-    set str "set MRProstateCare(entry,PDate) $MRProstateCare(entry,PDate)\n"
-    puts $fd $str
-
-    set comment "# patient name"
-    puts $fd $comment
-    set str "set MRProstateCare(entry,PName) $MRProstateCare(entry,PName)\n"
-    puts $fd $str
-
-    set comment "# patient id"
-    puts $fd $comment
-    set str "set MRProstateCare(entry,PID) $MRProstateCare(entry,PID)\n"
-    puts $fd $str
-
-    set comment "# step"
-    puts $fd $comment
-    set str "set MRProstateCare(entry,Step) $MRProstateCare(entry,Step)\n"
-    puts $fd $str
-
-    set comment "# anterior right"
-    puts $fd $comment
-    set str "set MRProstateCare(entry,AR) \{$MRProstateCare(entry,AR)\}\n"
-    puts $fd $str
-
-    set comment "# posterior right"
-    puts $fd $comment
-    set str "set MRProstateCare(entry,PR) \{$MRProstateCare(entry,PR)\}\n"
-    puts $fd $str
-
-    set comment "# posterior left"
-    puts $fd $comment
-    set str "set MRProstateCare(entry,PL) \{$MRProstateCare(entry,PL)\}\n"
-    puts $fd $str
-
-    set comment "# anterior left"
-    puts $fd $comment
-    set str "set MRProstateCare(entry,AL) \{$MRProstateCare(entry,AL)\}\n"
-    puts $fd $str
-
-    set comment "# the point list"
-    puts $fd $comment
-    set str "set MRProstateCare(pointList) \"\"\n"
-    puts $fd $str
-    set str "\$MRProstateCare(pointListBox) delete 0 end\n"
-    puts $fd $str
-
-    foreach x $MRProstateCare(pointList) {
-        set str "lappend MRProstateCare(pointList) \{$x\}\n"
-        puts $fd $str
-        set str "\$MRProstateCare(pointListBox) insert end \{$x\}\n" 
-        puts $fd $str
-    }
-
-    close $fd
-
-    #-------------------------------------------------------
-    # Write user inputs into file for Steve Haker's 
-    # template computation
-    #-------------------------------------------------------
-    set name $MRProstateCare(entry,PName)
-    set name [string trim $name]
-    # replace all spaces in the middle of name
-    regsub -all { +} $name "_" name 
-    # replace all , in the middle of name
-    regsub -all {,+} $name "_" name 
-
-    set dir [file dirname $fileName]
-    set inName $name
-    set outName $name
-    append inName "_in.txt" 
-    append outName "_out.txt" 
-    set inFileName [file join $dir $inName]
-    set outFileName [file join $dir $outName]
-    set MRProstateCare(outFileName) $outFileName
-
-    MRProstateCareWrite $inFileName
-
-    vtkProstateCoords pc
-    pc SetFileName 1 $inFileName
-    pc SetFileName 0 $outFileName
-    pc Run
-    pc Delete
-}
-
-
-proc MRProstateCareWriteFourCorners {fn} {
+proc MRProstateCareWrite {fn all} {
     global MRProstateCare 
 
     set fd [open $fn w]
@@ -1136,64 +1020,22 @@ proc MRProstateCareWriteFourCorners {fn} {
     set step [string trim $step]
     puts $fd "Step = $step\n\n\n"
 
-    close $fd
-}
+    if {$all} {
+        puts $fd "Points           R       S       A    Col    Row    Depth(cm)\n"
+        puts $fd "-------------------------------------------------------------\n\n"
 
+        foreach x $MRProstateCare(pointList) {
+            if {$x != ""} {
+                set i 0 
+                set i2 [string first ":" $x]
+                set title [string range $x $i [expr $i2-1]] 
+                set rsa [string range $x [expr $i2+3] end-1] 
 
-proc MRProstateCareWrite {fn} {
-    global MRProstateCare 
+                set rsa [string trim $rsa]
+                set title [string trim $title]
 
-    set fd [open $fn w]
-    puts $fd "\n\n\n\n\n"
- 
-    set comment "# This text file saves the user input. Do not edit it.\n"
-    puts $fd $comment
-
-    set name $MRProstateCare(entry,PName)
-    set name [string trim $name]
-    puts $fd "patient_name = $name\n\n"
-
-    set id $MRProstateCare(entry,PID)
-    set id [string trim $id]
-    puts $fd "patient_id = $id\n\n"
-
-    set date $MRProstateCare(entry,PDate)
-    set date [string trim $date]
-    puts $fd "date = $date\n\n\n"
-
-    set v $MRProstateCare(entry,AR)
-    set v [string trim $v]
-    puts $fd "1) Anterior  Right (RSA) = $v\n\n"
-
-    set v $MRProstateCare(entry,PR)
-    set v [string trim $v]
-    puts $fd "2) Posterior Right (RSA) = $v\n\n"
-
-    set v $MRProstateCare(entry,PL)
-    set v [string trim $v]
-    puts $fd "3) Posterior Left  (RSA) = $v\n\n"
-
-    set v $MRProstateCare(entry,AL)
-    set v [string trim $v]
-    puts $fd "4) Anterior  Left  (RSA) = $v\n\n\n"
-
-    set step $MRProstateCare(entry,Step)
-    set step [string trim $step]
-    puts $fd "Step = $step\n\n\n"
-    puts $fd "Points           R       S       A    Col    Row    Depth(cm)\n"
-    puts $fd "-------------------------------------------------------------\n\n"
-
-    foreach x $MRProstateCare(pointList) {
-        if {$x != ""} {
-            set i 0 
-            set i2 [string first ":" $x]
-            set title [string range $x $i [expr $i2-1]] 
-            set rsa [string range $x [expr $i2+3] end-1] 
-
-            set rsa [string trim $rsa]
-            set title [string trim $title]
-
-            puts $fd "$title  $rsa \n\n"
+                puts $fd "$title  $rsa \n\n"
+            }
         }
     }
 
