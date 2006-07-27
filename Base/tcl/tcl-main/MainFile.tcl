@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainFile.tcl,v $
-#   Date:      $Date: 2006/03/06 19:22:49 $
-#   Version:   $Revision: 1.70 $
+#   Date:      $Date: 2006/07/27 18:01:02 $
+#   Version:   $Revision: 1.71 $
 # 
 #===============================================================================
 # FILE:        MainFile.tcl
@@ -65,7 +65,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.70 $} {$Date: 2006/03/06 19:22:49 $}]
+        {$Revision: 1.71 $} {$Date: 2006/07/27 18:01:02 $}]
 
     set File(filePrefix) data
 }
@@ -343,6 +343,7 @@ proc MainFileSaveAsApply {} {
     set filename [file join $Mrml(dir) $File(filePrefix).xml]
 
     MainMrmlWrite $filename
+    puts "Finished writing $filename"
 }
 
 #-------------------------------------------------------------------------------
