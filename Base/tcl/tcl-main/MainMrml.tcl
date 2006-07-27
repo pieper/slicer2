@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainMrml.tcl,v $
-#   Date:      $Date: 2006/05/26 18:54:46 $
-#   Version:   $Revision: 1.115 $
+#   Date:      $Date: 2006/07/27 18:21:39 $
+#   Version:   $Revision: 1.116 $
 # 
 #===============================================================================
 # FILE:        MainMrml.tcl
@@ -77,7 +77,7 @@ proc MainMrmlInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainMrml \
-    {$Revision: 1.115 $} {$Date: 2006/05/26 18:54:46 $}]
+    {$Revision: 1.116 $} {$Date: 2006/07/27 18:21:39 $}]
 
     set Mrml(colorsUnsaved) 0
 }
@@ -121,7 +121,7 @@ proc MainMrmlUpdateIdLists {nodeTypeList} {
 #-------------------------------------------------------------------------------
 # .PROC MainMrmlAppendnodeTypeList 
 #  Call this function in your init function if your module addds new nodes 
-#  to the Mrml Tree.
+#  to the Mrml Tree. Makes sure that no duplicates are added.
 #  Example: vtkEMLocalSegment/tcl/EMLocalSegment 
 # .ARGS
 # list MRMLnodeTypeList new type list
@@ -129,7 +129,16 @@ proc MainMrmlUpdateIdLists {nodeTypeList} {
 #-------------------------------------------------------------------------------
 proc MainMrmlAppendnodeTypeList {MRMLnodeTypeList} {
     global Mrml
-    set Mrml(nodeTypeList) "$Mrml(nodeTypeList) $MRMLnodeTypeList" 
+
+    foreach node $MRMLnodeTypeList {
+        if {[lsearch $Mrml(nodeTypeList) $node] == -1} {
+            set Mrml(nodeTypeList) "$Mrml(nodeTypeList) $node"
+        } else {
+            if {$::Module(verbose)} {
+                puts "MainMrmlAppendnodeTypeList: Found $node in the list, skipping"
+            }
+        }
+    }
 
     MainMrmlUpdateIdLists "$MRMLnodeTypeList"
 }
@@ -711,6 +720,17 @@ proc MainMrmlRead {mrmlFile} {
     # Put the None volume at the end
     set i [lsearch $Volume(idList) $Volume(idNone)]
     set Volume(idList) "[lreplace $Volume(idList) $i $i] $Volume(idNone)"
+
+    # if there were scene options in the file, set one to be active now
+    set sceneOptions [vtkMrmlSceneOptionsNode ListInstances]
+    if {$::Module(verbose)} {
+        if {$sceneOptions != ""} {
+            puts "MainMrmlRead: found [llength $sceneOptions] scene options: $sceneOptions"
+            
+        } else {
+            puts "MainMrmlRead: no scenes in mrml file"
+        }
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -1297,6 +1317,13 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                                 $n SetForeground 0
                             }
                         }
+                        "label" {
+                            if {$val == "true"} {
+                                $n SetLabel 1
+                            } else {
+                                $n SetLabel 0
+                            }
+                        }
                         "fade" {
                             if {$val == "true"} {
                                 $n SetFade 1
@@ -1540,6 +1567,7 @@ proc MainMrmlBuildTreesVersion2.0 {tags} {
                         global $m
                         set loadproc [set ::Module(${m},procMRMLLoad)]
                         $loadproc $tag $attr
+                        
                     }
                 }
             }
@@ -2071,7 +2099,12 @@ proc MainMrmlWriteProceed {filename} {
         tree RemoveAllItems
         tree Delete
     } else {
+        if {$::Module(verbose)} { 
+            puts "MainMrmlWriteProceed: calling Write in the Mrml(dataTree) to file $filename" 
+        }
+        
         Mrml(dataTree) Write $filename
+        
         if {[Mrml(dataTree) GetErrorCode] != 0} {
             #puts "ERROR: MainMrmlWriteProceed: unable to write mrml data file $filename"
             #DevErrorWindow "ERROR: MainMrmlWriteProceed: unable to write mrml data file $filename"
