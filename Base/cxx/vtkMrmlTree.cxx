@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlTree.cxx,v $
-  Date:      $Date: 2006/02/14 20:40:15 $
-  Version:   $Revision: 1.23 $
+  Date:      $Date: 2006/07/27 16:01:55 $
+  Version:   $Revision: 1.24 $
 
 =========================================================================auto=*/
 #include "vtkMrmlTree.h"
@@ -65,8 +65,16 @@ void vtkMrmlTree::Write(char *filename)
     {
       indent -=2;
     }
-
-    node->Write(file, indent);
+   
+    if (node)
+        {
+            if (node->GetName() != NULL)
+            {
+                vtkDebugMacro("vtkMrmlTree::Write: writing node named " << node->GetName());
+            } else { vtkDebugMacro("vtkMrmlTree::Write: writing node w/no name"); }
+        
+            node->Write(file, indent);
+        } else { vtkErrorMacro("NODE IS NULL"); }
 
     if ( deltaIndent > 0 )
     {
