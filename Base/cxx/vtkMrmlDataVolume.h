@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlDataVolume.h,v $
-  Date:      $Date: 2006/02/22 23:47:16 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/07/27 16:01:01 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlDataVolume - Object used in the slicer to perform
@@ -98,7 +98,7 @@ public:
   vtkImageData *GetHistogramPlot();
 
   int GetBimodalThreshold() {return this->Bimodal->GetThreshold();};
-
+  
   // Description:
   // Assumes GetHistogramPlot has already been called
   int MapBinToScalar(int b) {return this->HistPlot->MapBinToScalar(b);};
@@ -114,6 +114,9 @@ public:
   vtkSetMacro(RangeAuto, int);
   vtkBooleanMacro(RangeAuto, int);
 
+    vtkImageAccumulateDiscrete *GetAccumulate() { return this->Accumulate;};
+    vtkImageBimodalAnalysis *GetBimodal() { return this->Bimodal;};
+    
   void StackSetPolygon(int window, vtkPoints *poly, int s, int p, int d,
                        int closed, int preshape, int label)
   {
