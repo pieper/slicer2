@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlVolumeStateNode.cxx,v $
-  Date:      $Date: 2006/01/06 17:56:50 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/07/27 17:46:24 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -43,6 +43,7 @@ vtkMrmlVolumeStateNode::vtkMrmlVolumeStateNode()
   // Numbers
   this->Foreground = 0;
   this->Background = 0;
+  this->Label = 0;
   this->Fade = 0;
   this->Opacity = 1.0;
 }
@@ -90,6 +91,10 @@ void vtkMrmlVolumeStateNode::Write(ofstream& of, int nIndent)
   {
     of << " background='" << (this->Background ? "true":"false") << "'";
   }
+  if (this->Label != 0)
+  {
+      of << " label='" << (this->Label ? "true" : " false") << "'";
+  }
   if (this->Fade != 0)
   {
     of << " fade='" << (this->Fade ? "true":"false") << "'";
@@ -117,6 +122,7 @@ void vtkMrmlVolumeStateNode::Copy(vtkMrmlNode *anode)
   // Numbers
   this->SetForeground(node->Foreground);
   this->SetBackground(node->Background);
+  this->SetLabel(node->Label);
   this->SetFade(node->Fade);
   this->SetOpacity(node->Opacity);
 }
@@ -133,6 +139,7 @@ void vtkMrmlVolumeStateNode::PrintSelf(ostream& os, vtkIndent indent)
     (this->ColorLUT ? this->ColorLUT : "(none)") << "\n";
   os << indent << "Foreground: " << this->Foreground << "\n";  
   os << indent << "Background: " << this->Background << "\n";
+  os << indent << "Label: " << this->Label << "\n";
   os << indent << "Fade: " << this->Fade << "\n";
   os << indent << "Opacity: " << this->Opacity << "\n";
 }

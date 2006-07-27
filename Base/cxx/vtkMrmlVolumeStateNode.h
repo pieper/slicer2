@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlVolumeStateNode.h,v $
-  Date:      $Date: 2006/02/14 20:40:16 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/07/27 17:46:24 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlVolumeStateNode - MRML node to save volume options.
@@ -66,17 +66,23 @@ public:
   vtkSetMacro(Background,int);
   vtkGetMacro(Background,int);
 
+    // Description:
+    // Is the volume shown in the label?
+    vtkBooleanMacro(Label,int);
+    vtkSetMacro(Label,int);
+    vtkGetMacro(Label,int);
+    
   // Description:
   // Is the volume faded?
   vtkBooleanMacro(Fade,int);
   vtkSetMacro(Fade,int);
   vtkGetMacro(Fade,int);
-  
+
   // Description:
   // Opacity of the volume
   vtkSetMacro(Opacity,float);
   vtkGetMacro(Opacity,float);
- 
+
 protected:
   vtkMrmlVolumeStateNode();
   ~vtkMrmlVolumeStateNode();
@@ -90,6 +96,7 @@ protected:
   // Booleans
   int Foreground;
   int Background;
+  int Label;
   int Fade;
   
   // Numbers
