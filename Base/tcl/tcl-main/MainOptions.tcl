@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainOptions.tcl,v $
-#   Date:      $Date: 2006/05/12 22:50:47 $
-#   Version:   $Revision: 1.30 $
+#   Date:      $Date: 2006/07/27 18:26:22 $
+#   Version:   $Revision: 1.31 $
 # 
 #===============================================================================
 # FILE:        MainOptions.tcl
@@ -56,7 +56,7 @@ proc MainOptionsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainOptions \
-    {$Revision: 1.30 $} {$Date: 2006/05/12 22:50:47 $}]
+    {$Revision: 1.31 $} {$Date: 2006/07/27 18:26:22 $}]
 
     # Props
     set Options(program) "slicer"
@@ -76,6 +76,15 @@ proc MainOptionsInit {} {
     set Scenes(oldMRML) 0
     set Scenes(nameList) ""
     set Scenes(currentScene) "default"
+
+    # a flag to stop modules from over writing presets (ie the slice offset)
+    set Options(recallingPresets) 0
+
+    # register a proc to be called when File->Close is called, to delete the current scenes
+    # need to use a module name in the Module(idList), so that it will get called in MainFileClose,
+    # so appropriate the Options module name as none of the Main modules are included.
+    set Module(Options,procMainFileCloseUpdateEntered) MainOptionsPresetDeleteAll
+    
 }
 
 #-------------------------------------------------------------------------------
@@ -245,9 +254,9 @@ proc MainOptionsParsePresets {attr} {
     foreach a $attr {
         set key [lindex $a 0]
         set val [lreplace $a 0 0]
-
-puts "MainOptionsParsePresets: key = $key, val = $val\nfrom a = $a"
-
+        if {$::Module(verbose)} {
+            puts "MainOptionsParsePresets: key = $key, val = $val\nfrom a = $a"
+        }
         set Preset($key) $val
     }
 }
@@ -389,6 +398,11 @@ proc MainOptionsRetrievePresetValues {} {
             set currentVolume [$node GetVolumeRefID]
             set Preset(Slices,$currentScene,fade) [$node GetFade]
             set Preset(Slices,$currentScene,opacity) [$node GetOpacity]
+            set Preset(Slices,$currentScene,volumerefid) [$node GetVolumeRefID]
+            set Preset(Slices,$currentScene,colorlut) [$node GetColorLUT]
+            set Preset(Slices,$currentScene,foreground) [$node GetForeground]
+            set Preset(Slices,$currentScene,background) [$node GetBackground]
+            set Preset(Slices,$currentScene,label) [$node GetLabel]
         }
         if {[string compare -length 14 $node "EndVolumeState"] == 0} {
             set currentVolume ""
@@ -411,6 +425,7 @@ proc MainOptionsRetrievePresetValues {} {
             set Preset(Slices,$currentScene,$pos,backVolID) [SharedVolumeLookup [$node GetBackVolRefID]]
             set Preset(Slices,$currentScene,$pos,foreVolID) [SharedVolumeLookup [$node GetForeVolRefID]]
             set Preset(Slices,$currentScene,$pos,labelVolID) [SharedVolumeLookup [$node GetLabelVolRefID]]
+            if {$::Module(verbose)} { puts "MainOptionsRetrievePresetValues: set slice $pos presets for backvol $Preset(Slices,$currentScene,$pos,backVolID), forevol $Preset(Slices,$currentScene,$pos,foreVolID), label vol $Preset(Slices,$currentScene,$pos,labelVolID)" }
             set Preset(Slices,$currentScene,$pos,clipState) [$node GetClipState]
             set Preset(Slices,$currentScene,clipType) [$node GetClipType]
         }
@@ -447,7 +462,19 @@ proc MainOptionsRetrievePresetValues {} {
             set Preset(Volumes,$currentScene,DICOMDataDictFile) [$node GetDICOMDataDictFile]
             set Preset(View,$currentScene,fov) [$node GetFOV]
         }
-        
+        # check for a module node
+        if {[$node GetClassName] == "vtkMrmlModuleNode"} {
+            # did the module listed in the ref register a retrieve proc?
+            set moduleName [$node GetModuleRefID]
+            if {[info exist ::Module(${moduleName},procRetrievePresets)] == 1} {
+                # call it
+                if {$::Module(verbose)} { puts "Calling $::Module($moduleName,procRetrievePresets) with $node, $currentScene" }
+                $::Module(${moduleName},procRetrievePresets) $node $currentScene
+            } else {
+                puts "Warning: No retrieve proc found for module $moduleName presets, register Module(${moduleName},procRetrievePresets) to save node values in Preset array"
+            }
+        }
+
         set node [Mrml(dataTree) GetNextItem]
     }
     
@@ -520,6 +547,17 @@ proc MainOptionsUnparsePresets {{presetNum ""}} {
         if {([string compare -length 11 $node "WindowLevel"] == 0) && ($inScene == 1)} {
             ModelHierarchyDeleteNode "WindowLevel" [$node GetID]
         }
+        # is it still around?
+        if {[info command $node] != ""} {
+            # check for Modules scene nodes
+            if {([string compare -length 17 [$node GetClassName] "vtkMrmlModuleNode"] == 0)} {
+                regexp {(.*)\(.*\)} $node matchVar thisNodeType
+                if {$::Module(verbose)} {
+                    puts "MainOptionsUnparsePresets: found a Module node $node with id [$node GetID], node type = $thisNodeType, calling ModelHierarchyDeleteNode on it"
+                }
+                ModelHierarchyDeleteNode $thisNodeType [$node GetID]
+            }
+        }
         set node [Mrml(dataTree) GetNextItem]
     }
     
@@ -577,7 +615,23 @@ proc MainOptionsUnparsePresets {{presetNum ""}} {
                 $node SetVolumeRefID $v_name
                 $node SetFade $Preset(Slices,$p,fade)
                 $node SetOpacity $Preset(Slices,$p,opacity)
-            
+                # check slice 0
+                set sliceNum 0
+                if {$Preset(Slices,$p,$sliceNum,foreVolID) == $v_id} {
+                    $node SetForeground 1
+                } else {
+                    $node SetForeground 0
+                }
+                if {$Preset(Slices,$p,$sliceNum,backVolID) == $v_id} {
+                    $node SetBackground 1
+                } else {
+                    $node SetBackground 0
+                }
+                if {$Preset(Slices,$p,$sliceNum,labelVolID) == $v_id} {
+                    $node SetLabel 1
+                } else {
+                    $node SetLabel 0
+                }
                 if {[info exists Preset(WindowLevel,$p,$v_name,lowerThreshold)] == 1} {
                     set node [MainMrmlAddNode "WindowLevel"]
                     $node SetWindow $Preset(WindowLevel,$p,$v_name,window)
@@ -600,9 +654,21 @@ proc MainOptionsUnparsePresets {{presetNum ""}} {
                 $node SetInModel $Preset(Slices,$p,$pos,visibility)
                 $node SetZoom $Preset(Slices,$p,$pos,zoom)
                 $node SetSliceSlider $Preset(Slices,$p,$pos,offset)
-                $node SetBackVolRefID [Volume($Preset(Slices,$p,$pos,backVolID),node) GetVolumeID]
-                $node SetForeVolRefID [Volume($Preset(Slices,$p,$pos,foreVolID),node) GetVolumeID]
-                $node SetLabelVolRefID [Volume($Preset(Slices,$p,$pos,labelVolID),node) GetVolumeID]
+                if {$Preset(Slices,$p,$pos,backVolID) != -1} {
+                    $node SetBackVolRefID [Volume($Preset(Slices,$p,$pos,backVolID),node) GetVolumeID]
+                } else {
+                    $node SetBackVolRefID -1
+                }
+                if {$Preset(Slices,$p,$pos,foreVolID) != -1} {
+                    $node SetForeVolRefID [Volume($Preset(Slices,$p,$pos,foreVolID),node) GetVolumeID]
+                } else {
+                    $node SetForeVoldRefID -1
+                }
+                if {$Preset(Slices,$p,$pos,labelVolID) != -1} {
+                    $node SetLabelVolRefID [Volume($Preset(Slices,$p,$pos,labelVolID),node) GetVolumeID]
+                } else {
+                    $node SetLabelVolRefID -1
+                }
                 $node SetClipState $Preset(Slices,$p,$pos,clipState)
                 $node SetClipType $Preset(Slices,$p,clipType)
                 
@@ -670,7 +736,15 @@ proc MainOptionsUnparsePresets {{presetNum ""}} {
                 }
             }
         }
-
+        # Check for any modules that have options to save here
+        foreach m $Module(idList) {
+            if {[info exists Preset($m,keys)] == 1} {
+                if {[info exists Module($m,procUnparsePresets)] == 1} {
+                    if {$::Module(verbose)} { puts "Calling $m unparse proc $Module($m,procUnparsePresets) for scene $p..." }
+                    $Module($m,procUnparsePresets) $p
+                }
+            }
+        }
         MainMrmlAddNode "EndScenes"
     }
 
@@ -762,13 +836,18 @@ proc MainOptionsPresetCallback {p} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsRecallPresets {p} {
-    global Module
+    global Module Options
 
+    set ::Options(recallingPresets) 1
     # Set current to the preset value
     if {$::Module(verbose)} { puts "MainOptionsRecallPresets: p = $p"}
     foreach m $Module(procRecallPresets) {
+        if {$::Module(verbose)} {
+            puts "\tMainOptionsRecallPrests: calling $m for $p"
+        }
         $m $p
     }
+    set ::Options(recallingPresets) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -883,6 +962,13 @@ proc MainOptionsPresetDelete {name} {
     set Preset(idList) [lreplace $Preset(idList) $i $i]
     $Gui(ViewMenuButton) configure -text "Select"
     
+    # unset the Preset array elements
+    set presetList [array names Preset *${name},*]
+    if {$::Module(verbose)} { puts "\nMainOptionsPresetDelete: Found presets to unset for $name:\n\t$presetList" }
+    foreach p $presetList {
+        unset Preset($p)
+    }
+
     # Refresh view menu
     $Gui(ViewMenuButton).m delete 0 last
     foreach scene $Scenes(nameList) {
@@ -892,21 +978,37 @@ proc MainOptionsPresetDelete {name} {
 
 #-------------------------------------------------------------------------------
 # .PROC MainOptionsPresetDeleteAll
-# Delete the view from the scenes and preset lists, refresh the view menu
+# Delete the view from the scenes and preset lists, refresh the view menu. 
+# Unsets the Preset array elements for the scenes.
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
 proc MainOptionsPresetDeleteAll {} {
     global Scenes Preset Gui
     
+    if {$::Module(verbose)} {
+        puts "MainOptionsPresetDeleteAll: deleting all views from the scenes and preset lists"
+    }
+
+    # unset the preset variables for the scenes
+    foreach scene $Scenes(nameList) {
+        # get all the presets
+        set presetList [array names Preset *${scene},*]
+        if {$::Module(verbose)} { puts "\nMainOptionsPresetDeleteAll: Found presets to unset for $scene:\n\t$presetList" }
+        foreach p $presetList {
+            unset Preset($p)
+        }
+    }
+
     # delete the view from the scenes and preset lists
     set Scenes(nameList) ""
     set Preset(idList) ""
     $Gui(ViewMenuButton) configure -text "Select"
     
-    # Refresh view menu
+    # Refresh view menu - delete everything then add the none view
     $Gui(ViewMenuButton).m delete 0 last
-    foreach scene $Scenes(nameList) {
-        $Gui(ViewMenuButton).m add command -label "$scene" -command "MainViewSelectView {$scene}"
-    }
+    $Gui(ViewMenuButton).m add command -label "(none)"
+#    foreach scene $Scenes(nameList) {
+#        $Gui(ViewMenuButton).m add command -label "$scene" -command "MainViewSelectView {$scene}"
+#    }
 }
