@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Developer.tcl,v $
-#   Date:      $Date: 2006/05/26 21:51:20 $
-#   Version:   $Revision: 1.55 $
+#   Date:      $Date: 2006/07/27 17:54:27 $
+#   Version:   $Revision: 1.56 $
 # 
 #===============================================================================
 # FILE:        Developer.tcl
@@ -962,6 +962,9 @@ proc DevPrintMrmlDataTree { { tagList "Volume" } { justMatrices 1 } } {
         if {$::Module(verbose)} {
             puts "\t${name}: class = $class"
         }
+        if {$class == "vtkMrmlScenesNode"} {
+            puts "Scene: [$node GetName]"
+        }
         foreach tag $tagList {
             if {$class == "vtkMrml${tag}Node"} {
                 if {$tag == "Volume"} {
@@ -990,6 +993,15 @@ proc DevPrintMrmlDataTree { { tagList "Volume" } { justMatrices 1 } } {
                 if {$tag == "Model"} {
                     puts "Model [$node GetID] [$node GetName]" 
                     DevPrintMatrix4x4 [$node GetRasToWld] "RAS -> WLD"
+                }
+                if {$tag == "Module"} {
+                    puts "Module node $node [$node GetModuleRefID]"
+                    puts "\tName = [$node GetName]"
+                    puts "\tValues = "
+                    set keys [$node GetKeys]
+                    foreach k $keys {
+                        puts "\t\t$k = [$node GetValue $k]"
+                    }
                 }
             }
         }
