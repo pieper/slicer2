@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainView.tcl,v $
-#   Date:      $Date: 2006/05/12 22:50:47 $
-#   Version:   $Revision: 1.55 $
+#   Date:      $Date: 2006/07/27 18:27:05 $
+#   Version:   $Revision: 1.56 $
 # 
 #===============================================================================
 # FILE:        MainView.tcl
@@ -61,7 +61,7 @@ textureInterpolation='On' textureResolution='512' fov='240.0'"
 
     set m MainView
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.55 $} {$Date: 2006/05/12 22:50:47 $}]
+    {$Revision: 1.56 $} {$Date: 2006/07/27 18:27:05 $}]
 
     set View(viewerHeightNormal) 656
     set View(viewerWidth)  956 
@@ -474,7 +474,7 @@ proc MainViewSetFov { {sceneNum "default"} {fov -1.0} } {
     }
 
     if {$::Module(verbose)} {
-        puts "MainViewSetFov View(fov) = $View(fov), current fov = [Slicer GetFieldOfView], sceneNum = $sceneNum"
+        puts "MainViewSetFov View(fov) = $View(fov), current fov = [Slicer GetFieldOfView], sceneNum = $sceneNum, viewcam position = [$View(viewCam) GetPosition]"
     }
     Slicer SetFieldOfView $View(fov)
     if {$sceneNum == "default"} {
@@ -899,17 +899,23 @@ proc MainViewStorePresets {p} {
 proc MainViewRecallPresets {p} {
     global Preset View
 
-    if {$::Module(verbose)} { puts "Starting MainViewRecallPresets" }
+    if {$::Module(verbose)} { 
+        puts "Starting MainViewRecallPresets" 
+        puts "\tUsing position $Preset(View,$p,position)\n\tviewUp $Preset(View,$p,viewUp)\n\t(current pos = [$View(viewCam) GetPosition], viewUp = [$View(viewCam) GetViewUp]"
+    
+        puts "Setting the view mode first"
+    }
+    eval MainViewerSetMode $Preset(View,$p,viewMode)
+
     eval $View(viewCam) SetPosition      $Preset(View,$p,position)
     eval $View(viewCam) SetViewUp        $Preset(View,$p,viewUp)
     eval $View(viewCam) SetClippingRange $Preset(View,$p,clippingRange)
 
     eval MainViewSetFocalPoint $Preset(View,$p,focalPoint)
-    eval MainViewerSetMode $Preset(View,$p,viewMode)
     eval MainViewSetBackgroundColor $Preset(View,$p,viewBgColor)
 
     if {$::Module(verbose)} { 
-        puts "MainViewRecallPresets $p about to call texture res"
+        puts "\tMainViewRecallPresets $p, after set focal point, about to call texture res View(viewCam) position = [$View(viewCam) GetPosition]"
     }
 
     eval MainViewSetTextureResolution $Preset(View,$p,textureResolution)
@@ -918,11 +924,9 @@ proc MainViewRecallPresets {p} {
     MainViewSetTexture 
 
     if {$::Module(verbose)} {
-        puts "MainViewRecallPresets: getting fov preset for $p and setting fov $Preset(View,$p,fov)"
+        puts "\tMainViewRecallPresets: getting fov preset for $p and setting fov $Preset(View,$p,fov)"
     }
     set View(fov) $Preset(View,$p,fov)
-    MainViewSetFov
-
-    if {$::Module(verbose)} { puts "Done MainViewRecallPresets"}
-
+    # pass in the scene id so that MainViewNavReset doesn't get called
+    MainViewSetFov $p
 }
