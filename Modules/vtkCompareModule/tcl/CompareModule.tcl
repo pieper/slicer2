@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: CompareModule.tcl,v $
-#   Date:      $Date: 2006/07/27 18:44:12 $
-#   Version:   $Revision: 1.4 $
+#   Date:      $Date: 2006/07/27 21:58:44 $
+#   Version:   $Revision: 1.5 $
 # 
 #===============================================================================
 # FILE:        CompareModule.tcl
@@ -38,7 +38,7 @@ proc CompareModuleInit {} {
     set m CompareModule
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.4 $} {$Date: 2006/07/27 18:44:12 $}]
+        {$Revision: 1.5 $} {$Date: 2006/07/27 21:58:44 $}]
 
     # Module Summary Info
     #------------------------------------
@@ -59,6 +59,7 @@ proc CompareModuleInit {} {
     set Module($m,procGUI) CompareModuleBuildGUI
     set Module($m,procVTK) CompareModuleBuildVTK
     set Module($m,procEnter) CompareModuleEnter
+    set Module($m,procExit) CompareModuleExit
 
     # Presets Procedures
     #------------------------------------
