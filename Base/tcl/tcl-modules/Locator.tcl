@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2006/03/06 19:24:22 $
-#   Version:   $Revision: 1.40 $
+#   Date:      $Date: 2006/07/27 18:33:45 $
+#   Version:   $Revision: 1.41 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -89,7 +89,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.40 $} {$Date: 2006/03/06 19:24:22 $}]
+        {$Revision: 1.41 $} {$Date: 2006/07/27 18:33:45 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -917,6 +917,8 @@ proc LocatorSetDriverAll {x} {
 # .PROC LocatorSetDriver
 # 
 # .ARGS
+# int s the slice id
+# str name the driver
 # .END
 #-------------------------------------------------------------------------------
 proc LocatorSetDriver {s name} {
@@ -925,20 +927,27 @@ proc LocatorSetDriver {s name} {
     # Change button text
     $Locator(mbDriver${s}) config -text $name
 
-    # Change variable
-    set Locator($s,driver) $name
+    # only change the rest if the driver changes
+    if {$Locator($s,driver) != $name} {
+        # Change variable
+        set Locator($s,driver) $name
+        
+        if {$name == "User"} {
+            Slicer SetDriver $s 0
+        } else {
+            Slicer SetDriver $s 1
+        }
 
-    if {$name == "User"} {
-        Slicer SetDriver $s 0
+        # Force recomputation of the reformat matrix
+        Slicer SetDirectNTP \
+            $Locator(nx) $Locator(ny) $Locator(nz) \
+            $Locator(tx) $Locator(ty) $Locator(tz) \
+            $Locator(px) $Locator(py) $Locator(pz) 
     } else {
-        Slicer SetDriver $s 1
+        if {$::Module(verbose)} {
+            puts "LocatorSetDriver: $s driver didn't change (old = $Locator($s,driver), new = $name), skipping SetDirectNTP"
+        }
     }
-
-    # Force recomputation of the reformat matrix
-    Slicer SetDirectNTP \
-        $Locator(nx) $Locator(ny) $Locator(nz) \
-        $Locator(tx) $Locator(ty) $Locator(tz) \
-        $Locator(px) $Locator(py) $Locator(pz) 
 }
 
 #-------------------------------------------------------------------------------
@@ -1336,7 +1345,6 @@ proc LocatorUseLocatorMatrix {} {
             
     # Find slices with their input set to locator.
     # and set the slice matrix with the new locator data
-
     Slicer SetDirectNTP \
         $Locator(nx) $Locator(ny) $Locator(nz) \
         $Locator(tx) $Locator(ty) $Locator(tz) \
@@ -1980,8 +1988,9 @@ proc LocatorImagesPrefix {} {
 
 #-------------------------------------------------------------------------------
 # .PROC LocatorStorePresets
-# 
+# Store the presets for the Locator module.
 # .ARGS
+# str p the scene name
 # .END
 #-------------------------------------------------------------------------------
 proc LocatorStorePresets {p} {
@@ -1995,7 +2004,14 @@ proc LocatorStorePresets {p} {
         set Preset(Locator,$p,$k) $Locator($k)
     }
 }
-        
+
+#-------------------------------------------------------------------------------
+# .PROC LocatorRecallPresets
+# Recall Locator module presets for scene p.
+# .ARGS
+# str p the scene name
+# .END
+#-------------------------------------------------------------------------------
 proc LocatorRecallPresets {p} {
     global Preset Locator Slice
 
