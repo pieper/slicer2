@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: CompareModule.tcl,v $
-#   Date:      $Date: 2006/05/12 22:45:02 $
-#   Version:   $Revision: 1.3 $
+#   Date:      $Date: 2006/07/27 18:44:12 $
+#   Version:   $Revision: 1.4 $
 # 
 #===============================================================================
 # FILE:        CompareModule.tcl
@@ -38,7 +38,7 @@ proc CompareModuleInit {} {
     set m CompareModule
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.3 $} {$Date: 2006/05/12 22:45:02 $}]
+        {$Revision: 1.4 $} {$Date: 2006/07/27 18:44:12 $}]
 
     # Module Summary Info
     #------------------------------------
@@ -64,6 +64,7 @@ proc CompareModuleInit {} {
     #------------------------------------
     lappend Module(procStorePresets) CompareModuleStorePresets
     lappend Module(procRecallPresets) CompareModuleRecallPresets
+    set Module($m,procRetrievePresets) CompareModuleRetrievePresetValues
 
     # Presets defaults
     set Module(CompareModule,presets) "opacity='0.5' \
@@ -85,6 +86,12 @@ proc CompareModuleInit {} {
     7,orient='Axial' 7,offset='0' 7,zoom='1.0'\
     8,backVolID='0' 8,foreVolID='0' 8,labelVolID='0' \
     8,orient='Axial' 8,offset='0' 8,zoom='1.0'"
+
+    # Get the presets into a mrml node
+    set Module($m,procMRML) CompareModuleUpdateMRML
+    set Module($m,procMRMLLoad) CompareModuleLoadMRML
+    MainMrmlAppendnodeTypeList "CompareModule"
+    set Module($m,procUnparsePresets) CompareModuleUnparsePresets
 
     # calls init procedures for the other module files
     CompareAnnoInit
@@ -920,7 +927,7 @@ proc CompareModuleEnableLinkControls {} {
 # .PROC CompareModuleStorePresets
 # Save current settings to preset global variables
 # .ARGS
-# int p the scene number
+# int p the scene id
 # .END
 #-------------------------------------------------------------------------------
 proc CompareModuleStorePresets {p} {
@@ -945,7 +952,7 @@ proc CompareModuleStorePresets {p} {
 # .PROC CompareModuleRecallPresets
 # Set current settings from preset global variables
 # .ARGS
-# int p the scene number
+# int p the scene id
 # .END
 #-------------------------------------------------------------------------------
 proc CompareModuleRecallPresets {p} {
@@ -964,4 +971,218 @@ proc CompareModuleRecallPresets {p} {
         CompareSlicesSetZoom $s $Preset(CompareModule,$p,$s,zoom)
     }
     CompareSlicesSetOpacityAll $Preset(CompareModule,$p,opacity)
+
+    # render so that the changes take effect
+    CompareRenderSlices
+}
+
+#-------------------------------------------------------------------------------
+# .PROC CompareModuleUnparsePresets
+# Makes a mrml node out of the presets.
+# Makes a Module node and adds it to the data tree.
+# .ARGS
+# int presetNum optional, defaults to empty string - currently not used
+# .END
+#-------------------------------------------------------------------------------
+proc CompareModuleUnparsePresets {{presetNum ""}} {
+    global Preset CompareSlice
+
+    if {$presetNum != ""} {
+        set p $presetNum
+    } else {
+        set p "default"
+    }
+    if {$::Module(verbose)} {
+        puts "----> Unparsing CompareModule Presets for scene $p"
+    }
+    set node [MainMrmlAddNode "Module" "CompareModule"]
+    $node SetModuleRefID "CompareModule"
+    $node SetName "CompareModule"
+
+    # set up the values
+    foreach s $CompareSlice(idList) {
+        $node SetValue backVolID$s $Preset(CompareModule,$p,$s,backVolID)
+        $node SetValue foreVolID$s $Preset(CompareModule,$p,$s,foreVolID)
+        $node SetValue labelVolID$s $Preset(CompareModule,$p,$s,labelVolID)
+        $node SetValue orient$s $Preset(CompareModule,$p,$s,orient)
+        $node SetValue offset$s $Preset(CompareModule,$p,$s,offset)
+        $node SetValue zoom$s $Preset(CompareModule,$p,$s,zoom)
+    }
+    $node SetValue "opacity" $Preset(CompareModule,$p,opacity)
+}
+
+#-------------------------------------------------------------------------------
+# .PROC CompareModuleRetrievePresetValues
+# Called from MainOptionsRetrievePresetValues to save the values from a mrml node
+# into the Presets array
+# .ARGS
+# vtkMrmlModuleNode node the node to grab values from
+# str p the scene ID
+# .END
+#-------------------------------------------------------------------------------
+proc CompareModuleRetrievePresetValues {node p} {
+    global Preset Module CompareSlice
+    if {$::Module(verbose)} {
+        puts "CompareModuleRetrievePresetValues: scene $p, node $node"
+    }
+    # check to see that it's a compare module node
+    set ClassName [$node GetClassName]
+    if {$ClassName == "vtkMrmlModuleNode" &&
+        [$node GetModuleRefID] == "CompareModule"} {
+        if {$::Module(verbose)} {
+            puts "\tGetting presets from node $node"
+        }
+        foreach s $CompareSlice(idList) {
+                set Preset(CompareModule,$p,$s,orient) [$node GetValue orient$s]
+                set Preset(CompareModule,$p,$s,offset) [$node GetValue offset$s]
+                set Preset(CompareModule,$p,$s,zoom) [$node GetValue zoom$s]
+                set Preset(CompareModule,$p,$s,backVolID) [$node GetValue backVolID$s]
+                set Preset(CompareModule,$p,$s,foreVolID) [$node GetValue foreVolID$s]
+                set Preset(CompareModule,$p,$s,labelVolID) [$node GetValue labelVolID$s]
+            }
+        set Preset(CompareModule,$p,opacity) [$node GetValue opacity]
+    } else {
+        if {$::Module(verbose)} {
+            puts "CompareModuleRetrievePresetValues: wrong kind of node $node, class = $ClassName, module = [$node GetModuleRefID]"
+        }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC CompareModuleUpdateMRML
+# Update Compare module variables from the mrml tree.
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc CompareModuleUpdateMRML {} {
+    global Mrml CompareSlice Preset
+
+    if {$::Module(verbose)} {
+        puts "CompareModuleUpdateMRML"
+    }
+    Mrml(dataTree) InitTraversal
+    set item [Mrml(dataTree) GetNextItem]
+    set sceneName ""
+    while {$item != ""} {
+        set ClassName [$item GetClassName]
+        # is it a scene node?
+        if {$ClassName == "vtkMrmlScenesNode"} {
+            # get the scene name
+            set sceneName [$item GetName]
+            if {$::Module(verbose)} {
+                puts "CompareModuleUpdateMRML: got a scene named $sceneName"
+            }
+        }
+        # is it a module node for this module?
+        if {$ClassName == "vtkMrmlModuleNode" &&
+            [$item GetModuleRefID] == "CompareModule"} {
+            # get the scene number out of the mrml node name
+            regexp {CompareModule\(([0-9]+),node\)} $item matchvar sceneNum
+            if {$::Module(verbose)} {
+                puts "CompareModuleUpdateMRML: Found a mrml module node for this module: class = $ClassName, name = [$item GetName]\n\tSaving it to Preset array for scene $sceneNum (orient0 = [$item GetValue orient0])"
+                puts "\tCurrent scene = $sceneNum, but using the last found name $sceneName"
+            }
+            foreach s $CompareSlice(idList) {
+                set Preset(CompareModule,$sceneName,$s,orient) [$item GetValue orient$s]
+                set Preset(CompareModule,$sceneName,$s,offset) [$item GetValue offset$s]
+                set Preset(CompareModule,$sceneName,$s,zoom) [$item GetValue zoom$s]
+                set Preset(CompareModule,$sceneName,$s,backVolID) [$item GetValue backVolID$s]
+                set Preset(CompareModule,$sceneName,$s,foreVolID) [$item GetValue foreVolID$s]
+                set Preset(CompareModule,$sceneName,$s,labelVolID) [$item GetValue labelVolID$s]
+
+            }
+            set Preset(CompareModule,$sceneName,opacity) [$item GetValue opacity]
+            if {$::Module(verbose)} {
+                CompareModulePrintPresets $sceneName
+            }
+        }
+        set item [Mrml(dataTree) GetNextItem]
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC CompareModuleLoadMRML
+# Whenever the MRML Tree is loaded this function is called to update all
+# CompareModule related information.
+# .ARGS
+# string tag
+# string attr
+# .END
+#-------------------------------------------------------------------------------
+proc CompareModuleLoadMRML {tag attr} {
+    global Mrml CompareSlice
+
+    if {$::Module(verbose)} {
+        puts "CompareModuleLoadMRML: tag = $tag, attr = $attr"
+    }
+    # get the module ref id element in the attr list to check it's a CompareModule node
+    set attrIndex 0
+    set moduleRefIDPair [lindex $attr $attrIndex]
+    while {[lindex $moduleRefIDPair 0] != "moduleRefID" && $attrIndex < [llength $attr]} {
+        incr attrIndex
+        set moduleRefIDPair [lindex $attr $attrIndex]
+    }
+    if {$::Module(verbose)} {
+        puts "CompareModuleLoadMRML got first attr  $moduleRefIDPair, and second element = [lindex $moduleRefIDPair 1]"
+    }
+    if {$tag == "Module" && ([lindex $moduleRefIDPair 1] == "CompareModule")} {
+        set node [MainMrmlAddNode Module CompareModule]
+        if {$::Module(verbose)} {
+            puts "CompareModuleLoadMRML: Added a MRML Node $node"
+        }
+        foreach a $attr {
+            set key [lindex $a 0]
+            set val [lreplace $a 0 0]
+            if {$::Module(verbose)} {
+                puts "\tHave the key $key, and value $val"
+            }
+            switch $key {
+                "moduleRefID" {
+                    $node SetModuleRefID $val
+                }
+                "name" {
+                    $node SetName $val
+                }
+                "options" {
+                    if {$::Module(verbose)} {
+                        puts "NOT USING options"
+                    }
+                }
+                "default" {
+                    $node SetValue $key $val
+                }
+            }
+        }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC CompareModulePrintPresets
+# Print out the presets for this module.
+# .ARGS
+# str p the scene id, if not set, print for all scenes
+# .END
+#-------------------------------------------------------------------------------
+proc CompareModulePrintPresets { {p "-1"}} {
+    global CompareSlice Scenes Preset
+
+    if {$p == -1} {
+        # set sceneList $Scenes(idList)
+        set sceneList "default $Scenes(nameList)"
+    } else {
+        set sceneList $p
+    }
+
+    foreach scene $sceneList {
+        puts "Compare Module presets for scene $scene:"
+        foreach s $CompareSlice(idList) {
+            puts "Preset(CompareModule,$scene,$s,orient)  = $Preset(CompareModule,$scene,$s,orient)"
+            puts "Preset(CompareModule,$scene,$s,offset) = $Preset(CompareModule,$scene,$s,offset)"
+            puts "Preset(CompareModule,$scene,$s,zoom) = $Preset(CompareModule,$scene,$s,zoom)"
+            puts "Preset(CompareModule,$scene,$s,backVolID) = $Preset(CompareModule,$scene,$s,backVolID)"
+            puts "Preset(CompareModule,$scene,$s,foreVolID) = $Preset(CompareModule,$scene,$s,foreVolID)"
+            puts "Preset(CompareModule,$scene,$s,labelVolID) = $Preset(CompareModule,$scene,$s,labelVolID)"
+        }
+        puts "Preset(CompareModule,$scene,opacity) = $Preset(CompareModule,$scene,opacity)"
+    }
 }
