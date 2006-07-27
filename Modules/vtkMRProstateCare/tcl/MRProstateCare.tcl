@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.8 $} {$Date: 2006/07/21 20:03:47 $}]
+        {$Revision: 1.1.2.9 $} {$Date: 2006/07/27 15:30:31 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -121,12 +121,11 @@ proc MRProstateCareInit {} {
     set MRProstateCare(Model1)  $Model(idNone)
     set MRProstateCare(FileName)  ""
 
-    set MRProstateCare(msPoll) 100
-    set MRProstateCare(port)   15000
-    set MRProstateCare(host)   mrtws
+    set MRProstateCare(port)   60000
     set MRProstateCare(connect) 0
     set MRProstateCare(pause) 0
     set MRProstateCare(loop) 0
+    set MRProstateCare(logTime) 10000
 
     # Patient/Table position
     set MRProstateCare(tblPosList)   "Front Side"
@@ -142,6 +141,10 @@ proc MRProstateCareInit {} {
     set MRProstateCare(countPenn) 0
     set MRProstateCare(editIndex) -1 
     set MRProstateCare(pointList) "" 
+
+    set MRProstateCare(tempDir) "/tmp"
+    set MRProstateCare(logFile) "MRProstateCareLog.txt"
+
  
     # Creates bindings
     MRProstateCareCreateBindings 
@@ -169,7 +172,7 @@ proc MRProstateCareInit {} {
 
 
 proc MRProstateCareBuildGUI {} {
-    global Gui MRProstateCare Module Volume Model
+    global Gui MRProstateCare Module Volume Model Locator
     
     # A frame has already been constructed automatically for each tab.
     # A frame named "Stuff" can be referenced as follows:
@@ -230,7 +233,7 @@ proc MRProstateCareBuildGUI {} {
     pack $f.fBot -side top 
 
     set f $fServer.fTop
-    eval {label $f.lConnectTitle -text "Connection status:"} $Gui(WTA)
+    eval {label $f.lConnectTitle -text "Connection to server:"} $Gui(WTA)
     eval {label $f.lConnectStatus -text "None" -width 8} $Gui(WLA)
     grid $f.lConnectTitle $f.lConnectStatus -pady 1 -padx $Gui(pad)
     set MRProstateCare(connectStatus) $f.lConnectStatus
@@ -240,20 +243,20 @@ proc MRProstateCareBuildGUI {} {
         "{Host name} {Port number} {Update period (ms)}" {
 
         DevAddLabel $f.l$x "${text}:" 
-        eval {entry $f.e$x -textvariable MRProstateCare($x) -width 17} $Gui(WEA)
+        eval {entry $f.e$x -textvariable Locator(Flashpoint,$x) -width 17} $Gui(WEA)
         grid $f.l$x $f.e$x -pady 3 -padx $Gui(pad) -sticky e
         grid $f.e$x -sticky w
     }
 
     set f $fServer.fBot
+    DevAddButton $f.bLoad "Load" "MRProstateCareLoad"  9 
     eval {checkbutton $f.cConnect \
-        -text "Connect" -variable MRProstateCare(connect) -width 9 \
-        -indicatoron 0 -command "MRProstateCareConnect"} $Gui(WCA)
+        -text "Connect" -variable Locator(connect) -width 9 \
+        -indicatoron 0 -command "LocatorConnect;MRProstateCareUpdateConnectionStatus"} $Gui(WCA)
     eval {checkbutton $f.cPause \
-        -text "Pause" -variable MRProstateCare(pause) -command "MRProstateCarePause" \
+        -text "Pause" -variable Locator(pause) -command "LocatorPause" \
         -width 9 -indicatoron 0} $Gui(WCA)
-    pack $f.cConnect $f.cPause -side left -pady $Gui(pad) -padx 2
-
+    grid $f.bLoad $f.cConnect $f.cPause -pady 5 -padx 1 
 
     #-------------------------------------------
     # Template frame
@@ -263,30 +266,38 @@ proc MRProstateCareBuildGUI {} {
     set fTemplate $Module(MRProstateCare,fTemplate)
     set f $fTemplate
 
-    frame $f.fTop -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.fTop -side top -pady 7 
-    frame $f.fMid -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.fMid -side top -pady 3 
-    frame $f.fBot -bg $Gui(activeWorkspace)
-    pack $f.fBot -side top -pady 7
+    foreach x "1 2 3 4 5" {
+        if {$x == 1 || $x == 5} {
+            frame $f.f$x -bg $Gui(activeWorkspace)
+        } else {
+            frame $f.f$x -bg $Gui(activeWorkspace) -relief groove -bd 2 
+        }
+        pack $f.f$x -side top -pady 3 
+    }
 
-    set f $fTemplate.fTop
+    set f $fTemplate.f1
+    eval {label $f.lLocatorTitle -text "Locator status:"} $Gui(WTA)
+    eval {label $f.lLocatorStatus -text "None" -width 8} $Gui(WLA)
+    grid $f.lLocatorTitle $f.lLocatorStatus -pady 3 -padx $Gui(pad)
+    set Locator(lLocStatus) $f.lLocatorStatus
+
+    set f $fTemplate.f2
     foreach x "PDate PName PID Step" text \
         "{Date} {Patient Name} {Patient ID} {Step}" {
 
        DevAddLabel $f.l$x "${text}:" 
        eval {entry $f.e$x -textvariable MRProstateCare(entry,$x) -width 23} $Gui(WEA)
  
-       grid $f.l$x $f.e$x -pady 3 -padx 2 -sticky e
+       grid $f.l$x $f.e$x -pady 1 -padx 2 -sticky e
        grid $f.e$x -sticky w
     }
     set MRProstateCare(entry,$x) 5.0
     set var [clock format [clock seconds] -format "%D"]
     set MRProstateCare(entry,PDate) $var 
  
-    set f $fTemplate.fMid
-    DevAddLabel $f.lTitle "RSA coords of the corner points:" 
-    grid $f.lTitle -row 0 -column 0 -columnspan 3 -pady 10 -sticky news
+    set f $fTemplate.f3
+    eval {label $f.l -text "RSA coords of the corner points"} $Gui(WTA)
+    grid $f.l -row 0 -column 0 -columnspan 3 -pady 10 -sticky news
 
     foreach x "AR PR PL AL" text \
         "{Anterior Right} {Posterior Right} {Posterior Left} {Anterior Left}" {
@@ -296,14 +307,39 @@ proc MRProstateCareBuildGUI {} {
        DevAddButton $f.b$x "Query" "MRProstateCareQuery $x" 5 
        set MRProstateCare(button,$x) $f.b$x
  
-       grid $f.l$x $f.e$x $f.b$x -pady 3 -padx 2 -sticky e
+       grid $f.l$x $f.e$x $f.b$x -pady 1 -padx 2 -sticky e
        grid $f.e$x -sticky w
 
     }
 
-    set f $fTemplate.fBot
-    DevAddButton $f.bCheck "Check" "MRProstateCareCheckTemplate" 10 
-    pack $f.bCheck -side top
+    set f $fTemplate.f4
+    eval {label $f.l -text "Position & Orientation"} $Gui(WTA)
+    frame $f.f -bg $Gui(activeWorkspace)
+    pack $f.l $f.f -side top -pady 3 -padx $Gui(pad)
+
+    set f $f.f
+    eval {label $f.l -text ""} $Gui(WLA)
+    foreach ax "x y z" text "R A S" {
+        eval {label $f.l$ax -text $text -width 7} $Gui(WLA)
+    }
+    grid $f.l $f.lx $f.ly $f.lz -pady 1 -padx $Gui(pad) -sticky e
+
+    foreach axis "N T P" var "n t p" {
+        eval {label $f.l$axis -text "$axis:"} $Gui(WLA)
+        foreach ax "x y z" text "R A S" {
+            eval {entry $f.e$axis$ax -justify right -width 7 \
+                -textvariable Locator($var${ax}Str)} $Gui(WEA)
+            bind $f.e$axis$ax <Return> "LocatorSetPosition; Render3D"
+        }
+        grid $f.l$axis $f.e${axis}x $f.e${axis}y $f.e${axis}z \
+            -pady 1 -padx 6 -sticky e
+    }
+
+    set f $fTemplate.f5
+    DevAddButton $f.bCheck "Check" "MRProstateCareCheckTemplateUserInput;\
+                                    MRProstateCareVerifyFourCorners; \
+                                    MRProstateCareView" 10 
+    grid $f.bCheck -pady 5 -padx 1 
 
 
     #-------------------------------------------
@@ -335,7 +371,7 @@ proc MRProstateCareBuildGUI {} {
             -relief raised -offrelief raised -overrelief raised \
             -command "" \
             -selectcolor white} $Gui(WEA)
-        pack $f.r$x -side top -pady 2 
+        pack $f.r$x -side top -pady 1 
     } 
     $f.rTarget select
     $f.rTarget configure -state normal 
@@ -386,10 +422,8 @@ proc MRProstateCareBuildGUI {} {
     # Bottom frame
     #-------------------------
     set f $fPoints.fBot
-    DevAddButton $f.bLoad "Load" "MRProstateCareLoad"  10 
-    DevAddButton $f.bSave "Save" "MRProstateCareSave"  10 
     DevAddButton $f.bView "View" "MRProstateCareView"  10 
-    grid $f.bLoad $f.bSave $f.bView -padx 1 -pady 5 
+    grid $f.bView -padx 1 -pady 5 
 
     #-------------------------------------------
     # Navigation frame
@@ -440,9 +474,10 @@ proc MRProstateCareBuildGUI {} {
 proc MRProstateCareQuery {field} {
     global MRProstateCare Locator 
 
-    set r $Locator(px)
-    set a $Locator(py)
-    set s $Locator(pz)
+    LocatorFormat 
+    set r $Locator(pxStr)
+    set a $Locator(pyStr)
+    set s $Locator(pzStr)
 
     set MRProstateCare(entry,$field) "$r $s $a"
 }
@@ -810,6 +845,135 @@ proc MRProstateCareLoad {} {
 }
 
 
+proc MRProstateCareVerifyFourCorners {} {
+    global MRProstateCare 
+
+    if {$MRProstateCare(userInputError)} {
+        return
+    }
+ 
+    #-------------------------------------------------------
+    # Write user inputs into file for Steve Haker's 
+    # template computation
+    #-------------------------------------------------------
+    set name $MRProstateCare(entry,PName)
+    set name [string trim $name]
+    # replace all spaces in the middle of name
+    regsub -all { +} $name "_" name 
+    # replace all , in the middle of name
+    regsub -all {,+} $name "_" name 
+
+    set inName $name
+    set outName $name
+    append inName "_in.txt" 
+    append outName "_out.txt" 
+    set inFileName [file join $MRProstateCare(tempDir) $inName]
+    set outFileName [file join $MRProstateCare(tempDir) $outName]
+    set MRProstateCare(outFileName) $outFileName
+
+    MRProstateCareWriteFourCorners $inFileName
+
+    vtkProstateCoords pc
+    pc SetFileName 1 $inFileName
+    pc SetFileName 0 $outFileName
+    pc Run
+    pc Delete
+}
+
+
+proc MRProstateCareLoopLog {} {
+    global MRProstateCare Locator 
+
+    if {! $MRProstateCare(loop)} {
+        return
+    }
+
+    #-------------------------------------------------------
+    # Write user inputs into file which can be loaded later
+    # by clicking the Load button
+    #-------------------------------------------------------
+ 
+    set fileName [file join $MRProstateCare(tempDir) $MRProstateCare(logFile)]
+ 
+    set fd [open $fileName w]
+    set comment "# This is the log file of MRProstateCare module. Do not edit it.\n"
+    puts $fd $comment
+
+    set comment "# host"
+    puts $fd $comment
+    set str "set Locator(Flashpoint,host) $Locator(Flashpoint,host)\n"
+    puts $fd $str
+
+    set comment "# port"
+    puts $fd $comment
+    set str "set Locator(Flashpoint,port) $Locator(Flashpoint,port)\n"
+    puts $fd $str
+
+    set comment "# msPoll"
+    puts $fd $comment
+    set str "set Locator(Flashpoint,msPoll) $Locator(Flashpoint,msPoll)\n"
+    puts $fd $str
+
+    set comment "# date"
+    puts $fd $comment
+    set str "set MRProstateCare(entry,PDate) $MRProstateCare(entry,PDate)\n"
+    puts $fd $str
+
+    set comment "# patient name"
+    puts $fd $comment
+    set str "set MRProstateCare(entry,PName) $MRProstateCare(entry,PName)\n"
+    puts $fd $str
+
+    set comment "# patient id"
+    puts $fd $comment
+    set str "set MRProstateCare(entry,PID) $MRProstateCare(entry,PID)\n"
+    puts $fd $str
+
+    set comment "# step"
+    puts $fd $comment
+    set str "set MRProstateCare(entry,Step) $MRProstateCare(entry,Step)\n"
+    puts $fd $str
+
+    set comment "# anterior right"
+    puts $fd $comment
+    set str "set MRProstateCare(entry,AR) \{$MRProstateCare(entry,AR)\}\n"
+    puts $fd $str
+
+    set comment "# posterior right"
+    puts $fd $comment
+    set str "set MRProstateCare(entry,PR) \{$MRProstateCare(entry,PR)\}\n"
+    puts $fd $str
+
+    set comment "# posterior left"
+    puts $fd $comment
+    set str "set MRProstateCare(entry,PL) \{$MRProstateCare(entry,PL)\}\n"
+    puts $fd $str
+
+    set comment "# anterior left"
+    puts $fd $comment
+    set str "set MRProstateCare(entry,AL) \{$MRProstateCare(entry,AL)\}\n"
+    puts $fd $str
+
+    set comment "# the point list"
+    puts $fd $comment
+    set str "set MRProstateCare(pointList) \"\"\n"
+    puts $fd $str
+    set str "\$MRProstateCare(pointListBox) delete 0 end\n"
+    puts $fd $str
+
+    foreach x $MRProstateCare(pointList) {
+        set str "lappend MRProstateCare(pointList) \{$x\}\n"
+        puts $fd $str
+        set str "\$MRProstateCare(pointListBox) insert end \{$x\}\n" 
+        puts $fd $str
+    }
+
+    close $fd
+
+    after $MRProstateCare(logTime) MRProstateCareLoopLog
+}
+
+
 proc MRProstateCareSave {} {
     global MRProstateCare 
 
@@ -834,7 +998,7 @@ proc MRProstateCareSave {} {
     }
 
     # Check the user input before we writing to file
-    MRProstateCareCheckTemplateCornerCoords
+    MRProstateCareCheckTemplateUserInput
     if {! [info exists MRProstateCare(pointList)] ||
         ! [llength $MRProstateCare(pointList)]} {
         DevErrorWindow "No point has been specified."
@@ -931,6 +1095,51 @@ proc MRProstateCareSave {} {
 }
 
 
+proc MRProstateCareWriteFourCorners {fn} {
+    global MRProstateCare 
+
+    set fd [open $fn w]
+    puts $fd "\n\n\n\n\n"
+ 
+    set comment "# This text file saves the user input. Do not edit it.\n"
+    puts $fd $comment
+
+    set name $MRProstateCare(entry,PName)
+    set name [string trim $name]
+    puts $fd "patient_name = $name\n\n"
+
+    set id $MRProstateCare(entry,PID)
+    set id [string trim $id]
+    puts $fd "patient_id = $id\n\n"
+
+    set date $MRProstateCare(entry,PDate)
+    set date [string trim $date]
+    puts $fd "date = $date\n\n\n"
+
+    set v $MRProstateCare(entry,AR)
+    set v [string trim $v]
+    puts $fd "1) Anterior  Right (RSA) = $v\n\n"
+
+    set v $MRProstateCare(entry,PR)
+    set v [string trim $v]
+    puts $fd "2) Posterior Right (RSA) = $v\n\n"
+
+    set v $MRProstateCare(entry,PL)
+    set v [string trim $v]
+    puts $fd "3) Posterior Left  (RSA) = $v\n\n"
+
+    set v $MRProstateCare(entry,AL)
+    set v [string trim $v]
+    puts $fd "4) Anterior  Left  (RSA) = $v\n\n\n"
+
+    set step $MRProstateCare(entry,Step)
+    set step [string trim $step]
+    puts $fd "Step = $step\n\n\n"
+
+    close $fd
+}
+
+
 proc MRProstateCareWrite {fn} {
     global MRProstateCare 
 
@@ -995,6 +1204,10 @@ proc MRProstateCareWrite {fn} {
 proc MRProstateCareView {} {
     global MRProstateCare 
 
+    if {$MRProstateCare(userInputError)} {
+        return
+    }
+ 
     if {! [info exists MRProstateCare(outFileName)] ||
         ! [file exists $MRProstateCare(outFileName)]} {
         DevErrorWindow "Output file doesn't exist."
@@ -1006,8 +1219,15 @@ proc MRProstateCareView {} {
     }
     incr MRProstateCare(newID)
 
-    set txt "<H3>Point coords with respect to the template</H3>"
-    append txt "<P>\n"
+    if {$MRProstateCare(currentTab) == 2} {
+        # Template tab
+        set txt "<H3>Template and related info</H3>"
+    } else {
+        # Points tab
+        set txt "<H3>Point coords with respect to the template</H3>"
+    }
+
+    append txt "<BR>\n"
 
     set fd [open $MRProstateCare(outFileName) r]
     set data [read $fd]
@@ -1026,7 +1246,7 @@ proc MRProstateCareView {} {
     }
 
     MRProstateCareCreateTextPopup infowin$MRProstateCare(newID) \
-        "Point Coords" 400 100 25 $txt
+        "MRProstateCare Information" 400 100 25 $txt
 }
 
 
@@ -1188,16 +1408,18 @@ proc MRProstateCareAddOrEditPoint {} {
 }
 
 
-proc MRProstateCareCheckTemplateCornerCoords {} {
+proc MRProstateCareCheckTemplateUserInput {} {
     global MRProstateCare
 
     # check the user input on Template tab
-
+    set MRProstateCare(userInputError) 0 
+ 
     # the date field
     set date $MRProstateCare(entry,PDate)
     set date [string trim $date]
     if {$date == ""} {
         DevErrorWindow "Must have the date set (e.g. 07/15/06)."
+        set MRProstateCare(userInputError) 1
         return
     }
 
@@ -1206,6 +1428,7 @@ proc MRProstateCareCheckTemplateCornerCoords {} {
     set name [string trim $name]
     if {$name == ""} {
         DevErrorWindow "Must have the patient name set."
+        set MRProstateCare(userInputError) 1
         return
     }
 
@@ -1214,6 +1437,7 @@ proc MRProstateCareCheckTemplateCornerCoords {} {
     set id [string trim $id]
     if {$id == ""} {
         DevErrorWindow "Must have the patient id set."
+        set MRProstateCare(userInputError) 1
         return
     }
 
@@ -1222,11 +1446,13 @@ proc MRProstateCareCheckTemplateCornerCoords {} {
     set step [string trim $step]
     if {$step == ""} {
         DevErrorWindow "Must have the step set."
+        set MRProstateCare(userInputError) 1
         return
     }
     if {[ValidateInt $step] == 0 &&
         [ValidateFloat $step] == 0} {
         DevErrorWindow "Value of step must be either integer or float."
+        set MRProstateCare(userInputError) 1
         return
     }
 
@@ -1237,6 +1463,7 @@ proc MRProstateCareCheckTemplateCornerCoords {} {
         set v [string trim $v]
         if {$v == ""} {
             DevErrorWindow "Must have the ${text} corner set."
+            set MRProstateCare(userInputError) 1
             return
         }
 
@@ -1246,151 +1473,18 @@ proc MRProstateCareCheckTemplateCornerCoords {} {
         set vl [split $v " "]
         if {[llength $vl] != 3} {
             DevErrorWindow "Input 3 integer/float values for the ${text} corner."
+            set MRProstateCare(userInputError) 1
             return
         }
         foreach x $vl {
             if {[ValidateInt $x] == 0 &&
                 [ValidateFloat $x] == 0} {
                 DevErrorWindow "Input 3 integer/float values for the ${text} corner."
+                set MRProstateCare(userInputError) 1
                 return
             }
         }
     }
-}
-
-
-proc MRProstateCareLoop {} {
-    global Slice Volume MRProstateCare
-    
-    if {$MRProstateCare(loop) == 0} {
-        return
-    }
-    if {$MRProstateCare(pause) == 1} {
-        return
-    }
-
-    set status [MRProstateCare(src) PollRealtime]
-
-    if {$status == -1} {
-        puts "ERROR: PollRealtime"
-        MRProstateCareConnect 0
-        return
-    }
-
-    set newImage   [MRProstateCare(src) GetNewImage]
-    set newLocator [MRProstateCare(src) GetNewLocator]
-
-    #----------------    
-    # NEW locator 
-    #----------------
-    if {$newLocator != 0} {
-        set locStatus [MRProstateCare(src) GetLocatorStatus]
-        set locMatrix [MRProstateCare(src) GetLocatorMatrix]
-            
-if {0} {
-        # Report status to user
-        if {$locStatus == 0} {
-            set locText "OK"
-            set MRProstateCare(bellCount) 0
-        } else {
-            set locText "BLOCKED"
-            set rem [expr $MRProstateCare(bellCount) % 50]
-            if {$rem == 0} {
-                # Every 5 seconds ring the bell if MRProstateCare is not available
-                bell
-            }
-
-            incr MRProstateCare(bellCount)
-        }
-        $MRProstateCare(lLocStatus) config -text $locText
-}
-
-        # Read matrix
-        set MRProstateCare(px) [$locMatrix GetElement 0 0]
-        set MRProstateCare(py) [$locMatrix GetElement 1 0]
-        set MRProstateCare(pz) [$locMatrix GetElement 2 0]
-        set MRProstateCare(nx) [$locMatrix GetElement 0 1]
-        set MRProstateCare(ny) [$locMatrix GetElement 1 1]
-        set MRProstateCare(nz) [$locMatrix GetElement 2 1]
-        set MRProstateCare(tx) [$locMatrix GetElement 0 2]
-        set MRProstateCare(ty) [$locMatrix GetElement 1 2]
-        set MRProstateCare(tz) [$locMatrix GetElement 2 2]
-
-        # display the new locator; we don't display locator
-        # for prostate care
-        # MRProstateCareUseLocatorMatrix
-    }
-
-    #----------------    
-    # NEW IMAGE
-    #----------------
-    if {$newImage != 0} {
-        
-        # Force an update so I can read the new matrix
-        MRProstateCare(src) Modified
-        MRProstateCare(src) Update
-    
-        # Update patient position
-        set MRProstateCare(tblPos)   [lindex $MRProstateCare(tblPosList) \
-            [MRProstateCare(src) GetTablePosition]]
-        set MRProstateCare(patEntry) [lindex $MRProstateCare(patEntryList) \
-            [MRProstateCare(src) GetPatientEntry]]
-        set MRProstateCare(patPos)   [lindex $MRProstateCare(patPosList) \
-            [MRProstateCare(Flashpoint,src) GetPatientPosition]]
-
-        # MRProstateCareSetPatientPosition
-
-        # Get other header values
-        set MRProstateCare(recon)    [MRProstateCare(src) GetRecon]
-        set MRProstateCare(imageNum) [MRProstateCare(src) GetImageNum]
-        set minVal [MRProstateCare(src) GetMinValue]
-        set maxVal [MRProstateCare(src) GetMaxValue]
-        set imgMatrix [MRProstateCare(src) GetImageMatrix]
-        puts "imgNo = $MRProstateCare(imageNum), recon = $MRProstateCare(recon), range = $minVal $maxVal"
-
-        # Copy the image to the Realtime volume
-        set v [MRProstateCareGetRealtimeID]
-        vtkImageCopy copy
-        copy SetInput [MRProstateCare(src) GetOutput]
-        copy Update
-        copy SetInput ""
-        Volume($v,vol) SetImageData [copy GetOutput]
-        copy SetOutput ""
-        copy Delete
-
-        # Set the header info
-        set n Volume($v,node)
-        $n SetImageRange $MRProstateCare(imageNum) $MRProstateCare(imageNum)
-        $n SetDescription "recon=$MRProstateCare(recon)"
-        set str [$n GetMatrixToString $imgMatrix]
-        $n SetRasToVtkMatrix $str
-        $n UseRasToVtkMatrixOn
-
-        # Update pipeline and GUI
-        MainVolumesUpdate $v
-
-        # If this Realtime volume is inside transforms, then
-        # compute the registration:
-        MainUpdateMRML
-
-        # Perform realtime image processing
-        # foreach cb $MRProstateCare(callbackList) {
-        #    $cb
-        # }
-    }
-
-    # Render the slices that the MRProstateCare is driving.
-    if {$newImage != 0 || $newLocator != 0} {
-        RenderAll
-    }
-
-    # Call update instead of update idletasks so that we
-    # process user input like changing slice orientation
-    update
-    if {[ValidateInt $MRProstateCare(msPoll)] == 0} {
-        set MRProstateCare(msPoll) 100
-    }
-    after $MRProstateCare(msPoll) MRProstateCareLoop
 }
 
 
@@ -1499,48 +1593,14 @@ proc MRProstateCareUseLocatorMatrix {} {
 }
 
 
-proc MRProstateCareConnect {{value ""}} {
-    global Gui MRProstateCare Mrml
+proc MRProstateCareUpdateConnectionStatus {} {
+    global MRProstateCare Locator 
 
-    if {$value != ""} {
-        set MRProstateCare(connect) $value
-    }
-
-    # CONNECT
-    if {$MRProstateCare(connect) == "1"} {
-            # You have to actually connect, dumbo
-            set status [MRProstateCare(src) OpenConnection \
-                $MRProstateCare(host) $MRProstateCare(port)]
-            if {$status == -1} {
-                tk_messageBox -icon error -type ok -title $Gui(title) \
-                    -message "Make sure spl_server is running on the mrt workstation: host='$MRProstateCare(host)' port='$MRProstateCare(port)'"
-                set MRProstateCare(loop) 0
-                set MRProstateCare(connect) 0
-                return
-            }
-
-            $MRProstateCare(connectStatus) config -text "OK" 
-
-            set MRProstateCare(loop) 1
-            MRProstateCareLoop
-    } else {
-        set MRProstateCare(loop) 0
-        set MRProstateCare(imageNum) ""
-        MRProstateCare(src) CloseConnection
+    if {$Locator(connect) == 0} {
         $MRProstateCare(connectStatus) config -text "None" 
+    } else {
+        $MRProstateCare(connectStatus) config -text "OK" 
     }
-
-}
-
-
-proc MRProstateCarePause {} {
-    global MRProstateCare
-
-    if {$MRProstateCare(pause) == 0 && $MRProstateCare(connect) == 1} {
-        MRProstateCareLoop
-    }
-
-    $MRProstateCare(connectStatus) config -text "None" 
 }
 
 
@@ -1551,7 +1611,7 @@ proc MRProstateCarePause {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRProstateCareBuildVTK {} {
-    global Gui MRProstateCare View Slice Target Volume Lut 
+    global Gui MRProstateCare View Slice Target Volume Lut Locator 
 
     #------------------------#
     # Realtime image source
@@ -1566,7 +1626,10 @@ proc MRProstateCareBuildVTK {} {
     vtkImageRealtimeScan MRProstateCare(src)
     MRProstateCare(src) SetOperatingSystem $os
 
+    set Locator(server) Flashpoint
+    set Gui(pc) 0 
 
+ 
 }
 
 #-------------------------------------------------------------------------------
@@ -1578,8 +1641,21 @@ proc MRProstateCareBuildVTK {} {
 #-------------------------------------------------------------------------------
 
 proc MRProstateCareEnter {} {
-    global MRProstateCare
+    global MRProstateCare Locator
    
+    set fileName [file join $MRProstateCare(tempDir) $MRProstateCare(logFile)]
+    if {[file exists $fileName]} {
+        set bak [string range $fileName 0 end-4]
+        set bak $bak.bak.txt 
+        file copy -force $fileName $bak
+    }
+ 
+    set MRProstateCare(loop) 1 
+    MRProstateCareLoopLog
+
+    # default connectiong port is 60000
+    set Locator(Flashpoint,port) $MRProstateCare(port)
+
     MRProstateCareUpdateNavigationTab
 
     #--- push all event bindings onto the stack.
@@ -1629,6 +1705,8 @@ proc MRProstateCareExit {} {
 
     # pop event bindings
     MRProstateCarePopBindings
+
+    set MRProstateCare(loop) 0
 
     # Pop event manager
     #------------------------------------
