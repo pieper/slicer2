@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Options.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:00 $
-#   Version:   $Revision: 1.24 $
+#   Date:      $Date: 2006/07/27 18:30:51 $
+#   Version:   $Revision: 1.25 $
 # 
 #===============================================================================
 # FILE:        Options.tcl
@@ -53,7 +53,7 @@ proc OptionsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.24 $} {$Date: 2006/01/06 17:57:00 $}]
+        {$Revision: 1.25 $} {$Date: 2006/07/27 18:30:51 $}]
 
     # Module Summary Info
     set Module($m,overview) "Save User Preferences to Options.xml file."
@@ -587,7 +587,9 @@ proc OptionsModulesUp {m} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC ModulesDown
+# .PROC OptionsModulesDown
+# .ARGS
+# str m module name
 # .END
 #-------------------------------------------------------------------------------
 proc OptionsModulesDown {m} {
