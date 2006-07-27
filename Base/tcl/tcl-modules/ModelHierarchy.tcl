@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: ModelHierarchy.tcl,v $
-#   Date:      $Date: 2006/03/06 19:24:22 $
-#   Version:   $Revision: 1.21 $
+#   Date:      $Date: 2006/07/27 18:32:24 $
+#   Version:   $Revision: 1.22 $
 # 
 #===============================================================================
 # FILE:        ModelHierarchy.tcl
@@ -133,7 +133,7 @@ proc ModelHierarchyInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.21 $} {$Date: 2006/03/06 19:24:22 $}]
+        {$Revision: 1.22 $} {$Date: 2006/07/27 18:32:24 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -479,7 +479,7 @@ proc ModelHierarchyRedrawFrame {} {
 proc ModelHierarchyDeleteNode {nodeType id} {
     global Mrml ModelRef ModelGroup EndModelGroup Hierarchy EndHierarchy
 
-    upvar $nodeType Array
+    upvar \#0 $nodeType Array
 
     MainMrmlClearList
     set Array(idListDelete) $id
