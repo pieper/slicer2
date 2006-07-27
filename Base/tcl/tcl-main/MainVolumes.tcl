@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainVolumes.tcl,v $
-#   Date:      $Date: 2006/07/26 22:00:23 $
-#   Version:   $Revision: 1.97 $
+#   Date:      $Date: 2006/07/27 17:55:10 $
+#   Version:   $Revision: 1.98 $
 # 
 #===============================================================================
 # FILE:        MainVolumes.tcl
@@ -54,7 +54,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.97 $} {$Date: 2006/07/26 22:00:23 $}]
+    {$Revision: 1.98 $} {$Date: 2006/07/27 17:55:10 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -484,7 +484,7 @@ proc MainVolumesWrite {v prefix} {
     # Form and check file prefix
     set filePrefix $prefix
     set fileFull [file join $Mrml(dir) $filePrefix]
-    puts "fileFull: $fileFull"
+
     # Check that it's not blank
     if {[file isdirectory $fileFull] == 1} {
         tk_messageBox -icon error -title $Gui(title) \
@@ -638,7 +638,9 @@ proc MainVolumesWrite {v prefix} {
             catch "export_iwriter Delete"
             vtkITKImageWriter export_iwriter 
             export_iwriter SetInput [Volume($v,vol) GetOutput]
-            puts "file Prefix das fuer den export_iwriter gesetzt wird: [Volume($v,node) GetFilePrefix]"
+            if {$::Module(verbose)} {
+                puts "file Prefix das fuer den export_iwriter gesetzt wird: [Volume($v,node) GetFilePrefix]"
+            }
             export_iwriter SetFileName [Volume($v,node) GetFullPrefix]
             export_iwriter SetRasToIJKMatrix export_matrix
             export_iwriter SetUseCompression $Volume(UseCompression)
@@ -926,7 +928,6 @@ proc MainVolumesUpdate {v} {
     # The BuildUpper() function reset the offsets to be in the middle of
     # the volume, so I need to set them to what's on the GUI:
     foreach s $Slice(idList) {
-puts "MainVolumesUpdate: setting slice offset $s $Slice($s,offset)"
         Slicer SetOffset $s $Slice($s,offset)
     }
 
