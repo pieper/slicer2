@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.14 $} {$Date: 2006/07/28 19:00:16 $}]
+        {$Revision: 1.1.2.15 $} {$Date: 2006/07/28 20:39:52 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -826,7 +826,7 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
 
 
 proc MRProstateCareNavLoop {} { 
-    global MRProstateCare Slice Anno 
+    global MRProstateCare Slice Anno Volume 
 
     if {! $MRProstateCare(navLoop)} {
         return
@@ -855,9 +855,45 @@ proc MRProstateCareNavLoop {} {
             $MRProstateCare(image2,currentVolumeID)
         set MRProstateCare(displayedImage) "image2" 
     }
+
     MainSlicesSetVolumeAll Back $MRProstateCare(currentDisplayedVolumeID)
     MainVolumesSetActive $MRProstateCare(currentDisplayedVolumeID)
     MainVolumesRender
+
+    set vname [Volume($MRProstateCare(currentDisplayedVolumeID),node) GetName]
+    if {$vname != "Realtime"} {
+        # set right slice to display
+        set p $MRProstateCare(currentPoint)
+        if {$p != ""} {
+            set i 0 
+            set i2 [string first ":" $p]
+            set title [string range $p $i [expr $i2-1]] 
+            set rsa [string range $p [expr $i2+3] end-1] 
+
+            set rsa [string trim $rsa]
+            set title [string trim $title]
+        }
+        regsub -all {( )+} $rsa " " rsa 
+        set coords [split $rsa " "]
+        # Axial slice changes as S
+        # Saggital slice changes as R
+        # Coronal slice changes as A
+        foreach s "0 1 2" i "1 0 2" {
+            set Slice($s,offset) [lindex $coords $i] 
+            MainSlicesSetOffset $s
+            RenderBoth $s
+        }
+
+
+        # draw a ball for the point in 3D view
+
+
+        # write the point name in 3D view
+
+
+    } else {
+        # TODO: handle Realtime volume
+    }
 
     # turn off orientation letters and cube in 3D view
     set Anno(letters) 0
@@ -911,6 +947,14 @@ proc MRProstateCareNavLoop {} {
     after $MRProstateCare(navTime) MRProstateCareNavLoop
 }
  
+
+proc MRProstateCareRenderSlice {} {
+    global MRProstateCare Locator
+
+
+
+}
+
 
 proc MRProstateCareStopNav {} { 
     global MRProstateCare 
