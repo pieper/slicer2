@@ -50,10 +50,15 @@ if {[info command vtkITKVersion] == ""} {
     catch "set itkVersion [vtkitkver GetITKVersion]"
     catch "vtkitkver Delete"
 }
-
-set dpString "ProgramName: $execName\nProgramArguments: $argv\nTimeStamp: [clock format [clock seconds] -format "%D-%T-%Z"]\nUser: $::env(USER)\nMachine: $tcl_platform(machine)\nPlatform: $tcl_platform(os) PlatformVersion: $tcl_platform(osVersion)"
+if {[info exist ::env(USER)] == 1} {
+    set userName $::env(USER)
+} else {
+    # user name may not be set when running a nightly test as a cron job
+    set userName "NONE"
+}
+set dpString "ProgramName: $execName\nProgramArguments: $argv\nTimeStamp: [clock format [clock seconds] -format "%D-%T-%Z"]\nUser: ${userName}\nMachine: $tcl_platform(machine)\nPlatform: $tcl_platform(os) PlatformVersion: $tcl_platform(osVersion)"
 set dpString "${dpString}\nVersion: [ParseCVSInfo "" {$Name:  $}]"
-set dpString "${dpString}\nCVS: [ParseCVSInfo "" {$Id: testDataProvenance.tcl,v 1.2 2006/07/11 20:23:16 nicole Exp $}]"
+set dpString "${dpString}\nCVS: [ParseCVSInfo "" {$Id: testDataProvenance.tcl,v 1.3 2006/07/28 14:23:00 nicole Exp $}]"
 set dpString "${dpString}\nCompilerName: ${compilerName} CompilerVersion: $compilerVersion"
 set dpString "${dpString}\nLibName: VTK LibVersion: ${vtkVersion}\nLibName: TCL LibVersion: ${tcl_patchLevel}\nLibName: TK LibVersion: ${tk_patchLevel}\nLibName: ITK LibVersion: ${itkVersion}"
 
