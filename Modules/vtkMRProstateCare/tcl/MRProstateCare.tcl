@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.13 $} {$Date: 2006/07/28 14:53:08 $}]
+        {$Revision: 1.1.2.14 $} {$Date: 2006/07/28 19:00:16 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -826,7 +826,7 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
 
 
 proc MRProstateCareNavLoop {} { 
-    global MRProstateCare Slice 
+    global MRProstateCare Slice Anno 
 
     if {! $MRProstateCare(navLoop)} {
         return
@@ -859,6 +859,12 @@ proc MRProstateCareNavLoop {} {
     MainVolumesSetActive $MRProstateCare(currentDisplayedVolumeID)
     MainVolumesRender
 
+    # turn off orientation letters and cube in 3D view
+    set Anno(letters) 0
+    set Anno(box) 0
+    MainAnnoSetVisibility
+    Render3D
+
     # clean the 3D view
     MainSlicesSetVisibilityAll 0
     Render3D
@@ -870,23 +876,37 @@ proc MRProstateCareNavLoop {} {
             set Slice(1,visibility) 0 
             set Slice(2,visibility) 0 
             set s 0
+
+            # adjust the display orientation
+            # Click "I" in the direction window to 
+            # get Axial display in the 3D view
+            MainViewNavReset 40 65 click 
         }
         "Sagittal" {
             set Slice(0,visibility) 0 
             set Slice(1,visibility) 1 
             set Slice(2,visibility) 0 
             set s 1 
+
+            # Click "L" to get Axial display 
+            # in the 3D view
+            MainViewNavReset 61 25 click 
         }
         "Coronal" {
             set Slice(0,visibility) 0 
             set Slice(1,visibility) 0 
             set Slice(2,visibility) 1 
             set s 2 
+
+            # Click "A" to get Axial display 
+            # in the 3D view
+            MainViewNavReset 55 38 click 
         }
     }
     MainSlicesSetVisibility ${s}
     MainViewerHideSliceControls 
     Render3D
+     
 
     after $MRProstateCare(navTime) MRProstateCareNavLoop
 }
