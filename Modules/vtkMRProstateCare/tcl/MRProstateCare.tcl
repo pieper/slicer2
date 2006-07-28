@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.12 $} {$Date: 2006/07/27 21:29:30 $}]
+        {$Revision: 1.1.2.13 $} {$Date: 2006/07/28 14:53:08 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -818,7 +818,8 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
     # Frame 5 
     #-------------------------
     set f $parent.f5
-    DevAddButton $f.bStart "Start" "MRProstateCareNavLoop"  10 
+    DevAddButton $f.bStart "Start" "set MRProstateCare(navLoop) 1; \
+                                    MRProstateCareNavLoop"  10 
     DevAddButton $f.bStop "Stop" "MRProstateCareStopNav"  10 
     grid $f.bStart $f.bStop -padx 1 -pady 5 
 }
@@ -827,7 +828,7 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
 proc MRProstateCareNavLoop {} { 
     global MRProstateCare Slice 
 
-    if {! $MRProstateCare(servLoop)} {
+    if {! $MRProstateCare(navLoop)} {
         return
     }
 
@@ -836,21 +837,33 @@ proc MRProstateCareNavLoop {} {
         return
     }
 
-    set both [expr {$MRProstateCare(image1,currentVolumeID) > 0  && $MRProstateCare(image2,currentVolumeID) > 0}] 
+    set both [expr {$MRProstateCare(image1,currentVolumeID) > 0  
+                    && $MRProstateCare(image2,currentVolumeID) > 0}] 
     if {! $both} {
         DevErrorWindow "Please have both images valid for display."
         return
     } 
 
+    # alternate between image1 and image2 for display
     if {$MRProstateCare(displayedImage) == "" ||
         $MRProstateCare(displayedImage) == "image2"} { 
-        set MRProstateCare(currentDisplayedVolumeID) $MRProstateCare(image1,currentVolumeID)
+        set MRProstateCare(currentDisplayedVolumeID) \
+            $MRProstateCare(image1,currentVolumeID)
         set MRProstateCare(displayedImage) "image1" 
     } else {
-        set MRProstateCare(currentDisplayedVolumeID) $MRProstateCare(image2,currentVolumeID)
+        set MRProstateCare(currentDisplayedVolumeID) \
+            $MRProstateCare(image2,currentVolumeID)
         set MRProstateCare(displayedImage) "image2" 
     }
+    MainSlicesSetVolumeAll Back $MRProstateCare(currentDisplayedVolumeID)
+    MainVolumesSetActive $MRProstateCare(currentDisplayedVolumeID)
+    MainVolumesRender
+
+    # clean the 3D view
+    MainSlicesSetVisibilityAll 0
+    Render3D
         
+    # show the slice according to the specified orientation
     switch $MRProstateCare(orientation) {
         "Axial" {
             set Slice(0,visibility) 1 
@@ -870,13 +883,10 @@ proc MRProstateCareNavLoop {} {
             set Slice(2,visibility) 1 
             set s 2 
         }
-
-        MainSlicesSetVisibilityAll ${s}
-        RenderAll
-        # MainViewerHideSliceControls 
-        # Render3D
     }
-
+    MainSlicesSetVisibility ${s}
+    MainViewerHideSliceControls 
+    Render3D
 
     after $MRProstateCare(navTime) MRProstateCareNavLoop
 }
@@ -885,7 +895,7 @@ proc MRProstateCareNavLoop {} {
 proc MRProstateCareStopNav {} { 
     global MRProstateCare 
 
-    set MRProstateCare(servLoop) 0
+    set MRProstateCare(navLoop) 0
 }
 
 
