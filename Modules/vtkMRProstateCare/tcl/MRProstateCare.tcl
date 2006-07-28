@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.15 $} {$Date: 2006/07/28 20:39:52 $}]
+        {$Revision: 1.1.2.16 $} {$Date: 2006/07/28 21:32:43 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -886,13 +886,18 @@ proc MRProstateCareNavLoop {} {
 
 
         # draw a ball for the point in 3D view
-
-
         # write the point name in 3D view
+        set MRProstateCare(currentPointRAS) ""
+        lappend MRProstateCare(currentPointRAS) [lindex $coords 0]
+        lappend MRProstateCare(currentPointRAS) [lindex $coords 2]
+        lappend MRProstateCare(currentPointRAS) [lindex $coords 1]
 
+        MRProstateCareDeleteFiducial
+        MRProstateCareCreateFiducial
 
     } else {
         # TODO: handle Realtime volume
+        MRProstateCareDeleteFiducial
     }
 
     # turn off orientation letters and cube in 3D view
@@ -946,13 +951,50 @@ proc MRProstateCareNavLoop {} {
 
     after $MRProstateCare(navTime) MRProstateCareNavLoop
 }
- 
-
-proc MRProstateCareRenderSlice {} {
-    global MRProstateCare Locator
 
 
+#-------------------------------------------------------------------------------
+# .PROC MRProstateCareCreateFiducial 
+# Make a fiducial at the tip of the current point.  Create a prostate list if it 
+# doesn't already exist.  
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MRProstateCareCreateFiducial {} {
+    global Locator MRProstateCare
+    if { ![FiducialsCheckListExistence "Prostate"] } {
+        FiducialsCreateFiducialsList default "Prostate"
+    }
 
+    set pid [FiducialsCreatePointFromWorldXYZ "Prostate" \
+        [expr 2 + [lindex $MRProstateCare(currentPointRAS) 0]] \
+        [expr -2 + [lindex $MRProstateCare(currentPointRAS) 1]] \
+        [expr 2 + [lindex $MRProstateCare(currentPointRAS) 2]]]
+    Point($pid,node) SetOrientationWXYZFromMatrix4x4 Locator(transverseMatrix)
+    FiducialsUpdateMRML
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC MRProstateCareDeleteFiducial 
+# Delete last fiducial on prostate list if it exists 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MRProstateCareDeleteFiducial {} {
+
+    if { ![FiducialsCheckListExistence "Prostate" fid] } {
+        return
+    }
+
+    if { [llength $::Fiducials($fid,pointIdList)] == 0 } {
+        return
+    }
+
+    set pid [lindex $::Fiducials($fid,pointIdList) end]
+
+    FiducialsDeletePoint $fid $pid
+    FiducialsUpdateMRML
 }
 
 
@@ -1634,23 +1676,9 @@ proc MRProstateCareUpdateConnectionStatus {} {
 proc MRProstateCareBuildVTK {} {
     global Gui MRProstateCare View Slice Target Volume Lut Locator 
 
-    #------------------------#
-    # Realtime image source
-    #------------------------#
-    set os -1
-    switch $::tcl_platform(os) {
-        "SunOS"  {set os 1}
-        "Linux"  {set os 2}
-        "Darwin" {set os 3}
-        default  {set os 4}
-    }
-    vtkImageRealtimeScan MRProstateCare(src)
-    MRProstateCare(src) SetOperatingSystem $os
-
     set Locator(server) Flashpoint
     set Gui(pc) 0 
 
- 
 }
 
 #-------------------------------------------------------------------------------
