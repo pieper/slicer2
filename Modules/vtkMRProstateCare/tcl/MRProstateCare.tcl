@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.16 $} {$Date: 2006/07/28 21:32:43 $}]
+        {$Revision: 1.1.2.17 $} {$Date: 2006/07/31 18:08:44 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -833,14 +833,14 @@ proc MRProstateCareNavLoop {} {
     }
 
     if {$MRProstateCare(currentPoint) == "none"} {
-        DevErrorWindow "Please select a valid point to display."
+        DevErrorWindow "Please select a valid point to display. Then press Start button to begin."
         return
     }
 
     set both [expr {$MRProstateCare(image1,currentVolumeID) > 0  
                     && $MRProstateCare(image2,currentVolumeID) > 0}] 
     if {! $both} {
-        DevErrorWindow "Please have both images valid for display."
+        DevErrorWindow "Please have both images valid for display. Then press Start button to begin."
         return
     } 
 
@@ -856,9 +856,9 @@ proc MRProstateCareNavLoop {} {
         set MRProstateCare(displayedImage) "image2" 
     }
 
-    MainSlicesSetVolumeAll Back $MRProstateCare(currentDisplayedVolumeID)
-    MainVolumesSetActive $MRProstateCare(currentDisplayedVolumeID)
-    MainVolumesRender
+#    MainSlicesSetVolumeAll Back $MRProstateCare(currentDisplayedVolumeID)
+#    MainVolumesSetActive $MRProstateCare(currentDisplayedVolumeID)
+#    MainVolumesRender
 
     set vname [Volume($MRProstateCare(currentDisplayedVolumeID),node) GetName]
     if {$vname != "Realtime"} {
@@ -892,19 +892,17 @@ proc MRProstateCareNavLoop {} {
         lappend MRProstateCare(currentPointRAS) [lindex $coords 2]
         lappend MRProstateCare(currentPointRAS) [lindex $coords 1]
 
-        MRProstateCareDeleteFiducial
-        MRProstateCareCreateFiducial
+        MRProstateCareShowPointTitle $title
 
     } else {
         # TODO: handle Realtime volume
-        MRProstateCareDeleteFiducial
+        MRProstateCareHidePointTitle
     }
 
     # turn off orientation letters and cube in 3D view
     set Anno(letters) 0
     set Anno(box) 0
     MainAnnoSetVisibility
-    Render3D
 
     # clean the 3D view
     MainSlicesSetVisibilityAll 0
@@ -948,8 +946,45 @@ proc MRProstateCareNavLoop {} {
     MainViewerHideSliceControls 
     Render3D
      
+    MainSlicesSetVolumeAll Back $MRProstateCare(currentDisplayedVolumeID)
+    MainVolumesSetActive $MRProstateCare(currentDisplayedVolumeID)
+    MainVolumesRender
 
     after $MRProstateCare(navTime) MRProstateCareNavLoop
+}
+
+proc MRProstateCareHidePointTitle {} {
+    global MRProstateCare View
+
+    $MRProstateCare(pointTitleActor) SetVisibility 0 
+}
+
+
+proc MRProstateCareShowPointTitle {title} {
+    global MRProstateCare View
+
+    set pos [expr   $View(fov) * 0.45]
+    set neg [expr - $View(fov) * 0.45]
+    $MRProstateCare(pointTitleText) SetText $title 
+    switch $MRProstateCare(orientation) {
+        "Axial" {
+            set r 0.0
+            set a $pos 
+            set s $neg
+        }
+        "Sagittal" {
+            set r $neg 
+            set a 0.0 
+            set s $pos
+        }
+        "Coronal" {
+            set r 0.0 
+            set a $pos 
+            set s $pos
+        }
+    }
+    $MRProstateCare(pointTitleActor) SetVisibility 1 
+    $MRProstateCare(pointTitleActor) SetPosition $r $a $s  
 }
 
 
@@ -961,15 +996,27 @@ proc MRProstateCareNavLoop {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRProstateCareCreateFiducial {} {
-    global Locator MRProstateCare
+    global Locator MRProstateCare View
     if { ![FiducialsCheckListExistence "Prostate"] } {
         FiducialsCreateFiducialsList default "Prostate"
     }
 
-    set pid [FiducialsCreatePointFromWorldXYZ "Prostate" \
-        [expr 2 + [lindex $MRProstateCare(currentPointRAS) 0]] \
-        [expr -2 + [lindex $MRProstateCare(currentPointRAS) 1]] \
-        [expr 2 + [lindex $MRProstateCare(currentPointRAS) 2]]]
+    set max [expr $View(fov) / 2]
+    set r [lindex $MRProstateCare(currentPointRAS) 0]
+    set a [lindex $MRProstateCare(currentPointRAS) 1]
+    set s [lindex $MRProstateCare(currentPointRAS) 2]
+    switch $MRProstateCare(orientation) {
+        "Axial" {
+            set s $max 
+        }
+        "Sagittal" {
+            set r $max 
+        }
+        "Coronal" {
+            set a -$max 
+        }
+    }
+    set pid [FiducialsCreatePointFromWorldXYZ "Prostate" $r $a $s]
     Point($pid,node) SetOrientationWXYZFromMatrix4x4 Locator(transverseMatrix)
     FiducialsUpdateMRML
 }
@@ -1674,12 +1721,47 @@ proc MRProstateCareUpdateConnectionStatus {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MRProstateCareBuildVTK {} {
-    global Gui MRProstateCare View Slice Target Volume Lut Locator 
+    global Gui MRProstateCare View Slice Target Volume Lut Locator Anno 
 
     set Locator(server) Flashpoint
     set Gui(pc) 0 
 
+    # Actor for point name
+    set scale [expr $View(fov) * $Anno(letterSize) ]
+    vtkVectorText pointTitleText
+    pointTitleText SetText "pointTitle"
+    set MRProstateCare(pointTitleText) pointTitleText
+
+    vtkPolyDataMapper  pointTitleMapper
+    pointTitleMapper SetInput [pointTitleText GetOutput]
+    vtkFollower pointTitleActor
+    pointTitleActor SetMapper pointTitleMapper
+    pointTitleActor SetScale  $scale $scale $scale 
+    pointTitleActor SetPickable 0
+    if {$View(bgName)=="White"} {
+        [pointTitleActor GetProperty] SetColor 0 0 1
+    } else {
+        [pointTitleActor GetProperty] SetColor 1 1 1
+    }
+    [pointTitleActor GetProperty] SetDiffuse 0.0
+    [pointTitleActor GetProperty] SetAmbient 1.0
+    [pointTitleActor GetProperty] SetSpecular 0.0
+    # add only to the Main View window
+    viewRen AddActor pointTitleActor
+
+    pointTitleActor SetPosition 0.0  0.0 0.0 
+    pointTitleActor SetVisibility 0
+    set MRProstateCare(pointTitleActor) pointTitleActor
+
+    # Make point title follow camera
+    pointTitleActor SetCamera $View(viewCam)
+
+#    set pos [expr   $View(fov) * 0.6]
+#    set neg [expr - $View(fov) * 0.6]
+#    pointTitleActor SetPosition $pos  0.0  $pos 
+
 }
+
 
 #-------------------------------------------------------------------------------
 # .PROC MRProstateCareEnter
