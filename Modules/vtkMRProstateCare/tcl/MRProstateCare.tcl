@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.17 $} {$Date: 2006/07/31 18:08:44 $}]
+        {$Revision: 1.1.2.18 $} {$Date: 2006/07/31 18:53:42 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -892,11 +892,11 @@ proc MRProstateCareNavLoop {} {
         lappend MRProstateCare(currentPointRAS) [lindex $coords 2]
         lappend MRProstateCare(currentPointRAS) [lindex $coords 1]
 
-        MRProstateCareShowPointTitle $title
+        MRProstateCareShowPoint $title
 
     } else {
         # TODO: handle Realtime volume
-        MRProstateCareHidePointTitle
+        MRProstateCareHidePoint
     }
 
     # turn off orientation letters and cube in 3D view
@@ -953,38 +953,50 @@ proc MRProstateCareNavLoop {} {
     after $MRProstateCare(navTime) MRProstateCareNavLoop
 }
 
-proc MRProstateCareHidePointTitle {} {
+proc MRProstateCareHidePoint {} {
     global MRProstateCare View
 
     $MRProstateCare(pointTitleActor) SetVisibility 0 
+    pointActor SetVisibility 0 
+
 }
 
 
-proc MRProstateCareShowPointTitle {title} {
+proc MRProstateCareShowPoint {title} {
     global MRProstateCare View
 
+    set rb [lindex $MRProstateCare(currentPointRAS) 0]
+    set ab [lindex $MRProstateCare(currentPointRAS) 1]
+    set sb [lindex $MRProstateCare(currentPointRAS) 2]
+ 
     set pos [expr   $View(fov) * 0.45]
     set neg [expr - $View(fov) * 0.45]
-    $MRProstateCare(pointTitleText) SetText $title 
     switch $MRProstateCare(orientation) {
         "Axial" {
-            set r 0.0
-            set a $pos 
-            set s $neg
+            set rt 0.0
+            set at $pos 
+            set st $neg
+            set sb $st
         }
         "Sagittal" {
-            set r $neg 
-            set a 0.0 
-            set s $pos
+            set rt $neg 
+            set at 0.0 
+            set st $pos
+            set rb $rt
         }
         "Coronal" {
-            set r 0.0 
-            set a $pos 
-            set s $pos
+            set rt 0.0 
+            set at $pos 
+            set st $pos
+            set ab $at
         }
     }
+    $MRProstateCare(pointTitleText) SetText $title 
     $MRProstateCare(pointTitleActor) SetVisibility 1 
-    $MRProstateCare(pointTitleActor) SetPosition $r $a $s  
+    $MRProstateCare(pointTitleActor) SetPosition $rt $at $st  
+
+    pointActor SetVisibility 1 
+    pointActor SetPosition $rb $ab $sb  
 }
 
 
@@ -1727,6 +1739,8 @@ proc MRProstateCareBuildVTK {} {
     set Gui(pc) 0 
 
     # Actor for point name
+    #-------------------------------
+
     set scale [expr $View(fov) * $Anno(letterSize) ]
     vtkVectorText pointTitleText
     pointTitleText SetText "pointTitle"
@@ -1739,9 +1753,9 @@ proc MRProstateCareBuildVTK {} {
     pointTitleActor SetScale  $scale $scale $scale 
     pointTitleActor SetPickable 0
     if {$View(bgName)=="White"} {
-        [pointTitleActor GetProperty] SetColor 0 0 1
+        [pointTitleActor GetProperty] SetColor 0 0 1 
     } else {
-        [pointTitleActor GetProperty] SetColor 1 1 1
+        [pointTitleActor GetProperty] SetColor 0 1 0 
     }
     [pointTitleActor GetProperty] SetDiffuse 0.0
     [pointTitleActor GetProperty] SetAmbient 1.0
@@ -1756,10 +1770,17 @@ proc MRProstateCareBuildVTK {} {
     # Make point title follow camera
     pointTitleActor SetCamera $View(viewCam)
 
-#    set pos [expr   $View(fov) * 0.6]
-#    set neg [expr - $View(fov) * 0.6]
-#    pointTitleActor SetPosition $pos  0.0  $pos 
-
+    # Actor for point location 
+    #-------------------------------
+    MakeVTKObject Sphere point 
+    pointSource SetRadius 4.0 
+    if {$View(bgName)=="White"} {
+        [pointActor GetProperty] SetColor 0 0 1 
+    } else {
+        [pointActor GetProperty] SetColor 0 1 0 
+    }
+    pointActor SetPosition 0.0 0.0 0.0 
+    pointActor SetVisibility 0 
 }
 
 
