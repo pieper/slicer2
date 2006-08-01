@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2006/07/24 20:35:48 $
-#   Version:   $Revision: 1.38.12.2.2.4 $
+#   Date:      $Date: 2006/08/01 19:39:10 $
+#   Version:   $Revision: 1.38.12.2.2.5 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -89,7 +89,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.4 $} {$Date: 2006/07/24 20:35:48 $}]
+        {$Revision: 1.38.12.2.2.5 $} {$Date: 2006/08/01 19:39:10 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -270,7 +270,7 @@ proc LocatorBuildVTK {} {
     # and it's 10 mm long.
     set actor opening 
     MakeVTKObject Cylinder $actor
-        ${actor}Source SetRadius $Locator(radius) 
+        ${actor}Source SetRadius [expr 1.1 * $Locator(radius)] 
         ${actor}Source SetHeight 10.
         # expr {$Locator(normalLen) / -2.0 + 3.64} is 
         # the tip location. Adding 5 mm moves the opening
