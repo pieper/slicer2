@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.18 $} {$Date: 2006/07/31 18:53:42 $}]
+        {$Revision: 1.1.2.19 $} {$Date: 2006/08/01 20:40:33 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -153,10 +153,10 @@ proc MRProstateCareInit {} {
     set MRProstateCare(currentDisplayedVolumeID) 0 
     set MRProstateCare(displayedImage) "" 
 
- 
+    set MRProstateCare(portSet) 0
+
     # Creates bindings
     MRProstateCareCreateBindings 
-
 
 }
 
@@ -1806,8 +1806,11 @@ proc MRProstateCareEnter {} {
     MRProstateCareLogLoop
 
     # default connectiong port is 60000
-    set Locator(Flashpoint,port) $MRProstateCare(port)
-
+    if {! $MRProstateCare(portSet)} {
+        set Locator(Flashpoint,port) $MRProstateCare(port)
+        set MRProstateCare(portSet) 1
+    }
+ 
     MRProstateCareUpdateNavigationTab
 
     #--- push all event bindings onto the stack.
