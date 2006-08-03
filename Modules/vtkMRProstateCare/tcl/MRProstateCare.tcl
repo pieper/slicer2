@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.19 $} {$Date: 2006/08/01 20:40:33 $}]
+        {$Revision: 1.1.2.20 $} {$Date: 2006/08/03 16:55:50 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -895,7 +895,15 @@ proc MRProstateCareNavLoop {} {
         MRProstateCareShowPoint $title
 
     } else {
-        # TODO: handle Realtime volume
+        # Axial slice changes as S
+        # Saggital slice changes as R
+        # Coronal slice changes as A
+        foreach s "0 1 2" {
+            set Slice($s,offset) 0 
+            MainSlicesSetOffset $s
+            RenderBoth $s
+        }
+
         MRProstateCareHidePoint
     }
 
