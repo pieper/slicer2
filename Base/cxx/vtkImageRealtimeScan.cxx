@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageRealtimeScan.cxx,v $
-  Date:      $Date: 2006/01/26 16:26:27 $
-  Version:   $Revision: 1.15.8.3 $
+  Date:      $Date: 2006/08/03 16:40:21 $
+  Version:   $Revision: 1.15.8.3.2.1 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -605,11 +605,12 @@ void vtkImageRealtimeScan::Execute(vtkImageData *data)
     int rowLength, errcode;
     int *outExt;
     char *img;
-     char fileName[1000];
+    char fileName[1000];
  
     if (data->GetScalarType() != VTK_SHORT)
     {
         vtkErrorMacro("Execute: This source only outputs shorts");
+        return;
     }
     outExt = data->GetExtent();
     nx = outExt[3]-outExt[2]+1;
@@ -632,7 +633,8 @@ void vtkImageRealtimeScan::Execute(vtkImageData *data)
             return;
         }
     }
-    else {
+    else 
+    {
 #ifndef _WIN32
         nbytes = SendServer(CMD_PIXELS);
         if (nbytes < 0) return;
@@ -649,10 +651,20 @@ void vtkImageRealtimeScan::Execute(vtkImageData *data)
             close(sockfd);
             return;
         }
-            
+
         memcpy(outPtr, img, nbytes);
+        if (ByteOrder)  // little endian 
+        {
+            for (int i = 0; i < numPoints; i++) 
+            {
+                DoByteSwap(outPtr[i]);
+                // cout << "outPtr = " << outPtr[i] << endl;
+            }
+
         fprintf(stderr, "New image, ctr pix = %d\n", outPtr[ny/2*nx/2]);
         delete [] img;
+    }
+
 #endif
     }
 }
