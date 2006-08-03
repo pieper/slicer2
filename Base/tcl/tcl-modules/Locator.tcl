@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2006/08/01 19:39:10 $
-#   Version:   $Revision: 1.38.12.2.2.5 $
+#   Date:      $Date: 2006/08/03 16:37:58 $
+#   Version:   $Revision: 1.38.12.2.2.6 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -89,7 +89,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.5 $} {$Date: 2006/08/01 19:39:10 $}]
+        {$Revision: 1.38.12.2.2.6 $} {$Date: 2006/08/03 16:37:58 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -1419,6 +1419,7 @@ proc LocatorGetRealtimeID {} {
     return $v
 }
 
+
 #-------------------------------------------------------------------------------
 # .PROC LocatorSetRealtime
 # 
@@ -1894,29 +1895,38 @@ proc LocatorLoopFlashpoint {} {
         puts "ima=$Locator(imageNum), recon=$Locator(recon), range=$minVal $maxVal"
 
         # Copy the image to the Realtime volume
-        set v [LocatorGetRealtimeID]
-        vtkImageCopy copy
-        copy SetInput [Locator(Flashpoint,src) GetOutput]
-        copy Update
-        copy SetInput ""
-        Volume($v,vol) SetImageData [copy GetOutput]
-        copy SetOutput ""
-        copy Delete
+        set rImage [Locator(Flashpoint,src) GetOutput]
 
-        # Set the header info
-        set n Volume($v,node)
-        $n SetImageRange $Locator(imageNum) $Locator(imageNum)
-        $n SetDescription "recon=$Locator(recon)"
-        set str [$n GetMatrixToString $imgMatrix]
-        $n SetRasToVtkMatrix $str
-        $n UseRasToVtkMatrixOn
+        set i [LocatorGetRealtimeID]
+        set n Volume($i,node)
 
-        # Update pipeline and GUI
-        MainVolumesUpdate $v
+        # Volume($i,node) SetSpacing [$rImage GetSpacing]
+        Volume($i,node) SetScanOrder "AP" 
+        Volume($i,node) SetNumScalars [$rImage GetNumberOfScalarComponents]
+        set ext [$rImage GetWholeExtent]
+        Volume($i,node) SetImageRange [expr 1 + [lindex $ext 4]] [expr 1 + [lindex $ext 5]]
+        Volume($i,node) SetScalarType [$rImage GetScalarType]
+        Volume($i,node) SetDimensions [lindex [$rImage GetDimensions] 0] [lindex [$rImage GetDimensions] 1]
+        Volume($i,node) ComputeRasToIjkFromScanOrder [Volume($i,node) GetScanOrder] 
+ 
+        Volume($i,vol) SetImageData $rImage
+        Volume($i,vol) SetRangeLow $minVal 
+        Volume($i,vol) SetRangeHigh $maxVal 
 
-        # If this Realtime volume is inside transforms, then
-        # compute the registration:
+        # To keep variables 'RangeLow' and 'RangeHigh' as float
+        # in vtkMrmlDataVolume for float volume, use this function:
+        Volume($i,vol) SetRangeAuto 0
+
+        # set the lower threshold to the actLow
+        Volume($i,node) AutoThresholdOff
+        Volume($i,node) ApplyThresholdOn
+        Volume($i,node) SetLowerThreshold 1 
+
+        MainSlicesSetVolumeAll Back $i
+        MainVolumesSetActive $i
+
         MainUpdateMRML
+        RenderAll
 
         # Perform realtime image processing
         foreach cb $Locator(callbackList) {
