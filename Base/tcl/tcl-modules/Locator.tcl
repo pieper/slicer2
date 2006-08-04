@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2006/08/03 16:37:58 $
-#   Version:   $Revision: 1.38.12.2.2.6 $
+#   Date:      $Date: 2006/08/04 16:45:15 $
+#   Version:   $Revision: 1.38.12.2.2.7 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -89,7 +89,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.6 $} {$Date: 2006/08/03 16:37:58 $}]
+        {$Revision: 1.38.12.2.2.7 $} {$Date: 2006/08/04 16:45:15 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -164,6 +164,7 @@ proc LocatorInit {} {
     set Locator(csysVisible) 0
 
     set Locator(bellCount) 0
+    set Locator(realtimeScanOrder) "AP" 
 }
 
 #-------------------------------------------------------------------------------
@@ -1803,6 +1804,43 @@ proc LocatorLoopImages {} {
     after $Locator(Images,msPoll) LocatorLoopImages
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC LocatorReorientRealtimeVolume
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc LocatorReorientRealtimeVolume {} {
+    global Slice Volume Locator
+
+    if {$Locator(idRealtime) == "NEW"} {
+        return
+    }
+ 
+    set i $Locator(idRealtime)
+    set n Volume($i,node)
+
+    Volume($i,node) SetScanOrder $Locator(realtimeScanOrder) 
+    Volume($i,node) ComputeRasToIjkFromScanOrder [Volume($i,node) GetScanOrder] 
+
+    # To keep variables 'RangeLow' and 'RangeHigh' as float
+    # in vtkMrmlDataVolume for float volume, use this function:
+    Volume($i,vol) SetRangeAuto 0
+
+    # set the lower threshold to the actLow
+    Volume($i,node) AutoThresholdOff
+    Volume($i,node) ApplyThresholdOn
+    Volume($i,node) SetLowerThreshold 1 
+
+    MainSlicesSetVolumeAll Back $i
+    MainVolumesSetActive $i
+
+    MainUpdateMRML
+    RenderAll
+}
+
+ 
 #-------------------------------------------------------------------------------
 # .PROC LocatorLoopFlashpoint
 # 
@@ -1901,7 +1939,7 @@ proc LocatorLoopFlashpoint {} {
         set n Volume($i,node)
 
         # Volume($i,node) SetSpacing [$rImage GetSpacing]
-        Volume($i,node) SetScanOrder "AP" 
+        Volume($i,node) SetScanOrder $Locator(realtimeScanOrder) 
         Volume($i,node) SetNumScalars [$rImage GetNumberOfScalarComponents]
         set ext [$rImage GetWholeExtent]
         Volume($i,node) SetImageRange [expr 1 + [lindex $ext 4]] [expr 1 + [lindex $ext 5]]
