@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: vtkFreeSurferReaders.tcl,v $
-#   Date:      $Date: 2006/07/05 21:01:00 $
-#   Version:   $Revision: 1.52 $
+#   Date:      $Date: 2006/08/04 22:11:54 $
+#   Version:   $Revision: 1.53 $
 # 
 #===============================================================================
 # FILE:        vtkFreeSurferReaders.tcl
@@ -328,7 +328,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.52 $} {$Date: 2006/07/05 21:01:00 $}]
+        {$Revision: 1.53 $} {$Date: 2006/08/04 22:11:54 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -3039,15 +3039,10 @@ proc vtkFreeSurferReadersReadAnnotation {a {_id -1} {annotFileName ""}} {
         }
         # the look up table should be a label one
         set lut [Model($_id,mapper,viewRen) GetLookupTable]
-        # skip this bit, as the models use vtkFSLookupTables now, which don't support ramps
-        if {[$lut GetClassName] != "vtkFSLookupTable"} {
-            $lut SetRampToLinear
-        } else {
-            if {$::Module(verbose)} {
-                puts "vtkFreeSurferReadersReadAnnotation: look up table for model is $lut, a free surfer type, resetting to label"
-            }
-            set lut Lut(-1,lut)
-        }
+
+        # re-allocate the look up table, so that it will work with internal tables
+        catch "fssarlut_${_id} Delete"
+        set lut [vtkLookupTable fssarlut_${_id}]
                 
         set fssar fssar_$a
         catch "$fssar Delete"
@@ -3058,19 +3053,8 @@ proc vtkFreeSurferReadersReadAnnotation {a {_id -1} {annotFileName ""}} {
         $fssar SetFileName $annotFileName
         $fssar SetOutput $scalars
         $fssar SetColorTableOutput $lut
-        # set the optional colour table filename
-        if [file exists $vtkFreeSurferReaders(colorTableFilename)] {
-            if {$::Module(verbose)} {
-                puts "Color table file exists: $vtkFreeSurferReaders(colorTableFilename)"
-            }
-            $fssar SetColorTableFileName $vtkFreeSurferReaders(colorTableFilename)
-            $fssar UseExternalColorTableFileOn
-        } else {
-            if {$::Module(verbose)} {
-                puts "Color table file does not exist: $vtkFreeSurferReaders(colorTableFilename)"
-            }
-            $fssar UseExternalColorTableFileOff
-        }
+        # try reading an internal colour table first
+        $fssar UseExternalColorTableFileOff
         
         # set up a progress observer 
         $fssar AddObserver StartEvent MainStartProgress
@@ -3079,6 +3063,23 @@ proc vtkFreeSurferReadersReadAnnotation {a {_id -1} {annotFileName ""}} {
         set ::Gui(progressText) "Reading $a"
         
         set retval [$fssar ReadFSAnnotation]
+        if {$retval == 6} {
+            # no internal colour table, try external one
+            if [file exists $vtkFreeSurferReaders(colorTableFilename)] {
+                if {$::Module(verbose)} {
+                    puts "No internal colour table, but an external color table file exists: $vtkFreeSurferReaders(colorTableFilename)"
+                }
+                $fssar SetColorTableFileName $vtkFreeSurferReaders(colorTableFilename)
+                $fssar UseExternalColorTableFileOn
+            
+                if {$::Module(verbose)} { puts "Trying to use external colour table file $vtkFreeSurferReaders(colorTableFilename)"}
+                set retval [$fssar ReadFSAnnotation]
+            } else {
+                puts "No internal colour table, and external one does not exist: $vtkFreeSurferReaders(colorTableFilename)"
+            }
+        } else {
+            if {$::Module(verbose)} { puts "Used internal colour table" }
+        }
 
         MainEndProgress
 
@@ -3089,7 +3090,13 @@ proc vtkFreeSurferReadersReadAnnotation {a {_id -1} {annotFileName ""}} {
             [$Model($_id,polyData) GetPointData] RemoveArray "labels"
             return
         }
-        
+
+        # set the lut for the model
+        if {$::Module(verbose)} { 
+            puts "Model mapper for model id $_id, settign lookup table $lut ([$lut GetNumberOfTableValues] values)"
+        }
+        Model($_id,mapper,viewRen) SetLookupTable $lut
+
         set ::Model(scalarVisibilityAuto) 0
         
         array unset _labels
@@ -3109,7 +3116,8 @@ proc vtkFreeSurferReadersReadAnnotation {a {_id -1} {annotFileName ""}} {
         MainModelsSetScalarVisibility $_id 1
 
         # might need to call ModelsPickScalarsCallback here to get everything right
-        ModelsPickScalarsCallback $_id [$Model($_id,polyData) GetPointData] "labels"
+# Don't call this, as we're using a different look up table that isn't integrated with the models yet
+        # ModelsPickScalarsCallback $_id [$Model($_id,polyData) GetPointData] "labels"
 
         Render3D
     } else {
@@ -5949,7 +5957,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set timemsg [join [split $timemsg] "-"]
     # make up the message with single quotes between each one for easy parsing later, 
     # leave out ones on the end as will get empty strings there
-    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.52 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
+    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.53 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -7326,6 +7334,18 @@ proc vtkFreeSurferReadersPickScalarsLut { parentButton } {
                 puts "skipping $l, name = $::Lut($l,name)"
             }
         }
+    }
+    # add any annotation luts
+    set fssarLUTs [info commands fssarlut_$m]
+    foreach l $fssarLUTs {
+        if {$l == $currlut} {
+            set labelText "* Model $m Annotation *"
+        } else {
+            set labelText "Model $m Annotation"
+        }
+        .mFSpickscalarslut insert end command -label $labelText \
+                -command "Model($m,mapper,viewRen) SetLookupTable $l \; Render3D"
+        incr numcmds
     }
     set x [expr [winfo rootx $parentButton] + 10]
     set y [expr [winfo rooty $parentButton] + 10]
