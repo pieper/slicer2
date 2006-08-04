@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSSurfaceReader.cxx,v $
-  Date:      $Date: 2006/05/26 19:40:14 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/08/04 18:48:03 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 #include "vtkFSSurfaceReader.h"
@@ -336,7 +336,7 @@ void vtkFSSurfaceReader::Execute()
       }
       
 #endif
-      if ((thisStep % 100) == 0)
+      if ((thisStep % 1000) == 0)
       {
           this->UpdateProgress(1.0*thisStep/totalSteps);
       }
@@ -386,7 +386,7 @@ void vtkFSSurfaceReader::Execute()
     
     // Add the face to the list.
     outputFaces->InsertNextCell (numVerticesPerFace, faceIndices);
-    if ((thisStep % 100) == 0)
+    if ((thisStep % 1000) == 0)
     {
         this->UpdateProgress(1.0*thisStep/totalSteps);
     }
@@ -488,7 +488,7 @@ void vtkFSSurfaceReader::Execute()
               faceNormal[2] /= length;
           }
 
-          if ((thisStep % 100) == 0)
+          if ((thisStep % 1000) == 0)
           {
               this->UpdateProgress(1.0*thisStep/totalSteps);
           }
