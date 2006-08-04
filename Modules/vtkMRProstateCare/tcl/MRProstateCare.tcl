@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.20 $} {$Date: 2006/08/03 16:55:50 $}]
+        {$Revision: 1.1.2.21 $} {$Date: 2006/08/04 16:31:36 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -450,7 +450,7 @@ proc MRProstateCareBuildGUI {} {
 
     #--- notebook configure
     $f.tsNotebook configure -width 250
-    $f.tsNotebook configure -height 350 
+    $f.tsNotebook configure -height 393 
     $f.tsNotebook configure -background $::Gui(activeWorkspace)
     $f.tsNotebook configure -activebackground $::Gui(activeWorkspace)
     $f.tsNotebook configure -selectbackground $::Gui(activeWorkspace)
@@ -466,7 +466,7 @@ proc MRProstateCareBuildGUI {} {
 
     #--- tab configure
     set i 0
-    foreach t "Level1 Level2 Level3" {
+    foreach t "Scan Display" {
         $f.tsNotebook insert $i $t
         frame $f.tsNotebook.f$t -bg $Gui(activeWorkspace) -bd 2 
         MRProstateCareBuildGUIFor${t} $f.tsNotebook.f$t
@@ -494,97 +494,7 @@ proc MRProstateCareQuery {field} {
 }
 
 
-proc MRProstateCareBuildGUIForLevel3 {parent} {
-    global MRProstateCare Gui 
-
-    set f $parent
-    frame $f.fTop -bg $Gui(activeWorkspace)
-    pack $f.fTop -side top -pady 3 
-    frame $f.fMid -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.fMid -side top -pady 3 
-    frame $f.fBot -bg $Gui(activeWorkspace)
-    pack $f.fBot -side top -pady 3 
-
-    #-------------------------
-    # Top frame
-    #-------------------------
-    set f $parent.fTop
- 
-    # Build pulldown menu for all Points 
-    DevAddLabel $f.lPosition "Current target:"
-
-    set tList [list {none}]
-    set df [lindex $tList 0] 
-    eval {menubutton $f.mbType -text $df \
-          -relief raised -bd 2 -width 18 \
-          -indicatoron 1 \
-          -menu $f.mbType.m} $Gui(WMBA)
-    eval {menu $f.mbType.m} $Gui(WMA)
-    
-    foreach m $tList  {
-        $f.mbType.m add command -label $m \
-            -command "MRProstateCareSelectTarget $m"
-    }
-
-    # Save menubutton for config
-    set MRProstateCare(gui,targetButton) $f.mbType
-    set MRProstateCare(gui,targetMenu) $f.mbType.m
-
-    blt::table $f \
-        0,0 $f.lPosition -padx 2 -pady 2 -anchor e \
-        0,1 $f.mbType -fill x -padx 2 -pady 2 -anchor w
-
-
-    #-------------------------
-    # Mid frame
-    #-------------------------
-    set f $parent.fMid
- 
-    DevAddLabel $f.lTitle "Displayed images:"
-    DevAddLabel $f.lImage1Label "Image 1:"
-    DevAddLabel $f.lImage1Value "Realtime"
-
-    # Build pulldown menu for volumes 
-    DevAddLabel $f.lVolume "Image 2:"
-
-    set mList [list {none}]
-    set df [lindex $mList 0] 
-    eval {menubutton $f.mbType -text $df \
-          -relief raised -bd 2 -width 20 \
-          -indicatoron 1 \
-          -menu $f.mbType.m} $Gui(WMBA)
-    eval {menu $f.mbType.m} $Gui(WMA)
-    bind $f.mbType <1> "MRProstateCareUpdateVolumes"
-    
-    foreach m $tList  {
-        $f.mbType.m add command -label $m \
-            -command "MRProstateCareSelectVolume $m"
-    }
-
-    # Save menubutton for config
-    set MRProstateCare(gui,volumeButton) $f.mbType
-    set MRProstateCare(gui,volumeMenu) $f.mbType.m
-
-    blt::table $f \
-        0,0 $f.lTitle -padx 2 -pady 2 -cspan 2 \
-        1,0 $f.lImage1Label -padx 2 -pady 2 -anchor e \
-        1,1 $f.lImage1Value -fill x -padx 2 -pady 2 -anchor w \
-        2,0 $f.lVolume -padx 2 -pady 2 -anchor e \
-        2,1 $f.mbType -fill x -padx 2 -pady 2 -anchor w
-
- 
-    #-------------------------
-    # Bot frame
-    #-------------------------
-    set f $parent.fBot
-    DevAddButton $f.bStart "Start" "MRProstateCareStartNav"  10 
-    DevAddButton $f.bStop "Stop" "MRProstateCareStopNav"  10 
-    grid $f.bStart $f.bStop -padx 1 -pady 5 
-}
-
-
-
-proc MRProstateCareBuildGUIForLevel2 {parent} {
+proc MRProstateCareBuildGUIForScan {parent} {
     global MRProstateCare Gui 
 
     set f $parent
@@ -675,20 +585,22 @@ proc MRProstateCareBuildGUIForLevel2 {parent} {
 
 
 
-proc MRProstateCareBuildGUIForLevel1 {parent} {
+proc MRProstateCareBuildGUIForDisplay {parent} {
     global MRProstateCare Gui 
 
     set f $parent
     frame $f.f1 -bg $Gui(activeWorkspace) 
     pack $f.f1 -side top -pady 0 
     frame $f.f2 -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.f2 -side top -pady 3 
+    pack $f.f2 -side top -pady 1 
     frame $f.f3 -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.f3 -side top -pady 3 
+    pack $f.f3 -side top -pady 1 
     frame $f.f4 -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.f4 -side top -pady 3 
-    frame $f.f5 -bg $Gui(activeWorkspace)
-    pack $f.f5 -side top -pady 3 
+    pack $f.f4 -side top -pady 1 
+    frame $f.f5 -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    pack $f.f5 -side top -pady 1 
+    frame $f.f6 -bg $Gui(activeWorkspace)
+    pack $f.f6 -side top -pady 1 
 
     #-------------------------
     # Frame 1 
@@ -696,13 +608,43 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
     set f $parent.f1
     eval {label $f.lPatient -text "Patient name:"} $Gui(WTA)
     DevAddLabel $f.lPatName "None"
-    grid $f.lPatient $f.lPatName -padx 5 -pady 5 
+    grid $f.lPatient $f.lPatName -padx 5 -pady 3 
     set MRProstateCare(patientNameLabel) $f.lPatName
+
 
     #-------------------------
     # Frame 2 
     #-------------------------
     set f $parent.f2
+
+    eval {label $f.lTitle -text "Realtime scan orientation:"} $Gui(WTA)
+ 
+    foreach x "Axial Sagittal Coronal" \
+        text "{Axial} {Sagittal} {Coronal}" {
+        eval {radiobutton $f.r$x -width 12 -text $text \
+            -variable MRProstateCare(realtimeOrientation) -value $x \
+            -relief raised -offrelief raised -overrelief raised \
+            -command "MRProstateCareSetRealtimeScanOrder" \
+            -selectcolor white} $Gui(WEA)
+    } 
+    $f.rCoronal select
+    $f.rCoronal configure -state normal 
+
+    foreach x "AP LR SI" \
+        text "{Flip A/P} {Flip L/R} {Flip S/I}" {
+        DevAddButton $f.b$x "$text" "MRProstateCareFlip $x"  15 
+    } 
+ 
+    grid $f.lTitle -row 0 -column 0 -columnspan 2 -pady 5 -sticky news
+    grid $f.rAxial $f.bAP -pady 1 -padx 3 
+    grid $f.rSagittal $f.bLR -pady 1 -padx 3 
+    grid $f.rCoronal $f.bSI -pady 1 -padx 3 
+
+ 
+    #-------------------------
+    # Frame 3 
+    #-------------------------
+    set f $parent.f3
  
     # Build pulldown menu for all Points 
     eval {label $f.lTitle -text "Select a point:"} $Gui(WTA)
@@ -725,14 +667,14 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
     set MRProstateCare(gui,level1PointMenu) $f.mbType.m
 
     blt::table $f \
-        0,0 $f.lTitle -padx 2 -pady 4 \
-        1,0 $f.mbType -fill x -padx 3 -pady 3 
+        0,0 $f.lTitle -padx 2 -pady 3 \
+        1,0 $f.mbType -fill x -padx 3 -pady 2 
 
     #-------------------------
-    # Frame 3
+    # Frame 4 
     #-------------------------
-    set f $parent.f3
-    eval {label $f.lTitle -text "Image orientation:"} $Gui(WTA)
+    set f $parent.f4
+    eval {label $f.lTitle -text "Image display orientation:"} $Gui(WTA)
  
     foreach x "Axial Sagittal Coronal" \
         text "{Axial} {Sagittal} {Coronal}" {
@@ -750,19 +692,19 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
 
 
     #-------------------------
-    # Frame 4 
+    # Frame 5 
     #-------------------------
-    set f $parent.f4
+    set f $parent.f5
     foreach x "Top Mid Bot" {
         frame $f.f$x -bg $Gui(activeWorkspace) 
         pack $f.f$x -side top -pady 1 
     }
 
-    set f $parent.f4.fTop
-    eval {label $f.lTitle -text "Displayed images:"} $Gui(WTA)
+    set f $parent.f5.fTop
+    eval {label $f.lTitle -text "Display images:"} $Gui(WTA)
     pack $f.lTitle -side top -pady 2 
  
-    set f $parent.f4.fMid
+    set f $parent.f5.fMid
     # Build pulldown menu for volumes of image 1 
     DevAddLabel $f.lVolume "Image 1:"
 
@@ -784,11 +726,11 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
     set MRProstateCare(gui,level1Image1VolumeMenu) $f.mbType.m
 
     blt::table $f \
-        0,0 $f.lVolume -padx 2 -pady 2 -anchor e \
-        0,1 $f.mbType -fill x -padx 3 -pady 2 -anchor w
+        0,0 $f.lVolume -padx 2 -pady 1 -anchor e \
+        0,1 $f.mbType -fill x -padx 3 -pady 1 -anchor w
 
 
-    set f $parent.f4.fBot
+    set f $parent.f5.fBot
     # Build pulldown menu for volumes 
     DevAddLabel $f.lVolume "Image 2:"
 
@@ -810,14 +752,14 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
     set MRProstateCare(gui,level1Image2VolumeMenu) $f.mbType.m
 
     blt::table $f \
-        0,0 $f.lVolume -padx 2 -pady 2 -anchor e \
-        0,1 $f.mbType -fill x -padx 3 -pady 2 -anchor w
+        0,0 $f.lVolume -padx 2 -pady 1 -anchor e \
+        0,1 $f.mbType -fill x -padx 3 -pady 1 -anchor w
 
  
     #-------------------------
-    # Frame 5 
+    # Frame 6 
     #-------------------------
-    set f $parent.f5
+    set f $parent.f6
     DevAddButton $f.bStart "Start" "set MRProstateCare(navLoop) 1; \
                                     MRProstateCareNavLoop"  10 
     DevAddButton $f.bStop "Stop" "MRProstateCareStopNav"  10 
@@ -825,6 +767,83 @@ proc MRProstateCareBuildGUIForLevel1 {parent} {
 }
 
 
+proc MRProstateCareSetRealtimeScanOrder {} {
+    global MRProstateCare Locator 
+
+    set action 0
+    switch $MRProstateCare(realtimeOrientation) {
+        "Axial" {
+            if {$Locator(realtimeScanOrder) != "AP" &&
+                $Locator(realtimeScanOrder) != "PA"} {
+                set Locator(realtimeScanOrder) "AP"
+                set action 1
+            }
+        }
+        "Sagittal" {
+            if {$Locator(realtimeScanOrder) != "LR" &&
+                $Locator(realtimeScanOrder) != "RL"} {
+                set Locator(realtimeScanOrder) "LR"
+                set action 1
+            }
+        }
+        "Coronal" {
+            if {$Locator(realtimeScanOrder) != "SI" &&
+                $Locator(realtimeScanOrder) != "IS"} {
+                set Locator(realtimeScanOrder) "SI"
+                set action 1
+            }
+        }
+    }
+
+    if {$action} {
+        LocatorReorientRealtimeVolume
+    }
+}
+
+
+proc MRProstateCareFlip {order} {
+    global MRProstateCare Locator 
+
+    set action 0
+    switch $MRProstateCare(realtimeOrientation) {
+        "Axial" {
+            if {$order == "AP"} {
+                if {$Locator(realtimeScanOrder) == "AP"} {
+                    set Locator(realtimeScanOrder) "PA"
+                } else {
+                    set Locator(realtimeScanOrder) "AP"
+                }
+                set action 1
+            }
+        }
+        "Sagittal" {
+            if {$order == "LR"} {
+                if {$Locator(realtimeScanOrder) == "LR"} {
+                    set Locator(realtimeScanOrder) "RL"
+                } else {
+                    set Locator(realtimeScanOrder) "LR"
+                }
+                set action 1
+            }
+        }
+        "Coronal" {
+            if {$order == "SI"} {
+                if {$Locator(realtimeScanOrder) == "SI"} {
+                    set Locator(realtimeScanOrder) "IS"
+                } else {
+                    set Locator(realtimeScanOrder) "SI"
+                }
+                set action 1
+            } 
+        }
+    }
+
+    if {$action} {
+        LocatorReorientRealtimeVolume
+    }
+}
+
+ 
 proc MRProstateCareNavLoop {} { 
     global MRProstateCare Slice Anno Volume 
 
