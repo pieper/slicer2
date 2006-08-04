@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.21 $} {$Date: 2006/08/04 16:31:36 $}]
+        {$Revision: 1.1.2.22 $} {$Date: 2006/08/04 21:26:15 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -145,7 +145,7 @@ proc MRProstateCareInit {} {
     set MRProstateCare(tempDir) "/tmp"
     set MRProstateCare(logFile) "MRProstateCareLog.txt"
     set MRProstateCare(navLoop) 0 
-    set MRProstateCare(navTime) 8000
+    set MRProstateCare(navTime) 5000
     set MRProstateCare(image1,currentVolumeID) 0 
     set MRProstateCare(image2,currentVolumeID) 0 
 
@@ -599,8 +599,10 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     pack $f.f4 -side top -pady 1 
     frame $f.f5 -bg $Gui(activeWorkspace) -relief groove -bd 2 
     pack $f.f5 -side top -pady 1 
-    frame $f.f6 -bg $Gui(activeWorkspace)
+    frame $f.f6 -bg $Gui(activeWorkspace) -relief groove -bd 2 
     pack $f.f6 -side top -pady 1 
+    frame $f.f7 -bg $Gui(activeWorkspace)
+    pack $f.f7 -side top -pady 1 
 
     #-------------------------
     # Frame 1 
@@ -630,15 +632,15 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     $f.rCoronal select
     $f.rCoronal configure -state normal 
 
-    foreach x "AP LR SI" \
-        text "{Flip A/P} {Flip L/R} {Flip S/I}" {
+    foreach x "SI LR AP" \
+        text "{Flip S/I} {Flip L/R} {Flip A/P}" {
         DevAddButton $f.b$x "$text" "MRProstateCareFlip $x"  15 
     } 
  
     grid $f.lTitle -row 0 -column 0 -columnspan 2 -pady 5 -sticky news
-    grid $f.rAxial $f.bAP -pady 1 -padx 3 
+    grid $f.rAxial $f.bSI -pady 1 -padx 3 
     grid $f.rSagittal $f.bLR -pady 1 -padx 3 
-    grid $f.rCoronal $f.bSI -pady 1 -padx 3 
+    grid $f.rCoronal $f.bAP -pady 1 -padx 3 
 
  
     #-------------------------
@@ -755,15 +757,38 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
         0,0 $f.lVolume -padx 2 -pady 1 -anchor e \
         0,1 $f.mbType -fill x -padx 3 -pady 1 -anchor w
 
- 
     #-------------------------
     # Frame 6 
     #-------------------------
     set f $parent.f6
+ 
+    eval {label $f.lTitle -text "Scale 3D view:"} $Gui(WTA)
+    eval {scale $f.s3D -from 1.0 -to 3.0 -length 60 \
+        -variable MRProstateCare(scale) \
+        -command "MRProstateCareScale3DView" \
+        -resolution 0.5} $Gui(WSA) 
+
+    grid $f.lTitle $f.s3D -padx 2 -pady 1 
+
+
+    #-------------------------
+    # Frame 7 
+    #-------------------------
+    set f $parent.f7
     DevAddButton $f.bStart "Start" "set MRProstateCare(navLoop) 1; \
                                     MRProstateCareNavLoop"  10 
     DevAddButton $f.bStop "Stop" "MRProstateCareStopNav"  10 
     grid $f.bStart $f.bStop -padx 1 -pady 5 
+}
+
+
+proc MRProstateCareScale3DView {v} {
+    global MRProstateCare  
+    global LastX LastY 
+
+    set LastX 0
+    set LastY 0
+    Zoom w $v $v
 }
 
 
@@ -773,9 +798,9 @@ proc MRProstateCareSetRealtimeScanOrder {} {
     set action 0
     switch $MRProstateCare(realtimeOrientation) {
         "Axial" {
-            if {$Locator(realtimeScanOrder) != "AP" &&
-                $Locator(realtimeScanOrder) != "PA"} {
-                set Locator(realtimeScanOrder) "AP"
+            if {$Locator(realtimeScanOrder) != "SI" &&
+                $Locator(realtimeScanOrder) != "IS"} {
+                set Locator(realtimeScanOrder) "SI"
                 set action 1
             }
         }
@@ -787,9 +812,9 @@ proc MRProstateCareSetRealtimeScanOrder {} {
             }
         }
         "Coronal" {
-            if {$Locator(realtimeScanOrder) != "SI" &&
-                $Locator(realtimeScanOrder) != "IS"} {
-                set Locator(realtimeScanOrder) "SI"
+            if {$Locator(realtimeScanOrder) != "AP" &&
+                $Locator(realtimeScanOrder) != "PA"} {
+                set Locator(realtimeScanOrder) "AP"
                 set action 1
             }
         }
@@ -807,14 +832,14 @@ proc MRProstateCareFlip {order} {
     set action 0
     switch $MRProstateCare(realtimeOrientation) {
         "Axial" {
-            if {$order == "AP"} {
-                if {$Locator(realtimeScanOrder) == "AP"} {
-                    set Locator(realtimeScanOrder) "PA"
+            if {$order == "SI"} {
+                if {$Locator(realtimeScanOrder) == "SI"} {
+                    set Locator(realtimeScanOrder) "IS"
                 } else {
-                    set Locator(realtimeScanOrder) "AP"
+                    set Locator(realtimeScanOrder) "SI"
                 }
                 set action 1
-            }
+            } 
         }
         "Sagittal" {
             if {$order == "LR"} {
@@ -827,19 +852,20 @@ proc MRProstateCareFlip {order} {
             }
         }
         "Coronal" {
-            if {$order == "SI"} {
-                if {$Locator(realtimeScanOrder) == "SI"} {
-                    set Locator(realtimeScanOrder) "IS"
+            if {$order == "AP"} {
+                if {$Locator(realtimeScanOrder) == "AP"} {
+                    set Locator(realtimeScanOrder) "PA"
                 } else {
-                    set Locator(realtimeScanOrder) "SI"
+                    set Locator(realtimeScanOrder) "AP"
                 }
                 set action 1
-            } 
+            }
         }
     }
 
     if {$action} {
         LocatorReorientRealtimeVolume
+        puts "I am called."
     }
 }
 
@@ -1782,7 +1808,7 @@ proc MRProstateCareBuildVTK {} {
     if {$View(bgName)=="White"} {
         [pointTitleActor GetProperty] SetColor 0 0 1 
     } else {
-        [pointTitleActor GetProperty] SetColor 0 1 0 
+        [pointTitleActor GetProperty] SetColor 0 0 1 
     }
     [pointTitleActor GetProperty] SetDiffuse 0.0
     [pointTitleActor GetProperty] SetAmbient 1.0
@@ -1804,7 +1830,7 @@ proc MRProstateCareBuildVTK {} {
     if {$View(bgName)=="White"} {
         [pointActor GetProperty] SetColor 0 0 1 
     } else {
-        [pointActor GetProperty] SetColor 0 1 0 
+        [pointActor GetProperty] SetColor 0 0 1 
     }
     pointActor SetPosition 0.0 0.0 0.0 
     pointActor SetVisibility 0 
