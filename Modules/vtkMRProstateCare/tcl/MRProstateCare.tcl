@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.23 $} {$Date: 2006/08/07 15:48:09 $}]
+        {$Revision: 1.1.2.24 $} {$Date: 2006/08/07 21:26:32 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -499,89 +499,63 @@ proc MRProstateCareBuildGUIForScan {parent} {
     global MRProstateCare Gui 
 
     set f $parent
-    frame $f.fTop -bg $Gui(activeWorkspace)
-    pack $f.fTop -side top -pady 3 
-    frame $f.fMid -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.fMid -side top -pady 3 
-    frame $f.fBot -bg $Gui(activeWorkspace)
-    pack $f.fBot -side top -pady 3 
+    foreach x "Top Mid Bot" {
+        frame $f.f$x -bg $Gui(activeWorkspace) -relief groove -bd 2 
+        pack $f.f$x -side top -pady 1 
+    }
 
-    #-------------------------
-    # Top frame
-    #-------------------------
     set f $parent.fTop
- 
-    # Build pulldown menu for all Points 
-    DevAddLabel $f.lTarget "Current target:"
 
-    set tList [list {none}]
-    set df [lindex $tList 0] 
-    eval {menubutton $f.mbType -text $df \
-          -relief raised -bd 2 -width 18 \
-          -indicatoron 1 \
-          -menu $f.mbType.m} $Gui(WMBA)
-    eval {menu $f.mbType.m} $Gui(WMA)
-    bind $f.mbType <1> "MRProstateCareUpdatePoints"
-    
-    foreach m $tList  {
-        $f.mbType.m add command -label $m \
-            -command "MRProstateCareSelectTarget $m"
-    }
+    frame $f.f1 -bg $Gui(activeWorkspace) 
+    pack $f.f1 -side top -pady 0 
+    frame $f.f2 -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    pack $f.f2 -side top -pady 1 
+    frame $f.f3 -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    pack $f.f3 -side top -pady 1 
+    frame $f.f4 -bg $Gui(activeWorkspace)
+    pack $f.f4 -side top -pady 1 
 
-    # Save menubutton for config
-    set MRProstateCare(gui,targetButton) $f.mbType
-    set MRProstateCare(gui,targetMenu) $f.mbType.m
-
-    blt::table $f \
-        0,0 $f.lTarget -padx 2 -pady 2 -anchor e \
-        0,1 $f.mbType -fill x -padx 2 -pady 2 -anchor w
+    #-------------------------
+    # Frame 1 
+    #-------------------------
+    set f $parent.fTop.f1
+    eval {label $f.lTitle -text "Set up realtime scanning:"} $Gui(WTA)
+    grid $f.lTitle -padx 5 -pady 3 
 
 
     #-------------------------
-    # Mid frame
+    # Frame 2 
     #-------------------------
-    set f $parent.fMid
+    set f $parent.fTop.f2
 
-    DevAddLabel $f.lTitle "Displayed images:"
-    DevAddLabel $f.lImage1Label "Image 1:"
-    DevAddLabel $f.lImage1Value "Realtime"
-
-    # Build pulldown menu for volumes 
-    DevAddLabel $f.lVolume "Image 2:"
-
-    set mList [list {none}]
-    set df [lindex $mList 0] 
-    eval {menubutton $f.mbType -text $df \
-          -relief raised -bd 2 -width 20 \
-          -indicatoron 1 \
-          -menu $f.mbType.m} $Gui(WMBA)
-    eval {menu $f.mbType.m} $Gui(WMA)
-    bind $f.mbType <1> "MRProstateCareUpdateVolumes"
-    
-    foreach m $tList  {
-        $f.mbType.m add command -label $m \
-            -command "MRProstateCareSelectVolume $m"
-    }
-
-    # Save menubutton for config
-    set MRProstateCare(gui,volumeButton) $f.mbType
-    set MRProstateCare(gui,volumeMenu) $f.mbType.m
-
-    blt::table $f \
-        0,0 $f.lTitle -padx 2 -pady 2 -cspan 2 \
-        1,0 $f.lImage1Label -padx 2 -pady 2 -anchor e \
-        1,1 $f.lImage1Value -fill x -padx 2 -pady 2 -anchor w \
-        2,0 $f.lVolume -padx 2 -pady 2 -anchor e \
-        2,1 $f.mbType -fill x -padx 2 -pady 2 -anchor w
-
+    eval {label $f.lTitle -text "Image display orientation:"} $Gui(WTA)
  
+    foreach x "Axial Sagittal Coronal" \
+        text "{Axial} {Sagittal} {Coronal}" {
+        eval {radiobutton $f.r$x -width 7 -text $text \
+            -variable MRProstateCare(realtimeOrientation) -value $x \
+            -relief raised -offrelief raised -overrelief raised \
+            -command "" \
+            -selectcolor white} $Gui(WEA)
+    } 
+    $f.rAxial select
+    $f.rAxial configure -state normal 
+
+    grid $f.lTitle -row 0 -column 0 -columnspan 3 -pady 5 -sticky news
+    grid $f.rAxial $f.rSagittal $f.rCoronal -pady 2 -padx 1 
+
+
     #-------------------------
     # Bot frame
     #-------------------------
+
+if {0} {
     set f $parent.fBot
     DevAddButton $f.bStart "Start" "MRProstateCareStartNav"  10 
     DevAddButton $f.bStop "Stop" "MRProstateCareStopNav"  10 
     grid $f.bStart $f.bStop -padx 1 -pady 5 
+}
+
 }
 
 
