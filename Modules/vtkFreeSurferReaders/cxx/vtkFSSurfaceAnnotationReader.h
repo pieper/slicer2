@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSSurfaceAnnotationReader.h,v $
-  Date:      $Date: 2006/05/26 19:40:14 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/08/07 21:06:54 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 // .NAME vtkFSSurfaceAnnotationReader - read a surface annotation and
@@ -63,7 +63,8 @@ public:
   char* GetColorTableNames();
 
   int ReadFSAnnotation();
-
+    int WriteFSAnnotation();
+    
   void SetColorTableFileName (char*);
 
     // changed these to use vtk Get/Set macros
