@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.22 $} {$Date: 2006/08/04 21:26:15 $}]
+        {$Revision: 1.1.2.23 $} {$Date: 2006/08/07 15:48:09 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -154,7 +154,8 @@ proc MRProstateCareInit {} {
     set MRProstateCare(displayedImage) "" 
 
     set MRProstateCare(portSet) 0
-
+    set MRProstateCare(preScale) 1 
+ 
     # Creates bindings
     MRProstateCareCreateBindings 
 
@@ -763,10 +764,9 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     set f $parent.f6
  
     eval {label $f.lTitle -text "Scale 3D view:"} $Gui(WTA)
-    eval {scale $f.s3D -from 1.0 -to 3.0 -length 60 \
-        -variable MRProstateCare(scale) \
+    eval {scale $f.s3D -from 1.0 -to 5.0 -length 115 \
         -command "MRProstateCareScale3DView" \
-        -resolution 0.5} $Gui(WSA) 
+        -resolution 1.0} $Gui(WSA) 
 
     grid $f.lTitle $f.s3D -padx 2 -pady 1 
 
@@ -786,9 +786,16 @@ proc MRProstateCareScale3DView {v} {
     global MRProstateCare  
     global LastX LastY 
 
-    set LastX 0
-    set LastY 0
-    Zoom w $v $v
+    set diff [expr $v - $MRProstateCare(preScale)]
+    set x [expr $diff * 5 + $LastX]
+    set y [expr $diff * 5 + $LastY]
+
+
+# puts "v = $v"
+# puts "LastX, Y = $LastX, $LastY"
+
+    Zoom w $x $y
+    set MRProstateCare(preScale) $v
 }
 
 
