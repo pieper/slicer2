@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSSurfaceAnnotationReader.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:37 $
-  Version:   $Revision: 1.8.2.1 $
+  Date:      $Date: 2006/08/07 21:20:13 $
+  Version:   $Revision: 1.8.2.1.4.1 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
 Program:   Visualization Toolkit
 Module:    $RCSfile: vtkFSSurfaceAnnotationReader.cxx,v $
 Language:  C++
-Date:      $Date: 2005/12/20 22:55:37 $
-Version:   $Revision: 1.8.2.1 $
+Date:      $Date: 2006/08/07 21:20:13 $
+Version:   $Revision: 1.8.2.1.4.1 $
 
 =========================================================================*/
 #include <stdio.h>
@@ -404,9 +404,9 @@ int vtkFSSurfaceAnnotationReader::ReadFSAnnotation()
       if (colorTableRGBs[colorTableEntryIndex] != NULL)
       {
           ocolors->SetTableValue (colorTableEntryIndex, 
-                                  colorTableRGBs[colorTableEntryIndex][0],
-                                  colorTableRGBs[colorTableEntryIndex][1],
-                                  colorTableRGBs[colorTableEntryIndex][2],
+                                  (colorTableRGBs[colorTableEntryIndex][0] / 255.0),
+                                  (colorTableRGBs[colorTableEntryIndex][1] / 255.0),
+                                  (colorTableRGBs[colorTableEntryIndex][2] / 255.0),
                                   1.0);
       }
       else
