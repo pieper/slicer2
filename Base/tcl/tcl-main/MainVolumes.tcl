@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainVolumes.tcl,v $
-#   Date:      $Date: 2006/04/21 18:47:56 $
-#   Version:   $Revision: 1.91.2.5 $
+#   Date:      $Date: 2006/08/08 18:32:18 $
+#   Version:   $Revision: 1.91.2.5.2.1 $
 # 
 #===============================================================================
 # FILE:        MainVolumes.tcl
@@ -54,7 +54,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.91.2.5 $} {$Date: 2006/04/21 18:47:56 $}]
+    {$Revision: 1.91.2.5.2.1 $} {$Date: 2006/08/08 18:32:18 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -636,7 +636,7 @@ proc MainVolumesWrite {v prefix} {
             #catch "export_iwriter Delete"
             vtkITKImageWriter export_iwriter 
             export_iwriter SetInput [Volume($v,vol) GetOutput]
-            export_iwriter SetFileName [Volume($v,node) GetFilePrefix]
+            export_iwriter SetFileName [Volume($v,node) GetFullPrefix]
             export_iwriter SetRasToIJKMatrix export_matrix
             export_iwriter SetUseCompression $Volume(UseCompression)
                       
