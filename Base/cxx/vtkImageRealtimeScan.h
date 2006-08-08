@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageRealtimeScan.h,v $
-  Date:      $Date: 2006/01/26 16:27:47 $
-  Version:   $Revision: 1.15.12.3 $
+  Date:      $Date: 2006/08/08 21:13:45 $
+  Version:   $Revision: 1.15.12.3.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageRealtimeScan - Get a realtime image from the scanner.
@@ -67,6 +67,8 @@
 #define CMD_HEADER 3
 #define CMD_PIXELS 4
 #define CMD_POS    5
+#define CMD_SCAN   6 
+
 
 class VTK_SLICER_BASE_EXPORT vtkImageRealtimeScan : public vtkImageSource 
 {
@@ -101,10 +103,13 @@ public:
     vtkGetMacro(Test, int);
     vtkSetMacro(Test, int);
 
+    vtkSetMacro(ScannerCommand, short);
+ 
     vtkGetMacro(OperatingSystem, int);
     vtkSetMacro(OperatingSystem, int);
 
     vtkSetStringMacro(TestPrefix);
+    vtkSetStringMacro(ScanningOrientation);
 
     int SetPosition(short tblPos, short patEntry, short patPos);
 
@@ -146,6 +151,21 @@ protected:
     // 0 - big endian
     // 1 - little endian
     int ByteOrder;
+
+    // commands to run scanner
+    // 0 - none
+    // 1 - start scanner
+    // 2 - stop scanner
+    // 3 - send scanning orientation
+    short ScannerCommand;
+
+    // 0 - none
+    // 1 - axial 
+    // 2 - sagittal 
+    // 3 - coronal 
+    // plus Px, Py and Pz
+    // such as "1 Px Py Pz"
+    char *ScanningOrientation;
 };
 
 

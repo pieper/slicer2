@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageRealtimeScan.cxx,v $
-  Date:      $Date: 2006/08/03 16:40:21 $
-  Version:   $Revision: 1.15.8.3.2.1 $
+  Date:      $Date: 2006/08/08 21:15:51 $
+  Version:   $Revision: 1.15.8.3.2.2 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -61,6 +61,9 @@ vtkImageRealtimeScan::vtkImageRealtimeScan()
     short int word = 0x0001;
     char *byte = (char *) &word;
     ByteOrder = (byte[0] ? 1 : 0);
+
+    ScannerCommand = 0;
+    ScanningOrientation = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -422,7 +425,28 @@ int vtkImageRealtimeScan::PollRealtime()
     long len, n, nbytes;
     float matrix[16];
     int i, j;
-    
+
+    // Send command to operate the sanner 
+    if (ScannerCommand)
+    {
+        nbytes = SendServer(CMD_SCAN);
+        if (nbytes < 0) return -1;
+
+        sprintf(buf, "%d %s\n", ScannerCommand, ScanningOrientation);
+        len = strlen(buf);
+        n = writen(sockfd, buf, len);
+        if (n < len) {
+            // This happens when the server crashes.
+            fprintf(stderr, "Client wrote %d instead of %d bytes.\n",n,len);
+            close(sockfd);
+            return -1;
+        }
+
+        ScannerCommand = 0;
+        ScanningOrientation = NULL;
+    }
+
+
     // Request the update info
     nbytes = SendServer(CMD_UPDATE);
     if (nbytes < 0) return -1;
