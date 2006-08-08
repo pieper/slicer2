@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSIO.cxx,v $
-  Date:      $Date: 2006/05/26 19:40:13 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2006/08/08 19:37:40 $
+  Version:   $Revision: 1.8 $
 
 =========================================================================auto=*/
 #include "vtkFSIO.h"
@@ -142,4 +142,46 @@ int vtkFSIO::ReadFloatZ (gzFile iFile, float& oFloat) {
   oFloat = f;
   
   return result;
+}
+
+//
+// Utility methods for writing test files
+//
+int vtkFSIO::WriteInt (FILE* iFile, int iInt)
+{
+    int i = iInt;
+    int result;
+
+    // swap if we need to, write an int, return the result
+    vtkByteSwap::Swap4BE(&i);
+    result = fwrite(&i, sizeof(int), 1, iFile);
+
+    return result;
+}
+
+int vtkFSIO::WriteInt3 (FILE* oFile, int iInt)
+{
+    // swap if we need to, then write three bytes
+    int i = iInt;
+    int result;
+
+    i = ((i>>8) & 0xffffff);
+    vtkByteSwap::Swap4BE(&i);
+    
+    result = fwrite(&i, 3, 1, oFile);
+    return result;
+}
+
+int vtkFSIO::WriteInt2 (FILE* oFile, int iInt)
+{
+
+    int i;
+    int result;
+
+    // swap if we need to, write two bytes, return the result
+    i = iInt;
+    vtkByteSwap::Swap4BE(&i);
+    result = fread(&i, 2, 1, oFile);
+
+    return result;
 }

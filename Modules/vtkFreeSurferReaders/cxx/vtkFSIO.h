@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSIO.h,v $
-  Date:      $Date: 2006/05/26 19:40:13 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/08/08 19:37:40 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 // .NAME vtkFSIO - Some IO functions for irregular FreeSurface files.
@@ -47,6 +47,11 @@ class  vtkFSIO {
  static int ReadInt3Z (gzFile iFile, int& oInt);
  static int ReadInt2Z (gzFile iFile, int& oInt);
   static int ReadFloatZ (gzFile iFile, float& oFloat);
+
+    // for testing purposes
+    static int WriteInt (FILE* iFile, int iInt);
+    static int WriteInt3 (FILE* iFile, int iInt);
+    static int WriteInt2 (FILE* iFile, int iInt);
 };
 
 #endif
