@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: ModelHierarchy.tcl,v $
-#   Date:      $Date: 2006/07/27 18:32:24 $
-#   Version:   $Revision: 1.22 $
+#   Date:      $Date: 2006/08/08 18:32:44 $
+#   Version:   $Revision: 1.23 $
 # 
 #===============================================================================
 # FILE:        ModelHierarchy.tcl
@@ -116,6 +116,7 @@ proc ModelHierarchyInit {} {
     set Module($m,procGUI) ModelHierarchyBuildGUI
     set Module($m,procEnter) ModelHierarchyEnter
     set Module($m,procExit) ModelHierarchyExit
+    set Module($m,procMainFileCloseUpdateEntered) ModelHierarchyMainFileClose
 
     # Define Dependencies
     #------------------------------------
@@ -133,7 +134,7 @@ proc ModelHierarchyInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.22 $} {$Date: 2006/07/27 18:32:24 $}]
+        {$Revision: 1.23 $} {$Date: 2006/08/08 18:32:44 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1193,4 +1194,16 @@ proc ModelHierarchyAddModel {modelID} {
         }
         set node [Mrml(dataTree) GetNextItem]
     }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC ModelHierarchyMainFileClose
+# clean up the hierarchy frame when the scene is closed
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc ModelHierarchyMainFileClose {} {
+    puts "ModelHierarchyMainFileClose"
+    
+    ModelHierarchyExit 1
 }
