@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: vtkFreeSurferReaders.tcl,v $
-#   Date:      $Date: 2006/08/04 22:11:54 $
-#   Version:   $Revision: 1.53 $
+#   Date:      $Date: 2006/08/08 14:20:54 $
+#   Version:   $Revision: 1.54 $
 # 
 #===============================================================================
 # FILE:        vtkFreeSurferReaders.tcl
@@ -203,7 +203,7 @@ proc vtkFreeSurferReadersInit {} {
 
     # if this is not set to 1, will query user if they wish to look for subjects in the SUBJECTS_DIR dir
     # if too many subjects (fails with 2k) are there, slicer may hang
-    set vtkFreeSurferReaders(QAAlwaysGlob) 1
+    set vtkFreeSurferReaders(QAAlwaysGlob) 0
 
     set vtkFreeSurferReaders(QAVolTypes) {aseg brain filled nu norm orig T1 wm}
     set vtkFreeSurferReaders(QADefaultVolTypes) {aseg norm}
@@ -328,7 +328,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.53 $} {$Date: 2006/08/04 22:11:54 $}]
+        {$Revision: 1.54 $} {$Date: 2006/08/08 14:20:54 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -5957,7 +5957,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set timemsg [join [split $timemsg] "-"]
     # make up the message with single quotes between each one for easy parsing later, 
     # leave out ones on the end as will get empty strings there
-    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.53 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
+    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.54 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
