@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.25 $} {$Date: 2006/08/08 14:51:42 $}]
+        {$Revision: 1.1.2.26 $} {$Date: 2006/08/08 21:12:16 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -520,8 +520,8 @@ proc MRProstateCareBuildGUIForScan {parent} {
     grid $f.lTitle -padx 5 -pady 3 
 
     set f $parent.fTop.f2
-    DevAddButton $f.bStart "Start" "MRProstateCareStartScanner"  16 
-    DevAddButton $f.bStop "Stop" "MRProstateCareStopScanner"  16 
+    DevAddButton $f.bStart "Start" "MRProstateCareSetScannerCommand 1"  16 
+    DevAddButton $f.bStop "Stop" "MRProstateCareSetScannerCommand 2"  16 
     blt::table $f \
         0,0 $f.bStart -fill x -padx 2 -pady 3 \
         0,1 $f.bStop -fill x -padx 3 -pady 2 
@@ -564,18 +564,9 @@ proc MRProstateCareBuildGUIForScan {parent} {
     grid $f.lTitle -row 0 -column 0 -columnspan 3 -pady 5 -sticky news
     grid $f.rAxial $f.rSagittal $f.rCoronal -pady 2 -padx 1 
 
-    set f $parent.fMid.f3
-
-    eval {label $f.lTitle -text "Slice thickness:"} $Gui(WTA)
-    eval {entry $f.eThickness -textvariable Locator(Flashpoint,$x) -width 17} $Gui(WEA)
-    DevAddButton $f.bSet "Set" "MRProstateCareSetSliceThickness"  13 
-
-    grid $f.lTitle -row 0 -column 0 -columnspan 3 -pady 5 -sticky news
-    grid $f.eThickness $f.bSet -pady 3 -padx 2 
-
     set f $parent.fMid.f4
 
-    DevAddButton $f.bScan "Scan" "MRProstateCareScan"  14 
+    DevAddButton $f.bScan "Scan" "MRProstateCareSetScannerCommand 3"  14 
     grid $f.bScan -pady 5 -padx 2 
 
 
@@ -585,6 +576,96 @@ proc MRProstateCareBuildGUIForScan {parent} {
 
 }
 
+proc MRProstateCareSetScannerCommand {cmd} {
+    global MRProstateCare Locator 
+
+    if {$cmd == 3 && $MRProstateCare(currentPoint) == "none"} {
+            DevErrorWindow "Please select a valid point for scanning."
+            return
+    } 
+
+    Locator(Flashpoint,src) SetScannerCommand $cmd 
+
+    set orient "0"
+    if {$cmd == 3} {
+        set coords [MRProstateCareGetRSAFromPoint $MRProstateCare(currentPoint)] 
+
+        # set coords [split $coords " "]
+        set r [lindex $coords 0] 
+        set s [lindex $coords 1] 
+        set a [lindex $coords 2] 
+
+        # patient postition in this list:
+        # Supine Prone Left-decub Right-decub
+        # for prostate biopsy, always use Supine 
+        set ppos 0
+
+        # patient postition in this list:
+        # Front Side 
+        # for prostate biopsy, always use Side 
+        set tpos 1
+
+        set pxyz [MRProstateCareGetPxyz $r $s $a $ppos $tpos] 
+        switch $MRProstateCare(realtimeOrientation) {
+            "Axial" {set or 1}
+            "Sagittal" {set or 2}
+            "Coronal" {set or 3}
+        }
+        set orient "$or $pxyz"
+    }   
+
+    Locator(Flashpoint,src) SetScanningOrientation $orient
+
+}
+
+
+proc MRProstateCareGetPxyz {r s a ppos tpos} {
+    global MRProstateCare
+
+    set PXYZ [MRProstateCareRSAtoXYZ $r $s $a $ppos $tpos]
+    set LPx [lindex $PXYZ 0] 
+    set LPy [lindex $PXYZ 1] 
+    set LPz [lindex $PXYZ 2] 
+
+    # Set image origin to tip location.
+    set Px [expr {round($LPx)}]
+    set Py [expr {round($LPy)}]
+    set Pz [expr {round($LPz)}]
+   
+    set Pxyz "$Px $Py $Pz" 
+}
+
+
+proc MRProstateCareRSAtoXYZ {R S A patpos tblpos} {
+
+    if {$tblpos == 0} {
+        switch $patpos {
+            0 {set X $R; set Y $A; set Z $S}
+            1 {set X -$R; set Y -$A; set Z $S}
+            2 {set X -$A; set Y $R; set Z $S}
+            3 {set X $A; set Y -$R; set Z $S}
+            4 {set X -$R; set Y $A; set Z -$S}
+            5 {set X $R; set Y -$A; set Z -$S}
+            6 {set X $A; set Y $R; set Z -$S}
+            7 {set X -$A; set Y -$R; set Z -$S}
+        } 
+        return "$X $Y $Z"
+    }
+
+    if {$tblpos == 1} {
+        switch $patpos {
+            0 {set X $S; set Y $A; set Z -$R}
+            1 {set X $S; set Y -$A; set Z $R}
+            2 {set X $S; set Y $R; set Z $A}
+            3 {set X $S; set Y -$R; set Z -$A}
+            4 {set X -$S; set Y $A; set Z $R}
+            5 {set X -$S; set Y -$A; set Z -$R}
+            6 {set X -$S; set Y $R; set Z -$A}
+            7 {set X -$S; set Y -$R; set Z $A}
+        }
+        return "$X $Y $Z"
+    }
+}
 
 
 proc MRProstateCareBuildGUIForDisplay {parent} {
@@ -917,17 +998,8 @@ proc MRProstateCareNavLoop {} {
     if {$vname != "Realtime"} {
         # set right slice to display
         set p $MRProstateCare(currentPoint)
-        if {$p != ""} {
-            set i 0 
-            set i2 [string first ":" $p]
-            set title [string range $p $i [expr $i2-1]] 
-            set rsa [string range $p [expr $i2+3] end-1] 
+        set coords [MRProstateCareGetRSAFromPoint $p] 
 
-            set rsa [string trim $rsa]
-            set title [string trim $title]
-        }
-        regsub -all {( )+} $rsa " " rsa 
-        set coords [split $rsa " "]
         # Axial slice changes as S
         # Saggital slice changes as R
         # Coronal slice changes as A
@@ -1014,6 +1086,27 @@ proc MRProstateCareNavLoop {} {
     after $MRProstateCare(navTime) MRProstateCareNavLoop
 }
 
+
+proc MRProstateCareGetRSAFromPoint {p} {
+    global MRProstateCare 
+
+    set coords ""
+    if {$p != ""} {
+        set i 0 
+        set i2 [string first ":" $p]
+        set title [string range $p $i [expr $i2-1]] 
+        set rsa [string range $p [expr $i2+3] end-1] 
+
+        set rsa [string trim $rsa]
+        set title [string trim $title]
+        regsub -all {( )+} $rsa " " rsa 
+        set coords [split $rsa " "]
+    }
+
+    return $coords
+}
+
+ 
 proc MRProstateCareHidePoint {} {
     global MRProstateCare View
 
