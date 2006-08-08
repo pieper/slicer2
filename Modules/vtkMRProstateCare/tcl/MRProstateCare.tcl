@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.24 $} {$Date: 2006/08/07 21:26:32 $}]
+        {$Revision: 1.1.2.25 $} {$Date: 2006/08/08 14:51:42 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -501,34 +501,54 @@ proc MRProstateCareBuildGUIForScan {parent} {
     set f $parent
     foreach x "Top Mid Bot" {
         frame $f.f$x -bg $Gui(activeWorkspace) -relief groove -bd 2 
-        pack $f.f$x -side top -pady 1 
+        pack $f.f$x -side top -pady 3 
     }
+
+    #-------------------------
+    # Frame Top 
+    #-------------------------
 
     set f $parent.fTop
 
     frame $f.f1 -bg $Gui(activeWorkspace) 
     pack $f.f1 -side top -pady 0 
-    frame $f.f2 -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    frame $f.f2 -bg $Gui(activeWorkspace) 
     pack $f.f2 -side top -pady 1 
-    frame $f.f3 -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.f3 -side top -pady 1 
-    frame $f.f4 -bg $Gui(activeWorkspace)
-    pack $f.f4 -side top -pady 1 
+
+    set f $parent.fTop.f1
+    eval {label $f.lTitle -text "Control scanner:"} $Gui(WTA)
+    grid $f.lTitle -padx 5 -pady 3 
+
+    set f $parent.fTop.f2
+    DevAddButton $f.bStart "Start" "MRProstateCareStartScanner"  16 
+    DevAddButton $f.bStop "Stop" "MRProstateCareStopScanner"  16 
+    blt::table $f \
+        0,0 $f.bStart -fill x -padx 2 -pady 3 \
+        0,1 $f.bStop -fill x -padx 3 -pady 2 
 
     #-------------------------
-    # Frame 1 
+    # Frame Mid 
     #-------------------------
-    set f $parent.fTop.f1
-    eval {label $f.lTitle -text "Set up realtime scanning:"} $Gui(WTA)
+
+    set f $parent.fMid
+
+    frame $f.f1 -bg $Gui(activeWorkspace) 
+    pack $f.f1 -side top -pady 1 
+    frame $f.f2 -bg $Gui(activeWorkspace) -relief groove -bd 1 
+    pack $f.f2 -side top -pady 2 -padx 2 
+    frame $f.f3 -bg $Gui(activeWorkspace) -relief groove -bd 1 
+    pack $f.f3 -side top -pady 2 -padx 2 
+    frame $f.f4 -bg $Gui(activeWorkspace)
+    pack $f.f4 -side top -pady 2 -padx 2 
+
+    set f $parent.fMid.f1
+    eval {label $f.lTitle -text "Scan an image:"} $Gui(WTA)
     grid $f.lTitle -padx 5 -pady 3 
 
 
-    #-------------------------
-    # Frame 2 
-    #-------------------------
-    set f $parent.fTop.f2
+    set f $parent.fMid.f2
 
-    eval {label $f.lTitle -text "Image display orientation:"} $Gui(WTA)
+    eval {label $f.lTitle -text "Image orientation:"} $Gui(WTA)
  
     foreach x "Axial Sagittal Coronal" \
         text "{Axial} {Sagittal} {Coronal}" {
@@ -544,17 +564,24 @@ proc MRProstateCareBuildGUIForScan {parent} {
     grid $f.lTitle -row 0 -column 0 -columnspan 3 -pady 5 -sticky news
     grid $f.rAxial $f.rSagittal $f.rCoronal -pady 2 -padx 1 
 
+    set f $parent.fMid.f3
+
+    eval {label $f.lTitle -text "Slice thickness:"} $Gui(WTA)
+    eval {entry $f.eThickness -textvariable Locator(Flashpoint,$x) -width 17} $Gui(WEA)
+    DevAddButton $f.bSet "Set" "MRProstateCareSetSliceThickness"  13 
+
+    grid $f.lTitle -row 0 -column 0 -columnspan 3 -pady 5 -sticky news
+    grid $f.eThickness $f.bSet -pady 3 -padx 2 
+
+    set f $parent.fMid.f4
+
+    DevAddButton $f.bScan "Scan" "MRProstateCareScan"  14 
+    grid $f.bScan -pady 5 -padx 2 
+
 
     #-------------------------
     # Bot frame
     #-------------------------
-
-if {0} {
-    set f $parent.fBot
-    DevAddButton $f.bStart "Start" "MRProstateCareStartNav"  10 
-    DevAddButton $f.bStop "Stop" "MRProstateCareStopNav"  10 
-    grid $f.bStart $f.bStop -padx 1 -pady 5 
-}
 
 }
 
