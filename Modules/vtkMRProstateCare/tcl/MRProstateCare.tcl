@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.26 $} {$Date: 2006/08/08 21:12:16 $}]
+        {$Revision: 1.1.2.27 $} {$Date: 2006/08/09 15:38:10 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -586,7 +586,6 @@ proc MRProstateCareSetScannerCommand {cmd} {
 
     Locator(Flashpoint,src) SetScannerCommand $cmd 
 
-    set orient "0"
     if {$cmd == 3} {
         set coords [MRProstateCareGetRSAFromPoint $MRProstateCare(currentPoint)] 
 
@@ -595,14 +594,21 @@ proc MRProstateCareSetScannerCommand {cmd} {
         set s [lindex $coords 1] 
         set a [lindex $coords 2] 
 
-        # patient postition in this list:
-        # Supine Prone Left-decub Right-decub
-        # for prostate biopsy, always use Supine 
-        set ppos 0
+        # patient postition: 
+        # 0 = head first, supine
+        # 1 = head first, prone
+        # 2 = head first, left decub
+        # 3 = head first, right decub
+        # 4 = feet first, supine
+        # 5 = feet first, prone
+        # 6 = feet first, left decub
+        # 7 = feet first, right decub
+        set ppos 4 
 
-        # patient postition in this list:
-        # Front Side 
-        # for prostate biopsy, always use Side 
+        # table position:
+        # 0 = axial
+        # 1 = side
+        # 2 = vertical
         set tpos 1
 
         set pxyz [MRProstateCareGetPxyz $r $s $a $ppos $tpos] 
@@ -611,11 +617,9 @@ proc MRProstateCareSetScannerCommand {cmd} {
             "Sagittal" {set or 2}
             "Coronal" {set or 3}
         }
-        set orient "$or $pxyz"
+        Locator(Flashpoint,src) SetScanningOrientation \
+            $or [lindex $pxyz 0] [lindex $pxyz 1] [lindex $pxyz 2] 0 
     }   
-
-    Locator(Flashpoint,src) SetScanningOrientation $orient
-
 }
 
 
@@ -641,27 +645,27 @@ proc MRProstateCareRSAtoXYZ {R S A patpos tblpos} {
     if {$tblpos == 0} {
         switch $patpos {
             0 {set X $R; set Y $A; set Z $S}
-            1 {set X -$R; set Y -$A; set Z $S}
-            2 {set X -$A; set Y $R; set Z $S}
-            3 {set X $A; set Y -$R; set Z $S}
-            4 {set X -$R; set Y $A; set Z -$S}
-            5 {set X $R; set Y -$A; set Z -$S}
-            6 {set X $A; set Y $R; set Z -$S}
-            7 {set X -$A; set Y -$R; set Z -$S}
+            1 {set X [expr -$R]; set Y [expr -$A]; set Z $S}
+            2 {set X [expr -$A]; set Y $R; set Z $S}
+            3 {set X $A; set Y [expr -$R]; set Z $S}
+            4 {set X [expr -$R]; set Y $A; set Z [expr -$S]}
+            5 {set X $R; set Y [expr -$A]; set Z [expr -$S]}
+            6 {set X $A; set Y $R; set Z [expr -$S]}
+            7 {set X [expr -$A]; set Y [expr -$R]; set Z [expr -$S]}
         } 
         return "$X $Y $Z"
     }
 
     if {$tblpos == 1} {
         switch $patpos {
-            0 {set X $S; set Y $A; set Z -$R}
-            1 {set X $S; set Y -$A; set Z $R}
+            0 {set X $S; set Y $A; set Z [expr -$R]}
+            1 {set X $S; set Y [expr -$A]; set Z $R}
             2 {set X $S; set Y $R; set Z $A}
-            3 {set X $S; set Y -$R; set Z -$A}
-            4 {set X -$S; set Y $A; set Z $R}
-            5 {set X -$S; set Y -$A; set Z -$R}
-            6 {set X -$S; set Y $R; set Z -$A}
-            7 {set X -$S; set Y -$R; set Z $A}
+            3 {set X $S; set Y [expr -$R]; set Z [expr -$A]}
+            4 {set X [expr -$S]; set Y $A; set Z $R}
+            5 {set X [expr -$S]; set Y [expr -$A]; set Z [expr -$R]}
+            6 {set X [expr -$S]; set Y $R; set Z [expr -$A]}
+            7 {set X [expr -$S]; set Y [expr -$R]; set Z $A}
         }
         return "$X $Y $Z"
     }
