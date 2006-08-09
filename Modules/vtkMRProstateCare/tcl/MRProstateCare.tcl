@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.27 $} {$Date: 2006/08/09 15:38:10 $}]
+        {$Revision: 1.1.2.28 $} {$Date: 2006/08/09 18:14:04 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -752,8 +752,8 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     }
 
     # Save menubutton for config
-    set MRProstateCare(gui,level1PointButton) $f.mbType
-    set MRProstateCare(gui,level1PointMenu) $f.mbType.m
+    set MRProstateCare(gui,displayPointButton) $f.mbType
+    set MRProstateCare(gui,displayPointMenu) $f.mbType.m
 
     blt::table $f \
         0,0 $f.lTitle -padx 2 -pady 3 \
@@ -811,8 +811,8 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     }
 
     # Save menubutton for config
-    set MRProstateCare(gui,level1Image1VolumeButton) $f.mbType
-    set MRProstateCare(gui,level1Image1VolumeMenu) $f.mbType.m
+    set MRProstateCare(gui,displayImage1VolumeButton) $f.mbType
+    set MRProstateCare(gui,displayImage1VolumeMenu) $f.mbType.m
 
     blt::table $f \
         0,0 $f.lVolume -padx 2 -pady 1 -anchor e \
@@ -837,8 +837,8 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     }
 
     # Save menubutton for config
-    set MRProstateCare(gui,level1Image2VolumeButton) $f.mbType
-    set MRProstateCare(gui,level1Image2VolumeMenu) $f.mbType.m
+    set MRProstateCare(gui,displayImage2VolumeButton) $f.mbType
+    set MRProstateCare(gui,displayImage2VolumeMenu) $f.mbType.m
 
     blt::table $f \
         0,0 $f.lVolume -padx 2 -pady 1 -anchor e \
@@ -978,27 +978,33 @@ proc MRProstateCareNavLoop {} {
     set both [expr {$MRProstateCare(image1,currentVolumeID) > 0  
                     && $MRProstateCare(image2,currentVolumeID) > 0}] 
     if {! $both} {
-        DevErrorWindow "Please have both images valid for display. Then press Start button to begin."
+        DevErrorWindow "Please have both images available for display. Then press Start button to begin."
         return
     } 
 
-    # alternate between image1 and image2 for display
-    if {$MRProstateCare(displayedImage) == "" ||
-        $MRProstateCare(displayedImage) == "image2"} { 
-        set MRProstateCare(currentDisplayedVolumeID) \
-            $MRProstateCare(image1,currentVolumeID)
-        set MRProstateCare(displayedImage) "image1" 
+    # clean the 3D view
+    MainSlicesSetVisibilityAll 0
+    Render3D
+ 
+    # set back and fore images right
+    MainSlicesSetVolumeAll Back $MRProstateCare(image1,currentVolumeID) 
+    MainVolumesSetActive $MRProstateCare(image1,currentVolumeID)
+    MainSlicesSetVolumeAll Fore $MRProstateCare(image2,currentVolumeID) 
+    MainVolumesSetActive $MRProstateCare(image2,currentVolumeID)
+    MainVolumesRender
+
+    # Slice(opacity) = 0.0 - background image is displayed
+    # Slice(opacity) = 1.0 - foreground image is displayed
+    if {$Slice(opacity) == 0.0} {
+        # The back image (image1) is being displayed
+        set MRProstateCare(nextVolumeID) $MRProstateCare(image2,currentVolumeID)
     } else {
-        set MRProstateCare(currentDisplayedVolumeID) \
-            $MRProstateCare(image2,currentVolumeID)
-        set MRProstateCare(displayedImage) "image2" 
+        # The fore image (image2) is being displayed
+        set MRProstateCare(nextVolumeID) $MRProstateCare(image1,currentVolumeID)
     }
 
-#    MainSlicesSetVolumeAll Back $MRProstateCare(currentDisplayedVolumeID)
-#    MainVolumesSetActive $MRProstateCare(currentDisplayedVolumeID)
-#    MainVolumesRender
 
-    set vname [Volume($MRProstateCare(currentDisplayedVolumeID),node) GetName]
+    set vname [Volume($MRProstateCare(nextVolumeID),node) GetName]
     if {$vname != "Realtime"} {
         # set right slice to display
         set p $MRProstateCare(currentPoint)
@@ -1021,6 +1027,10 @@ proc MRProstateCareNavLoop {} {
         lappend MRProstateCare(currentPointRAS) [lindex $coords 2]
         lappend MRProstateCare(currentPointRAS) [lindex $coords 1]
 
+        set i 0 
+        set i2 [string first ":" $p]
+        set title [string range $p $i [expr $i2-1]] 
+        set title [string trim $title]
         MRProstateCareShowPoint $title
 
     } else {
@@ -1041,10 +1051,7 @@ proc MRProstateCareNavLoop {} {
     set Anno(box) 0
     MainAnnoSetVisibility
 
-    # clean the 3D view
-    MainSlicesSetVisibilityAll 0
-    Render3D
-        
+       
     # show the slice according to the specified orientation
     switch $MRProstateCare(orientation) {
         "Axial" {
@@ -1083,9 +1090,8 @@ proc MRProstateCareNavLoop {} {
     MainViewerHideSliceControls 
     Render3D
      
-    MainSlicesSetVolumeAll Back $MRProstateCare(currentDisplayedVolumeID)
-    MainVolumesSetActive $MRProstateCare(currentDisplayedVolumeID)
-    MainVolumesRender
+    MainSlicesSetOpacityToggle
+    RenderAll
 
     after $MRProstateCare(navTime) MRProstateCareNavLoop
 }
@@ -1238,7 +1244,7 @@ proc MRProstateCareSelectPoint {m} {
     global MRProstateCare 
 
     # configure menubutton
-    $MRProstateCare(gui,level1PointButton) config -text $m 
+    $MRProstateCare(gui,displayPointButton) config -text $m 
     set MRProstateCare(currentPoint) $m
 }
 
@@ -1250,14 +1256,16 @@ proc MRProstateCareSelectVolume {which v} {
 
     # configure menubutton
     if {$which == 1} {
-        $MRProstateCare(gui,level1Image1VolumeButton) config -text $name 
+        $MRProstateCare(gui,displayImage1VolumeButton) config -text $name 
         set MRProstateCare(image1,currentVolumeID) $v
+        set layer Back
     } else {
-        $MRProstateCare(gui,level1Image2VolumeButton) config -text $name 
+        $MRProstateCare(gui,displayImage2VolumeButton) config -text $name 
         set MRProstateCare(image2,currentVolumeID) $v
+        set layer Fore
     }
 
-    MainSlicesSetVolumeAll Back $v
+    MainSlicesSetVolumeAll $layer $v
     MainVolumesSetActive $v
     MainVolumesRender
 }
@@ -2121,15 +2129,15 @@ proc MRProstateCareUpdateNavigationTab {} {
     }
 
     # Inside the Navigation tab update the point list
-    $MRProstateCare(gui,level1PointMenu) delete 0 end 
+    $MRProstateCare(gui,displayPointMenu) delete 0 end 
     set size [llength $MRProstateCare(pointList)]
     if {$size == 0} {
         MRProstateCareSelectPoint none
-        $MRProstateCare(gui,level1PointMenu) add command -label none \
+        $MRProstateCare(gui,displayPointMenu) add command -label none \
             -command "MRProstateCareSelectPoint none"
     } else {
         foreach x $MRProstateCare(pointList) {
-            $MRProstateCare(gui,level1PointMenu) add command \
+            $MRProstateCare(gui,displayPointMenu) add command \
                 -label $x \
                 -command "MRProstateCareSelectPoint \{$x\}"
         }
@@ -2139,17 +2147,17 @@ proc MRProstateCareUpdateNavigationTab {} {
 
     # Inside the Navigation tab update the volume list
     # for image1
-    $MRProstateCare(gui,level1Image1VolumeMenu) delete 0 end 
+    $MRProstateCare(gui,displayImage1VolumeMenu) delete 0 end 
     foreach v $Volume(idList) {
-        $MRProstateCare(gui,level1Image1VolumeMenu) add command \
+        $MRProstateCare(gui,displayImage1VolumeMenu) add command \
             -label [Volume($v,node) GetName] \
             -command "MRProstateCareSelectVolume 1 $v"
     }
 
     # for image2
-    $MRProstateCare(gui,level1Image2VolumeMenu) delete 0 end 
+    $MRProstateCare(gui,displayImage2VolumeMenu) delete 0 end 
     foreach v $Volume(idList) {
-        $MRProstateCare(gui,level1Image2VolumeMenu) add command \
+        $MRProstateCare(gui,displayImage2VolumeMenu) add command \
             -label [Volume($v,node) GetName] \
             -command "MRProstateCareSelectVolume 2 $v"
     }
