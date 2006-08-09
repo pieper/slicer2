@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageRealtimeScan.cxx,v $
-  Date:      $Date: 2006/08/08 21:15:51 $
-  Version:   $Revision: 1.15.8.3.2.2 $
+  Date:      $Date: 2006/08/09 15:39:50 $
+  Version:   $Revision: 1.15.8.3.2.3 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -63,7 +63,9 @@ vtkImageRealtimeScan::vtkImageRealtimeScan()
     ByteOrder = (byte[0] ? 1 : 0);
 
     ScannerCommand = 0;
-    ScanningOrientation = NULL;
+    for (int i = 0; i < 5; i++) {
+        ScanningOrientation[i] = 0.0;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -432,7 +434,12 @@ int vtkImageRealtimeScan::PollRealtime()
         nbytes = SendServer(CMD_SCAN);
         if (nbytes < 0) return -1;
 
-        sprintf(buf, "%d %s\n", ScannerCommand, ScanningOrientation);
+        sprintf(buf, "%d %f %f %f %f %f\n", ScannerCommand, 
+                                            ScanningOrientation[0],
+                                            ScanningOrientation[1],
+                                            ScanningOrientation[2],
+                                            ScanningOrientation[3],
+                                            ScanningOrientation[4]);
         len = strlen(buf);
         n = writen(sockfd, buf, len);
         if (n < len) {
@@ -443,7 +450,9 @@ int vtkImageRealtimeScan::PollRealtime()
         }
 
         ScannerCommand = 0;
-        ScanningOrientation = NULL;
+        for (int i = 0; i < 5; i++) {
+            ScanningOrientation[i] = 0.0;
+        }
     }
 
 
