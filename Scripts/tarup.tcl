@@ -519,6 +519,11 @@ puts "uploadFlag = $uploadFlag"
         file mkdir $moddest
         if { [file exists $moddir/tcl] } {
             file copy -force $moddir/tcl $moddest
+        } else {
+            # for a Modules that use an uppercase tcl directory name
+            if { [file exists $moddir/Tcl] } {
+                file copy -force $moddir/Tcl $moddest
+            }
         }
         if {$includeSource} {
             if { [file exists $moddir/cxx] } {
