@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.28 $} {$Date: 2006/08/09 18:14:04 $}]
+        {$Revision: 1.1.2.29 $} {$Date: 2006/08/10 21:13:08 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -511,42 +511,18 @@ proc MRProstateCareBuildGUIForScan {parent} {
     set f $parent.fTop
 
     frame $f.f1 -bg $Gui(activeWorkspace) 
-    pack $f.f1 -side top -pady 0 
-    frame $f.f2 -bg $Gui(activeWorkspace) 
-    pack $f.f2 -side top -pady 1 
-
-    set f $parent.fTop.f1
-    eval {label $f.lTitle -text "Control scanner:"} $Gui(WTA)
-    grid $f.lTitle -padx 5 -pady 3 
-
-    set f $parent.fTop.f2
-    DevAddButton $f.bStart "Start" "MRProstateCareSetScannerCommand 1"  16 
-    DevAddButton $f.bStop "Stop" "MRProstateCareSetScannerCommand 2"  16 
-    blt::table $f \
-        0,0 $f.bStart -fill x -padx 2 -pady 3 \
-        0,1 $f.bStop -fill x -padx 3 -pady 2 
-
-    #-------------------------
-    # Frame Mid 
-    #-------------------------
-
-    set f $parent.fMid
-
-    frame $f.f1 -bg $Gui(activeWorkspace) 
     pack $f.f1 -side top -pady 1 
     frame $f.f2 -bg $Gui(activeWorkspace) -relief groove -bd 1 
     pack $f.f2 -side top -pady 2 -padx 2 
     frame $f.f3 -bg $Gui(activeWorkspace) -relief groove -bd 1 
     pack $f.f3 -side top -pady 2 -padx 2 
-    frame $f.f4 -bg $Gui(activeWorkspace)
-    pack $f.f4 -side top -pady 2 -padx 2 
 
-    set f $parent.fMid.f1
-    eval {label $f.lTitle -text "Scan an image:"} $Gui(WTA)
+    set f $parent.fTop.f1
+    eval {label $f.lTitle -text "Set up a scan:"} $Gui(WTA)
     grid $f.lTitle -padx 5 -pady 3 
 
 
-    set f $parent.fMid.f2
+    set f $parent.fTop.f2
 
     eval {label $f.lTitle -text "Image orientation:"} $Gui(WTA)
  
@@ -564,10 +540,23 @@ proc MRProstateCareBuildGUIForScan {parent} {
     grid $f.lTitle -row 0 -column 0 -columnspan 3 -pady 5 -sticky news
     grid $f.rAxial $f.rSagittal $f.rCoronal -pady 2 -padx 1 
 
-    set f $parent.fMid.f4
+    #-------------------------
+    # Frame Mid 
+    #-------------------------
 
-    DevAddButton $f.bScan "Scan" "MRProstateCareSetScannerCommand 3"  14 
-    grid $f.bScan -pady 5 -padx 2 
+    set f $parent.fMid
+
+    frame $f.f1 -bg $Gui(activeWorkspace) 
+    pack $f.f1 -side top -pady 0 
+    frame $f.f2 -bg $Gui(activeWorkspace) 
+    pack $f.f2 -side top -pady 1 
+
+    set f $parent.fMid.f2
+    DevAddButton $f.bStart "Start scan" "MRProstateCareSetScannerCommand 1"  16 
+    DevAddButton $f.bStop "Stop scan" "MRProstateCareSetScannerCommand 0"  16 
+    blt::table $f \
+        0,0 $f.bStart -fill x -padx 2 -pady 3 \
+        0,1 $f.bStop -fill x -padx 3 -pady 2 
 
 
     #-------------------------
@@ -579,14 +568,12 @@ proc MRProstateCareBuildGUIForScan {parent} {
 proc MRProstateCareSetScannerCommand {cmd} {
     global MRProstateCare Locator 
 
-    if {$cmd == 3 && $MRProstateCare(currentPoint) == "none"} {
+    if {$cmd == 1 && $MRProstateCare(currentPoint) == "none"} {
             DevErrorWindow "Please select a valid point for scanning."
             return
     } 
 
-    Locator(Flashpoint,src) SetScannerCommand $cmd 
-
-    if {$cmd == 3} {
+    if {$cmd == 1} {
         set coords [MRProstateCareGetRSAFromPoint $MRProstateCare(currentPoint)] 
 
         # set coords [split $coords " "]
@@ -617,9 +604,12 @@ proc MRProstateCareSetScannerCommand {cmd} {
             "Sagittal" {set or 2}
             "Coronal" {set or 3}
         }
-        Locator(Flashpoint,src) SetScanningOrientation \
+        Locator(Flashpoint,src) SetScanOrientation \
             $or [lindex $pxyz 0] [lindex $pxyz 1] [lindex $pxyz 2] 0 
     }   
+
+    Locator(Flashpoint,src) OperateScanner $cmd 
+ 
 }
 
 
