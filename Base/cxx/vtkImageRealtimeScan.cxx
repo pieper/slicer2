@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageRealtimeScan.cxx,v $
-  Date:      $Date: 2006/08/09 15:39:50 $
-  Version:   $Revision: 1.15.8.3.2.3 $
+  Date:      $Date: 2006/08/10 20:52:28 $
+  Version:   $Revision: 1.15.8.3.2.4 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -62,9 +62,9 @@ vtkImageRealtimeScan::vtkImageRealtimeScan()
     char *byte = (char *) &word;
     ByteOrder = (byte[0] ? 1 : 0);
 
-    ScannerCommand = 0;
-    for (int i = 0; i < 5; i++) {
-        ScanningOrientation[i] = 0.0;
+    for (int ii = 0; ii < 5; ii++) 
+    {
+        ScanOrientation[ii] = 0.0;
     }
 }
 
@@ -182,7 +182,7 @@ long vtkImageRealtimeScan::SendServer(int cmd)
     if (sockfd < 0) return -1;
 
 #ifndef _WIN32
-    
+
     sprintf(buf, "%d", cmd);
     len = strlen(buf);
     n = writen(sockfd, buf, len);
@@ -207,6 +207,61 @@ long vtkImageRealtimeScan::SendServer(int cmd)
 
     return nbytes;
 }
+
+
+
+/******************************************************************************
+OperateScanner
+
+Sends realtime scanning command 'cmd' to the server.
+The server then drives the scanner to image.
+******************************************************************************/
+int vtkImageRealtimeScan::OperateScanner(int cmd)
+{
+    long nbytes = 0;
+    long n, len;
+    char buf[100];
+    
+
+    // Return if not connected yet
+    if (sockfd < 0) return -1;
+
+    sprintf(buf, "%d", CMD_SCAN);
+    len = strlen(buf);
+    n = writen(sockfd, buf, len);
+    if (n < len) {
+        // This happens when the server crashes.
+        fprintf(stderr, "Client wrote %d instead of %d bytes.\n",n,len);
+        close(sockfd);
+        return -1;
+    }
+
+    sprintf(buf, 
+            "%d %f %f %f %f %f", 
+            cmd, 
+            ScanOrientation[0],
+            ScanOrientation[1],
+            ScanOrientation[2],
+            ScanOrientation[3],
+            ScanOrientation[4]);
+
+
+    /* The number of bytes (100) has to be the same 
+       for receiving (CMD_SCAN) in the spl_server.
+
+       If they are different, it will cause slicer to hang or crash.  
+    */
+    n = writen(sockfd, buf, 100);
+    if (n < len) {
+        // This happens when the server crashes.
+        fprintf(stderr, "Client wrote %d instead of %d bytes.\n",n,len);
+        close(sockfd);
+        return -1;
+    }
+
+    return 0; 
+}
+
 
 /******************************************************************************
 SetPosition
@@ -421,39 +476,12 @@ PollRealtime
 ******************************************************************************/
 int vtkImageRealtimeScan::PollRealtime()
 {
-    static char buf[200];
+    static char buf[1000];
     
 #ifndef _WIN32
     long len, n, nbytes;
     float matrix[16];
     int i, j;
-
-    // Send command to operate the sanner 
-    if (ScannerCommand)
-    {
-        nbytes = SendServer(CMD_SCAN);
-        if (nbytes < 0) return -1;
-
-        sprintf(buf, "%d %f %f %f %f %f\n", ScannerCommand, 
-                                            ScanningOrientation[0],
-                                            ScanningOrientation[1],
-                                            ScanningOrientation[2],
-                                            ScanningOrientation[3],
-                                            ScanningOrientation[4]);
-        len = strlen(buf);
-        n = writen(sockfd, buf, len);
-        if (n < len) {
-            // This happens when the server crashes.
-            fprintf(stderr, "Client wrote %d instead of %d bytes.\n",n,len);
-            close(sockfd);
-            return -1;
-        }
-
-        ScannerCommand = 0;
-        for (int i = 0; i < 5; i++) {
-            ScanningOrientation[i] = 0.0;
-        }
-    }
 
 
     // Request the update info
