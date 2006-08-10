@@ -65,16 +65,23 @@ if {![info exists ::env(SLICER_CUSTOM_CONFIG)]} {
 if {$::env(SLICER_CUSTOM_CONFIG) != "true"} {
     set bypass_msg "\n\n(Set environment variable SLICER_CUSTOM_CONFIG to true to bypass this message)"
 }
+
 # The environment variables that we need to have set for slicer 
 # to start up properly
 set envVars {VTK_DIR VTK_BUILD_SUBDIR VTK_SRC_DIR KWWIDGETS_DIR ITK_BINARY_PATH SANDBOX_BIN_DIR TCL_BIN_DIR TCL_LIB_DIR SOV_BINARY_DIR TEEM_BIN_DIR}
 # Make up a list of the environment variables that haven't been set already,
 # that we need to set
 set envVarsToSet {}
-foreach v $envVars {
-    if {![info exists ::env($v)] || $::env($v) == "" } {
-        lappend envVarsToSet $v
+if {$::env(SLICER_CUSTOM_CONFIG)} {
+    # only set the ones that aren't set
+    foreach v $envVars {
+        if {![info exists ::env($v)] || $::env($v) == "" } {
+            lappend envVarsToSet $v
+        }
     }
+} else {
+    # if the user is not running a custom configuration set all vars
+    set envVarsToSet $envVars
 }
 
 # Source the local variables file, if it exists, or set defaults here
@@ -89,6 +96,10 @@ if { [file exists $localvarsfile] } {
 } else {
     puts stderr "Cannot find $localvarsfile"
     exit
+}
+
+# only reset these paths if the user isn't running a custom configuration
+if {$::env(SLICER_CUSTOM_CONFIG)} {
 }
 
 # if it is an empty string or doesn't exist, set the LD_LIBRARY_PATH 
@@ -140,6 +151,8 @@ foreach v $envVars {
         # it's already been set, don't over-ride
         puts stderr "NOT Overriding current $v $::env($v)"
         if {$::env(SLICER_CUSTOM_CONFIG) != "true"} {
+            # this shouldn't print out anymore, because above we put all the envVars in envVarsToSet 
+            # if the custom config env var isn't true
             tk_messageBox -type ok -message "NOT Overriding current $v $::env($v) $bypass_msg"
         }
     }
