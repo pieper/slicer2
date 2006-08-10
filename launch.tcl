@@ -98,10 +98,6 @@ if { [file exists $localvarsfile] } {
     exit
 }
 
-# only reset these paths if the user isn't running a custom configuration
-if {$::env(SLICER_CUSTOM_CONFIG)} {
-}
-
 # if it is an empty string or doesn't exist, set the LD_LIBRARY_PATH 
 if {[catch {
     if {$::env(LD_LIBRARY_PATH) == ""} { 
