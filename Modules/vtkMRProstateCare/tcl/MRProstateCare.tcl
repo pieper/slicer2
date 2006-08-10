@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.29 $} {$Date: 2006/08/10 21:13:08 $}]
+        {$Revision: 1.1.2.30 $} {$Date: 2006/08/10 21:25:07 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -499,11 +499,11 @@ proc MRProstateCareBuildGUIForScan {parent} {
     global MRProstateCare Gui 
 
     set f $parent
-    foreach x "Top Mid Bot" {
-        frame $f.f$x -bg $Gui(activeWorkspace) -relief groove -bd 2 
-        pack $f.f$x -side top -pady 3 
-    }
-
+    frame $f.fTop -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    pack $f.fTop -side top -pady 3 
+    frame $f.fMid -bg $Gui(activeWorkspace) 
+    pack $f.fMid -side top -pady 3 
+ 
     #-------------------------
     # Frame Top 
     #-------------------------
@@ -552,11 +552,11 @@ proc MRProstateCareBuildGUIForScan {parent} {
     pack $f.f2 -side top -pady 1 
 
     set f $parent.fMid.f2
-    DevAddButton $f.bStart "Start scan" "MRProstateCareSetScannerCommand 1"  16 
-    DevAddButton $f.bStop "Stop scan" "MRProstateCareSetScannerCommand 0"  16 
+    DevAddButton $f.bStart "Start scan" "MRProstateCareSetScannerCommand 1"  12 
+    DevAddButton $f.bStop "Stop scan" "MRProstateCareSetScannerCommand 0"  12 
     blt::table $f \
         0,0 $f.bStart -fill x -padx 2 -pady 3 \
-        0,1 $f.bStop -fill x -padx 3 -pady 2 
+        0,1 $f.bStop -fill x -padx 2 -pady 2 
 
 
     #-------------------------
