@@ -70,7 +70,7 @@ int DBGALL = 0;
 #define CMD_HEADER   3
 #define CMD_PIXELS   4
 #define CMD_POS      5 
-#define CMD_SCAN    6     // Added by Emese
+#define CMD_SCAN     6     
 
 char *progname = NULL;
 extern char *sys_errlist[];
@@ -341,7 +341,7 @@ int Serve(fd)
     int bClose = 0, status, xres, yres;
     float x, y, z, nx, ny, nz, tx, ty, tz, xyz[9], ras[9], spacing[3];
     long totlen, imanum = 0, recon=0, i, nbytes, n, len;
-    short locStatus, prevLocStatus = -2, NewLocator=0, NewImage=0, firstImage=1;
+    short locStatus, prevLocStatus = -2, NewLocator=0, NewImage=0;
     short minpix, maxpix;
     char buf[300];
     caddr_t ibuf;
@@ -351,12 +351,22 @@ int Serve(fd)
     float px = 0, py=0, pz=0, pnx=0, pny=0, pnz=0, ptx=0, pty=0, ptz=0;
     char cmdname[6][20];
 
+    /* scanning */
+    int sCmd = -1;
+    float sOrient[5];
+    char sCmdStr[300];
+    char sOrientNames[3][20];
+
     sprintf(cmdname[0], "CLOSE");
     sprintf(cmdname[1], "PING");
     sprintf(cmdname[2], "UPDATE");
     sprintf(cmdname[3], "HEADER");
     sprintf(cmdname[4], "PIXELS");
     sprintf(cmdname[5], "POS");
+
+    sprintf(sOrientNames[0], "axial");
+    sprintf(sOrientNames[1], "sagittal");
+    sprintf(sOrientNames[2], "coronal");
 
     /* Initialize connection with image buffer */
     msg = (char *)mror_imagebuf_init();
@@ -738,21 +748,53 @@ int Serve(fd)
                 if (DBG) fprintf(stderr, "CMD_POS: patpos = %d tblpos=%d\n",
                         patpos, tblpos);
                 break;
+
             case CMD_SCAN:
 
-                if (DBG) 
-                    fprintf(stderr, "Incomimg command for the MRI.\n");
-                /* command from client */
+                /* command from 3D Slicer for scanning */
                 n = readn(fd, buf, 100);
-                fprintf(stderr, "CMD_SCAN: %s\n", buf);
-                if (n > 2)    
-                { 
-                    buf[n-2] = '\n';
-                    if (DBG) 
-                        fprintf(stderr, "Received %ld characters.\n", n);
-                    // system(buf);
+                if (n < 100) {
+                    fprintf(stderr, "Server: Read error.\n");
+                    return -1;
                 }
-                break; 
+
+                n = sscanf(buf, "%d %f %f %f %f %f", 
+                                  &sCmd,
+                                  &sOrient[0],
+                                  &sOrient[1],
+                                  &sOrient[2],
+                                  &sOrient[3],
+                                  &sOrient[4]);
+                if (n == EOF) {
+                    fprintf(stderr, "Server: sscanf error in CMD_SCAN.\n");
+                    return -1;
+                }
+
+                memset(sCmdStr, 0, 300);
+                if (sCmd == 0) {
+                    /* stop the scanner */
+                    strcpy(sCmdStr, "echo \"cmd stop\" > /export/home/mrtmstr/TEMP/MRT_PIPE");
+                } else {
+                    /* to scan a realtime slice */  
+                    n = (int)sOrient[0] - 1;
+                    sprintf(sCmdStr, "echo %s %s %s %f %f %f %f\"\n", 
+                                     "\"cmd start\"",
+                                     "\"orthogonal",
+                                     sOrientNames[n],
+                                     sOrient[1],
+                                     sOrient[2],
+                                     sOrient[3], 
+                                     sOrient[4]);
+                }
+
+                /* send command(s) to
+                   the realtime control process of the scanner */
+                // system(sCmdStr);
+
+                // fprintf(stderr, "cmd to RTC: %s\n", sCmdStr);
+
+                break;
+
             default:
                 break;
         }
