@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.30 $} {$Date: 2006/08/10 21:25:07 $}]
+        {$Revision: 1.1.2.31 $} {$Date: 2006/08/11 18:36:48 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -529,7 +529,7 @@ proc MRProstateCareBuildGUIForScan {parent} {
     foreach x "Axial Sagittal Coronal" \
         text "{Axial} {Sagittal} {Coronal}" {
         eval {radiobutton $f.r$x -width 7 -text $text \
-            -variable MRProstateCare(realtimeOrientation) -value $x \
+            -variable MRProstateCare(realtimeScanOrient) -value $x \
             -relief raised -offrelief raised -overrelief raised \
             -command "" \
             -selectcolor white} $Gui(WEA)
@@ -599,7 +599,7 @@ proc MRProstateCareSetScannerCommand {cmd} {
         set tpos 1
 
         set pxyz [MRProstateCareGetPxyz $r $s $a $ppos $tpos] 
-        switch $MRProstateCare(realtimeOrientation) {
+        switch $MRProstateCare(realtimeScanOrient) {
             "Axial" {set or 1}
             "Sagittal" {set or 2}
             "Coronal" {set or 3}
@@ -667,19 +667,19 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
 
     set f $parent
     frame $f.f1 -bg $Gui(activeWorkspace) 
-    pack $f.f1 -side top -pady 0 
+    pack $f.f1 -side top -pady 3 
     frame $f.f2 -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.f2 -side top -pady 1 
+    pack $f.f2 -side top -pady 3 
     frame $f.f3 -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.f3 -side top -pady 1 
+    pack $f.f3 -side top -pady 3 
     frame $f.f4 -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.f4 -side top -pady 1 
+    pack $f.f4 -side top -pady 3 
     frame $f.f5 -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.f5 -side top -pady 1 
+    pack $f.f5 -side top -pady 3 
     frame $f.f6 -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.f6 -side top -pady 1 
+    pack $f.f6 -side top -pady 3 
     frame $f.f7 -bg $Gui(activeWorkspace)
-    pack $f.f7 -side top -pady 1 
+    pack $f.f7 -side top -pady 3 
 
     #-------------------------
     # Frame 1 
@@ -687,43 +687,15 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     set f $parent.f1
     eval {label $f.lPatient -text "Patient name:"} $Gui(WTA)
     DevAddLabel $f.lPatName "None"
-    grid $f.lPatient $f.lPatName -padx 5 -pady 3 
+    grid $f.lPatient $f.lPatName -padx 5 -pady 5 
     set MRProstateCare(patientNameLabel) $f.lPatName
 
 
+ 
     #-------------------------
     # Frame 2 
     #-------------------------
     set f $parent.f2
-
-    eval {label $f.lTitle -text "Realtime scan orientation:"} $Gui(WTA)
- 
-    foreach x "Axial Sagittal Coronal" \
-        text "{Axial} {Sagittal} {Coronal}" {
-        eval {radiobutton $f.r$x -width 12 -text $text \
-            -variable MRProstateCare(realtimeOrientation) -value $x \
-            -relief raised -offrelief raised -overrelief raised \
-            -command "MRProstateCareSetRealtimeScanOrder" \
-            -selectcolor white} $Gui(WEA)
-    } 
-    $f.rCoronal select
-    $f.rCoronal configure -state normal 
-
-    foreach x "SI LR AP" \
-        text "{Flip S/I} {Flip L/R} {Flip A/P}" {
-        DevAddButton $f.b$x "$text" "MRProstateCareFlip $x"  15 
-    } 
- 
-    grid $f.lTitle -row 0 -column 0 -columnspan 2 -pady 5 -sticky news
-    grid $f.rAxial $f.bSI -pady 1 -padx 3 
-    grid $f.rSagittal $f.bLR -pady 1 -padx 3 
-    grid $f.rCoronal $f.bAP -pady 1 -padx 3 
-
- 
-    #-------------------------
-    # Frame 3 
-    #-------------------------
-    set f $parent.f3
  
     # Build pulldown menu for all Points 
     eval {label $f.lTitle -text "Select a point:"} $Gui(WTA)
@@ -750,47 +722,48 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
         1,0 $f.mbType -fill x -padx 3 -pady 2 
 
     #-------------------------
-    # Frame 4 
+    # Frame 3 
     #-------------------------
-    set f $parent.f4
-    eval {label $f.lTitle -text "Image display orientation:"} $Gui(WTA)
+    set f $parent.f3
+
+    eval {label $f.lTitle -text "Realtime scan:"} $Gui(WTA)
  
     foreach x "Axial Sagittal Coronal" \
         text "{Axial} {Sagittal} {Coronal}" {
         eval {radiobutton $f.r$x -width 7 -text $text \
-            -variable MRProstateCare(orientation) -value $x \
+            -variable MRProstateCare(realtimeScanOrient) -value $text \
             -relief raised -offrelief raised -overrelief raised \
-            -command "" \
+            -command "MRProstateCareSetRealtimeScanOrder" \
             -selectcolor white} $Gui(WEA)
     } 
-    $f.rAxial select
-    $f.rAxial configure -state normal 
-
+    $f.rCoronal select
+    $f.rCoronal configure -state normal 
+ 
     grid $f.lTitle -row 0 -column 0 -columnspan 3 -pady 5 -sticky news
     grid $f.rAxial $f.rSagittal $f.rCoronal -pady 2 -padx 1 
-
+ 
 
     #-------------------------
-    # Frame 5 
+    # Frame 4 
     #-------------------------
-    set f $parent.f5
+    set f $parent.f4
     foreach x "Top Mid Bot" {
         frame $f.f$x -bg $Gui(activeWorkspace) 
         pack $f.f$x -side top -pady 1 
     }
 
-    set f $parent.f5.fTop
-    eval {label $f.lTitle -text "Display images:"} $Gui(WTA)
+    set f $parent.f4.fTop
+    eval {label $f.lTitle -text "Choose images:"} $Gui(WTA)
     pack $f.lTitle -side top -pady 2 
  
-    set f $parent.f5.fMid
+    set f $parent.f4.fMid
     # Build pulldown menu for volumes of image 1 
-    DevAddLabel $f.lVolume "Image 1:"
+    DevAddLabel $f.lVolume "Background:"
 
     set mList [list {none}]
     set df [lindex $mList 0] 
     eval {menubutton $f.mbType -text $df \
-          -relief raised -bd 2 -width 20 \
+          -relief raised -bd 2 -width 17 \
           -indicatoron 1 \
           -menu $f.mbType.m} $Gui(WMBA)
     eval {menu $f.mbType.m} $Gui(WMA)
@@ -809,14 +782,14 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
         0,1 $f.mbType -fill x -padx 3 -pady 1 -anchor w
 
 
-    set f $parent.f5.fBot
+    set f $parent.f4.fBot
     # Build pulldown menu for volumes 
-    DevAddLabel $f.lVolume "Image 2:"
+    DevAddLabel $f.lVolume "Foreground:"
 
     set mList [list {none}]
     set df [lindex $mList 0] 
     eval {menubutton $f.mbType -text $df \
-          -relief raised -bd 2 -width 20 \
+          -relief raised -bd 2 -width 17 \
           -indicatoron 1 \
           -menu $f.mbType.m} $Gui(WMBA)
     eval {menu $f.mbType.m} $Gui(WMA)
@@ -833,6 +806,29 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     blt::table $f \
         0,0 $f.lVolume -padx 2 -pady 1 -anchor e \
         0,1 $f.mbType -fill x -padx 3 -pady 1 -anchor w
+
+
+    #-------------------------
+    # Frame 5 
+    #-------------------------
+    set f $parent.f5
+
+    eval {label $f.lTitle -text "Image display:"} $Gui(WTA)
+ 
+    foreach x "Axial Sagittal Coronal" \
+        text "{Axial} {Sagittal} {Coronal}" {
+        eval {radiobutton $f.r$x -width 7 -text $text \
+            -variable MRProstateCare(imageDisplayOrient) -value $text \
+            -relief raised -offrelief raised -overrelief raised \
+            -command "" \
+            -selectcolor white} $Gui(WEA)
+    } 
+    $f.rAxial select
+    $f.rAxial configure -state normal 
+
+    grid $f.lTitle -row 0 -column 0 -columnspan 3 -pady 5 -sticky news
+    grid $f.rAxial $f.rSagittal $f.rCoronal -pady 2 -padx 1 
+
 
     #-------------------------
     # Frame 6 
@@ -879,7 +875,7 @@ proc MRProstateCareSetRealtimeScanOrder {} {
     global MRProstateCare Locator 
 
     set action 0
-    switch $MRProstateCare(realtimeOrientation) {
+    switch $MRProstateCare(realtimeScanOrient) {
         "Axial" {
             if {$Locator(realtimeScanOrder) != "SI" &&
                 $Locator(realtimeScanOrder) != "IS"} {
@@ -913,7 +909,7 @@ proc MRProstateCareFlip {order} {
     global MRProstateCare Locator 
 
     set action 0
-    switch $MRProstateCare(realtimeOrientation) {
+    switch $MRProstateCare(realtimeScanOrient) {
         "Axial" {
             if {$order == "SI"} {
                 if {$Locator(realtimeScanOrder) == "SI"} {
@@ -1043,7 +1039,7 @@ proc MRProstateCareNavLoop {} {
 
        
     # show the slice according to the specified orientation
-    switch $MRProstateCare(orientation) {
+    switch $MRProstateCare(imageDisplayOrient) {
         "Axial" {
             set Slice(0,visibility) 1 
             set Slice(1,visibility) 0 
@@ -1125,7 +1121,7 @@ proc MRProstateCareShowPoint {title} {
  
     set pos [expr   $View(fov) * 0.45]
     set neg [expr - $View(fov) * 0.45]
-    switch $MRProstateCare(orientation) {
+    switch $MRProstateCare(imageDisplayOrient) {
         "Axial" {
             set rt 0.0
             set at $pos 
@@ -1171,7 +1167,7 @@ proc MRProstateCareCreateFiducial {} {
     set r [lindex $MRProstateCare(currentPointRAS) 0]
     set a [lindex $MRProstateCare(currentPointRAS) 1]
     set s [lindex $MRProstateCare(currentPointRAS) 2]
-    switch $MRProstateCare(orientation) {
+    switch $MRProstateCare(imageDisplayOrient) {
         "Axial" {
             set s $max 
         }
