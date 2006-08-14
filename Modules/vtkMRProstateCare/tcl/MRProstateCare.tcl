@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.32 $} {$Date: 2006/08/11 21:30:38 $}]
+        {$Revision: 1.1.2.33 $} {$Date: 2006/08/14 20:50:31 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -614,11 +614,13 @@ proc MRProstateCareBuildGUIForScan {parent} {
     pack $f.f2 -side top -pady 1 
 
     set f $parent.fBot.f2
-    DevAddButton $f.bStart "Start scan" "MRProstateCareSetScannerCommand 1"  12 
-    DevAddButton $f.bStop "Stop scan" "MRProstateCareSetScannerCommand 0"  12 
+    DevAddButton $f.bStart "Start scan" "MRProstateCareSetScannerCommand 1"  10 
+    DevAddButton $f.bScan "Scan" "MRProstateCareSetScannerCommand 2"  10 
+    DevAddButton $f.bStop "Stop scan" "MRProstateCareSetScannerCommand 0"  10 
     blt::table $f \
         0,0 $f.bStart -fill x -padx 2 -pady 3 \
-        0,1 $f.bStop -fill x -padx 2 -pady 2 
+        0,1 $f.bScan -fill x -padx 2 -pady 3 \
+        0,2 $f.bStop -fill x -padx 2 -pady 3 
 
 
 }
@@ -659,12 +661,12 @@ proc MRProstateCareChangeRSA {v} {
 proc MRProstateCareSetScannerCommand {cmd} {
     global MRProstateCare Locator 
 
-    if {$cmd == 1 && $MRProstateCare(currentPoint) == "none"} {
+    if {$cmd == 2 && $MRProstateCare(currentPoint) == "none"} {
             DevErrorWindow "Please select a valid point for scanning."
             return
     } 
 
-    if {$cmd == 1} {
+    if {$cmd == 2} {
         # validate values of r, s, and a
         foreach ii "x y z" {
             if {[ValidateInt $MRProstateCare(${ii}Str)] == 0 &&

@@ -773,25 +773,41 @@ int Serve(fd)
                 memset(sCmdStr, 0, 300);
                 if (sCmd == 0) {
                     /* stop the scanner */
-                    strcpy(sCmdStr, "echo \"cmd stop\" > /export/home/mrtmstr/TEMP/MRT_PIPE");
+                    strcpy(sCmdStr, "echo \"cmd stop\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE");
+                } else if (sCmd == 1) {
+                    /* start the scanner */
+                    strcpy(sCmdStr, "echo \"cmd start\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE");
                 } else {
                     /* to scan a realtime slice */  
                     n = (int)sOrient[0] - 1;
-                    sprintf(sCmdStr, "echo %s %s %s %f %f %f %f\"\n", 
-                                     "\"cmd start\"",
+ 
+/*
+                    sprintf(sCmdStr, "echo %s %s %s %f %f %f %f\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE", 
+                                     "\"cmd start\n\"",
                                      "\"orthogonal",
                                      sOrientNames[n],
                                      sOrient[1],
                                      sOrient[2],
                                      sOrient[3], 
                                      sOrient[4]);
+*/
+
+
+                    sprintf(sCmdStr, "echo \"orthogonal %s %f %f %f %f\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE",
+                                     sOrientNames[n],
+                                     sOrient[1],
+                                     sOrient[2],
+                                     sOrient[3],
+                                     sOrient[4]);
+
+
                 }
+
+                fprintf(stderr, "cmd to RTC: %s\n", sCmdStr);
 
                 /* send command(s) to
                    the realtime control process of the scanner */
-                // system(sCmdStr);
-
-                // fprintf(stderr, "cmd to RTC: %s\n", sCmdStr);
+                system(sCmdStr);
 
                 break;
 
