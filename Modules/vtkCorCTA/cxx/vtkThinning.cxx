@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkThinning.cxx,v $
-  Date:      $Date: 2006/03/06 21:07:29 $
-  Version:   $Revision: 1.10 $
+  Date:      $Date: 2006/08/14 14:27:06 $
+  Version:   $Revision: 1.11 $
 
 =========================================================================auto=*/
 
@@ -536,29 +536,34 @@ void vtkThinning::ExecuteData(vtkDataObject* output)
   //fprintf(stderr,"%f\n",scalarRange[0]);
   // Initialize the heap to the contour points which are simple
   for(z=1;z<=OutputImage->GetDimensions()[2]-2;z++) {
-  for(y=1;y<=OutputImage->GetDimensions()[1]-2;y++) {
-    outputPtr=(unsigned short*)OutputImage->GetScalarPointer(1,y,z);
-    for(x=1;x<=OutputImage->GetDimensions()[0]-2;x++) {
-      contour = FALSE;
-      if (*outputPtr) {
-        for(n=0;n<=26;n++) {
-          if (!(*(outputPtr+neighbors_pos[n]))) {
-            contour=TRUE;
-            break;
-          }
+    for(y=1;y<=OutputImage->GetDimensions()[1]-2;y++) {
+      outputPtr=(unsigned short*)OutputImage->GetScalarPointer(1,y,z);
+      for(x=1;x<=OutputImage->GetDimensions()[0]-2;x++) {
+    contour = FALSE;
+    if (*outputPtr) {
+      for(n=0;n<=26;n++) {
+        if (!(*(outputPtr+neighbors_pos[n]))) {
+          contour=TRUE;
+          break;
         }
       }
-      if ((contour) && IsSimple(OutputImage,x,y,z,cstar,cbar) ) {
-    double order;
-    order = (0 - (im_Criterion->GetScalarComponentAsFloat(x,y,z,0) * scalarRange[0])) - endpoint_Criterion->GetScalarComponentAsFloat(x,y,z,0); 
-    //    fprintf(stderr,"%f\n",order);
-        heap += TrialPoint(x,y,z,order);
-    heapPtr=(unsigned short*)im_heap->GetScalarPointer(x,y,z);
-    *heapPtr=1;
-      }
-      outputPtr++;
     }
-  }
+    if ((contour) && IsSimple(OutputImage,x,y,z,cstar,cbar) ) {
+      double order;
+      if (im_Criterion==endpoint_Criterion){
+        order = im_Criterion->GetScalarComponentAsFloat(x,y,z,0);
+      }
+      else {
+        order = (0 - (im_Criterion->GetScalarComponentAsFloat(x,y,z,0) * scalarRange[0])) - endpoint_Criterion->GetScalarComponentAsFloat(x,y,z,0); 
+      }
+      //    fprintf(stderr,"%f\n",order);
+      heap += TrialPoint(x,y,z,order);
+      heapPtr=(unsigned short*)im_heap->GetScalarPointer(x,y,z);
+      *heapPtr=1;
+    }
+    outputPtr++;
+      }
+    }
   }
   //fprintf(stderr,"heap initialized, size is %d...\n",heap.Size());
   this->UpdateProgress(0.2);
@@ -576,13 +581,21 @@ void vtkThinning::ExecuteData(vtkDataObject* output)
 
     p = heap.GetMin();
     //    if (p.value > MaxEndpointThreshold) break;
-
+    
+    double endpoint_value = endpoint_Criterion->GetScalarComponentAsFloat(p.x,p.y,p.z,0);
+    double MaxEndpointThreshold_value = MaxEndpointThreshold;
+    if (im_Criterion==endpoint_Criterion){
+      endpoint_value = -endpoint_Criterion->GetScalarComponentAsFloat(p.x,p.y,p.z,0);
+      MaxEndpointThreshold_value = -MaxEndpointThreshold; 
+    }
     if ( IsSimple(OutputImage,p.x,p.y,p.z,cstar,cbar) ) {
-      if ( !( (IsEndPoint(OutputImage,p.x,p.y,p.z)) 
-          && 
-          (fabs(endpoint_Criterion->GetScalarComponentAsFloat(p.x,p.y,p.z,0)) >= fabs(MaxEndpointThreshold))
-        )
-     ) { 
+      if ( 
+        (im_Criterion->GetScalarComponentAsFloat(p.x,p.y,p.z,0) < MinCriterionThreshold )
+      || 
+        ( !(IsEndPoint(OutputImage,p.x,p.y,p.z)) ) 
+      ||
+        ( (IsEndPoint(OutputImage,p.x,p.y,p.z)) && (endpoint_value>MaxEndpointThreshold_value) )
+        ) { 
         // remove P
     outputPtr=(unsigned short*)OutputImage->GetScalarPointer(p.x,p.y,p.z);
     *outputPtr=0;
