@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkROISelectTracts.cxx,v $
-  Date:      $Date: 2006/01/20 03:42:47 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/08/15 16:39:53 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 
@@ -16,7 +16,6 @@
 #include "vtkStreamlineConvolve.h"
 #include "vtkPruneStreamline.h"
 #include "vtkCellArray.h"
-#include "vtkActor.h"
 #include "vtkProperty.h"
 
 #include "vtkHyperStreamlineDTMRI.h"
@@ -50,14 +49,15 @@ vtkROISelectTracts::vtkROISelectTracts()
   this->InputANDROIValues = NULL;
   this->InputNOTROIValues = NULL;
   this->StreamlineController = NULL;
+
+  this->PassThreshold = 0;
   
   this->ConvolutionKernel = NULL;
 
   // collections
   this->Streamlines = NULL;
-  this->Actors = NULL;
-  this->ColorActors = vtkDoubleArray::New();
-  this->ColorActors->SetNumberOfComponents(3);
+  this->ColorStreamlines = vtkDoubleArray::New();
+  this->ColorStreamlines->SetNumberOfComponents(4);
 
   // for fibers selecting fibers that pass through a ROI
   this->StreamlinesAsPolyLines = vtkPolyData::New();
@@ -75,7 +75,7 @@ vtkROISelectTracts::~vtkROISelectTracts()
   if (this->InputROI) this->InputROI->Delete();
   if (this->InputROI2) this->InputROI2->Delete();
   
-  this->ColorActors->Delete();
+  this->ColorStreamlines->Delete();
 
 }
 
@@ -86,7 +86,7 @@ void vtkROISelectTracts::ConvertStreamlinesToPolyLines()
   vtkPoints *newPoints = vtkPoints::New();
   vtkCellArray *newLines = vtkCellArray::New(); 
   vtkPoints *strPoints;
-  vtkHyperStreamlineDTMRI *currStreamline = NULL;
+  vtkHyperStreamline *currStreamline = NULL;
   int npts = 0;
   
   if (this->Streamlines == 0) 
@@ -100,7 +100,7 @@ void vtkROISelectTracts::ConvertStreamlinesToPolyLines()
   this->Streamlines->InitTraversal();
   for(int i=0 ; i<numStreamlines; i++)
     {
-      currStreamline= dynamic_cast<vtkHyperStreamlineDTMRI *> (this->Streamlines->GetNextItemAsObject());
+      currStreamline= dynamic_cast<vtkHyperStreamline *> (this->Streamlines->GetNextItemAsObject());
     
       //strPoints = currStreamline->GetHyperStreamline0();
       strPoints = currStreamline->GetOutput()->GetCell(0)->GetPoints();
@@ -179,6 +179,10 @@ void vtkROISelectTracts::FindStreamlinesThatPassThroughROI()
   trans->Concatenate(this->ROIWldToIjk);
   conv->SetTransform(trans);
   
+  // new conv
+  //conv->SetKernelSize(9);
+  //conv->SetSigma(1.5,1.5,1);
+  
    
   int val = this->ConvolutionKernel->GetNumberOfTuples();
   if (val == 27)
@@ -196,7 +200,7 @@ void vtkROISelectTracts::FindStreamlinesThatPassThroughROI()
    else {
      vtkErrorMacro("Kernel dimensions does not fit.");
     } 
-      
+
   conv->Update();
  
   finder->SetInput(conv->GetOutput());
@@ -221,17 +225,11 @@ void vtkROISelectTracts::FindStreamlinesThatPassThroughROI()
 
 void vtkROISelectTracts::HighlightStreamlinesPassTest()
 {
- 
   vtkIdType strId;
 
-  if (this->Streamlines == 0) 
+  if (this->StreamlineController == 0) 
     {
-      vtkErrorMacro("You must set the Streamlines before using this class.");
-      return;
-    }
-  if (this->Actors == 0) 
-    {
-      vtkErrorMacro("You must set the Actors before using this class.");
+      vtkErrorMacro("You must set a Streamlines Controller before using this class.");
       return;
     }
 
@@ -243,51 +241,66 @@ void vtkROISelectTracts::HighlightStreamlinesPassTest()
   
   //Save color of actors. If coloractor is filled restore the value of
   // the actors. If not, fill coloractor with new values 
-  double *color;
-  vtkActor *currActor;
-  if (this->ColorActors->GetNumberOfTuples()==this->Actors->GetNumberOfItems())
+  unsigned char RGBA[4];
+  double color[4];
+  vtkHyperStreamline *currStreamline;
+  if (this->ColorStreamlines->GetNumberOfTuples()==this->Streamlines->GetNumberOfItems())
     {
-    for (int i=0;i<this->Actors->GetNumberOfItems();i++) {
-      currActor = (vtkActor *) this->Actors->GetItemAsObject(i);
-      color = this->ColorActors->GetTuple(i);
-      currActor->GetProperty()->SetColor(color[0],color[1],color[2]);
-      currActor->GetProperty()->SetOpacity(1);
-     }  
+    for (int i=0;i<this->Streamlines->GetNumberOfItems();i++) {
+      currStreamline = (vtkHyperStreamline *) this->Streamlines->GetItemAsObject(i);
+      this->ColorStreamlines->GetTuple(i,color);
+      RGBA[0]= (unsigned char) color[0];
+      RGBA[1]= (unsigned char) color[1];
+      RGBA[2]= (unsigned char) color[2];
+      RGBA[3]= (unsigned char) color[3];
+      this->StreamlineController->GetDisplayTracts()->SetStreamlineRGBA(currStreamline,RGBA);
+     }
     }
-   else if (this->ColorActors->GetNumberOfTuples()>0) {
+   else if (this->ColorStreamlines->GetNumberOfTuples()>0) {
      //User might delete/add some fibers.
      //Set all the actors to the same color as a hack
-     color = this->ColorActors->GetTuple(0);
-     for (int i=0;i<this->Actors->GetNumberOfItems();i++) {
-      currActor = (vtkActor *) this->Actors->GetItemAsObject(i);
-      currActor->GetProperty()->SetColor(color[0],color[1],color[2]);
-      currActor->GetProperty()->SetOpacity(1);
+     this->ColorStreamlines->GetTuple(0,color);
+     for (int i=0;i<this->Streamlines->GetNumberOfItems();i++) {
+      currStreamline = (vtkHyperStreamline *) this->Streamlines->GetItemAsObject(i);
+      this->StreamlineController->GetDisplayTracts()->SetStreamlineRGBA(currStreamline,(unsigned char) color[0], (unsigned char) color[1], (unsigned char) color[2], (unsigned char) color[3]);
      }
     }        
     else {
      // Store colors
-     this->ColorActors->Reset();
-     this->ColorActors->SetNumberOfTuples(this->Actors->GetNumberOfItems());
-     for (int i=0;i<this->Actors->GetNumberOfItems();i++) {
-      currActor = (vtkActor *) this->Actors->GetItemAsObject(i);
-      color = currActor->GetProperty()->GetColor();
-      this->ColorActors->SetTuple(i,color);
-     } 
-    }  
-          
+     this->ColorStreamlines->Reset();
+     this->ColorStreamlines->SetNumberOfComponents(4);
+     this->ColorStreamlines->SetNumberOfTuples(this->Streamlines->GetNumberOfItems());
+     for (int i=0;i<this->Streamlines->GetNumberOfItems();i++) {
+      currStreamline = (vtkHyperStreamline *) this->Streamlines->GetItemAsObject(i);
+      this->StreamlineController->GetDisplayTracts()->GetStreamlineRGBA(currStreamline,RGBA);
+      color[0] = (double) RGBA[0];
+      color[1] = (double) RGBA[1];
+      color[2] = (double) RGBA[2];
+      color[3] = (double) RGBA[3];
+      this->ColorStreamlines->SetComponent(i,0,color[0]);
+      this->ColorStreamlines->SetComponent(i,1,color[1]);
+      this->ColorStreamlines->SetComponent(i,2,color[2]);
+      this->ColorStreamlines->SetComponent(i,3,color[3]);
+     }
+    }
 
   int idx=0;
+  // set red color
+  RGBA[0]=255;
+  RGBA[1]=0;
+  RGBA[2]=0;
+  RGBA[3]=255;
   for (int i=0;i<this->Streamlines->GetNumberOfItems();i++) {
     strId = this->StreamlineIdPassTest->GetValue(idx);
     if(strId!=i) {
       //this->DeleteStreamline(i);
       //Changes Opacity
-      currActor = (vtkActor *) this->Actors->GetItemAsObject(i);
-      currActor->GetProperty()->SetOpacity(0.1);
+      currStreamline = (vtkHyperStreamline *) this->Streamlines->GetItemAsObject(i);
+      this->StreamlineController->GetDisplayTracts()->SetStreamlineOpacity(currStreamline,(unsigned char) 0.1 * 255);
     }
     else {
-      currActor = (vtkActor *) this->Actors->GetItemAsObject(i);
-      currActor->GetProperty()->SetColor(1,0,0);
+      currStreamline = (vtkHyperStreamline *) this->Streamlines->GetItemAsObject(i);
+      this->StreamlineController->GetDisplayTracts()->SetStreamlineRGBA(currStreamline,RGBA);
       //cout<<"Streamline Id: "<<strId<<endl;
       idx++;
     }  
@@ -299,30 +312,28 @@ void vtkROISelectTracts::ResetStreamlinesPassTest()
 {
  
  //Restore actors colors
-  double *color;
-  vtkActor *currActor;
-  if (this->ColorActors->GetNumberOfTuples()==this->Actors->GetNumberOfItems())
+  double color[4];
+  vtkHyperStreamline *currStreamline;
+  if (this->ColorStreamlines->GetNumberOfTuples()==this->Streamlines->GetNumberOfItems())
     {
-    for (int i=0;i<this->Actors->GetNumberOfItems();i++) {
-      currActor = (vtkActor *) this->Actors->GetItemAsObject(i);
-      color = this->ColorActors->GetTuple(i);
-      currActor->GetProperty()->SetColor(color[0],color[1],color[2]);
-      currActor->GetProperty()->SetOpacity(1);
-     }  
+    for (int i=0;i<this->Streamlines->GetNumberOfItems();i++) {
+      currStreamline = (vtkHyperStreamline *) this->Streamlines->GetItemAsObject(i);
+      this->ColorStreamlines->GetTuple(i,color);
+      this->StreamlineController->GetDisplayTracts()->SetStreamlineRGBA(currStreamline,(unsigned char) color[0], (unsigned char) color[1], (unsigned char) color[2], (unsigned char) color[3]);
+     }
     }
-   else if (this->ColorActors->GetNumberOfTuples()>0) {
+   else if (this->ColorStreamlines->GetNumberOfTuples()>0) {
      //User might delete/add some fibers.
      //Set all the actors to the same color as a hack
-     color = this->ColorActors->GetTuple(0);
-     for (int i=0;i<this->Actors->GetNumberOfItems();i++) {
-      currActor = (vtkActor *) this->Actors->GetItemAsObject(i);
-      currActor->GetProperty()->SetColor(color[0],color[1],color[2]);
-      currActor->GetProperty()->SetOpacity(1);
+     this->ColorStreamlines->GetTuple(0,color);
+     for (int i=0;i<this->Streamlines->GetNumberOfItems();i++) {
+      currStreamline = (vtkHyperStreamline *) this->Streamlines->GetItemAsObject(i);
+      this->StreamlineController->GetDisplayTracts()->SetStreamlineRGBA(currStreamline,(unsigned char) color[0], (unsigned char) color[1], (unsigned char) color[2], (unsigned char) color[3]);
      } 
    }
  
   //Reset color actors
-  this->ColorActors->Reset();
+  this->ColorStreamlines->Reset();
  
  //Reset streamline Id pass test
   this->StreamlineIdPassTest->Reset();
@@ -348,9 +359,9 @@ void vtkROISelectTracts::DeleteStreamlinesNotPassTest()
 
   // The collection is a FILO list (First in - Last out).
   // We run the list backwards
-  vtkActor *currActor;
-  double *color;
-  
+  vtkHyperStreamline *currStreamline;
+  double color[4];
+
   int idx=numStr-1;
   for (int i=this->Streamlines->GetNumberOfItems()-1;i>=0;i--) {
     strId = this->StreamlineIdPassTest->GetValue(idx);
@@ -360,16 +371,15 @@ void vtkROISelectTracts::DeleteStreamlinesNotPassTest()
     else {
       //cout<<"Streamline Id: "<<strId<<endl;
       //Restore original color
-      currActor = (vtkActor *) this->Actors->GetItemAsObject(i);
-      color = this->ColorActors->GetTuple(i);
-      currActor->GetProperty()->SetColor(color[0],color[1],color[2]);
+      currStreamline = (vtkHyperStreamline *) this->Streamlines->GetItemAsObject(i);
+      this->ColorStreamlines->GetTuple(i,color);
+      this->StreamlineController->GetDisplayTracts()->SetStreamlineRGBA(currStreamline,(unsigned char) color[0], (unsigned char) color[1], (unsigned char) color[2], (unsigned char) color[3]);
       idx--;
-    }  
-     
+    }
   }
-  
+
   //Reset list of Streamlines Ids that pass the test
   this->StreamlineIdPassTest->Reset(); 
-  this->ColorActors->Reset(); 
-  
+  this->ColorStreamlines->Reset(); 
+
 }
