@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMultipleStreamlineController.cxx,v $
-  Date:      $Date: 2006/02/10 00:15:59 $
-  Version:   $Revision: 1.69 $
+  Date:      $Date: 2006/08/15 16:38:31 $
+  Version:   $Revision: 1.70 $
 
 =========================================================================auto=*/
 #include "vtkMultipleStreamlineController.h"
@@ -74,11 +74,11 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
 
   this->DisplayTracts->SetStreamlines(this->Streamlines);
 
-  this->SaveTracts->SetStreamlines(this->DisplayTracts->GetClippedStreamlines());
-  this->SaveTracts->SetTubeFilters(this->DisplayTracts->GetTubeFilters());
+  this->SaveTracts->SetStreamlines(this->DisplayTracts->GetClippedStreamlinesGroup());
+  this->SaveTracts->SetTubeFilters(this->DisplayTracts->GetTubeFiltersGroup());
   this->SaveTracts->SetActors(this->DisplayTracts->GetActors());
 
-  this->ColorROIFromTracts->SetStreamlines(this->DisplayTracts->GetClippedStreamlines());
+  this->ColorROIFromTracts->SetStreamlines(this->DisplayTracts->GetClippedStreamlinesGroup());
   this->ColorROIFromTracts->SetActors(this->DisplayTracts->GetActors());
 }
 
@@ -220,17 +220,23 @@ void vtkMultipleStreamlineController::DeleteAllStreamlines()
 void vtkMultipleStreamlineController::DeleteStreamline(int index)
 {
   vtkHyperStreamline *currStreamline;
-
+  int groupIndex, indexInGroup;
   // Helper class
   // Delete display (actor, mapper)
   vtkDebugMacro( << "Calling DisplayTracts DeleteStreamline" );
-  this->DisplayTracts->DeleteStreamline(index);
+  currStreamline = (vtkHyperStreamline *)
+    this->Streamlines->GetItemAsObject(index);
+  this->DisplayTracts->FindStreamline(currStreamline,groupIndex,indexInGroup);
+  if (groupIndex == -1 || indexInGroup == -1) {
+     //vtkWarningMacro( <<" Fiber not found. Impossible to delete");
+     return;
+  }
 
+  this->DisplayTracts->DeleteStreamlineInGroup(groupIndex,indexInGroup);
 
   // Delete actual streamline
   vtkDebugMacro( << "Delete stream" );
-  currStreamline = (vtkHyperStreamline *)
-    this->Streamlines->GetItemAsObject(index);
+
   if (currStreamline != NULL)
     {
       this->Streamlines->RemoveItem(index);
@@ -244,15 +250,35 @@ void vtkMultipleStreamlineController::DeleteStreamline(int index)
 // This is the delete called from the user interface where the
 // actor has been picked with the mouse.
 //----------------------------------------------------------------------------
-void vtkMultipleStreamlineController::DeleteStreamline(vtkActor *pickedActor)
+void vtkMultipleStreamlineController::DeleteStreamline(vtkCellPicker *picker)
 {
-  int index;
+  int index,groupIndex,indexInGroup;
+  vtkHyperStreamline *currStreamline;
 
-  index = this->DisplayTracts->GetStreamlineIndexFromActor(pickedActor);
+  // Find streamline querying vtkDisplayTracts
+  this->DisplayTracts->FindStreamline(picker,groupIndex,indexInGroup);
+ 
+  // If found, delete fiber from vtkDisplay Tracts
+  if (groupIndex == -1 || indexInGroup == -1) {
+     vtkWarningMacro( <<" Fiber not found. Impossible to delete");
+     return;
+  }
+  
+  currStreamline= (vtkHyperStreamline *)
+  this->DisplayTracts->GetStreamlineInGroup(groupIndex,indexInGroup);
 
-  if (index >=0)
+  this->DisplayTracts->DeleteStreamlineInGroup(groupIndex,indexInGroup);
+
+ // Delete actual streamline
+  vtkDebugMacro( << "Delete stream" );
+  if (currStreamline != NULL)
     {
-      this->DeleteStreamline(index);
+      // index return by IsItemPresent is 1-based.
+      index = this->Streamlines->IsItemPresent(currStreamline);
+      if (index > 0) {
+         this->Streamlines->RemoveItem(index-1);
+         currStreamline->Delete();
+      }
     }
 }
 
@@ -263,6 +289,7 @@ void vtkMultipleStreamlineController::ClusterTracts(int tmp)
 {
   //vtkCollection *streamlines = this->Streamlines;
   vtkCollection *streamlines = this->DisplayTracts->GetClippedStreamlines();
+  //vtkCollection *streamlines = NULL;
 
   if (streamlines == 0)
     {
@@ -278,6 +305,9 @@ void vtkMultipleStreamlineController::ClusterTracts(int tmp)
 
   // First make sure none of the streamlines have 0 length
   this->CleanStreamlines(streamlines);
+
+  // Get new flat array of clipped streamlines after cleaning.
+  streamlines = this->DisplayTracts->GetClippedStreamlines();
 
   int numberOfClusters= this->TractClusterer->GetNumberOfClusters();
 
@@ -298,22 +328,20 @@ void vtkMultipleStreamlineController::ClusterTracts(int tmp)
   lut->SetNumberOfTableValues (numberOfClusters);
   lut->Build();
 
-  double rgba[4];
-  vtkActor *currActor;
+  double rgb[3];
   vtkPolyDataMapper *currMapper;
+  vtkHyperStreamline *currStreamline;
   for (int idx = 0; idx < clusters->GetNumberOfTuples(); idx++)
     {
       vtkDebugMacro("index = " << idx << "class label = " << clusters->GetValue(idx));
       
-      currActor = (vtkActor *) this->DisplayTracts->GetActors()->GetItemAsObject(idx);
-      currMapper = (vtkPolyDataMapper *) this->DisplayTracts->GetMappers()->GetItemAsObject(idx);
+      currStreamline = (vtkHyperStreamline *) this->DisplayTracts->GetStreamlines()->GetItemAsObject(idx);
 
-      if (currActor && currMapper) 
+      if (currStreamline) 
         {
-          lut->GetColor(clusters->GetValue(idx),rgba);
-          vtkDebugMacro("rgb " << rgba[0] << " " << rgba[1] << " " << rgba[2]); 
-          currActor->GetProperty()->SetColor(rgba[0],rgba[1],rgba[2]); 
-          currMapper->SetScalarVisibility(0);
+          lut->GetColor(clusters->GetValue(idx),rgb);
+          vtkDebugMacro("rgb " << rgb[0] << " " << rgb[1] << " " << rgb[2]);
+          this->DisplayTracts->SetStreamlineRGB(currStreamline,(unsigned char) rgb[0]*255, (unsigned char) rgb[1]*255, (unsigned char) rgb[2]*255);
         }
       else
         {
@@ -321,6 +349,13 @@ void vtkMultipleStreamlineController::ClusterTracts(int tmp)
         }
     }
 
+  // Set mapper to ScalarVisibility = 0
+  this->DisplayTracts->SetScalarVisibility(0);
+  //for (int idx =0; idx <this->DisplayTracts->GetMappers()->GetNumberOfItems(); idx++) 
+  //  {
+  //    currMapper = (vtkPolyDataMapper *) this->DisplayTracts->GetMappers()->GetItemAsObject(idx);
+  //    currMapper->SetScalarVisibility(0);
+  // }
 }
 
 // Remove any streamlines with 0 length

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMultipleStreamlineController.h,v $
-  Date:      $Date: 2006/01/06 17:57:26 $
-  Version:   $Revision: 1.46 $
+  Date:      $Date: 2006/08/15 16:38:32 $
+  Version:   $Revision: 1.47 $
 
 =========================================================================auto=*/
 // .NAME vtkMultipleStreamlineController - 
@@ -39,6 +39,7 @@
 #include "vtkDoubleArray.h"
 #include "vtkPolyData.h"
 #include "vtkIntArray.h"
+#include "vtkCellPicker.h"
 
 #include "vtkClusterTracts.h"
 #include "vtkSaveTracts.h"
@@ -55,7 +56,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // Description
   // Delete one streamline.  The input is a pointer to the actor you
   // wish to delete.  This method finds the index and calls DeleteStreamline.
-  void DeleteStreamline(vtkActor *pickedActor);
+  void DeleteStreamline(vtkCellPicker *picker);
 
   // Description
   // Delete all streamlines
@@ -86,7 +87,7 @@ class VTK_DTMRI_EXPORT vtkMultipleStreamlineController : public vtkObject
   // Description
   // List of the output vtkHyperStreamlines (or subclasses)
   // These are what you see (could be clipped by the user)
-  vtkCollection *GetClippedStreamlines() {return this->DisplayTracts->GetClippedStreamlines();}
+  vtkCollection *GetClippedStreamlines() {return this->DisplayTracts->GetClippedStreamlinesGroup();}
 
   // Description
   // List of the output vtkHyperStreamlines (or subclasses)
