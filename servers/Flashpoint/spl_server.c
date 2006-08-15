@@ -364,9 +364,9 @@ int Serve(fd)
     sprintf(cmdname[4], "PIXELS");
     sprintf(cmdname[5], "POS");
 
-    sprintf(sOrientNames[0], "axial");
-    sprintf(sOrientNames[1], "sagittal");
-    sprintf(sOrientNames[2], "coronal");
+    sprintf(sOrientNames[0], "raxial");
+    sprintf(sOrientNames[1], "rsagittal");
+    sprintf(sOrientNames[2], "rcoronal");
 
     /* Initialize connection with image buffer */
     msg = (char *)mror_imagebuf_init();
@@ -773,48 +773,39 @@ int Serve(fd)
                 memset(sCmdStr, 0, 300);
                 if (sCmd == 0) {
                     /* stop the scanner */
-                    strcpy(sCmdStr, "echo \"cmd stop\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE");
+                    strcpy(sCmdStr, 
+                           "echo \"cmd stop\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE");
                 } else if (sCmd == 1) {
                     /* start the scanner */
-                    strcpy(sCmdStr, "echo \"cmd start\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE");
+                    strcpy(sCmdStr, 
+                           "echo \"cmd start\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE");
                 } else {
                     /* to scan a realtime slice */  
                     n = (int)sOrient[0] - 1;
  
-/*
-                    sprintf(sCmdStr, "echo %s %s %s %f %f %f %f\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE", 
-                                     "\"cmd start\n\"",
-                                     "\"orthogonal",
-                                     sOrientNames[n],
-                                     sOrient[1],
-                                     sOrient[2],
-                                     sOrient[3], 
-                                     sOrient[4]);
-*/
+                    sprintf(sCmdStr, 
+                            "echo %s %s %f %f %f %f\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE", 
+                            "\"orthogonal",
+                            sOrientNames[n],
+                            sOrient[1],
+                            sOrient[2],
+                            sOrient[3], 
+                            sOrient[4]);
 
 
-                    sprintf(sCmdStr, "echo \"orthogonal %s %f %f %f %f\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE",
-                                     sOrientNames[n],
-                                     sOrient[1],
-                                     sOrient[2],
-                                     sOrient[3],
-                                     sOrient[4]);
+                    fprintf(stderr, "cmd to RTC: %s\n", sCmdStr);
 
-
+                    /* send command(s) to
+                       the realtime control process of the scanner */
+                    system(sCmdStr);
                 }
-
-                fprintf(stderr, "cmd to RTC: %s\n", sCmdStr);
-
-                /* send command(s) to
-                   the realtime control process of the scanner */
-                system(sCmdStr);
-
                 break;
 
             default:
                 break;
         }
     }
+
     return 0;
 }
 
