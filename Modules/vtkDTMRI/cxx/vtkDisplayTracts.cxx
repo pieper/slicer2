@@ -7,18 +7,22 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDisplayTracts.cxx,v $
-  Date:      $Date: 2006/03/06 21:07:29 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2006/08/15 16:37:27 $
+  Version:   $Revision: 1.15 $
 
 =========================================================================auto=*/
 #include "vtkDisplayTracts.h"
-#include "vtkPolyDataMapper.h"
 #include "vtkRenderer.h"
-#include "vtkAppendPolyData.h"
-#include "vtkTubeFilter.h"
+#include "vtkTubeFilter2.h"
 #include "vtkTransformPolyDataFilter.h"
 #include "vtkClipPolyData.h"
-
+#include "vtkMergePoints.h"
+#include "vtkCell.h"
+#include "vtkPolyData.h"
+#include "vtkUnsignedCharArray.h"
+#include "vtkCellData.h"
+#include "vtkMergeDataObjectFilter.h"
+#include "vtkFieldData.h"
 
 //------------------------------------------------------------------------------
 vtkDisplayTracts* vtkDisplayTracts::New()
@@ -47,12 +51,32 @@ vtkDisplayTracts::vtkDisplayTracts()
   // input collections
   this->Streamlines = NULL;
 
+ // 1 actor has 1 mapper and 1 append filter. 
+ // The input to the append filter is 1 item of the Tube and Streamline group.
+ // The element of the group is a collecion of streamlines and tube filters. T
+ // This way an actor will mapped a set of fibers.
+  this->StreamlinesGroup = vtkCollection::New();
+  this->ClippedStreamlinesGroup = vtkCollection::New();
+  this->MergeFiltersGroup = vtkCollection::New();
+  this->TubeFiltersGroup = vtkCollection::New();
+  this->TransformFiltersGroup = vtkCollection::New();
+
   // internal/output collections
-  this->ClippedStreamlines = vtkCollection::New();
   this->Mappers = vtkCollection::New();
-  this->TransformFilters = vtkCollection::New();
-  this->TubeFilters = vtkCollection::New();
   this->Actors = vtkCollection::New();
+  this->AppendFilters = vtkCollection::New();
+
+  // Flat collection of clipped streamlines
+  this->ClippedStreamlines = vtkCollection::New();
+ 
+  this->activeStreamlines = NULL;
+  this->activeClippedStreamlines = NULL;
+  this->activeMergeFilters = NULL;
+  this->activeTubeFilters = NULL;
+  this->activeTransformFilters = NULL;
+  this->activeAppendFilter = NULL;
+  this->activeMapper = NULL;
+  this->activeActor = NULL;
 
   // Streamline parameters for all streamlines
   this->ScalarVisibility=0;
@@ -72,6 +96,11 @@ vtkDisplayTracts::vtkDisplayTracts()
   // the number of actors displayed in the scene
   this->NumberOfVisibleActors=0;
 
+  // Max number of fibers per group. This number is a trade off between
+  // graphics performance (having less actor) and searching performance (time spend searching for fibers
+  // in a group);
+  this->NumberOfStreamlinesPerActor = 100;
+
 }
 
 //----------------------------------------------------------------------------
@@ -82,11 +111,17 @@ vtkDisplayTracts::~vtkDisplayTracts()
   this->Renderers->Delete();
   if (this->Streamlines != NULL)
     this->Streamlines->Delete();
-  this->ClippedStreamlines->Delete();
   this->Mappers->Delete();
   this->Actors->Delete();
-  this->TubeFilters->Delete();
-  this->TransformFilters->Delete();
+
+  this->StreamlinesGroup->Delete();
+  this->ClippedStreamlinesGroup->Delete();
+  this->MergeFiltersGroup->Delete();
+  this->TubeFiltersGroup->Delete();
+  this->TransformFiltersGroup->Delete();
+  this->AppendFilters->Delete();
+
+  this->ClippedStreamlines->Delete();
 
   this->StreamlineLookupTable->Delete();
   this->StreamlineProperty->Delete();
@@ -107,18 +142,38 @@ void vtkDisplayTracts::SetScalarVisibility(int value)
       currMapper= (vtkPolyDataMapper *)this->Mappers->GetNextItemAsObject();
       while(currMapper)
         {
-          currMapper->SetScalarVisibility(this->ScalarVisibility);
+          this->SetMapperVisibility(currMapper);
           currMapper= (vtkPolyDataMapper *)this->Mappers->GetNextItemAsObject();      
         }
     }
 }
 
+void vtkDisplayTracts::SetMapperVisibility(vtkPolyDataMapper *currMapper)
+{
+  // value = 0; Use cell data to color. Choose field data of name "Color"
+  // This field data is generated during the streamline creation.
+  // value =1; Use Scalars in PointData to color the streamline. 
+  if (this->ScalarVisibility == 0) {
+    currMapper->ScalarVisibilityOn();
+    currMapper->SetScalarModeToUseCellFieldData();
+    currMapper->SetColorModeToDefault();
+    currMapper->SelectColorArray("Color");
+   } else {
+    currMapper->ScalarVisibilityOn();
+    currMapper->SetScalarModeToUsePointData();
+    currMapper->SetColorModeToMapScalars();
+   }
+}
 
 //----------------------------------------------------------------------------
 void vtkDisplayTracts::SetClipping(int value)
 {
+
+  vtkCollection *currStreamlines, *currTubeFitlers;
+  vtkCollection *currTransFilters, *currClippedStreamlines;
   vtkHyperStreamline *currStreamline;
-  vtkTubeFilter *currTubeFilter;
+  vtkTubeFilter2 *currTubeFilter;
+  vtkTransformPolyDataFilter *currTransFilter;
 #if (VTK_MAJOR_VERSION >= 5)
    vtkPolyDataAlgorithm *clippedStreamline;
 #else
@@ -140,38 +195,58 @@ void vtkDisplayTracts::SetClipping(int value)
 
       this->Clipping = value;
 
-
+      int numGroups = this->StreamlinesGroup->GetNumberOfItems();
       // clear storage for these streamlines
-      this->ClippedStreamlines->RemoveAllItems();      
-      
-          
+      for (int i=0 ;i < numGroups; i++) {
+        ((vtkCollection *) this->ClippedStreamlinesGroup->GetItemAsObject(i))->RemoveAllItems();
+       }
       // apply this to ALL streamlines
       // traverse streamline collection and clip each one
-      this->Streamlines->InitTraversal();
-      this->TubeFilters->InitTraversal();
-      
-      currStreamline = (vtkHyperStreamline *)
-        this->Streamlines->GetNextItemAsObject();
-      currTubeFilter = (vtkTubeFilter *)
-        this->TubeFilters->GetNextItemAsObject();
-      
-      while (currStreamline && currTubeFilter)
+      this->StreamlinesGroup->InitTraversal();
+      this->TransformFiltersGroup->InitTraversal();
+      this->ClippedStreamlinesGroup->InitTraversal();
+
+      currStreamlines = (vtkCollection *)
+        this->StreamlinesGroup->GetNextItemAsObject();
+      currClippedStreamlines = (vtkCollection *)
+        this->ClippedStreamlinesGroup->GetNextItemAsObject();
+      currTransFilters = (vtkCollection *)
+        this->TransformFiltersGroup->GetNextItemAsObject();
+
+      //Foreach Group
+      while (currStreamlines && currClippedStreamlines && currTransFilters)
         {
-          // clip or not, depending on this->Clipping
-          clippedStreamline = this->ClipStreamline(currStreamline);
+           //
+           currStreamline = (vtkHyperStreamline *)
+                currStreamlines->GetNextItemAsObject();
+           currTransFilter = (vtkTransformPolyDataFilter *)
+                currTransFilters->GetNextItemAsObject();
+           while (currStreamline && currTransFilter)
+            {
+            // clip or not, depending on this->Clipping
+            clippedStreamline = this->ClipStreamline(currStreamline,currClippedStreamlines);
 
-          // Make sure we are displaying clipped streamline
-          // this corresponds to contents of ClippedStreamlines collection
-          currTubeFilter->SetInput(clippedStreamline->GetOutput());
+            // Make sure we are displaying clipped streamline
+            // this corresponds to contents of ClippedStreamlines collection
+            currTransFilter->SetInput(clippedStreamline->GetOutput());
 
-          currTubeFilter = (vtkTubeFilter *)
-            this->TubeFilters->GetNextItemAsObject();
-          currStreamline = (vtkHyperStreamline *)
-            this->Streamlines->GetNextItemAsObject();
+            currTransFilter = (vtkTransformPolyDataFilter *)
+                currTransFilters->GetNextItemAsObject();
+            currStreamline = (vtkHyperStreamline *)
+                currStreamlines->GetNextItemAsObject();
+            }
+
+           currStreamlines = (vtkCollection *)
+                this->StreamlinesGroup->GetNextItemAsObject();
+           currClippedStreamlines = (vtkCollection *)
+                this->ClippedStreamlinesGroup->GetNextItemAsObject();
+           currTransFilters = (vtkCollection *)
+                this->TransformFiltersGroup->GetNextItemAsObject();
+
         }
     }
-}
 
+}
 
 // Handle clipping/not clipping a single streamline
 //----------------------------------------------------------------------------
@@ -181,7 +256,7 @@ vtkPolyDataAlgorithm *
 #else
 vtkPolyDataSource *
 #endif
-vtkDisplayTracts::ClipStreamline(vtkHyperStreamline *currStreamline)
+vtkDisplayTracts::ClipStreamline(vtkHyperStreamline *currStreamline, vtkCollection *activeClippedStreamlineGroup)
 //ETX
 {
 
@@ -196,7 +271,7 @@ vtkDisplayTracts::ClipStreamline(vtkHyperStreamline *currStreamline)
       //currClipper->SetValue(0.0);
       currClipper->Update();
       
-      this->ClippedStreamlines->AddItem((vtkObject *) currClipper);
+      this->activeClippedStreamlines->AddItem((vtkObject *) currClipper);
       
       // The object survives as long as it is on the
       // collection. (until clipping is turned off)
@@ -208,7 +283,7 @@ vtkDisplayTracts::ClipStreamline(vtkHyperStreamline *currStreamline)
     {
       // Turn clipping off
       // Put the original streamline onto the collection
-      this->ClippedStreamlines->AddItem((vtkObject *) currStreamline);
+      activeClippedStreamlines->AddItem((vtkObject *) currStreamline);
       return currStreamline;
     }
 
@@ -222,47 +297,426 @@ void vtkDisplayTracts::ApplyUserSettingsToGraphicsObject(int index)
 {
   vtkPolyDataMapper *currMapper;
   vtkActor *currActor;
-  vtkTubeFilter *currTubeFilter;
-
+  vtkTubeFilter2 *currTubeFilter;
+  vtkCollection *currTransFilters, *currTubeFilters;
   currActor = (vtkActor *) this->Actors->GetItemAsObject(index);
   currMapper = (vtkPolyDataMapper *) this->Mappers->GetItemAsObject(index);
-  currTubeFilter = (vtkTubeFilter *) this->TubeFilters->GetItemAsObject(index);
+  currTransFilters = (vtkCollection *) this->TransformFiltersGroup->GetItemAsObject(index);
+  currTubeFilters = (vtkCollection *) this->TubeFiltersGroup->GetItemAsObject(index);
 
   // set the Actor's properties according to the sample 
   // object that the user can access.
   currActor->GetProperty()->SetAmbient(this->StreamlineProperty->GetAmbient());
   currActor->GetProperty()->SetDiffuse(this->StreamlineProperty->GetDiffuse());
   currActor->GetProperty()->SetSpecular(this->StreamlineProperty->GetSpecular());
-  currActor->GetProperty()->
-    SetSpecularPower(this->StreamlineProperty->GetSpecularPower());
-  currActor->GetProperty()->SetColor(this->StreamlineProperty->GetColor());    
+  currActor->GetProperty()->SetSpecularPower(this->StreamlineProperty->GetSpecularPower());
+  currActor->GetProperty()->SetColor(this->StreamlineProperty->GetColor()); 
+
   // Set the scalar visibility as desired by the user
-  currMapper->SetScalarVisibility(this->ScalarVisibility);
+  currMapper->SetLookupTable(this->StreamlineLookupTable);
+  currMapper->UseLookupTableScalarRangeOn();
+  this->SetMapperVisibility(currMapper);
 
   // Set the tube width and number of sides as desired by the user
-  currTubeFilter->SetRadius(this->TubeRadius);
+ for (int i= 0; i< currTubeFilters->GetNumberOfItems(); i++)
+    {
+    ((vtkTubeFilter2 *) currTubeFilters->GetItemAsObject(i))->SetRadius(this->TubeRadius);
+    ((vtkTubeFilter2 *) currTubeFilters->GetItemAsObject(i))->SetNumberOfSides(this->TubeNumberOfSides);
+    }
 
-  currTubeFilter->SetNumberOfSides(this->TubeNumberOfSides);
+}
 
+int vtkDisplayTracts::IsPropertyEqual(vtkProperty *a, vtkProperty *b)
+{
+  int p1,p2,p3,p4,p5;
+
+  vtkDebugMacro(<<" In IsPropertyEqual");
+  if (a == NULL || b == NULL) {
+    return 0;
+  }
+   p1 = (a->GetAmbient() == b->GetAmbient());
+   p2 = (a->GetDiffuse() == b->GetDiffuse());
+   p3 = (a->GetSpecular() == b->GetSpecular());
+   p4 = (a->GetSpecularPower() == b->GetSpecularPower());
+   //p5 = (a->GetColor()[0] == b->GetColor()[0] && 
+   //      a->GetColor()[1] == b->GetColor()[1] && 
+   //      a->GetColor()[2] == b->GetColor()[2]);
+   if (p1 && p2 && p3 && p4 && p5) {
+     return p1;
+   } else {
+     if (p1) {
+       return !p1;
+     } else {
+       return p1;
+     }
+   }
 }
 
 void vtkDisplayTracts::UpdateAllTubeFiltersWithCurrentSettings()
 {
-  vtkTubeFilter *currTubeFilter;
+  vtkTubeFilter2 *currTubeFilter;
+  vtkCollection *currTubeFilters;
 
-  this->TubeFilters->InitTraversal();
-  currTubeFilter= (vtkTubeFilter *)this->TubeFilters->GetNextItemAsObject();
-  while(currTubeFilter)
+  this->TubeFiltersGroup->InitTraversal();
+  currTubeFilters = (vtkCollection *)this->TubeFiltersGroup->GetNextItemAsObject();
+  while(currTubeFilters)
     {
-      vtkDebugMacro( << "Updating tube filter " << currTubeFilter);
+      vtkDebugMacro( << "Updating tube filter Group" << currTubeFilters);
 
-      // Set the tube width and number of sides as desired by the user
-      currTubeFilter->SetRadius(this->TubeRadius);     
-      currTubeFilter->SetNumberOfSides(this->TubeNumberOfSides);
-     
-      currTubeFilter= (vtkTubeFilter *)this->TubeFilters->GetNextItemAsObject();
+       currTubeFilters->InitTraversal();
+       currTubeFilter = (vtkTubeFilter2 *)currTubeFilters->GetNextItemAsObject();
+       while(currTubeFilter)
+         {
+            // Set the tube width and number of sides as desired by the user
+            currTubeFilter->SetRadius(this->TubeRadius);     
+            currTubeFilter->SetNumberOfSides(this->TubeNumberOfSides);
+            currTubeFilter = (vtkTubeFilter2 *)currTubeFilters->GetNextItemAsObject();
+         }
+       currTubeFilters = (vtkCollection *)this->TubeFiltersGroup->GetNextItemAsObject();
     }
+}
 
+void vtkDisplayTracts::SetActiveGroup (int groupindex) 
+{
+
+   vtkDebugMacro(<<"Setting an active Group");
+   this->activeStreamlines = (vtkCollection *) this->StreamlinesGroup->GetItemAsObject(groupindex);
+   this->activeTubeFilters = (vtkCollection *) this->TubeFiltersGroup->GetItemAsObject(groupindex);
+   this->activeClippedStreamlines = (vtkCollection *) this->ClippedStreamlinesGroup->GetItemAsObject(groupindex);
+   this->activeMergeFilters = (vtkCollection *)
+   this->MergeFiltersGroup->GetItemAsObject(groupindex);
+   this->activeTransformFilters = (vtkCollection *) this->TransformFiltersGroup->GetItemAsObject(groupindex);
+   this->activeAppendFilter = (vtkAppendPolyData *) this->AppendFilters->GetItemAsObject(groupindex);
+   this->activeActor = (vtkActor *) this->Actors->GetItemAsObject(groupindex);
+   this->activeMapper =  (vtkPolyDataMapper *) this->Mappers->GetItemAsObject(groupindex);
+}
+
+void vtkDisplayTracts::AddNewGroup() 
+{
+  vtkCollection  *newStreamlinesGroup;
+  vtkCollection  *newTubeFiltersGroup;
+  vtkCollection  *newTransformFiltersGroup;
+  vtkCollection  *newClippedStreamlinesGroup;
+  vtkCollection  *newMergeFiltersGroup;
+  vtkAppendPolyData *newAppendFilter;
+
+  vtkDebugMacro(<<"Adding new group");
+
+  newStreamlinesGroup = vtkCollection::New();
+  this->StreamlinesGroup->AddItem(newStreamlinesGroup);
+  newTubeFiltersGroup = vtkCollection::New();
+  this->TubeFiltersGroup->AddItem(newTubeFiltersGroup);
+  newClippedStreamlinesGroup = vtkCollection::New();
+  this->ClippedStreamlinesGroup->AddItem(newClippedStreamlinesGroup);
+  newTransformFiltersGroup = vtkCollection::New();
+  this->TransformFiltersGroup->AddItem(newTransformFiltersGroup);
+  newMergeFiltersGroup = vtkCollection::New();
+  this->MergeFiltersGroup->AddItem(newMergeFiltersGroup);
+
+  //Add interface to Graphic pipeline
+  newAppendFilter = vtkAppendPolyData::New();
+  this->AppendFilters->AddItem(newAppendFilter);
+
+  // Delete object. Adding to the collection increments the reference count
+}
+
+void vtkDisplayTracts::FindStreamline(vtkHyperStreamline *currStreamline,int & groupIndex, int & indexInGroup)
+{
+
+  int numGroups = this->StreamlinesGroup->GetNumberOfItems();
+  int item;
+
+  vtkDebugMacro(<<"Number of Groups: "<<numGroups);
+  for (int i = 0; i< numGroups; i++) 
+   {
+     item = ((vtkCollection *) this->StreamlinesGroup->GetItemAsObject(i))->IsItemPresent(currStreamline); 
+     if (item > 0) {
+        groupIndex = i;
+        indexInGroup = item-1;
+        return;
+     }
+   }
+
+   groupIndex = -1;
+   indexInGroup = -1;
+}
+
+
+// Find a streamline after being selected from the user interface
+//----------------------------------------------------------------------------
+void vtkDisplayTracts::FindStreamline(vtkCellPicker *picker,int &groupIndex, int &indexInGroup)
+{
+
+  vtkActor *pickedActor = picker->GetActor();
+  groupIndex = this->GetStreamlineGroupIndexFromActor(pickedActor);
+  indexInGroup = this->GetStreamlineIndexFromActor(groupIndex,picker);
+
+}
+
+// Get color properties of a single streamline
+//----------------------------------------------------------------------------
+void vtkDisplayTracts::GetStreamlineRGBA(vtkHyperStreamline *currStreamline, unsigned char &R, unsigned char &G, unsigned char &B, unsigned char &A)
+{
+  int groupIndex, indexInGroup;
+  vtkMergeDataObjectFilter *currMergeFilter;
+
+  this->FindStreamline(currStreamline,groupIndex,indexInGroup);
+  if (groupIndex == -1 || indexInGroup == -1) {
+    return;
+  }
+  vtkCollection *currMergeFilters = (vtkCollection *) this->MergeFiltersGroup->GetItemAsObject(groupIndex);
+  currMergeFilter = (vtkMergeDataObjectFilter *) currMergeFilters->GetItemAsObject(indexInGroup);
+
+  vtkUnsignedCharArray *colorarray = (vtkUnsignedCharArray *) ((vtkPolyData *) currMergeFilter->GetDataObject())->GetFieldData()->GetArray("Color");
+
+  if (colorarray == NULL) {
+    //cout<<"Fiber does not have a color assigned"<<endl;
+    return;
+  }
+  R=(unsigned char) colorarray->GetComponent(0,0);
+  G=(unsigned char) colorarray->GetComponent(0,1);
+  B=(unsigned char) colorarray->GetComponent(0,2);
+  A=(unsigned char) colorarray->GetComponent(0,3);
+}
+
+// Get color properties of a single streamline
+//----------------------------------------------------------------------------
+void vtkDisplayTracts::GetStreamlineRGBA(vtkHyperStreamline *currStreamline, unsigned char RGBA[4])
+{
+  this->GetStreamlineRGBA(currStreamline,RGBA[0],RGBA[1],RGBA[2],RGBA[3]);
+
+}
+
+void vtkDisplayTracts::SetStreamlineRGBA(vtkHyperStreamline *currStreamline, unsigned char R, unsigned char G, unsigned char B, unsigned char A)
+{
+  int groupIndex, indexInGroup;
+  vtkMergeDataObjectFilter *currMergeFilter;
+  this->FindStreamline(currStreamline,groupIndex,indexInGroup);
+  if (groupIndex == -1 || indexInGroup == -1) {
+    return;
+  }
+  vtkCollection *currMergeFilters = (vtkCollection *) this->MergeFiltersGroup->GetItemAsObject(groupIndex);
+  currMergeFilter = (vtkMergeDataObjectFilter *) currMergeFilters->GetItemAsObject(indexInGroup);
+  vtkUnsignedCharArray *colorarray = (vtkUnsignedCharArray *) ((vtkPolyData *) currMergeFilter->GetDataObject())->GetFieldData()->GetArray("Color");
+  if (colorarray == NULL) {
+      return;
+  }
+
+  colorarray->SetComponent(0,0,R);
+  colorarray->SetComponent(0,1,G);
+  colorarray->SetComponent(0,2,B);
+  colorarray->SetComponent(0,3,A);
+  colorarray->SetComponent(1,0,R);
+  colorarray->SetComponent(1,1,G);
+  colorarray->SetComponent(1,2,B);
+  colorarray->SetComponent(1,3,A);
+  // Input has changed
+  currMergeFilter->GetDataObject()->Modified();
+
+}
+
+void vtkDisplayTracts::SetStreamlineRGB(vtkHyperStreamline *currStreamline, unsigned char R, unsigned char G, unsigned char B)
+{
+  unsigned char opacity;
+  this->GetStreamlineOpacity(currStreamline,opacity);
+  this->SetStreamlineRGBA(currStreamline,R,G,B,opacity);
+}
+
+void vtkDisplayTracts::SetStreamlineRGB(vtkHyperStreamline *currStreamline, unsigned char RGB[3])
+{
+  this->SetStreamlineRGB(currStreamline,RGB[0],RGB[1],RGB[2]);
+}
+
+void vtkDisplayTracts::SetStreamlineOpacity(vtkHyperStreamline *currStreamline, unsigned char opacity)
+{
+
+  int groupIndex, indexInGroup;
+  vtkMergeDataObjectFilter *currMergeFilter;
+
+  this->FindStreamline(currStreamline,groupIndex,indexInGroup);
+  if (groupIndex == -1 || indexInGroup == -1) {
+    return;
+  }
+  vtkCollection *currMergeFilters = (vtkCollection *) this->MergeFiltersGroup->GetItemAsObject(groupIndex);
+  currMergeFilter = (vtkMergeDataObjectFilter *) currMergeFilters->GetItemAsObject(indexInGroup);
+  vtkUnsignedCharArray *colorarray = (vtkUnsignedCharArray *) ((vtkPolyData *) currMergeFilter->GetDataObject())->GetFieldData()->GetArray("Color");
+  colorarray->SetComponent(0,3,opacity);
+  colorarray->SetComponent(1,3,opacity);
+  // Input has changed
+  currMergeFilter->GetDataObject()->Modified();
+}
+
+void vtkDisplayTracts::GetStreamlineOpacity(vtkHyperStreamline *currStreamline, unsigned char &opacity)
+{
+  int groupIndex, indexInGroup;
+  vtkMergeDataObjectFilter *currMergeFilter;
+
+  this->FindStreamline(currStreamline,groupIndex,indexInGroup);
+  if (groupIndex == -1 || indexInGroup == -1) {
+    return;
+  }
+  vtkCollection *currMergeFilters = (vtkCollection *) this->MergeFiltersGroup->GetItemAsObject(groupIndex);
+  currMergeFilter = (vtkMergeDataObjectFilter *) currMergeFilters->GetItemAsObject(indexInGroup);
+  vtkUnsignedCharArray *colorarray = (vtkUnsignedCharArray *) ((vtkPolyData *)currMergeFilter->GetDataObject())->GetFieldData()->GetArray("Color");
+  opacity= (unsigned char) colorarray->GetComponent(0,3);
+}
+
+// Changes color properties of a single streamline
+//----------------------------------------------------------------------------
+void vtkDisplayTracts::SetStreamlineRGBA(vtkHyperStreamline *currStreamline, unsigned char RGBA[4])
+{
+  this->SetStreamlineRGBA(currStreamline,RGBA[0],RGBA[1],RGBA[2],RGBA[3]);
+}
+
+
+// Make Streamlines Group, ClippedStreamline Group, Merge Filter, Tube Filter group and Transform Filter group.
+// The fibers in Streamlines Collection would be splitted in groups. Each group would have an actor associated to it.
+void vtkDisplayTracts::CreateGroupObjects()
+{
+  int numGroups, numStreamlinesInGroups;
+  int numStreamlines;
+  vtkCollection *lastStreamlinesGroup;
+  #if (VTK_MAJOR_VERSION >= 5)
+    vtkPolyDataAlgorithm *currClippedStreamline;
+  #else
+    vtkPolyDataSource *currClippedStreamline;
+  #endif
+  vtkHyperStreamline *currStreamline;
+  vtkTubeFilter2 *currTubeFilter;
+  vtkTransformPolyDataFilter *currTransFilter;
+  vtkMergeDataObjectFilter *currMergeFilter;
+  double color[3];
+  double opacity;
+
+  numGroups = this->StreamlinesGroup->GetNumberOfItems();
+  numStreamlinesInGroups = 0;
+  for (int i=0; i<numGroups; i++) {
+    numStreamlinesInGroups += ((vtkCollection *) this->StreamlinesGroup->GetItemAsObject(i))->GetNumberOfItems();
+  }
+
+  // Check number of streamlines in the flat collection that comes from vtkSeedTracts.
+  numStreamlines = this->Streamlines->GetNumberOfItems();
+
+  vtkDebugMacro(<<"Streamlines in Group: "<<numStreamlinesInGroups<< " Total num of Streamlines: "<< numStreamlines);
+
+  // All the streamlines are allocated in groups
+  if (numStreamlines == numStreamlinesInGroups) {
+    return;
+  }
+
+  // Dummy transformation to populate in all the fibers
+  vtkTransform *currTransform=vtkTransform::New();
+  currTransform->SetMatrix(this->WorldToTensorScaledIJK->GetMatrix());
+  currTransform->Inverse();
+
+  // Get color information to fill cell data field.
+  this->StreamlineProperty->GetColor(color);
+  opacity=this->StreamlineProperty->GetOpacity();
+
+  // Creating dummy dataset with color info in the field data
+  // data would be used to merge with the current streamline.
+  vtkUnsignedCharArray *colorarray = vtkUnsignedCharArray::New();
+  colorarray->SetNumberOfComponents(4);
+  colorarray->SetNumberOfTuples(2);
+  colorarray->SetComponent(0,0,(unsigned char) (255*color[0]));
+  colorarray->SetComponent(0,1,(unsigned char) (255*color[1]));
+  colorarray->SetComponent(0,2,(unsigned char) (255*color[2]));
+  colorarray->SetComponent(0,3,(unsigned char) (255*opacity));
+  colorarray->SetComponent(1,0,(unsigned char) (255*color[0]));
+  colorarray->SetComponent(1,1,(unsigned char) (255*color[1]));
+  colorarray->SetComponent(1,2,(unsigned char) (255*color[2]));
+  colorarray->SetComponent(1,3,(unsigned char) (255*opacity));
+  colorarray->SetName("Color");
+  vtkPolyData *dataset = vtkPolyData::New();
+  vtkFieldData *fd = vtkFieldData::New();
+  fd->AddArray(colorarray);
+  dataset->SetFieldData(fd);
+
+   // Add new streamlines to group
+  for (int i=numStreamlinesInGroups ; i< numStreamlines; i++)
+   {
+
+    // Check num streamlines in the last group
+    vtkCollection *lastStreamlinesGroup = (vtkCollection *) this->StreamlinesGroup->GetItemAsObject(numGroups-1);
+    vtkDebugMacro(<<"LastStreamline: "<<lastStreamlinesGroup);
+    if (lastStreamlinesGroup == NULL )
+     {
+      // Create new group to allocate new streamlines
+      this->AddNewGroup();
+      numGroups++;
+     // Set active the group that we have just created
+      this->SetActiveGroup(numGroups-1);
+     } 
+    else if (lastStreamlinesGroup->GetNumberOfItems() <= this->NumberOfStreamlinesPerActor) 
+     {
+      // Check if the last group has the same actor properties that the one we want to create.
+      // if not, we should create a brand new group
+      this->SetActiveGroup(numGroups-1);
+      if (this->activeActor != NULL && !(this->IsPropertyEqual(this->activeActor->GetProperty(),this->StreamlineProperty))) {
+            this->AddNewGroup();
+            numGroups++;
+            this->SetActiveGroup(numGroups-1);
+       }
+     }
+    else 
+     {
+      // Create a new group because the active one is full
+      this->AddNewGroup();
+      numGroups++;
+      this->SetActiveGroup(numGroups-1);
+     }
+
+    vtkDebugMacro(<<"Adding objects to the group");
+    // Adding streamline to selected group
+    currStreamline = (vtkHyperStreamline *) this->Streamlines->GetItemAsObject(i);
+    this->activeStreamlines->AddItem(this->Streamlines->GetItemAsObject(i));
+
+    // Creating objects that handle that streamlines
+    currTubeFilter = vtkTubeFilter2::New();
+    currTransFilter = vtkTransformPolyDataFilter::New();
+    currClippedStreamline =
+        this->ClipStreamline(currStreamline,this->activeClippedStreamlines);
+
+   // Add color information in Cell Data
+   // The default color is the one that is pass in StreamlineProperty.
+   // Thereafter, the color can be modified by changing the FieldData "Color"
+   // for a given streamline.
+
+    currMergeFilter = vtkMergeDataObjectFilter::New();
+    currMergeFilter->SetInput(currClippedStreamline->GetOutput());
+    currMergeFilter->SetDataObject(dataset);
+    currMergeFilter->SetOutputFieldToCellDataField();
+
+    this->activeMergeFilters->AddItem((vtkObject *) currMergeFilter);
+    this->activeTransformFilters->AddItem((vtkObject *)currTransFilter);
+    this->activeTubeFilters->AddItem((vtkObject *)currTubeFilter);
+
+    // Create transformation matrix to place streamline in scene
+    currTransFilter->SetTransform(currTransform);
+
+    // Set tube params
+    currTubeFilter->SetRadius(this->TubeRadius);
+    currTubeFilter->SetNumberOfSides(this->TubeNumberOfSides);
+
+    // This is already added in ClippedStreamline method.
+    //activeClippedStreamlinesGroup->AddItem((vtkObject *)currClippedStreamline);
+
+     // Hook up the pipeline  involving the objects that generate
+    // the data
+    vtkDebugMacro(<<"Hooking up pipeline");
+    currTransFilter->SetInput((vtkPolyData *) currMergeFilter->GetOutput());
+    currTubeFilter->SetInput(currTransFilter->GetOutput());
+
+    // Connect Group pipeline to Append Filter.
+    // Append Filer is the interface between the Group Pipeline and
+    // the Graphics Object Pipeline (actor, mapper....)
+     this->activeAppendFilter->AddInput(currTubeFilter->GetOutput());
+   }
+
+  currTransform->Delete();   // Set Matrix info in Transform filters
+  colorarray->Delete();
+  fd->Delete();
+  dataset->Delete();
 
 }
 
@@ -271,7 +725,7 @@ void vtkDisplayTracts::UpdateAllTubeFiltersWithCurrentSettings()
 //----------------------------------------------------------------------------
 void vtkDisplayTracts::CreateGraphicsObjects()
 {
-  int numStreamlines, numActorsCreated;
+  int numActorsCreated, numStreamlinesGroup;
 #if (VTK_MAJOR_VERSION >= 5)
   vtkPolyDataAlgorithm *currStreamline;
 #else
@@ -282,57 +736,58 @@ void vtkDisplayTracts::CreateGraphicsObjects()
   vtkTransform *currTransform;
   vtkRenderer *currRenderer;
   vtkTransformPolyDataFilter *currTransFilter;
-  vtkTubeFilter *currTubeFilter;
+  vtkTubeFilter2 *currTubeFilter;
+
+  vtkCollection *currStreamlines;
+  vtkCollection *currTubeFilters;
+  vtkCollection *currTransFilters;
+  vtkAppendPolyData *currAppendFilter;
+
 
   // Find out how many streamlines we have, and if they all have actors
-  numStreamlines = this->Streamlines->GetNumberOfItems();
+  //numStreamlines = this->Streamlines->GetNumberOfItems();
+  //numActorsCreated = this->Actors->GetNumberOfItems();
+  numStreamlinesGroup = this->StreamlinesGroup->GetNumberOfItems();
   numActorsCreated = this->Actors->GetNumberOfItems();
 
-  vtkDebugMacro(<< "in CreateGraphicsObjects " << numActorsCreated << "  " << numStreamlines);
+
+  vtkDebugMacro(<< "in CreateGraphicsObjects " << numActorsCreated << "  " << numStreamlinesGroup);
 
   // If we have already made all of the objects needed, stop here.
-  if (numActorsCreated == numStreamlines) 
-    return;
+  //if (numActorsCreated == numStreamlinesGroup) 
+  //  return;
 
-  // Create transformation matrix to place actors in scene
-  currTransform=vtkTransform::New();
-  currTransform->SetMatrix(this->WorldToTensorScaledIJK->GetMatrix());
-  currTransform->Inverse();
+ // check if we need transform and tube filters, then stop here.
+  if (numActorsCreated == numStreamlinesGroup) 
+   {
+     //this->ApplyUserSettingsToGraphicsObject(numStreamlinesGroup-1);
+     return;
+   }
+
 
   // Make actors and etc. for all streamlines that need them
-  while (numActorsCreated < numStreamlines) 
+  while (numActorsCreated < numStreamlinesGroup) 
     {
-      // Handle clipping/not clipping
-      // Now use the clipped/not clipped streamline for the rest
-      currStreamline = 
-        this->ClipStreamline((vtkHyperStreamline *)
-                             this->Streamlines->GetItemAsObject(numActorsCreated));
 
       // Now create the objects needed
       currActor = vtkActor::New();
       this->Actors->AddItem((vtkObject *)currActor);
       currMapper = vtkPolyDataMapper::New();
       this->Mappers->AddItem((vtkObject *)currMapper);
-          currTransFilter = vtkTransformPolyDataFilter::New();
-          this->TransformFilters->AddItem((vtkObject *) currTransFilter);
-      currTubeFilter = vtkTubeFilter::New();
-      this->TubeFilters->AddItem((vtkObject *)currTubeFilter);
+      //currTransFilter = vtkTransformPolyDataFilter::New();
+      //this->TransformFilters->AddItem((vtkObject *) currTransFilter);   
+      currAppendFilter = (vtkAppendPolyData *)
+      this->AppendFilters->GetItemAsObject(numActorsCreated);
 
       // Apply user's visualization settings to these objects
       this->ApplyUserSettingsToGraphicsObject(numActorsCreated);
 
       // Hook up the pipeline
-          currTransFilter->SetInput(currStreamline->GetOutput());
-      currTubeFilter->SetInput(currTransFilter->GetOutput());
-      currMapper->SetInput(currTubeFilter->GetOutput());
-      currMapper->SetLookupTable(this->StreamlineLookupTable);
-      currMapper->UseLookupTableScalarRangeOn();
+      vtkDebugMacro(<<"Attaching Graphic pipeline for actor "<<numActorsCreated);
+
+      currMapper->SetInput(currAppendFilter->GetOutput());
       currActor->SetMapper(currMapper);
-      
-      // Place the actor correctly in the scene
-      //currActor->SetUserMatrix(currTransform->GetMatrix());
-      currTransFilter->SetTransform(currTransform);
-          
+
       // add to the scene (to each renderer)
       // This is the same as MainAddActor in Main.tcl.
       this->Renderers->InitTraversal();
@@ -347,25 +802,26 @@ void vtkDisplayTracts::CreateGraphicsObjects()
       numActorsCreated++;
     }
 
-
-  currTransform->Delete();
-
   // For debugging print this info again
-  // Find out how many streamlines we have, and if they all have actors
-  numStreamlines = this->Streamlines->GetNumberOfItems();
+  // Find out how many streamlines Groups we have, and if they all have actors
+  numStreamlinesGroup = this->StreamlinesGroup->GetNumberOfItems();
   numActorsCreated = this->Actors->GetNumberOfItems();
-
-  vtkDebugMacro(<< "in CreateGraphicsObjects " << numActorsCreated << "  " << numStreamlines);
+  vtkDebugMacro(<< "in CreateGraphicsObjects " << numActorsCreated << "  " << numStreamlinesGroup);
 
 }
 
-//----------------------------------------------------------------------------
+
 void vtkDisplayTracts::AddStreamlinesToScene()
 {
   vtkActor *currActor;
   int index;
 
-  // make objects if needed
+  // make group objects if needed
+  vtkDebugMacro(<< "Creating Group objects");
+  this->CreateGroupObjects();
+
+  // make graphics objects if needed
+  vtkDebugMacro(<< "Creating Graphic objects");
   this->CreateGraphicsObjects();
 
   // traverse actor collection and make all visible
@@ -407,48 +863,182 @@ void vtkDisplayTracts::RemoveStreamlinesFromScene()
 //----------------------------------------------------------------------------
 void vtkDisplayTracts::DeleteAllStreamlines()
 {
-  int numStreamlines, i;
+  int numGroups, i;
 
   i=0;
-  numStreamlines = this->ClippedStreamlines->GetNumberOfItems();
-  while (i < numStreamlines)
+  numGroups = this->StreamlinesGroup->GetNumberOfItems();
+  while (i < numGroups)
     {
-      vtkDebugMacro( << "Deleting streamline " << i);
+      vtkDebugMacro( << "Deleting streamline group " << i);
       // always delete the first streamline from the collections
       // (they change size as we do this, shrinking away)
-      this->DeleteStreamline(0);
+      this->DeleteAllStreamlinesInGroup(i);
       i++;
     }
-    
+
+  // Make sure the group collection is empty
+  this->StreamlinesGroup->RemoveAllItems();
+  this->ClippedStreamlinesGroup->RemoveAllItems();
+  this->MergeFiltersGroup->RemoveAllItems();
+  this->TubeFiltersGroup->RemoveAllItems();
+  this->TransformFiltersGroup->RemoveAllItems();
+
   // Make sure the collection is empty
-  this->ClippedStreamlines->RemoveAllItems();
+  this->AppendFilters->RemoveAllItems();
   this->Mappers->RemoveAllItems();
-  this->TubeFilters->RemoveAllItems();
-  this->TransformFilters->RemoveAllItems();
-  this->Actors->RemoveAllItems();
-  
+  this->Actors->RemoveAllItems(); 
 }
+
+//----------------------------------------------------------------------------
+void vtkDisplayTracts::DeleteAllStreamlinesInGroup(int groupindex)
+{
+  
+  int numStreamlines, i;
+  vtkCollection *currStreamlines;
+  i=0;
+  currStreamlines = (vtkCollection *)this->StreamlinesGroup->GetItemAsObject(groupindex);
+  numStreamlines = currStreamlines->GetNumberOfItems();
+  while (i < numStreamlines)
+    {
+     vtkDebugMacro( << "Deleting group" << i);
+     // always delete the first streamline from the collections
+     // (they change size as we do this, shrinking away)     
+     this->DeleteStreamlineInGroup(groupindex,0);
+     i++;
+    }
+}
+
 
 // Delete all of the DISPLAY objects created for one streamline 
 //----------------------------------------------------------------------------
-void vtkDisplayTracts::DeleteStreamline(int index)
+void vtkDisplayTracts::DeleteStreamlineInGroup(int groupindex, int index)
 {
+
+  vtkHyperStreamline *currStreamline;
+  #if (VTK_MAJOR_VERSION >= 5)
+   vtkPolyDataAlgorithm *currClippedStreamline;
+  #else
+   vtkPolyDataSource *currClippedStreamline;
+  #endif
+  vtkTransformPolyDataFilter *currTransFilter;
+  vtkTubeFilter2 *currTubeFilter;
+  vtkMergeDataObjectFilter *currMergeFilter;
+  vtkAppendPolyData *currAppendFilter;
   vtkRenderer *currRenderer;
   //vtkLookupTable *currLookupTable;
   vtkPolyDataMapper *currMapper;
-  vtkTransformPolyDataFilter *currTransFilter;
-  vtkTubeFilter *currTubeFilter;
   vtkActor *currActor;
 
-  vtkDebugMacro( << "Deleting actor " << index);
-  currActor = (vtkActor *) this->Actors->GetItemAsObject(index);
-  if (currActor != NULL)
+  vtkCollection *currStreamlines;
+  vtkCollection *currClippedStreamlines;
+  vtkCollection *currMergeFilters;
+  vtkCollection *currTubeFilters;
+  vtkCollection *currTransFilters;
+
+  currStreamlines = (vtkCollection *) this->StreamlinesGroup->GetItemAsObject(groupindex);
+  currClippedStreamlines = (vtkCollection *)this->ClippedStreamlinesGroup->GetItemAsObject(groupindex);
+  currMergeFilters = (vtkCollection *) this->MergeFiltersGroup->GetItemAsObject(groupindex);
+  currTubeFilters = (vtkCollection *) this->TubeFiltersGroup->GetItemAsObject(groupindex);
+  currTransFilters = (vtkCollection *) this->TransformFiltersGroup->GetItemAsObject(groupindex);
+  currAppendFilter = (vtkAppendPolyData *) this->AppendFilters->GetItemAsObject(groupindex);
+
+  int numStreamlinesInGroup = currStreamlines->GetNumberOfItems();
+ 
+  vtkDebugMacro( << "Delete streamline" );
+  // Remove from collection.
+  // If we are clipping this should delete the clipper object.
+  // Otherwise it removes a reference to the streamline object still 
+  // on the Streamlines collection.
+  //this->ClippedStreamlines->RemoveItem(index);
+
+  currStreamline = (vtkHyperStreamline *)
+    currStreamlines->GetItemAsObject(index);
+  if (currStreamline != NULL)
+    {
+      currStreamlines->RemoveItem(index);
+      //currStreamline->Delete();
+    }
+
+  vtkDebugMacro (<< "Delete Clipped streamlines" );
+
+  currClippedStreamline = 
+  #if (VTK_MAJOR_VERSION >= 5)
+  (vtkPolyDataAlgorithm *)
+  #else
+  (vtkPolyDataSource *)
+  #endif
+    currClippedStreamlines->GetItemAsObject(index);
+  if (currClippedStreamline != NULL)
+    {
+      currClippedStreamlines->RemoveItem(index);
+      //currClippedStreamline->Delete();
+    }
+
+  vtkDebugMacro( << "Delete MergeFilter" );
+  currMergeFilter = (vtkMergeDataObjectFilter *) currMergeFilters->GetItemAsObject(index);
+  if (currMergeFilter != NULL)
+    {
+      currMergeFilters->RemoveItem(index);
+      currMergeFilter->Delete();
+    }
+
+  vtkDebugMacro( << "Delete transformFilter" );
+  currTransFilter = (vtkTransformPolyDataFilter *) currTransFilters->GetItemAsObject(index);
+  if (currTransFilter != NULL)
+    {
+      currTransFilters->RemoveItem(index);
+      currTransFilter->Delete();
+    }
+
+  vtkDebugMacro( << "Delete tubeAppendFiltersFilter" );
+   currTubeFilter = (vtkTubeFilter2 *) currTubeFilters->GetItemAsObject(index);
+  if (currTubeFilter != NULL)
+    {
+      // Disconnect the tube from the appender: 
+      //interface between group level and graphic level
+      currAppendFilter->RemoveInput(currTubeFilter->GetOutput());
+      currTubeFilters->RemoveItem(index);
+      currTubeFilter->Delete();
+    }
+
+
+  // If this is the last streamline in the group. Then remove the graphic objects
+  // actor, renderer, and mapper and remove group item in group collection
+  if (numStreamlinesInGroup == 1) {
+
+    if (currStreamlines != NULL) {
+        this->StreamlinesGroup->RemoveItem(groupindex);
+        currStreamlines->Delete();
+    }
+
+    if (currClippedStreamlines != NULL) {
+        this->ClippedStreamlinesGroup->RemoveItem(groupindex);
+        currClippedStreamlines->Delete();
+    }
+
+    if (currMergeFilters != NULL) {
+        this->MergeFiltersGroup->RemoveItem(groupindex);
+        currMergeFilters->Delete();
+    }
+
+    if (currTransFilters != NULL) {
+        this->TransformFiltersGroup->RemoveItem(groupindex);
+        currTransFilters->Delete();
+    }
+
+    if (currTubeFilters != NULL) {
+        this->TubeFiltersGroup->RemoveItem(groupindex);
+        currTubeFilters->Delete();
+    }
+
+    vtkDebugMacro( << "Deleting actor " << groupindex);
+    currActor = (vtkActor *) this->Actors->GetItemAsObject(groupindex);
+    if (currActor != NULL)
     {
       if (currActor->GetVisibility()) {
           currActor->VisibilityOff();
           this->NumberOfVisibleActors--;
-      }
-      
+     } 
       // Remove from the scene (from each renderer)
       // Just like MainRemoveActor in Main.tcl.
       // Don't delete the renderers since they are input.
@@ -456,87 +1046,159 @@ void vtkDisplayTracts::DeleteStreamline(int index)
       currRenderer= (vtkRenderer *)this->Renderers->GetNextItemAsObject();
       while(currRenderer)
         {
-          vtkDebugMacro( << "rm actor from renderer " << currRenderer);
+          vtkDebugMacro( << "Delete actor from renderer " << currRenderer);
           currRenderer->RemoveActor(currActor);
           currRenderer= (vtkRenderer *)this->Renderers->GetNextItemAsObject();
         }
 
       // Delete the actors, this class created them
-      this->Actors->RemoveItem(index);
+      this->Actors->RemoveItem(groupindex);
       currActor->Delete();
     }
 
-  vtkDebugMacro( << "Delete stream" );
-  // Remove from collection.
-  // If we are clipping this should delete the clipper object.
-  // Otherwise it removes a reference to the streamline object still 
-  // on the Streamlines collection.
-  this->ClippedStreamlines->RemoveItem(index);
+    vtkDebugMacro( << "Delete mapper" );
+    currMapper = (vtkPolyDataMapper *) this->Mappers->GetItemAsObject(groupindex);
+    if (currMapper != NULL)
+        {
+        this->Mappers->RemoveItem(groupindex);
+        currMapper->Delete();
+        }
+    vtkDebugMacro( << "Delete appender" );
+    currAppendFilter = (vtkAppendPolyData *) this->AppendFilters->GetItemAsObject(groupindex);
+    if (currAppendFilter != NULL)
+        {
+        this->AppendFilters->RemoveItem(groupindex);
+        currAppendFilter->Delete();
+        }
+   }
 
-  vtkDebugMacro( << "Delete mapper" );
-  currMapper = (vtkPolyDataMapper *) this->Mappers->GetItemAsObject(index);
-  if (currMapper != NULL)
-    {
-      this->Mappers->RemoveItem(index);
-      currMapper->Delete();
-    }
+}
 
-  vtkDebugMacro( << "Delete transformFilter" );
-  currTransFilter = (vtkTransformPolyDataFilter *) this->TransformFilters->GetItemAsObject(index);
-  if (currTransFilter != NULL)
-    {
-      this->TransformFilters->RemoveItem(index);
-      currTransFilter->Delete();
-    }
-
-  vtkDebugMacro( << "Delete tubeFilter" );
-  currTubeFilter = (vtkTubeFilter *) this->TubeFilters->GetItemAsObject(index);
-  if (currTubeFilter != NULL)
-    {
-      this->TubeFilters->RemoveItem(index);
-      currTubeFilter->Delete();
-    }
-
-  vtkDebugMacro( << "Done deleting streamline");
-
+// Delete all of the DISPLAY objects created for one streamline 
+//----------------------------------------------------------------------------
+vtkHyperStreamline* vtkDisplayTracts::GetStreamlineInGroup(int groupindex, int index)
+{
+ vtkCollection *currStreamlines;
+ currStreamlines = (vtkCollection *)this->StreamlinesGroup->GetItemAsObject(groupindex);
+ return (vtkHyperStreamline *) currStreamlines->GetItemAsObject(index);
 }
 
 // This is the delete called from the user interface where the
 // actor has been picked with the mouse.
 //----------------------------------------------------------------------------
-void vtkDisplayTracts::DeleteStreamline(vtkActor *pickedActor)
+void vtkDisplayTracts::DeleteStreamline(vtkCellPicker *picker)
 {
-  int index;
+  int groupindex,index;
 
-  index = this->GetStreamlineIndexFromActor(pickedActor);
+  vtkActor *pickedActor = picker->GetActor();
+  groupindex = this->GetStreamlineGroupIndexFromActor(pickedActor);
+  index = this->GetStreamlineIndexFromActor(groupindex,picker);
 
-  if (index >=0)
+  if (index >=0 && groupindex >=0)
     {
-      this->DeleteStreamline(index);
+      this->DeleteStreamlineInGroup(groupindex,index);
     }
 }
 
 // Get the index into all of the collections corresponding to the picked
 // actor.
 //----------------------------------------------------------------------------
-int vtkDisplayTracts::GetStreamlineIndexFromActor(vtkActor *pickedActor)
+int vtkDisplayTracts::GetStreamlineGroupIndexFromActor(vtkActor *pickedActor)
 {
-  int index;
+  int groupindex;
 
   vtkDebugMacro( << "Picked actor (present?): " << pickedActor);
   // find the actor on the collection.
   // nonzero index means item was found.
-  index = this->Actors->IsItemPresent(pickedActor);
+  groupindex = this->Actors->IsItemPresent(pickedActor);
 
   // the index returned was 1-based but actually to get items
   // from the list we must use 0-based indices.  Very
   // strange but this is necessary.
-  index--;
+  groupindex--;
 
   // so now "not found" is -1, and >=0 are valid indices
-  return(index);
+  return(groupindex);
+}
+
+// Get the index into all of the collections corresponding to the picked
+// actor.
+//----------------------------------------------------------------------------
+int vtkDisplayTracts::GetStreamlineIndexFromActor(int groupindex,vtkCellPicker *picker)
+{
+
+ vtkCollection *currTubeFilters = (vtkCollection *) this->TubeFiltersGroup->GetItemAsObject(groupindex);
+
+ if (currTubeFilters == NULL) {
+    return -1;
+ }
+
+ //Point id of the first point of the picked cell
+
+ vtkAppendPolyData *currAppender =  (vtkAppendPolyData *)(this->AppendFilters->GetItemAsObject(groupindex));
+
+ vtkCell *cell =currAppender->GetOutput()->GetCell(picker->GetCellId());
+ vtkIdType ptId = cell->GetPointId(0);
+
+ double *pt = currAppender->GetOutput()->GetPoint(ptId);
+ vtkTubeFilter2 * currTubeFilter;
+ vtkMergePoints *loc = vtkMergePoints::New();
+
+ //cout<<"Pick point id: "<<ptId<<" Points coordinate: "<<pt[0]<<" "<<pt[1]<<" "<<pt[2]<<endl;
+ vtkPoints *p;
+ int result;
+ double testp[3];
+ for (int i = 0; i < currTubeFilters->GetNumberOfItems(); i++)
+   {
+   currTubeFilter = (vtkTubeFilter2 *)currTubeFilters->GetItemAsObject(i);
+   if (currTubeFilter == NULL)
+     {
+     continue;
+     }
+   //loc->SetDataSet(currTubeFilter->GetOutput());
+   //result = loc->IsInsertedPoint(pt[0],pt[1],pt[2]);
+   p = currTubeFilter->GetOutput()->GetPoints();
+   result = -1;
+   for (int j=0; j<p->GetNumberOfPoints();j++) {
+        p->GetPoint(j,testp);
+        if (testp[0] == pt[0] && testp[1] == pt[1] && testp[2] == pt[2]) {
+            result = j;
+            break;
+        }
+   }
+
+   if (result >-1)
+     {
+      //Bingo
+      //cout<<"Bingo: Fiber to remove num: "<<i<<endl;
+      loc->Delete();
+      return i;
+     }
+   }
+  
+loc->Delete();
+
+//We didn't find the point that the picker chose.
+return  -1;
+
 }
 
 
+vtkCollection *vtkDisplayTracts::GetClippedStreamlines() {
 
+  int numGroups, numItems;
+  vtkCollection *currStreamlines;
+  numGroups = this->ClippedStreamlinesGroup->GetNumberOfItems();
+  // Empty the collection
+  this->ClippedStreamlines->RemoveAllItems();
 
+  for (int i=0; i< numGroups; i++)
+    {
+     currStreamlines = (vtkCollection *) this->ClippedStreamlinesGroup->GetItemAsObject(i);
+     numItems = currStreamlines->GetNumberOfItems();
+     for (int k=0; k< numItems; k++) {
+        this->ClippedStreamlines->AddItem(currStreamlines->GetItemAsObject(k));
+     }
+    }
+   return this->ClippedStreamlines;
+}
