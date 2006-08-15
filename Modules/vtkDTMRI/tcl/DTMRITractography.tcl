@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITractography.tcl,v $
-#   Date:      $Date: 2006/03/14 21:43:57 $
-#   Version:   $Revision: 1.52 $
+#   Date:      $Date: 2006/08/15 16:44:56 $
+#   Version:   $Revision: 1.53 $
 # 
 #===============================================================================
 # FILE:        DTMRITractography.tcl
@@ -58,7 +58,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.52 $} {$Date: 2006/03/14 21:43:57 $}]
+                                 {$Revision: 1.53 $} {$Date: 2006/08/15 16:44:56 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -110,7 +110,7 @@ proc DTMRITractographyInit {} {
     # What type of value to use for a threshold
     # default must match the vtk class
     set DTMRI(stream,StoppingMode) LinearMeasure; 
-    set DTMRI(stream,StoppingMode,menu) {LinearMeasure PlanarMeasure SphericalMeasure FractionalAnisotropy}         
+    set DTMRI(stream,StoppingMode,menu) {LinearMeasure FractionalAnisotropy}         
 
     # threshold of above value
     set DTMRI(stream,StoppingThreshold) 0.15
@@ -1142,7 +1142,7 @@ proc DTMRISelectRemoveHyperStreamline {x y z} {
 
     # see which actor was picked
     set actor [DTMRI(vtk,picker) GetActor]
-    DTMRI(vtk,streamlineControl) DeleteStreamline $actor
+    DTMRI(vtk,streamlineControl) DeleteStreamline DTMRI(vtk,picker)
     
 }
 
