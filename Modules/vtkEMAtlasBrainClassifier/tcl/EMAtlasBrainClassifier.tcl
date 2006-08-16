@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
-#   Date:      $Date: 2006/07/05 18:08:27 $
-#   Version:   $Revision: 1.40 $
+#   Date:      $Date: 2006/08/16 20:46:52 $
+#   Version:   $Revision: 1.41 $
 # 
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
@@ -107,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
    set Module($m,depend) ""
 
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.40 $} {$Date: 2006/07/05 18:08:27 $}]
+       {$Revision: 1.41 $} {$Date: 2006/08/16 20:46:52 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -137,6 +137,7 @@ proc EMAtlasBrainClassifierInit {} {
      set EMAtlasBrainClassifier(Normalize,SPGR) "90"
      set EMAtlasBrainClassifier(Normalize,T2W)  "310"
  
+    set EMAtlasBrainClassifier(MultiThreading) 0 
      set EMAtlasBrainClassifier(AlgorithmVersion) "Standard" 
      set EMAtlasBrainClassifier(NonRigidRegistrationFlag) 1
  
@@ -423,17 +424,27 @@ proc EMAtlasBrainClassifierBuildGUI {} {
       pack $f.fMisc.f$frame -side left -padx 0 -pady $Gui(pad)
     }
 
+    DevAddLabel $f.fMisc.fLeft.lMultiThread "Multi Threading:"
+    pack $f.fMisc.fLeft.lMultiThread  -side top -padx $Gui(pad) -pady 2 -anchor w 
+    frame  $f.fMisc.fRight.fMultiThread -bg $Gui(activeWorkspace)
+    pack $f.fMisc.fRight.fMultiThread -side top -padx 2 -pady 2  -anchor w 
+    foreach value "1 0" text "On Off" width "4 4" {
+        eval {radiobutton $f.fMisc.fRight.fMultiThread.r$value -width $width -indicatoron 0\
+                  -text "$text" -value "$value" -variable  EMAtlasBrainClassifier(MultiThreading) } $Gui(WCA)
+    }
+    pack $f.fMisc.fRight.fMultiThread.r0 $f.fMisc.fRight.fMultiThread.r1 -side left -fill x
+
     foreach Att "XMLTemplate AtlasDir" Text "{XML-Template File} {Atlas Directory}" Help "{XML Template file to be used for the segmentation} {Location of the atlases which define spatial distribtution}" {
-    DevAddLabel $f.fMisc.fLeft.l$Att "${Text}:"  
-    pack $f.fMisc.fLeft.l$Att -side top -padx 2 -pady 2  -anchor w 
-
-    frame $f.fMisc.fRight.f$Att  -bg $Gui(activeWorkspace)
-    pack $f.fMisc.fRight.f$Att -side top -padx 2 -pady 2  
-
-    eval {entry  $f.fMisc.fRight.f$Att.eFile   -width 15 -textvariable EMAtlasBrainClassifier($Att) } $Gui(WEA)
-    eval {button $f.fMisc.fRight.f$Att.bSelect -text "..." -width 2 -command "EMAtlasBrainClassifierDefine$Att"} $Gui(WBA)     
-    pack $f.fMisc.fRight.f$Att.eFile  $f.fMisc.fRight.f$Att.bSelect -side left -padx 0 -pady 0 
-    TooltipAdd  $f.fMisc.fRight.f$Att  "$Help" 
+        DevAddLabel $f.fMisc.fLeft.l$Att "${Text}:"  
+        pack $f.fMisc.fLeft.l$Att -side top -padx 2 -pady 2  -anchor w 
+        
+        frame $f.fMisc.fRight.f$Att  -bg $Gui(activeWorkspace)
+        pack $f.fMisc.fRight.f$Att -side top -padx 2 -pady 2  
+        
+        eval {entry  $f.fMisc.fRight.f$Att.eFile   -width 15 -textvariable EMAtlasBrainClassifier($Att) } $Gui(WEA)
+        eval {button $f.fMisc.fRight.f$Att.bSelect -text "..." -width 2 -command "EMAtlasBrainClassifierDefine$Att"} $Gui(WBA)     
+        pack $f.fMisc.fRight.f$Att.eFile  $f.fMisc.fRight.f$Att.bSelect -side left -padx 0 -pady 0 
+        TooltipAdd  $f.fMisc.fRight.f$Att  "$Help" 
     }
 }
 #-------------------------------------------------------------------------------
@@ -698,8 +709,8 @@ proc EMAtlasBrainClassifierVolumeWriter {VolID} {
     #        - Check if largest slice m is present 
     #        - if not => slices start at 1 .. n => move everything to m -n + 1 ,..., m 
 
-    set FileFormat $Editor(fileformat)
-    set Editor(fileformat) "Standard" 
+#set FileFormat $Editor(fileformat)
+#set Editor(fileformat) "Standard" 
 
     set Name [Volume($VolID,node) GetName]
 
@@ -708,7 +719,7 @@ proc EMAtlasBrainClassifierVolumeWriter {VolID} {
     # Kilian: MainVolumesWrite changes name 
     Volume($VolID,node) SetName "$Name"
  
-    set Editor(fileformat) $FileFormat
+#    set Editor(fileformat) $FileFormat
 }
 
 #-------------------------------------------------------------------------------
@@ -2520,6 +2531,20 @@ proc EMAtlasBrainClassifier_SaveSegmentation { } {
 proc EMAtlasBrainClassifierStartSegmentation { } {
     global EMAtlasBrainClassifier EMSegment env Mrml
 
+    #kquintus: EMAtlasBrainClassifier produces different atlases and EMResults depending
+    #          on how many processors a machine has. Set to single-threaded to produce the
+    #          same output always
+    
+    # Initialization only
+    set EMAtlasBrainClassifier(InitialNumberOfThreads) -1
+    
+    if {$EMAtlasBrainClassifier(MultiThreading) == 0 } {
+        catch " vtkMultiThreader tempMultiThreader"
+        set EMAtlasBrainClassifier(InitialNumberOfThreads) [tempMultiThreader GetGlobalDefaultNumberOfThreads]
+        tempMultiThreader SetGlobalDefaultNumberOfThreads 1
+        tempMultiThreader Delete
+    }
+    
     # ---------------------------------------------------------------
     # Setup Pipeline
     if {[EMAtlasBrainClassifier_InitilizePipeline] == 0} { return 0}  
@@ -2614,6 +2639,14 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
     }
 
     puts "=========== Finished  ============ "
+    
+    # kquintus: set number of threads used back to what it was before EMAtlasBrainClassifierStartSegmentation was executed
+    if {$EMAtlasBrainClassifier(MultiThreading) == 0} {
+        catch "vtkMultiThreader tempMultiThreader"
+        tempMultiThreader SetGlobalDefaultNumberOfThreads $EMAtlasBrainClassifier(InitialNumberOfThreads)
+        tempMultiThreader Delete
+    }
+    
     return 1
 }
 
