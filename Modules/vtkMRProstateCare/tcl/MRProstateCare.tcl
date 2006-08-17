@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.33 $} {$Date: 2006/08/14 20:50:31 $}]
+        {$Revision: 1.1.2.34 $} {$Date: 2006/08/17 18:21:37 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -263,7 +263,7 @@ proc MRProstateCareBuildGUI {} {
     DevAddButton $f.bLoad "Load" "MRProstateCareLoad"  9 
     eval {checkbutton $f.cConnect \
         -text "Connect" -variable Locator(connect) -width 9 \
-        -indicatoron 0 -command "LocatorConnect;MRProstateCareUpdateConnectionStatus"} $Gui(WCA)
+        -indicatoron 0 -command "MRProstateCareConnect"} $Gui(WCA)
     eval {checkbutton $f.cPause \
         -text "Pause" -variable Locator(pause) -command "LocatorPause" \
         -width 9 -indicatoron 0} $Gui(WCA)
@@ -453,7 +453,7 @@ proc MRProstateCareBuildGUI {} {
 
     #--- notebook configure
     $f.tsNotebook configure -width 250
-    $f.tsNotebook configure -height 390 
+    $f.tsNotebook configure -height 350 
     $f.tsNotebook configure -background $::Gui(activeWorkspace)
     $f.tsNotebook configure -activebackground $::Gui(activeWorkspace)
     $f.tsNotebook configure -selectbackground $::Gui(activeWorkspace)
@@ -469,7 +469,7 @@ proc MRProstateCareBuildGUI {} {
 
     #--- tab configure
     set i 0
-    foreach t "Scan Display" {
+    foreach t "Display Scan" {
         $f.tsNotebook insert $i $t
         frame $f.tsNotebook.f$t -bg $Gui(activeWorkspace) -bd 2 
         MRProstateCareBuildGUIFor${t} $f.tsNotebook.f$t
@@ -547,14 +547,14 @@ proc MRProstateCareBuildGUIForScan {parent} {
  
     set f $parent.fT2
 
-    eval {label $f.lTitle -text "Realtime scan:"} $Gui(WTA)
+    eval {label $f.lTitle -text "Choose scan orientation:"} $Gui(WTA)
  
     foreach x "Axial Sagittal Coronal" \
         text "{Axial} {Sagittal} {Coronal}" {
         eval {radiobutton $f.r$x -width 7 -text $text \
             -variable MRProstateCare(realtimeScanOrient) -value $text \
             -relief raised -offrelief raised -overrelief raised \
-            -command "MRProstateCareSetRealtimeScanOrder" \
+            -command "" \
             -selectcolor white} $Gui(WEA)
     } 
     $f.rCoronal select
@@ -597,10 +597,14 @@ proc MRProstateCareBuildGUIForScan {parent} {
 
     DevAddButton $f.bPlus "+" "MRProstateCareChangeRSA +"  6 
     DevAddButton $f.bMinus "-" "MRProstateCareChangeRSA -"  6 
+    DevAddButton $f.bReset "Reset" "MRProstateCareChangeRSA r" 6 
+    DevAddButton $f.bSend "Send" "MRProstateCareSetScannerCommand 2" 6 
+ 
     blt::table $f \
-        0,0 $f.bPlus -fill x -padx 2 -pady 2 \
-        0,1 $f.bMinus -fill x -padx 2 -pady 2 
-
+        0,0 $f.bPlus -fill x -padx 1 -pady 2 \
+        0,1 $f.bMinus -fill x -padx 1 -pady 2 \
+        0,2 $f.bReset -fill x -padx 1 -pady 2 \
+        0,3 $f.bSend -fill x -padx 1 -pady 2 
 
 
     #-------------------------
@@ -615,43 +619,60 @@ proc MRProstateCareBuildGUIForScan {parent} {
 
     set f $parent.fBot.f2
     DevAddButton $f.bStart "Start scan" "MRProstateCareSetScannerCommand 1"  10 
-    DevAddButton $f.bScan "Scan" "MRProstateCareSetScannerCommand 2"  10 
     DevAddButton $f.bStop "Stop scan" "MRProstateCareSetScannerCommand 0"  10 
     blt::table $f \
-        0,0 $f.bStart -fill x -padx 2 -pady 3 \
-        0,1 $f.bScan -fill x -padx 2 -pady 3 \
-        0,2 $f.bStop -fill x -padx 2 -pady 3 
-
-
+        0,0 $f.bStart -fill x -padx 1 -pady 3 \
+        0,2 $f.bStop -fill x -padx 1 -pady 3 
 }
 
 
+proc MRProstateCareUpdateImageOrientations {} {
+    global MRProstateCare View 
+
+    # After each realtime scan, display the realtime 
+    # image in Slicer in right orientation.
+    MRProstateCareSetRealtimeScanOrder
+ 
+    # In the Display tab, make sure we display both images
+    # in the orientation where the realtime was scanned.
+    set MRProstateCare(imageDisplayOrient) \
+        $MRProstateCare(lastRealtimeScanOrient)
+}
+
+ 
 proc MRProstateCareChangeRSA {v} {
     global MRProstateCare View 
 
-    if {$v == "+"} {
-        set val 1
-    } else {
-        set val -1
-    }
-
-    # Axial slice changes as S
-    # Saggital slice changes as R
-    # Coronal slice changes as A
-    switch $MRProstateCare(realtimeScanOrient) {
-        "Axial" {set MRProstateCare(zStr) [expr $MRProstateCare(zStr) + $val]} 
-        "Sagittal" {set MRProstateCare(xStr) [expr $MRProstateCare(xStr) + $val]} 
-        "Coronal" {set MRProstateCare(yStr) [expr $MRProstateCare(yStr) + $val]} 
-    }
-
-    set max [expr $View(fov) / 2]
-    set min [expr -$max]
-    foreach ii "x y z" {
-        if {$MRProstateCare(${ii}Str) > $max} {
-            set MRProstateCare(${ii}Str) $max
+    if {$v == "r"} {
+        foreach v "x y z" {
+            set MRProstateCare(${v}Str) \
+                $MRProstateCare(${v}Str,original)
         }
-        if {$MRProstateCare(${ii}Str) < $min} {
-            set MRProstateCare(${ii}Str) $min
+    } else {
+        if {$v == "+"} {
+            set val 1
+        } else {
+            set val -1
+        }
+
+        # Axial slice changes as S
+        # Saggital slice changes as R
+        # Coronal slice changes as A
+        switch $MRProstateCare(realtimeScanOrient) {
+            "Axial" {set MRProstateCare(zStr) [expr $MRProstateCare(zStr) + $val]} 
+            "Sagittal" {set MRProstateCare(xStr) [expr $MRProstateCare(xStr) + $val]} 
+            "Coronal" {set MRProstateCare(yStr) [expr $MRProstateCare(yStr) + $val]} 
+        }
+
+        set max [expr $View(fov) / 2]
+        set min [expr -$max]
+        foreach ii "x y z" {
+            if {$MRProstateCare(${ii}Str) > $max} {
+                set MRProstateCare(${ii}Str) $max
+            }
+            if {$MRProstateCare(${ii}Str) < $min} {
+                set MRProstateCare(${ii}Str) $min
+            }
         }
     }
 
@@ -706,6 +727,9 @@ proc MRProstateCareSetScannerCommand {cmd} {
         }
         Locator(Flashpoint,src) SetScanOrientation \
             $or [lindex $pxyz 0] [lindex $pxyz 1] [lindex $pxyz 2] 0 
+
+        set MRProstateCare(lastRealtimeScanOrient) \
+            $MRProstateCare(realtimeScanOrient)
     }   
 
     Locator(Flashpoint,src) OperateScanner $cmd 
@@ -766,7 +790,7 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     global MRProstateCare Gui 
 
     set f $parent
-    frame $f.f1 -bg $Gui(activeWorkspace) 
+    frame $f.f1 -bg $Gui(activeWorkspace) -relief groove -bd 2 
     pack $f.f1 -side top -pady 3 
     frame $f.f2 -bg $Gui(activeWorkspace) -relief groove -bd 2 
     pack $f.f2 -side top -pady 3 
@@ -774,28 +798,13 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     pack $f.f3 -side top -pady 3 
     frame $f.f4 -bg $Gui(activeWorkspace) -relief groove -bd 2 
     pack $f.f4 -side top -pady 3 
-    frame $f.f5 -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    frame $f.f5 -bg $Gui(activeWorkspace)
     pack $f.f5 -side top -pady 3 
-    frame $f.f6 -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.f6 -side top -pady 3 
-    frame $f.f7 -bg $Gui(activeWorkspace)
-    pack $f.f7 -side top -pady 3 
 
     #-------------------------
     # Frame 1 
     #-------------------------
     set f $parent.f1
-    eval {label $f.lPatient -text "Patient name:"} $Gui(WTA)
-    DevAddLabel $f.lPatName "None"
-    grid $f.lPatient $f.lPatName -padx 5 -pady 5 
-    set MRProstateCare(patientNameLabel) $f.lPatName
-
-
- 
-    #-------------------------
-    # Frame 2 
-    #-------------------------
-    set f $parent.f2
  
     # Build pulldown menu for all Points 
     eval {label $f.lTitle -text "Select a point:"} $Gui(WTA)
@@ -822,41 +831,19 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
         1,0 $f.mbType -fill x -padx 3 -pady 2 
 
     #-------------------------
-    # Frame 3 
+    # Frame 2 
     #-------------------------
-    set f $parent.f3
-
-    eval {label $f.lTitle -text "Realtime scan:"} $Gui(WTA)
- 
-    foreach x "Axial Sagittal Coronal" \
-        text "{Axial} {Sagittal} {Coronal}" {
-        eval {radiobutton $f.r$x -width 7 -text $text \
-            -variable MRProstateCare(realtimeScanOrient) -value $text \
-            -relief raised -offrelief raised -overrelief raised \
-            -command "MRProstateCareSetRealtimeScanOrder" \
-            -selectcolor white} $Gui(WEA)
-    } 
-    $f.rCoronal select
-    $f.rCoronal configure -state normal 
- 
-    grid $f.lTitle -row 0 -column 0 -columnspan 3 -pady 5 -sticky news
-    grid $f.rAxial $f.rSagittal $f.rCoronal -pady 2 -padx 1 
- 
-
-    #-------------------------
-    # Frame 4 
-    #-------------------------
-    set f $parent.f4
+    set f $parent.f2
     foreach x "Top Mid Bot" {
         frame $f.f$x -bg $Gui(activeWorkspace) 
         pack $f.f$x -side top -pady 1 
     }
 
-    set f $parent.f4.fTop
+    set f $parent.f2.fTop
     eval {label $f.lTitle -text "Choose images:"} $Gui(WTA)
     pack $f.lTitle -side top -pady 2 
  
-    set f $parent.f4.fMid
+    set f $parent.f2.fMid
     # Build pulldown menu for volumes of image 1 
     DevAddLabel $f.lVolume "Background:"
 
@@ -882,7 +869,7 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
         0,1 $f.mbType -fill x -padx 3 -pady 1 -anchor w
 
 
-    set f $parent.f4.fBot
+    set f $parent.f2.fBot
     # Build pulldown menu for volumes 
     DevAddLabel $f.lVolume "Foreground:"
 
@@ -909,11 +896,11 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
 
 
     #-------------------------
-    # Frame 5 
+    # Frame 3 
     #-------------------------
-    set f $parent.f5
+    set f $parent.f3
 
-    eval {label $f.lTitle -text "Image display:"} $Gui(WTA)
+    eval {label $f.lTitle -text "Choose display orientation:"} $Gui(WTA)
  
     foreach x "Axial Sagittal Coronal" \
         text "{Axial} {Sagittal} {Coronal}" {
@@ -931,9 +918,9 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
 
 
     #-------------------------
-    # Frame 6 
+    # Frame 4 
     #-------------------------
-    set f $parent.f6
+    set f $parent.f4
  
     eval {label $f.lTitle -text "Scale 3D view:"} $Gui(WTA)
     eval {scale $f.s3D -from 1.0 -to 5.0 -length 115 \
@@ -944,9 +931,9 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
 
 
     #-------------------------
-    # Frame 7 
+    # Frame 5 
     #-------------------------
-    set f $parent.f7
+    set f $parent.f5
     DevAddButton $f.bStart "Start" "set MRProstateCare(navLoop) 1; \
                                     MRProstateCareNavLoop"  10 
     DevAddButton $f.bStop "Stop" "MRProstateCareStopNav"  10 
@@ -975,7 +962,7 @@ proc MRProstateCareSetRealtimeScanOrder {} {
     global MRProstateCare Locator 
 
     set action 0
-    switch $MRProstateCare(realtimeScanOrient) {
+    switch $MRProstateCare(lastRealtimeScanOrient) {
         "Axial" {
             if {$Locator(realtimeScanOrder) != "SI" &&
                 $Locator(realtimeScanOrder) != "IS"} {
@@ -1044,7 +1031,6 @@ proc MRProstateCareFlip {order} {
 
     if {$action} {
         LocatorReorientRealtimeVolume
-        puts "I am called."
     }
 }
 
@@ -1358,6 +1344,15 @@ proc MRProstateCareSelectVolume {which v} {
     MainSlicesSetVolumeAll $layer $v
     MainVolumesSetActive $v
     MainVolumesRender
+}
+
+
+proc MRProstateCareConnect {} {
+    global MRProstateCare 
+
+    LocatorConnect
+    MRProstateCareUpdateConnectionStatus
+
 }
 
 
@@ -1976,8 +1971,13 @@ proc MRProstateCareUpdateConnectionStatus {} {
 
     if {$Locator(connect) == 0} {
         $MRProstateCare(connectStatus) config -text "None" 
+        LocatorUnRegisterCallback \ 
+            MRProstateCareUpdateImageOrientations
+ 
     } else {
         $MRProstateCare(connectStatus) config -text "OK" 
+        LocatorRegisterCallback \ 
+            MRProstateCareUpdateImageOrientations
     }
 }
 
@@ -2211,14 +2211,6 @@ proc MRProstateCareSetCurrentTab {index} {
 proc MRProstateCareUpdateNavigationTab {} {
     global MRProstateCare Volume
 
-    # Update patient name
-    set pname [string trim $MRProstateCare(entry,PName)]
-    if {$pname == ""} {
-        $MRProstateCare(patientNameLabel) config -text None 
-    } else {
-        $MRProstateCare(patientNameLabel) config -text $pname 
-    }
-
     # Inside the Navigation tab update the point list
     $MRProstateCare(gui,displayPointMenu) delete 0 end 
     $MRProstateCare(gui,scanPointMenu) delete 0 end 
@@ -2279,6 +2271,10 @@ proc MRProstateCareUpdateRSA {} {
         set MRProstateCare(yStr) [lindex $coords 2]
     }
 
+    # save the values for reset
+    foreach v "x y z" {
+        set MRProstateCare(${v}Str,original) $MRProstateCare(${v}Str)
+    }
 } 
 
 
