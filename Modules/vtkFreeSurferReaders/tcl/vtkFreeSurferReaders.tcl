@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: vtkFreeSurferReaders.tcl,v $
-#   Date:      $Date: 2006/08/08 14:20:54 $
-#   Version:   $Revision: 1.54 $
+#   Date:      $Date: 2006/08/17 16:52:33 $
+#   Version:   $Revision: 1.55 $
 # 
 #===============================================================================
 # FILE:        vtkFreeSurferReaders.tcl
@@ -328,7 +328,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.54 $} {$Date: 2006/08/08 14:20:54 $}]
+        {$Revision: 1.55 $} {$Date: 2006/08/17 16:52:33 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -5517,7 +5517,7 @@ proc vtkFreeSurferReadersSetQASubjects {} {
         if { $dir != "" } {
             set retval "yes"
             if {!$vtkFreeSurferReaders(QAAlwaysGlob)} {
-                set retval [tk_messageBox -type yesnocancel -title "Subject directory check" -message "About to search in $dir for FreeSurfer subjects. Continue? \nPress Cancel to not ask again and always search.\n\nOperation may hang if greater than 1000 subject dirs are present, can reset dir in vtkFreeSurferReaders QA tab."]
+                set retval [tk_messageBox -parent .tMain -type yesnocancel -title "Subject directory check" -message "About to search in $dir for FreeSurfer subjects. Continue? \nPress Cancel to not ask again and always search.\n\nOperation may hang if greater than 1000 subject dirs are present, can reset dir in vtkFreeSurferReaders QA tab."]
             }
             if {$retval == "cancel"} {
                 set vtkFreeSurferReaders(QAAlwaysGlob) 0
@@ -5957,7 +5957,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set timemsg [join [split $timemsg] "-"]
     # make up the message with single quotes between each one for easy parsing later, 
     # leave out ones on the end as will get empty strings there
-    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.54 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
+    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.55 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
