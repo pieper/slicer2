@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSSurfaceAnnotationReader.cxx,v $
-  Date:      $Date: 2006/08/07 21:06:53 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2006/08/17 17:31:27 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -552,7 +552,7 @@ int vtkFSSurfaceAnnotationReader::ReadEmbeddedColorTable (FILE* annotFile,
       }
       
       // Allocate arrays for our r/g/b values and for our names.
-      rgbValues = (int**) calloc (numColorTableEntries, sizeof(int) );
+      rgbValues = (int**) calloc (numColorTableEntries, sizeof(int*) );
       names = (char**) calloc (numColorTableEntries, sizeof(char*) );
       if (NULL == rgbValues || NULL == names)
       {
