@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSSurfaceAnnotationReader.cxx,v $
-  Date:      $Date: 2006/08/07 21:20:13 $
-  Version:   $Revision: 1.8.2.1.4.1 $
+  Date:      $Date: 2006/08/17 17:46:07 $
+  Version:   $Revision: 1.8.2.1.4.2 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
 Program:   Visualization Toolkit
 Module:    $RCSfile: vtkFSSurfaceAnnotationReader.cxx,v $
 Language:  C++
-Date:      $Date: 2006/08/07 21:20:13 $
-Version:   $Revision: 1.8.2.1.4.1 $
+Date:      $Date: 2006/08/17 17:46:07 $
+Version:   $Revision: 1.8.2.1.4.2 $
 
 =========================================================================*/
 #include <stdio.h>
@@ -545,7 +545,7 @@ int vtkFSSurfaceAnnotationReader::ReadEmbeddedColorTable (FILE* annotFile,
       }
       
       // Allocate arrays for our r/g/b values and for our names.
-      rgbValues = (int**) calloc (numColorTableEntries, sizeof(int) );
+      rgbValues = (int**) calloc (numColorTableEntries, sizeof(int*) );
       names = (char**) calloc (numColorTableEntries, sizeof(char*) );
       if (NULL == rgbValues || NULL == names)
       {
@@ -782,7 +782,7 @@ int vtkFSSurfaceAnnotationReader::ReadExternalColorTable (char* fileName,
   // Allocate our arrays.
   vtkDebugMacro(<< "\nReadExternalColorTable: callocing rgbValues as int** x " << numColorTableEntries << endl);
   
-  rgbValues = (int**) calloc (numColorTableEntries, sizeof(int) );
+  rgbValues = (int**) calloc (numColorTableEntries, sizeof(int*) );
   names = (char**) calloc (numColorTableEntries, sizeof(char*) );
   if (NULL == rgbValues || NULL == names)
   {
