@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.36 $} {$Date: 2006/08/18 19:04:04 $}]
+        {$Revision: 1.1.2.37 $} {$Date: 2006/08/18 21:26:51 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -136,9 +136,6 @@ proc MRProstateCareInit {} {
     set MRProstateCare(patPos)       [lindex $MRProstateCare(patPosList) 0]
 
     set MRProstateCare(currentTab) 1 
-    set MRProstateCare(countTarget) 0
-    set MRProstateCare(countSextant) 0
-    set MRProstateCare(countPenn) 0
     set MRProstateCare(editIndex) -1 
     set MRProstateCare(pointList) "" 
 
@@ -1694,20 +1691,39 @@ proc MRProstateCareAddOrEditPoint {} {
         }
     }
 
-    # remove the old point from the list
-    if {$MRProstateCare(editIndex) >= 0} { 
-        set MRProstateCare(pointList) \
-            [lreplace $MRProstateCare(pointList) \
-            $MRProstateCare(editIndex) \
-            $MRProstateCare(editIndex)]
-    }
-
     set item "$title : ($rsa)"
     set index [lsearch -exact $MRProstateCare(pointList) $item]
     if {$index != -1} { 
         DevErrorWindow "The point is already added in."
         return
     }
+
+
+    # remove the old point from the list
+    set curs [$MRProstateCare(pointListBox) curselection]
+    if {$curs != "" && $curs >= 0} { 
+        # the new point will replace the selected point
+        # in the list box
+        set MRProstateCare(pointList) \
+            [lreplace $MRProstateCare(pointList) $curs $curs]
+    }
+
+    # if the title of the new point is same as one in 
+    # in the list box but their rsa's are different,
+    # the new point will be added and the old one will
+    # be removed.
+    set c 0
+    foreach p $MRProstateCare(pointList) {
+        set t [string trim $title]
+        set i [string first $t $p 0] 
+        if {$i >= 0} {
+            set MRProstateCare(pointList) \
+                [lreplace $MRProstateCare(pointList) $c $c]
+            break
+        }
+        incr c
+    }
+ 
 
     # Keep and sort the new point in the point list
     lappend MRProstateCare(pointList) $item
@@ -2121,21 +2137,13 @@ proc MRProstateCareProcessMouseEvent {x y} {
 
     # One point
     set cat $MRProstateCare(category)
-    set count [incr MRProstateCare(count$cat)]
-
-    set MRProstateCare(entry,Title) $cat
-    append MRProstateCare(entry,Title) "_$count"
-    set MRProstateCare(entry,Coords) "$R $S $A"
-
-    # Keep and sort the point in a list
-    set item "$MRProstateCare(entry,Title) : ($MRProstateCare(entry,Coords))"
-    lappend MRProstateCare(pointList) $item
-    set MRProstateCare(pointList) [lsort -dictionary $MRProstateCare(pointList)]  
-    # Add it into the list box
-    $MRProstateCare(pointListBox) delete 0 end
-    foreach x $MRProstateCare(pointList) {
-        $MRProstateCare(pointListBox) insert end $x 
+    if {$cat != "Sextant"} {
+        set MRProstateCare(entry,Title) $cat
+        append MRProstateCare(entry,Title) "_"
+    } else {
+        set MRProstateCare(entry,Title) "" 
     }
+    set MRProstateCare(entry,Coords) "$R $S $A"
 }
 
 proc MRProstateCareSetCurrentTab {index} {
