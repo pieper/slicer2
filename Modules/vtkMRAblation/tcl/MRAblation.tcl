@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MRAblation.tcl,v $
-#   Date:      $Date: 2006/05/23 21:22:35 $
-#   Version:   $Revision: 1.1.2.10 $
+#   Date:      $Date: 2006/08/18 15:56:22 $
+#   Version:   $Revision: 1.1.2.11 $
 # 
 #===============================================================================
 # FILE:        MRAblation.tcl
@@ -137,7 +137,7 @@ proc MRAblationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.10 $} {$Date: 2006/05/23 21:22:35 $}]
+        {$Revision: 1.1.2.11 $} {$Date: 2006/08/18 15:56:22 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -760,10 +760,14 @@ proc MRAblationCompute {hot} {
         Volume($i,node) SetWindow 50 
         Volume($i,node) SetLevel  25 
 
+        Volume($i,node) AutoThresholdOff
+        Volume($i,node) ApplyThresholdOn
+        Volume($i,node) SetLowerThreshold 39 
+
         MainSlicesSetVolumeAll Fore $i
         MainVolumesSetActive $i
 
-        # set the act volume to the color of FMRI 
+        # set the act volume to the color of reversed rainbow 
         MainVolumesSetParam LutID 6 
 
         MainUpdateMRML
@@ -1014,12 +1018,27 @@ proc MRAblationWatch {} {
     # ge files start wtih I
     set geFiles [glob -nocomplain -directory $MRAblation(imageDir) -type f I.*]
     set noGeFiles [llength $geFiles]
+
+
     # dicom files start wtih a digit 
     # dicom files end wtih IMA 
     # dicom files starts wtih MR 
     # Combine different dicom naming conventions:
-    set dcmFiles [glob -nocomplain -directory $MRAblation(imageDir) -type f {MR.* *.IMA [0-9].*}]
+    set dcm1 [glob -nocomplain -directory $MRAblation(imageDir) -type f {MR.*}]
+    set dcm2 [glob -nocomplain -directory $MRAblation(imageDir) -type f {*.IMA}]
+    set dcm3 [glob -nocomplain -directory $MRAblation(imageDir) -type f {[0-9].*}]
+    set dcmFiles ""
+    if {[llength $dcm1] > 0} {
+        set dcmFiles $dcm1
+    }
+    if {[llength $dcm2] > 0} {
+        set dcmFiles $dcm2
+    }
+    if {[llength $dcm3] > 0} {
+        set dcmFiles $dcm3
+    }
     set noDcmFiles [llength $dcmFiles]
+
  
     if {$noGeFiles > 0} {
         set MRAblation(imageFiles) $geFiles 
