@@ -7,14 +7,18 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageThermalMap.cxx,v $
-  Date:      $Date: 2006/03/23 18:45:38 $
-  Version:   $Revision: 1.1.2.7 $
+  Date:      $Date: 2006/08/18 14:36:59 $
+  Version:   $Revision: 1.1.2.8 $
 
 =========================================================================auto=*/
 #include "vtkImageThermalMap.h"
 #include "vtkObjectFactory.h"
 #include <math.h>
+#ifdef _WIN32
+#include <fstream>   // file I/O
+#else
 #include <fstream.h>   // file I/O
+#endif
 
 //------------------------------------------------------------------------------
 vtkImageThermalMap* vtkImageThermalMap::New()
