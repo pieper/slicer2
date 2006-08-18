@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.35 $} {$Date: 2006/08/18 16:07:39 $}]
+        {$Revision: 1.1.2.36 $} {$Date: 2006/08/18 19:04:04 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -156,7 +156,8 @@ proc MRProstateCareInit {} {
     set MRProstateCare(portSet) 0
     set MRProstateCare(preScale) 1 
     set MRProstateCare(currentPoint) none 
-
+    set MRProstateCare(lastRealtimeScanOrient) "Coronal" 
+ 
 
     # Creates bindings
     MRProstateCareCreateBindings 
@@ -1096,6 +1097,7 @@ proc MRProstateCareNavLoop {} {
         # draw a ball for the point in 3D view
         # write the point name in 3D view
         set i 0 
+        set p $MRProstateCare(currentPoint)
         set i2 [string first ":" $p]
         set title [string range $p $i [expr $i2-1]] 
         set title [string trim $title]
