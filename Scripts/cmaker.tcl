@@ -147,11 +147,13 @@ set VTK_ARG9 "-DVTK_SRC_DIR:PATH=$VTK_SRC_DIR"
 regsub -all {\\} $SLICER_HOME / slicer_home
 set baseModulePath $slicer_home/Modules
 set modulePaths [glob -nocomplain $baseModulePath/vtk*]
+regsub -all {\\} $modulePaths / modulePaths 
 if { [info exists env(SLICER_MODULES)] } {
     foreach dir $env(SLICER_MODULES) {
         eval lappend modulePaths [glob -nocomplain $dir/vtk*]
     }
 }
+
 
 set fd [open "${slicer_home}/DartTestfile.txt" "w"]
 puts $fd "SUBDIRS(Base/builds/$env(BUILD))"
@@ -170,11 +172,15 @@ foreach dir $modulePaths {
     # if it's not the custom one (the example) 
     # but starts with vtk and has some c++ code, 
     # and has a cxx/CMakeLists.txt file append it to the list of targets
+    set cxxDir [file join $dir cxx]
+    set localFile [file join $cxxDir CMakeListsLocal.txt]
+    set cxxFiles [file join $cxxDir *.cxx]
+
     if { [string match "vtk*" $moduleName] 
            && ![string match "*CustomModule*" $moduleName] 
-           && [file exists $dir/cxx] 
-           && [file exists $dir/cxx/CMakeListsLocal.txt]
-           && [llength [glob -nocomplain $dir/cxx/*.cxx]] > 0 } {
+           && [file exists $cxxDir] 
+           && [file exists $localFile]
+           && [llength [glob -nocomplain $cxxFiles]] > 0 } {
 
         #
         # if there's a cmaker_local.tcl file, it means
