@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.34 $} {$Date: 2006/08/17 18:21:37 $}]
+        {$Revision: 1.1.2.35 $} {$Date: 2006/08/18 16:07:39 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -213,13 +213,7 @@ proc MRProstateCareBuildGUI {} {
     # Refer to the documentation for details on the syntax.
     #
     set help "
-    The MRProstateCare module is an example for developers.  It shows how to add a module 
-    to the Slicer.  The source code is in slicer2/Modules/vtkMRProstateCare/tcl/MRProstateCare.tcl.
-    <P>
-    Description by tab:
-    <BR>
-    <UL>
-    <LI><B>Tons o' Stuff:</B> This tab is a demo for developers.
+    The MRProstateCare module is developed to guide the medical procedure of prostate biopsy in the open magnet enviroment at MRT. 
     "
     regsub -all "\n" $help {} help
     MainHelpApplyTags MRProstateCare $help
@@ -307,7 +301,7 @@ proc MRProstateCareBuildGUI {} {
     set MRProstateCare(entry,PDate) $var 
  
     set f $fTemplate.f3
-    eval {label $f.l -text "RSA coords of the corner points"} $Gui(WTA)
+    eval {label $f.l -text "RSA coords of template corners:"} $Gui(WTA)
     grid $f.l -row 0 -column 0 -columnspan 3 -pady 10 -sticky news
 
     foreach x "AR PR PL AL" text \
@@ -324,9 +318,9 @@ proc MRProstateCareBuildGUI {} {
     }
 
     set f $fTemplate.f4
-    eval {label $f.l -text "Position & Orientation"} $Gui(WTA)
+    eval {label $f.l -text "Locator position & orientation:"} $Gui(WTA)
     frame $f.f -bg $Gui(activeWorkspace)
-    pack $f.l $f.f -side top -pady 3 -padx $Gui(pad)
+    pack $f.l $f.f -side top -pady 5 -padx $Gui(pad)
 
     set f $f.f
     eval {label $f.l -text ""} $Gui(WLA)
@@ -637,6 +631,9 @@ proc MRProstateCareUpdateImageOrientations {} {
     # in the orientation where the realtime was scanned.
     set MRProstateCare(imageDisplayOrient) \
         $MRProstateCare(lastRealtimeScanOrient)
+
+    set MRProstateCare(displayRSA) $MRProstateCare(lastScanRSA) 
+ 
 }
 
  
@@ -730,6 +727,11 @@ proc MRProstateCareSetScannerCommand {cmd} {
 
         set MRProstateCare(lastRealtimeScanOrient) \
             $MRProstateCare(realtimeScanOrient)
+
+        set MRProstateCare(lastScanRSA) "" 
+        lappend MRProstateCare(lastScanRSA) $r 
+        lappend MRProstateCare(lastScanRSA) $s 
+        lappend MRProstateCare(lastScanRSA) $a 
     }   
 
     Locator(Flashpoint,src) OperateScanner $cmd 
@@ -1079,8 +1081,7 @@ proc MRProstateCareNavLoop {} {
     set vname [Volume($MRProstateCare(nextVolumeID),node) GetName]
     if {$vname != "Realtime"} {
         # set right slice to display
-        set p $MRProstateCare(currentPoint)
-        set coords [MRProstateCareGetRSAFromPoint $p] 
+        set coords $MRProstateCare(displayRSA) 
 
         # Axial slice changes as S
         # Saggital slice changes as R
@@ -1094,11 +1095,6 @@ proc MRProstateCareNavLoop {} {
 
         # draw a ball for the point in 3D view
         # write the point name in 3D view
-        set MRProstateCare(currentPointRAS) ""
-        lappend MRProstateCare(currentPointRAS) [lindex $coords 0]
-        lappend MRProstateCare(currentPointRAS) [lindex $coords 2]
-        lappend MRProstateCare(currentPointRAS) [lindex $coords 1]
-
         set i 0 
         set i2 [string first ":" $p]
         set title [string range $p $i [expr $i2-1]] 
@@ -1201,9 +1197,9 @@ proc MRProstateCareHidePoint {} {
 proc MRProstateCareShowPoint {title} {
     global MRProstateCare View
 
-    set rb [lindex $MRProstateCare(currentPointRAS) 0]
-    set ab [lindex $MRProstateCare(currentPointRAS) 1]
-    set sb [lindex $MRProstateCare(currentPointRAS) 2]
+    set rb [lindex $MRProstateCare(displayRSA) 0]
+    set ab [lindex $MRProstateCare(displayRSA) 2]
+    set sb [lindex $MRProstateCare(displayRSA) 1]
  
     set pos [expr   $View(fov) * 0.45]
     set neg [expr - $View(fov) * 0.45]
@@ -1233,63 +1229,6 @@ proc MRProstateCareShowPoint {title} {
 
     pointActor SetVisibility 1 
     pointActor SetPosition $rb $ab $sb  
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC MRProstateCareCreateFiducial 
-# Make a fiducial at the tip of the current point.  Create a prostate list if it 
-# doesn't already exist.  
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc MRProstateCareCreateFiducial {} {
-    global Locator MRProstateCare View
-    if { ![FiducialsCheckListExistence "Prostate"] } {
-        FiducialsCreateFiducialsList default "Prostate"
-    }
-
-    set max [expr $View(fov) / 2]
-    set r [lindex $MRProstateCare(currentPointRAS) 0]
-    set a [lindex $MRProstateCare(currentPointRAS) 1]
-    set s [lindex $MRProstateCare(currentPointRAS) 2]
-    switch $MRProstateCare(imageDisplayOrient) {
-        "Axial" {
-            set s $max 
-        }
-        "Sagittal" {
-            set r $max 
-        }
-        "Coronal" {
-            set a -$max 
-        }
-    }
-    set pid [FiducialsCreatePointFromWorldXYZ "Prostate" $r $a $s]
-    Point($pid,node) SetOrientationWXYZFromMatrix4x4 Locator(transverseMatrix)
-    FiducialsUpdateMRML
-}
-
-
-#-------------------------------------------------------------------------------
-# .PROC MRProstateCareDeleteFiducial 
-# Delete last fiducial on prostate list if it exists 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc MRProstateCareDeleteFiducial {} {
-
-    if { ![FiducialsCheckListExistence "Prostate" fid] } {
-        return
-    }
-
-    if { [llength $::Fiducials($fid,pointIdList)] == 0 } {
-        return
-    }
-
-    set pid [lindex $::Fiducials($fid,pointIdList) end]
-
-    FiducialsDeletePoint $fid $pid
-    FiducialsUpdateMRML
 }
 
 
@@ -2271,9 +2210,13 @@ proc MRProstateCareUpdateRSA {} {
         set MRProstateCare(yStr) [lindex $coords 2]
     }
 
-    # save the values for reset
-    foreach v "x y z" {
+    # save values
+    set MRProstateCare(displayRSA) ""
+    set MRProstateCare(lastScanRSA) ""
+    foreach v "x z y" {
         set MRProstateCare(${v}Str,original) $MRProstateCare(${v}Str)
+        lappend MRProstateCare(displayRSA) $MRProstateCare(${v}Str)
+        lappend MRProstateCare(lastScanRSA) $MRProstateCare(${v}Str)
     }
 } 
 
