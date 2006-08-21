@@ -791,14 +791,14 @@ int Serve(fd)
                             sOrient[2],
                             sOrient[3], 
                             sOrient[4]);
-
-
-                    fprintf(stderr, "cmd to RTC: %s\n", sCmdStr);
-
-                    /* send command(s) to
-                       the realtime control process of the scanner */
-                    system(sCmdStr);
                 }
+
+                fprintf(stderr, "cmd to RTC: %s\n", sCmdStr);
+
+                /* send command(s) to
+                   the realtime control process of the scanner */
+                system(sCmdStr);
+
                 break;
 
             default:
