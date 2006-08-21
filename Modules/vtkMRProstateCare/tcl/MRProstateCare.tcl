@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.37 $} {$Date: 2006/08/18 21:26:51 $}]
+        {$Revision: 1.1.2.38 $} {$Date: 2006/08/21 21:21:26 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -316,7 +316,7 @@ proc MRProstateCareBuildGUI {} {
     }
 
     set f $fTemplate.f4
-    eval {label $f.l -text "Locator position & orientation:"} $Gui(WTA)
+    eval {label $f.l -text "Current locator position & orientation:"} $Gui(WTA)
     frame $f.f -bg $Gui(activeWorkspace)
     pack $f.l $f.f -side top -pady 5 -padx $Gui(pad)
 
@@ -621,6 +621,8 @@ proc MRProstateCareBuildGUIForScan {parent} {
 proc MRProstateCareUpdateImageOrientations {} {
     global MRProstateCare View 
 
+    puts "haiying ........"
+
     # After each realtime scan, display the realtime 
     # image in Slicer in right orientation.
     MRProstateCareSetRealtimeScanOrder
@@ -733,7 +735,24 @@ proc MRProstateCareSetScannerCommand {cmd} {
     }   
 
     Locator(Flashpoint,src) OperateScanner $cmd 
- 
+    MRProstateCareUpdateRealtimeScanOrder
+}
+
+
+proc MRProstateCareUpdateRealtimeScanOrder {} {
+    global MRProstateCare Locator 
+
+    switch $MRProstateCare(lastRealtimeScanOrient) {
+        "Axial" {
+            set Locator(realtimeScanOrder) "SI"
+        }
+        "Sagittal" {
+            set Locator(realtimeScanOrder) "LR"
+        }
+        "Coronal" {
+            set Locator(realtimeScanOrder) "AP"
+        }
+    }
 }
 
 
@@ -1928,13 +1947,8 @@ proc MRProstateCareUpdateConnectionStatus {} {
 
     if {$Locator(connect) == 0} {
         $MRProstateCare(connectStatus) config -text "None" 
-        LocatorUnRegisterCallback \ 
-            MRProstateCareUpdateImageOrientations
- 
     } else {
         $MRProstateCare(connectStatus) config -text "OK" 
-        LocatorRegisterCallback \ 
-            MRProstateCareUpdateImageOrientations
     }
 }
 
