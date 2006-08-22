@@ -70,7 +70,13 @@ puts stderr "SLICER_HOME is $::SLICER_HOME"
 # changes in the "Files to test if library has already been built"
 # section below, or genlib will happily build the library again.
 
-set ::CMAKE_TAG "CMake-2-4-2"
+if { $::env(BUILD) == "darwin-x86" } {
+    set ::CMAKE_TAG "CMake-2-4-2"
+} elseif { $::tcl_platform(os) == "Darwin" && $::tcl_platform(osVersion) >= 8 } {
+    set ::CMAKE_TAG "CMake-2-4-2"
+} else {
+    set ::CMAKE_TAG "CMake-2-0-6"
+}
 set ::TEEM_TAG "Teem-1-9-0-patches"
 set ::VTK_TAG "Slicer-2-6"
 set ::ITK_TAG "Slicer-2-6"
