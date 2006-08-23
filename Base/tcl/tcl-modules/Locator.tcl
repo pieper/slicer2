@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2006/08/21 20:10:55 $
-#   Version:   $Revision: 1.38.12.2.2.8 $
+#   Date:      $Date: 2006/08/23 19:06:12 $
+#   Version:   $Revision: 1.38.12.2.2.9 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -89,7 +89,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.8 $} {$Date: 2006/08/21 20:10:55 $}]
+        {$Revision: 1.38.12.2.2.9 $} {$Date: 2006/08/23 19:06:12 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -165,6 +165,9 @@ proc LocatorInit {} {
 
     set Locator(bellCount) 0
     set Locator(realtimeScanOrder) "AP" 
+    set Locator(realtimeRSA) "0 0 0" 
+    set Locator(nextRealtimeImageInfo) "" 
+ 
 }
 
 #-------------------------------------------------------------------------------
@@ -1913,6 +1916,28 @@ proc LocatorLoopFlashpoint {} {
         # Force an update so I can read the new matrix
         Locator(Flashpoint,src) Modified
         Locator(Flashpoint,src) Update
+
+        # Realtime image id set by user
+        # then set the right scan order for
+        # the realtime image
+        set rtid    [Locator(Flashpoint,src) GetRealtimeImageID]
+        if {$Locator(nextRealtimeImageInfo) != ""} {
+            set id    [lindex $Locator(nextRealtimeImageInfo) 0]
+            if {$rtid == $id} {
+                set r [lindex $Locator(nextRealtimeImageInfo) 2]
+                set s [lindex $Locator(nextRealtimeImageInfo) 3]
+                set a [lindex $Locator(nextRealtimeImageInfo) 4]
+                set Locator(realtimeRSA) "$r $s $a" 
+
+                set order [lindex $Locator(nextRealtimeImageInfo) 1]
+                switch $order {
+                    1 {set Locator(realtimeScanOrder) "IS"} 
+                    2 {set Locator(realtimeScanOrder) "LR"}
+                    3 {set Locator(realtimeScanOrder) "AP"}
+                }
+            }
+        }
+
     
         # Update patient position
         set Locator(tblPos)   [lindex $Locator(tblPosList) \
