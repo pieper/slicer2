@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDisplayTracts.cxx,v $
-  Date:      $Date: 2006/08/15 16:37:27 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2006/08/23 15:39:47 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 #include "vtkDisplayTracts.h"
@@ -169,10 +169,9 @@ void vtkDisplayTracts::SetMapperVisibility(vtkPolyDataMapper *currMapper)
 void vtkDisplayTracts::SetClipping(int value)
 {
 
-  vtkCollection *currStreamlines, *currTubeFitlers;
+  vtkCollection *currStreamlines;
   vtkCollection *currTransFilters, *currClippedStreamlines;
   vtkHyperStreamline *currStreamline;
-  vtkTubeFilter2 *currTubeFilter;
   vtkTransformPolyDataFilter *currTransFilter;
 #if (VTK_MAJOR_VERSION >= 5)
    vtkPolyDataAlgorithm *clippedStreamline;
@@ -297,7 +296,6 @@ void vtkDisplayTracts::ApplyUserSettingsToGraphicsObject(int index)
 {
   vtkPolyDataMapper *currMapper;
   vtkActor *currActor;
-  vtkTubeFilter2 *currTubeFilter;
   vtkCollection *currTransFilters, *currTubeFilters;
   currActor = (vtkActor *) this->Actors->GetItemAsObject(index);
   currMapper = (vtkPolyDataMapper *) this->Mappers->GetItemAsObject(index);
@@ -575,7 +573,6 @@ void vtkDisplayTracts::CreateGroupObjects()
 {
   int numGroups, numStreamlinesInGroups;
   int numStreamlines;
-  vtkCollection *lastStreamlinesGroup;
   #if (VTK_MAJOR_VERSION >= 5)
     vtkPolyDataAlgorithm *currClippedStreamline;
   #else
@@ -736,10 +733,8 @@ void vtkDisplayTracts::CreateGraphicsObjects()
   vtkTransform *currTransform;
   vtkRenderer *currRenderer;
   vtkTransformPolyDataFilter *currTransFilter;
-  vtkTubeFilter2 *currTubeFilter;
 
   vtkCollection *currStreamlines;
-  vtkCollection *currTubeFilters;
   vtkCollection *currTransFilters;
   vtkAppendPolyData *currAppendFilter;
 
