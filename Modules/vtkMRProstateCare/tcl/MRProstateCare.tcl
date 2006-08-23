@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.41 $} {$Date: 2006/08/23 20:01:42 $}]
+        {$Revision: 1.1.2.42 $} {$Date: 2006/08/23 20:20:39 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -884,7 +884,7 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     #-------------------------
     set f $parent.f3
 
-    eval {label $f.lTitle -text "Choose display orientation:"} $Gui(WTA)
+    eval {label $f.lTitle -text "Current display orientation:"} $Gui(WTA)
  
     foreach x "Axial Sagittal Coronal" \
         text "{Axial} {Sagittal} {Coronal}" {
@@ -892,10 +892,10 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
             -variable MRProstateCare(imageDisplayOrient) -value $text \
             -relief raised -offrelief raised -overrelief raised \
             -command "" \
+            -state disabled \
             -selectcolor white} $Gui(WEA)
     } 
     $f.rCoronal select
-    $f.rCoronal configure -state normal 
 
     grid $f.lTitle -row 0 -column 0 -columnspan 3 -pady 5 -sticky news
     grid $f.rAxial $f.rSagittal $f.rCoronal -pady 2 -padx 1 
