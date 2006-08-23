@@ -221,8 +221,8 @@ if { ![file exists $SLICER_LIB] } {
 if {$isWindows} {
     if {![file exists $::CMAKE]} {
         cd $SLICER_HOME
-        runcmd curl -k -O http://www.na-mic.org/Slicer/Download/External/Slicer2.6-Lib-win32.zip
-        runcmd unzip ./Slicer2.6-Lib-win32.zip
+        runcmd curl -k -O http://www.na-mic.org/Slicer/Download/External/Slicer2.7-Lib-win32.zip
+        runcmd unzip ./Slicer2.7-Lib-win32.zip
     }
 }
 
@@ -255,6 +255,7 @@ if { ![file exists $::CMAKE] } {
 
         cd $::CMAKE_PATH
         runcmd $SLICER_LIB/CMake/bootstrap
+        eval runcmd $::MAKE
     }
 }
 
