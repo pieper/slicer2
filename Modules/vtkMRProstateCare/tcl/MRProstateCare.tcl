@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.42 $} {$Date: 2006/08/23 20:20:39 $}]
+        {$Revision: 1.1.2.43 $} {$Date: 2006/08/23 21:29:37 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -780,8 +780,8 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     pack $f.f2 -side top -pady 3 
     frame $f.f3 -bg $Gui(activeWorkspace) -relief groove -bd 2 
     pack $f.f3 -side top -pady 3 
-    frame $f.f4 -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.f4 -side top -pady 3 
+#    frame $f.f4 -bg $Gui(activeWorkspace) -relief groove -bd 2 
+#    pack $f.f4 -side top -pady 3 
     frame $f.f5 -bg $Gui(activeWorkspace)
     pack $f.f5 -side top -pady 3 
 
@@ -901,6 +901,7 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     grid $f.rAxial $f.rSagittal $f.rCoronal -pady 2 -padx 1 
 
 
+if {0} {
     #-------------------------
     # Frame 4 
     #-------------------------
@@ -912,6 +913,7 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
         -resolution 1.0} $Gui(WSA) 
 
     grid $f.lTitle $f.s3D -padx 2 -pady 1 
+}
 
 
     #-------------------------
