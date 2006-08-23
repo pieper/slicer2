@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageRealtimeScan.h,v $
-  Date:      $Date: 2006/08/10 20:52:28 $
-  Version:   $Revision: 1.15.12.3.2.3 $
+  Date:      $Date: 2006/08/23 19:08:26 $
+  Version:   $Revision: 1.15.12.3.2.4 $
 
 =========================================================================auto=*/
 // .NAME vtkImageRealtimeScan - Get a realtime image from the scanner.
@@ -48,7 +48,9 @@
 #define    LEN_IMG_PATPOS   2
 #define OFFSET_IMG_IMANUM   OFFSET_IMG_PATPOS + LEN_IMG_PATPOS
 #define    LEN_IMG_IMANUM   4 
-#define OFFSET_IMG_RECON    OFFSET_IMG_IMANUM + LEN_IMG_IMANUM
+#define OFFSET_IMG_ID       OFFSET_IMG_IMANUM + LEN_IMG_IMANUM
+#define    LEN_IMG_ID       4 
+#define OFFSET_IMG_RECON    OFFSET_IMG_ID + LEN_IMG_ID
 #define    LEN_IMG_RECON    4 
 #define OFFSET_IMG_MINPIX   OFFSET_IMG_RECON + LEN_IMG_RECON
 #define    LEN_IMG_MINPIX   2
@@ -99,6 +101,7 @@ public:
     vtkGetMacro(MaxValue, short);
     vtkGetMacro(Recon, long);
     vtkGetMacro(ImageNum, long);
+    vtkGetMacro(RealtimeImageID, long);
     
     vtkGetMacro(Test, int);
     vtkSetMacro(Test, int);
@@ -160,6 +163,8 @@ protected:
     // plus Px, Py and Pz
     // such as "1 Px Py Pz"
     float ScanOrientation[5];
+
+    long RealtimeImageID;
 };
 
 

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageRealtimeScan.cxx,v $
-  Date:      $Date: 2006/08/17 21:24:23 $
-  Version:   $Revision: 1.15.8.3.2.5 $
+  Date:      $Date: 2006/08/23 19:10:25 $
+  Version:   $Revision: 1.15.8.3.2.6 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -56,6 +56,7 @@ vtkImageRealtimeScan::vtkImageRealtimeScan()
     MinValue = MaxValue = 0;
     Recon = 0;
     ImageNum = 0;
+    RealtimeImageID = 33000;
 
     // test byte order
     short int word = 0x0001;
@@ -591,6 +592,8 @@ void vtkImageRealtimeScan::ExecuteInformation()
         patPos = ntohs(patPos);
         bcopy(&buf[OFFSET_IMG_IMANUM],  &(this->ImageNum), LEN_IMG_IMANUM);
         this->ImageNum = ntohl(this->ImageNum);
+        bcopy(&buf[OFFSET_IMG_ID],  &(this->RealtimeImageID), LEN_IMG_ID);
+        this->RealtimeImageID = ntohl(this->RealtimeImageID);
         bcopy(&buf[OFFSET_IMG_RECON],   &(this->Recon),    LEN_IMG_RECON);
         this->Recon = ntohl(this->Recon);
         bcopy(&buf[OFFSET_IMG_MINPIX],  &(this->MinValue), LEN_IMG_MINPIX);
