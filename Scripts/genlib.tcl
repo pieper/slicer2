@@ -247,7 +247,7 @@ if { ![file exists $::CMAKE] } {
 
 
     if {$isWindows} {
-        puts stderr "Slicer2.6-Lib-win32.zip did not download and unzip correctly."
+        puts stderr "Slicer2.7-Lib-win32.zip did not download and unzip correctly."
         exit
     } else {
         eval "runcmd $::CVS $CVS_FLAGS :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login"
@@ -268,7 +268,7 @@ if { ![file exists $::CMAKE] } {
 if { ![file exists $::TCL_TEST_FILE] } {
 
     if {$isWindows} {
-        puts stderr "Slicer2.6-Lib-win32.zip did not download and unzip correctly."
+        puts stderr "Slicer2.7-Lib-win32.zip did not download and unzip correctly."
         exit
     }
 
