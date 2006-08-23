@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.38 $} {$Date: 2006/08/21 21:21:26 $}]
+        {$Revision: 1.1.2.39 $} {$Date: 2006/08/23 19:04:36 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -154,7 +154,9 @@ proc MRProstateCareInit {} {
     set MRProstateCare(preScale) 1 
     set MRProstateCare(currentPoint) none 
     set MRProstateCare(lastRealtimeScanOrient) "Coronal" 
- 
+
+    set MRProstateCare(realtimeImageID) 33000 
+
 
     # Creates bindings
     MRProstateCareCreateBindings 
@@ -679,12 +681,12 @@ proc MRProstateCareChangeRSA {v} {
 proc MRProstateCareSetScannerCommand {cmd} {
     global MRProstateCare Locator 
 
-    if {$cmd == 2 && $MRProstateCare(currentPoint) == "none"} {
+    if {$cmd != 0 && $MRProstateCare(currentPoint) == "none"} {
             DevErrorWindow "Please select a valid point for scanning."
             return
     } 
 
-    if {$cmd == 2} {
+    if {$cmd != 0} {
         # validate values of r, s, and a
         foreach ii "x y z" {
             if {[ValidateInt $MRProstateCare(${ii}Str)] == 0 &&
@@ -698,6 +700,7 @@ proc MRProstateCareSetScannerCommand {cmd} {
         set r $MRProstateCare(xStr)
         set s $MRProstateCare(zStr)
         set a $MRProstateCare(yStr)
+
 
         # patient postition: 
         # 0 = head first, supine
@@ -723,10 +726,14 @@ proc MRProstateCareSetScannerCommand {cmd} {
             "Coronal" {set or 3}
         }
         Locator(Flashpoint,src) SetScanOrientation \
-            $or [lindex $pxyz 0] [lindex $pxyz 1] [lindex $pxyz 2] 0 
+            $or [lindex $pxyz 0] [lindex $pxyz 1] [lindex $pxyz 2] $MRProstateCare(realtimeImageID) 
 
+        set idInfo "$MRProstateCare(realtimeImageID) $or $r $s $a"
+        set Locator(nextRealtimeImageInfo) $idInfo
         set MRProstateCare(lastRealtimeScanOrient) \
             $MRProstateCare(realtimeScanOrient)
+
+        incr MRProstateCare(realtimeImageID)
 
         set MRProstateCare(lastScanRSA) "" 
         lappend MRProstateCare(lastScanRSA) $r 
@@ -735,7 +742,7 @@ proc MRProstateCareSetScannerCommand {cmd} {
     }   
 
     Locator(Flashpoint,src) OperateScanner $cmd 
-    MRProstateCareUpdateRealtimeScanOrder
+    # MRProstateCareUpdateRealtimeScanOrder
 }
 
 

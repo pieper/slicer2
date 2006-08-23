@@ -51,7 +51,9 @@ int DBGALL = 0;
 #define LEN_IMG_PATPOS      2 
 #define OFFSET_IMG_IMANUM   OFFSET_IMG_PATPOS + LEN_IMG_PATPOS
 #define LEN_IMG_IMANUM      4 
-#define OFFSET_IMG_RECON    OFFSET_IMG_IMANUM + LEN_IMG_IMANUM
+#define OFFSET_IMG_ID       OFFSET_IMG_IMANUM + LEN_IMG_IMANUM 
+#define LEN_IMG_ID          4
+#define OFFSET_IMG_RECON    OFFSET_IMG_ID + LEN_IMG_ID
 #define LEN_IMG_RECON       4 
 #define OFFSET_IMG_MINPIX   OFFSET_IMG_RECON + LEN_IMG_RECON
 #define LEN_IMG_MINPIX      2 
@@ -351,7 +353,7 @@ int Serve(fd)
     float px = 0, py=0, pz=0, pnx=0, pny=0, pnz=0, ptx=0, pty=0, ptz=0;
     char cmdname[6][20];
 
-long  myid;
+    long imageID;
 
     /* scanning */
     int sCmd = -1;
@@ -548,7 +550,9 @@ long  myid;
                     return -1;
                 }
 
+                /*
                 fprintf(stderr, "imageIndex = %d\n", imageIndex);
+                */
 
                 /* Read header data 
                  */
@@ -584,15 +588,12 @@ long  myid;
                         xyz[6], xyz[7], xyz[8]);
 
 
-
-                /* Patient, Table position */
-                status = (int)mror_hdrdata(ibuf, MROR_HDR_WS_USRVAR0_OFFSET, MROR_HDR_WS_USRVAR0_LEN, &myid);
+                /* Realtime image id */
+                status = (int)mror_hdrdata(ibuf, MROR_HDR_WS_USRVAR0_OFFSET, MROR_HDR_WS_USRVAR0_LEN, &imageID);
                 if (status)
                 {
                     fprintf(stderr, "2. Failed read hdr.\n");
                 }
-                fprintf(stderr, "myid = %d\n", myid);
-
 
                 /* Patient, Table position */
                 status = (int)mror_hdrdata(ibuf, MROR_HDR_CONT_WSID_OFFSET, MROR_HDR_CONT_WSID_LEN, &wsid);
@@ -676,6 +677,7 @@ long  myid;
                 bcopy(&patpos,  &buf[OFFSET_IMG_PATPOS ], LEN_IMG_PATPOS);
                 bcopy(&recon,   &buf[OFFSET_IMG_RECON  ], LEN_IMG_RECON);
                 bcopy(&imanum,  &buf[OFFSET_IMG_IMANUM ], LEN_IMG_IMANUM);
+                bcopy(&imageID, &buf[OFFSET_IMG_ID     ], LEN_IMG_ID);
                 bcopy(&minpix,  &buf[OFFSET_IMG_MINPIX ], LEN_IMG_MINPIX);
                 bcopy(&maxpix,  &buf[OFFSET_IMG_MAXPIX ], LEN_IMG_MAXPIX);
                 bcopy(dim,      &buf[OFFSET_IMG_DIM    ], LEN_IMG_DIM);
@@ -795,6 +797,7 @@ long  myid;
                         break;
 
                     case 1:
+                    case 2:
                         /* Set a unique id for the realtime image.
                            We use this id to display this image in 3D Slicer with
                            right orientation.*/
@@ -805,33 +808,24 @@ long  myid;
                         /* fprintf(stderr, "cmd to RTC: %s\n", sCmdStr); */
                         system(sCmdStr);
 
-                        /* start the scanner */
-                        strcpy(sCmdStr, 
-                           "echo \"cmd start\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE");
-                        system(sCmdStr);
-                        break;   
-
-                    case 2: 
-                        sprintf(sCmdStr,
-                            "echo %s 0 %d\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE",
-                            "\"wsivar",
-                            (int)sOrient[4]);
-                        /* fprintf(stderr, "cmd to RTC: %s\n", sCmdStr); */
-                        system(sCmdStr);
-
-                        /* to scan a realtime slice */  
+                        /* to scan a realtime slice */
                         n = (int)sOrient[0] - 1;
- 
-                        sprintf(sCmdStr, 
-                            "echo %s %s %f %f %f 0.0\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE", 
+                        sprintf(sCmdStr,
+                            "echo %s %s %f %f %f 0.0\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE",
                             "\"orthogonal",
                             sOrientNames[n],
                             sOrient[1],
                             sOrient[2],
                             sOrient[3]);
-
-                        /* fprintf(stderr, "cmd to RTC: %s\n", sCmdStr); */
                         system(sCmdStr);
+
+                        if (sCmd == 1)
+                        {
+                            /* start the scanner */
+                            strcpy(sCmdStr,
+                               "echo \"cmd start\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE");
+                            system(sCmdStr);
+                        }
                         break;
                 }
                 break;
