@@ -223,6 +223,7 @@ if {$isWindows} {
         cd $SLICER_HOME
         runcmd curl -k -O http://www.na-mic.org/Slicer/Download/External/Slicer2.7-Lib-win32.zip
         runcmd unzip ./Slicer2.7-Lib-win32.zip
+    runcmd chmod -R 777 ./Lib/win32/CMake-build/bin
     }
 }
 
