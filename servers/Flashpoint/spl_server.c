@@ -351,6 +351,8 @@ int Serve(fd)
     float px = 0, py=0, pz=0, pnx=0, pny=0, pnz=0, ptx=0, pty=0, ptz=0;
     char cmdname[6][20];
 
+long  myid;
+
     /* scanning */
     int sCmd = -1;
     float sOrient[5];
@@ -558,6 +560,8 @@ int Serve(fd)
                    mrt_pixdata_ptr(ibuf,img,&xres,&yres) xres, yres int*, ibuf,img*
                  */
 
+
+
                 /* Corner points */
                 status = (int)mror_hdrdata(ibuf, MROR_HDR_CORNER_PT_OFFSET, MROR_HDR_CORNER_PT_LEN, xyz);
                 // Added by Emese
@@ -581,6 +585,14 @@ int Serve(fd)
 
 
 
+                /* Patient, Table position */
+                status = (int)mror_hdrdata(ibuf, MROR_HDR_WS_USRVAR0_OFFSET, MROR_HDR_WS_USRVAR0_LEN, &myid);
+                if (status)
+                {
+                    fprintf(stderr, "2. Failed read hdr.\n");
+                }
+                fprintf(stderr, "myid = %d\n", myid);
+
 
                 /* Patient, Table position */
                 status = (int)mror_hdrdata(ibuf, MROR_HDR_CONT_WSID_OFFSET, MROR_HDR_CONT_WSID_LEN, &wsid);
@@ -601,12 +613,12 @@ int Serve(fd)
                 for (i = 0; i<9; i++)
                     ras[i] *=  10.0;    
 
+               
                 if (DBG && DBGALL) fprintf(stderr, 
                         "RAS: %6.2f %6.2f %6.2f, %6.2f %6.2f %6.2f, %6.2f %6.2f %6.2f\n",
                         ras[0], ras[1], ras[2], ras[3], ras[4], ras[5],
                         ras[6], ras[7], ras[8]);
                 if (DBG) fprintf(stderr, "patpos = %d, tblpos=%d\n", patpos, tblpos);
-
 
 
                 /* Read dimensions */
@@ -771,34 +783,57 @@ int Serve(fd)
                 }
 
                 memset(sCmdStr, 0, 300);
-                if (sCmd == 0) {
-                    /* stop the scanner */
-                    strcpy(sCmdStr, 
+                switch(sCmd)
+                {
+                    case 0:
+                        /* stop the scanner */
+                        strcpy(sCmdStr, 
                            "echo \"cmd stop\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE");
-                } else if (sCmd == 1) {
-                    /* start the scanner */
-                    strcpy(sCmdStr, 
+                        /* send command(s) to
+                           the realtime control process of the scanner */
+                        system(sCmdStr);
+                        break;
+
+                    case 1:
+                        /* Set a unique id for the realtime image.
+                           We use this id to display this image in 3D Slicer with
+                           right orientation.*/
+                        sprintf(sCmdStr,
+                            "echo %s 0 %d\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE",
+                            "\"wsivar",
+                            (int)sOrient[4]);
+                        /* fprintf(stderr, "cmd to RTC: %s\n", sCmdStr); */
+                        system(sCmdStr);
+
+                        /* start the scanner */
+                        strcpy(sCmdStr, 
                            "echo \"cmd start\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE");
-                } else {
-                    /* to scan a realtime slice */  
-                    n = (int)sOrient[0] - 1;
+                        system(sCmdStr);
+                        break;   
+
+                    case 2: 
+                        sprintf(sCmdStr,
+                            "echo %s 0 %d\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE",
+                            "\"wsivar",
+                            (int)sOrient[4]);
+                        /* fprintf(stderr, "cmd to RTC: %s\n", sCmdStr); */
+                        system(sCmdStr);
+
+                        /* to scan a realtime slice */  
+                        n = (int)sOrient[0] - 1;
  
-                    sprintf(sCmdStr, 
-                            "echo %s %s %f %f %f %f\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE", 
+                        sprintf(sCmdStr, 
+                            "echo %s %s %f %f %f 0.0\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE", 
                             "\"orthogonal",
                             sOrientNames[n],
                             sOrient[1],
                             sOrient[2],
-                            sOrient[3], 
-                            sOrient[4]);
+                            sOrient[3]);
+
+                        /* fprintf(stderr, "cmd to RTC: %s\n", sCmdStr); */
+                        system(sCmdStr);
+                        break;
                 }
-
-                fprintf(stderr, "cmd to RTC: %s\n", sCmdStr);
-
-                /* send command(s) to
-                   the realtime control process of the scanner */
-                system(sCmdStr);
-
                 break;
 
             default:
