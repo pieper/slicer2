@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageRealtimeScan.cxx,v $
-  Date:      $Date: 2006/08/23 19:10:25 $
-  Version:   $Revision: 1.15.8.3.2.6 $
+  Date:      $Date: 2006/08/23 20:35:09 $
+  Version:   $Revision: 1.15.8.3.2.7 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -729,7 +729,7 @@ void vtkImageRealtimeScan::Execute(vtkImageData *data)
                 // cout << "outPtr = " << outPtr[i] << endl;
             }
 
-        fprintf(stderr, "New image, ctr pix = %d\n", outPtr[ny/2*nx/2]);
+        // fprintf(stderr, "New image, ctr pix = %d\n", outPtr[ny/2*nx/2]);
         delete [] img;
     }
 
