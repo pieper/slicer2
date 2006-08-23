@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.39 $} {$Date: 2006/08/23 19:04:36 $}]
+        {$Revision: 1.1.2.40 $} {$Date: 2006/08/23 19:45:01 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -742,7 +742,6 @@ proc MRProstateCareSetScannerCommand {cmd} {
     }   
 
     Locator(Flashpoint,src) OperateScanner $cmd 
-    # MRProstateCareUpdateRealtimeScanOrder
 }
 
 
@@ -936,8 +935,8 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
             -command "" \
             -selectcolor white} $Gui(WEA)
     } 
-    $f.rAxial select
-    $f.rAxial configure -state normal 
+    $f.rCoronal select
+    $f.rCoronal configure -state normal 
 
     grid $f.lTitle -row 0 -column 0 -columnspan 3 -pady 5 -sticky news
     grid $f.rAxial $f.rSagittal $f.rCoronal -pady 2 -padx 1 
@@ -1062,7 +1061,7 @@ proc MRProstateCareFlip {order} {
 
  
 proc MRProstateCareNavLoop {} { 
-    global MRProstateCare Slice Anno Volume 
+    global MRProstateCare Locator Slice Anno Volume 
 
     if {! $MRProstateCare(navLoop)} {
         return
@@ -1080,6 +1079,11 @@ proc MRProstateCareNavLoop {} {
         return
     } 
 
+
+    # update display RSA
+    set MRProstateCare(displayRSA) $Locator(realtimeRSA)
+
+ 
     # clean the 3D view
     MainSlicesSetVisibilityAll 0
     Render3D
@@ -1145,6 +1149,12 @@ proc MRProstateCareNavLoop {} {
     MainAnnoSetVisibility
 
        
+    # from scanning orientation to dispaly orientation
+    switch $Locator(realtimeScanOrder) {
+        "IS" {set MRProstateCare(imageDisplayOrient) "Axial"} 
+        "LR" {set MRProstateCare(imageDisplayOrient) "Sagittal"} 
+        "AP" {set MRProstateCare(imageDisplayOrient) "Coronal"} 
+    }
     # show the slice according to the specified orientation
     switch $MRProstateCare(imageDisplayOrient) {
         "Axial" {
@@ -2242,11 +2252,9 @@ proc MRProstateCareUpdateRSA {} {
     }
 
     # save values
-    set MRProstateCare(displayRSA) ""
     set MRProstateCare(lastScanRSA) ""
     foreach v "x z y" {
         set MRProstateCare(${v}Str,original) $MRProstateCare(${v}Str)
-        lappend MRProstateCare(displayRSA) $MRProstateCare(${v}Str)
         lappend MRProstateCare(lastScanRSA) $MRProstateCare(${v}Str)
     }
 } 
