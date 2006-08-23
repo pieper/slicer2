@@ -254,13 +254,7 @@ if { ![file exists $::CMAKE] } {
         eval "runcmd $::CVS $CVS_FLAGS :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $::CMAKE_TAG CMake"
 
         cd $::CMAKE_PATH
-        if { $isSolaris } {
-            # make sure to pick up curses.h in /local/os/include
-            runcmd $SLICER_LIB/CMake/bootstrap --init=$SLICER_HOME/Scripts/spl.cmake.init
-        } else {
-            runcmd $SLICER_LIB/CMake/bootstrap
-        } 
-        eval runcmd $::MAKE
+        runcmd $SLICER_LIB/CMake/bootstrap
     }
 }
 
