@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.40 $} {$Date: 2006/08/23 19:45:01 $}]
+        {$Revision: 1.1.2.41 $} {$Date: 2006/08/23 20:01:42 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -620,25 +620,6 @@ proc MRProstateCareBuildGUIForScan {parent} {
 }
 
 
-proc MRProstateCareUpdateImageOrientations {} {
-    global MRProstateCare View 
-
-    puts "haiying ........"
-
-    # After each realtime scan, display the realtime 
-    # image in Slicer in right orientation.
-    MRProstateCareSetRealtimeScanOrder
- 
-    # In the Display tab, make sure we display both images
-    # in the orientation where the realtime was scanned.
-    set MRProstateCare(imageDisplayOrient) \
-        $MRProstateCare(lastRealtimeScanOrient)
-
-    set MRProstateCare(displayRSA) $MRProstateCare(lastScanRSA) 
- 
-}
-
- 
 proc MRProstateCareChangeRSA {v} {
     global MRProstateCare View 
 
@@ -734,31 +715,9 @@ proc MRProstateCareSetScannerCommand {cmd} {
             $MRProstateCare(realtimeScanOrient)
 
         incr MRProstateCare(realtimeImageID)
-
-        set MRProstateCare(lastScanRSA) "" 
-        lappend MRProstateCare(lastScanRSA) $r 
-        lappend MRProstateCare(lastScanRSA) $s 
-        lappend MRProstateCare(lastScanRSA) $a 
     }   
 
     Locator(Flashpoint,src) OperateScanner $cmd 
-}
-
-
-proc MRProstateCareUpdateRealtimeScanOrder {} {
-    global MRProstateCare Locator 
-
-    switch $MRProstateCare(lastRealtimeScanOrient) {
-        "Axial" {
-            set Locator(realtimeScanOrder) "SI"
-        }
-        "Sagittal" {
-            set Locator(realtimeScanOrder) "LR"
-        }
-        "Coronal" {
-            set Locator(realtimeScanOrder) "AP"
-        }
-    }
 }
 
 
@@ -2252,10 +2211,8 @@ proc MRProstateCareUpdateRSA {} {
     }
 
     # save values
-    set MRProstateCare(lastScanRSA) ""
     foreach v "x z y" {
         set MRProstateCare(${v}Str,original) $MRProstateCare(${v}Str)
-        lappend MRProstateCare(lastScanRSA) $MRProstateCare(${v}Str)
     }
 } 
 
