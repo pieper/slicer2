@@ -20,10 +20,10 @@ proc MRProstateCareInit {} {
     #  Provide your name, affiliation and contact information so you can be 
     #  reached for any questions people may have regarding your module. 
     #  This is included in the  Help->Module Credits menu item.
-    set Module($m,author) "Simon DiMaio, SPL/BWH, simond@bwh.harvard.edu
-                           Steve Haker, SPL/BWH, haker@bwh.harvard.edu
+    set Module($m,author) "Haiying Liu, SPL/BWH <hliu@bwh.harvard.edu>
                            Nobuhiko Hata, SPL/BWH, <hata@bwh.harvard.edu> 
-                           Haiying Liu, SPL/BWH <hliu@bwh.harvard.edu>"
+                           Steve Haker, SPL/BWH, haker@bwh.harvard.edu
+                           Simon DiMaio, SPL/BWH, simond@bwh.harvard.edu"
 
     #  Set the level of development that this module falls under, from the list defined in Main.tcl,
     #  Module(categories) or pick your own
@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.43 $} {$Date: 2006/08/23 21:29:37 $}]
+        {$Revision: 1.1.2.44 $} {$Date: 2006/08/24 16:46:15 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -213,7 +213,7 @@ proc MRProstateCareBuildGUI {} {
     # Refer to the documentation for details on the syntax.
     #
     set help "
-    The MRProstateCare module is developed to guide the medical procedure of prostate biopsy in the open magnet enviroment at MRT. 
+    The MRProstateCare module is developed to guide the medical procedure of prostate biopsy in the open magnet enviroment. 
     "
     regsub -all "\n" $help {} help
     MainHelpApplyTags MRProstateCare $help
@@ -943,83 +943,6 @@ proc MRProstateCareScale3DView {v} {
     set MRProstateCare(preScale) $v
 }
 
-
-proc MRProstateCareSetRealtimeScanOrder {} {
-    global MRProstateCare Locator 
-
-    set action 0
-    switch $MRProstateCare(lastRealtimeScanOrient) {
-        "Axial" {
-            if {$Locator(realtimeScanOrder) != "SI" &&
-                $Locator(realtimeScanOrder) != "IS"} {
-                set Locator(realtimeScanOrder) "SI"
-                set action 1
-            }
-        }
-        "Sagittal" {
-            if {$Locator(realtimeScanOrder) != "LR" &&
-                $Locator(realtimeScanOrder) != "RL"} {
-                set Locator(realtimeScanOrder) "LR"
-                set action 1
-            }
-        }
-        "Coronal" {
-            if {$Locator(realtimeScanOrder) != "AP" &&
-                $Locator(realtimeScanOrder) != "PA"} {
-                set Locator(realtimeScanOrder) "AP"
-                set action 1
-            }
-        }
-    }
-
-    if {$action} {
-        LocatorReorientRealtimeVolume
-    }
-}
-
-
-proc MRProstateCareFlip {order} {
-    global MRProstateCare Locator 
-
-    set action 0
-    switch $MRProstateCare(realtimeScanOrient) {
-        "Axial" {
-            if {$order == "SI"} {
-                if {$Locator(realtimeScanOrder) == "SI"} {
-                    set Locator(realtimeScanOrder) "IS"
-                } else {
-                    set Locator(realtimeScanOrder) "SI"
-                }
-                set action 1
-            } 
-        }
-        "Sagittal" {
-            if {$order == "LR"} {
-                if {$Locator(realtimeScanOrder) == "LR"} {
-                    set Locator(realtimeScanOrder) "RL"
-                } else {
-                    set Locator(realtimeScanOrder) "LR"
-                }
-                set action 1
-            }
-        }
-        "Coronal" {
-            if {$order == "AP"} {
-                if {$Locator(realtimeScanOrder) == "AP"} {
-                    set Locator(realtimeScanOrder) "PA"
-                } else {
-                    set Locator(realtimeScanOrder) "AP"
-                }
-                set action 1
-            }
-        }
-    }
-
-    if {$action} {
-        LocatorReorientRealtimeVolume
-    }
-}
-
  
 proc MRProstateCareNavLoop {} { 
     global MRProstateCare Locator Slice Anno Volume 
@@ -1044,6 +967,12 @@ proc MRProstateCareNavLoop {} {
     # update display RSA
     set MRProstateCare(displayRSA) $Locator(realtimeRSA)
 
+    # from scanning orientation to dispaly orientation
+    switch $Locator(realtimeScanOrder) {
+        "IS" {set MRProstateCare(imageDisplayOrient) "Axial"} 
+        "LR" {set MRProstateCare(imageDisplayOrient) "Sagittal"} 
+        "AP" {set MRProstateCare(imageDisplayOrient) "Coronal"} 
+    }
  
     # clean the 3D view
     MainSlicesSetVisibilityAll 0
@@ -1109,13 +1038,6 @@ proc MRProstateCareNavLoop {} {
     set Anno(box) 0
     MainAnnoSetVisibility
 
-       
-    # from scanning orientation to dispaly orientation
-    switch $Locator(realtimeScanOrder) {
-        "IS" {set MRProstateCare(imageDisplayOrient) "Axial"} 
-        "LR" {set MRProstateCare(imageDisplayOrient) "Sagittal"} 
-        "AP" {set MRProstateCare(imageDisplayOrient) "Coronal"} 
-    }
     # show the slice according to the specified orientation
     switch $MRProstateCare(imageDisplayOrient) {
         "Axial" {
@@ -1199,6 +1121,7 @@ proc MRProstateCareShowPoint {title} {
  
     set pos [expr   $View(fov) * 0.45]
     set neg [expr - $View(fov) * 0.45]
+
     switch $MRProstateCare(imageDisplayOrient) {
         "Axial" {
             set rt 0.0
