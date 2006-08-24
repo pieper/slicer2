@@ -196,10 +196,11 @@ if { $WM != "" } {
     set wmpid [exec $WM &]
 }
 
+set RETURN_CODE 0
 proc file_event {fp} {
-    global END
+    global END RETURN_CODE
     if {[eof $fp]} {
-        catch "close $fp"
+        set RETURN_CODE [catch "close $fp"]
         set END 1
     } else {
         gets $fp line
@@ -229,5 +230,5 @@ if { $argc > 0 } {
     exec kill $vncpid
 }
 
-exit 0
+exit $RETURN_CODE
 
