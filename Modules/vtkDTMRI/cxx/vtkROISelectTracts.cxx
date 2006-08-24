@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkROISelectTracts.cxx,v $
-  Date:      $Date: 2006/08/15 16:39:53 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2006/08/24 18:30:48 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 
@@ -50,7 +50,7 @@ vtkROISelectTracts::vtkROISelectTracts()
   this->InputNOTROIValues = NULL;
   this->StreamlineController = NULL;
 
-  this->PassThreshold = 0;
+  this->PassThreshold = 1;
   
   this->ConvolutionKernel = NULL;
 
@@ -290,17 +290,19 @@ void vtkROISelectTracts::HighlightStreamlinesPassTest()
   RGBA[1]=0;
   RGBA[2]=0;
   RGBA[3]=255;
+
   for (int i=0;i<this->Streamlines->GetNumberOfItems();i++) {
     strId = this->StreamlineIdPassTest->GetValue(idx);
     if(strId!=i) {
       //this->DeleteStreamline(i);
       //Changes Opacity
       currStreamline = (vtkHyperStreamline *) this->Streamlines->GetItemAsObject(i);
-      this->StreamlineController->GetDisplayTracts()->SetStreamlineOpacity(currStreamline,(unsigned char) 0.1 * 255);
+      //this->StreamlineController->GetDisplayTracts()->SetStreamlineOpacity(currStreamline,(unsigned char) 50);
+      this->StreamlineController->GetDisplayTracts()->SetStreamlineRGBA(currStreamline,0,0,255,150);
     }
     else {
       currStreamline = (vtkHyperStreamline *) this->Streamlines->GetItemAsObject(i);
-      this->StreamlineController->GetDisplayTracts()->SetStreamlineRGBA(currStreamline,RGBA);
+      this->StreamlineController->GetDisplayTracts()->SetStreamlineRGBA(currStreamline,255,0,0,255);
       //cout<<"Streamline Id: "<<strId<<endl;
       idx++;
     }  
