@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.44 $} {$Date: 2006/08/24 16:46:15 $}]
+        {$Revision: 1.1.2.45 $} {$Date: 2006/08/24 19:13:48 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -151,7 +151,7 @@ proc MRProstateCareInit {} {
     set MRProstateCare(displayedImage) "" 
 
     set MRProstateCare(portSet) 0
-    set MRProstateCare(preScale) 1 
+    set MRProstateCare(scaleFactor) 1 
     set MRProstateCare(currentPoint) none 
     set MRProstateCare(lastRealtimeScanOrient) "Coronal" 
 
@@ -780,8 +780,8 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     pack $f.f2 -side top -pady 3 
     frame $f.f3 -bg $Gui(activeWorkspace) -relief groove -bd 2 
     pack $f.f3 -side top -pady 3 
-#    frame $f.f4 -bg $Gui(activeWorkspace) -relief groove -bd 2 
-#    pack $f.f4 -side top -pady 3 
+    frame $f.f4 -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    pack $f.f4 -side top -pady 3 
     frame $f.f5 -bg $Gui(activeWorkspace)
     pack $f.f5 -side top -pady 3 
 
@@ -901,7 +901,6 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     grid $f.rAxial $f.rSagittal $f.rCoronal -pady 2 -padx 1 
 
 
-if {0} {
     #-------------------------
     # Frame 4 
     #-------------------------
@@ -909,11 +908,10 @@ if {0} {
  
     eval {label $f.lTitle -text "Scale 3D view:"} $Gui(WTA)
     eval {scale $f.s3D -from 1.0 -to 5.0 -length 115 \
-        -command "MRProstateCareScale3DView" \
+        -command "MRProstateCareSetScaleFactor" \
         -resolution 1.0} $Gui(WSA) 
 
     grid $f.lTitle $f.s3D -padx 2 -pady 1 
-}
 
 
     #-------------------------
@@ -927,20 +925,10 @@ if {0} {
 }
 
 
-proc MRProstateCareScale3DView {v} {
+proc MRProstateCareSetScaleFactor {v} {
     global MRProstateCare  
-    global LastX LastY 
 
-    set diff [expr $v - $MRProstateCare(preScale)]
-    set x [expr $diff * 5 + $LastX]
-    set y [expr $diff * 5 + $LastY]
-
-
-# puts "v = $v"
-# puts "LastX, Y = $LastX, $LastY"
-
-    Zoom w $x $y
-    set MRProstateCare(preScale) $v
+    set MRProstateCare(scaleFactor) $v
 }
 
  
@@ -1050,6 +1038,7 @@ proc MRProstateCareNavLoop {} {
             # Click "I" in the direction window to 
             # get Axial display in the 3D view
             MainViewNavReset 40 65 click 
+            MRProstateCareZoom
         }
         "Sagittal" {
             set Slice(0,visibility) 0 
@@ -1060,6 +1049,7 @@ proc MRProstateCareNavLoop {} {
             # Click "L" to get Axial display 
             # in the 3D view
             MainViewNavReset 61 25 click 
+            MRProstateCareZoom
         }
         "Coronal" {
             set Slice(0,visibility) 0 
@@ -1070,6 +1060,7 @@ proc MRProstateCareNavLoop {} {
             # Click "A" to get Axial display 
             # in the 3D view
             MainViewNavReset 55 38 click 
+            MRProstateCareZoom
         }
     }
     MainSlicesSetVisibility ${s}
@@ -1922,6 +1913,7 @@ proc MRProstateCareBuildVTK {} {
 
 proc MRProstateCareEnter {} {
     global MRProstateCare Locator
+    global LastX LastY
    
     set fileName [file join $MRProstateCare(tempDir) $MRProstateCare(logFile)]
     if {[file exists $fileName]} {
@@ -1957,7 +1949,6 @@ proc MRProstateCareEnter {} {
     # clear the text box and put instructions there
     # $MRProstateCare(textBox) delete 1.0 end
     # $MRProstateCare(textBox) insert end "Shift-Click anywhere!\n"
-
 }
 
 
@@ -2140,5 +2131,61 @@ proc MRProstateCareUpdateRSA {} {
         set MRProstateCare(${v}Str,original) $MRProstateCare(${v}Str)
     }
 } 
+
+
+proc MRProstateCareZoom {} {
+    global CurrentCamera
+    global RendererFound
+    global View Module
+    global MRProstateCare 
+
+    # No zoom for v = 1
+    set v $MRProstateCare(scaleFactor)
+    if {$v == 1} {
+        return
+    }
+
+    if {$::View(parallelProjection) == 1} {
+        if {$::Module(verbose)} { 
+            puts "TkInteractor Zoom: parallel proj on = $::View(parallelProjection), no zooming allowed" 
+        }
+        return
+    }
+
+    if { ! $RendererFound } { return }
+
+    if { [info exists ::FiducialEventHandled] && $::FiducialEventHandled } { 
+        # special flag to handle point widget - TODO: generalize
+        set ::FiducialEventHandled 0
+        return
+    }
+
+    set y [expr {$v * 6.0}]
+    set zoomFactor [expr pow(1.02,$y)]
+    set clippingRange [$CurrentCamera GetClippingRange]
+    set minRange [lindex $clippingRange 0]
+    set maxRange [lindex $clippingRange 1]
+
+    $CurrentCamera SetClippingRange [expr $minRange / $zoomFactor] \
+                                    [expr $maxRange / $zoomFactor]
+    $CurrentCamera Dolly $zoomFactor
+    
+    if {[$CurrentCamera GetParallelProjection] == 1} {
+        $CurrentCamera SetParallelScale \
+            [expr [$CurrentCamera GetParallelScale] / $zoomFactor]
+    }
+
+
+    # Call each Module's "CameraMotion" routine
+    #-------------------------------------------
+    foreach m $Module(idList) {
+        if {[info exists Module($m,procCameraMotion)] == 1} {
+            if {$Module(verbose) == 1} {puts "CameraMotion: $m"}
+            $Module($m,procCameraMotion)
+        }
+    }
+
+   Render
+}
 
 
