@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
-#   Date:      $Date: 2006/07/05 17:42:47 $
-#   Version:   $Revision: 1.26.2.6 $
+#   Date:      $Date: 2006/08/24 03:14:53 $
+#   Version:   $Revision: 1.26.2.5.2.1 $
 # 
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
@@ -107,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
    set Module($m,depend) ""
 
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.26.2.6 $} {$Date: 2006/07/05 17:42:47 $}]
+       {$Revision: 1.26.2.5.2.1 $} {$Date: 2006/08/24 03:14:53 $}]
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
     set EMAtlasBrainClassifier(Volume,T2W)  $Volume(idNone)
@@ -327,49 +327,6 @@ proc EMAtlasBrainClassifierBuildGUI {} {
         pack $f.fRight.fOutput.r$value -side left -padx 0 -pady 0 
     }
 
-
-    DevAddLabel $f.fLeft.lFileType "  Select File Type:" 
-    pack $f.fLeft.lFileType -side top -padx $Gui(pad) -pady 2  -anchor w
-
-    frame $f.fRight.fFileType -bg $Gui(activeWorkspace)
-
-    eval {menubutton $f.fRight.mbType -text "NRRD(.nhdr)    " \
-            -relief raised -bd 2 -width 20 \
-            -menu $f.fRight.mbType.m} $Gui(WMBA) 
-    eval {menu $f.fRight.mbType.m} $Gui(WMA)
-    pack  $f.fRight.mbType -side top -padx 0 -pady 2  -anchor w
-    
-    #  Add menu items
-    foreach FileType {{Standard} {hdr} {nrrd} {nhdr} {mhd} {mha} {nii} {img} {img.gz} {vtk}} \
-         name {{"Headerless"} {"Analyze (.hdr)"} {"NRRD(.nrrd)"} {"NRRD(.nhdr)"} {"Meta (.mhd)"} {"Meta (.mha)"} {"Nifti (.nii)"} {"Nifti (.img)"} {"Nifti (.img.gz)"} {"VTK (.vtk)"}} { 
-            set Editor($FileType) $name 
-            $f.fRight.mbType.m add command -label $name \
-               -command "EMAtlasBrainClassifierVolumesSetFileType $FileType"
-        }
-    set Editor(fileformat) "nhdr"
-    # save menubutton for config
-    set Volume(gui,mbSaveEMAtlasFileType) $f.fRight.mbType
-    # put a tooltip over the menu
-    TooltipAdd $f.fRight.mbType \
-            "Choose file type."
-
-    DevAddLabel $f.fLeft.lCompr "  Use Compression:" 
-    pack $f.fLeft.lCompr -side top -padx $Gui(pad) -pady 2  -anchor w
-
-    frame $f.fRight.fCompr -bg $Gui(activeWorkspace)
-    
-    foreach value "1 0" text "On Off" width "4 4" {
-        eval {radiobutton $f.fRight.fCompr.rComp$value -width $width -indicatoron 0\
-            -text "$text" -value "$value" -variable Volume(UseCompression) \
-            } $Gui(WCA)
-        pack $f.fRight.fCompr.rComp$value -side left -fill x
-    }
-    TooltipAdd $f.fRight.fCompr.rComp1 \
-            "Suggest to the Writer to compress the file if the format supports it."
-    TooltipAdd $f.fRight.fCompr.rComp0 \
-            "Don't compress the file, even if the format supports it."
-    pack $f.fRight.fCompr -side top -padx 0 -pady 2  -anchor w
-
     #-------------------------------------------
     # Run Algorithm
     #------------------------------------------
@@ -395,6 +352,58 @@ proc EMAtlasBrainClassifierBuildGUI {} {
        eval {checkbutton  $f.fSave.c$Att -text "$Text" -variable EMAtlasBrainClassifier(Save,$Att) -indicatoron 1} $Gui(WCA)
        pack $f.fSave.c$Att  -side top -padx $Gui(pad) -pady 0 -anchor w 
     }
+
+    frame $f.fSave.fFileType -bg $Gui(activeWorkspace)
+    # Kilian-Aug-06 : Currently disabled bc the selection of the 
+    # function does not change anything later  
+    # pack $f.fSave.fFileType -side top -padx 0 -pady $Gui(pad) -fill x
+
+    DevAddLabel $f.fSave.fFileType.lFileType "  Select File Type:" 
+    pack $f.fSave.fFileType.lFileType -side left -padx 0 -pady 0  -anchor w
+    frame $f.fSave.fFileType.fFileType -bg $Gui(activeWorkspace)
+
+    eval {menubutton $f.fSave.fFileType.mbType -text "NRRD(.nhdr)    " \
+            -relief raised -bd 2 -width 20 \
+            -menu $f.fSave.fFileType.mbType.m} $Gui(WMBA) 
+    eval {menu $f.fSave.fFileType.mbType.m} $Gui(WMA)
+    pack  $f.fSave.fFileType.mbType -side left -padx 2 -pady 0  -anchor w
+    
+    #  Add menu items
+    foreach FileType {{Standard} {hdr} {nrrd} {nhdr} {mhd} {mha} {nii} {img} {img.gz} {vtk}} \
+         name {{"Headerless"} {"Analyze (.hdr)"} {"NRRD(.nrrd)"} {"NRRD(.nhdr)"} {"Meta (.mhd)"} {"Meta (.mha)"} {"Nifti (.nii)"} {"Nifti (.img)"} {"Nifti (.img.gz)"} {"VTK (.vtk)"}} { 
+            set Editor($FileType) $name 
+            $f.fSave.fFileType.mbType.m add command -label $name \
+               -command "EMAtlasBrainClassifierVolumesSetFileType $FileType"
+        }
+    set Editor(fileformat) "nhdr"
+    # save menubutton for config
+    set Volume(gui,mbSaveEMAtlasFileType) $f.fSave.fFileType.mbType
+    # put a tooltip over the menu
+    TooltipAdd $f.fSave.fFileType.mbType \
+            "Choose file type."
+
+    frame $f.fSave.fCompression -bg $Gui(activeWorkspace) 
+    # Kilian- Aug-06 : Currently disabled bc the selection of the 
+    # function does not change anything later 
+    # pack $f.fSave.fCompression -side top -padx 0 -pady 0 -fill x
+
+    DevAddLabel $f.fSave.fCompression.lCompr "  Use Compression:" 
+    pack $f.fSave.fCompression.lCompr -side left -padx 0 -pady 0  -anchor w
+
+    frame $f.fSave.fCompression.fCompr -bg $Gui(activeWorkspace)
+    
+    foreach value "1 0" text "On Off" width "4 4" {
+        eval {radiobutton $f.fSave.fCompression.fCompr.rComp$value -width $width -indicatoron 0\
+            -text "$text" -value "$value" -variable Volume(UseCompression) \
+            } $Gui(WCA)
+        pack $f.fSave.fCompression.fCompr.rComp$value -side left -fill x
+    }
+    TooltipAdd $f.fSave.fCompression.fCompr.rComp1 \
+            "Suggest to the Writer to compress the file if the format supports it."
+    TooltipAdd $f.fSave.fCompression.fCompr.rComp0 \
+            "Don't compress the file, even if the format supports it."
+    pack $f.fSave.fCompression.fCompr -side left -padx 2 -pady 0  -anchor w
+
 
     DevAddLabel $f.fAlgo.lTitle "Segmentation Algorithm"  
     pack $f.fAlgo.lTitle -side top -padx $Gui(pad) -pady 2 
