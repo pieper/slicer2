@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDisplayTracts.cxx,v $
-  Date:      $Date: 2006/08/23 15:39:47 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2006/08/24 18:29:57 $
+  Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 #include "vtkDisplayTracts.h"
@@ -513,6 +513,14 @@ void vtkDisplayTracts::SetStreamlineRGBA(vtkHyperStreamline *currStreamline, uns
 
 }
 
+// Changes color properties of a single streamline
+//----------------------------------------------------------------------------
+void vtkDisplayTracts::SetStreamlineRGBA(vtkHyperStreamline *currStreamline, unsigned char RGBA[4])
+{
+  this->SetStreamlineRGBA(currStreamline,RGBA[0],RGBA[1],RGBA[2],RGBA[3]);
+}
+
+
 void vtkDisplayTracts::SetStreamlineRGB(vtkHyperStreamline *currStreamline, unsigned char R, unsigned char G, unsigned char B)
 {
   unsigned char opacity;
@@ -559,12 +567,6 @@ void vtkDisplayTracts::GetStreamlineOpacity(vtkHyperStreamline *currStreamline, 
   opacity= (unsigned char) colorarray->GetComponent(0,3);
 }
 
-// Changes color properties of a single streamline
-//----------------------------------------------------------------------------
-void vtkDisplayTracts::SetStreamlineRGBA(vtkHyperStreamline *currStreamline, unsigned char RGBA[4])
-{
-  this->SetStreamlineRGBA(currStreamline,RGBA[0],RGBA[1],RGBA[2],RGBA[3]);
-}
 
 
 // Make Streamlines Group, ClippedStreamline Group, Merge Filter, Tube Filter group and Transform Filter group.
@@ -610,24 +612,6 @@ void vtkDisplayTracts::CreateGroupObjects()
   this->StreamlineProperty->GetColor(color);
   opacity=this->StreamlineProperty->GetOpacity();
 
-  // Creating dummy dataset with color info in the field data
-  // data would be used to merge with the current streamline.
-  vtkUnsignedCharArray *colorarray = vtkUnsignedCharArray::New();
-  colorarray->SetNumberOfComponents(4);
-  colorarray->SetNumberOfTuples(2);
-  colorarray->SetComponent(0,0,(unsigned char) (255*color[0]));
-  colorarray->SetComponent(0,1,(unsigned char) (255*color[1]));
-  colorarray->SetComponent(0,2,(unsigned char) (255*color[2]));
-  colorarray->SetComponent(0,3,(unsigned char) (255*opacity));
-  colorarray->SetComponent(1,0,(unsigned char) (255*color[0]));
-  colorarray->SetComponent(1,1,(unsigned char) (255*color[1]));
-  colorarray->SetComponent(1,2,(unsigned char) (255*color[2]));
-  colorarray->SetComponent(1,3,(unsigned char) (255*opacity));
-  colorarray->SetName("Color");
-  vtkPolyData *dataset = vtkPolyData::New();
-  vtkFieldData *fd = vtkFieldData::New();
-  fd->AddArray(colorarray);
-  dataset->SetFieldData(fd);
 
    // Add new streamlines to group
   for (int i=numStreamlinesInGroups ; i< numStreamlines; i++)
@@ -679,10 +663,33 @@ void vtkDisplayTracts::CreateGroupObjects()
    // Thereafter, the color can be modified by changing the FieldData "Color"
    // for a given streamline.
 
+    // Creating dummy dataset with color info in the field data
+    // data would be used to merge with the current streamline.
+    vtkUnsignedCharArray *colorarray = vtkUnsignedCharArray::New();
+    colorarray->SetNumberOfComponents(4);
+    colorarray->SetNumberOfTuples(2);
+    colorarray->SetComponent(0,0,(unsigned char) (255*color[0]));
+    colorarray->SetComponent(0,1,(unsigned char) (255*color[1]));
+    colorarray->SetComponent(0,2,(unsigned char) (255*color[2]));
+    colorarray->SetComponent(0,3,(unsigned char) (255*opacity));
+    colorarray->SetComponent(1,0,(unsigned char) (255*color[0]));
+    colorarray->SetComponent(1,1,(unsigned char) (255*color[1]));
+    colorarray->SetComponent(1,2,(unsigned char) (255*color[2]));
+    colorarray->SetComponent(1,3,(unsigned char) (255*opacity));
+    colorarray->SetName("Color");
+    vtkPolyData *dataset = vtkPolyData::New();
+    vtkFieldData *fd = vtkFieldData::New();
+    fd->AddArray(colorarray);
+    dataset->SetFieldData(fd);
+
     currMergeFilter = vtkMergeDataObjectFilter::New();
     currMergeFilter->SetInput(currClippedStreamline->GetOutput());
     currMergeFilter->SetDataObject(dataset);
     currMergeFilter->SetOutputFieldToCellDataField();
+
+    colorarray->Delete();
+    fd->Delete();
+    dataset->Delete();
 
     this->activeMergeFilters->AddItem((vtkObject *) currMergeFilter);
     this->activeTransformFilters->AddItem((vtkObject *)currTransFilter);
@@ -711,9 +718,6 @@ void vtkDisplayTracts::CreateGroupObjects()
    }
 
   currTransform->Delete();   // Set Matrix info in Transform filters
-  colorarray->Delete();
-  fd->Delete();
-  dataset->Delete();
 
 }
 
