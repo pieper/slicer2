@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
-#   Date:      $Date: 2006/08/16 20:46:52 $
-#   Version:   $Revision: 1.41 $
+#   Date:      $Date: 2006/08/25 18:28:40 $
+#   Version:   $Revision: 1.42 $
 # 
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
@@ -72,7 +72,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifierInit {} {
-    global EMAtlasBrainClassifier Module Volume env Mrml tcl_platform
+    global EMAtlasBrainClassifier Module Volume env Mrml tcl_platform 
 
     set m EMAtlasBrainClassifier
 
@@ -107,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
    set Module($m,depend) ""
 
    lappend Module(versions) [ParseCVSInfo $m \
-       {$Revision: 1.41 $} {$Date: 2006/08/16 20:46:52 $}]
+       {$Revision: 1.42 $} {$Date: 2006/08/25 18:28:40 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -185,6 +185,7 @@ proc EMAtlasBrainClassifierInit {} {
      set EMAtlasBrainClassifier(SegmentationMode) EMAtlasBrainClassifier
  
      set EMAtlasBrainClassifier(eventManager) {}
+    set Editor(fileformat) "nhdr"
 }
 
 #-------------------------------------------------------------------------------
@@ -330,48 +331,6 @@ proc EMAtlasBrainClassifierBuildGUI {} {
     }
 
 
-    DevAddLabel $f.fLeft.lFileType "  Select File Type:" 
-    pack $f.fLeft.lFileType -side top -padx $Gui(pad) -pady 2  -anchor w
-
-    frame $f.fRight.fFileType -bg $Gui(activeWorkspace)
-
-    eval {menubutton $f.fRight.mbType -text "NRRD(.nhdr)    " \
-            -relief raised -bd 2 -width 20 \
-            -menu $f.fRight.mbType.m} $Gui(WMBA) 
-    eval {menu $f.fRight.mbType.m} $Gui(WMA)
-    pack  $f.fRight.mbType -side top -padx 0 -pady 2  -anchor w
-    
-    #  Add menu items
-    foreach FileType {{Standard} {hdr} {nrrd} {nhdr} {mhd} {mha} {nii} {img} {img.gz} {vtk}} \
-         name {{"Headerless"} {"Analyze (.hdr)"} {"NRRD(.nrrd)"} {"NRRD(.nhdr)"} {"Meta (.mhd)"} {"Meta (.mha)"} {"Nifti (.nii)"} {"Nifti (.img)"} {"Nifti (.img.gz)"} {"VTK (.vtk)"}} { 
-            set Editor($FileType) $name 
-            $f.fRight.mbType.m add command -label $name \
-               -command "EMAtlasBrainClassifierVolumesSetFileType $FileType"
-        }
-    set Editor(fileformat) "nhdr"
-    # save menubutton for config
-    set Volume(gui,mbSaveEMAtlasFileType) $f.fRight.mbType
-    # put a tooltip over the menu
-    TooltipAdd $f.fRight.mbType \
-            "Choose file type."
-
-    DevAddLabel $f.fLeft.lCompr "  Use Compression:" 
-    pack $f.fLeft.lCompr -side top -padx $Gui(pad) -pady 2  -anchor w
-
-    frame $f.fRight.fCompr -bg $Gui(activeWorkspace)
-    
-    foreach value "1 0" text "On Off" width "4 4" {
-        eval {radiobutton $f.fRight.fCompr.rComp$value -width $width -indicatoron 0\
-            -text "$text" -value "$value" -variable Volume(UseCompression) \
-            } $Gui(WCA)
-        pack $f.fRight.fCompr.rComp$value -side left -fill x
-    }
-    TooltipAdd $f.fRight.fCompr.rComp1 \
-            "Suggest to the Writer to compress the file if the format supports it."
-    TooltipAdd $f.fRight.fCompr.rComp0 \
-            "Don't compress the file, even if the format supports it."
-    pack $f.fRight.fCompr -side top -padx 0 -pady 2  -anchor w
-
     #-------------------------------------------
     # Run Algorithm
     #------------------------------------------
@@ -397,7 +356,60 @@ proc EMAtlasBrainClassifierBuildGUI {} {
        eval {checkbutton  $f.fSave.c$Att -text "$Text" -variable EMAtlasBrainClassifier(Save,$Att) -indicatoron 1} $Gui(WCA)
        pack $f.fSave.c$Att  -side top -padx $Gui(pad) -pady 0 -anchor w 
     }
+#############################
 
+ frame $f.fSave.fFileType -bg $Gui(activeWorkspace)
+          # Kilian-Aug-06 : Currently disabled bc the selection of the
+          # function does not change anything later
+           pack $f.fSave.fFileType -side top -padx 0 -pady $Gui(pad) -fill x
+      
+          DevAddLabel $f.fSave.fFileType.lFileType "  Select File Type:"
+          pack $f.fSave.fFileType.lFileType -side left -padx 0 -pady 0  -anchor w
+          frame $f.fSave.fFileType.fFileType -bg $Gui(activeWorkspace)
+      
+          eval {menubutton $f.fSave.fFileType.mbType -text "NRRD(.nhdr)    " \
+                  -relief raised -bd 2 -width 20 \
+                  -menu $f.fSave.fFileType.mbType.m} $Gui(WMBA)
+          eval {menu $f.fSave.fFileType.mbType.m} $Gui(WMA)
+          pack  $f.fSave.fFileType.mbType -side left -padx 2 -pady 0  -anchor w
+      
+          #  Add menu items
+          foreach FileType {{Standard} {hdr} {nrrd} {nhdr} {mhd} {mha} {nii} {img} {img.gz} {vtk}} \
+               name {{"Headerless"} {"Analyze (.hdr)"} {"NRRD(.nrrd)"} {"NRRD(.nhdr)"} {"Meta (.mhd)"} {"Meta (.mha)"} {"Nifti (.nii)"} {"Nifti (.img)"} {"Nifti (.img.gz)"} {"VTK (.vtk)"}} {
+                  set Editor($FileType) $name
+                  $f.fSave.fFileType.mbType.m add command -label $name \
+                     -command "EMAtlasBrainClassifierVolumesSetFileType $FileType"
+              }
+         
+          # save menubutton for config
+          set Volume(gui,mbSaveEMAtlasFileType) $f.fSave.fFileType.mbType
+          # put a tooltip over the menu
+          TooltipAdd $f.fSave.fFileType.mbType \
+                  "Choose file type."
+      
+          frame $f.fSave.fCompression -bg $Gui(activeWorkspace)
+          # Kilian- Aug-06 : Currently disabled bc the selection of the
+          # function does not change anything later
+           pack $f.fSave.fCompression -side top -padx 0 -pady 0 -fill x
+      
+          DevAddLabel $f.fSave.fCompression.lCompr "  Use Compression:"
+          pack $f.fSave.fCompression.lCompr -side left -padx 0 -pady 0  -anchor w
+      
+          frame $f.fSave.fCompression.fCompr -bg $Gui(activeWorkspace)
+      
+          foreach value "1 0" text "On Off" width "4 4" {
+              eval {radiobutton $f.fSave.fCompression.fCompr.rComp$value -width $width -indicatoron 0\
+                  -text "$text" -value "$value" -variable Volume(UseCompression) \
+                  } $Gui(WCA)
+              pack $f.fSave.fCompression.fCompr.rComp$value -side left -fill x
+          }
+          TooltipAdd $f.fSave.fCompression.fCompr.rComp1 \
+                  "Suggest to the Writer to compress the file if the format supports it."
+          TooltipAdd $f.fSave.fCompression.fCompr.rComp0 \
+                  "Don't compress the file, even if the format supports it."
+          pack $f.fSave.fCompression.fCompr -side left -padx 2 -pady 0  -anchor w
+
+#######3
     DevAddLabel $f.fAlgo.lTitle "Segmentation Algorithm"  
     pack $f.fAlgo.lTitle -side top -padx $Gui(pad) -pady 2 
     set Tip(Standard) "Validated version using non-rigid registration for the atlas alignment.\nThis method is computationally expensive."  
@@ -709,8 +721,9 @@ proc EMAtlasBrainClassifierVolumeWriter {VolID} {
     #        - Check if largest slice m is present 
     #        - if not => slices start at 1 .. n => move everything to m -n + 1 ,..., m 
 
-#set FileFormat $Editor(fileformat)
-#set Editor(fileformat) "Standard" 
+    #Katharina 08/25/06: commented in order to enable saving in different file formats
+    #set FileFormat $Editor(fileformat)
+    #set Editor(fileformat) "Standard" 
 
     set Name [Volume($VolID,node) GetName]
 
@@ -718,8 +731,9 @@ proc EMAtlasBrainClassifierVolumeWriter {VolID} {
  
     # Kilian: MainVolumesWrite changes name 
     Volume($VolID,node) SetName "$Name"
- 
-#    set Editor(fileformat) $FileFormat
+    
+    #Katharina 08/25/06: commented in order to enable saving in different file formats
+    #set Editor(fileformat) $FileFormat
 }
 
 #-------------------------------------------------------------------------------
@@ -980,23 +994,35 @@ proc EMAtlasBrainClassifierReadNextKey {input} {
 # .END
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifier_Normalize { Mode } {
-    global Volume EMAtlasBrainClassifier
+    global Volume EMAtlasBrainClassifier Editor
 
     # Initialize Normalization 
     set VolIDInput $EMAtlasBrainClassifier(Volume,${Mode}) 
 
     set VolIDOutput [DevCreateNewCopiedVolume $VolIDInput "" "Normed$Mode"]
-
-    set Prefix $EMAtlasBrainClassifier(WorkingDirectory)/[string tolower $Mode]/[file tail [Volume($VolIDInput,node) GetFilePrefix]]norm
-    puts "--- $EMAtlasBrainClassifier(WorkingDirectory) $Prefix"
+    
+    # set Prefix $EMAtlasBrainClassifier(WorkingDirectory)/[string tolower $Mode]/[file tail [Volume($VolIDInput,node) GetFilePrefix]]norm
+    #kquintus: generalize to other file types. Depending on what file format the input volumes have you might get weird 
+    # prefixes like "case.nhdrnorm" with the old version. That's why the prefix should be built with [Volume($VolIDInput,node) GetName]
+    set Prefix $EMAtlasBrainClassifier(WorkingDirectory)/[string tolower $Mode]/[Volume($VolIDInput,node) GetName]_norm
+   
     Volume($VolIDOutput,node) SetFilePrefix "$Prefix"
-    Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
-    Volume($VolIDOutput,node) SetFilePattern "%s.%03d"
+       
+    #katharina 08/25/06: file pattern depends on file format the user has chosen. MainVolumesWrite takes care of that 
+    #Volume($VolIDOutput,node) SetFilePattern "%s.%03d"
+   
     Volume($VolIDOutput,node) SetLittleEndian $EMAtlasBrainClassifier(LittleEndian)
 
-    set StartSlice [format "%03d" [lindex [Volume($EMAtlasBrainClassifier(Volume,$Mode),node) GetImageRange] 0]]
+    #katharina 08/25/06: in order to check if the normed file already exists in the selected file format search for different file pattern
+    if {$Editor(fileformat) == "Standard"} {    
+        set selectedExtention [format "%03d" [lindex [Volume($EMAtlasBrainClassifier(Volume,$Mode),node) GetImageRange] 0]]
+        Volume($VolIDOutput,node) SetFullPrefix "$Prefix" 
+    } else {
+        set selectedExtention $Editor(fileformat)
+        Volume($VolIDOutput,node) SetFullPrefix "$Prefix.$Editor(fileformat)"  
+    }
     # Jump over Normalization if normed images already exists - only in batch mode
-    if {$EMAtlasBrainClassifier(BatchMode)  && [file exists $Prefix.$StartSlice] } {
+    if {$EMAtlasBrainClassifier(BatchMode) && [file exists $Prefix.$selectedExtention] } {
     puts "=========== Load Normalized Input $Mode  ============ "
     MainVolumesRead $VolIDOutput
     set CalculatedFlag 0
@@ -1233,7 +1259,7 @@ proc EMAtlasBrainClassifier_NumberOfTrainingSamples { } {
 # .END
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifier_RegistrationInitialize {RegisterAtlasDirList} {
-    global EMAtlasBrainClassifier
+    global EMAtlasBrainClassifier Editor
 
     # ---------------------------------------------------------------
     # Check if we load the module for the first time 
@@ -1253,12 +1279,20 @@ proc EMAtlasBrainClassifier_RegistrationInitialize {RegisterAtlasDirList} {
     puts "=========== Initilize Registration of Atlas to Case  ============ "
 
     set RunRegistrationFlag 0 
-    set StartSlice [format "%03d" [lindex [Volume($EMAtlasBrainClassifier(Volume,NormalizedSPGR),node) GetImageRange] 0]]
+    
+    #Katharina 08/25/06: generalize to other file formats. Atlas has to exist in the selected file format, otherwise registration is executed.
+    #set StartSlice [format "%03d" [lindex [Volume($EMAtlasBrainClassifier(Volume,NormalizedSPGR),node) GetImageRange] 0]]    
+    if {$Editor(fileformat) == "Standard"} {    
+        set selectedExtention [format "%03d" [lindex [Volume($EMAtlasBrainClassifier(Volume,NormalizedSPGR),node) GetImageRange] 0]] 
+    } else {
+        set selectedExtention $Editor(fileformat) 
+    }
+    
     foreach Dir "$RegisterAtlasDirList" {
-       if {[file exists $EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I.$StartSlice] == 0  } {
-          set RunRegistrationFlag 1 
-          break 
-       }
+        if {[file exists $EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I.$selectedExtention] == 0  } {
+            set RunRegistrationFlag 1 
+            break 
+        }
     }
     
     if {$RunRegistrationFlag == 0 && ($EMAtlasBrainClassifier(BatchMode) == 0)} {
@@ -1394,17 +1428,23 @@ proc EMAtlasBrainClassifier_AtlasRegistration {RegisterAtlasDirList RegisterAtla
 # .END
 #-------------------------------------------------------------------------------
 proc EMAtlasBrainClassifier_LoadAtlas {RegisterAtlasDirList RegisterAtlasNameList } {
-  global EMAtlasBrainClassifier Volume  
-  set VolIDInput $EMAtlasBrainClassifier(Volume,SPGR)
-  foreach Dir "$RegisterAtlasDirList" Name "$RegisterAtlasNameList" {
-    puts "=========== Load Atlas $Name  ============ "
-    set VolIDOutput [DevCreateNewCopiedVolume $VolIDInput "" "$Name"]
-    Volume($VolIDOutput,node) SetFilePrefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I"
-    Volume($VolIDOutput,node) SetFullPrefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I" 
-    Volume($VolIDOutput,node) SetLittleEndian $EMAtlasBrainClassifier(LittleEndian)
-    MainVolumesRead $VolIDOutput
-    RenderAll
-  }      
+    global EMAtlasBrainClassifier Volume Editor
+    set VolIDInput $EMAtlasBrainClassifier(Volume,SPGR)
+    foreach Dir "$RegisterAtlasDirList" Name "$RegisterAtlasNameList" {
+        puts "=========== Load Atlas $Name  ============ "
+        set VolIDOutput [DevCreateNewCopiedVolume $VolIDInput "" "$Name"]
+        Volume($VolIDOutput,node) SetFilePrefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I"
+        
+        #Katharina 08/25/06: depending on the selected file format setFullPrefix differently
+        if {$Editor(fileformat) == "Standard"} {    
+            Volume($VolIDOutput,node) SetFullPrefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I" 
+        } else {
+            Volume($VolIDOutput,node) SetFullPrefix "$EMAtlasBrainClassifier(WorkingDirectory)/atlas/$Dir/I.$Editor(fileformat)"     
+        }
+        Volume($VolIDOutput,node) SetLittleEndian $EMAtlasBrainClassifier(LittleEndian)
+        MainVolumesRead $VolIDOutput
+        RenderAll
+    }      
 }
 
 #-------------------------------------------------------------------------------
@@ -2664,12 +2704,13 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
 # <TemplateXMLFile>   = Optional - if the pipeline should use an xml file other then the default - please make sure to define AtlasDir 
 #                       if structures are included that are not in the default atlas - otherwise the default atlas will be deleted and re-downloaded
 # <AtlasDir>          = Optional - Location of atlas directory   
+# <FileFormat>        = Optional - file format in which segmentation result, atlas and normed imgages will be stored
 # .ARGS
 # 
 # .END
 #-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_BatchMode {{AlgorithmVersion Standard} {SegmentationMode ""} {TemplateXMLFile ""} {AtlasDir "" } {SPGRVolID 1} {T2VolID 2} {ExitFlag 1}} {
-    global Mrml EMAtlasBrainClassifier Volume
+proc EMAtlasBrainClassifier_BatchMode {{AlgorithmVersion Standard} {SegmentationMode ""} {TemplateXMLFile ""} {AtlasDir "" } {SPGRVolID 1} {T2VolID 2} {ExitFlag 1} {FileFormat "nhdr"}} {
+    global Mrml EMAtlasBrainClassifier Volume Editor
  
     set EMAtlasBrainClassifier(WorkingDirectory) $Mrml(dir)
 
@@ -2697,6 +2738,10 @@ proc EMAtlasBrainClassifier_BatchMode {{AlgorithmVersion Standard} {Segmentation
     if {$AtlasDir != "" } {
        set EMAtlasBrainClassifier(AtlasDir) $AtlasDir
     }
+
+    #kquintus: added optyion to select different file formats in batch mode
+    set Editor(fileformat) $FileFormat
+    
     puts "Run segmentation with the following options:"
     puts "Algorithm: $EMAtlasBrainClassifier(AlgorithmVersion)"
     puts "Mode:      $EMAtlasBrainClassifier(SegmentationMode)"
