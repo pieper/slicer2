@@ -1,6 +1,42 @@
 #!/bin/sh
-# the next line restarts using tclsh \
-exec tclsh "$0" "$@"
+# the next line restarts using wish \
+exec wish "$0" "$@"
+
+
+# Hide the top window
+wm geometry . 1x1+0+0
+wm overrideredirect . 1
+wm transient . 
+
+
+# Global constants
+set Dir "/usr/local/data"
+# all dicom files are saved in /usr/local/data/dcmImages
+set ImageDir "$Dir/dcmImages"
+set LoopCycle 2000
+set SeriesDirs ""
+set Counting 0
+set NoOfFiles 0 
+ 
+
+
+proc DevErrorWindow {{message "Unknown Error"}} {
+    set oscaling [tk scaling]
+    tk scaling 1
+    tk_messageBox -title "Dicom" -icon error -message $message -type ok
+    tk scaling $oscaling
+}
+
+
+
+proc DevInfoWindow {message} {
+    set oscaling [tk scaling]
+    tk scaling 1
+    tk_messageBox -title "Dicom" -icon info -message $message -type ok
+    tk scaling $oscaling
+}
+
+
 
 proc uniqkey {} {
     set key [expr { pow(2,31) + [clock clicks]}]
@@ -18,15 +54,16 @@ proc sleep {ms} {
     unset ::__sleep__tmp__$uniq
 }
 
-proc DicomWatch {dir} {
-    # all dicom files are saved in /usr/local/data/dcmImages
-    set imageDir "$dir/dcmImages"
-    if {! [file exists $imageDir] || 
-        ! [file isdirectory $imageDir]} {
-        puts "Directory doesn't exist: $imageDir"
-        exit
-    }
 
+
+proc SortFiles {} {
+    global Dir
+    global ImageDir
+    global LoopCycle
+    global SeriesDirs
+ 
+
+    # Dicom files currently available in the directory
     set files [glob -nocomplain -directory $imageDir *.*]
     set size [llength $files]
     if {$size > 0} {
@@ -52,10 +89,14 @@ proc DicomWatch {dir} {
             set abPatientDir "$dir/$patientDir"
             if {! [file exists $abPatientDir] || 
                 ! [file isdirectory $abPatientDir]} {
-                # set abPatientDir "test"
                 exec mkdir $abPatientDir
+
+                if {! [file exists $abPatientDir]} {
+                    DevErrorWindow "Couldn't create this directory: $abPatientDir"
+                    exit
+                }
             } 
- 
+
             # make series directory
             set series [exec get_dicom_info -series $f]
             set series [string trim $series]
@@ -63,23 +104,76 @@ proc DicomWatch {dir} {
             if {! [file exists $seriesDir] || 
                 ! [file isdirectory $seriesDir]} {
                 exec mkdir $seriesDir
+
+                if {! [file exists $seriesDir]} {
+                    DevErrorWindow "Couldn't create this directory: $seriesDir"
+                    exit
+                }
+
+                lappend SeriesDirs $seriesDir
             } 
 
             # copy image to the series directory
             exec mv $f $seriesDir
         }
     }
+
+    after $LoopCycle SortFiles 
 }
 
-set dir "/usr/local/data"
-if {! [file exists $dir] || 
-    ! [file isdirectory $dir]} {
-    puts "Directory doesn't exist: $dir"
-    exit
+
+
+proc CheckProgress {} {
+    global SeriesDirs
+    global LoopCycle
+    global Counting
+    global NoOfFiles
+
+    set size [llength $SeriesDirs]
+    if {$size > 0} {
+        set imgDir [lindex $SeriesDirs 0]
+        set files [glob -nocomplain -directory $imgDir *.*]
+        set len [llength $files]
+ 
+        if {$Counting} {
+            if {$len == $NoOfFiles} {
+                # done for this series
+                # remove the first element
+                set SeriesDirs [lreplace SeriesDirs 0 0]
+                set Counting 0
+
+                # give a message to the user
+                DevInfoWindow "Dicom image transfer done for this series:\n$imgDir"
+            } else {
+                set NoOfFiles $len 
+            }
+
+        } else {
+            set Counting 1
+            set NoOfFiles $len 
+        }
+    }
+
+    after $LoopCycle CheckProgress 
 }
 
+
+
+# Main loop
 while {1} {
-    DicomWatch $dir
-    sleep 10000
+
+    if {! [file exists $Dir] || 
+        ! [file isdirectory $Dir]} {
+        DevErrorWindow "Directory doesn't exist: $Dir"
+        exit
+    }
+    if {! [file exists $ImageDir] || 
+        ! [file isdirectory $ImageDir]} {
+        DevErrorWindow "Directory doesn't exist: $ImageDir"
+        exit
+    }
+
+    SortFiles 
+    CheckProgress
 }
 
