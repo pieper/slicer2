@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.45 $} {$Date: 2006/08/24 19:13:48 $}]
+        {$Revision: 1.1.2.46 $} {$Date: 2006/08/25 14:08:16 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -906,7 +906,7 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     #-------------------------
     set f $parent.f4
  
-    eval {label $f.lTitle -text "Scale 3D view:"} $Gui(WTA)
+    eval {label $f.lTitle -text "Zoom 3D view:"} $Gui(WTA)
     eval {scale $f.s3D -from 1.0 -to 5.0 -length 115 \
         -command "MRProstateCareSetScaleFactor" \
         -resolution 1.0} $Gui(WSA) 
