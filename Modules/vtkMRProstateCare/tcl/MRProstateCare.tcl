@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.46 $} {$Date: 2006/08/25 14:08:16 $}]
+        {$Revision: 1.1.2.47 $} {$Date: 2006/08/25 15:29:20 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1468,7 +1468,7 @@ proc MRProstateCareView {} {
     }
 
     MRProstateCareCreateTextPopup infowin$MRProstateCare(newID) \
-        "MRProstateCare Information" 400 100 25 $txt
+        "MRProstateCare Info" 400 100 25 $txt
 }
 
 
