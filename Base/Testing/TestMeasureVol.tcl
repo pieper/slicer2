@@ -4,8 +4,8 @@ package require vtkTeem
 #for the NRRD Reader to load Reference Volume
 
 
-#ctest: test fails -> result is 1
-#       test succeeds -> result is 0
+#ctest: test fails -> exitCode is 1
+#       test succeeds -> exitCode is 0
 set exitCode 0
 
 proc RunTest {{init 0}} {
@@ -84,7 +84,6 @@ proc RunTest {{init 0}} {
     proc MainEndProgress {} {}
     
     MainMrmlRead [file join $::env(SLICER_HOME) Base/Testing/TestInput/MeasureVol.xml]
-    #MainMrmlRead "/home/kquintus/schiz/slicer_auto_testing/xml-files/test/test/MeasureVol.xml"
     MainUpdateMRML
     set Volume(activeID) 1
     
@@ -103,16 +102,20 @@ proc RunTest {{init 0}} {
     MeasureVolVolume
 
     #  Open the Baseline 
-    set fp [open [file join $::env(SLICER_HOME) Base/Testing/Baseline/measureVol_caseR16_hist.txt] r]
+    set fp [open [file join $::env(SLICER_HOME) Base/Testing/Baseline/measureVol_caseR16_hist_2.txt] r]
     set data [read $fp]
     close $fp
     
     #  Create baseline list
     set data [split $data "\n"]
+    
+    #tell CTest that I require the full output of the test
+    puts "CTEST_FULL_OUTPUT"
+
     puts "Baseline measurements in mL:"
     puts "----------------------------"
     foreach line $data {
-        puts $line
+    puts $line
         set new  [split [regsub -all {[ \t\n]+} $line { }]]
         set a [lindex $new 1]
         set b [lindex $new 2]
@@ -143,7 +146,8 @@ proc RunTest {{init 0}} {
         #puts $i
         if {$c!=""} {
             set orig [lindex $baseline_list "$i 1"]
-            set diff [expr $orig -$c]
+
+        set diff [expr $orig -$c]
             if {$diff != 0} {
                 set label [lindex $new 1]
                 set dev [expr (abs($diff)/$orig)*100]
@@ -159,7 +163,7 @@ proc RunTest {{init 0}} {
     
 }
 RunTest 1
-
+puts "ExitCode: $exitCode"
 if {$exitCode == 0} {
     puts "No differences between baseline measurements and nightly results."
     puts "Test passed."
@@ -167,5 +171,4 @@ if {$exitCode == 0} {
     puts "There are differences between baseline measurements and nightly results."
     puts "Test failed."
 }
-#puts "Result: $exitCode"
 exit $exitCode
