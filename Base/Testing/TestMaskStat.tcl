@@ -1,5 +1,6 @@
 package require vtkSlicerBase
 
+
 source [file join $::env(SLICER_HOME) Base/tcl/tcl-main/MainFile.tcl]
 source [file join $::env(SLICER_HOME) Base/tcl/tcl-main/MainMrml.tcl]
 source [file join $::env(SLICER_HOME) Base/tcl/tcl-main/Gui.tcl]
@@ -101,6 +102,10 @@ set fp [open [file join $::env(SLICER_HOME) Base/Testing/Baseline/maskStatBaseli
 set data [read $fp]
 close $fp
 set data [split $data "\n"]
+
+#tell CTest that I require the full output of the test
+puts "CTEST_FULL_OUTPUT"
+
 puts "\nBaseline mask statistics:"
 puts "----------------------------"
 
@@ -170,4 +175,11 @@ if {$diff_std != 0} {
     puts "Std: no difference"  
 }
 
+
+puts "Exit Code is $exitCode"
+if {$exitCode == 0} {
+    puts "Test passed."
+} else {
+    puts "Test failed."
+}
 exit $exitCode
