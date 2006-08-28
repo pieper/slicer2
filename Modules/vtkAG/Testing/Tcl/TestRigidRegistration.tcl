@@ -1,12 +1,12 @@
 package require vtkSlicerBase
 package require vtkAG
 package require vtkITK
-package require vtkTeem 
+
 #for the NRRD Reader to load Reference Volume
+package require vtkTeem 
 
-
-#ctest: test fails -> result is 1
-#       test succeeds -> result is 0
+#ctest: test fails -> exitCode is 1
+#       test succeeds -> exitCode is 0
 set exitCode 5
 
 proc RunTest {{init 0}} {
@@ -31,7 +31,9 @@ proc RunTest {{init 0}} {
         source [file join $::env(SLICER_HOME) Base/tcl/tcl-shared/Developer.tcl]
         source [file join $::env(SLICER_HOME) Modules/vtkTeem/tcl/VolNrrd.tcl]
                 
-        set Module(procMRML) ""
+        # all these Initialisations to use the MRML-tree and to be able to run the RunAG proc
+ 
+    set Module(procMRML) ""
         set Path(program) [file join $::env(SLICER_HOME) Base/tcl]
 
         MainMrmlInit
@@ -87,7 +89,6 @@ proc RunTest {{init 0}} {
     MainUpdateMRML
 
     # Set Parameters for AG
-    ###########################
     set AG(InputVolSource) 1
     set AG(InputVolTarget) 2
     set AG(ResultVol) -5
@@ -105,7 +106,6 @@ proc RunTest {{init 0}} {
     RunAG
 
     # Save Volume
-
     set Volume(activeID) 3
     set Volume(UseCompression) 1
     set Volumes(extentionGenericSave) "nhdr"
@@ -166,6 +166,7 @@ proc RunTest {{init 0}} {
     set std [stat GetStdev]
     puts "The nightly AG-Result has been saved in [file join $::env(SLICER_HOME) Modules/vtkAG/Testing/TestOutput/nightly_AG_Result.nhdr]."
     puts "Difference between baseline and nightly AG-Result has been saved in [file join $::env(SLICER_HOME) Modules/vtkAG/Testing/TestOutput/difference.nhdr]."
+    puts ""
     puts "Statistics of the difference image:"
     puts "min: $min"
     puts "max: $max"
@@ -178,5 +179,13 @@ proc RunTest {{init 0}} {
     }
 }
 RunTest 1
-puts "Result: $exitCode"
+puts ""
+if {$exitCode == 0} {
+    puts "ExitCode: $exitCode"
+    puts "Test passed"
+} else {
+    puts "Result: $exitCode"
+    puts "Test failed"g
+}
+
 exit $exitCode
