@@ -185,7 +185,7 @@ if {$exitCode == 0} {
     puts "Test passed"
 } else {
     puts "Result: $exitCode"
-    puts "Test failed"g
+    puts "Test failed"
 }
 
 exit $exitCode
