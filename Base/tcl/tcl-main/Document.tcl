@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Document.tcl,v $
-#   Date:      $Date: 2006/02/09 16:56:32 $
-#   Version:   $Revision: 1.29 $
+#   Date:      $Date: 2006/08/29 17:05:51 $
+#   Version:   $Revision: 1.30 $
 # 
 #===============================================================================
 # FILE:        Document.tcl
@@ -68,8 +68,8 @@ proc HtmlHead {fid title {styleFile "../../style.css"} \
 <td align=left>
     &nbsp;<a href='$homeFile' target='_top'>www.slicer.org</a>
 </td>
-<td align=right> 
-        <a href='http://slicer.sourceforge.net/'>slicer.sourceforge.net</a>&nbsp; 
+<td align=right>
+        <a href='http://www.na-mic.org/Wiki/index.php/Slicer'>NA-MIC.org/Wiki/index.php/Slicer</a>&nbsp;
 </td> 
 </tr> 
 </table>
@@ -365,7 +365,7 @@ proc DocumentGenerateAuto {dir} {
     &nbsp;<a href='../index.html' target='_top'>www.slicer.org</a>
 </td>
 <td align=right> 
-        <a href='http://slicer.sourceforge.net/'>slicer.sourceforge.net</a>&nbsp; 
+        <a href='http://www.na-mic.org/Wiki/index.php/Slicer'>NA-MIC.org/Wiki/index.php/Slicer</a>&nbsp;
 </td> 
 </tr> 
 </table>
