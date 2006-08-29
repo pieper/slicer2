@@ -1,6 +1,3 @@
-#ctest: test fails -> result is 1
-#       test succeeds -> result is 0
-
 package require vtkSlicerBase
 package require vtkITK
 package require vtkTeem 
@@ -142,6 +139,8 @@ proc MainViewSetFov {s1 s2} { }
 
 vtkNRRDReader nr
 nr SetFileName [file join $::env(SLICER_HOME) Modules/vtkTransformVolume/Testing/TestInput/baselineTransformVolume.nhdr]
+#nr SetFileName [file join $::env(SLICER_HOME) Modules/vtkTransformVolume/Testing/TestInput/test.nhdr]
+
 nr Update
 
 # Prepare a Volume for the subtraction result like it has
@@ -174,9 +173,12 @@ set Volumes(extentionGenericSave) "nhdr"
 set Volumes(prefixGenericSave) [file join $::env(SLICER_HOME) Modules/vtkTransformVolume/Testing/TestOutput/difference.nhdr]
 VolumesGenericExport
 
-#Now do the statistics
-
+#ctest: test fails -> exitCode is 1
+#       test succeeds -> exitCode is 0
 set exitCode 5
+
+
+#Now do the statistics
 
 vtkImageStatistics stat
 stat SetInput [Volume($difference,vol) GetOutput]
@@ -186,6 +188,7 @@ set max [stat GetMax]
 set mean [stat GetAverage]
 set std [stat GetStdev]
 stat Delete
+puts "CTEST_FULL_OUTPUT"
 puts "The nightly AG-Result has been saved in [file join $::env(SLICER_HOME) Modules/vtkTransformVolume/Testing/TestOutput/nightly_AG_Result.nhdr]."
 puts "Difference between baseline and nightly AG-Result has been saved in [file join $::env(SLICER_HOME) Modules/vtkTransformVolume/Testing/TestOutput/difference.nhdr]."
 puts "Statistics of the difference image:"
@@ -201,4 +204,11 @@ if {$min == 0 && $max == 0} {
 
 TransformVolumeExit
 
+puts "Exit code: $exitCode"
+puts ""    
+if {$exitCode == 0} {
+    puts "Test passed."
+} else {
+    puts "Test failed."
+}
 exit $exitCode
