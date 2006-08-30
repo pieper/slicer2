@@ -378,9 +378,13 @@ if { $::BATCH == "true" } {
         puts stderr "Run: Unknown build: $::env(BUILD)"
         exit -1
     }
-    
+
     # get the actual exit code of the child process
-    set code [lindex $::errorCode 2]
+    if { $::errorCode == "NONE" } {
+        set code 0
+    } else {
+        set code [lindex $::errorCode 2]
+    }
     # print the stdout/stderr of the child
 
     # if the errorCode is not an integer value, set it to 1.
