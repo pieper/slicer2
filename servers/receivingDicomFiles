@@ -1,0 +1,188 @@
+#!/bin/sh
+# the next line restarts using wish \
+exec wish "$0" "$@"
+
+# receivingDicomFiles - receive dicom files from MRT scanner.
+
+# Global constants
+set Dir "/usr/local/data"
+# all dicom files are saved in /usr/local/data/dcmImages
+set ImageDir "$Dir/dcmImages"
+set SeriesDirs ""
+set Counting 0
+set NoOfFiles -1 
+set CycleTime 3000
+set SeriesNumber 0
+set log ""
+ 
+# Set title and allow window resizing.
+wm title . "Receiving Dicom ..." 
+
+
+
+proc SortFiles {} {
+    global Dir
+    global ImageDir
+    global CycleTime
+    global SeriesDirs
+    global SeriesNumber
+    global log
+    global patientName
+    global directoryName
+
+    # Dicom files currently available in the directory
+    set files [glob -nocomplain -directory $ImageDir *.*]
+    set size [llength $files]
+    if {$size > 0} {
+        foreach f $files {
+            # get image date
+            set date [exec get_dicom_info -attvalue 0008 0023 $f]
+            set year [string range $date 0 3]
+            set month [string range $date 4 5]
+            set day [string range $date 6 7]
+            set datePart "$year-$month-$day"
+
+            # get patient name 
+            set name [exec get_dicom_info -pname $f]
+            set names [split $name ","]
+            set lName [string trim [lindex $names 0]]
+            regsub -all " " $lName {.} lName 
+            set fName [string trim [lindex $names 1]]
+            regsub -all " " $fName {.} fName 
+            set namePart $lName-$fName
+            set patientName "$fName $lName" 
+
+            # make patient directory
+            set patientDir $datePart-$namePart
+            set abPatientDir "$Dir/$patientDir"
+            if {! [file exists $abPatientDir] || 
+                ! [file isdirectory $abPatientDir]} {
+                exec mkdir $abPatientDir
+
+                if {! [file exists $abPatientDir]} {
+                    $log insert end "\nCouldn't create this directory: \n$abPatientDir\n"
+                }
+                set directoryName $abPatientDir
+            } 
+
+            # make series directory
+            set series [exec get_dicom_info -series $f]
+            set series [string trim $series]
+            set seriesDir "$abPatientDir/$series" 
+            if {! [file exists $seriesDir] || 
+                ! [file isdirectory $seriesDir]} {
+                exec mkdir $seriesDir
+
+                if {! [file exists $seriesDir]} {
+                    $log insert end "\nCouldn't create this directory: \n$seriesDir\n"
+                }
+                lappend SeriesDirs $seriesDir
+                set SeriesNumber $series
+            } 
+
+            # copy image to the series directory
+            exec mv $f $seriesDir
+        }
+    }
+    after $CycleTime SortFiles
+}
+
+
+proc CheckProgress {} {
+    global SeriesDirs
+    global CycleTime
+    global Counting
+    global NoOfFiles
+    global SeriesNumber
+    global log
+
+    set size [llength $SeriesDirs]
+    if {$size > 0} {
+        set imgDir [lindex $SeriesDirs 0]
+        set files [glob -nocomplain -directory $imgDir *.*]
+        set len [llength $files]
+ 
+        if {$Counting} {
+            if {$len == $NoOfFiles} {
+                # done for this series
+                # remove the first element
+                set SeriesDirs [lreplace SeriesDirs 0 0]
+                set Counting 0
+
+                # give a message to the user
+                $log insert end "\nGot all images for series ($SeriesNumber)\n"
+            } else {
+                set NoOfFiles $len 
+            }
+
+        } else {
+            set Counting 1
+            set NoOfFiles $len 
+        }
+    }
+    after $CycleTime CheckProgress
+}
+
+
+# Create a frame for buttons and entry.
+foreach x "1 2 3 4 5" {
+    frame .f$x -borderwidth 1 
+#    pack  -side top -fill both -expand true
+#    pack .f$x -side top -fill x
+    pack .f$x -side top -fill both -expand true 
+}
+
+set f .f1
+label $f.lDate -text Date: -padx 1 
+set var [clock format [clock seconds] -format "%D"]
+label $f.lDateVal -text $var -padx 1 
+pack $f.lDate $f.lDateVal -side left
+
+set f .f2
+label $f.lName -text "Patient:" -padx 1 
+set patientName none
+label $f.lNameVal -textvar patientName -padx 1 
+pack $f.lName $f.lNameVal -side left
+
+set f .f3
+label $f.lDir -text "Directory:" -padx 1 
+set directoryName none
+label $f.lDirVal -textvar directoryName -padx 1 
+pack $f.lDir $f.lDirVal -side left
+
+set f .f4
+# Create the command buttons.
+button $f.quit -text Quit -command exit
+pack $f.quit -side left 
+
+set f .f5
+# Create a text widget to log the output
+set log [text $f.log -width 40 -height 10 \
+	-borderwidth 2 -relief raised -setgrid true\
+	-yscrollcommand {$f.scroll set}]
+scrollbar $f.scroll -command {$f.log yview}
+pack $f.scroll -side right -fill y
+pack $f.log -side left -fill both -expand true
+
+
+set a [file exists $Dir]
+set b [file isdirectory $Dir]
+if {! $a || ! $b} {
+    $log insert end "\nDirectory doesn't exist: \n$Dir\n"
+}
+
+set c [file exists $ImageDir] 
+set d [file isdirectory $ImageDir]
+if {! $c || ! $d} {
+    $log insert end "\nDirectory doesn't exist: \n$ImageDir\n"
+}
+
+# Main loop
+if {$a && $b && $c && $d} {
+    # Sort dcm files and
+    # check if the receiving process is done 
+    # for a specific series
+    SortFiles 
+    CheckProgress
+}
+

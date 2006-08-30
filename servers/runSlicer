@@ -1,0 +1,38 @@
+#!/bin/bash 
+
+# 1 = process found
+# 0 = process not found
+function findproc()
+{
+    ps -e | grep -i $1 > /tmp/pids.txt 
+    if [ -s /tmp/pids.txt ]; then
+        # one or more found
+        return 1 
+    else
+        # none found
+        return 0 
+    fi
+}
+
+findproc storescp 
+if [ $? -eq 0 ]; then
+    cd /usr/local/data/dcmImages
+    /usr/local/dicom/bin/storescp -aet SCLP_DIC1 4104 &
+fi
+rm /tmp/pids.txt
+
+
+findproc wish 
+if [ $? -eq 0 ]; then
+    /usr/local/bin/receivingDicomFiles &
+fi
+rm /tmp/pids.txt
+
+
+findproc vtk 
+if [ $? -eq 0 ]; then
+    /usr/local/src/slicer2/slicer2-linux-x86 &
+fi
+rm /tmp/pids.txt
+
+
