@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Editor.tcl,v $
-#   Date:      $Date: 2006/06/08 21:59:14 $
-#   Version:   $Revision: 1.90 $
+#   Date:      $Date: 2006/08/31 20:27:30 $
+#   Version:   $Revision: 1.91 $
 # 
 #===============================================================================
 # FILE:        Editor.tcl
@@ -105,7 +105,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.90 $} {$Date: 2006/06/08 21:59:14 $}]
+        {$Revision: 1.91 $} {$Date: 2006/08/31 20:27:30 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -838,9 +838,11 @@ proc EditorBuildGUI {} {
     set Editor(formatMenu) $f.fRight.mbFormat     
     
     #  Add menu items
-    foreach FileType {{Standard} {.pts} {hdr} {nrrd} {nhdr} {mhd} {mha} {nii} {img} {img.gz} {vtk}} \
+    # Saving of nifti extentions .img and .img.gz doesn't work right now. For the extention .img itk defers to analyze.
+    # Saving of nifti extention .img.gz is not supported yet by itk.
+    foreach FileType {{Standard} {.pts} {hdr} {nrrd} {nhdr} {mhd} {mha} {nii} {nii.gz} {vtk}} \
         name {{Headerless} {.pts} {Analyze (.hdr)} {NRRD(.nrrd)} {NRRD(.nhdr)} \
-                  {Meta (.mhd)} {Meta (.mha)} {Nifti (.nii)} {Nifti (.img)} {Nifti (.img.gz)} {VTK (.vtk)}} { 
+                  {Meta (.mhd)} {Meta (.mha)} {Nifti (.nii)} {Nifti (.nii.gz)} {VTK (.vtk)}} { 
                       set Editor($FileType) $name
                       $f.fRight.mbFormat.m add command -label $name \
                           -command "EditorExportSetFileType $FileType"
