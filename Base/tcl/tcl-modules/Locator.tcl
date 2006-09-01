@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2006/08/24 16:48:52 $
-#   Version:   $Revision: 1.38.12.2.2.10 $
+#   Date:      $Date: 2006/09/01 17:47:15 $
+#   Version:   $Revision: 1.38.12.2.2.11 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -89,7 +89,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.10 $} {$Date: 2006/08/24 16:48:52 $}]
+        {$Revision: 1.38.12.2.2.11 $} {$Date: 2006/09/01 17:47:15 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -1985,11 +1985,14 @@ proc LocatorLoopFlashpoint {} {
         Volume($i,node) ApplyThresholdOn
         Volume($i,node) SetLowerThreshold 1 
 
+        LocatorTranslateRealtimeVolume
+
         MainSlicesSetVolumeAll Back $i
         MainVolumesSetActive $i
 
         MainUpdateMRML
         RenderAll
+
 
         set Locator(realtimeRSA) "$r $s $a" 
         set Locator(realtimeScanOrder) $scanOrder 
@@ -2016,6 +2019,139 @@ proc LocatorLoopFlashpoint {} {
     }
     after $Locator(Flashpoint,msPoll) LocatorLoopFlashpoint
 }
+
+
+proc LocatorTranslateRealtimeVolume {} {
+    global Locator
+
+
+    # realtime volume id
+    set volid $Locator(idRealtime)
+ 
+    # calculate the space directions and origin
+    catch "ras_matrix Delete"
+    vtkMatrix4x4 ras_matrix
+    eval ras_matrix DeepCopy [Volume($volid,node) GetRasToIjkMatrix]
+    ras_matrix Invert
+    set space_origin [format "(%g, %g, %g)" \
+        [ras_matrix GetElement 0 3]\
+        [ras_matrix GetElement 1 3]\
+        [ras_matrix GetElement 2 3] ]
+    set space_directions [format "(%g, %g, %g) (%g, %g, %g) (%g, %g, %g)" \
+        [ras_matrix GetElement 0 0]\
+        [ras_matrix GetElement 1 0]\
+        [ras_matrix GetElement 2 0]\
+        [ras_matrix GetElement 0 1]\
+        [ras_matrix GetElement 1 1]\
+        [ras_matrix GetElement 2 1]\
+        [ras_matrix GetElement 0 2]\
+        [ras_matrix GetElement 1 2]\
+        [ras_matrix GetElement 2 2] ]
+    ras_matrix Delete
+
+
+    LocatorParseSpaceDirections $volid $space_origin $space_directions
+
+    # MainUpdateMRML
+    # Slicer SetOffset 0 0
+    # MainSlicesSetVolumeAll Back $volid
+    # RenderAll
+
+} 
+
+
+
+#
+# convert nrrd-style space directions line into vtk/slicer info
+# - unfortunately, this is some nasty math to do in tcl
+#
+proc LocatorParseSpaceDirections {volid space_origin space_directions} {
+    global Locator Volume
+
+    #
+    # parse the 'space directions' and 'space origin' information into
+    # a slicer RasToIjk and related matrices by telling the mrml node
+    # the RAS corners of the volume
+    #
+
+    regsub -all "\\(" $space_origin " " space_origin
+    regsub -all "\\)" $space_origin " " space_origin
+    regsub -all "\\," $space_origin " " space_origin
+    regsub -all "\\(" $space_directions " " space_directions
+    regsub -all "\\)" $space_directions " " space_directions
+    regsub -all "\\," $space_directions " " space_directions
+
+
+# puts "space_origin $space_origin"
+# puts "space_directions $space_directions"
+
+    #
+    # normalize and save length for each space direction vector
+    #
+    set spacei 0
+    foreach dir [lrange $space_directions 0 2] {
+        set spacei [expr $spacei + $dir * $dir]
+    }
+    set spacei [expr sqrt($spacei)]
+    set unit_space_directions ""
+    foreach dir [lrange $space_directions 0 2] {
+        lappend unit_space_directions [expr $dir / $spacei]
+    }
+
+    set spacej 0
+    foreach dir [lrange $space_directions 3 5] {
+        set spacej [expr $spacej + $dir * $dir]
+    }
+    set spacej [expr sqrt($spacej)]
+    foreach dir [lrange $space_directions 3 5] {
+        lappend unit_space_directions [expr $dir / $spacej]
+    }
+
+    set spacek 0
+    foreach dir [lrange $space_directions 6 8] {
+        set spacek [expr $spacek + $dir * $dir]
+    }
+    set spacek [expr sqrt($spacek)]
+    foreach dir [lrange $space_directions 6 8] {
+        lappend unit_space_directions [expr $dir / $spacek]
+    }
+    
+    Volume($volid,node) SetSpacing $spacei $spacej $spacek
+    [Volume($volid,vol) GetOutput] SetSpacing $spacei $spacej $spacek
+
+
+    #
+    # fill the ijk to ras matrix
+    # - use it to calculate the slicer internal matrices (RasToIjk etc)
+    #
+
+    set r [lindex $Locator(realtimeRSA) 0]
+    set s [lindex $Locator(realtimeRSA) 1]
+    set a [lindex $Locator(realtimeRSA) 2]
+    set ras "$r $a $s"
+ 
+    catch "Ijk_matrix Delete"
+    vtkMatrix4x4 Ijk_matrix
+    Ijk_matrix Identity
+    for {set i 0} {$i < 3} {incr i} {
+        for {set j 0} {$j < 3} {incr j} {
+            set val [lindex $space_directions [expr 3 * $i + $j]]
+            Ijk_matrix SetElement $j $i $val
+        }
+        set val [expr [lindex $space_origin $i] + [lindex $ras $i]]
+        Ijk_matrix SetElement $i 3 $val
+    }
+
+    set dims [[Volume($volid,vol) GetOutput] GetDimensions]
+
+    VolumesComputeNodeMatricesFromIjkToRasMatrix2 $volid Ijk_matrix $dims
+
+# puts [Ijk_matrix Print]
+
+    Ijk_matrix Delete
+}
+
+
 
 #-------------------------------------------------------------------------------
 # .PROC LocatorFilePrefix
