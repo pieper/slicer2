@@ -14,6 +14,14 @@
 ## variables that are the same for all systems
 set ::SLICER_DATA_ROOT ""
 
+# option to customize slicer: set the default file format. Right now only 
+# used in Volumes.tcl to set the default file type of volumes to load.
+# At the moment only checks if SLICER_OPTIONS_DEFAULT_FILE_FORMAT 
+# is "nrrd", everything else will effect in the "basic" default file format.
+if {[info exists ::env(SLICER_OPTIONS_DEFAULT_FILE_FORMAT)] == 0 } {
+    set ::env(SLICER_OPTIONS_DEFAULT_FILE_FORMAT) "basic"
+}
+
 if {[info exists ::env(SLICER_HOME)]} {
     # already set by the launcher
     set ::SLICER_HOME $::env(SLICER_HOME)
