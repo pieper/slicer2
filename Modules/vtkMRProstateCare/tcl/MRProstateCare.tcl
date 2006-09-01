@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.47 $} {$Date: 2006/08/25 15:29:20 $}]
+        {$Revision: 1.1.2.48 $} {$Date: 2006/09/01 17:44:36 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -985,41 +985,34 @@ proc MRProstateCareNavLoop {} {
 
 
     set vname [Volume($MRProstateCare(nextVolumeID),node) GetName]
-    if {$vname != "Realtime"} {
-        # set right slice to display
-        set coords $MRProstateCare(displayRSA) 
-
-        # Axial slice changes as S
-        # Saggital slice changes as R
-        # Coronal slice changes as A
-        foreach s "0 1 2" i "1 0 2" {
-            set Slice($s,offset) [lindex $coords $i] 
-            MainSlicesSetOffset $s
-            RenderBoth $s
-        }
 
 
-        # draw a ball for the point in 3D view
-        # write the point name in 3D view
-        set i 0 
-        set p $MRProstateCare(currentPoint)
-        set i2 [string first ":" $p]
-        set title [string range $p $i [expr $i2-1]] 
-        set title [string trim $title]
-        MRProstateCareShowPoint $title
-
-    } else {
-        # Axial slice changes as S
-        # Saggital slice changes as R
-        # Coronal slice changes as A
-        foreach s "0 1 2" {
-            set Slice($s,offset) 0 
-            MainSlicesSetOffset $s
-            RenderBoth $s
-        }
-
-        MRProstateCareHidePoint
+    # set right slice to display
+    set coords $MRProstateCare(displayRSA) 
+    # Axial slice changes as S
+    # Saggital slice changes as R
+    # Coronal slice changes as A
+    foreach s "0 1 2" i "1 0 2" {
+        set Slice($s,offset) [lindex $coords $i] 
+        MainSlicesSetOffset $s
+        RenderBoth $s
     }
+
+
+    if {$vname != "Realtime"} {
+    # draw a ball for the point in 3D view
+    # write the point name in 3D view
+    set i 0 
+    set p $MRProstateCare(currentPoint)
+    set i2 [string first ":" $p]
+    set title [string range $p $i [expr $i2-1]] 
+    set title [string trim $title]
+    MRProstateCareShowPoint $title
+    } else {
+        MRProstateCareHidePoint 
+    }
+
+
 
     # turn off orientation letters and cube in 3D view
     set Anno(letters) 0
@@ -1729,109 +1722,6 @@ proc MRProstateCareCheckTemplateUserInput {} {
 }
 
 
-proc MRProstateCareSetRealtime {v} {
-    global MRProstateCare Volume
-
-    set MRProstateCare(idRealtime) $v
-    
-    # Change button text, and show file prefix
-if {0} {
-    if {$v == "NEW"} {
-        $MRProstateCare(mbRealtime) config -text $v
-        set MRProstateCare(prefixRealtime) ""
-    } else {
-        $MRProstateCare(mbRealtime) config -text [Volume($v,node) GetName]
-        set MRProstateCare(prefixRealtime) [MainFileGetRelativePrefix \
-            [Volume($v,node) GetFilePrefix]]
-    }
-} 
-}
-
-proc MRProstateCareGetRealtimeID {} {
-    global MRProstateCare Volume Lut
-        
-    # If there is no Realtime volume, then create one
-    if {$MRProstateCare(idRealtime) != "NEW"} {
-        return $MRProstateCare(idRealtime)
-    }
-    
-    # Create the node
-    set n [MainMrmlAddNode Volume]
-    set v [$n GetID]
-    $n SetDescription "Realtime Volume"
-    $n SetName        "Realtime"
-
-    # Create the volume
-    MainVolumesCreate $v
-
-    MRProstateCareSetRealtime $v
-
-    MainUpdateMRML
-
-    return $v
-}
-
-
-proc MRProstateCareUseLocatorMatrix {} {
-    global MRProstateCare Slice
-
-    foreach p "normalOffset transverseOffset crossOffset" {
-        if {[ValidateFloat $MRProstateCare($p)] == 0} {
-            tk_messageBox -message "$p must be a floating point number."
-            return
-        }
-    }
-
-    # Form arrays so we can use vector processing functions
-    set P(x) $MRProstateCare(px)
-    set P(y) $MRProstateCare(py)
-    set P(z) $MRProstateCare(pz)
-    set N(x) $MRProstateCare(nx)
-    set N(y) $MRProstateCare(ny)
-    set N(z) $MRProstateCare(nz)
-    set T(x) $MRProstateCare(tx)
-    set T(y) $MRProstateCare(ty)
-    set T(z) $MRProstateCare(tz)
-
-    # Ensure N, T orthogonal:
-    #    C = N x T
-    #    T = C x N
-    Cross C N T
-    Cross T C N
-
-    # Ensure vectors are normalized
-    Normalize N
-    Normalize T
-    Normalize C
-
-    # Offset the Locator
-    set n $MRProstateCare(normalOffset)
-    set t $MRProstateCare(transverseOffset)
-    set c $MRProstateCare(crossOffset)
-    set MRProstateCare(px) [expr $P(x) + $N(x)*$n + $T(x)*$t + $C(x)*$c]
-    set MRProstateCare(py) [expr $P(y) + $N(y)*$n + $T(y)*$t + $C(y)*$c]
-    set MRProstateCare(pz) [expr $P(z) + $N(z)*$n + $T(z)*$t + $C(z)*$c]
-    set MRProstateCare(nx) $N(x)
-    set MRProstateCare(ny) $N(y)
-    set MRProstateCare(nz) $N(z)
-    set MRProstateCare(tx) $T(x)
-    set MRProstateCare(ty) $T(y)
-    set MRProstateCare(tz) $T(z)
-
-    # Format display
-    MRProstateCareFormat
-                
-    # Position the rendered locator
-    MRProstateCareSetMatrices
-            
-    # Find slices with their input set to locator.
-    # and set the slice matrix with the new locator data
-
-    Slicer SetDirectNTP \
-        $MRProstateCare(nx) $MRProstateCare(ny) $MRProstateCare(nz) \
-        $MRProstateCare(tx) $MRProstateCare(ty) $MRProstateCare(tz) \
-        $MRProstateCare(px) $MRProstateCare(py) $MRProstateCare(pz) 
-}
 
 
 proc MRProstateCareUpdateConnectionStatus {} {
@@ -2187,5 +2077,6 @@ proc MRProstateCareZoom {} {
 
    Render
 }
+
 
 
