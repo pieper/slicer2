@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.48 $} {$Date: 2006/09/01 17:44:36 $}]
+        {$Revision: 1.1.2.49 $} {$Date: 2006/09/01 18:04:58 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -957,8 +957,8 @@ proc MRProstateCareNavLoop {} {
 
     # from scanning orientation to dispaly orientation
     switch $Locator(realtimeScanOrder) {
-        "IS" {set MRProstateCare(imageDisplayOrient) "Axial"} 
-        "LR" {set MRProstateCare(imageDisplayOrient) "Sagittal"} 
+        "SI" {set MRProstateCare(imageDisplayOrient) "Axial"} 
+        "RL" {set MRProstateCare(imageDisplayOrient) "Sagittal"} 
         "AP" {set MRProstateCare(imageDisplayOrient) "Coronal"} 
     }
  
@@ -1000,14 +1000,14 @@ proc MRProstateCareNavLoop {} {
 
 
     if {$vname != "Realtime"} {
-    # draw a ball for the point in 3D view
-    # write the point name in 3D view
-    set i 0 
-    set p $MRProstateCare(currentPoint)
-    set i2 [string first ":" $p]
-    set title [string range $p $i [expr $i2-1]] 
-    set title [string trim $title]
-    MRProstateCareShowPoint $title
+        # draw a ball for the point in 3D view
+        # write the point name in 3D view
+        set i 0 
+        set p $MRProstateCare(currentPoint)
+        set i2 [string first ":" $p]
+        set title [string range $p $i [expr $i2-1]] 
+        set title [string trim $title]
+        MRProstateCareShowPoint $title
     } else {
         MRProstateCareHidePoint 
     }
