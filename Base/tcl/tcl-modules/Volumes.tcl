@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Volumes.tcl,v $
-#   Date:      $Date: 2006/08/31 20:24:15 $
-#   Version:   $Revision: 1.137 $
+#   Date:      $Date: 2006/09/01 19:02:18 $
+#   Version:   $Revision: 1.138 $
 # 
 #===============================================================================
 # FILE:        Volumes.tcl
@@ -101,10 +101,15 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-                                  {$Revision: 1.137 $} {$Date: 2006/08/31 20:24:15 $}]
+                                  {$Revision: 1.138 $} {$Date: 2006/09/01 19:02:18 $}]
 
     # Props
-    set Volume(propertyType) VolBasic
+    if { $::env(SLICER_OPTIONS_DEFAULT_FILE_FORMAT) == "nrrd"} {
+        set Volume(propertyType) VolNrrd
+    } else {
+        set Volume(propertyType) VolBasic
+    }
+    
     # text for menus displayed on Volumes->Props->Header GUI
     set Volume(scalarTypeMenu) "Char UnsignedChar Short UnsignedShort\ 
     {Int} UnsignedInt Long UnsignedLong Float Double"
@@ -474,7 +479,8 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
         set Volume(f$m) $f.f${m}
     }
     # raise the default one 
-    raise $Volume(fVolBasic)
+    raise $Volume(f$Volume(propertyType))
+    
 
     #-------------------------------------------
     # Props->Top frame
