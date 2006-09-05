@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.51 $} {$Date: 2006/09/05 17:28:43 $}]
+        {$Revision: 1.1.2.52 $} {$Date: 2006/09/05 20:35:18 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -143,7 +143,7 @@ proc MRProstateCareInit {} {
     set MRProstateCare(tempDir) "/tmp"
     set MRProstateCare(logFile) "MRProstateCareLog.txt"
     set MRProstateCare(navLoop) 0 
-    set MRProstateCare(navTime) 1000
+    set MRProstateCare(navTime) 250
     set MRProstateCare(image1,currentVolumeID) 0 
     set MRProstateCare(image2,currentVolumeID) 0 
 
@@ -963,26 +963,9 @@ proc MRProstateCareSetScaleFactor {v} {
     set MRProstateCare(scaleFactor) $v
 }
 
- 
-proc MRProstateCareNavLoop {} { 
+
+proc MRProstateCareUpdateForNav {} { 
     global MRProstateCare Locator Slice Anno Volume 
-
-
-    if {! $MRProstateCare(navLoop)} {
-        return
-    }
-
-    if {$MRProstateCare(currentPoint) == "none"} {
-        DevErrorWindow "Please select a valid point to display. Then press Start button to begin."
-        return
-    }
-
-    set both [expr {$MRProstateCare(image1,currentVolumeID) > 0  
-                    && $MRProstateCare(image2,currentVolumeID) > 0}] 
-    if {! $both} {
-        DevErrorWindow "Please have both images available for display. Then press Start button to begin."
-        return
-    } 
 
 
     # update display RSA
@@ -997,7 +980,7 @@ proc MRProstateCareNavLoop {} {
  
     # clean the 3D view
     MainSlicesSetVisibilityAll 0
-#    Render3D
+    Render3D
     # turn off orientation letters and cube in 3D view
     set Anno(letters) 0
     set Anno(box) 0
@@ -1009,7 +992,7 @@ proc MRProstateCareNavLoop {} {
     MainVolumesSetActive $MRProstateCare(image1,currentVolumeID)
     MainSlicesSetVolumeAll Fore $MRProstateCare(image2,currentVolumeID) 
     MainVolumesSetActive $MRProstateCare(image2,currentVolumeID)
-#    MainVolumesRender
+    MainVolumesRender
 
 
     # set right slice to display
@@ -1026,13 +1009,21 @@ proc MRProstateCareNavLoop {} {
 
     # draw a ball for the point in 3D view
     # write the point name in 3D view
-    set i 0 
-    set p $MRProstateCare(currentPoint)
-    set i2 [string first ":" $p]
-    set title [string range $p $i [expr $i2-1]] 
-    set title [string trim $title]
-    MRProstateCareShowPoint $title
+    if {$MRProstateCare(currentPoint) != "none"} {
+        set i 0 
+        set p $MRProstateCare(currentPoint)
+        set i2 [string first ":" $p]
+        set title [string range $p $i [expr $i2-1]] 
+        set title [string trim $title]
+        MRProstateCareShowPoint $title
+    }
 
+    MRProstateCareShowSliceIn3D
+}
+
+
+proc MRProstateCareShowSliceIn3D {} { 
+    global MRProstateCare Slice Anno Volume 
 
     # show the slice according to the specified orientation
     switch $MRProstateCare(imageDisplayOrient) {
@@ -1073,13 +1064,33 @@ proc MRProstateCareNavLoop {} {
     }
     MainSlicesSetVisibility ${s}
     MainViewerHideSliceControls 
-#    Render3D
+    Render3D
+}
+
+ 
+proc MRProstateCareNavLoop {} { 
+    global MRProstateCare Locator Slice Anno Volume 
+
+
+    if {! $MRProstateCare(navLoop)} {
+        return
+    }
+
+
+    set both [expr {$MRProstateCare(image1,currentVolumeID) > 0  
+                    && $MRProstateCare(image2,currentVolumeID) > 0}] 
+    if {! $both} {
+        DevErrorWindow "Please have both images available for display. Then press Start button to begin."
+        return
+    } 
+
+    MRProstateCareShowSliceIn3D
 
     if {$Slice(opacity) == 1} {set MRProstateCare(navLoopFactor) -1}
     if {$Slice(opacity) == 0} {set MRProstateCare(navLoopFactor) +1}
-    set Slice(opacity) [expr $Slice(opacity) + $MRProstateCare(navLoopFactor) * 0.2]
+    set Slice(opacity) [expr $Slice(opacity) + $MRProstateCare(navLoopFactor) * 0.1]
     MainSlicesSetOpacityAll
-    # RenderAll
+    RenderAll
 
     after $MRProstateCare(navTime) MRProstateCareNavLoop
 }
@@ -1182,6 +1193,17 @@ proc MRProstateCareSelectPoint {m} {
 
     # Update rsa values in Display->Scan tab
     MRProstateCareUpdateRSA
+
+    # draw a ball for the point in 3D view
+    # write the point name in 3D view
+    if {$MRProstateCare(currentPoint) != "none"} {
+        set i 0 
+        set p $MRProstateCare(currentPoint)
+        set i2 [string first ":" $p]
+        set title [string range $p $i [expr $i2-1]] 
+        set title [string trim $title]
+        MRProstateCareShowPoint $title
+    }
 }
 
 
@@ -1209,6 +1231,8 @@ proc MRProstateCareSelectVolume {which v} {
 
 proc MRProstateCareConnect {} {
     global MRProstateCare 
+
+    LocatorRegisterCallback MRProstateCareUpdateForNav
 
     LocatorConnect
     MRProstateCareUpdateConnectionStatus
