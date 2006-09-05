@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.50 $} {$Date: 2006/09/05 16:43:51 $}]
+        {$Revision: 1.1.2.51 $} {$Date: 2006/09/05 17:28:43 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -284,7 +284,7 @@ proc MRProstateCareBuildGUI {} {
     set f $fTemplate.f1
     eval {label $f.lLocatorTitle -text "Locator status:"} $Gui(WTA)
     eval {label $f.lLocatorStatus -text "None" -width 8} $Gui(WLA)
-    grid $f.lLocatorTitle $f.lLocatorStatus -pady 3 -padx $Gui(pad)
+    grid $f.lLocatorTitle $f.lLocatorStatus -pady 1 -padx $Gui(pad)
     set Locator(lLocStatus) $f.lLocatorStatus
 
     set f $fTemplate.f2
@@ -301,9 +301,16 @@ proc MRProstateCareBuildGUI {} {
     set var [clock format [clock seconds] -format "%D"]
     set MRProstateCare(entry,PDate) $var 
  
+
     set f $fTemplate.f3
+    foreach x "top bot" {
+        frame $f.f$x -bg $Gui(activeWorkspace) 
+        pack $f.f$x -side top -pady 1 
+    }
+ 
+    set f $fTemplate.f3.ftop
     eval {label $f.l -text "RSA coords of template corners:"} $Gui(WTA)
-    grid $f.l -row 0 -column 0 -columnspan 3 -pady 10 -sticky news
+    grid $f.l -row 0 -column 0 -columnspan 3 -pady 5 -sticky news
 
     foreach x "AR PR PL AL" text \
         "{Anterior Right} {Posterior Right} {Posterior Left} {Anterior Left}" {
@@ -317,11 +324,16 @@ proc MRProstateCareBuildGUI {} {
        grid $f.e$x -sticky w
 
     }
+    set f $fTemplate.f3.fbot
+    DevAddButton $f.bSave "Save" "MRProstateCareSaveCornerCoors" 8 
+    DevAddButton $f.bReset "Reset" "MRProstateCareResetCornerCoors" 8 
+    grid $f.bSave $f.bReset -pady 2 -sticky news
+ 
 
     set f $fTemplate.f4
     eval {label $f.l -text "Current locator position & orientation:"} $Gui(WTA)
     frame $f.f -bg $Gui(activeWorkspace)
-    pack $f.l $f.f -side top -pady 5 -padx $Gui(pad)
+    pack $f.l $f.f -side top -pady 2 -padx $Gui(pad)
 
     set f $f.f
     eval {label $f.l -text ""} $Gui(WLA)
@@ -345,7 +357,7 @@ proc MRProstateCareBuildGUI {} {
     DevAddButton $f.bCheck "Check" "MRProstateCareCheckTemplateUserInput;\
                                     MRProstateCareVerify 0; \
                                     MRProstateCareView" 10 
-    grid $f.bCheck -pady 5 -padx 1 
+    grid $f.bCheck -pady 3 -padx 1 
 
 
     #-------------------------------------------
@@ -481,6 +493,24 @@ proc MRProstateCareBuildGUI {} {
     }
 }
 
+
+proc MRProstateCareSaveCornerCoors {} {
+    global MRProstateCare 
+
+    foreach x "AR PR PL AL" {
+        set MRProstateCare(saved$x) $MRProstateCare(entry,$x)
+    }
+}
+
+
+proc MRProstateCareResetCornerCoors {} {
+    global MRProstateCare
+
+    foreach x "AR PR PL AL" {
+        set MRProstateCare(entry,$x) $MRProstateCare(saved$x)
+    }
+}
+ 
 
 proc MRProstateCareQuery {field} {
     global MRProstateCare Locator 
@@ -908,7 +938,6 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     # Frame 4 
     #-------------------------
     set f $parent.f4
- 
     eval {label $f.lTitle -text "Zoom 3D view:"} $Gui(WTA)
     eval {scale $f.s3D -from 1.0 -to 5.0 -length 115 \
         -command "MRProstateCareSetScaleFactor" \
