@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Volumes.tcl,v $
-#   Date:      $Date: 2006/07/07 17:46:03 $
-#   Version:   $Revision: 1.127.2.1.2.3 $
+#   Date:      $Date: 2006/09/05 20:51:57 $
+#   Version:   $Revision: 1.127.2.1.2.4 $
 # 
 #===============================================================================
 # FILE:        Volumes.tcl
@@ -101,7 +101,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-             {$Revision: 1.127.2.1.2.3 $} {$Date: 2006/07/07 17:46:03 $}]
+             {$Revision: 1.127.2.1.2.4 $} {$Date: 2006/09/05 20:51:57 $}]
 
     # Props
     set Volume(propertyType) VolBasic
@@ -2474,8 +2474,8 @@ proc VolumesComputeNodeMatricesFromIjkToRasMatrix2 {volumeNode ijkToRasMatrix di
     vtkMatrix4x4 Spacing
     vtkMatrix4x4 Position
 
-puts "ijkToRasMatrix" 
-puts [$ijkToRasMatrix Print]
+# puts "ijkToRasMatrix" 
+# puts [$ijkToRasMatrix Print]
 
     # RasToIjk is simply the inverse of ijkToRas
     RasToIjk DeepCopy $ijkToRasMatrix
@@ -2493,8 +2493,8 @@ puts [$ijkToRasMatrix Print]
     }
     set yext [expr [lindex $dims 1] - 1]
     set vtkOrigin [$ijkToRasMatrix MultiplyPoint 0 $yext 0 1]
-puts "vtkOrigin" 
-puts $vtkOrigin 
+# puts "vtkOrigin" 
+# puts $vtkOrigin 
     for {set row 0} {$row < 3} {incr row} {
         VtkToRas SetElement $row 3 [lindex $vtkOrigin $row]
     }
@@ -2504,11 +2504,11 @@ puts $vtkOrigin
     set strRasToVtk [Volume($volumeNode,node) GetMatrixToString RasToVtk]
     Volume($volumeNode,node) SetRasToVtkMatrix $strRasToVtk
 
-puts "VtkToRas" 
-puts [VtkToRas Print]
+# puts "VtkToRas" 
+# puts [VtkToRas Print]
 
-puts "RasToVtk" 
-puts [RasToVtk Print]
+# puts "RasToVtk" 
+# puts [RasToVtk Print]
 
     # calculate the PositionMatrix
     # VtkToRas = Position * Spacing
@@ -2525,11 +2525,11 @@ puts [RasToVtk Print]
     set strPosition [Volume($volumeNode,node) GetMatrixToString Position]
     Volume($volumeNode,node) SetPositionMatrix $strPosition
 
-puts "Spacing" 
-puts [Spacing Print]
+# puts "Spacing" 
+# puts [Spacing Print]
 
-puts "Position" 
-puts [Position Print]
+# puts "Position" 
+# puts [Position Print]
 
     RasToIjk Delete
     VtkToRas Delete
