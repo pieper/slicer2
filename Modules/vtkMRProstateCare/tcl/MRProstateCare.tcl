@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.49 $} {$Date: 2006/09/01 18:04:58 $}]
+        {$Revision: 1.1.2.50 $} {$Date: 2006/09/05 16:43:51 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -137,12 +137,13 @@ proc MRProstateCareInit {} {
 
     set MRProstateCare(currentTab) 1 
     set MRProstateCare(editIndex) -1 
+    set MRProstateCare(editMode)   0 
     set MRProstateCare(pointList) "" 
 
     set MRProstateCare(tempDir) "/tmp"
     set MRProstateCare(logFile) "MRProstateCareLog.txt"
     set MRProstateCare(navLoop) 0 
-    set MRProstateCare(navTime) 5000
+    set MRProstateCare(navTime) 1000
     set MRProstateCare(image1,currentVolumeID) 0 
     set MRProstateCare(image2,currentVolumeID) 0 
 
@@ -408,7 +409,9 @@ proc MRProstateCareBuildGUI {} {
     eval {label $f.lTitle -text "Defined points:"} $Gui(WTA)
     scrollbar $f.vs -orient vertical -bg $Gui(activeWorkspace)
     set MRProstateCare(PointsVerScroll) $f.vs
-    listbox $f.lb -height 6 -width 24 -bg $Gui(activeWorkspace) \
+    listbox $f.lb \
+        -height 6 -width 24 \
+        -bg $Gui(activeWorkspace) \
         -yscrollcommand {$::MRProstateCare(PointsVerScroll) set}
     set MRProstateCare(pointListBox) $f.lb
     $MRProstateCare(PointsVerScroll) configure -command {$MRProstateCare(pointListBox) yview}
@@ -935,6 +938,7 @@ proc MRProstateCareSetScaleFactor {v} {
 proc MRProstateCareNavLoop {} { 
     global MRProstateCare Locator Slice Anno Volume 
 
+
     if {! $MRProstateCare(navLoop)} {
         return
     }
@@ -964,27 +968,19 @@ proc MRProstateCareNavLoop {} {
  
     # clean the 3D view
     MainSlicesSetVisibilityAll 0
-    Render3D
- 
+#    Render3D
+    # turn off orientation letters and cube in 3D view
+    set Anno(letters) 0
+    set Anno(box) 0
+    MainAnnoSetVisibility
+
+
     # set back and fore images right
     MainSlicesSetVolumeAll Back $MRProstateCare(image1,currentVolumeID) 
     MainVolumesSetActive $MRProstateCare(image1,currentVolumeID)
     MainSlicesSetVolumeAll Fore $MRProstateCare(image2,currentVolumeID) 
     MainVolumesSetActive $MRProstateCare(image2,currentVolumeID)
-    MainVolumesRender
-
-    # Slice(opacity) = 0.0 - background image is displayed
-    # Slice(opacity) = 1.0 - foreground image is displayed
-    if {$Slice(opacity) == 0.0} {
-        # The back image (image1) is being displayed
-        set MRProstateCare(nextVolumeID) $MRProstateCare(image2,currentVolumeID)
-    } else {
-        # The fore image (image2) is being displayed
-        set MRProstateCare(nextVolumeID) $MRProstateCare(image1,currentVolumeID)
-    }
-
-
-    set vname [Volume($MRProstateCare(nextVolumeID),node) GetName]
+#    MainVolumesRender
 
 
     # set right slice to display
@@ -999,25 +995,15 @@ proc MRProstateCareNavLoop {} {
     }
 
 
-    if {$vname != "Realtime"} {
-        # draw a ball for the point in 3D view
-        # write the point name in 3D view
-        set i 0 
-        set p $MRProstateCare(currentPoint)
-        set i2 [string first ":" $p]
-        set title [string range $p $i [expr $i2-1]] 
-        set title [string trim $title]
-        MRProstateCareShowPoint $title
-    } else {
-        MRProstateCareHidePoint 
-    }
+    # draw a ball for the point in 3D view
+    # write the point name in 3D view
+    set i 0 
+    set p $MRProstateCare(currentPoint)
+    set i2 [string first ":" $p]
+    set title [string range $p $i [expr $i2-1]] 
+    set title [string trim $title]
+    MRProstateCareShowPoint $title
 
-
-
-    # turn off orientation letters and cube in 3D view
-    set Anno(letters) 0
-    set Anno(box) 0
-    MainAnnoSetVisibility
 
     # show the slice according to the specified orientation
     switch $MRProstateCare(imageDisplayOrient) {
@@ -1058,10 +1044,13 @@ proc MRProstateCareNavLoop {} {
     }
     MainSlicesSetVisibility ${s}
     MainViewerHideSliceControls 
-    Render3D
-     
-    MainSlicesSetOpacityToggle
-    RenderAll
+#    Render3D
+
+    if {$Slice(opacity) == 1} {set MRProstateCare(navLoopFactor) -1}
+    if {$Slice(opacity) == 0} {set MRProstateCare(navLoopFactor) +1}
+    set Slice(opacity) [expr $Slice(opacity) + $MRProstateCare(navLoopFactor) * 0.2]
+    MainSlicesSetOpacityAll
+    # RenderAll
 
     after $MRProstateCare(navTime) MRProstateCareNavLoop
 }
@@ -1537,6 +1526,7 @@ proc MRProstateCareShowPointToEdit {} {
             set MRProstateCare(entry,Title) $title
             set MRProstateCare(entry,Coords) $rsa 
             set MRProstateCare(editIndex) $curs
+            set MRProstateCare(editMode) 1
        }
     } else {
         set MRProstateCare(editIndex) -1 
@@ -1550,12 +1540,12 @@ proc MRProstateCareDeletePoint {} {
 
     set curs [$MRProstateCare(pointListBox) curselection]
     if {$curs >= 0} {
-        $MRProstateCare(pointListBox) delete $curs 
+        $MRProstateCare(pointListBox) delete $curs
         set size [llength $MRProstateCare(pointList)]
         set MRProstateCare(pointList) \
             [lreplace $MRProstateCare(pointList) $curs $curs]
         set size [llength $MRProstateCare(pointList)]
- 
+
     } else {
         DevErrorWindow "Select a point to delete."
     }
@@ -1595,6 +1585,11 @@ proc MRProstateCareAddOrEditPoint {} {
         }
     }
 
+
+    # Replace one space in the middle of 
+    # the string by four spaces
+    regsub -all " " $rsa "    " rsa 
+
     set item "$title : ($rsa)"
     set index [lsearch -exact $MRProstateCare(pointList) $item]
     if {$index != -1} { 
@@ -1621,8 +1616,13 @@ proc MRProstateCareAddOrEditPoint {} {
         set t [string trim $title]
         set i [string first $t $p 0] 
         if {$i >= 0} {
-            set MRProstateCare(pointList) \
-                [lreplace $MRProstateCare(pointList) $c $c]
+            set rt [DevYesNo "Are you sure you want to replace the existing point with different RSA values?"]
+            if {$rt == "no"} {
+                return 
+            } else {
+                set MRProstateCare(pointList) \
+                    [lreplace $MRProstateCare(pointList) $c $c]
+            }
             break
         }
         incr c
@@ -1639,6 +1639,8 @@ proc MRProstateCareAddOrEditPoint {} {
     foreach x $MRProstateCare(pointList) {
         $MRProstateCare(pointListBox) insert end $x 
     }
+
+    set MRProstateCare(editMode)   0 
 }
 
 
@@ -1782,7 +1784,7 @@ proc MRProstateCareBuildVTK {} {
     # Actor for point location 
     #-------------------------------
     MakeVTKObject Sphere point 
-    pointSource SetRadius 4.0 
+    pointSource SetRadius 3.0 
     if {$View(bgName)=="White"} {
         [pointActor GetProperty] SetColor 0 0 1 
     } else {
@@ -1933,14 +1935,17 @@ proc MRProstateCareProcessMouseEvent {x y} {
 
     # One point
     set cat $MRProstateCare(category)
-    if {$cat != "Sextant"} {
-        set MRProstateCare(entry,Title) $cat
-        append MRProstateCare(entry,Title) "_"
-    } else {
-        set MRProstateCare(entry,Title) "" 
+    if {! $MRProstateCare(editMode)} {
+        if {$cat != "Sextant"} {
+            set MRProstateCare(entry,Title) $cat
+            append MRProstateCare(entry,Title) "_"
+        } else {
+            set MRProstateCare(entry,Title) "" 
+        }
     }
-    set MRProstateCare(entry,Coords) "$R $S $A"
+    set MRProstateCare(entry,Coords) "$R     $S     $A"
 }
+
 
 proc MRProstateCareSetCurrentTab {index} {
     global MRProstateCare
