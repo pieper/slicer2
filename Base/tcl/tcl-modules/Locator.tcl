@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2006/09/05 17:31:36 $
-#   Version:   $Revision: 1.38.12.2.2.13 $
+#   Date:      $Date: 2006/09/05 21:14:48 $
+#   Version:   $Revision: 1.38.12.2.2.14 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -89,7 +89,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.13 $} {$Date: 2006/09/05 17:31:36 $}]
+        {$Revision: 1.38.12.2.2.14 $} {$Date: 2006/09/05 21:14:48 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -1920,10 +1920,7 @@ proc LocatorLoopFlashpoint {} {
         # Realtime image id set by user
         # then set the right scan order for
         # the realtime image
-        set scanOrder "AP"
-        set r 0 
-        set s 0 
-        set a 0 
+
         set rtid    [Locator(Flashpoint,src) GetRealtimeImageID]
         if {$Locator(nextRealtimeImageInfo) != ""} {
             set id    [lindex $Locator(nextRealtimeImageInfo) 0]
@@ -1931,12 +1928,13 @@ proc LocatorLoopFlashpoint {} {
                 set r [lindex $Locator(nextRealtimeImageInfo) 2]
                 set s [lindex $Locator(nextRealtimeImageInfo) 3]
                 set a [lindex $Locator(nextRealtimeImageInfo) 4]
-
+                set Locator(realtimeRSA) "$r $s $a" 
+ 
                 set order [lindex $Locator(nextRealtimeImageInfo) 1]
                 switch $order {
-                    1 {set scanOrder "SI"} 
-                    2 {set scanOrder "RL"}
-                    3 {set scanOrder "AP"}
+                    1 {set Locator(realtimeScanOrder) "SI"} 
+                    2 {set Locator(realtimeScanOrder) "RL"}
+                    3 {set Locator(realtimeScanOrder) "AP"}
                 }
             }
         }
@@ -1967,7 +1965,7 @@ proc LocatorLoopFlashpoint {} {
         set n Volume($i,node)
 
         # Volume($i,node) SetSpacing [$rImage GetSpacing]
-        Volume($i,node) SetScanOrder $scanOrder 
+        Volume($i,node) SetScanOrder $Locator(realtimeScanOrder) 
         Volume($i,node) SetNumScalars [$rImage GetNumberOfScalarComponents]
         set ext [$rImage GetWholeExtent]
         Volume($i,node) SetImageRange [expr 1 + [lindex $ext 4]] [expr 1 + [lindex $ext 5]]
@@ -1996,10 +1994,6 @@ proc LocatorLoopFlashpoint {} {
         MainUpdateMRML
         RenderAll
 
-
-        set Locator(realtimeRSA) "$r $s $a" 
-        set Locator(realtimeScanOrder) $scanOrder 
- 
         # Perform realtime image processing
         foreach cb $Locator(callbackList) {
             set cb [string trim $cb]
