@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.52 $} {$Date: 2006/09/05 20:35:18 $}]
+        {$Revision: 1.1.2.53 $} {$Date: 2006/09/06 19:37:03 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1653,7 +1653,7 @@ proc MRProstateCareAddOrEditPoint {} {
 
     # remove the old point from the list
     set curs [$MRProstateCare(pointListBox) curselection]
-    if {$curs != "" && $curs >= 0} { 
+    if {$curs != "" && $curs >= 0 && $MRProstateCare(editMode)} { 
         # the new point will replace the selected point
         # in the list box
         set MRProstateCare(pointList) \
@@ -2133,7 +2133,7 @@ proc MRProstateCareZoom {} {
         }
     }
 
-   Render
+    Render
 }
 
 
