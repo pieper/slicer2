@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.53 $} {$Date: 2006/09/06 19:37:03 $}]
+        {$Revision: 1.1.2.54 $} {$Date: 2006/09/07 19:44:39 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -240,7 +240,7 @@ proc MRProstateCareBuildGUI {} {
 
     set f $fServer.fTop
     eval {label $f.lConnectTitle -text "Connection to server:"} $Gui(WTA)
-    eval {label $f.lConnectStatus -text "None" -width 8} $Gui(WLA)
+    eval {label $f.lConnectStatus -text "none" -width 8} $Gui(WLA)
     grid $f.lConnectTitle $f.lConnectStatus -pady 1 -padx $Gui(pad)
     set MRProstateCare(connectStatus) $f.lConnectStatus
 
@@ -283,7 +283,7 @@ proc MRProstateCareBuildGUI {} {
 
     set f $fTemplate.f1
     eval {label $f.lLocatorTitle -text "Locator status:"} $Gui(WTA)
-    eval {label $f.lLocatorStatus -text "None" -width 8} $Gui(WLA)
+    eval {label $f.lLocatorStatus -text "none" -width 8} $Gui(WLA)
     grid $f.lLocatorTitle $f.lLocatorStatus -pady 1 -padx $Gui(pad)
     set Locator(lLocStatus) $f.lLocatorStatus
 
@@ -462,7 +462,7 @@ proc MRProstateCareBuildGUI {} {
 
     #--- notebook configure
     $f.tsNotebook configure -width 250
-    $f.tsNotebook configure -height 350 
+    $f.tsNotebook configure -height 370 
     $f.tsNotebook configure -background $::Gui(activeWorkspace)
     $f.tsNotebook configure -activebackground $::Gui(activeWorkspace)
     $f.tsNotebook configure -selectbackground $::Gui(activeWorkspace)
@@ -809,6 +809,8 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     set f $parent
     frame $f.f1 -bg $Gui(activeWorkspace) -relief groove -bd 2 
     pack $f.f1 -side top -pady 3 
+    frame $f.f1b -bg $Gui(activeWorkspace) -relief groove -bd 2 
+    pack $f.f1b -side top -pady 3 
     frame $f.f2 -bg $Gui(activeWorkspace) -relief groove -bd 2 
     pack $f.f2 -side top -pady 3 
     frame $f.f3 -bg $Gui(activeWorkspace) -relief groove -bd 2 
@@ -847,6 +849,52 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
         0,0 $f.lTitle -padx 2 -pady 3 \
         1,0 $f.mbType -fill x -padx 3 -pady 2 
 
+
+    #-------------------------
+    # Frame 1b 
+    #-------------------------
+    set f $parent.f1b
+    foreach x "Top Mid Bot" {
+        frame $f.f$x -bg $Gui(activeWorkspace) 
+        pack $f.f$x -side top -pady 1 
+    }
+
+    set f $parent.f1b.fTop
+    eval {label $f.lTitle -text "Reorient an image:"} $Gui(WTA)
+    pack $f.lTitle -side top -pady 2 
+ 
+    set f $parent.f1b.fMid
+    # Build pulldown menu for volumes of image 1 
+    DevAddLabel $f.lVolume "Image:"
+
+    set mList [list {none}]
+    set df [lindex $mList 0] 
+    eval {menubutton $f.mbType -text $df \
+          -relief raised -bd 2 -width 22 \
+          -indicatoron 1 \
+          -menu $f.mbType.m} $Gui(WMBA)
+    eval {menu $f.mbType.m} $Gui(WMA)
+    
+    foreach m $mList  {
+        $f.mbType.m add command -label $m \
+            -command "MRProstateCareSelectFlipVolume $m"
+    }
+
+    # Save menubutton for config
+    set MRProstateCare(gui,flipVolumeButton) $f.mbType
+    set MRProstateCare(gui,flipVolumeMenu) $f.mbType.m
+
+    blt::table $f \
+        0,0 $f.lVolume -padx 2 -pady 1 -anchor e \
+        0,1 $f.mbType -fill x -padx 3 -pady 1 -anchor w
+
+
+    set f $parent.f1b.fBot
+    DevAddButton $f.bAP "Flip A/P" "MRProstateCareFlipImage AP" 9 
+    DevAddButton $f.bSI "Flip S/I" "MRProstateCareFlipImage SI" 9 
+    DevAddButton $f.bRL "Flip R/L" "MRProstateCareFlipImage RL" 9 
+    grid $f.bRL $f.bAP $f.bSI -padx 0 -pady 3 
+ 
     #-------------------------
     # Frame 2 
     #-------------------------
@@ -955,6 +1003,38 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     DevAddButton $f.bStop "Stop" "MRProstateCareStopNav"  10 
     grid $f.bStart $f.bStop -padx 1 -pady 5 
 }
+
+
+
+proc MRProstateCareFlipImage {axis} {
+    global MRProstateCare Volume  
+
+    set v $MRProstateCare(currentFlipVolumeID)
+
+    #--- get the corresponding axis in Vtk space.
+    set newvec [IbrowserGetRasToVtkAxis $axis Volume($v,node)]
+    #--- unpack the vector into x, y and z
+    foreach { x y z } $newvec { }
+    vtkImageFlip flip
+    flip SetInput [Volume($v,vol) GetOutput]
+    #--- now set the flip axis in VTK space
+    if { ($x == 1) || ($x == -1) } {
+        flip SetFilteredAxis 0
+    } elseif { ($y == 1) || ( $y == -1) } {
+        flip SetFilteredAxis 1
+    } elseif { ($z == 1) || ($z == -1) } {
+        flip SetFilteredAxis 2
+    }
+    Volume($v,vol) SetImageData [ flip GetOutput ]
+
+    MainVolumesUpdate $v
+    flip Delete
+
+    RenderAll
+
+
+}
+
 
 
 proc MRProstateCareSetScaleFactor {v} {
@@ -1204,6 +1284,21 @@ proc MRProstateCareSelectPoint {m} {
         set title [string trim $title]
         MRProstateCareShowPoint $title
     }
+}
+
+
+proc MRProstateCareSelectFlipVolume {v} {
+    global MRProstateCare Volume 
+
+    set name [Volume($v,node) GetName] 
+
+    # configure menubutton
+    $MRProstateCare(gui,flipVolumeButton) config -text $name 
+    set MRProstateCare(currentFlipVolumeID) $v
+
+    MainSlicesSetVolumeAll Back $v
+    MainVolumesSetActive $v
+    MainVolumesRender
 }
 
 
@@ -1783,7 +1878,7 @@ proc MRProstateCareUpdateConnectionStatus {} {
     global MRProstateCare Locator 
 
     if {$Locator(connect) == 0} {
-        $MRProstateCare(connectStatus) config -text "None" 
+        $MRProstateCare(connectStatus) config -text "none" 
     } else {
         $MRProstateCare(connectStatus) config -text "OK" 
     }
@@ -2040,6 +2135,14 @@ proc MRProstateCareUpdateNavigationTab {} {
     }
 
     # Inside the Navigation tab update the volume list
+    # for reorienting 
+    $MRProstateCare(gui,flipVolumeMenu) delete 0 end 
+    foreach v $Volume(idList) {
+        $MRProstateCare(gui,flipVolumeMenu) add command \
+            -label [Volume($v,node) GetName] \
+            -command "MRProstateCareSelectFlipVolume $v"
+    }
+
     # for image1
     $MRProstateCare(gui,displayImage1VolumeMenu) delete 0 end 
     foreach v $Volume(idList) {
