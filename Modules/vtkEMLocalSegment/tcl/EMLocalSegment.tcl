@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMLocalSegment.tcl,v $
-#   Date:      $Date: 2006/06/06 22:27:42 $
-#   Version:   $Revision: 1.73 $
+#   Date:      $Date: 2006/09/08 22:19:49 $
+#   Version:   $Revision: 1.74 $
 # 
 #===============================================================================
 # FILE:        EMLocalSegment.tcl
@@ -269,7 +269,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.73 $} {$Date: 2006/06/06 22:27:42 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.74 $} {$Date: 2006/09/08 22:19:49 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -5961,4 +5961,45 @@ proc EMSegmentWriteTextBox {} {
        }
    }
    if {$EMSegment(UseSamples) == 0} {$EMSegment(Cl-textBox) configure -state disabled}
+}
+
+#-------------------------------------------------------------------------------
+# .PROC  EMSegmentGenerateJointModelsBatch 
+# Generates joint models and saves them of current active volume
+# slicer2-   <XML-File> --exec "EMSegmentGenerateJointModelsBatch  3 8 /data/projects/ThesisValidation/cases/case2/EMSegmentationCortexOriginalBSplineV5_Opt6/Models "
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMSegmentGenerateJointModelsBatch {startLabel endLabel prefix } {
+  global ModelMaker Volume 
+  set ModelMaker(startLabel) $startLabel
+  set ModelMaker(endLabel)   $endLabel
+  set ModelMaker(jointSmooth) 1
+  # Very Smooth Model 
+  set ModelMaker(smooth) 30
+  set ModelMaker(decimate) 0
+  set ModelMaker(UseSinc) 0
+  set ModelMaker(SplitNormals) Off
+
+  set ModelMaker(idVolume) [lindex $Volume(idList) 0]
+
+  ModelMakerCreateAll 0
+  Render3D
+  ModelMakerWriteAll $prefix
+  Render3D
+  MainExitProgram
+}
+
+proc EMSegmentModelSnapshot {prefix } {
+  global  Anno Save
+  set Anno(box) 0 
+  set Anno(letters) 0 
+  MainAnnoSetVisibility
+  MainViewSetBackgroundColor "White"
+  Render3D
+
+  if { [DevInfoWindow "Take Screen shoot and save it to $prefix"] == "" } { 
+    SaveRendererToFile [file dirname $prefix] [file tail $prefix] $Save(imageFileType) $Save(imageOutputZoom) viewRen
+    MainExitProgram
+  } 
 }
