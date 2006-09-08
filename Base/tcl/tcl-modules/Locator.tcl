@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2006/09/05 21:14:48 $
-#   Version:   $Revision: 1.38.12.2.2.14 $
+#   Date:      $Date: 2006/09/08 19:28:48 $
+#   Version:   $Revision: 1.38.12.2.2.15 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -89,7 +89,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.14 $} {$Date: 2006/09/05 21:14:48 $}]
+        {$Revision: 1.38.12.2.2.15 $} {$Date: 2006/09/08 19:28:48 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -167,6 +167,7 @@ proc LocatorInit {} {
     set Locator(realtimeScanOrder) "AP" 
     set Locator(realtimeRSA) "0 0 0" 
     set Locator(nextRealtimeImageInfo) "" 
+    set Locator(currentRealtimeImageID) 0
  
 }
 
@@ -1917,10 +1918,11 @@ proc LocatorLoopFlashpoint {} {
         Locator(Flashpoint,src) Modified
         Locator(Flashpoint,src) Update
 
-        # Realtime image id set by user
-        # then set the right scan order for
-        # the realtime image
-
+        # When we scan an image in realtime mode in vtkMRProstate module, 
+        # we attach an unique id to it and also send it to Locator module.
+        # Here we match the id's. If they are equal, that means we got the
+        # image we scanned.
+        set id 0
         set rtid    [Locator(Flashpoint,src) GetRealtimeImageID]
         if {$Locator(nextRealtimeImageInfo) != ""} {
             set id    [lindex $Locator(nextRealtimeImageInfo) 0]
@@ -1939,67 +1941,78 @@ proc LocatorLoopFlashpoint {} {
             }
         }
 
-    
-        # Update patient position
-        set Locator(tblPos)   [lindex $Locator(tblPosList) \
-            [Locator(Flashpoint,src) GetTablePosition]]
-        set Locator(patEntry) [lindex $Locator(patEntryList) \
-            [Locator(Flashpoint,src) GetPatientEntry]]
-        set Locator(patPos)   [lindex $Locator(patPosList) \
-            [Locator(Flashpoint,src) GetPatientPosition]]
-        LocatorSetPatientPosition
 
-        # Get other header values
-        set Locator(recon)    [Locator(Flashpoint,src) GetRecon]
-        set Locator(imageNum) [Locator(Flashpoint,src) GetImageNum]
-        set minVal [Locator(Flashpoint,src) GetMinValue]
-        set maxVal [Locator(Flashpoint,src) GetMaxValue]
-        set imgMatrix [Locator(Flashpoint,src) GetImageMatrix]
-        puts mat=$imgMatrix
-        puts "ima=$Locator(imageNum), recon=$Locator(recon), range=$minVal $maxVal"
+        # Locator(nextRealtimeImageInfo) == "" means we have not scanned yet, 
+        # but we just grabbed the current image in the shared memory on mrt 
+        # workstation and display it in Slicer as a volume named "Realtime". 
+        # 
+        # rtid == Locator(currentRealtimeImageID) means we got new image from 
+        # our own scan in one of the following cases:
+        # a. scanning orientation has changed (e.g. from Axial to Coronal), 
+        #    then we have a new image.
+        # b. scannig location has changed (we may keep the same scanning 
+        #     orientation but change the location).
+        if {$Locator(nextRealtimeImageInfo) == "" || $rtid != $Locator(currentRealtimeImageID)} {
+            # Update patient position
+            set Locator(tblPos)   [lindex $Locator(tblPosList) \
+                [Locator(Flashpoint,src) GetTablePosition]]
+            set Locator(patEntry) [lindex $Locator(patEntryList) \
+                [Locator(Flashpoint,src) GetPatientEntry]]
+            set Locator(patPos)   [lindex $Locator(patPosList) \
+                [Locator(Flashpoint,src) GetPatientPosition]]
+            LocatorSetPatientPosition
 
-        # Copy the image to the Realtime volume
-        set rImage [Locator(Flashpoint,src) GetOutput]
+            # Get other header values
+            set Locator(recon)    [Locator(Flashpoint,src) GetRecon]
+            set Locator(imageNum) [Locator(Flashpoint,src) GetImageNum]
+            set minVal [Locator(Flashpoint,src) GetMinValue]
+            set maxVal [Locator(Flashpoint,src) GetMaxValue]
+            set imgMatrix [Locator(Flashpoint,src) GetImageMatrix]
+            puts mat=$imgMatrix
+            puts "ima=$Locator(imageNum), recon=$Locator(recon), range=$minVal $maxVal"
 
-        set i [LocatorGetRealtimeID]
-        set n Volume($i,node)
+            # Copy the image to the Realtime volume
+            set rImage [Locator(Flashpoint,src) GetOutput]
 
-        # Volume($i,node) SetSpacing [$rImage GetSpacing]
-        Volume($i,node) SetScanOrder $Locator(realtimeScanOrder) 
-        Volume($i,node) SetNumScalars [$rImage GetNumberOfScalarComponents]
-        set ext [$rImage GetWholeExtent]
-        Volume($i,node) SetImageRange [expr 1 + [lindex $ext 4]] [expr 1 + [lindex $ext 5]]
-        Volume($i,node) SetScalarType [$rImage GetScalarType]
-        Volume($i,node) SetDimensions [lindex [$rImage GetDimensions] 0] [lindex [$rImage GetDimensions] 1]
-        Volume($i,node) ComputeRasToIjkFromScanOrder [Volume($i,node) GetScanOrder] 
- 
-        Volume($i,vol) SetImageData $rImage
-        Volume($i,vol) SetRangeLow $minVal 
-        Volume($i,vol) SetRangeHigh $maxVal 
+            set i [LocatorGetRealtimeID]
+            set n Volume($i,node)
 
-        # To keep variables 'RangeLow' and 'RangeHigh' as float
-        # in vtkMrmlDataVolume for float volume, use this function:
-        Volume($i,vol) SetRangeAuto 0
+            # Volume($i,node) SetSpacing [$rImage GetSpacing]
+            Volume($i,node) SetScanOrder $Locator(realtimeScanOrder) 
+            Volume($i,node) SetNumScalars [$rImage GetNumberOfScalarComponents]
+            set ext [$rImage GetWholeExtent]
+            Volume($i,node) SetImageRange [expr 1 + [lindex $ext 4]] [expr 1 + [lindex $ext 5]]
+            Volume($i,node) SetScalarType [$rImage GetScalarType]
+            Volume($i,node) SetDimensions [lindex [$rImage GetDimensions] 0] [lindex [$rImage GetDimensions] 1]
+            Volume($i,node) ComputeRasToIjkFromScanOrder [Volume($i,node) GetScanOrder] 
 
-        # set the lower threshold to the actLow
-        Volume($i,node) AutoThresholdOff
-        Volume($i,node) ApplyThresholdOn
-        Volume($i,node) SetLowerThreshold 1 
+            Volume($i,vol) SetImageData $rImage
+            Volume($i,vol) SetRangeLow $minVal 
+            Volume($i,vol) SetRangeHigh $maxVal 
 
-        LocatorTranslateRealtimeVolume
+            # To keep variables 'RangeLow' and 'RangeHigh' as float
+            # in vtkMrmlDataVolume for float volume, use this function:
+            Volume($i,vol) SetRangeAuto 0
 
-        MainSlicesSetVolumeAll Back $i
-        MainVolumesSetActive $i
+            # set the lower threshold to the actLow
+            Volume($i,node) AutoThresholdOff
+            Volume($i,node) ApplyThresholdOn
+            Volume($i,node) SetLowerThreshold 1 
 
-        MainUpdateMRML
-        RenderAll
+            LocatorTranslateRealtimeVolume
 
-        # Perform realtime image processing
-        foreach cb $Locator(callbackList) {
-            set cb [string trim $cb]
-            if {$cb != ""} {
-                $cb
+            MainSlicesSetVolumeAll Back $i
+            MainVolumesSetActive $i
+            MainUpdateMRML
+            RenderAll
+
+            # Perform realtime image processing
+            foreach cb $Locator(callbackList) {
+                set cb [string trim $cb]
+                if {$cb != ""} {$cb}
             }
+
+            set Locator(currentRealtimeImageID) $rtid 
         }
     }
 
@@ -2048,12 +2061,6 @@ proc LocatorTranslateRealtimeVolume {} {
 
 
     LocatorParseSpaceDirections $volid $space_origin $space_directions
-
-    # MainUpdateMRML
-    # Slicer SetOffset 0 0
-    # MainSlicesSetVolumeAll Back $volid
-    # RenderAll
-
 } 
 
 
