@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: VolRend.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:01 $
-#   Version:   $Revision: 1.15 $
+#   Date:      $Date: 2006/09/11 14:34:22 $
+#   Version:   $Revision: 1.16 $
 # 
 #===============================================================================
 # FILE:        VolRend.tcl
@@ -66,7 +66,7 @@ proc VolRendInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.15 $} {$Date: 2006/01/06 17:57:01 $}]
+        {$Revision: 1.16 $} {$Date: 2006/09/11 14:34:22 $}]
 
     set Module($m,row1List) "Help Settings Transfer"
     set Module($m,row1Name) "{Help} {Settings} {Transfer Functions}"
@@ -181,6 +181,8 @@ Description by tabs:
     
     # Add menus that list models and volumes
     DevAddSelectButton VolRend $f Original "Ref Volume" Grid
+    lappend Volume(mbActiveList) $f.mbOriginal
+    lappend Volume(mActiveList)  $f.mbOriginal.m
 
     #-------------------------------------------
     # Settings->HideOnExit frame
