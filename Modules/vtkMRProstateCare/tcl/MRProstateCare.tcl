@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.54 $} {$Date: 2006/09/07 19:44:39 $}]
+        {$Revision: 1.1.2.55 $} {$Date: 2006/09/13 20:05:12 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1012,7 +1012,7 @@ proc MRProstateCareFlipImage {axis} {
     set v $MRProstateCare(currentFlipVolumeID)
 
     #--- get the corresponding axis in Vtk space.
-    set newvec [IbrowserGetRasToVtkAxis $axis Volume($v,node)]
+    set newvec [MRProstateCareGetRasToVtkAxis $axis Volume($v,node)]
     #--- unpack the vector into x, y and z
     foreach { x y z } $newvec { }
     vtkImageFlip flip
@@ -1033,6 +1033,55 @@ proc MRProstateCareFlipImage {axis} {
     RenderAll
 
 
+}
+
+
+
+proc MRProstateCareGetRasToVtkAxis {axis vnode} {
+    #
+    #--- Given an axis in RAS space, we want
+    #--- to find the axis that corresponds in VTK 
+    #--- space (which describes the vtkImageData
+    #--- represented by a vtkMrmlVolumeNode.)
+    #
+    #--- create a vtkTransform
+    vtkTransform T
+    #--- get the transform matrix in string form
+    #--- and set it to be the transform's matrix.
+    set m [ $vnode GetRasToVtkMatrix ]
+    eval T SetMatrix $m
+
+    #--- axis along which to flip in VTK space
+    if { $axis == "RL" } {
+        #--- if Flipping along R-L
+        #puts "RAS axis 1 0 0"
+        set newvec [ T TransformFloatVectorAtPoint 0 0 0 -1 0 0 ]
+    } elseif { $axis == "AP" } {
+        #--- if flipping along A-P
+        #puts "RAS axis 0 1 0"
+        set newvec [ T TransformFloatVectorAtPoint 0 0 0 0 -1 0 ]
+    } elseif { $axis == "SI" } {
+        #--- if flipping along S-I
+        #puts "RAS axis 0 0 1"
+        set newvec [ T TransformFloatVectorAtPoint 0 0 0 0 0 -1 ]
+    }
+    foreach { x y z } $newvec { }
+    #puts "VTK axis: $x $y $z"
+    #--- because of scale, newvec might not be unit
+    if { $x != 0 } {
+        set newvec [ lreplace $newvec 0 0 1 ]
+    }
+    if { $y != 0 } {
+        set newvec [ lreplace $newvec 1 1 1 ]
+    }
+    if { $z != 0 } {
+        set newvec [ lreplace $newvec 2 2 1 ]
+    }
+    
+    #--- clean up
+    T Delete
+    #--- return the new axis as a vector.
+    return $newvec
 }
 
 
