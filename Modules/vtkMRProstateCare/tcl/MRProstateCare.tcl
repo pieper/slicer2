@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.56 $} {$Date: 2006/09/14 14:01:25 $}]
+        {$Revision: 1.1.2.57 $} {$Date: 2006/09/14 14:46:50 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -283,7 +283,7 @@ proc MRProstateCareBuildGUI {} {
         } else {
             frame $f.f$x -bg $Gui(activeWorkspace) -relief groove -bd 2 
         }
-        pack $f.f$x -side top -pady 3 
+        pack $f.f$x -side top -pady 1 -fill x 
     }
 
     set f $fTemplate.f1
@@ -362,7 +362,7 @@ proc MRProstateCareBuildGUI {} {
     DevAddButton $f.bCheck "Check" "MRProstateCareCheckTemplateUserInput;\
                                     MRProstateCareVerify 0; \
                                     MRProstateCareView" 10 
-    grid $f.bCheck -pady 3 -padx 1 
+    grid $f.bCheck -pady 2 -padx 1 
 
 
     #-------------------------------------------
@@ -383,7 +383,7 @@ proc MRProstateCareBuildGUI {} {
     set f $fPoints.fTop
     foreach x "1 2 3" {
         frame $f.f$x -bg $Gui(activeWorkspace) -relief groove -bd 2 
-        pack $f.f$x -side top -pady 2 -padx 2 
+        pack $f.f$x -side top -pady 2 -padx 2 -fill x 
     }
 
     set f $fPoints.fTop.f1
@@ -534,13 +534,13 @@ proc MRProstateCareBuildGUIForScan {parent} {
 
     set f $parent
     frame $f.fT1 -bg $Gui(activeWorkspace) -relief groove -bd 2
-    pack $f.fT1 -side top -pady 3 
+    pack $f.fT1 -side top -pady 3 -fill x 
     frame $f.fT2 -bg $Gui(activeWorkspace) -relief groove -bd 2
-    pack $f.fT2 -side top -pady 3 
+    pack $f.fT2 -side top -pady 3 -fill x 
     frame $f.fMid -bg $Gui(activeWorkspace) -relief groove -bd 2  
-    pack $f.fMid -side top -pady 3 
+    pack $f.fMid -side top -pady 3 -fill x 
     frame $f.fBot -bg $Gui(activeWorkspace) 
-    pack $f.fBot -side top -pady 3 
+    pack $f.fBot -side top -pady 3 -fill x 
 
     #-------------------------
     # Frame T1 
@@ -813,17 +813,17 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
 
     set f $parent
     frame $f.f1 -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.f1 -side top -pady 3 
+    pack $f.f1 -side top -pady 3 -fill x 
     frame $f.f1b -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.f1b -side top -pady 3 
+    pack $f.f1b -side top -pady 3 -fill x
     frame $f.f2 -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.f2 -side top -pady 3 
+    pack $f.f2 -side top -pady 3 -fill x 
     frame $f.f3 -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.f3 -side top -pady 3 
+    pack $f.f3 -side top -pady 3 -fill x 
     frame $f.f4 -bg $Gui(activeWorkspace) -relief groove -bd 2 
-    pack $f.f4 -side top -pady 3 
+    pack $f.f4 -side top -pady 3 -fill x 
     frame $f.f5 -bg $Gui(activeWorkspace)
-    pack $f.f5 -side top -pady 3 
+    pack $f.f5 -side top -pady 3 -fill x 
 
     #-------------------------
     # Frame 1 
