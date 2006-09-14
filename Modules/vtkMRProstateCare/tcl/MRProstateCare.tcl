@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.55 $} {$Date: 2006/09/13 20:05:12 $}]
+        {$Revision: 1.1.2.56 $} {$Date: 2006/09/14 14:01:25 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -140,16 +140,21 @@ proc MRProstateCareInit {} {
     set MRProstateCare(editMode)   0 
     set MRProstateCare(pointList) "" 
 
-    set MRProstateCare(tempDir) "/tmp"
+    switch $::tcl_platform(os) {
+        "SunOS" -
+        "Darwin" -
+        "Linux" {
+            set MRProstateCare(tempDir) "/tmp"
+        }
+        default {
+            set MRProstateCare(tempDir) "C:"
+        }
+    }
     set MRProstateCare(logFile) "MRProstateCareLog.txt"
     set MRProstateCare(navLoop) 0 
     set MRProstateCare(navTime) 250
     set MRProstateCare(image1,currentVolumeID) 0 
     set MRProstateCare(image2,currentVolumeID) 0 
-
-    # volume ID of currently displayed volume
-    set MRProstateCare(currentDisplayedVolumeID) 0 
-    set MRProstateCare(displayedImage) "" 
 
     set MRProstateCare(portSet) 0
     set MRProstateCare(scaleFactor) 1 
@@ -157,7 +162,7 @@ proc MRProstateCareInit {} {
     set MRProstateCare(lastRealtimeScanOrient) "Coronal" 
 
     set MRProstateCare(realtimeImageID) 33000 
-
+    set MRProstateCare(displayRSA) "0 0 0"
 
     # Creates bindings
     MRProstateCareCreateBindings 
