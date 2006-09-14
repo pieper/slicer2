@@ -92,7 +92,7 @@ switch $tcl_platform(os) {
     }
     default {
         # set the default heap size with Zm, vtk value is 1000, max on windows seems to be 2000, other flags are from VTK
-        set VTK_ARG3 "-DCMAKE_CXX_FLAGS:STRING=/Zm1000 /W3 /GX /GR"
+        # set VTK_ARG3 "-DCMAKE_CXX_FLAGS:STRING=/DWIN32 /D_WINDOWS /W3 /Zm1000 /GX /GR"
     }
 }
 
