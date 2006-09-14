@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.60 $} {$Date: 2006/09/14 17:33:54 $}]
+        {$Revision: 1.1.2.61 $} {$Date: 2006/09/14 17:38:50 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1681,7 +1681,7 @@ proc MRProstateCareCreateTextPopup {topicWinName title x y textBoxHit txt} {
 
     set dismissButtonHit 4
     set minWinHit [ expr $textBoxHit + $dismissButtonHit ]
-    wm minsize $w 40 $minWinHit
+    wm minsize $w 50 $minWinHit
     frame $w.fMsg -background #FFFFFF
     frame $w.fButton -background #FFFFFF
     pack $w.fMsg -fill both -expand true
