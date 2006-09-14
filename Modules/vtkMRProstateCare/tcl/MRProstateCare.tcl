@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.58 $} {$Date: 2006/09/14 15:12:04 $}]
+        {$Revision: 1.1.2.59 $} {$Date: 2006/09/14 17:28:09 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -140,7 +140,16 @@ proc MRProstateCareInit {} {
     set MRProstateCare(editMode)   0 
     set MRProstateCare(pointList) "" 
 
-    set MRProstateCare(tempDir) [pwd] 
+    switch $tcl_platform(os) {
+        "SunOS" -
+        "Darwin" -
+        "Linux" {
+            set MRProstateCare(tempDir) "/tmp"
+        }
+        default {
+            set MRProstateCare(tempDir) ""
+        }
+    }
     set MRProstateCare(logFile) "MRProstateCareLog.txt"
     set MRProstateCare(navLoop) 0 
     set MRProstateCare(navTime) 250
