@@ -107,7 +107,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.59 $} {$Date: 2006/09/14 17:28:09 $}]
+        {$Revision: 1.1.2.60 $} {$Date: 2006/09/14 17:33:54 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -140,7 +140,7 @@ proc MRProstateCareInit {} {
     set MRProstateCare(editMode)   0 
     set MRProstateCare(pointList) "" 
 
-    switch $tcl_platform(os) {
+    switch $::tcl_platform(os) {
         "SunOS" -
         "Darwin" -
         "Linux" {
