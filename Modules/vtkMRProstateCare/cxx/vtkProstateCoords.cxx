@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkProstateCoords.cxx,v $
-  Date:      $Date: 2006/07/20 18:31:05 $
-  Version:   $Revision: 1.1.2.1 $
+  Date:      $Date: 2006/09/14 13:05:37 $
+  Version:   $Revision: 1.1.2.2 $
 
 =========================================================================auto=*/
 
@@ -66,7 +66,8 @@ int vtkProstateCoords::SetFileName(int in, const char *name)
             this->FileNameOut = new char [size];
         }
         strcpy(this->FileNameOut, name);
-    }
+   }
+   return 0;
 }
 
 
