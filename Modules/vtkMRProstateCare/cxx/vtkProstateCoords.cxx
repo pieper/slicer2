@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkProstateCoords.cxx,v $
-  Date:      $Date: 2006/09/14 13:05:37 $
-  Version:   $Revision: 1.1.2.2 $
+  Date:      $Date: 2006/09/15 16:24:50 $
+  Version:   $Revision: 1.1.2.3 $
 
 =========================================================================auto=*/
 
@@ -22,6 +22,8 @@ vtkStandardNewMacro(vtkProstateCoords);
 
 vtkProstateCoords::vtkProstateCoords()
 {
+    this->FileNameIn  = NULL; 
+    this->FileNameOut = NULL; 
 }
 
 vtkProstateCoords::~vtkProstateCoords()
@@ -55,16 +57,20 @@ int vtkProstateCoords::SetFileName(int in, const char *name)
 
     if (in)
     {
-        if (this->FileNameIn == NULL) 
+        if (this->FileNameIn != NULL) 
         {
-            this->FileNameIn = new char [size];
+            delete [] this->FileNameIn;
         }
+
+        this->FileNameIn = new char [size+1];
         strcpy(this->FileNameIn, name);
     } else {
-        if (this->FileNameOut == NULL) 
+        if (this->FileNameOut != NULL) 
         {
-            this->FileNameOut = new char [size];
+            delete [] this->FileNameOut;
         }
+
+        this->FileNameOut = new char [size+1];
         strcpy(this->FileNameOut, name);
    }
    return 0;
