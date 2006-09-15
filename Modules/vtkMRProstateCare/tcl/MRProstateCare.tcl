@@ -11,6 +11,11 @@ proc MRProstateCareInit {} {
 
     set m MRProstateCare
 
+    if {[catch "package require BLT"]} {
+        DevErrorWindow "Must have BLT for interface."
+        return
+    }
+
     # Module Summary Info
     #------------------------------------
     # Description:
@@ -107,7 +112,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.61 $} {$Date: 2006/09/14 17:38:50 $}]
+        {$Revision: 1.1.2.62 $} {$Date: 2006/09/15 15:40:15 $}]
 
     # Initialize module-level variables
     #------------------------------------

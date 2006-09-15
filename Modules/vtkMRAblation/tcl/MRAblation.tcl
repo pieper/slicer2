@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MRAblation.tcl,v $
-#   Date:      $Date: 2006/08/18 15:56:22 $
-#   Version:   $Revision: 1.1.2.11 $
+#   Date:      $Date: 2006/09/15 15:36:16 $
+#   Version:   $Revision: 1.1.2.12 $
 # 
 #===============================================================================
 # FILE:        MRAblation.tcl
@@ -42,6 +42,11 @@ proc MRAblationInit {} {
     global MRAblation Module Volume Model env
 
     set m MRAblation
+
+    if {[catch "package require BLT"]} {
+        DevErrorWindow "Must have the BLT package for interface."
+        return 
+    }
 
     # Module Summary Info
     #------------------------------------
@@ -137,7 +142,7 @@ proc MRAblationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.11 $} {$Date: 2006/08/18 15:56:22 $}]
+        {$Revision: 1.1.2.12 $} {$Date: 2006/09/15 15:36:16 $}]
 
     # Initialize module-level variables
     #------------------------------------
