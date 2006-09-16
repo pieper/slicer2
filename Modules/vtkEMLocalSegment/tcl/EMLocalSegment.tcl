@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMLocalSegment.tcl,v $
-#   Date:      $Date: 2006/09/08 22:19:49 $
-#   Version:   $Revision: 1.74 $
+#   Date:      $Date: 2006/09/16 18:32:33 $
+#   Version:   $Revision: 1.75 $
 # 
 #===============================================================================
 # FILE:        EMLocalSegment.tcl
@@ -269,7 +269,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.74 $} {$Date: 2006/09/08 22:19:49 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.75 $} {$Date: 2006/09/16 18:32:33 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -6002,4 +6002,28 @@ proc EMSegmentModelSnapshot {prefix } {
     SaveRendererToFile [file dirname $prefix] [file tail $prefix] $Save(imageFileType) $Save(imageOutputZoom) viewRen
     MainExitProgram
   } 
+}
+
+proc EMSegmentCalcDiceBatch {FileName LabelList } {  
+
+    set TEXT ""
+    set VolID1 [lindex $::Volume(idList) 0]
+    set VolID2 [lindex $::Volume(idList) 1]
+
+    vtkImageEMGeneral EMDice
+    foreach label $LabelList {
+    set TEXT "${TEXT}[format %3s $LABEL]: [format %4.3f [EMDice CalcSimularityMeasure [Volume($VolID1,vol) GetOutput] [Volume($VolID2,vol) GetOutput] $label 0]]  "
+    }
+         
+    EMDice Delete
+   
+    if {[catch {set fid [open $FileName w]} errmsg] == 0} {
+    puts $fid "$TEXT"
+    catch {close $fid} errmsg
+    }
+
+    if {$errmsg != "" } { puts "Could not save file bc $errmsg" 
+    } else { puts "Saved results to $FileName"}
+    
+    MainExitProgram   
 }
