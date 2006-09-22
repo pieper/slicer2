@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkIndirectLookupTable.cxx,v $
-  Date:      $Date: 2006/04/13 19:25:39 $
-  Version:   $Revision: 1.26 $
+  Date:      $Date: 2006/09/22 18:43:46 $
+  Version:   $Revision: 1.27 $
 
 =========================================================================auto=*/
 #include "vtkIndirectLookupTable.h"
@@ -317,6 +317,7 @@ void vtkIndirectLookupTable::Build()
     this->LookupTable->SetNumberOfColors(256);
     this->LookupTable->SetSaturationRange(0, 0);
     this->LookupTable->SetValueRange(0, 1);
+    this->LookupTable->SetRampToLinear();
     this->LookupTable->Build();
     }
 
@@ -460,6 +461,68 @@ unsigned char *vtkIndirectLookupTable::MapValue(vtkFloatingPointType v)
   return &lut[map[this->MapOffset + (long)v]];
 }
 
+//----------------------------------------------------------------------------
+// This version of the "MapData" function works around lots of the premature
+// efficiency hacks in the rest of the code in order to provide a correct
+// result for floating point data.
+  
+template<class T>
+static void vtkIndirectLookupTableMapDataExact(vtkIndirectLookupTable *self,
+  T *input, unsigned char *output,int length, int incr)
+{
+  int i;
+  int index;
+  double inval;
+
+  vtkFloatingPointType contrastWindow = self->GetWindow();
+  vtkFloatingPointType contrastLevel = self->GetLevel();
+  unsigned char *lut = self->GetLookupTable()->GetPointer(0);
+  int numberOfColors = self->GetLookupTable()->GetNumberOfColors();
+  vtkFloatingPointType lowerThresh = self->GetLowerThreshold();
+  vtkFloatingPointType upperThresh = self->GetUpperThreshold();
+  vtkFloatingPointType lowerRange = contrastLevel - contrastWindow/2.0;
+  vtkFloatingPointType upperRange = contrastLevel + contrastWindow/2.0;
+  int applyThreshold = self->GetApplyThreshold();
+
+  // delta is -2: 1 is for a fencepost, second is because the first pixel
+  // in the lookup table is a special transparent one.
+  vtkFloatingPointType delta = (double)(numberOfColors - 2) / contrastWindow;
+
+  for(i = 0; i < length; i++) 
+    {
+    inval = *input;
+    if (applyThreshold && (inval <= lowerThresh || inval >= upperThresh)) 
+      {
+      output[0] = lut[0];
+      output[1] = lut[1];
+      output[2] = lut[2];
+      output[3] = lut[3];
+      }
+    else 
+      {
+      if (inval < lowerRange)
+        {
+        inval = lowerRange;
+        }
+      else if (inval > upperRange)
+        {
+        inval = upperRange;
+        }
+      
+      // Offset by 1 because the lut has transparent pixel for first entry.
+      // Add 0.5 for proper rounding to int (we'll always be above zero,
+      // so truncation rules apply).
+      index = (int)((inval - lowerRange)*delta + 0.5) + 1;
+      index *= 4;
+      output[0] = lut[index];
+      output[1] = lut[index+1];
+      output[2] = lut[index+2];
+      output[3] = lut[index+3];
+      }
+    output += 4;
+    input += incr;
+    }
+}
 
 //----------------------------------------------------------------------------
 // accelerate the mapping by copying the data in 32-bit chunks instead
@@ -647,13 +710,13 @@ void vtkIndirectLookupTable::MapScalarsThroughTable2(void *input, unsigned char 
       }
     else
       {
-      vtkIndirectLookupTableMapData(this,(float *)input, output,
+      vtkIndirectLookupTableMapDataExact(this,(float *)input, output,
         numberOfValues, inputIncrement);
       }
     break;
 
   case VTK_DOUBLE:
-    vtkIndirectLookupTableMapData(this, (double *)input, output,
+    vtkIndirectLookupTableMapDataExact(this, (double *)input, output,
       numberOfValues, inputIncrement);
     break;
 
@@ -662,6 +725,3 @@ void vtkIndirectLookupTable::MapScalarsThroughTable2(void *input, unsigned char 
     return;
     }
 }
-
-
-

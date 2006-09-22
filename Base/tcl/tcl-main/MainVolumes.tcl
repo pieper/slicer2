@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainVolumes.tcl,v $
-#   Date:      $Date: 2006/07/27 17:55:10 $
-#   Version:   $Revision: 1.98 $
+#   Date:      $Date: 2006/09/22 18:42:59 $
+#   Version:   $Revision: 1.99 $
 # 
 #===============================================================================
 # FILE:        MainVolumes.tcl
@@ -54,7 +54,7 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.98 $} {$Date: 2006/07/27 17:55:10 $}]
+    {$Revision: 1.99 $} {$Date: 2006/09/22 18:42:59 $}]
 
     set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
 
@@ -1289,7 +1289,7 @@ proc MainVolumesSetParam {Param {value ""}} {
 # .PROC MainVolumesUpdateSliderRange
 # The resolution of sliders may be changed due to the
 # scalar type of the volume:<br>
-# resolution = 0.5 for VTK_FLOAT or VTK_DOUBLE<br>
+# resolution = 0.01 for VTK_FLOAT or VTK_DOUBLE<br>
 # resolution = 1 for others
 # .ARGS
 # .END
@@ -1302,7 +1302,7 @@ proc MainVolumesUpdateSliderRange {} {
         # VTK_FLOAT = 10; VTK_DOUBLE = 11
         set b [expr {$Volume(scalarType) == 10 || $Volume(scalarType) == 11}]
     }
-    set res [expr {$b == 1 ? 0.5 : 1}]
+    set res [expr {$b == 1 ? 0.01 : 1}]
 
     # Change GUI
     # width = hi - lo + 1 = (hi+1) - (lo-1) - 1
