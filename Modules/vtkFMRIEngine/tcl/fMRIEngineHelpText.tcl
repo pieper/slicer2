@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEngineHelpText.tcl,v $
-#   Date:      $Date: 2006/03/01 20:11:07 $
-#   Version:   $Revision: 1.21.2.3 $
+#   Date:      $Date: 2006/09/29 13:46:01 $
+#   Version:   $Revision: 1.21.2.4 $
 # 
 #===============================================================================
 # FILE:        fMRIEngineHelpText.tcl
@@ -463,10 +463,11 @@ proc fMRIEngineHelpViewPlotting { } {
     #--- Types of plotting
     set i [ fMRIEngineGetHelpWinID ]
     set txt "<H3>Voxel timecourse plotting</H3>
-<P> Sometimes visual inspection of the voxel timecourse can reveal trends in the data that may not be well represented by an activation detection algorithm; looking at an individual voxel's response, or the collective response of a cluster of voxels in the form of a timecourse plot might help to disambiguate false positives from actual brain activations, for instance. Several modes of voxel timecourse plotting are available: <I>timecourse</I>, <I>peristimulus historgram</I>, and <I>ROI</I>.
+<P> Sometimes visual inspection of the voxel timecourse can reveal trends in the data that may not be well represented by an activation detection algorithm; looking at an individual voxel's response, or the collective response of a cluster of voxels in the form of a timecourse plot might help to
+disambiguate false positives from actual brain activations, for instance. Several modes of voxel timecourse plotting are available: <I>timecourse</I>, <I>peristimulus plot</I>, and <I>ROI</I>.
 <P><B>Timecourse plot</B>
 <P> In this plotting mode (previously called <I>voxel-natural</I>), the observed timecourse of a selected voxel is plotted horizontally along the time axis, and superimposed on a plot of the paradigm signal as reference. Different stimulus conditions within the paradigm are represented by different colors in the plot. Clicking on the voxel timecourse plot itself reveals the numerical voxel values at that timepoint.
-<P><B>Peristimulus histogram plot</B>
+<P><B>Peristimulus plot</B>
 <P> In this plotting mode, samples from the timecourse of a selected voxel are divided into bins representing each stimulus condition in the paradigm. Each bin contains the combined spans of time during which a stimulus condition of one type was presented. The values of samples spanning the timecourse of each bin are averaged together to depict an average response to the associated stimulus, and response maximum and minimum values are plotted around the average for each sample point."
     DevCreateTextPopup infowin$i "fMRIEngine information" 100 100 25 $txt    
 }

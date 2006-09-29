@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEnginePlot.tcl,v $
-#   Date:      $Date: 2006/01/02 17:41:55 $
-#   Version:   $Revision: 1.29.2.3 $
+#   Date:      $Date: 2006/09/29 13:45:30 $
+#   Version:   $Revision: 1.29.2.4 $
 # 
 #===============================================================================
 # FILE:        fMRIEnginePlot.tcl
@@ -68,7 +68,7 @@ proc fMRIEngineMakeTimecoursePlotWindow {} {
     if {$fMRIEngine(tcPlottingOption) == "Long"} {
         set plotTitle "$fMRIEngine(timecoursePlot) Timecourse Plot"
     } else {    
-        set plotTitle "$fMRIEngine(timecoursePlot) Peristimulus Histogram"
+        set plotTitle "$fMRIEngine(timecoursePlot) Peristimulus Plot"
     }
 
     set plotGeometry "+335+200"
@@ -163,9 +163,10 @@ proc fMRIEngineGetVoxelTimecourse {} {
     }
     set fMRIEngine(timecourse) [fMRIEngine(actEstimator) GetTimeCourse $i $j $k]
 
-    set fMRIEngine(voxelLocation,x) $i
-    set fMRIEngine(voxelLocation,y) $j
-    set fMRIEngine(voxelLocation,z) $k
+#    set fMRIEngine(voxelLocation,x) $i
+#    set fMRIEngine(voxelLocation,y) $j
+#    set fMRIEngine(voxelLocation,z) $k
+
 
     return 0
 }
@@ -273,7 +274,7 @@ proc fMRIEngineDrawPlotShort {} {
     if {$fMRIEngine(timecoursePlot) == "Voxel"} {
         set fMRIEngine(voxelIndices) voxelIndices
         $fMRIEngine(timeCourseGraph) marker create text \
-            -text "Voxel: ($fMRIEngine(voxelLocation,x),$fMRIEngine(voxelLocation,y),$fMRIEngine(voxelLocation,z))" \
+            -text "Voxel: ($fMRIEngine(voxelR),$fMRIEngine(voxelA),$fMRIEngine(voxelS))" \
             -coords {$noVols $timeCourseYMax} \
             -yoffset 5 -xoffset -70 -name $fMRIEngine(voxelIndices) -under yes -bg white \
             -font fixed 
@@ -720,7 +721,7 @@ proc fMRIEngineDrawPlotLong {} {
     if {$fMRIEngine(timecoursePlot) == "Voxel"} {
         set fMRIEngine(voxelIndices) voxelIndices
         $fMRIEngine(timeCourseGraph) marker create text \
-            -text "Voxel: ($fMRIEngine(voxelLocation,x),$fMRIEngine(voxelLocation,y),$fMRIEngine(voxelLocation,z))" \
+            -text "Voxel: ($fMRIEngine(voxelR),$fMRIEngine(voxelA),$fMRIEngine(voxelS))" \
         -coords {$totalVolumes $timeCourseYMax} \
         -yoffset 5 -xoffset -70 -name $fMRIEngine(voxelIndices) -under yes -bg white \
         -font fixed 
@@ -818,7 +819,7 @@ proc fMRIEngineGetDataVolumeDimensions {} {
 # .END
 #-------------------------------------------------------------------------------
 proc fMRIEngineGetVoxelFromSelection {x y} {
-    global fMRIEngine Interactor Gui
+    global fMRIEngine Interactor Gui Anno
     
     # Which slice was picked?
     set s $Interactor(s)
@@ -868,7 +869,20 @@ proc fMRIEngineGetVoxelFromSelection {x y} {
     set k [expr round ($k)]
     # puts "Rounded voxel coords: $i $j $k"
     #puts "Voxel indices: $i $j $k"
-    
+
+    # Get RAS coordinates
+    set R [Anno($s,cur1,mapper) GetInput]
+    set rl [split $R " "]
+    set fMRIEngine(voxelR) [lindex $rl 1]
+
+    set A [Anno($s,cur2,mapper) GetInput]
+    set al [split $A " "]
+    set fMRIEngine(voxelA) [lindex $al 1]
+
+    set S [Anno($s,cur3,mapper) GetInput]
+    set sl [split $S " "]
+    set fMRIEngine(voxelS) [lindex $sl 1]
+
     return "$i $j $k"
 }
 

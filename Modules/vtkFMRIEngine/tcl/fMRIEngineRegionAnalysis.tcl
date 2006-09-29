@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEngineRegionAnalysis.tcl,v $
-#   Date:      $Date: 2006/01/06 16:53:37 $
-#   Version:   $Revision: 1.14.2.9 $
+#   Date:      $Date: 2006/09/29 13:46:28 $
+#   Version:   $Revision: 1.14.2.10 $
 # 
 #===============================================================================
 # FILE:        fMRIEngineRegionAnalysis.tcl
@@ -563,7 +563,7 @@ proc fMRIEngineBuildUIForROIStats {parent} {
 
     set f $parent.fPlot.fPeristimulus
     set param Short 
-    set name {Peristimulus histogram}
+    set name {Peristimulus plot}
     eval {radiobutton $f.r$param -width 25 -text $name \
         -variable fMRIEngine(tcPlottingOption) -value $param \
         -relief raised -offrelief raised -overrelief raised \
@@ -591,7 +591,7 @@ proc fMRIEngineBuildUIForROIStats {parent} {
 proc fMRIEngineUpdateCondsForROIPlot {} {
     global fMRIEngine
 
-    # Peristimulus histogram plotting will be disabled if the paradigm desgin is 
+    # Peristimulus plot plotting will be disabled if the paradigm desgin is 
     # event-related or mixed.
     if {$fMRIEngine(paradigmDesignType) != "blocked"} {
         $fMRIEngine(gui,roiTimecourseRadioButton) select 
@@ -709,7 +709,7 @@ proc fMRIEnginePlotROIStats {type} {
 
     set w .roiStatsWin
     toplevel $w
-    wm title $w "Region Stats" 
+    wm title $w "Region Histogram" 
     wm minsize $w 250 160 
     # wm geometry $w "+898+200" 
     # wm geometry $w "+850+200" 
@@ -1350,7 +1350,7 @@ proc fMRIEngineShowRegionStats {} {
     toplevel $w -bg white 
     set fMRIEngine(regionStatsToplevel) $w
  
-    wm title $w "Region Stats" 
+    wm title $w "Region Histogram" 
 #    wm minsize $w $plotWidth $plotHeight
 #    set plotGeometry "+335+200"
     set plotGeometry "+400+30"
@@ -1372,7 +1372,7 @@ proc fMRIEngineShowRegionStats {} {
     # Create the histogram widget
     fMRIEngineCreateHistogram $w.f1 600 400 
 
-    # show region stats
+    # show region histogram 
     if {$fMRIEngine(thresholdingOption) == "uncorrected"} {
         set pLabel "p threshold\n(uncorrected)"
     } else {
@@ -1473,7 +1473,7 @@ proc fMRIEngineCreateHistogram {parent {width 350} {height 250}} {
     fMRIEngine(imageAccumulate) SetComponentSpacing $spacing 1.0 1.0
     fMRIEngine(imageAccumulate) Update 
 
-    # region stats
+    # region histogram 
     set fMRIEngine(regionVoxelCount) [fMRIEngine(imageAccumulate) GetVoxelCount]
 
     set fMRIEngine(regionMin) [format "%.2f" $minX] 
