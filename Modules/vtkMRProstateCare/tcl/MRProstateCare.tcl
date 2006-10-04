@@ -112,7 +112,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.63 $} {$Date: 2006/10/04 18:51:31 $}]
+        {$Revision: 1.1.2.64 $} {$Date: 2006/10/04 19:22:39 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -632,17 +632,25 @@ proc MRProstateCareBuildGUIForScan {parent} {
 
     set f $parent.fMid.f2
 
-    DevAddButton $f.bPlus "+" "MRProstateCareChangeRSA +"  6 
-    DevAddButton $f.bMinus "-" "MRProstateCareChangeRSA -"  6 
+    DevAddButton $f.bPlus1 "+1" "MRProstateCareChangeRSA +1"  6 
+    DevAddButton $f.bMinus1 "-1" "MRProstateCareChangeRSA -1"  6 
+    DevAddButton $f.bPlus5 "+5" "MRProstateCareChangeRSA +5"  6 
+    DevAddButton $f.bMinus5 "-5" "MRProstateCareChangeRSA -5"  6 
+    DevAddButton $f.bPlus10 "+10" "MRProstateCareChangeRSA +10"  6 
+    DevAddButton $f.bMinus10 "-10" "MRProstateCareChangeRSA -10"  6 
     DevAddButton $f.bReset "Reset" "MRProstateCareChangeRSA r" 6 
-    DevAddButton $f.bSend "Send" "MRProstateCareSetScannerCommand 2" 6 
+    DevAddButton $f.bSend "Go" "MRProstateCareSetScannerCommand 2" 6 
  
     blt::table $f \
-        0,0 $f.bPlus -fill x -padx 1 -pady 2 \
-        0,1 $f.bMinus -fill x -padx 1 -pady 2 \
-        0,2 $f.bReset -fill x -padx 1 -pady 2 \
-        0,3 $f.bSend -fill x -padx 1 -pady 2 
-
+        0,0 $f.bPlus1 -fill x -padx 1 -pady 1 \
+        0,1 $f.bPlus5 -fill x -padx 1 -pady 1 \
+        0,2 $f.bPlus10 -fill x -padx 1 -pady 1 \
+        0,3 $f.bReset -fill x -padx 1 -pady 1 \
+        1,0 $f.bMinus1 -fill x -padx 1 -pady 1 \
+        1,1 $f.bMinus5 -fill x -padx 1 -pady 1 \
+        1,2 $f.bMinus10 -fill x -padx 1 -pady 1 \
+        1,3 $f.bSend -fill x -padx 1 -pady 1 
+ 
 
     #-------------------------
     # Frame Bot
@@ -667,24 +675,19 @@ proc MRProstateCareChangeRSA {v} {
     global MRProstateCare View 
 
     if {$v == "r"} {
-        foreach v "x y z" {
-            set MRProstateCare(${v}Str) \
-                $MRProstateCare(${v}Str,original)
+        foreach i "x y z" {
+            set MRProstateCare(${i}Str) \
+                $MRProstateCare(${i}Str,original)
         }
     } else {
-        if {$v == "+"} {
-            set val 1
-        } else {
-            set val -1
-        }
 
         # Axial slice changes as S
         # Saggital slice changes as R
         # Coronal slice changes as A
         switch $MRProstateCare(realtimeScanOrient) {
-            "Axial" {set MRProstateCare(zStr) [expr $MRProstateCare(zStr) + $val]} 
-            "Sagittal" {set MRProstateCare(xStr) [expr $MRProstateCare(xStr) + $val]} 
-            "Coronal" {set MRProstateCare(yStr) [expr $MRProstateCare(yStr) + $val]} 
+            "Axial" {set MRProstateCare(zStr) [expr $MRProstateCare(zStr) + $v]} 
+            "Sagittal" {set MRProstateCare(xStr) [expr $MRProstateCare(xStr) + $v]} 
+            "Coronal" {set MRProstateCare(yStr) [expr $MRProstateCare(yStr) + $v]} 
         }
 
         set max [expr $View(fov) / 2]
@@ -698,7 +701,6 @@ proc MRProstateCareChangeRSA {v} {
             }
         }
     }
-
 }
 
 
