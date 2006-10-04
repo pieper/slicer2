@@ -112,7 +112,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.62 $} {$Date: 2006/09/15 15:40:15 $}]
+        {$Revision: 1.1.2.63 $} {$Date: 2006/10/04 18:51:31 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1836,10 +1836,8 @@ proc MRProstateCareAddOrEditPoint {} {
     }
  
 
-    # Keep and sort the new point in the point list
+    # Keep the new point in the point list
     lappend MRProstateCare(pointList) $item
-    set MRProstateCare(pointList) \
-        [lsort -dictionary $MRProstateCare(pointList)]  
 
     # Put the point list into the list box
     $MRProstateCare(pointListBox) delete 0 end
