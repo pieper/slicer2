@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2006/09/08 19:28:48 $
-#   Version:   $Revision: 1.38.12.2.2.15 $
+#   Date:      $Date: 2006/10/04 19:45:32 $
+#   Version:   $Revision: 1.38.12.2.2.16 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -89,7 +89,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.15 $} {$Date: 2006/09/08 19:28:48 $}]
+        {$Revision: 1.38.12.2.2.16 $} {$Date: 2006/10/04 19:45:32 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -1997,7 +1997,8 @@ proc LocatorLoopFlashpoint {} {
             # set the lower threshold to the actLow
             Volume($i,node) AutoThresholdOff
             Volume($i,node) ApplyThresholdOn
-            Volume($i,node) SetLowerThreshold 1 
+            Volume($i,node) SetLowerThreshold $minVal
+            Volume($i,node) SetUpperThreshold $maxVal
 
             LocatorTranslateRealtimeVolume
 
