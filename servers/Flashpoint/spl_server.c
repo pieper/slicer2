@@ -470,10 +470,6 @@ int Serve(fd, doRealtime)
                 imageIndex = get_current_image_index();
                 NewImage = 0;
 
-                /* Don't skip images
-                   BUT, the imageIndex rolls over, so roll with the punches.
-                 */
-
                 if (doRealtime && imageIndex !=  prevIndex) {
                     prevIndex = imageIndex;
 
@@ -546,7 +542,7 @@ int Serve(fd, doRealtime)
                     bcopy(&NewImage  , &buf[OFFSET_IMG_NEW], LEN_IMG_NEW);
                     len = nbytes;
                     n = writen(fd, buf, len);
-                    if(n !=  len) {
+                    if(n != len) {
                         fprintf(stderr, "Server: write error '%s'.\n", buf);
                         return -1;
                     }
