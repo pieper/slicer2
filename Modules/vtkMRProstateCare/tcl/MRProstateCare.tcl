@@ -112,7 +112,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.65 $} {$Date: 2006/10/05 14:46:11 $}]
+        {$Revision: 1.1.2.66 $} {$Date: 2006/10/05 15:05:19 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -302,9 +302,9 @@ proc MRProstateCareBuildGUI {} {
         "{Date} {Patient Name} {Patient ID} {Step}" {
 
        DevAddLabel $f.l$x "${text}:" 
-       eval {entry $f.e$x -textvariable MRProstateCare(entry,$x) -width 23} $Gui(WEA)
+       eval {entry $f.e$x -textvariable MRProstateCare(entry,$x) -width 26} $Gui(WEA)
  
-       grid $f.l$x $f.e$x -pady 1 -padx 2 -sticky e
+       grid $f.l$x $f.e$x -pady 1 -padx 1 -sticky e
        grid $f.e$x -sticky w
     }
     set MRProstateCare(entry,$x) 5.0
@@ -326,11 +326,11 @@ proc MRProstateCareBuildGUI {} {
         "{Anterior Right} {Posterior Right} {Posterior Left} {Anterior Left}" {
 
        DevAddLabel $f.l$x "${text}:" 
-       eval {entry $f.e$x -textvariable MRProstateCare(entry,$x) -width 15} $Gui(WEA)
-       DevAddButton $f.b$x "Query" "MRProstateCareQuery $x" 5 
+       eval {entry $f.e$x -textvariable MRProstateCare(entry,$x) -width 20} $Gui(WEA)
+       DevAddButton $f.b$x "Get" "MRProstateCareQuery $x" 3 
        set MRProstateCare(button,$x) $f.b$x
  
-       grid $f.l$x $f.e$x $f.b$x -pady 1 -padx 2 -sticky e
+       grid $f.l$x $f.e$x $f.b$x -pady 1 -padx 1 -sticky e
        grid $f.e$x -sticky w
 
     }
