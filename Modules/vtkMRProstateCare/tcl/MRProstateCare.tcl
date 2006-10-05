@@ -112,7 +112,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.64 $} {$Date: 2006/10/04 19:22:39 $}]
+        {$Revision: 1.1.2.65 $} {$Date: 2006/10/05 14:46:11 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1411,9 +1411,85 @@ proc MRProstateCareLoad {} {
     set fd [open $fileName r]
     set data [read $fd]
     set lines [split $data "\n"]
-    foreach line $lines {
-        set line [string trim $line]
-        eval $line
+
+    # Here we check the format of the file to be 
+    # loaded. One is the back up file saved from
+    # slicer itself. The other is output file
+    # from slicer.
+    set i [string first "#" $data 0]
+    if {$i >= 0} {
+        # The back up file
+
+        foreach line $lines {
+            set line [string trim $line]
+            eval $line
+        }
+    } else {
+        # The output file
+
+        # the point list
+        set MRProstateCare(pointList) ""
+        $MRProstateCare(pointListBox) delete 0 end
+
+        foreach line $lines {
+            set line [string trim $line]
+            set ii [string first "=" $line 0]
+            if {$ii >= 0} {
+                # string has a "="
+                set tokens [split $line "="]
+                set tag [lindex $tokens 0]
+                set tag [string trim $tag]
+                set value [lindex $tokens 1]
+                set value [string trim $value]
+ 
+                if {$tag == "patient_name"} {
+                    set MRProstateCare(entry,PName) $value 
+                } elseif {$tag == "patient_id"} {
+                    set MRProstateCare(entry,PID) $value 
+                } elseif {$tag == "date"} {
+                    set MRProstateCare(entry,PDate) $value 
+                } elseif {$tag == "Step"} {
+                    set MRProstateCare(entry,Step) $value 
+                } else {
+                    foreach x "1\) 2\) 3\) 4\)" {
+                        set iii [string first $x $tag 0]
+                        if {$iii >= 0} {
+                            if {$x == "1\)"} {
+                                set MRProstateCare(entry,AR) $value 
+                            } elseif {$x == "2\)"} {
+                                set MRProstateCare(entry,PR) $value 
+                            } elseif {$x == "3\)"} {
+                                set MRProstateCare(entry,AL) $value 
+                            } else {
+                                set MRProstateCare(entry,PL) $value 
+                            }
+                            break
+                        }
+                    }
+                }
+            } else {
+                # String doesn't have a "="
+                # replace multiple spaces with one space 
+                regsub -all { +} $line " " line 
+
+                set tokens [split $line " "]
+                set len [llength $tokens]
+                if {$len == 7} {
+                    set tag [lindex $tokens 0]
+                    set r [lindex $tokens 1]
+                    set s [lindex $tokens 2]
+                    set a [lindex $tokens 3]
+ 
+                    if {[ValidateFloat $r] == 1 && 
+                        [ValidateFloat $s] == 1 &&  
+                        [ValidateFloat $a] == 1} {
+                        set coords "$tag: \($r  $s  $a\)"
+                        lappend MRProstateCare(pointList) $coords 
+                        $MRProstateCare(pointListBox) insert end $coords
+                    }
+                }
+            }
+        }
     }
     close $fd
 }
