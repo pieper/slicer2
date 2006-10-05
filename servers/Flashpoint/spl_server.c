@@ -336,8 +336,9 @@ void BuildImageMatrix(buf, offset, cnr)
 /******************************************************************************
   Serve
  ******************************************************************************/
-int Serve(fd)
+int Serve(fd, doRealtime)
     int fd;
+    int doRealtime;
 {
     char *msg = NULL;
     int bClose = 0, status, xres, yres;
@@ -360,6 +361,9 @@ int Serve(fd)
     float sOrient[5];
     char sCmdStr[300];
     char sOrientNames[3][20];
+    int deltaR;
+    int deltaA;
+    int deltaS;
 
     sprintf(cmdname[0], "CLOSE");
     sprintf(cmdname[1], "PING");
@@ -470,9 +474,24 @@ int Serve(fd)
                    BUT, the imageIndex rolls over, so roll with the punches.
                  */
 
-                if (imageIndex !=  prevIndex) {
-                    NewImage = 1;
+                if (doRealtime && imageIndex !=  prevIndex) {
                     prevIndex = imageIndex;
+
+                    /* Get scan order of the realtime image from the corner points */ 
+                    deltaR = ras[0] - ras[3];
+                    deltaA = ras[1] - ras[4];
+                    deltaS = ras[2] - ras[5];
+
+                    deltaR = fabs(deltaR);
+                    deltaA = fabs(deltaA);
+                    deltaS = fabs(deltaS);
+
+                    /* NewImage = 1: Axial scanning of the realtime image
+                       NewImage = 2: Sagittal
+                       NewImage = 3: Coronal */
+                    if (deltaS < deltaR && deltaS < deltaA) {NewImage = 1;}
+                    if (deltaR < deltaS && deltaR < deltaA) {NewImage = 2;}
+                    if (deltaA < deltaR && deltaA < deltaS) {NewImage = 3;}
                 }
 
 
@@ -848,18 +867,28 @@ int main(argc, argv)
     int argc;
     char *argv[];
 {
-    int sockfd, newsockfd, clilen, status, port;
+    int sockfd, newsockfd, clilen, status, port, doRealtime = 0;
     struct sockaddr_in cli_addr, serv_addr;
 
     if (argc < 2)
     {
-        fprintf(stderr, "usage: %s portnum [-v]\n", argv[0]);
+        fprintf(stderr, "Usage: %s portnum [doRealtime] [-v]\n", argv[0]);
         return 1;
     }
+
+    /* set up the arguments */
     progname = argv[0];
     port = atoi(argv[1]);
-    if (argc  == 3)
+    if (argc == 3) 
+    {
+        doRealtime = atoi(argv[2]);
+    }
+    else if (argc >= 4) 
+    {
+        doRealtime = atoi(argv[2]);
         DBG = 1;
+    }
+
 
     /* NETWORK */
 
@@ -900,7 +929,7 @@ int main(argc, argv)
         if (fork()  == 0) {
             /* Child */
             close(sockfd);
-            status = Serve(newsockfd);
+            status = Serve(newsockfd, doRealtime);
             close(newsockfd);
             if (status < 0)
                 fprintf(stderr, "Server exiting due to error.\n");
