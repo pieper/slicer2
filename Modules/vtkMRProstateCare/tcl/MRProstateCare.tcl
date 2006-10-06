@@ -112,7 +112,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.69 $} {$Date: 2006/10/06 18:19:17 $}]
+        {$Revision: 1.1.2.70 $} {$Date: 2006/10/06 19:34:56 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -168,6 +168,7 @@ proc MRProstateCareInit {} {
 
     set MRProstateCare(realtimeImageID) 33000 
     set MRProstateCare(displayRSA) "0 0 0"
+    set MRProstateCare(preOpVolumeID) 0
 
     # Creates bindings
     MRProstateCareCreateBindings 
@@ -922,7 +923,7 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
  
     set f $parent.f2.fMid
     # Build pulldown menu for volumes of image 1 
-    DevAddLabel $f.lVolume "Background:"
+    DevAddLabel $f.lVolume "Axi PreOp:"
 
     set mList [list {none}]
     set df [lindex $mList 0] 
@@ -942,13 +943,12 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     set MRProstateCare(gui,displayImage1VolumeMenu) $f.mbType.m
 
     blt::table $f \
-        0,0 $f.lVolume -padx 2 -pady 1 -anchor e \
+        0,0 $f.lVolume -padx 2 -pady 1 -anchor w \
         0,1 $f.mbType -fill x -padx 3 -pady 1 -anchor w
-
 
     set f $parent.f2.fBot
     # Build pulldown menu for volumes 
-    DevAddLabel $f.lVolume "Foreground:"
+    DevAddLabel $f.lVolume "Cor PreOp:"
 
     set mList [list {none}]
     set df [lindex $mList 0] 
@@ -968,9 +968,8 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     set MRProstateCare(gui,displayImage2VolumeMenu) $f.mbType.m
 
     blt::table $f \
-        0,0 $f.lVolume -padx 2 -pady 1 -anchor e \
+        0,0 $f.lVolume -padx 2 -pady 1 -anchor w \
         0,1 $f.mbType -fill x -padx 3 -pady 1 -anchor w
-
 
     #-------------------------
     # Frame 3 
@@ -1129,10 +1128,13 @@ proc MRProstateCareUpdateForNav {} {
 
 
     # set back and fore images right
-    MainSlicesSetVolumeAll Back $MRProstateCare(image1,currentVolumeID) 
-    MainVolumesSetActive $MRProstateCare(image1,currentVolumeID)
-    MainSlicesSetVolumeAll Fore $MRProstateCare(image2,currentVolumeID) 
-    MainVolumesSetActive $MRProstateCare(image2,currentVolumeID)
+    # MainSlicesSetVolumeAll Back $MRProstateCare(image1,currentVolumeID) 
+    # MainVolumesSetActive $MRProstateCare(image1,currentVolumeID)
+    # MainSlicesSetVolumeAll Fore $MRProstateCare(image2,currentVolumeID) 
+    # MainVolumesSetActive $MRProstateCare(image2,currentVolumeID)
+
+    MainSlicesSetVolumeAll Fore $Locator(idRealtime)
+    MainVolumesSetActive $Locator(idRealtime)
     MainVolumesRender
 
 
@@ -1179,6 +1181,9 @@ proc MRProstateCareShowSliceIn3D {} {
             # get Axial display in the 3D view
             MainViewNavReset 40 65 click 
             MRProstateCareZoom
+
+            set MRProstateCare(preOpVolumeID) $MRProstateCare(image1,currentVolumeID) 
+ 
         }
         "Sagittal" {
             set Slice(0,visibility) 0 
@@ -1190,6 +1195,10 @@ proc MRProstateCareShowSliceIn3D {} {
             # in the 3D view
             MainViewNavReset 61 25 click 
             MRProstateCareZoom
+
+            if {$MRProstateCare(preOpVolumeID) == 0} {
+                set MRProstateCare(preOpVolumeID) $MRProstateCare(image1,currentVolumeID) 
+            }
         }
         "Coronal" {
             set Slice(0,visibility) 0 
@@ -1201,8 +1210,15 @@ proc MRProstateCareShowSliceIn3D {} {
             # in the 3D view
             MainViewNavReset 55 38 click 
             MRProstateCareZoom
+
+            set MRProstateCare(preOpVolumeID) $MRProstateCare(image2,currentVolumeID) 
         }
     }
+
+    MainSlicesSetVolumeAll Back $MRProstateCare(preOpVolumeID)
+    MainVolumesSetActive $MRProstateCare(preOpVolumeID)
+    MainVolumesRender
+
     MainSlicesSetVisibility ${s}
     MainViewerHideSliceControls 
     Render3D
@@ -1221,7 +1237,7 @@ proc MRProstateCareNavLoop {} {
     set both [expr {$MRProstateCare(image1,currentVolumeID) > 0  
                     && $MRProstateCare(image2,currentVolumeID) > 0}] 
     if {! $both} {
-        DevErrorWindow "Please have both images available for display. Then press Start button to begin."
+        DevErrorWindow "Please have both axial and coronal pre-op images available for display. Then press Start button to begin."
         return
     } 
 
@@ -1372,16 +1388,16 @@ proc MRProstateCareSelectVolume {which v} {
     if {$which == 1} {
         $MRProstateCare(gui,displayImage1VolumeButton) config -text $name 
         set MRProstateCare(image1,currentVolumeID) $v
-        set layer Back
+        # set layer Back
     } else {
         $MRProstateCare(gui,displayImage2VolumeButton) config -text $name 
         set MRProstateCare(image2,currentVolumeID) $v
-        set layer Fore
+        # set layer Fore
     }
 
-    MainSlicesSetVolumeAll $layer $v
-    MainVolumesSetActive $v
-    MainVolumesRender
+    # MainSlicesSetVolumeAll $layer $v
+    # MainVolumesSetActive $v
+    # MainVolumesRender
 }
 
 
