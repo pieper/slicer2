@@ -112,7 +112,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.70 $} {$Date: 2006/10/06 19:34:56 $}]
+        {$Revision: 1.1.2.71 $} {$Date: 2006/10/06 19:53:02 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -2206,8 +2206,8 @@ proc MRProstateCareCreateBindings {} {
 proc MRProstateCareProcessMouseEvent {x y} {
     global MRProstateCare Interactor Anno
 
-    if {$MRProstateCare(currentTab) != 3} {
-        # Only on Points tab are we interested in 
+    if {$MRProstateCare(currentTab) != 3 && $MRProstateCare(currentTab) != 4} {
+        # Only on Points tab and Navigate->Scan tab are we interested in 
         # this mouse event.
         return 
     }
@@ -2232,17 +2232,27 @@ proc MRProstateCareProcessMouseEvent {x y} {
     set sl [split $S " "]
     set S [lindex $sl 1]
 
-    # One point
-    set cat $MRProstateCare(category)
-    if {! $MRProstateCare(editMode)} {
-        if {$cat != "Sextant"} {
-            set MRProstateCare(entry,Title) $cat
-            append MRProstateCare(entry,Title) "_"
-        } else {
-            set MRProstateCare(entry,Title) "" 
+    # Points tab
+    if {$MRProstateCare(currentTab) == 3} {
+        # One point
+        set cat $MRProstateCare(category)
+        if {! $MRProstateCare(editMode)} {
+            if {$cat != "Sextant"} {
+                set MRProstateCare(entry,Title) $cat
+                append MRProstateCare(entry,Title) "_"
+            } else {
+                set MRProstateCare(entry,Title) "" 
+            }
         }
+        set MRProstateCare(entry,Coords) "$R    $S    $A"
     }
-    set MRProstateCare(entry,Coords) "$R     $S     $A"
+
+    # Navigate->Scan tab
+    if {$MRProstateCare(currentTab) == 4} {
+        set MRProstateCare(xStr)  $R
+        set MRProstateCare(zStr)  $S
+        set MRProstateCare(yStr)  $A
+    }
 }
 
 
