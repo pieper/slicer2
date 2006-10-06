@@ -342,7 +342,7 @@ int Serve(fd, doRealtime)
 {
     char *msg = NULL;
     int bClose = 0, status, xres, yres;
-    float x, y, z, nx, ny, nz, tx, ty, tz, xyz[9], ras[9], spacing[3];
+    float x, y, z, nx, ny, nz, tx, ty, tz, xyz[9], xyz2[9], ras[9], ras2[9], spacing[3];
     long totlen, imanum = 0, recon=0, i, nbytes, n, len;
     short locStatus, prevLocStatus = -2, NewLocator=0, NewImage=0;
     short minpix, maxpix;
@@ -357,13 +357,11 @@ int Serve(fd, doRealtime)
     long imageID;
 
     /* scanning */
+    char tmp1[9], tmp2[9], tmp3[9];
     int sCmd = -1;
     float sOrient[5];
     char sCmdStr[300];
     char sOrientNames[3][20];
-    int deltaR;
-    int deltaA;
-    int deltaS;
 
     sprintf(cmdname[0], "CLOSE");
     sprintf(cmdname[1], "PING");
@@ -472,22 +470,48 @@ int Serve(fd, doRealtime)
 
                 if (doRealtime && imageIndex !=  prevIndex) {
                     prevIndex = imageIndex;
+                    ibuf = (caddr_t)mrt_imagebuf_ptr(0, imageIndex);
 
-                    /* Get scan order of the realtime image from the corner points */ 
-                    deltaR = ras[0] - ras[3];
-                    deltaA = ras[1] - ras[4];
-                    deltaS = ras[2] - ras[5];
+                    /* Corner points */
+                    status = (int)mror_hdrdata(ibuf, MROR_HDR_CORNER_PT_OFFSET, MROR_HDR_CORNER_PT_LEN, xyz2);
+                    if (status)
+                    {
+                        fprintf(stderr, "Error reading corner points of this image: %d\n", imageIndex);
+                        if (ibuf  == NULL)
+                            fprintf(stderr, "ibuf is NULL\n");
+                        else
+                            fprintf(stderr, "ibuf is not NULL\n");
+                    }
 
-                    deltaR = fabs(deltaR);
-                    deltaA = fabs(deltaA);
-                    deltaS = fabs(deltaS);
+                    /* Convert xyz to ras */
+                    xyz_to_ras(&xyz2[0], &ras2[0], patpos, tblpos);
+                    xyz_to_ras(&xyz2[3], &ras2[3], patpos, tblpos);
+                    xyz_to_ras(&xyz2[6], &ras2[6], patpos, tblpos);
 
+                    /* Get scan order of the realtime image from the corner points */
                     /* NewImage = 1: Axial scanning of the realtime image
                        NewImage = 2: Sagittal
                        NewImage = 3: Coronal */
-                    if (deltaS < deltaR && deltaS < deltaA) {NewImage = 1;}
-                    if (deltaR < deltaS && deltaR < deltaA) {NewImage = 2;}
-                    if (deltaA < deltaR && deltaA < deltaS) {NewImage = 3;}
+
+                    sprintf(tmp1, "%6.2f", ras2[0]);
+                    sprintf(tmp2, "%6.2f", ras2[3]);
+                    sprintf(tmp3, "%6.2f", ras2[6]);
+                    /* fprintf(stderr, "ras[0]: %6.2f ras[3]: %6.2f ras[6]: %6.2f \n", ras2[0], ras2[3], ras2[6]); */
+                    if (strcmp(tmp1, tmp2) == 0 && strcmp(tmp1, tmp3) == 0) {NewImage = 2;}
+
+                    sprintf(tmp1, "%6.2f", ras2[2]);
+                    sprintf(tmp2, "%6.2f", ras2[5]);
+                    sprintf(tmp3, "%6.2f", ras2[8]);
+                    /* fprintf(stderr, "ras[2]: %6.2f ras[5]: %6.2f ras[8]: %6.2f \n", ras2[2], ras2[5], ras2[8]); */
+                    if (strcmp(tmp1, tmp2) == 0 && strcmp(tmp1, tmp3) == 0) {NewImage = 1;}
+
+                    sprintf(tmp1, "%6.2f", ras2[1]);
+                    sprintf(tmp2, "%6.2f", ras2[4]);
+                    sprintf(tmp3, "%6.2f", ras2[7]);
+                    /* fprintf(stderr, "ras[1]: %6.2f ras[4]: %6.2f ras[7]: %6.2f \n", ras2[1], ras2[4], ras2[7]); */
+                    if (strcmp(tmp1, tmp2) == 0 && strcmp(tmp1, tmp3) == 0) {NewImage = 3;}
+
+                    /* fprintf(stderr, "new image: %d \n", NewImage); */
                 }
 
 
