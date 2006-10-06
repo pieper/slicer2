@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2006/10/05 19:30:21 $
-#   Version:   $Revision: 1.38.12.2.2.17 $
+#   Date:      $Date: 2006/10/06 18:18:10 $
+#   Version:   $Revision: 1.38.12.2.2.18 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -89,7 +89,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.17 $} {$Date: 2006/10/05 19:30:21 $}]
+        {$Revision: 1.38.12.2.2.18 $} {$Date: 2006/10/06 18:18:10 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -1868,6 +1868,9 @@ proc LocatorLoopFlashpoint {} {
         LocatorConnect 0
         return
     }
+
+    Locator(Flashpoint,src) Modified
+    Locator(Flashpoint,src) Update
     set newImage   [Locator(Flashpoint,src) GetNewImage]
     set newLocator [Locator(Flashpoint,src) GetNewLocator]
 
@@ -1913,7 +1916,16 @@ proc LocatorLoopFlashpoint {} {
     # NEW IMAGE
     #----------------
     if {$newImage != 0} {
-        
+
+        # 1: Axial
+        # 2: Sagittal
+        # 3: Coronal
+        switch $newImage {
+            1 {set Locator(realtimeScanOrder) "SI"} 
+            2 {set Locator(realtimeScanOrder) "RL"}
+            3 {set Locator(realtimeScanOrder) "AP"}
+        }
+       
         # Force an update so I can read the new matrix
         Locator(Flashpoint,src) Modified
         Locator(Flashpoint,src) Update
@@ -1925,21 +1937,13 @@ proc LocatorLoopFlashpoint {} {
         set id 0
         set rtid    [Locator(Flashpoint,src) GetRealtimeImageID]
         if {$Locator(nextRealtimeImageInfo) != ""} {
-            set id    [lindex $Locator(nextRealtimeImageInfo) 0]
+            set id [lindex $Locator(nextRealtimeImageInfo) 0]
             if {$rtid == $id} {
                 set r [lindex $Locator(nextRealtimeImageInfo) 1]
                 set s [lindex $Locator(nextRealtimeImageInfo) 2]
                 set a [lindex $Locator(nextRealtimeImageInfo) 3]
                 set Locator(realtimeRSA) "$r $s $a" 
  
-                # 1: Axial
-                # 2: Sagittal
-                # 3: Coronal
-                switch $newImage {
-                    1 {set Locator(realtimeScanOrder) "SI"} 
-                    2 {set Locator(realtimeScanOrder) "RL"}
-                    3 {set Locator(realtimeScanOrder) "AP"}
-                }
             }
         }
 
