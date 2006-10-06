@@ -112,7 +112,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.68 $} {$Date: 2006/10/05 19:33:22 $}]
+        {$Revision: 1.1.2.69 $} {$Date: 2006/10/06 18:19:17 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1273,8 +1273,8 @@ proc MRProstateCareShowPoint {title} {
     set ab [lindex $MRProstateCare(displayRSA) 2]
     set sb [lindex $MRProstateCare(displayRSA) 1]
  
-    set pos [expr   $View(fov) * 0.28]
-    set neg [expr - $View(fov) * 0.28]
+    set pos [expr   $View(fov) * 0.30]
+    set neg [expr - $View(fov) * 0.30]
 
     switch $MRProstateCare(imageDisplayOrient) {
         "Axial" {
