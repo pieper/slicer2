@@ -112,7 +112,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.71 $} {$Date: 2006/10/06 19:53:02 $}]
+        {$Revision: 1.1.2.72 $} {$Date: 2006/10/10 15:16:10 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1243,11 +1243,14 @@ proc MRProstateCareNavLoop {} {
 
     MRProstateCareShowSliceIn3D
 
-    if {$Slice(opacity) == 1} {set MRProstateCare(navLoopFactor) -1}
-    if {$Slice(opacity) == 0} {set MRProstateCare(navLoopFactor) +1}
-    set Slice(opacity) [expr $Slice(opacity) + $MRProstateCare(navLoopFactor) * 0.1]
+    if {$Slice(opacity) == 1} {set MRProstateCare(navLoopFactor) -0.25}
+    if {$Slice(opacity) == 0} {set MRProstateCare(navLoopFactor) +0.25}
+    set Slice(opacity) [expr $Slice(opacity) + $MRProstateCare(navLoopFactor)]
     MainSlicesSetOpacityAll
     RenderAll
+
+    set vis [expr {$Slice(opacity) >= 0.5 ? 0 : 1}]
+    pointActor SetVisibility $vis 
 
     after $MRProstateCare(navTime) MRProstateCareNavLoop
 }
@@ -1283,7 +1286,7 @@ proc MRProstateCareHidePoint {} {
 
 
 proc MRProstateCareShowPoint {title} {
-    global MRProstateCare View
+    global MRProstateCare View Slice
 
     set rb [lindex $MRProstateCare(displayRSA) 0]
     set ab [lindex $MRProstateCare(displayRSA) 2]
@@ -1312,12 +1315,15 @@ proc MRProstateCareShowPoint {title} {
             set ab $at
         }
     }
-    $MRProstateCare(pointTitleText) SetText $title 
-    $MRProstateCare(pointTitleActor) SetVisibility 1 
-    $MRProstateCare(pointTitleActor) SetPosition $rt $at $st  
 
-    pointActor SetVisibility 1 
+    set vis [expr {$Slice(opacity) >= 0.5 ? 0 : 1}]
+ 
+    $MRProstateCare(pointTitleText) SetText $title 
+    $MRProstateCare(pointTitleActor) SetPosition $rt $at $st  
+    $MRProstateCare(pointTitleActor) SetVisibility 1 
+
     pointActor SetPosition $rb $ab $sb  
+    pointActor SetVisibility 1 
 }
 
 
