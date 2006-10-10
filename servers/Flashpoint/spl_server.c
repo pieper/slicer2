@@ -488,6 +488,7 @@ int Serve(fd, doRealtime)
                     xyz_to_ras(&xyz2[3], &ras2[3], patpos, tblpos);
                     xyz_to_ras(&xyz2[6], &ras2[6], patpos, tblpos);
 
+                    NewImage = 1;
                     /* Get scan order of the realtime image from the corner points */
                     /* NewImage = 1: Axial scanning of the realtime image
                        NewImage = 2: Sagittal
@@ -496,22 +497,25 @@ int Serve(fd, doRealtime)
                     sprintf(tmp1, "%6.2f", ras2[0]);
                     sprintf(tmp2, "%6.2f", ras2[3]);
                     sprintf(tmp3, "%6.2f", ras2[6]);
-                    /* fprintf(stderr, "ras[0]: %6.2f ras[3]: %6.2f ras[6]: %6.2f \n", ras2[0], ras2[3], ras2[6]); */
+                    /* fprintf(stderr, "ras[0]: %6.2f ras[3]: %6.2f ras[6]: %6.2f \n", 
+                               ras2[0], ras2[3], ras2[6]); */ 
                     if (strcmp(tmp1, tmp2) == 0 && strcmp(tmp1, tmp3) == 0) {NewImage = 2;}
 
                     sprintf(tmp1, "%6.2f", ras2[2]);
                     sprintf(tmp2, "%6.2f", ras2[5]);
                     sprintf(tmp3, "%6.2f", ras2[8]);
-                    /* fprintf(stderr, "ras[2]: %6.2f ras[5]: %6.2f ras[8]: %6.2f \n", ras2[2], ras2[5], ras2[8]); */
+                    /* fprintf(stderr, "ras[2]: %6.2f ras[5]: %6.2f ras[8]: %6.2f \n", 
+                               ras2[2], ras2[5], ras2[8]); */ 
                     if (strcmp(tmp1, tmp2) == 0 && strcmp(tmp1, tmp3) == 0) {NewImage = 1;}
 
                     sprintf(tmp1, "%6.2f", ras2[1]);
                     sprintf(tmp2, "%6.2f", ras2[4]);
                     sprintf(tmp3, "%6.2f", ras2[7]);
-                    /* fprintf(stderr, "ras[1]: %6.2f ras[4]: %6.2f ras[7]: %6.2f \n", ras2[1], ras2[4], ras2[7]); */
+                    /* fprintf(stderr, "ras[1]: %6.2f ras[4]: %6.2f ras[7]: %6.2f \n", 
+                               ras2[1], ras2[4], ras2[7]); */ 
                     if (strcmp(tmp1, tmp2) == 0 && strcmp(tmp1, tmp3) == 0) {NewImage = 3;}
 
-                    /* fprintf(stderr, "new image: %d \n", NewImage); */
+                    /* fprintf(stderr, "new image: %d \n", NewImage); */ 
                 }
 
 
