@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEngineInspect.tcl,v $
-#   Date:      $Date: 2006/03/01 20:10:20 $
-#   Version:   $Revision: 1.29.2.5 $
+#   Date:      $Date: 2006/10/10 19:39:24 $
+#   Version:   $Revision: 1.29.2.6 $
 # 
 #===============================================================================
 # FILE:        fMRIEngineInspect.tcl
@@ -128,7 +128,7 @@ proc fMRIEngineUpdateViewTab {} {
         }
     }
  
-    # Peristimulus histogram plotting will be disabled if the paradigm desgin is 
+    # Peristimulus plot will be disabled if the paradigm desgin is 
     # event-related or mixed.
     if {$fMRIEngine(paradigmDesignType) != "blocked"} {
         $fMRIEngine(gui,viewTimecourseRadioButton) select 
@@ -356,7 +356,7 @@ proc fMRIEngineBuildUIForPlot {parent} {
 
     set f $parent.fPlot.fOptions.fPeristimulus
     set param Short 
-    set name {Peristimulus histogram}
+    set name {Peristimulus plot}
     eval {radiobutton $f.r$param -width 25 -text $name \
         -variable fMRIEngine(tcPlottingOption) -value $param \
         -relief raised -offrelief raised -overrelief raised \
