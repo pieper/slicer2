@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: fMRIEnginePlot.tcl,v $
-#   Date:      $Date: 2006/09/29 13:45:30 $
-#   Version:   $Revision: 1.29.2.4 $
+#   Date:      $Date: 2006/10/10 19:40:37 $
+#   Version:   $Revision: 1.29.2.5 $
 # 
 #===============================================================================
 # FILE:        fMRIEnginePlot.tcl
@@ -67,8 +67,12 @@ proc fMRIEngineMakeTimecoursePlotWindow {} {
     # Checks time course plotting option
     if {$fMRIEngine(tcPlottingOption) == "Long"} {
         set plotTitle "$fMRIEngine(timecoursePlot) Timecourse Plot"
+        set yAxisTitle "Intensity"
+        set xAxisTitle "Volume Number"
     } else {    
         set plotTitle "$fMRIEngine(timecoursePlot) Peristimulus Plot"
+        set yAxisTitle "Average Intensity"
+        set xAxisTitle "Temporal Samples Per Condition"
     }
 
     set plotGeometry "+335+200"
@@ -96,7 +100,9 @@ proc fMRIEngineMakeTimecoursePlotWindow {} {
 
         $w.graph legend configure -position bottom -relief raised \
             -font fixed -fg black -bg white 
-        $w.graph axis configure y -title "Intensity"
+
+        $w.graph axis configure y -title $yAxisTitle 
+
         # $w.graph grid on
         # $w.graph grid configure -color black
 
@@ -114,12 +120,7 @@ proc fMRIEngineMakeTimecoursePlotWindow {} {
         set fMRIEngine(timeCourseGraph) $w.graph
     }
 
-    if {$fMRIEngine(tcPlottingOption) == "Short"} {
-        $fMRIEngine(timeCourseGraph) axis configure x \
-            -title "Combined All-EV Volume Number" 
-    } else {
-        $fMRIEngine(timeCourseGraph) axis configure x -title "Volume Number" 
-    }
+    $fMRIEngine(timeCourseGraph) axis configure x -title $xAxisTitle 
 }
 
 
