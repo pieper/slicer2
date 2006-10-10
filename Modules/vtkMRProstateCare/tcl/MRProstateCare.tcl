@@ -112,7 +112,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.72 $} {$Date: 2006/10/10 15:16:10 $}]
+        {$Revision: 1.1.2.73 $} {$Date: 2006/10/10 15:29:27 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -144,17 +144,7 @@ proc MRProstateCareInit {} {
     set MRProstateCare(editIndex) -1 
     set MRProstateCare(editMode)   0 
     set MRProstateCare(pointList) "" 
-
-    switch $::tcl_platform(os) {
-        "SunOS" -
-        "Darwin" -
-        "Linux" {
-            set MRProstateCare(tempDir) "/tmp"
-        }
-        default {
-            set MRProstateCare(tempDir) ""
-        }
-    }
+    set MRProstateCare(tempDir) [pwd] 
     set MRProstateCare(logFile) "MRProstateCareLog.txt"
     set MRProstateCare(navLoop) 0 
     set MRProstateCare(navTime) 250
@@ -1590,17 +1580,17 @@ proc MRProstateCareLogLoop {} {
 
     set comment "# date"
     puts $fd $comment
-    set str "set MRProstateCare(entry,PDate) $MRProstateCare(entry,PDate)\n"
+    set str "set MRProstateCare(entry,PDate) \{$MRProstateCare(entry,PDate)\}\n"
     puts $fd $str
 
     set comment "# patient name"
     puts $fd $comment
-    set str "set MRProstateCare(entry,PName) $MRProstateCare(entry,PName)\n"
+    set str "set MRProstateCare(entry,PName) \{$MRProstateCare(entry,PName)\}\n"
     puts $fd $str
 
     set comment "# patient id"
     puts $fd $comment
-    set str "set MRProstateCare(entry,PID) $MRProstateCare(entry,PID)\n"
+    set str "set MRProstateCare(entry,PID) \{$MRProstateCare(entry,PID)\}\n"
     puts $fd $str
 
     set comment "# step"
