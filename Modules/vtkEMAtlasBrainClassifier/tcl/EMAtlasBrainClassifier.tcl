@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
-#   Date:      $Date: 2006/08/25 20:53:08 $
-#   Version:   $Revision: 1.43 $
+#   Date:      $Date: 2006/10/11 21:01:13 $
+#   Version:   $Revision: 1.44 $
 # 
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
@@ -107,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-                                  {$Revision: 1.43 $} {$Date: 2006/08/25 20:53:08 $}]
+                                  {$Revision: 1.44 $} {$Date: 2006/10/11 21:01:13 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -2703,11 +2703,17 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
 #                       if structures are included that are not in the default atlas - otherwise the default atlas will be deleted and re-downloaded
 # <AtlasDir>          = Optional - Location of atlas directory   
 # <FileFormat>        = Optional - file format in which segmentation result, atlas and normed imgages will be stored
+# <GenerateModels>    = Optional - default "0" will not generate models. In the end of the model generating process the user currently
+#                       gets informed about which models were created and this involves confirming a pop up window with "ok". This is
+#                       inconvenient for batch processing.
 # .ARGS
 # 
 # .END
 #-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_BatchMode {{AlgorithmVersion Standard} {SegmentationMode ""} {TemplateXMLFile ""} {AtlasDir "" } {SPGRVolID 1} {T2VolID 2} {ExitFlag 1} {FileFormat "nhdr"}} {
+proc EMAtlasBrainClassifier_BatchMode {{AlgorithmVersion Standard} {SegmentationMode ""} \
+                       {TemplateXMLFile ""} {AtlasDir "" } {SPGRVolID 1} \
+                       {T2VolID 2} {ExitFlag 1} {FileFormat "nhdr"} \
+                       {GenerateModels 0} } {
     global Mrml EMAtlasBrainClassifier Volume
     
     set EMAtlasBrainClassifier(WorkingDirectory) $Mrml(dir)
@@ -2721,8 +2727,9 @@ proc EMAtlasBrainClassifier_BatchMode {{AlgorithmVersion Standard} {Segmentation
     set EMAtlasBrainClassifier(Save,SPGR) 1
     set EMAtlasBrainClassifier(Save,T2W)  1
     set EMAtlasBrainClassifier(BatchMode) 1
-
+    
     set EMAtlasBrainClassifier(AlgorithmVersion) $AlgorithmVersion
+   
     EMAtlasBrainClassifierChangeAlgorithm 
 
     if {$SegmentationMode != "" } {
@@ -2737,9 +2744,14 @@ proc EMAtlasBrainClassifier_BatchMode {{AlgorithmVersion Standard} {Segmentation
         set EMAtlasBrainClassifier(AtlasDir) $AtlasDir
     }
 
-    #kquintus: added optyion to select different file formats in batch mode
+    #kquintus: added option to select different file formats in batch mode
     set EMAtlasBrainClassifier(fileformat) $FileFormat
-    
+
+    set EMAtlasBrainClassifier(GenerateModels) $GenerateModels
+   
+    #kquintus: locally modified to enable full output for ctest:
+    puts "CTEST_FULL_OUTPUT"
+    puts ""
     puts "Run segmentation with the following options:"
     puts "Algorithm: $EMAtlasBrainClassifier(AlgorithmVersion)"
     puts "Mode:      $EMAtlasBrainClassifier(SegmentationMode)"
@@ -2749,9 +2761,7 @@ proc EMAtlasBrainClassifier_BatchMode {{AlgorithmVersion Standard} {Segmentation
     SplashKill
     
     set SucessFlag [EMAtlasBrainClassifierStartSegmentation]
-
     if {$ExitFlag} {MainExitProgram [expr 1 - $SucessFlag ] }
-
     return $SucessFlag
 }
 
