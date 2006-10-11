@@ -178,7 +178,10 @@ proc RunTest {{init 0}} {
         set exitCode 1
     }
 }
+
+puts "CTEST_FULL_OUTPUT"
 RunTest 1
+
 puts ""
 if {$exitCode == 0} {
     puts "ExitCode: $exitCode"
