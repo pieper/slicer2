@@ -102,7 +102,7 @@ proc RunTest {{init 0}} {
     MeasureVolVolume
 
     #  Open the Baseline 
-    set fp [open [file join $::env(SLICER_HOME) Base/Testing/Baseline/measureVol_caseR16_hist_2.txt] r]
+    set fp [open [file join $::env(SLICER_HOME) Base/Testing/Baseline/measureVol_caseR16_hist.txt] r]
     set data [read $fp]
     close $fp
     
@@ -163,7 +163,7 @@ proc RunTest {{init 0}} {
     
 }
 RunTest 1
-puts "ExitCode: $exitCode"
+
 if {$exitCode == 0} {
     puts "No differences between baseline measurements and nightly results."
     puts "Test passed."
