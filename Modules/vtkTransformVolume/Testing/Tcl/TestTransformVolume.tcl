@@ -189,8 +189,8 @@ set mean [stat GetAverage]
 set std [stat GetStdev]
 stat Delete
 puts "CTEST_FULL_OUTPUT"
-puts "The nightly AG-Result has been saved in [file join $::env(SLICER_HOME) Modules/vtkTransformVolume/Testing/TestOutput/nightly_AG_Result.nhdr]."
-puts "Difference between baseline and nightly AG-Result has been saved in [file join $::env(SLICER_HOME) Modules/vtkTransformVolume/Testing/TestOutput/difference.nhdr]."
+puts "The nightly transformation result has been saved in [file join $::env(SLICER_HOME) Modules/vtkTransformVolume/Testing/TestOutput/nightlyTransformResult.nhdr]."
+puts "Difference between baseline and nightly transformation Result has been saved in [file join $::env(SLICER_HOME) Modules/vtkTransformVolume/Testing/TestOutput/difference.nhdr]."
 puts "Statistics of the difference image:"
 puts "min: $min"
 puts "max: $max"
@@ -203,9 +203,7 @@ if {$min == 0 && $max == 0} {
 }
 
 TransformVolumeExit
-
-puts "Exit code: $exitCode"
-puts ""    
+  
 if {$exitCode == 0} {
     puts "Test passed."
 } else {
