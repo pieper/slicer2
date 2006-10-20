@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTeemEstimateDiffusionTensor.cxx,v $
-  Date:      $Date: 2006/10/18 21:55:03 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2006/10/20 22:11:24 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================auto=*/
 #include "vtkTeemEstimateDiffusionTensor.h"
@@ -51,17 +51,16 @@ vtkTeemEstimateDiffusionTensor::vtkTeemEstimateDiffusionTensor()
   for (int i=0; i<this->NumberOfGradients;i++)
     this->B->SetValue(i,1000);
 
-  // Internal variable to scale the B values, so we get a
-  // much better conditioned matrix so solve the Tensor model
-  // LS problem. The diffusion matrix should be scaled back with 
-  // this factor to get the real diffusion.
-  this->ScaleFactor = 10000;
+  // Scalar Factor for the tensor values
+  //this->ScaleFactor = 1;
 
 
   this->MinimumSignalValue = 1.0;
 
 
   this->EstimationMethod = tenEstimateMethodLLS;
+
+  this->NumberOfWLSIterations = 1;
  
   // defaults are from DT-MRI 
   // (from Processing and Visualization for 
@@ -219,11 +218,8 @@ void vtkTeemEstimateDiffusionTensor::ExecuteData(vtkDataObject *out)
   // if the user has transformed the coordinate system
   this->TransformDiffusionGradients();
   
-  
   //Allocate Internals
-
   int N = this->GetNumberOfGradients();
-
 
   // jump back into normal pipeline: call standard superclass method here
   //Do not jump to do the proper allocation of output data
@@ -266,11 +262,11 @@ static void vtkTeemEstimateDiffusionTensorExecute(vtkTeemEstimateDiffusionTensor
 
   // Set Ten Context
   tenEstimateContext *tec = tenEstimateContextNew();
-  if (this->SetTenContext(tec)) {
-    tenEstimateContextNix();
+  if (self->SetTenContext(tec)) {
+    cout<<"TenContext cannot be set. Bailing out"<<endl;
+    tenEstimateContextNix(tec);
+    return;
   }
-
-  // Update context and so on: Ask Gordon
 
 
   // changed from arrays to pointers
@@ -297,7 +293,7 @@ static void vtkTeemEstimateDiffusionTensorExecute(vtkTeemEstimateDiffusionTensor
   numInputs = inData->GetNumberOfScalarComponents();
   dwi = new double[numInputs]; 
 
-  const float _ten[7];
+  double _ten[7];
 
   for (idxZ = 0; idxZ <= maxZ; idxZ++)
     {
@@ -315,12 +311,13 @@ static void vtkTeemEstimateDiffusionTensorExecute(vtkTeemEstimateDiffusionTensor
           for (idxX = 0; idxX <= maxX; idxX++)
             {
              // create tensor from combination of gradient inputs
-             dwi = (double*) inPtr;
-             inPtr += inIncX;
+             for (int i=0; i< numInputs; i++) 
+             {
+               dwi[i] = (double) inPtr[i];
+             }
              // Set dwi to context
              //Main method
-             tenEstimate1TensorSingle_d(tec,
-                                           _ten, dwi);
+              tenEstimate1TensorSingle_d(tec,_ten, dwi);
               outT[0][0] = _ten[1];
               outT[0][1] = outT[1][0] = _ten[2];
               outT[0][2] = outT[2][0] = _ten[3];
@@ -333,9 +330,12 @@ static void vtkTeemEstimateDiffusionTensorExecute(vtkTeemEstimateDiffusionTensor
 
               // copy no diffusion data through for scalars
               *outPtr = (T) B0;
-              
+
+              //*outPtr = (T) tec->errorDwi;
+
               //Pending: Compute the average tensor upon request.
-       
+
+              inPtr += inIncX;
               ptId ++;
               outPtr++;
             }
@@ -350,102 +350,83 @@ static void vtkTeemEstimateDiffusionTensorExecute(vtkTeemEstimateDiffusionTensor
 
   delete [] dwi;
 
-  // Delete Context 
+  // Delete Context
+  tenEstimateContextNix(tec);
 }
 
-void vtkTeemEstimateDiffusionTensor::ComputeBMatrix(Nrrd *nbmat) 
+int vtkTeemEstimateDiffusionTensor::SetGradientsToContext(tenEstimateContext *tec) 
 {
-   Nrrd *ngradKVP=NULL, *nbmatKVP=NULL;
-   double bKVP, bval;
-
-   //airArray mop = airMopNew();
-   //airMopAdd(mop, nbmat, (airMopper)nrrdNuke, airMopAlways);
-   bval = bKVP;
-
-   //Fill ngradKVP from vtkArray
-  Nrrd *ngradKVP = nrrdNew();
+  Nrrd *ngrad =NULL;
+  //Fill ngrad  from vtkArray
+  ngrad  = nrrdNew();
+  char *err;
   const int type = nrrdTypeDouble;
   size_t size[2];
   size[0]=3;
   size[1]=this->DiffusionGradient->GetNumberOfTuples();
-  double * data = (double *) this->DiffusionGradient->GetVoidPointer();
-  if(nrrdWrap_nva(ngradKVP,data,type,2,size)) {
+  double *data = (double *) this->DiffusionGradient->GetVoidPointer(0);
+  if(nrrdWrap_nva(ngrad ,data,type,2,size)) {
+    biffAdd(NRRD, err);
     sprintf(err,"%s:",this->GetClassName());
-    biffAdd(NRRD, err); return;
+    nrrdNuke(ngrad);
+    return 1;
   }
   
   // To accomodate different b-values we might have to rescale the gradients
-  double minB = this->B->GetRange()[0];
-  data = (double *) (ngradKVP->data);
+  double maxB = this->B->GetRange()[1];
+  data = (double *) (ngrad ->data);
   double factor;
-  for (int i=0; i< this->size[1]; i++) {
-   factor =  this->B->GetValue[i]/minB;
+  for (int i=0; i< size[1]; i++) {
+   factor =  1/sqrt(maxB/this->B->GetValue(i));
    data[0] = data[0] * factor;
    data[1] = data[1] * factor;
    data[2] = data[2] * factor;
    data += 3;
-  } 
+  }
 
-  if (ngradKVP) {
-      if (tenBMatrixCalc(nbmat, ngradKVP)) {
-        err=biffGetDone(TEN);
-        fprintf(stderr, "%s: trouble finding B-matrix:\n%s\n", this->GetClassName(), err);
-        return 1;
-      }
-    } else {
-      if (nrrdConvert(nbmat, nbmatKVP, nrrdTypeDouble)) {
-        err=biffGetDone(NRRD);
-        fprintf(stderr, "%s: trouble converting B-matrix:\n%s\n", this->GetClassName(), err);
-        return 1;
-      }
-    }
+  tenEstimateGradientsSet(tec,ngrad,maxB,!this->knownB0);
 
+  nrrdNuke(ngrad);
 }
 
-void vtkTeemEstimateDiffusionTensor::SetTenContext(  tenEstimateContext *tec)
+int vtkTeemEstimateDiffusionTensor::SetTenContext(  tenEstimateContext *tec)
 {
     tec->progress = AIR_TRUE;
 
-    // Compute bmat
-    Nrrd *nbmat;
-    nbmat = nrrdNew();
-    this->ComputeBMatrix(nbmat);
+    // Set gradients
+    this->SetGradientsToContext(tec);
 
-    EE = 0;
+    int EE = 0;
     int knownB0 = 0;
-    double soft = 0;
-    int threshold = 0;
-    int EE;
+    int verbose = 0;
+    char *err;
     if (!EE) tenEstimateVerboseSet(tec, verbose);
     if (!EE) EE |= tenEstimateMethodSet(tec, this->EstimationMethod);
-    if (!EE) EE |= tenEstimateBMatricesSet(tec, nbmat, bval, !knownB0);
     if (!EE) EE |= tenEstimateValueMinSet(tec, this->MinimumSignalValue);
     switch(this->EstimationMethod) {
     case tenEstimateMethodLLS:
-      if (airStrlen(terrS)) {
         tec->recordErrorLogDwi = AIR_TRUE;
         /* tec->recordErrorDwi = AIR_TRUE; */
-      }
       break;
     case tenEstimateMethodNLS:
-      if (airStrlen(terrS)) {
         tec->recordErrorDwi = AIR_TRUE;
-      }
       break;
     case tenEstimateMethodWLS:
-      if (!EE) tec->WLSIterNum = wlsi;
-      if (airStrlen(terrS)) {
-        tec->recordErrorDwi = AIR_TRUE;
-      }
+      if (!EE) tec->WLSIterNum = this->NumberOfWLSIterations;
+      tec->recordErrorDwi = AIR_TRUE;
       break;
     }
-    if (!EE) EE |= tenEstimateThresholdSet(tec, thresh, soft);
+    // Do not set any threshold for the mask. Do that later
+    if (!EE) EE |= tenEstimateThresholdSet(tec, 0, 1);
     if (!EE) EE |= tenEstimateUpdate(tec);
     if (EE) {
       err=biffGetDone(TEN);
-      fprintf(stderr, "%s: trouble setting up estimation:\n%s\n", this->GetClassName(), err);
+      fprintf(stderr, "%s: trouble setting up estimation:\n%s\n",
+      this->GetClassName(), err);
       return 1;
     }
+
+return 0;
 
 }
 
@@ -454,12 +435,12 @@ void vtkTeemEstimateDiffusionTensor::SetTenContext(  tenEstimateContext *tec)
 // algorithm to fill the output from the inputs.
 // It just executes a switch statement to call the correct function for
 // the regions data types.
-void vtkTeemEstimateDiffusionTensor::ThreadedExecute(vtkImageData **inDatas, 
+void vtkTeemEstimateDiffusionTensor::ThreadedExecute(vtkImageData *inData, 
                                               vtkImageData *outData,
                                               int outExt[6], int id)
 {
   int idx;
-  void **inPtrs;
+  void *inPtrs;
   void *outPtr = outData->GetScalarPointerForExtent(outExt);
 
   vtkDebugMacro("in threaded execute, " << this->GetNumberOfInputs() << " inputs ");
@@ -468,18 +449,14 @@ void vtkTeemEstimateDiffusionTensor::ThreadedExecute(vtkImageData **inDatas,
   inPtrs = new void*[this->NumberOfInputs];
 
   // Loop through to fill input pointer array
-  for (idx = 0; idx < this->NumberOfInputs; ++idx)
-    {
-      // Lauren should we use out ext here?
-      inPtrs[idx] = inDatas[idx]->GetScalarPointerForExtent(outExt);
-    }
+  inPtrs = inData->GetScalarPointerForExtent(outExt);
 
 
   // call Execute method to handle all data at the same time
-  switch (inDatas[0]->GetScalarType())
+  switch (inData->GetScalarType())
     {
       vtkTemplateMacro7(vtkTeemEstimateDiffusionTensorExecute, this, 
-                        inDatas, (VTK_TT **)(inPtrs),
+                        inData, (VTK_TT *)(inPtrs),
                         outData, (VTK_TT *)(outPtr), 
                         outExt, id);
     default:
@@ -489,5 +466,4 @@ void vtkTeemEstimateDiffusionTensor::ThreadedExecute(vtkImageData **inDatas,
   
 }
 
-/
 

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTeemEstimateDiffusionTensor.h,v $
-  Date:      $Date: 2006/10/18 21:55:03 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2006/10/20 22:11:25 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================auto=*/
 // .NAME vtkTeemEstimateDiffusionTensor - 
@@ -89,8 +89,8 @@ class VTK_TEEM_EXPORT vtkTeemEstimateDiffusionTensor : public vtkImageToImageFil
   // Internal class use only
   //BTX
   void TransformDiffusionGradients();
-
-  
+  int SetGradientsToContext ( tenEstimateContext *tec);
+  int SetTenContext(  tenEstimateContext *tec);
   //ETX
 
  protected:
@@ -100,8 +100,7 @@ class VTK_TEEM_EXPORT vtkTeemEstimateDiffusionTensor : public vtkImageToImageFil
   void operator=(const vtkTeemEstimateDiffusionTensor&);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-  void ComputeBMatrix(Nrrd *nbmat);
-  void SetTenContext(  tenEstimateContext *tec);
+
 
   int NumberOfGradients;
 
@@ -119,13 +118,14 @@ class VTK_TEEM_EXPORT vtkTeemEstimateDiffusionTensor : public vtkImageToImageFil
   double MinimumSignalValue;
 
   // Matrices for LS fitting
-  double **A;
-  double **PinvA;
-  double ScaleFactor;
+  int knownB0;
 
-  void ExecuteInformation(vtkImageData **inDatas, vtkImageData *outData);
+  // Number of iterations for WLS estimation
+  int NumberOfWLSIterations;
+
+  void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
   void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
-  void ThreadedExecute(vtkImageData **inDatas, vtkImageData *outData,
+  void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,
         int extent[6], int id);
 
   // We override this in order to allocate output tensors
