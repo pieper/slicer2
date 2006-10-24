@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTeemEstimateDiffusionTensor.h,v $
-  Date:      $Date: 2006/10/20 22:11:25 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/10/24 20:06:47 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 // .NAME vtkTeemEstimateDiffusionTensor - 
@@ -116,6 +116,9 @@ class VTK_TEEM_EXPORT vtkTeemEstimateDiffusionTensor : public vtkImageToImageFil
 
   // Minimum detectable value
   double MinimumSignalValue;
+
+  // Noise variance (useful for MLE)
+  double Sigma;
 
   // Matrices for LS fitting
   int knownB0;

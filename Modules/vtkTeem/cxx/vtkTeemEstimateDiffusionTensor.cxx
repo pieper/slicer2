@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTeemEstimateDiffusionTensor.cxx,v $
-  Date:      $Date: 2006/10/20 22:11:24 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2006/10/24 20:06:47 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 #include "vtkTeemEstimateDiffusionTensor.h"
@@ -57,10 +57,13 @@ vtkTeemEstimateDiffusionTensor::vtkTeemEstimateDiffusionTensor()
 
   this->MinimumSignalValue = 1.0;
 
+  this->Sigma = 0.0;
 
   this->EstimationMethod = tenEstimateMethodLLS;
 
   this->NumberOfWLSIterations = 1;
+
+  this->knownB0 = 0;
  
   // defaults are from DT-MRI 
   // (from Processing and Visualization for 
@@ -150,7 +153,6 @@ void vtkTeemEstimateDiffusionTensor::SetNumberOfGradients(int num)
       //this->NumberOfRequiredInputs = num;
       this->Modified();
     }
-  this->DiffusionGradient->Reset();
 }
 
 void vtkTeemEstimateDiffusionTensor::GetDiffusionGradient(int num,double grad[3])
@@ -171,7 +173,7 @@ void vtkTeemEstimateDiffusionTensor::ExecuteInformation(vtkImageData *inData,
   // We always want to output input scalars Type
   outData->SetScalarType(inData->GetScalarType());
   // We output two scalar components: baseline and average of dwis
-  outData->SetNumberOfScalarComponents(2);
+  outData->SetNumberOfScalarComponents(1);
 
 }
 
@@ -246,7 +248,7 @@ static void vtkTeemEstimateDiffusionTensorExecute(vtkTeemEstimateDiffusionTensor
   unsigned long count = 0;
   unsigned long target;
   int numInputs, k,i,j;
-  double *dwi;
+  float *dwi;
   double B0;
   vtkDataArray *outTensors;
   double D[3][3];
@@ -261,12 +263,14 @@ static void vtkTeemEstimateDiffusionTensorExecute(vtkTeemEstimateDiffusionTensor
 
 
   // Set Ten Context
+  cout<<"Creating tensor Context"<<endl;
   tenEstimateContext *tec = tenEstimateContextNew();
   if (self->SetTenContext(tec)) {
     cout<<"TenContext cannot be set. Bailing out"<<endl;
     tenEstimateContextNix(tec);
     return;
   }
+  cout<<"Context done"<<endl;
 
 
   // changed from arrays to pointers
@@ -291,9 +295,9 @@ static void vtkTeemEstimateDiffusionTensorExecute(vtkTeemEstimateDiffusionTensor
   outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
 
   numInputs = inData->GetNumberOfScalarComponents();
-  dwi = new double[numInputs]; 
+  dwi = new float[numInputs]; 
 
-  double _ten[7];
+  float _ten[7];
 
   for (idxZ = 0; idxZ <= maxZ; idxZ++)
     {
@@ -313,11 +317,11 @@ static void vtkTeemEstimateDiffusionTensorExecute(vtkTeemEstimateDiffusionTensor
              // create tensor from combination of gradient inputs
              for (int i=0; i< numInputs; i++) 
              {
-               dwi[i] = (double) inPtr[i];
+               dwi[i] = (float) inPtr[i];
              }
              // Set dwi to context
              //Main method
-              tenEstimate1TensorSingle_d(tec,_ten, dwi);
+              tenEstimate1TensorSingle_f(tec,_ten, dwi);
               outT[0][0] = _ten[1];
               outT[0][1] = outT[1][0] = _ten[2];
               outT[0][2] = outT[2][0] = _ten[3];
@@ -364,6 +368,8 @@ int vtkTeemEstimateDiffusionTensor::SetGradientsToContext(tenEstimateContext *te
   size_t size[2];
   size[0]=3;
   size[1]=this->DiffusionGradient->GetNumberOfTuples();
+  cout<<"Size: "<<size[1]<<endl;
+  cout<<this->GetNumberOfGradients()<<endl;
   double *data = (double *) this->DiffusionGradient->GetVoidPointer(0);
   if(nrrdWrap_nva(ngrad ,data,type,2,size)) {
     biffAdd(NRRD, err);
@@ -394,15 +400,22 @@ int vtkTeemEstimateDiffusionTensor::SetTenContext(  tenEstimateContext *tec)
     tec->progress = AIR_TRUE;
 
     // Set gradients
-    this->SetGradientsToContext(tec);
+    cout<<"Setting greadients"<<endl;
+    if (this->SetGradientsToContext(tec)) {
+      vtkErrorMacro("Error setting gradient into tenEstimateContext. Bailing out");
+      return 1;
+    }
 
     int EE = 0;
-    int knownB0 = 0;
     int verbose = 0;
     char *err;
+
+   cout<<"Setting values"<<endl;
     if (!EE) tenEstimateVerboseSet(tec, verbose);
     if (!EE) EE |= tenEstimateMethodSet(tec, this->EstimationMethod);
     if (!EE) EE |= tenEstimateValueMinSet(tec, this->MinimumSignalValue);
+   cout<<"Before switch"<<endl;
+
     switch(this->EstimationMethod) {
     case tenEstimateMethodLLS:
         tec->recordErrorLogDwi = AIR_TRUE;
@@ -415,10 +428,23 @@ int vtkTeemEstimateDiffusionTensor::SetTenContext(  tenEstimateContext *tec)
       if (!EE) tec->WLSIterNum = this->NumberOfWLSIterations;
       tec->recordErrorDwi = AIR_TRUE;
       break;
+    /*
+    case tenEstimateMethodMLE:
+      if (this->Sigma < 0.0)) {
+        vtkErrorMacro("Noise sigma has to be positive >=0.0");
+        return 1;
+      }
+      if (!EE) EE |= tenEstimateSigmaSet(tec, this->Sigma);
+      tec->recordErrorDwi = AIR_TRUE;
+      break;
+     */
     }
+    cout<<"After switch"<<endl;
     // Do not set any threshold for the mask. Do that later
     if (!EE) EE |= tenEstimateThresholdSet(tec, 0, 1);
+    cout<<"Update"<<endl;
     if (!EE) EE |= tenEstimateUpdate(tec);
+    cout<<"Done update"<<endl;
     if (EE) {
       err=biffGetDone(TEN);
       fprintf(stderr, "%s: trouble setting up estimation:\n%s\n",
