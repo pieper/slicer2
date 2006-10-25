@@ -7,9 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageRealtimeScan.h,v $
-  Date:      $Date: 2006/10/25 16:04:44 $
-  Version:   $Revision: 1.15.12.3.2.5 $
-
+  Date:      $Date: 2006/10/25 18:55:31 $
+  Version:   $Revision: 1.15.12.3.2.6 $
 =========================================================================auto=*/
 // .NAME vtkImageRealtimeScan - Get a realtime image from the scanner.
 // .SECTION
@@ -23,9 +22,6 @@
 #include "vtkMatrix4x4.h"
 #include "vtkSlicer.h"
 
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 #define LOC_OK 0
 #define LOC_NO 1
@@ -69,12 +65,14 @@
 #define CMD_HEADER 3
 #define CMD_PIXELS 4
 #define CMD_POS    5
+#define CMD_SCAN   6 
+
 
 class VTK_SLICER_BASE_EXPORT vtkImageRealtimeScan : public vtkImageSource 
 {
 public:
     static vtkImageRealtimeScan *New();
-    vtkTypeMacro(vtkImageRealtimeScan,vtkImageSource);
+  vtkTypeMacro(vtkImageRealtimeScan,vtkImageSource);
     void PrintSelf(ostream& os, vtkIndent indent);
 
     void ExecuteInformation();
@@ -107,10 +105,12 @@ public:
     vtkSetMacro(OperatingSystem, int);
 
     vtkSetStringMacro(TestPrefix);
+    vtkSetVectorMacro(ScanOrientation, float, 4);
 
     vtkGetVector3Macro(RealtimeScanningLocation, vtkFloatingPointType);
 
     int SetPosition(short tblPos, short patEntry, short patPos);
+    int OperateScanner(int cmd);
 
 protected:
     vtkImageRealtimeScan();
@@ -150,6 +150,14 @@ protected:
     // 0 - big endian
     // 1 - little endian
     int ByteOrder;
+
+    // 0 - none
+    // 1 - axial 
+    // 2 - sagittal 
+    // 3 - coronal 
+    // plus Px, Py and Pz
+    // such as "1 Px Py Pz"
+    float ScanOrientation[4];
 
     vtkFloatingPointType RealtimeScanningLocation[3];
 };
