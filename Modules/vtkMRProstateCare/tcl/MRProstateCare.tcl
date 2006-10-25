@@ -112,7 +112,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.73 $} {$Date: 2006/10/10 15:29:27 $}]
+        {$Revision: 1.1.2.74 $} {$Date: 2006/10/25 16:02:23 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -154,9 +154,7 @@ proc MRProstateCareInit {} {
     set MRProstateCare(portSet) 0
     set MRProstateCare(scaleFactor) 1 
     set MRProstateCare(currentPoint) none 
-    set MRProstateCare(lastRealtimeScanOrient) "Coronal" 
 
-    set MRProstateCare(realtimeImageID) 33000 
     set MRProstateCare(displayRSA) "0 0 0"
     set MRProstateCare(preOpVolumeID) 0
 
@@ -743,14 +741,7 @@ proc MRProstateCareSetScannerCommand {cmd} {
             "Coronal" {set or 3}
         }
         Locator(Flashpoint,src) SetScanOrientation \
-            $or [lindex $pxyz 0] [lindex $pxyz 1] [lindex $pxyz 2] $MRProstateCare(realtimeImageID) 
-
-        set idInfo "$MRProstateCare(realtimeImageID) $r $s $a"
-        set Locator(nextRealtimeImageInfo) $idInfo
-        set MRProstateCare(lastRealtimeScanOrient) \
-            $MRProstateCare(realtimeScanOrient)
-
-        incr MRProstateCare(realtimeImageID)
+            $or [lindex $pxyz 0] [lindex $pxyz 1] [lindex $pxyz 2] 
     }   
 
     Locator(Flashpoint,src) OperateScanner $cmd 

@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2006/10/06 18:18:10 $
-#   Version:   $Revision: 1.38.12.2.2.18 $
+#   Date:      $Date: 2006/10/25 16:01:25 $
+#   Version:   $Revision: 1.38.12.2.2.19 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -89,7 +89,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.18 $} {$Date: 2006/10/06 18:18:10 $}]
+        {$Revision: 1.38.12.2.2.19 $} {$Date: 2006/10/25 16:01:25 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -166,9 +166,6 @@ proc LocatorInit {} {
     set Locator(bellCount) 0
     set Locator(realtimeScanOrder) "AP" 
     set Locator(realtimeRSA) "0 0 0" 
-    set Locator(nextRealtimeImageInfo) "" 
-    set Locator(currentRealtimeImageID) 0
- 
 }
 
 #-------------------------------------------------------------------------------
@@ -1930,44 +1927,19 @@ proc LocatorLoopFlashpoint {} {
         Locator(Flashpoint,src) Modified
         Locator(Flashpoint,src) Update
 
-        # When we scan an image in realtime mode in vtkMRProstate module, 
-        # we attach an unique id to it and also send it to Locator module.
-        # Here we match the id's. If they are equal, that means we got the
-        # image we scanned.
-        set id 0
-        set rtid    [Locator(Flashpoint,src) GetRealtimeImageID]
-        if {$Locator(nextRealtimeImageInfo) != ""} {
-            set id [lindex $Locator(nextRealtimeImageInfo) 0]
-            if {$rtid == $id} {
-                set r [lindex $Locator(nextRealtimeImageInfo) 1]
-                set s [lindex $Locator(nextRealtimeImageInfo) 2]
-                set a [lindex $Locator(nextRealtimeImageInfo) 3]
-                set Locator(realtimeRSA) "$r $s $a" 
- 
-            }
-        }
+        # Update table and patient position
+        set Locator(tblPos)   [lindex $Locator(tblPosList) \
+            [Locator(Flashpoint,src) GetTablePosition]]
+        set Locator(patEntry) [lindex $Locator(patEntryList) \
+            [Locator(Flashpoint,src) GetPatientEntry]]
+        set Locator(patPos)   [lindex $Locator(patPosList) \
+            [Locator(Flashpoint,src) GetPatientPosition]]
 
 
-        # Locator(nextRealtimeImageInfo) == "" means we have not scanned yet, 
-        # but we just grabbed the current image in the shared memory on mrt 
-        # workstation and display it in Slicer as a volume named "Realtime". 
-        # 
-        # rtid == Locator(currentRealtimeImageID) means we got new image from 
-        # our own scan in one of the following cases:
-        # a. scanning orientation has changed (e.g. from Axial to Coronal), 
-        #    then we have a new image.
-        # b. scannig location has changed (we may keep the same scanning 
-        #     orientation but change the location).
-        if {$Locator(nextRealtimeImageInfo) == "" || $rtid != $Locator(currentRealtimeImageID)} {
-            # Update patient position
-            set Locator(tblPos)   [lindex $Locator(tblPosList) \
-                [Locator(Flashpoint,src) GetTablePosition]]
-            set Locator(patEntry) [lindex $Locator(patEntryList) \
-                [Locator(Flashpoint,src) GetPatientEntry]]
-            set Locator(patPos)   [lindex $Locator(patPosList) \
-                [Locator(Flashpoint,src) GetPatientPosition]]
-            LocatorSetPatientPosition
-
+        set newRSA [LocatorXYZToRSA]
+        # newRSA holds the r,s and a values the new realtime scan
+        # should display in the slicer
+        if {$Locator(realtimeRSA) != $newRSA} {
             # Get other header values
             set Locator(recon)    [Locator(Flashpoint,src) GetRecon]
             set Locator(imageNum) [Locator(Flashpoint,src) GetImageNum]
@@ -2019,7 +1991,7 @@ proc LocatorLoopFlashpoint {} {
                 if {$cb != ""} {$cb}
             }
 
-            set Locator(currentRealtimeImageID) $rtid 
+            set Locator(realtimeRSA) $newRSA 
         }
     }
 
@@ -2035,6 +2007,79 @@ proc LocatorLoopFlashpoint {} {
         set Locator(Flashpoint,msPoll) 100
     }
     after $Locator(Flashpoint,msPoll) LocatorLoopFlashpoint
+}
+
+
+proc LocatorXYZToRSA {} {
+    global Locator
+
+    # patient postition: 
+    # 0 = head first, supine
+    # 1 = head first, prone
+    # 2 = head first, left decub
+    # 3 = head first, right decub
+    # 4 = feet first, supine
+    # 5 = feet first, prone
+    # 6 = feet first, left decub
+    # 7 = feet first, right decub
+    set patpos 4 
+    if {$Locator(patEntry) == "Head-first"} {
+        if {$Locator(patPos) == "Supine"}      {set patpos 0}
+        if {$Locator(patPos) == "Prone"}       {set patpos 1}
+        if {$Locator(patPos) == "Left-decub"}  {set patpos 2}
+        if {$Locator(patPos) == "Right-decub"} {set patpos 3}
+    } else {
+        if {$Locator(patPos) == "Supine"}      {set patpos 4}
+        if {$Locator(patPos) == "Prone"}       {set patpos 5}
+        if {$Locator(patPos) == "Left-decub"}  {set patpos 6}
+        if {$Locator(patPos) == "Right-decub"} {set patpos 7}
+    }
+
+    # table position:
+    # 0 = axial
+    # 1 = side
+    # 2 = vertical
+    set tblpos -1
+    if {$Locator(tblPos) == "Front"} {set tblpos 0}
+    if {$Locator(tblPos) == "Side"} {set tblpos 1}
+    if {$Locator(tblPos) == "Vertical"} {set tblpos 2}
+
+    # The scanning location of the realtime image in magnet coordinate system
+    set xyz [Locator(Flashpoint,src) GetRealtimeScanningLocation]
+    set x [lindex $xyz 0]
+    set x [expr round($x)
+    set y [lindex $xyz 1]
+    set y [expr round($y)
+    set z [lindex $xyz 2]
+    set z [expr round($z)
+ 
+    if {$tblpos == 0} {
+        switch $patpos {
+            0 {set r $x; set a $y; set s $z}
+            1 {set r [expr -$x]; set a [expr -$y]; set s $z}
+            2 {set a [expr -$x]; set r $y; set s $z}
+            3 {set a $x; set r [expr -$y]; set s $z}
+            4 {set r [expr -$x]; set a $y; set s [expr -$z]}
+            5 {set r $x; set a [expr -$y]; set s [expr -$z]}
+            6 {set a $x; set r $y; set s [expr -$z]}
+            7 {set a [expr -$x]; set r [expr -$y]; set s [expr -$z]}
+        } 
+        return "$r $s $a"
+    }
+
+    if {$tblpos == 1} {
+        switch $patpos {
+            0 {set s $x; set a $y; set r [expr -$z]}
+            1 {set s $x; set a [expr -$y]; set r $z}
+            2 {set s $x; set r $y; set a $z}
+            3 {set s $x; set r [expr -$y]; set a [expr -$z]}
+            4 {set s [expr -$x]; set a $y; set r $z}
+            5 {set s [expr -$x]; set a [expr -$y]; set r [expr -$z]}
+            6 {set s [expr -$x]; set r $y; set a [expr -$z]}
+            7 {set s [expr -$x]; set r [expr -$y]; set a $z}
+        }
+        return "$r $s $a"
+    }
 }
 
 
