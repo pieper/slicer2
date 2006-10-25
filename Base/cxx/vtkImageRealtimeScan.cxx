@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageRealtimeScan.cxx,v $
-  Date:      $Date: 2006/08/23 20:35:09 $
-  Version:   $Revision: 1.15.8.3.2.7 $
+  Date:      $Date: 2006/10/25 16:04:54 $
+  Version:   $Revision: 1.15.8.3.2.8 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -56,17 +56,13 @@ vtkImageRealtimeScan::vtkImageRealtimeScan()
     MinValue = MaxValue = 0;
     Recon = 0;
     ImageNum = 0;
-    RealtimeImageID = 33000;
 
     // test byte order
     short int word = 0x0001;
     char *byte = (char *) &word;
     ByteOrder = (byte[0] ? 1 : 0);
 
-    for (int ii = 0; ii < 5; ii++) 
-    {
-        ScanOrientation[ii] = 0.0;
-    }
+    memset(RealtimeScanningLocation, 0, LEN_XYZ_COORDS); 
 }
 
 //----------------------------------------------------------------------------
@@ -183,7 +179,7 @@ long vtkImageRealtimeScan::SendServer(int cmd)
     if (sockfd < 0) return -1;
 
 #ifndef _WIN32
-
+    
     sprintf(buf, "%d", cmd);
     len = strlen(buf);
     n = writen(sockfd, buf, len);
@@ -208,65 +204,6 @@ long vtkImageRealtimeScan::SendServer(int cmd)
 
     return nbytes;
 }
-
-
-
-/******************************************************************************
-OperateScanner
-
-Sends realtime scanning command 'cmd' to the server.
-The server then drives the scanner to image.
-******************************************************************************/
-int vtkImageRealtimeScan::OperateScanner(int cmd)
-{
-    long nbytes = 0;
-    long n, len;
-    char buf[100];
-    
-
-    // Return if not connected yet
-    if (sockfd < 0) return -1;
-
-#ifndef _WIN32
-
-    sprintf(buf, "%d", CMD_SCAN);
-    len = strlen(buf);
-    n = writen(sockfd, buf, len);
-    if (n < len) {
-        // This happens when the server crashes.
-        fprintf(stderr, "Client wrote %d instead of %d bytes.\n",n,len);
-        close(sockfd);
-        return -1;
-    }
-
-    sprintf(buf, 
-            "%d %f %f %f %f %f", 
-            cmd, 
-            ScanOrientation[0],
-            ScanOrientation[1],
-            ScanOrientation[2],
-            ScanOrientation[3],
-            ScanOrientation[4]);
-
-
-    /* The number of bytes (100) has to be the same 
-       for receiving (CMD_SCAN) in the spl_server.
-
-       If they are different, it will cause slicer to hang or crash.  
-    */
-    n = writen(sockfd, buf, 100);
-    if (n < len) {
-        // This happens when the server crashes.
-        fprintf(stderr, "Client wrote %d instead of %d bytes.\n",n,len);
-        close(sockfd);
-        return -1;
-    }
-
-#endif
-
-    return 0; 
-}
-
 
 /******************************************************************************
 SetPosition
@@ -481,14 +418,14 @@ PollRealtime
 ******************************************************************************/
 int vtkImageRealtimeScan::PollRealtime()
 {
-    static char buf[1000];
+    static char buf[200];
     
 #ifndef _WIN32
     long len, n, nbytes;
     float matrix[16];
+    float loc[3];
     int i, j;
-
-
+    
     // Request the update info
     nbytes = SendServer(CMD_UPDATE);
     if (nbytes < 0) return -1;
@@ -508,6 +445,17 @@ int vtkImageRealtimeScan::PollRealtime()
 
     bcopy(&buf[OFFSET_IMG_NEW], &NewImage,   LEN_IMG_NEW);
     NewImage = ntohs(NewImage);
+
+    bcopy(&buf[OFFSET_XYZ_COORDS], loc, LEN_XYZ_COORDS);
+    if (ByteOrder)  // little endian 
+    {
+        for (int ii = 0; ii < 3; ii++)
+        {
+            DoByteSwap(loc[ii]);
+        }
+    }
+    memcpy(this->RealtimeScanningLocation, loc, LEN_XYZ_COORDS);
+
 
     // Read locator info if it exists
     if (NewLocator) {
@@ -592,8 +540,6 @@ void vtkImageRealtimeScan::ExecuteInformation()
         patPos = ntohs(patPos);
         bcopy(&buf[OFFSET_IMG_IMANUM],  &(this->ImageNum), LEN_IMG_IMANUM);
         this->ImageNum = ntohl(this->ImageNum);
-        bcopy(&buf[OFFSET_IMG_ID],  &(this->RealtimeImageID), LEN_IMG_ID);
-        this->RealtimeImageID = ntohl(this->RealtimeImageID);
         bcopy(&buf[OFFSET_IMG_RECON],   &(this->Recon),    LEN_IMG_RECON);
         this->Recon = ntohl(this->Recon);
         bcopy(&buf[OFFSET_IMG_MINPIX],  &(this->MinValue), LEN_IMG_MINPIX);
@@ -673,12 +619,11 @@ void vtkImageRealtimeScan::Execute(vtkImageData *data)
     int rowLength, errcode;
     int *outExt;
     char *img;
-    char fileName[1000];
+     char fileName[1000];
  
     if (data->GetScalarType() != VTK_SHORT)
     {
         vtkErrorMacro("Execute: This source only outputs shorts");
-        return;
     }
     outExt = data->GetExtent();
     nx = outExt[3]-outExt[2]+1;
@@ -701,8 +646,7 @@ void vtkImageRealtimeScan::Execute(vtkImageData *data)
             return;
         }
     }
-    else 
-    {
+    else {
 #ifndef _WIN32
         nbytes = SendServer(CMD_PIXELS);
         if (nbytes < 0) return;
@@ -719,20 +663,10 @@ void vtkImageRealtimeScan::Execute(vtkImageData *data)
             close(sockfd);
             return;
         }
-
+            
         memcpy(outPtr, img, nbytes);
-        if (ByteOrder)  // little endian 
-        {
-            for (int i = 0; i < numPoints; i++) 
-            {
-                DoByteSwap(outPtr[i]);
-                // cout << "outPtr = " << outPtr[i] << endl;
-            }
-
-        // fprintf(stderr, "New image, ctr pix = %d\n", outPtr[ny/2*nx/2]);
+        fprintf(stderr, "New image, ctr pix = %d\n", outPtr[ny/2*nx/2]);
         delete [] img;
-    }
-
 #endif
     }
 }
