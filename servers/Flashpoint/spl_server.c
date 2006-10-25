@@ -40,7 +40,9 @@ int DBGALL = 0;
 #define LEN_LOC_NEW        2
 #define OFFSET_IMG_NEW     OFFSET_LOC_NEW + LEN_LOC_NEW
 #define LEN_IMG_NEW        2 
-#define OFFSET_LOC_STATUS  OFFSET_IMG_NEW + LEN_IMG_NEW
+#define OFFSET_XYZ_COORDS OFFSET_IMG_NEW + LEN_IMG_NEW 
+#define LEN_XYZ_COORDS     12
+#define OFFSET_LOC_STATUS  OFFSET_XYZ_COORDS + LEN_XYZ_COORDS
 #define LEN_LOC_STATUS     2 
 #define OFFSET_LOC_MATRIX  OFFSET_LOC_STATUS + LEN_LOC_STATUS
 #define LEN_LOC_MATRIX     64
@@ -354,14 +356,15 @@ int Serve(fd, doRealtime)
     float px = 0, py=0, pz=0, pnx=0, pny=0, pnz=0, ptx=0, pty=0, ptz=0;
     char cmdname[6][20];
 
-    long imageID;
-
     /* scanning */
-    char tmp1[9], tmp2[9], tmp3[9];
+    float tmp1;
+    int sCount;
+    int ii, jj;
     int sCmd = -1;
-    float sOrient[5];
+    float sOrient[4];
     char sCmdStr[300];
     char sOrientNames[3][20];
+    float sOffsets[3];
 
     sprintf(cmdname[0], "CLOSE");
     sprintf(cmdname[1], "PING");
@@ -463,7 +466,6 @@ int Serve(fd, doRealtime)
                             ras[6], ras[7], ras[8]);
                 }
 
-
                 /* See if image is new */
                 imageIndex = get_current_image_index();
                 NewImage = 0;
@@ -471,6 +473,29 @@ int Serve(fd, doRealtime)
                 if (doRealtime && imageIndex !=  prevIndex) {
                     prevIndex = imageIndex;
                     ibuf = (caddr_t)mrt_imagebuf_ptr(0, imageIndex);
+
+                    /* Get x, y, z offsets from the realtime server */ 
+                    status = (int)mror_hdrdata(ibuf, MROR_HDR_CONT_XOFFSET_OFFSET, MROR_HDR_CONT_XOFFSET_LEN, &sOffsets[0]);
+                    if (status)
+                    {
+                        fprintf(stderr, "Failed to read x offset.\n");
+                    }
+                    fprintf(stderr, "x offset = %6.2f\n", sOffsets[0]); 
+
+                    status = (int)mror_hdrdata(ibuf, MROR_HDR_CONT_YOFFSET_OFFSET, MROR_HDR_CONT_YOFFSET_LEN, &sOffsets[1]);
+                    if (status)
+                    {
+                        fprintf(stderr, "Failed to read y offset.\n");
+                    }
+                    fprintf(stderr, "y offset = %6.2f\n", sOffsets[1]); 
+
+                    status = (int)mror_hdrdata(ibuf, MROR_HDR_CONT_ZOFFSET_OFFSET, MROR_HDR_CONT_ZOFFSET_LEN, &sOffsets[2]);
+                    if (status)
+                    {
+                        fprintf(stderr, "Failed to read z offset.\n");
+                    }
+                    fprintf(stderr, "z offset = %6.2f\n", sOffsets[2]); 
+
 
                     /* Corner points */
                     status = (int)mror_hdrdata(ibuf, MROR_HDR_CORNER_PT_OFFSET, MROR_HDR_CORNER_PT_LEN, xyz2);
@@ -488,33 +513,54 @@ int Serve(fd, doRealtime)
                     xyz_to_ras(&xyz2[3], &ras2[3], patpos, tblpos);
                     xyz_to_ras(&xyz2[6], &ras2[6], patpos, tblpos);
 
-                    NewImage = 1;
+
+                    /*
+                    fprintf(stderr,
+                            "my RAS: %6.2f %6.2f %6.2f, %6.2f %6.2f %6.2f, %6.2f %6.2f %6.2f\n",
+                            ras2[0], ras2[1], ras2[2], ras2[3], ras2[4], ras2[5], ras2[6], ras2[7], ras2[8]);
+                    */
+
+
+                    NewImage = 100;
                     /* Get scan order of the realtime image from the corner points */
                     /* NewImage = 1: Axial scanning of the realtime image
                        NewImage = 2: Sagittal
                        NewImage = 3: Coronal */
 
-                    sprintf(tmp1, "%6.2f", ras2[0]);
-                    sprintf(tmp2, "%6.2f", ras2[3]);
-                    sprintf(tmp3, "%6.2f", ras2[6]);
-                    /* fprintf(stderr, "ras[0]: %6.2f ras[3]: %6.2f ras[6]: %6.2f \n", 
-                               ras2[0], ras2[3], ras2[6]); */ 
-                    if (strcmp(tmp1, tmp2) == 0 && strcmp(tmp1, tmp3) == 0) {NewImage = 2;}
+                    /* The array "sOffsets" holds x, y, and z offsets for a realtime scan. 
+                       These values are in the units of mm and in the magnet coornate system.
+                       The R, S, and A offsets on the Realtime Imaging Control are in the same 
+                       space as Slicer. RSA and xyz have some linear relation. */
+                    for (ii = 0; ii < 3; ii++)
+                    {
+                        sCount = 0;
+                        for (jj = 0; jj < 9; jj++)
+                        {
+                            tmp1 = fabs(fabs(sOffsets[ii]) - 10 * fabs(ras2[jj]));
+                            if (tmp1 < 1.0) sCount++;
+                            /* fprintf(stderr, "tmp1 = %6.2f  sCount = %d\n", tmp1, sCount); */
+                        }
 
-                    sprintf(tmp1, "%6.2f", ras2[2]);
-                    sprintf(tmp2, "%6.2f", ras2[5]);
-                    sprintf(tmp3, "%6.2f", ras2[8]);
-                    /* fprintf(stderr, "ras[2]: %6.2f ras[5]: %6.2f ras[8]: %6.2f \n", 
-                               ras2[2], ras2[5], ras2[8]); */ 
-                    if (strcmp(tmp1, tmp2) == 0 && strcmp(tmp1, tmp3) == 0) {NewImage = 1;}
+                        /* For an Axial scan, we expect the x offset (either negative or positive)
+                           three times in the array of corner points (ras2). 
 
-                    sprintf(tmp1, "%6.2f", ras2[1]);
-                    sprintf(tmp2, "%6.2f", ras2[4]);
-                    sprintf(tmp3, "%6.2f", ras2[7]);
-                    /* fprintf(stderr, "ras[1]: %6.2f ras[4]: %6.2f ras[7]: %6.2f \n", 
-                               ras2[1], ras2[4], ras2[7]); */ 
-                    if (strcmp(tmp1, tmp2) == 0 && strcmp(tmp1, tmp3) == 0) {NewImage = 3;}
+                           For an Axial scan, we expect the y offset (either negative or positive)
+                           three times in the array of corner points.
 
+                           For an Axial scan, we expect the z offset (either negative or positive)
+                           three times in the array of corner points. */
+                        if (sCount == 3)
+                        {
+                            /* ii == 0: Axial */
+                            if (ii == 0) {NewImage = 1;}
+                            /* ii == 1: Coronal */
+                            if (ii == 1) {NewImage = 3;} 
+                            /* ii == 2: Sagittal */
+                            if (ii == 2) {NewImage = 2;}
+                            break;
+                        }
+                    }
+                    
                     /* fprintf(stderr, "new image: %d \n", NewImage); */ 
                 }
 
@@ -529,7 +575,7 @@ int Serve(fd, doRealtime)
                 {
                     /* Respond with nbytes
                      */
-                    nbytes = LEN_LOC_NEW + LEN_IMG_NEW + 
+                    nbytes = LEN_LOC_NEW + LEN_IMG_NEW + LEN_XYZ_COORDS + 
                         LEN_LOC_STATUS + LEN_LOC_MATRIX;
                     bcopy(&nbytes, &buf[OFFSET_NBYTES], LEN_NBYTES);
                     len = LEN_NBYTES;
@@ -543,6 +589,7 @@ int Serve(fd, doRealtime)
                      */
                     bcopy(&NewLocator, &buf[OFFSET_LOC_NEW],    LEN_LOC_NEW);
                     bcopy(&NewImage  , &buf[OFFSET_IMG_NEW],    LEN_IMG_NEW);
+                    bcopy(sOffsets,    &buf[OFFSET_XYZ_COORDS], LEN_XYZ_COORDS);
                     bcopy(&locStatus,  &buf[OFFSET_LOC_STATUS], LEN_LOC_STATUS);
                     BuildLocatorMatrix(buf, OFFSET_LOC_MATRIX, ras);
                     len = nbytes;
@@ -552,11 +599,11 @@ int Serve(fd, doRealtime)
                         return -1;
                     }
                 }
-                else
+                else 
                 {
                     /* Respond with nbytes 
                      */
-                    nbytes = LEN_LOC_NEW + LEN_IMG_NEW; 
+                    nbytes = LEN_LOC_NEW + LEN_IMG_NEW + LEN_XYZ_COORDS; 
                     bcopy(&nbytes, &buf[OFFSET_NBYTES], LEN_NBYTES);
                     len = LEN_NBYTES;
                     n = writen(fd, buf, len);
@@ -567,7 +614,8 @@ int Serve(fd, doRealtime)
 
                     /* Write "new" flags */
                     bcopy(&NewLocator, &buf[OFFSET_LOC_NEW], LEN_LOC_NEW);
-                    bcopy(&NewImage  , &buf[OFFSET_IMG_NEW], LEN_IMG_NEW);
+                    bcopy(&NewImage, &buf[OFFSET_IMG_NEW], LEN_IMG_NEW);
+                    bcopy(sOffsets, &buf[OFFSET_XYZ_COORDS], LEN_XYZ_COORDS);
                     len = nbytes;
                     n = writen(fd, buf, len);
                     if(n != len) {
@@ -630,13 +678,6 @@ int Serve(fd, doRealtime)
                         xyz[0], xyz[1], xyz[2], xyz[3], xyz[4], xyz[5],
                         xyz[6], xyz[7], xyz[8]);
 
-
-                /* Realtime image id */
-                status = (int)mror_hdrdata(ibuf, MROR_HDR_WS_USRVAR0_OFFSET, MROR_HDR_WS_USRVAR0_LEN, &imageID);
-                if (status)
-                {
-                    fprintf(stderr, "2. Failed read hdr.\n");
-                }
 
                 /* Patient, Table position */
                 status = (int)mror_hdrdata(ibuf, MROR_HDR_CONT_WSID_OFFSET, MROR_HDR_CONT_WSID_LEN, &wsid);
@@ -720,7 +761,6 @@ int Serve(fd, doRealtime)
                 bcopy(&patpos,  &buf[OFFSET_IMG_PATPOS ], LEN_IMG_PATPOS);
                 bcopy(&recon,   &buf[OFFSET_IMG_RECON  ], LEN_IMG_RECON);
                 bcopy(&imanum,  &buf[OFFSET_IMG_IMANUM ], LEN_IMG_IMANUM);
-                bcopy(&imageID, &buf[OFFSET_IMG_ID     ], LEN_IMG_ID);
                 bcopy(&minpix,  &buf[OFFSET_IMG_MINPIX ], LEN_IMG_MINPIX);
                 bcopy(&maxpix,  &buf[OFFSET_IMG_MAXPIX ], LEN_IMG_MAXPIX);
                 bcopy(dim,      &buf[OFFSET_IMG_DIM    ], LEN_IMG_DIM);
@@ -820,8 +860,7 @@ int Serve(fd, doRealtime)
                                   &sOrient[0],
                                   &sOrient[1],
                                   &sOrient[2],
-                                  &sOrient[3],
-                                  &sOrient[4]);
+                                  &sOrient[3]);
                 if (n == EOF) {
                     fprintf(stderr, "Server: sscanf error in CMD_SCAN.\n");
                     return -1;
@@ -843,13 +882,13 @@ int Serve(fd, doRealtime)
                     case 2:
                         /* Set a unique id for the realtime image.
                            We use this id to display this image in 3D Slicer with
-                           right orientation.*/
+                           right orientation.
                         sprintf(sCmdStr,
                             "echo %s 0 %d\n\" > /export/home/mrtmstr/TEMP/MRT_PIPE",
                             "\"wsivar",
                             (int)sOrient[4]);
-                        /* fprintf(stderr, "cmd to RTC: %s\n", sCmdStr); */
-                        system(sCmdStr);
+                        fprintf(stderr, "cmd to RTC: %s\n", sCmdStr); 
+                        system(sCmdStr); */
 
                         /* to scan a realtime slice */
                         n = (int)sOrient[0] - 1;
