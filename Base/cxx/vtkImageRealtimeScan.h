@@ -7,9 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageRealtimeScan.h,v $
-  Date:      $Date: 2006/03/06 19:02:26 $
-  Version:   $Revision: 1.18 $
-
+  Date:      $Date: 2006/10/25 18:03:26 $
+  Version:   $Revision: 1.19 $
 =========================================================================auto=*/
 // .NAME vtkImageRealtimeScan - Get a realtime image from the scanner.
 // .SECTION
@@ -31,13 +30,15 @@
 #define    LEN_NBYTES      4
 
 #define OFFSET_LOC_NEW     0
-#define    LEN_LOC_NEW     2
+#define LEN_LOC_NEW        2
 #define OFFSET_IMG_NEW     OFFSET_LOC_NEW + LEN_LOC_NEW
-#define    LEN_IMG_NEW     2
-#define OFFSET_LOC_STATUS  OFFSET_IMG_NEW + LEN_IMG_NEW
-#define    LEN_LOC_STATUS  2
+#define LEN_IMG_NEW        2
+#define OFFSET_XYZ_COORDS OFFSET_IMG_NEW + LEN_IMG_NEW
+#define LEN_XYZ_COORDS     12
+#define OFFSET_LOC_STATUS  OFFSET_XYZ_COORDS + LEN_XYZ_COORDS
+#define LEN_LOC_STATUS     2
 #define OFFSET_LOC_MATRIX  OFFSET_LOC_STATUS + LEN_LOC_STATUS
-#define    LEN_LOC_MATRIX 64
+#define LEN_LOC_MATRIX     64
 
 #define OFFSET_IMG_TBLPOS   0
 #define    LEN_IMG_TBLPOS   2
@@ -102,8 +103,12 @@ public:
     vtkSetMacro(OperatingSystem, int);
 
     vtkSetStringMacro(TestPrefix);
+    vtkSetVectorMacro(ScanOrientation, float, 4);
+
+    vtkGetVector3Macro(RealtimeScanningLocation, vtkFloatingPointType);
 
     int SetPosition(short tblPos, short patEntry, short patPos);
+    int OperateScanner(int cmd);
 
 protected:
     vtkImageRealtimeScan();
@@ -143,6 +148,16 @@ protected:
     // 0 - big endian
     // 1 - little endian
     int ByteOrder;
+
+    // 0 - none
+    // 1 - axial 
+    // 2 - sagittal 
+    // 3 - coronal 
+    // plus Px, Py and Pz
+    // such as "1 Px Py Pz"
+    float ScanOrientation[4];
+
+    vtkFloatingPointType RealtimeScanningLocation[3];
 };
 
 
