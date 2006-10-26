@@ -112,7 +112,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.74 $} {$Date: 2006/10/25 16:02:23 $}]
+        {$Revision: 1.1.2.75 $} {$Date: 2006/10/26 20:08:01 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -155,7 +155,7 @@ proc MRProstateCareInit {} {
     set MRProstateCare(scaleFactor) 1 
     set MRProstateCare(currentPoint) none 
 
-    set MRProstateCare(displayRSA) "0 0 0"
+    set MRProstateCare(targetRSA) "0 0 0"
     set MRProstateCare(preOpVolumeID) 0
 
     # Creates bindings
@@ -1089,9 +1089,6 @@ proc MRProstateCareUpdateForNav {} {
     global MRProstateCare Locator Slice Anno Volume 
 
 
-    # update display RSA
-    set MRProstateCare(displayRSA) $Locator(realtimeRSA)
-
     # from scanning orientation to dispaly orientation
     switch $Locator(realtimeScanOrder) {
         "SI" {set MRProstateCare(imageDisplayOrient) "Axial"} 
@@ -1120,7 +1117,7 @@ proc MRProstateCareUpdateForNav {} {
 
 
     # set right slice to display
-    set coords $MRProstateCare(displayRSA) 
+    set coords $Locator(realtimeRSA) 
     # Axial slice changes as S
     # Saggital slice changes as R
     # Coronal slice changes as A
@@ -1269,9 +1266,9 @@ proc MRProstateCareHidePoint {} {
 proc MRProstateCareShowPoint {title} {
     global MRProstateCare View Slice
 
-    set rb [lindex $MRProstateCare(displayRSA) 0]
-    set ab [lindex $MRProstateCare(displayRSA) 2]
-    set sb [lindex $MRProstateCare(displayRSA) 1]
+    set rb [lindex $MRProstateCare(targetRSA) 0]
+    set ab [lindex $MRProstateCare(targetRSA) 2]
+    set sb [lindex $MRProstateCare(targetRSA) 1]
  
     set pos [expr   $View(fov) * 0.30]
     set neg [expr - $View(fov) * 0.30]
@@ -1334,6 +1331,8 @@ proc MRProstateCareSelectPoint {m} {
     $MRProstateCare(gui,displayPointButton) config -text $m 
     $MRProstateCare(gui,scanPointButton) config -text $m 
     set MRProstateCare(currentPoint) $m
+
+    set MRProstateCare(targetRSA) [MRProstateCareGetRSAFromPoint $MRProstateCare(currentPoint)] 
 
     # Update rsa values in Display->Scan tab
     MRProstateCareUpdateRSA
@@ -2262,25 +2261,21 @@ proc MRProstateCareUpdateNavigationTab {} {
     $MRProstateCare(gui,scanPointMenu) delete 0 end 
  
     set size [llength $MRProstateCare(pointList)]
-    if {$size == 0} {
-        MRProstateCareSelectPoint none
-        $MRProstateCare(gui,displayPointMenu) add command -label none \
-            -command "MRProstateCareSelectPoint none"
-        $MRProstateCare(gui,scanPointMenu) add command -label none \
-            -command "MRProstateCareSelectPoint none"
- 
-    } else {
-        foreach x $MRProstateCare(pointList) {
-            $MRProstateCare(gui,displayPointMenu) add command \
-                -label $x \
-                -command "MRProstateCareSelectPoint \{$x\}"
-            $MRProstateCare(gui,scanPointMenu) add command \
-                -label $x \
-                -command "MRProstateCareSelectPoint \{$x\}"
-        }
-        set x [lindex $MRProstateCare(pointList) 0]
-        MRProstateCareSelectPoint "$x" 
+    MRProstateCareSelectPoint none
+    $MRProstateCare(gui,displayPointMenu) add command -label none \
+        -command "MRProstateCareSelectPoint none"
+    $MRProstateCare(gui,scanPointMenu) add command -label none \
+        -command "MRProstateCareSelectPoint none"
+
+    foreach x $MRProstateCare(pointList) {
+        $MRProstateCare(gui,displayPointMenu) add command \
+            -label $x \
+            -command "MRProstateCareSelectPoint \{$x\}"
+        $MRProstateCare(gui,scanPointMenu) add command \
+            -label $x \
+            -command "MRProstateCareSelectPoint \{$x\}"
     }
+    MRProstateCareSelectPoint "none" 
 
     # Inside the Navigation tab update the volume list
     # for reorienting 
