@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageRealtimeScan.cxx,v $
-  Date:      $Date: 2006/10/25 18:07:42 $
-  Version:   $Revision: 1.15.8.3.2.9 $
+  Date:      $Date: 2006/10/26 15:59:25 $
+  Version:   $Revision: 1.15.8.3.2.10 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -504,6 +504,7 @@ int vtkImageRealtimeScan::PollRealtime()
         for (int ii = 0; ii < 3; ii++)
         {
             DoByteSwap(loc[ii]);
+            // cout << "loc = " << loc[ii] << endl;
         }
     }
     memcpy(this->RealtimeScanningLocation, loc, LEN_XYZ_COORDS);
@@ -715,8 +716,17 @@ void vtkImageRealtimeScan::Execute(vtkImageData *data)
             close(sockfd);
             return;
         }
-            
+
         memcpy(outPtr, img, nbytes);
+        if (ByteOrder)  // little endian
+        {
+            for (int i = 0; i < numPoints; i++)
+            {
+                DoByteSwap(outPtr[i]);
+                // cout << "outPtr = " << outPtr[i] << endl;
+            }
+        }
+
         fprintf(stderr, "New image, ctr pix = %d\n", outPtr[ny/2*nx/2]);
         delete [] img;
 #endif
