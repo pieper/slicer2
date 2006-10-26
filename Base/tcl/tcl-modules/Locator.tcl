@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2006/10/25 16:01:25 $
-#   Version:   $Revision: 1.38.12.2.2.19 $
+#   Date:      $Date: 2006/10/26 16:21:12 $
+#   Version:   $Revision: 1.38.12.2.2.20 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -89,7 +89,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.19 $} {$Date: 2006/10/25 16:01:25 $}]
+        {$Revision: 1.38.12.2.2.20 $} {$Date: 2006/10/26 16:21:12 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -1866,7 +1866,7 @@ proc LocatorLoopFlashpoint {} {
         return
     }
 
-    Locator(Flashpoint,src) Modified
+    # Locator(Flashpoint,src) Modified
     Locator(Flashpoint,src) Update
     set newImage   [Locator(Flashpoint,src) GetNewImage]
     set newLocator [Locator(Flashpoint,src) GetNewLocator]
@@ -1940,6 +1940,8 @@ proc LocatorLoopFlashpoint {} {
         # newRSA holds the r,s and a values the new realtime scan
         # should display in the slicer
         if {$Locator(realtimeRSA) != $newRSA} {
+            set Locator(realtimeRSA) $newRSA 
+
             # Get other header values
             set Locator(recon)    [Locator(Flashpoint,src) GetRecon]
             set Locator(imageNum) [Locator(Flashpoint,src) GetImageNum]
@@ -1991,7 +1993,6 @@ proc LocatorLoopFlashpoint {} {
                 if {$cb != ""} {$cb}
             }
 
-            set Locator(realtimeRSA) $newRSA 
         }
     }
 
@@ -2046,12 +2047,13 @@ proc LocatorXYZToRSA {} {
 
     # The scanning location of the realtime image in magnet coordinate system
     set xyz [Locator(Flashpoint,src) GetRealtimeScanningLocation]
+
     set x [lindex $xyz 0]
-    set x [expr round($x)
+    set x [expr round($x)]
     set y [lindex $xyz 1]
-    set y [expr round($y)
+    set y [expr round($y)]
     set z [lindex $xyz 2]
-    set z [expr round($z)
+    set z [expr round($z)]
  
     if {$tblpos == 0} {
         switch $patpos {
