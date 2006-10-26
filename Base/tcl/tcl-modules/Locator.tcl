@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2006/10/26 16:21:12 $
-#   Version:   $Revision: 1.38.12.2.2.20 $
+#   Date:      $Date: 2006/10/26 17:53:06 $
+#   Version:   $Revision: 1.38.12.2.2.21 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -89,7 +89,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.20 $} {$Date: 2006/10/26 16:21:12 $}]
+        {$Revision: 1.38.12.2.2.21 $} {$Date: 2006/10/26 17:53:06 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -1913,15 +1913,16 @@ proc LocatorLoopFlashpoint {} {
     # NEW IMAGE
     #----------------
     if {$newImage != 0} {
-
         # 1: Axial
         # 2: Sagittal
         # 3: Coronal
+        set scanOrder "SI"
         switch $newImage {
-            1 {set Locator(realtimeScanOrder) "SI"} 
-            2 {set Locator(realtimeScanOrder) "RL"}
-            3 {set Locator(realtimeScanOrder) "AP"}
+            1 {set scanOrder "SI"} 
+            2 {set scanOrder "RL"}
+            3 {set scanOrder "AP"}
         }
+
        
         # Force an update so I can read the new matrix
         Locator(Flashpoint,src) Modified
@@ -1939,8 +1940,9 @@ proc LocatorLoopFlashpoint {} {
         set newRSA [LocatorXYZToRSA]
         # newRSA holds the r,s and a values the new realtime scan
         # should display in the slicer
-        if {$Locator(realtimeRSA) != $newRSA} {
+        if {$Locator(realtimeRSA) != $newRSA || $Locator(realtimeScanOrder) != $scanOrder} {
             set Locator(realtimeRSA) $newRSA 
+            set Locator(realtimeScanOrder) $scanOrder 
 
             # Get other header values
             set Locator(recon)    [Locator(Flashpoint,src) GetRecon]
@@ -1958,7 +1960,8 @@ proc LocatorLoopFlashpoint {} {
             set n Volume($i,node)
 
             # Volume($i,node) SetSpacing [$rImage GetSpacing]
-            Volume($i,node) SetScanOrder $Locator(realtimeScanOrder) 
+            Volume($i,node) SetScanOrder $scanOrder 
+
             Volume($i,node) SetNumScalars [$rImage GetNumberOfScalarComponents]
             set ext [$rImage GetWholeExtent]
             Volume($i,node) SetImageRange [expr 1 + [lindex $ext 4]] [expr 1 + [lindex $ext 5]]
