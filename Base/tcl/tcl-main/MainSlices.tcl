@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainSlices.tcl,v $
-#   Date:      $Date: 2006/07/27 18:27:58 $
-#   Version:   $Revision: 1.66 $
+#   Date:      $Date: 2006/10/26 17:48:10 $
+#   Version:   $Revision: 1.67 $
 # 
 #===============================================================================
 # FILE:        MainSlices.tcl
@@ -86,7 +86,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.66 $} {$Date: 2006/07/27 18:27:58 $}]
+        {$Revision: 1.67 $} {$Date: 2006/10/26 17:48:10 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"
@@ -803,7 +803,7 @@ proc MainSlicesSetActive {{s ""}} {
     } else {
         set Slice(activeID) $s
     }
-
+    
     Slicer SetActiveSlice $s
     Slicer Update
 
@@ -855,7 +855,7 @@ proc MainSlicesSetVolumeAll {Layer v {setOffSetFlag 1}} {
 
         # Always update Slider Range when change volume or orient
         if {$s == 2 && $::Module(verbose)} {
-puts "\tMainSlicesSetVolumeAll: calling MainSlicesSetSliderRange $s (setOffsetFlag = $setOffSetFlag)"
+            puts "\tMainSlicesSetVolumeAll: calling MainSlicesSetSliderRange $s (setOffsetFlag = $setOffSetFlag)"
         }
         if {$setOffSetFlag == 0} {
             # trick it into thinking that we're updating options
@@ -870,6 +870,7 @@ puts "\tMainSlicesSetVolumeAll: calling MainSlicesSetSliderRange $s (setOffsetFl
 
         #--- Remove Ibrowser's control of viewer if Ibrowser is present
         #--- and update the Ibrowser's icons to reflect the change
+
         if { [catch "package require vtkIbrowser"] == 0 } {
             if { $Layer == "fore" || $Layer == "Fore" } {
                 if { [info exists ::IbrowserController(Icanvas)] } {
@@ -886,7 +887,7 @@ puts "\tMainSlicesSetVolumeAll: calling MainSlicesSetSliderRange $s (setOffsetFl
                     set ::Ibrowser(BGInterval) $::Ibrowser(NoInterval)
                 }
             }
-        }
+        } 
     }
 }
 
@@ -939,12 +940,16 @@ proc MainSlicesSetVolume {Layer s v} {
             if { [info exists ::IbrowserController(Icanvas)] } {
                 IbrowserDeselectFGIcon $::IbrowserController(Icanvas)
             }
-            set ::Ibrowser(FGInterval) $::Ibrowser(NoInterval)
+            if { [info exists ::Ibrowser(NoInterval) ] } {
+                set ::Ibrowser(FGInterval) $::Ibrowser(NoInterval)
+            }
         } elseif { $Layer == "back" || $Layer == "Back" } {
             if { [info exists ::IbrowserController(Icanvas)] } {
                 IbrowserDeselectBGIcon $::IbrowserController(Icanvas)
             }
-            set ::Ibrowser(BGInterval) $::Ibrowser(NoInterval)
+            if { [info exists ::Ibrowser(NoInterval) ] } {
+                set ::Ibrowser(BGInterval) $::Ibrowser(NoInterval)
+            }
         }
     }
 }
