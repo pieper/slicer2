@@ -53,9 +53,7 @@ int DBGALL = 0;
 #define LEN_IMG_PATPOS      2 
 #define OFFSET_IMG_IMANUM   OFFSET_IMG_PATPOS + LEN_IMG_PATPOS
 #define LEN_IMG_IMANUM      4 
-#define OFFSET_IMG_ID       OFFSET_IMG_IMANUM + LEN_IMG_IMANUM 
-#define LEN_IMG_ID          4
-#define OFFSET_IMG_RECON    OFFSET_IMG_ID + LEN_IMG_ID
+#define OFFSET_IMG_RECON    OFFSET_IMG_IMANUM + LEN_IMG_IMANUM  
 #define LEN_IMG_RECON       4 
 #define OFFSET_IMG_MINPIX   OFFSET_IMG_RECON + LEN_IMG_RECON
 #define LEN_IMG_MINPIX      2 
@@ -480,21 +478,21 @@ int Serve(fd, doRealtime)
                     {
                         fprintf(stderr, "Failed to read x offset.\n");
                     }
-                    fprintf(stderr, "x offset = %6.2f\n", sOffsets[0]); 
+                    /* fprintf(stderr, "x offset = %6.2f\n", sOffsets[0]); */ 
 
                     status = (int)mror_hdrdata(ibuf, MROR_HDR_CONT_YOFFSET_OFFSET, MROR_HDR_CONT_YOFFSET_LEN, &sOffsets[1]);
                     if (status)
                     {
                         fprintf(stderr, "Failed to read y offset.\n");
                     }
-                    fprintf(stderr, "y offset = %6.2f\n", sOffsets[1]); 
+                    /* fprintf(stderr, "y offset = %6.2f\n", sOffsets[1]); */ 
 
                     status = (int)mror_hdrdata(ibuf, MROR_HDR_CONT_ZOFFSET_OFFSET, MROR_HDR_CONT_ZOFFSET_LEN, &sOffsets[2]);
                     if (status)
                     {
                         fprintf(stderr, "Failed to read z offset.\n");
                     }
-                    fprintf(stderr, "z offset = %6.2f\n", sOffsets[2]); 
+                    /* fprintf(stderr, "z offset = %6.2f\n", sOffsets[2]); */ 
 
 
                     /* Corner points */
@@ -759,8 +757,8 @@ int Serve(fd, doRealtime)
 
                 bcopy(&tblpos,  &buf[OFFSET_IMG_TBLPOS ], LEN_IMG_TBLPOS);
                 bcopy(&patpos,  &buf[OFFSET_IMG_PATPOS ], LEN_IMG_PATPOS);
-                bcopy(&recon,   &buf[OFFSET_IMG_RECON  ], LEN_IMG_RECON);
                 bcopy(&imanum,  &buf[OFFSET_IMG_IMANUM ], LEN_IMG_IMANUM);
+                bcopy(&recon,   &buf[OFFSET_IMG_RECON  ], LEN_IMG_RECON);
                 bcopy(&minpix,  &buf[OFFSET_IMG_MINPIX ], LEN_IMG_MINPIX);
                 bcopy(&maxpix,  &buf[OFFSET_IMG_MAXPIX ], LEN_IMG_MAXPIX);
                 bcopy(dim,      &buf[OFFSET_IMG_DIM    ], LEN_IMG_DIM);
@@ -798,7 +796,6 @@ int Serve(fd, doRealtime)
                     fprintf(stderr, "Server: write error '%s'.\n", buf);
                     return -1;
                 }
-
 
                 /* Send pixels one row at a time, beginning with the bottom
                    row of the image (top, left corner of image is coord 0,0).
@@ -855,7 +852,7 @@ int Serve(fd, doRealtime)
                     return -1;
                 }
 
-                n = sscanf(buf, "%d %f %f %f %f %f", 
+                n = sscanf(buf, "%d %f %f %f %f", 
                                   &sCmd,
                                   &sOrient[0],
                                   &sOrient[1],
