@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageRealtimeScan.h,v $
-  Date:      $Date: 2006/10/25 18:55:31 $
-  Version:   $Revision: 1.15.12.3.2.6 $
+  Date:      $Date: 2006/10/26 16:16:22 $
+  Version:   $Revision: 1.15.12.3.2.7 $
 =========================================================================auto=*/
 // .NAME vtkImageRealtimeScan - Get a realtime image from the scanner.
 // .SECTION
@@ -107,7 +107,7 @@ public:
     vtkSetStringMacro(TestPrefix);
     vtkSetVectorMacro(ScanOrientation, float, 4);
 
-    vtkGetVector3Macro(RealtimeScanningLocation, vtkFloatingPointType);
+    vtkGetVector3Macro(RealtimeScanningLocation, float);
 
     int SetPosition(short tblPos, short patEntry, short patPos);
     int OperateScanner(int cmd);
@@ -159,7 +159,7 @@ protected:
     // such as "1 Px Py Pz"
     float ScanOrientation[4];
 
-    vtkFloatingPointType RealtimeScanningLocation[3];
+    float RealtimeScanningLocation[3];
 };
 
 
