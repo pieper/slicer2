@@ -112,7 +112,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.75 $} {$Date: 2006/10/26 20:08:01 $}]
+        {$Revision: 1.1.2.76 $} {$Date: 2006/10/27 16:34:25 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -153,9 +153,10 @@ proc MRProstateCareInit {} {
 
     set MRProstateCare(portSet) 0
     set MRProstateCare(scaleFactor) 1 
-    set MRProstateCare(currentPoint) none 
+    set MRProstateCare(currentPoint) None 
 
     set MRProstateCare(targetRSA) "0 0 0"
+    set MRProstateCare(targetBallVisibility) 1 
     set MRProstateCare(preOpVolumeID) 0
 
     # Creates bindings
@@ -239,7 +240,7 @@ proc MRProstateCareBuildGUI {} {
 
     set f $fServer.fTop
     eval {label $f.lConnectTitle -text "Connection to server:"} $Gui(WTA)
-    eval {label $f.lConnectStatus -text "none" -width 8} $Gui(WLA)
+    eval {label $f.lConnectStatus -text "None" -width 8} $Gui(WLA)
     grid $f.lConnectTitle $f.lConnectStatus -pady 1 -padx $Gui(pad)
     set MRProstateCare(connectStatus) $f.lConnectStatus
 
@@ -282,7 +283,7 @@ proc MRProstateCareBuildGUI {} {
 
     set f $fTemplate.f1
     eval {label $f.lLocatorTitle -text "Locator status:"} $Gui(WTA)
-    eval {label $f.lLocatorStatus -text "none" -width 8} $Gui(WLA)
+    eval {label $f.lLocatorStatus -text "None" -width 8} $Gui(WLA)
     grid $f.lLocatorTitle $f.lLocatorStatus -pady 1 -padx $Gui(pad)
     set Locator(lLocStatus) $f.lLocatorStatus
 
@@ -545,7 +546,7 @@ proc MRProstateCareBuildGUIForScan {parent} {
     # Build pulldown menu for all Points 
     eval {label $f.lTitle -text "Select a point:"} $Gui(WTA)
  
-    set tList [list {none}]
+    set tList [list {None}]
     set df [lindex $tList 0] 
     eval {menubutton $f.mbType -text $df \
           -relief raised -bd 2 -width 28 \
@@ -696,7 +697,7 @@ proc MRProstateCareChangeRSA {v} {
 proc MRProstateCareSetScannerCommand {cmd} {
     global MRProstateCare Locator 
 
-    if {$cmd != 0 && $MRProstateCare(currentPoint) == "none"} {
+    if {$cmd != 0 && $MRProstateCare(currentPoint) == "None"} {
             DevErrorWindow "Please select a valid point for scanning."
             return
     } 
@@ -822,7 +823,7 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     # Build pulldown menu for all Points 
     eval {label $f.lTitle -text "Select a point:"} $Gui(WTA)
  
-    set tList [list {none}]
+    set tList [list {None}]
     set df [lindex $tList 0] 
     eval {menubutton $f.mbType -text $df \
           -relief raised -bd 2 -width 28 \
@@ -861,7 +862,7 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     # Build pulldown menu for volumes of image 1 
     DevAddLabel $f.lVolume "Image:"
 
-    set mList [list {none}]
+    set mList [list {None}]
     set df [lindex $mList 0] 
     eval {menubutton $f.mbType -text $df \
           -relief raised -bd 2 -width 22 \
@@ -906,7 +907,7 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     # Build pulldown menu for volumes of image 1 
     DevAddLabel $f.lVolume "Axi PreOp:"
 
-    set mList [list {none}]
+    set mList [list {None}]
     set df [lindex $mList 0] 
     eval {menubutton $f.mbType -text $df \
           -relief raised -bd 2 -width 17 \
@@ -931,7 +932,7 @@ proc MRProstateCareBuildGUIForDisplay {parent} {
     # Build pulldown menu for volumes 
     DevAddLabel $f.lVolume "Cor PreOp:"
 
-    set mList [list {none}]
+    set mList [list {None}]
     set df [lindex $mList 0] 
     eval {menubutton $f.mbType -text $df \
           -relief raised -bd 2 -width 17 \
@@ -1127,18 +1128,9 @@ proc MRProstateCareUpdateForNav {} {
         RenderBoth $s
     }
 
-
-    # draw a ball for the point in 3D view
-    # write the point name in 3D view
-    if {$MRProstateCare(currentPoint) != "none"} {
-        set i 0 
-        set p $MRProstateCare(currentPoint)
-        set i2 [string first ":" $p]
-        set title [string range $p $i [expr $i2-1]] 
-        set title [string trim $title]
-        MRProstateCareShowPoint $title
-    }
-
+    # set MRProstateCare(targetBallVisibility) 1 
+    MRProstateCareShowTargetBall
+    MRProstateCareShowTargetTitle 
     MRProstateCareShowSliceIn3D
 }
 
@@ -1223,22 +1215,37 @@ proc MRProstateCareNavLoop {} {
 
     if {$Slice(opacity) == 1} {set MRProstateCare(navLoopFactor) -0.25}
     if {$Slice(opacity) == 0} {set MRProstateCare(navLoopFactor) +0.25}
-    set Slice(opacity) [expr $Slice(opacity) + $MRProstateCare(navLoopFactor)]
+    set Slice(opacity) [expr $Slice(opacity) + \
+        $MRProstateCare(navLoopFactor)]
     MainSlicesSetOpacityAll
     RenderAll
 
-    set vis [expr {$Slice(opacity) >= 0.5 ? 0 : 1}]
-    pointActor SetVisibility $vis 
+    set MRProstateCare(targetBallVisibility) \
+        [expr {$Slice(opacity) >= 0.5 ? 0 : 1}]
+    MRProstateCareShowTargetBall 
 
     after $MRProstateCare(navTime) MRProstateCareNavLoop
 }
 
 
-proc MRProstateCareGetRSAFromPoint {p} {
+proc MRProstateCareParseCurrentPoint {} {
     global MRProstateCare 
 
-    set coords ""
-    if {$p != ""} {
+    if {$MRProstateCare(currentPoint) == "None"} {
+        set MRProstateCare(targetRSA) "0 0 0"
+        set MRProstateCare(targetTitle) "None"
+    } else {
+        # title
+        set i 0 
+        set p $MRProstateCare(currentPoint)
+        set i2 [string first ":" $p]
+        set title [string range $p $i [expr $i2-1]] 
+        set title [string trim $title]
+        set MRProstateCare(targetTitle) $title 
+ 
+        # rsa
+        set coords ""
+        set p $MRProstateCare(currentPoint)
         set i 0 
         set i2 [string first ":" $p]
         set title [string range $p $i [expr $i2-1]] 
@@ -1248,9 +1255,8 @@ proc MRProstateCareGetRSAFromPoint {p} {
         set title [string trim $title]
         regsub -all {( )+} $rsa " " rsa 
         set coords [split $rsa " "]
+        set MRProstateCare(targetRSA) $coords 
     }
-
-    return $coords
 }
 
  
@@ -1263,13 +1269,15 @@ proc MRProstateCareHidePoint {} {
 }
 
 
-proc MRProstateCareShowPoint {title} {
+proc MRProstateCareShowTargetTitle {} {
     global MRProstateCare View Slice
 
-    set rb [lindex $MRProstateCare(targetRSA) 0]
-    set ab [lindex $MRProstateCare(targetRSA) 2]
-    set sb [lindex $MRProstateCare(targetRSA) 1]
- 
+    if {$MRProstateCare(targetTitle) == "None"} {
+        $MRProstateCare(pointTitleActor) SetVisibility 0 
+        Render3D
+        return
+    }
+
     set pos [expr   $View(fov) * 0.30]
     set neg [expr - $View(fov) * 0.30]
 
@@ -1294,14 +1302,27 @@ proc MRProstateCareShowPoint {title} {
         }
     }
 
-    set vis [expr {$Slice(opacity) >= 0.5 ? 0 : 1}]
- 
-    $MRProstateCare(pointTitleText) SetText $title 
+    $MRProstateCare(pointTitleText) SetText $MRProstateCare(targetTitle) 
     $MRProstateCare(pointTitleActor) SetPosition $rt $at $st  
     $MRProstateCare(pointTitleActor) SetVisibility 1 
+    Render3D
+}
 
-    pointActor SetPosition $rb $ab $sb  
-    pointActor SetVisibility 1 
+
+proc MRProstateCareShowTargetBall {} {
+    global MRProstateCare 
+
+    set vis 0
+    if {$MRProstateCare(targetTitle) != "None"} {
+        set rb [lindex $MRProstateCare(targetRSA) 0]
+        set ab [lindex $MRProstateCare(targetRSA) 2]
+        set sb [lindex $MRProstateCare(targetRSA) 1]
+ 
+        pointActor SetPosition $rb $ab $sb  
+        set vis $MRProstateCare(targetBallVisibility)
+    }
+    pointActor SetVisibility $vis 
+    Render3D
 }
 
 
@@ -1332,21 +1353,16 @@ proc MRProstateCareSelectPoint {m} {
     $MRProstateCare(gui,scanPointButton) config -text $m 
     set MRProstateCare(currentPoint) $m
 
-    set MRProstateCare(targetRSA) [MRProstateCareGetRSAFromPoint $MRProstateCare(currentPoint)] 
+    MRProstateCareParseCurrentPoint
 
     # Update rsa values in Display->Scan tab
     MRProstateCareUpdateRSA
 
     # draw a ball for the point in 3D view
     # write the point name in 3D view
-    if {$MRProstateCare(currentPoint) != "none"} {
-        set i 0 
-        set p $MRProstateCare(currentPoint)
-        set i2 [string first ":" $p]
-        set title [string range $p $i [expr $i2-1]] 
-        set title [string trim $title]
-        MRProstateCareShowPoint $title
-    }
+    # set MRProstateCare(targetBallVisibility) 1 
+    MRProstateCareShowTargetBall
+    MRProstateCareShowTargetTitle 
 }
 
 
@@ -2015,7 +2031,7 @@ proc MRProstateCareUpdateConnectionStatus {} {
     global MRProstateCare Locator 
 
     if {$Locator(connect) == 0} {
-        $MRProstateCare(connectStatus) config -text "none" 
+        $MRProstateCare(connectStatus) config -text "None" 
     } else {
         $MRProstateCare(connectStatus) config -text "OK" 
     }
@@ -2261,11 +2277,11 @@ proc MRProstateCareUpdateNavigationTab {} {
     $MRProstateCare(gui,scanPointMenu) delete 0 end 
  
     set size [llength $MRProstateCare(pointList)]
-    MRProstateCareSelectPoint none
-    $MRProstateCare(gui,displayPointMenu) add command -label none \
-        -command "MRProstateCareSelectPoint none"
-    $MRProstateCare(gui,scanPointMenu) add command -label none \
-        -command "MRProstateCareSelectPoint none"
+    MRProstateCareSelectPoint None
+    $MRProstateCare(gui,displayPointMenu) add command -label None \
+        -command "MRProstateCareSelectPoint None"
+    $MRProstateCare(gui,scanPointMenu) add command -label None \
+        -command "MRProstateCareSelectPoint None"
 
     foreach x $MRProstateCare(pointList) {
         $MRProstateCare(gui,displayPointMenu) add command \
@@ -2275,7 +2291,7 @@ proc MRProstateCareUpdateNavigationTab {} {
             -label $x \
             -command "MRProstateCareSelectPoint \{$x\}"
     }
-    MRProstateCareSelectPoint "none" 
+    MRProstateCareSelectPoint "None" 
 
     # Inside the Navigation tab update the volume list
     # for reorienting 
@@ -2309,15 +2325,14 @@ proc MRProstateCareUpdateNavigationTab {} {
 proc MRProstateCareUpdateRSA {} {
     global MRProstateCare Volume
 
-    if {$MRProstateCare(currentPoint) == "none"} {
+    if {$MRProstateCare(currentPoint) == "None"} {
         set MRProstateCare(xStr) 0.0
         set MRProstateCare(zStr) 0.0
         set MRProstateCare(yStr) 0.0
     } else {
-        set coords [MRProstateCareGetRSAFromPoint $MRProstateCare(currentPoint)] 
-        set MRProstateCare(xStr) [lindex $coords 0]
-        set MRProstateCare(zStr) [lindex $coords 1]
-        set MRProstateCare(yStr) [lindex $coords 2]
+        set MRProstateCare(xStr) [lindex $MRProstateCare(targetRSA) 0]
+        set MRProstateCare(zStr) [lindex $MRProstateCare(targetRSA) 1]
+        set MRProstateCare(yStr) [lindex $MRProstateCare(targetRSA) 2]
     }
 
     # save values
