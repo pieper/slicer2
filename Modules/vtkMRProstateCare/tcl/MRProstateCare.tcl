@@ -112,7 +112,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.76 $} {$Date: 2006/10/27 16:34:25 $}]
+        {$Revision: 1.1.2.77 $} {$Date: 2006/10/27 19:46:15 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1128,9 +1128,12 @@ proc MRProstateCareUpdateForNav {} {
         RenderBoth $s
     }
 
+    MRProstateCareUpdateTargetOffsetText
+
     # set MRProstateCare(targetBallVisibility) 1 
     MRProstateCareShowTargetBall
     MRProstateCareShowTargetTitle 
+    MRProstateCareShowTargetOffsetText
     MRProstateCareShowSliceIn3D
 }
 
@@ -1259,13 +1262,42 @@ proc MRProstateCareParseCurrentPoint {} {
     }
 }
 
- 
-proc MRProstateCareHidePoint {} {
-    global MRProstateCare View
 
-    $MRProstateCare(pointTitleActor) SetVisibility 0 
-    pointActor SetVisibility 0 
+proc MRProstateCareShowTargetOffsetText {} {
+    global MRProstateCare View 
 
+    if {$MRProstateCare(offsetText) == "None"} {
+        $MRProstateCare(targetOffsetActor) SetVisibility 0 
+        Render3D
+        return
+    }
+
+    set pos [expr   $View(fov)]
+    set neg [expr - $View(fov)]
+    set r1 0.35
+    set r2 0.33
+    switch $MRProstateCare(imageDisplayOrient) {
+        "Axial" {
+            set rt [expr $r1 * $pos]
+            set at [expr $r2 * $neg]
+            set st $neg
+        }
+        "Sagittal" {
+            set rt $neg 
+            set at [expr $r1 * $pos]
+            set st [expr $r2 * $neg]
+        }
+        "Coronal" {
+            set rt [expr $r1 * $pos] 
+            set at $pos 
+            set st [expr $r2 * $neg]
+        }
+    }
+
+    $MRProstateCare(targetOffsetText) SetText $MRProstateCare(offsetText) 
+    $MRProstateCare(targetOffsetActor) SetPosition $rt $at $st  
+    $MRProstateCare(targetOffsetActor) SetVisibility 1 
+    Render3D
 }
 
 
@@ -1278,27 +1310,25 @@ proc MRProstateCareShowTargetTitle {} {
         return
     }
 
-    set pos [expr   $View(fov) * 0.30]
-    set neg [expr - $View(fov) * 0.30]
-
+    set pos [expr   $View(fov)]
+    set neg [expr - $View(fov)]
+    set r1 0.35
+    set r2 0.33
     switch $MRProstateCare(imageDisplayOrient) {
         "Axial" {
-            set rt 0.0
-            set at $pos 
+            set rt [expr $r1 * $pos]
+            set at [expr $r2 * $pos]
             set st $neg
-            set sb $st
         }
         "Sagittal" {
             set rt $neg 
-            set at 0.0 
-            set st $pos
-            set rb $rt
+            set at [expr $r1 * $pos]
+            set st [expr $r2 * $pos]
         }
         "Coronal" {
-            set rt 0.0 
+            set rt [expr $r1 * $pos] 
             set at $pos 
-            set st $pos
-            set ab $at
+            set st [expr $r2 * $pos]
         }
     }
 
@@ -1354,6 +1384,7 @@ proc MRProstateCareSelectPoint {m} {
     set MRProstateCare(currentPoint) $m
 
     MRProstateCareParseCurrentPoint
+    MRProstateCareUpdateTargetOffsetText
 
     # Update rsa values in Display->Scan tab
     MRProstateCareUpdateRSA
@@ -1363,6 +1394,51 @@ proc MRProstateCareSelectPoint {m} {
     # set MRProstateCare(targetBallVisibility) 1 
     MRProstateCareShowTargetBall
     MRProstateCareShowTargetTitle 
+    MRProstateCareShowTargetOffsetText
+
+}
+
+
+proc MRProstateCareUpdateTargetOffsetText {} {
+    global MRProstateCare Locator
+
+    set fvName [[[Slicer GetForeVolume 0] GetMrmlNode] GetName]
+    if {$MRProstateCare(currentPoint) == "None" ||
+        $fvName != "Realtime"} {
+        set MRProstateCare(offsetText) "None"
+    } else {
+        # Axial slice changes as S
+        # Saggital slice changes as R
+        # Coronal slice changes as A
+        set Rr [lindex $Locator(realtimeRSA) 0] 
+        set Rs [lindex $Locator(realtimeRSA) 1] 
+        set Ra [lindex $Locator(realtimeRSA) 2] 
+        set Tr [lindex $MRProstateCare(targetRSA) 0] 
+        set Ts [lindex $MRProstateCare(targetRSA) 1] 
+        set Ta [lindex $MRProstateCare(targetRSA) 2] 
+        switch $Locator(realtimeScanOrder) {
+            "SI" {
+                set offset [expr $Ts - $Rs]  
+                set lt S 
+            } 
+            "RL" {
+                set offset [expr $Tr - $Rr]  
+                set lt R 
+            } 
+            "AP" {
+                set offset [expr $Ta - $Ra]  
+                set lt A 
+            } 
+        }
+        if {$offset > 0} {
+            set t "${lt}(+${offset})"
+        } elseif {$offset < 0} {
+            set t "${lt}(${offset})"
+        } else {
+            set t "${lt}(0)"
+        }
+        set MRProstateCare(offsetText) $t 
+    }
 }
 
 
@@ -2050,9 +2126,8 @@ proc MRProstateCareBuildVTK {} {
     set Locator(server) Flashpoint
     set Gui(pc) 0 
 
-    # Actor for point name
+    # Actor for target title 
     #-------------------------------
-
     set scale [expr $View(fov) * $Anno(letterSize) ]
     vtkVectorText pointTitleText
     pointTitleText SetText "pointTitle"
@@ -2082,7 +2157,41 @@ proc MRProstateCareBuildVTK {} {
     # Make point title follow camera
     pointTitleActor SetCamera $View(viewCam)
 
-    # Actor for point location 
+
+    # Actor for text to indicate the 
+    # offset between the target and
+    # current realtime iamge
+    #-------------------------------
+    vtkVectorText targetOffsetText
+    targetOffsetText SetText "targetOffset"
+    set MRProstateCare(targetOffsetText) targetOffsetText 
+
+    vtkPolyDataMapper  targetOffsetMapper
+    targetOffsetMapper SetInput [targetOffsetText GetOutput]
+    vtkFollower targetOffsetActor
+    targetOffsetActor SetMapper targetOffsetMapper
+    targetOffsetActor SetScale  $scale $scale $scale 
+    targetOffsetActor SetPickable 0
+    if {$View(bgName)=="White"} {
+        [targetOffsetActor GetProperty] SetColor 0 0 1 
+    } else {
+        [targetOffsetActor GetProperty] SetColor 0 0 1 
+    }
+    [targetOffsetActor GetProperty] SetDiffuse 0.0
+    [targetOffsetActor GetProperty] SetAmbient 1.0
+    [targetOffsetActor GetProperty] SetSpecular 0.0
+    # add only to the Main View window
+    viewRen AddActor targetOffsetActor
+
+    targetOffsetActor SetPosition 0.0  0.0 0.0 
+    targetOffsetActor SetVisibility 0
+    set MRProstateCare(targetOffsetActor) targetOffsetActor
+
+    # Make point title follow camera
+    targetOffsetActor SetCamera $View(viewCam)
+
+
+    # Actor for target ball 
     #-------------------------------
     MakeVTKObject Sphere point 
     pointSource SetRadius 3.0 
@@ -2395,6 +2504,7 @@ proc MRProstateCareZoom {} {
     }
 
     Render
+
 }
 
 
