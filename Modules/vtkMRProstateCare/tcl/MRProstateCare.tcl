@@ -112,7 +112,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.77 $} {$Date: 2006/10/27 19:46:15 $}]
+        {$Revision: 1.1.2.78 $} {$Date: 2006/10/30 15:25:51 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -158,6 +158,9 @@ proc MRProstateCareInit {} {
     set MRProstateCare(targetRSA) "0 0 0"
     set MRProstateCare(targetBallVisibility) 1 
     set MRProstateCare(preOpVolumeID) 0
+
+    set MRProstateCare(textDisplayRate1) 0.30
+    set MRProstateCare(textDisplayRate2) 0.23
 
     # Creates bindings
     MRProstateCareCreateBindings 
@@ -1083,6 +1086,11 @@ proc MRProstateCareSetScaleFactor {v} {
     global MRProstateCare  
 
     set MRProstateCare(scaleFactor) $v
+    set MRProstateCare(textDisplayRate1) [expr 0.30 - ($v - 1) * 0.025]
+    set MRProstateCare(textDisplayRate2) [expr 0.23 - ($v - 1) * 0.025]
+    MRProstateCareShowTargetTitle 
+    MRProstateCareShowTargetOffsetText
+    Render3D
 }
 
 
@@ -1274,8 +1282,8 @@ proc MRProstateCareShowTargetOffsetText {} {
 
     set pos [expr   $View(fov)]
     set neg [expr - $View(fov)]
-    set r1 0.35
-    set r2 0.33
+    set r1 $MRProstateCare(textDisplayRate1) 
+    set r2 $MRProstateCare(textDisplayRate2) 
     switch $MRProstateCare(imageDisplayOrient) {
         "Axial" {
             set rt [expr $r1 * $pos]
@@ -1312,8 +1320,9 @@ proc MRProstateCareShowTargetTitle {} {
 
     set pos [expr   $View(fov)]
     set neg [expr - $View(fov)]
-    set r1 0.35
-    set r2 0.33
+    set r1 $MRProstateCare(textDisplayRate1) 
+    set r2 $MRProstateCare(textDisplayRate2) 
+
     switch $MRProstateCare(imageDisplayOrient) {
         "Axial" {
             set rt [expr $r1 * $pos]
@@ -2128,7 +2137,8 @@ proc MRProstateCareBuildVTK {} {
 
     # Actor for target title 
     #-------------------------------
-    set scale [expr $View(fov) * $Anno(letterSize) ]
+    # set scale [expr $View(fov) * $Anno(letterSize) ]
+    set scale 8 
     vtkVectorText pointTitleText
     pointTitleText SetText "pointTitle"
     set MRProstateCare(pointTitleText) pointTitleText
