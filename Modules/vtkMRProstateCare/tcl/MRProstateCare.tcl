@@ -112,7 +112,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.78 $} {$Date: 2006/10/30 15:25:51 $}]
+        {$Revision: 1.1.2.79 $} {$Date: 2006/10/31 14:20:33 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1097,7 +1097,6 @@ proc MRProstateCareSetScaleFactor {v} {
 proc MRProstateCareUpdateForNav {} { 
     global MRProstateCare Locator Slice Anno Volume 
 
-
     # from scanning orientation to dispaly orientation
     switch $Locator(realtimeScanOrder) {
         "SI" {set MRProstateCare(imageDisplayOrient) "Axial"} 
@@ -1124,6 +1123,18 @@ proc MRProstateCareUpdateForNav {} {
     MainVolumesSetActive $Locator(idRealtime)
     MainVolumesRender
 
+    MRProstateCareSetSlices
+    MRProstateCareUpdateTargetOffsetText
+    # set MRProstateCare(targetBallVisibility) 1 
+    MRProstateCareShowTargetBall
+    MRProstateCareShowTargetTitle 
+    MRProstateCareShowTargetOffsetText
+    MRProstateCareShowSliceIn3D
+}
+
+
+proc MRProstateCareSetSlices {} { 
+    global MRProstateCare Locator Slice 
 
     # set right slice to display
     set coords $Locator(realtimeRSA) 
@@ -1135,17 +1146,9 @@ proc MRProstateCareUpdateForNav {} {
         MainSlicesSetOffset $s
         RenderBoth $s
     }
-
-    MRProstateCareUpdateTargetOffsetText
-
-    # set MRProstateCare(targetBallVisibility) 1 
-    MRProstateCareShowTargetBall
-    MRProstateCareShowTargetTitle 
-    MRProstateCareShowTargetOffsetText
-    MRProstateCareShowSliceIn3D
 }
 
-
+ 
 proc MRProstateCareShowSliceIn3D {} { 
     global MRProstateCare Slice Anno Volume 
 
@@ -1222,6 +1225,7 @@ proc MRProstateCareNavLoop {} {
         return
     } 
 
+    MRProstateCareSetSlices
     MRProstateCareShowSliceIn3D
 
     if {$Slice(opacity) == 1} {set MRProstateCare(navLoopFactor) -0.25}
