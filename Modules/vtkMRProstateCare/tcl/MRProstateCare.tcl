@@ -112,7 +112,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.79 $} {$Date: 2006/10/31 14:20:33 $}]
+        {$Revision: 1.1.2.80 $} {$Date: 2006/11/02 20:44:14 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1353,13 +1353,27 @@ proc MRProstateCareShowTargetTitle {} {
 
 
 proc MRProstateCareShowTargetBall {} {
-    global MRProstateCare 
+    global MRProstateCare View 
 
     set vis 0
+    set pos [expr   $View(fov)]
+    set neg [expr - $View(fov)]
     if {$MRProstateCare(targetTitle) != "None"} {
         set rb [lindex $MRProstateCare(targetRSA) 0]
         set ab [lindex $MRProstateCare(targetRSA) 2]
         set sb [lindex $MRProstateCare(targetRSA) 1]
+
+        switch $MRProstateCare(imageDisplayOrient) {
+            "Axial" {
+                set sb $neg
+            }
+            "Sagittal" {
+                set rb $neg 
+            }
+            "Coronal" {
+                set ab $pos 
+            }
+        }
  
         pointActor SetPosition $rb $ab $sb  
         set vis $MRProstateCare(targetBallVisibility)
