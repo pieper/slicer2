@@ -112,7 +112,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.80 $} {$Date: 2006/11/02 20:44:14 $}]
+        {$Revision: 1.1.2.81 $} {$Date: 2006/11/08 21:17:58 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -159,8 +159,11 @@ proc MRProstateCareInit {} {
     set MRProstateCare(targetBallVisibility) 1 
     set MRProstateCare(preOpVolumeID) 0
 
-    set MRProstateCare(textDisplayRate1) 0.30
-    set MRProstateCare(textDisplayRate2) 0.23
+#    set MRProstateCare(textDisplayRate1) 0.30
+#    set MRProstateCare(textDisplayRate2) 0.23
+    set MRProstateCare(textDisplayRate1) 0.50
+    set MRProstateCare(textDisplayRate2) 0.43
+
 
     # Creates bindings
     MRProstateCareCreateBindings 
@@ -1276,13 +1279,20 @@ proc MRProstateCareParseCurrentPoint {} {
 
 
 proc MRProstateCareShowTargetOffsetText {} {
-    global MRProstateCare View 
+    global MRProstateCare View Locator 
 
     if {$MRProstateCare(offsetText) == "None"} {
         $MRProstateCare(targetOffsetActor) SetVisibility 0 
         Render3D
         return
     }
+
+    # Axial slice changes as S
+    # Saggital slice changes as R
+    # Coronal slice changes as A
+    set Rr [lindex $Locator(realtimeRSA) 0] 
+    set Rs [lindex $Locator(realtimeRSA) 1] 
+    set Ra [lindex $Locator(realtimeRSA) 2] 
 
     set pos [expr   $View(fov)]
     set neg [expr - $View(fov)]
@@ -1292,16 +1302,16 @@ proc MRProstateCareShowTargetOffsetText {} {
         "Axial" {
             set rt [expr $r1 * $pos]
             set at [expr $r2 * $neg]
-            set st $neg
+            set st [expr $Rs - 10] 
         }
         "Sagittal" {
-            set rt $neg 
+            set rt [expr $Rr - 10] 
             set at [expr $r1 * $pos]
             set st [expr $r2 * $neg]
         }
         "Coronal" {
             set rt [expr $r1 * $pos] 
-            set at $pos 
+            set at [expr $Ra + 10] 
             set st [expr $r2 * $neg]
         }
     }
@@ -1314,13 +1324,20 @@ proc MRProstateCareShowTargetOffsetText {} {
 
 
 proc MRProstateCareShowTargetTitle {} {
-    global MRProstateCare View Slice
+    global MRProstateCare View Slice Locator
 
     if {$MRProstateCare(targetTitle) == "None"} {
         $MRProstateCare(pointTitleActor) SetVisibility 0 
         Render3D
         return
     }
+
+    # Axial slice changes as S
+    # Saggital slice changes as R
+    # Coronal slice changes as A
+    set Rr [lindex $Locator(realtimeRSA) 0] 
+    set Rs [lindex $Locator(realtimeRSA) 1] 
+    set Ra [lindex $Locator(realtimeRSA) 2] 
 
     set pos [expr   $View(fov)]
     set neg [expr - $View(fov)]
@@ -1331,16 +1348,16 @@ proc MRProstateCareShowTargetTitle {} {
         "Axial" {
             set rt [expr $r1 * $pos]
             set at [expr $r2 * $pos]
-            set st $neg
+            set st [expr $Rs - 10] 
         }
         "Sagittal" {
-            set rt $neg 
+            set rt [expr $Rr - 10] 
             set at [expr $r1 * $pos]
             set st [expr $r2 * $pos]
         }
         "Coronal" {
             set rt [expr $r1 * $pos] 
-            set at $pos 
+            set at [expr $Ra + 10] 
             set st [expr $r2 * $pos]
         }
     }
@@ -1353,7 +1370,14 @@ proc MRProstateCareShowTargetTitle {} {
 
 
 proc MRProstateCareShowTargetBall {} {
-    global MRProstateCare View 
+    global MRProstateCare View Locator 
+
+    # Axial slice changes as S
+    # Saggital slice changes as R
+    # Coronal slice changes as A
+    set Rr [lindex $Locator(realtimeRSA) 0] 
+    set Rs [lindex $Locator(realtimeRSA) 1] 
+    set Ra [lindex $Locator(realtimeRSA) 2] 
 
     set vis 0
     set pos [expr   $View(fov)]
@@ -1365,13 +1389,13 @@ proc MRProstateCareShowTargetBall {} {
 
         switch $MRProstateCare(imageDisplayOrient) {
             "Axial" {
-                set sb $neg
+                set sb [expr $Rs - 2] 
             }
             "Sagittal" {
-                set rb $neg 
+                set rb [expr $Rr - 2] 
             }
             "Coronal" {
-                set ab $pos 
+                set ab [expr $Ra + 2] 
             }
         }
  
@@ -2168,9 +2192,9 @@ proc MRProstateCareBuildVTK {} {
     pointTitleActor SetScale  $scale $scale $scale 
     pointTitleActor SetPickable 0
     if {$View(bgName)=="White"} {
-        [pointTitleActor GetProperty] SetColor 0 0 1 
+        [pointTitleActor GetProperty] SetColor 1 1 0 
     } else {
-        [pointTitleActor GetProperty] SetColor 0 0 1 
+        [pointTitleActor GetProperty] SetColor 1 1 0 
     }
     [pointTitleActor GetProperty] SetDiffuse 0.0
     [pointTitleActor GetProperty] SetAmbient 1.0
@@ -2201,9 +2225,9 @@ proc MRProstateCareBuildVTK {} {
     targetOffsetActor SetScale  $scale $scale $scale 
     targetOffsetActor SetPickable 0
     if {$View(bgName)=="White"} {
-        [targetOffsetActor GetProperty] SetColor 0 0 1 
+        [targetOffsetActor GetProperty] SetColor 1 1 0 
     } else {
-        [targetOffsetActor GetProperty] SetColor 0 0 1 
+        [targetOffsetActor GetProperty] SetColor 1 1 0 
     }
     [targetOffsetActor GetProperty] SetDiffuse 0.0
     [targetOffsetActor GetProperty] SetAmbient 1.0
@@ -2222,11 +2246,11 @@ proc MRProstateCareBuildVTK {} {
     # Actor for target ball 
     #-------------------------------
     MakeVTKObject Sphere point 
-    pointSource SetRadius 3.0 
+    pointSource SetRadius 2.0 
     if {$View(bgName)=="White"} {
-        [pointActor GetProperty] SetColor 0 0 1 
+        [pointActor GetProperty] SetColor 1 1 0 
     } else {
-        [pointActor GetProperty] SetColor 0 0 1 
+        [pointActor GetProperty] SetColor 1 1 0 
     }
     pointActor SetPosition 0.0 0.0 0.0 
     pointActor SetVisibility 0 
