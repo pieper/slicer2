@@ -112,7 +112,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.82 $} {$Date: 2006/11/09 20:26:06 $}]
+        {$Revision: 1.1.2.83 $} {$Date: 2006/11/09 20:41:51 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1606,9 +1606,9 @@ proc MRProstateCareLoad {} {
                             } elseif {$x == "2\)"} {
                                 set MRProstateCare(entry,PR) $value 
                             } elseif {$x == "3\)"} {
-                                set MRProstateCare(entry,AL) $value 
-                            } else {
                                 set MRProstateCare(entry,PL) $value 
+                            } else {
+                                set MRProstateCare(entry,AL) $value 
                             }
                             break
                         }
