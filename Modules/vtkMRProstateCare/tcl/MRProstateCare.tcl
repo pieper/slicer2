@@ -112,7 +112,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.81 $} {$Date: 2006/11/08 21:17:58 $}]
+        {$Revision: 1.1.2.82 $} {$Date: 2006/11/09 20:26:06 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1228,6 +1228,8 @@ proc MRProstateCareNavLoop {} {
         return
     } 
 
+    set id [MIRIADSegmentGetVolumeByName "Realtime"]
+    MainSlicesSetVolumeAll Fore $id 
     MRProstateCareSetSlices
     MRProstateCareShowSliceIn3D
 
@@ -1302,16 +1304,16 @@ proc MRProstateCareShowTargetOffsetText {} {
         "Axial" {
             set rt [expr $r1 * $pos]
             set at [expr $r2 * $neg]
-            set st [expr $Rs - 10] 
+            set st $neg 
         }
         "Sagittal" {
-            set rt [expr $Rr - 10] 
+            set rt $neg 
             set at [expr $r1 * $pos]
             set st [expr $r2 * $neg]
         }
         "Coronal" {
             set rt [expr $r1 * $pos] 
-            set at [expr $Ra + 10] 
+            set at $pos 
             set st [expr $r2 * $neg]
         }
     }
@@ -1348,16 +1350,16 @@ proc MRProstateCareShowTargetTitle {} {
         "Axial" {
             set rt [expr $r1 * $pos]
             set at [expr $r2 * $pos]
-            set st [expr $Rs - 10] 
+            set st $neg 
         }
         "Sagittal" {
-            set rt [expr $Rr - 10] 
+            set rt $neg 
             set at [expr $r1 * $pos]
             set st [expr $r2 * $pos]
         }
         "Coronal" {
             set rt [expr $r1 * $pos] 
-            set at [expr $Ra + 10] 
+            set at $pos 
             set st [expr $r2 * $pos]
         }
     }
@@ -1469,15 +1471,15 @@ proc MRProstateCareUpdateTargetOffsetText {} {
         set Ta [lindex $MRProstateCare(targetRSA) 2] 
         switch $Locator(realtimeScanOrder) {
             "SI" {
-                set offset [expr $Ts - $Rs]  
+                set offset [expr round($Ts - $Rs)]  
                 set lt S 
             } 
             "RL" {
-                set offset [expr $Tr - $Rr]  
+                set offset [expr round($Tr - $Rr)]  
                 set lt R 
             } 
             "AP" {
-                set offset [expr $Ta - $Ra]  
+                set offset [expr round($Ta - $Ra)]  
                 set lt A 
             } 
         }
