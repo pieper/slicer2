@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageAccumulateDiscrete.cxx,v $
-  Date:      $Date: 2006/04/13 19:30:50 $
-  Version:   $Revision: 1.22 $
+  Date:      $Date: 2006/11/10 19:51:43 $
+  Version:   $Revision: 1.23 $
 
 =========================================================================auto=*/
 #include "vtkImageAccumulateDiscrete.h"
@@ -164,14 +164,6 @@ void vtkImageAccumulateDiscrete::ExecuteData(vtkDataObject *)
   
   int type = inData->GetScalarType();
 
-#ifdef SLICER_VTK5
-  //TODO type access is broken on vtk5?
-  if ( type != VTK_SHORT )
-  {
-      vtkErrorMacro( "setting input data type to VTK_SHORT (4), was " << type);
-      type = VTK_SHORT;
-  }
-#endif
   switch (type)
   {
     case VTK_CHAR:
