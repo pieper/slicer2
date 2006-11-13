@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Graph.tcl,v $
-#   Date:      $Date: 2006/01/06 17:57:05 $
-#   Version:   $Revision: 1.8 $
+#   Date:      $Date: 2006/11/13 16:41:10 $
+#   Version:   $Revision: 1.9 $
 # 
 #===============================================================================
 # FILE:        Graph.tcl
@@ -729,12 +729,21 @@ proc GraphCreateHistogramCurve {varDataName Volume Xmin Xmax Xlen} {
     ${varDataName}Res SetInput [${varDataName}Accu GetOutput] 
     ${varDataName}Res Update 
     # Believe it or not I still have to do the following check otherwise things go bad 
-    set extent [[${varDataName}Res GetOutput] GetExtent]
+    set output [${varDataName}Res GetOutput]
+    set extent [$output GetExtent]
+
+    while {[expr [lindex $extent 1] - [lindex $extent 0] + 1] > $Xlen } {
+      set XInvUnit [expr $XInvUnit * 0.99]
+      ${varDataName}Res SetAxisMagnificationFactor 0 $XInvUnit
+      ${varDataName}Res Update 
+      set extent [$output GetExtent]
+    }
+
     while {[expr [lindex $extent 1] - [lindex $extent 0] + 1] < $Xlen } {
-    set XInvUnit [expr $XInvUnit * 1.001]
-    ${varDataName}Res SetAxisMagnificationFactor 0 $XInvUnit
-    ${varDataName}Res Update 
-    set extent [[${varDataName}Res GetOutput] GetExtent]
+      set XInvUnit [expr $XInvUnit * 1.001]
+      ${varDataName}Res SetAxisMagnificationFactor 0 $XInvUnit
+      ${varDataName}Res Update 
+      set extent [$output GetExtent]
     }
 }
 
