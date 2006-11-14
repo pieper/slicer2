@@ -431,15 +431,15 @@ int Serve(fd, doRealtime)
                 locStatus = (short)locator_status();
                 locStatus = (locStatus == 0) ? LOC_OK : LOC_NO;
 
-                /* Read locator in mm */
-                locator_last_xyz_nxyz_txyz(&x, &y, &z, 
-                        &nx, &ny, &nz, &tx, &ty, &tz);
-
                 /* See if locator has new info */
-                NewLocator = 1;
+                NewLocator = (locStatus == LOC_OK) ? 1 : 0;
 
                 if (NewLocator)
                 {
+                    /* Read locator in mm */
+                    locator_last_xyz_nxyz_txyz(&x, &y, &z,
+                        &nx, &ny, &nz, &tx, &ty, &tz);
+
                     prevLocStatus = locStatus;
                     px  = x;   py  = y;   pz  = z;
                     pnx = nx;  pny = ny;  pnz = nz;
