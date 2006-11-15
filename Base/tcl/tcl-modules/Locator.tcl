@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2006/10/26 17:53:06 $
-#   Version:   $Revision: 1.38.12.2.2.21 $
+#   Date:      $Date: 2006/11/15 16:52:46 $
+#   Version:   $Revision: 1.38.12.2.2.22 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -75,6 +75,9 @@ proc LocatorInit {} {
     # Define Procedures
     set Module($m,procGUI)   LocatorBuildGUI
     set Module($m,procVTK)   LocatorBuildVTK
+    set Module($m,procEnter) LocatorEnter
+    set Module($m,procExit)  LocatorExit
+
 
     lappend Module(procStorePresets) LocatorStorePresets
     lappend Module(procRecallPresets) LocatorRecallPresets
@@ -89,7 +92,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.21 $} {$Date: 2006/10/26 17:53:06 $}]
+        {$Revision: 1.38.12.2.2.22 $} {$Date: 2006/11/15 16:52:46 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -136,7 +139,7 @@ proc LocatorInit {} {
     set Locator(prefixRealtime) ""
     
     # Servers
-    set Locator(serverList) "Flashpoint File Images Csys"
+    set Locator(serverList) "Flashpoint File Images OpenTracker Csys"
     set Locator(server) [lindex $Locator(serverList) 0]
     set Locator(connect) 0
     set Locator(pause) 0
@@ -162,11 +165,18 @@ proc LocatorInit {} {
     set Locator(Images,increment) 1
     # Csys
     set Locator(csysVisible) 0
+    # OpenTracker
+    set Locator(OpenTracker,msPoll) 100
+    set dir [pwd]
+    set Locator(OpenTracker,cfg) [file join $dir defaultConfig.xml] 
 
     set Locator(bellCount) 0
     set Locator(realtimeScanOrder) "AP" 
     set Locator(realtimeRSA) "0 0 0" 
+    set Locator(pointPairList) "" 
+    LocatorCreateBindings
 }
+
 
 #-------------------------------------------------------------------------------
 # .PROC LocatorUpdateMRML
@@ -230,6 +240,9 @@ proc LocatorBuildVTK {} {
     }
     vtkImageRealtimeScan Locator(Flashpoint,src)
     Locator(Flashpoint,src) SetOperatingSystem $os
+
+    # OpenTracker
+    vtkOpenTracker Locator(OpenTracker,src);
 
 #    Locator(Flashpoint,src) SetTest 1
 
@@ -627,6 +640,47 @@ know the location of the tip of this device rather than the Locator.
         grid $f.e$x -sticky w
     }
 
+    #-------------------------------------------
+    # Server->Bot->OpenTracker frame
+    #-------------------------------------------
+    set f $fServer.fBot.fOpenTracker
+
+    #--- create blt notebook
+    blt::tabset $f.tsNotebook -relief flat -borderwidth 0
+    pack $f.tsNotebook -side top
+
+    #--- notebook configure
+    $f.tsNotebook configure -width 250
+    $f.tsNotebook configure -height 500 
+    $f.tsNotebook configure -background $::Gui(activeWorkspace)
+    $f.tsNotebook configure -activebackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -selectbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -tabbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -highlightbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -highlightcolor $::Gui(activeWorkspace)
+    $f.tsNotebook configure -foreground black
+    $f.tsNotebook configure -activeforeground black
+    $f.tsNotebook configure -selectforeground black
+    $f.tsNotebook configure -tabforeground black
+    $f.tsNotebook configure -relief flat
+    $f.tsNotebook configure -tabrelief raised
+
+    #--- tab configure
+    set i 0
+    foreach t "Setup Registration" {
+        $f.tsNotebook insert $i $t
+        frame $f.tsNotebook.f$t -bg $Gui(activeWorkspace) -bd 2 
+        LocatorBuildGUIFor${t} $f.tsNotebook.f$t
+
+        $f.tsNotebook tab configure $t -window $f.tsNotebook.f$t 
+        $f.tsNotebook tab configure $t -activebackground $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -selectbackground $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -background $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -fill both -padx 2 -pady 1 
+
+        incr i
+    }
+
 
     #-------------------------------------------
     # Server->Bot->Images frame
@@ -884,6 +938,296 @@ know the location of the tip of this device rather than the Locator.
             -pady 2 -padx 5 -sticky e
     }
 }
+
+
+
+proc LocatorBuildGUIForRegistration {parent} {
+    global Locator Gui 
+
+    set f $parent
+    foreach x "1 2 3" {
+        if {$x != 3} {
+            frame $f.f$x -bg $Gui(activeWorkspace) -relief groove -bd 2 
+        } else {
+            frame $f.f$x -bg $Gui(activeWorkspace)
+        }
+        pack $f.f$x -side top -pady 1 -fill x 
+    }
+
+    set f $parent.f1
+    eval {label $f.lTitle -text "Add a point pair:"} $Gui(WTA)
+ 
+    eval {label $f.lPatient -text "Pat space:"} $Gui(WLA)
+    eval {entry $f.ePatient -width 20 -textvariable Locator(entry,patientCoords)} $Gui(WEA)
+    eval {label $f.lSlicer -text "Slicer space:"} $Gui(WLA)
+    eval {entry $f.eSlicer -width 20 -textvariable Locator(entry,slicerCoords)} $Gui(WEA)
+    DevAddButton $f.bGet "Get" "LocatorGetPatientCoords" 3 
+    DevAddButton $f.bOK "OK" "LocatorAddPointPair" 8 
+
+    blt::table $f \
+        0,0 $f.lTitle -padx 1 -pady 7 -fill x -cspan 2 \
+        1,0 $f.lPatient -padx 1 -pady 1 -anchor e \
+        1,1 $f.ePatient -fill x -padx 1 -pady 1 -anchor w \
+        1,2 $f.bGet  -fill x -padx 1 -pady 1 -anchor w \
+        2,0 $f.lSlicer -padx 1 -pady 1 -anchor e \
+        2,1 $f.eSlicer -padx 1 -pady 1 -anchor w \
+        3,1 $f.bOK -padx 1 -pady 3 -anchor w
+
+
+    set f $parent.f2
+    foreach x "Up Down" {
+        frame $f.f$x -bg $Gui(activeWorkspace) 
+        pack $f.f$x -side top 
+    }
+
+    set f $parent.f2.fUp
+    eval {label $f.lTitle -text "Defined point pairs:"} $Gui(WTA)
+    scrollbar $f.vs -orient vertical -bg $Gui(activeWorkspace)
+    scrollbar $f.hs -orient horizontal -bg $Gui(activeWorkspace)
+    set Locator(PointsVerScroll) $f.vs
+    set Locator(PointsHonScroll) $f.hs
+    listbox $f.lb \
+        -height 5 -width 24 \
+        -bg $Gui(activeWorkspace) \
+        -xscrollcommand {$::Locator(PointsHonScroll) set} \
+        -yscrollcommand {$::Locator(PointsVerScroll) set}
+    set Locator(pointPairListBox) $f.lb
+    $Locator(PointsHonScroll) configure -command {$Locator(pointPairListBox) xview}
+    $Locator(PointsVerScroll) configure -command {$Locator(pointPairListBox) yview}
+
+    blt::table $f \
+        0,0 $f.lTitle -padx 10 -pady 7 \
+        1,0 $Locator(pointPairListBox) -padx 2 -pady 1 -fill x \
+        1,1 $Locator(PointsVerScroll) -fill y -padx 2 -pady 1 \
+        2,0 $Locator(PointsHonScroll) -fill x -padx 2 -pady 1
+
+
+    set f $parent.f2.fDown
+    DevAddButton $f.bLoad "Load" "LocatorLoadPointPairs" 8 
+    DevAddButton $f.bSave "Save" "LocatorSavePointPair" 8 
+    DevAddButton $f.bDelete "Delete" "LocatorDeletePointPair" 8 
+    grid $f.bLoad $f.bSave $f.bDelete -padx 1 -pady 2
+
+    set f $parent.f3
+    DevAddButton $f.bReg "Register" "LocatorRegister" 8 
+    DevAddButton $f.bReset "Reset" "LocatorResetRegistration" 8 
+
+    grid $f.bReg $f.bReset -padx 1 -pady 5 
+
+}
+
+
+
+proc LocatorResetRegistration {} {
+    global Locator
+
+    Locator(OpenTracker,src) SetUseRegistration 0 
+
+}
+
+
+
+proc LocatorLoadPointPairs {} {
+    global Locator
+
+    # read data from file
+    set fileType {{"Text" *.txt}}
+    set fileName [tk_getOpenFile -filetypes $fileType -parent .]
+
+    # if user just wanted to cancel
+    if {[string length $fileName] <= 0} {
+        return
+    }
+    
+    set fd [open $fileName r]
+    set data [read $fd]
+    set lines [split $data "\n"]
+    foreach line $lines {
+        set line [string trim $line]
+        eval $line
+    }
+    close $fd
+}
+
+
+
+proc LocatorSavePointPairs {} {
+    global Locator
+
+    set dir [pwd]
+    set fileName [file join $dir "opentracker_point_pairs.txt"]
+
+    set fd [open $fileName w]
+    puts $fd "\n\n\n\n\n"
+ 
+    set comment "# This text file saves the user input. Do not edit it.\n"
+    puts $fd $comment
+
+    set comment "# the point pair list"
+    puts $fd $comment
+    set str "set Locator(pointPairList) \"\"\n"
+    puts $fd $str
+    set str "\$Locator(pointPairListBox) delete 0 end\n"
+    puts $fd $str
+
+    foreach x $Locator(pointPairList) {
+        set str "lappend Locator(pointPairList) \{$x\}\n"
+        puts $fd $str
+        set str "\$Locator(pointPairListBox) insert end \{$x\}\n" 
+        puts $fd $str
+    }
+
+    close $fd
+}
+
+
+
+
+proc LocatorRegister {} {
+    global Locator
+
+    set size [llength $Locator(pointPairList)]
+    if {$size < 2} {
+        DevErrorWindow "At least 2 pairs of landmarks are needed for registration."
+        return
+    }
+
+    set size [llength $Locator(pointPairList)]
+    Locator(OpenTracker,src) SetNumberOfPoints $size 
+
+
+    set id 0 
+    foreach x $Locator(pointPairList) {
+        set c [string trim $x]
+        set i [string first ")" $c]
+        if {$i < 0} {
+            DevErrorWindow "Wrong point pair found: $c."
+            return
+        }
+
+        set start 1
+        set done [expr $i - 1]
+        set pc [string range $c $start $done] 
+
+        set start [expr $i + 2] 
+        set sc [string range $c $start end-1] 
+
+
+        Locator(OpenTracker,src) AddPoint $id [lindex $sc 0] [lindex $sc 1] [lindex $sc 2] \
+                                              [lindex $pc 0] [lindex $pc 1] [lindex $pc 2]  
+
+        incr id
+    }
+
+    set error [Locator(OpenTracker,src) DoRegistration] 
+    if {$error} {
+        DevErrorWindow "Error registration between TargetLandmarks and SourceLandmarks."
+        return
+    }
+
+    set Locator(lmtMatrix) [Locator(OpenTracker,src) GetLandmarkTransformMatrix] 
+    puts [$Locator(lmtMatrix) Print]
+
+}
+
+
+
+proc LocatorDeletePointPair {} {
+    global Locator
+
+    set curs [$Locator(pointPairListBox) curselection]
+    if {$curs >= 0} {
+        $Locator(pointPairListBox) delete $curs
+        set size [llength $Locator(pointPairList)]
+        set Locator(pointPairList) \
+            [lreplace $Locator(pointPairList) $curs $curs]
+        set size [llength $Locator(pointPairList)]
+
+    } else {
+        DevErrorWindow "Select a point pair to delete."
+    }
+
+}
+
+
+
+proc LocatorAddPointPair {} {
+    global Locator
+
+    set pc $Locator(entry,patientCoords)
+    set pc [string trim $pc]
+    regsub -all {( )+} $pc "   " pc 
+
+    set sc $Locator(entry,slicerCoords)
+    set sc [string trim $sc]
+    regsub -all {( )+} $sc "   " sc 
+
+
+    set psc "($pc)($sc)"
+    set index [lsearch -exact $Locator(pointPairList) $psc]
+    if {$index != -1} { 
+        DevErrorWindow "The point pair is already added in."
+        return
+    }
+
+ 
+
+    # Keep the new point in the point list
+    lappend Locator(pointPairList) $psc
+
+    # Put the point pair list into the list box
+    $Locator(pointPairListBox) delete 0 end
+    foreach x $Locator(pointPairList) {
+        $Locator(pointPairListBox) insert end $x 
+    }
+}
+
+
+
+proc LocatorGetPatientCoords {} {
+    global Locator
+
+    set Locator(entry,patientCoords) "$Locator(px)   $Locator(py)   $Locator(pz)"
+}
+
+
+
+proc LocatorBuildGUIForSetup {parent} {
+    global Locator Gui 
+
+    set s OpenTracker
+    set f $parent
+    foreach x "1 2 3" {
+        frame $f.f$x -bg $Gui(activeWorkspace) -relief groove -bd 2 
+        pack $f.f$x -side top -pady 1 -fill x 
+    }
+
+    set f $parent.f1
+    foreach x "Top Mid Bot" {
+        frame $f.f$x -bg $Gui(activeWorkspace) 
+        pack $f.f$x -side top -pady 1 -fill x 
+    }
+
+
+    set f $parent.f1.fTop
+#    DevAddLabel $f.lLabel "Set up:"
+#    pack $f.lLabel -side top -pady 2
+
+    set f $parent.f1.fMid
+    DevAddFileBrowse $f Locator "OpenTracker,cfg" "Config file:" \
+        "" "xml" "\$Volume(DefaultDir)" "Open" \
+        "Browse for a config file" "" "Absolute"
+
+    set f $parent.f1.fBot
+    set x "msPoll"
+    DevAddLabel $f.l$x "Update period (ms):"
+    eval {entry $f.e$x -textvariable Locator($s,$x) -width 13} $Gui(WEA)
+    grid $f.l$x $f.e$x -pady $Gui(pad) -padx $Gui(pad) -sticky e
+    grid $f.e$x -sticky w
+ 
+}
+
+
 
 #-------------------------------------------------------------------------------
 # .PROC LocatorSetActive
@@ -1624,7 +1968,15 @@ host='$Locator(Flashpoint,host)' port='$Locator(Flashpoint,port)'"
             $Locator(mbActive) config -state disabled
             LocatorLoopImages
         }
+
+    "OpenTracker" {
+        # Initialize
+        Locator(OpenTracker,src) Init $Locator(OpenTracker,cfg)
+        set Locator(loop) 1
+        $Locator(mbActive) config -state disabled
+        LocatorLoopOpenTracker
         }
+    }
 
     # DISCONNECT
     } else {
@@ -1651,6 +2003,65 @@ host='$Locator(Flashpoint,host)' port='$Locator(Flashpoint,port)'"
         }
     }
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC LocatorLoopOpenTracker
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc LocatorLoopOpenTracker {} {
+    global Locator Slice
+
+    if {$Locator(loop) == 0} {
+        return
+    }
+
+    Locator(OpenTracker,src) PollRealtime
+    #----------------    
+    # NEW LOCATOR
+    #----------------
+        set locMatrix [Locator(OpenTracker,src) GetLocatorMatrix]
+            
+
+        # Read matrix
+        set Locator(px) [$locMatrix GetElement 0 0]
+        set Locator(py) [$locMatrix GetElement 1 0]
+        set Locator(pz) [$locMatrix GetElement 2 0]
+        set Locator(nx) [$locMatrix GetElement 0 1]
+        set Locator(ny) [$locMatrix GetElement 1 1]
+        set Locator(nz) [$locMatrix GetElement 2 1]
+        set Locator(tx) [$locMatrix GetElement 0 2]
+        set Locator(ty) [$locMatrix GetElement 1 2]
+        set Locator(tz) [$locMatrix GetElement 2 2]
+
+        LocatorUseLocatorMatrix
+
+    # simond - service callback list.
+    # Perform realtime image processing
+    foreach cb $Locator(callbackList) {
+        $cb
+    }
+
+
+    # Render the slices that the locator is driving
+    foreach s $Slice(idList) {
+        if {[Slicer GetDriver $s] == 1} {
+            RenderSlice $s
+        }
+    }
+    Render3D
+
+    # Call update instead of update idletasks so that we
+    # process user input like changing slice orientation
+    update
+    if {[ValidateInt $Locator(OpenTracker,msPoll)] == 0} {
+        set Locator(OpenTracker,msPoll) 100
+    }
+    after $Locator(OpenTracker,msPoll) LocatorLoopOpenTracker
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC LocatorLoopFile
@@ -2407,3 +2818,90 @@ proc LocatorCsysCallback {args} {
     }
     Render3D
 }
+
+
+
+proc LocatorPushBindings {} {
+   global Ev Csys
+
+    EvActivateBindingSet LocatorSlice0Events
+    EvActivateBindingSet LocatorSlice1Events
+    EvActivateBindingSet LocatorSlice2Events
+}
+
+
+
+proc LocatorPopBindings {} {
+    global Ev Csys
+
+    EvDeactivateBindingSet LocatorSlice0Events
+    EvDeactivateBindingSet LocatorSlice1Events
+    EvDeactivateBindingSet LocatorSlice2Events
+}
+
+
+
+proc LocatorCreateBindings {} {
+    global Gui Ev
+
+    EvDeclareEventHandler LocatorSlicesEvents <1> \
+        {set xc %x; set yc %y; LocatorProcessMouseEvent $xc $yc}
+
+    EvAddWidgetToBindingSet LocatorSlice0Events $Gui(fSl0Win) {LocatorSlicesEvents}
+    EvAddWidgetToBindingSet LocatorSlice1Events $Gui(fSl1Win) {LocatorSlicesEvents}
+    EvAddWidgetToBindingSet LocatorSlice2Events $Gui(fSl2Win) {LocatorSlicesEvents}    
+}
+
+
+
+proc LocatorProcessMouseEvent {x y} {
+    global Locator Interactor Anno
+
+
+    if {$Locator(server) != "OpenTracker"} {
+        # Only for the OpenTracker server are we interested in 
+        # this mouse event.
+        return 
+    }
+
+    # Which slice was picked?
+    set s $Interactor(s)
+    if {$s == ""} {
+        DevErrorWindow "No slice was picked."
+        return
+    }
+
+    # Get RAS coordinates
+    set R [Anno($s,cur1,mapper) GetInput]
+    set rl [split $R " "]
+    set R [lindex $rl 1]
+
+    set A [Anno($s,cur2,mapper) GetInput]
+    set al [split $A " "]
+    set A [lindex $al 1]
+
+    set S [Anno($s,cur3,mapper) GetInput]
+    set sl [split $S " "]
+    set S [lindex $sl 1]
+
+    # One point
+    set Locator(entry,slicerCoords) "$R   $A   $S"
+}
+
+
+
+proc LocatorExit {} {
+
+    # pop event bindings
+    LocatorPopBindings
+}
+
+
+
+proc LocatorEnter {} {
+    global Locator
+   
+    #--- push all event bindings onto the stack.
+    LocatorPushBindings
+}
+
