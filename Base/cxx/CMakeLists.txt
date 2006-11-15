@@ -57,8 +57,9 @@ SET (Base_SRCS
 	vtkMrmlVolumeReadWriteStructuredPointsNode.cxx
 	# Endoscopic Module:
 	vtkImageDijkstra.cxx vtkDataSetToLabelMap.cxx
-    # for the Twin module
-    vtkXDisplayWindow.cxx
+        # for the Twin module
+        vtkXDisplayWindow.cxx
+        vtkOpenTracker.cxx
 )
 
 
@@ -70,6 +71,21 @@ SET (Base_SRCS
 #
 
 ADD_LIBRARY (vtkSlicerBase ${Base_SRCS})
+
+
+INCLUDE_DIRECTORIES(
+  C:/projects/igttechdev/libs/opentracker/src
+)
+
+FIND_LIBRARY(OPENTRACKER
+  NAMES opentrackerd 
+  PATHS C:/projects/igttechdev/libs/opentracker/lib
+)
+
+TARGET_LINK_LIBRARIES(vtkSlicerBase
+  ${OPENTRACKER}
+)
+
 
 #
 # Create the vtkSlicerBase Tcl library
@@ -210,6 +226,7 @@ LINK_LIBRARIES (
   vtkImaging 
   vtkFiltering
 )
+
   IF (APPLE)
     SET_TARGET_PROPERTIES(vtkSlicerBase PROPERTIES LINK_FLAGS "-init _oft_initSlicerBase")
   ENDIF(APPLE)
