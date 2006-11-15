@@ -112,7 +112,7 @@ proc MRProstateCareInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1.2.83 $} {$Date: 2006/11/09 20:41:51 $}]
+        {$Revision: 1.1.2.84 $} {$Date: 2006/11/15 20:44:32 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -163,6 +163,9 @@ proc MRProstateCareInit {} {
 #    set MRProstateCare(textDisplayRate2) 0.23
     set MRProstateCare(textDisplayRate1) 0.50
     set MRProstateCare(textDisplayRate2) 0.43
+
+    set MRProstateCare(targetTitle) "None"
+    set MRProstateCare(offsetText) "None"
 
 
     # Creates bindings
