@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup.tcl,v $
-#   Date:      $Date: 2006/03/17 23:15:17 $
-#   Version:   $Revision: 1.21 $
+#   Date:      $Date: 2006/11/17 14:50:44 $
+#   Version:   $Revision: 1.22 $
 # 
 #===============================================================================
 # FILE:        dup.tcl
@@ -275,8 +275,9 @@ itcl::body dup::prefs { } {
     set _prefs(DEFACE_DIR,help) "Staging directory for files to upload"
 
     # create a pref file if needed and let user fill in blanks
+    set preffile $::env(HOME)/.birndup/prefs
     if { ![file exists $::env(HOME)/.birndup/prefs] } {
-        set resp [tk_messageBox -type okcancel -message "A preferences file must be created for you.\n\nClick Ok to continue or Cancel to exit"]
+        set resp [tk_messageBox -type okcancel -message "A preferences file will be created for you in $preffile.\n\nClick OK to continue or Cancel to exit"]
         if { $resp == "cancel" } {
             itcl::delete object $this
             return ""
@@ -288,7 +289,7 @@ itcl::body dup::prefs { } {
         $this prefui
     }
 
-    set fp [open $::env(HOME)/.birndup/prefs r]
+    set fp [open $preffile r]
     array set userprefs [read $fp]
     close $fp
 
