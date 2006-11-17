@@ -22,7 +22,7 @@ set Blub(blubber) 1
 # Display value
 GraphCreate Blub $w $Xlen $Ylen "" "0 0" 0 $Dimension 1 "" $Xmin  $Xmax $Xsca "%d" $Ymin $Ymax $Ysca $Yfor 1
 GraphCreateGaussianCurveRegion BlubCurve 3 1.0 1.0 2 $Dimension $Xmin $Xmax $Xlen $Ymin $Ymax $Ylen 
-GraphAddCurveRegion Blub $w BlubCurve [GraphHexToRGB 00ff00] 0 0
+GraphAddCurveRegion Blub $w [BlubCurve GetOutput] [GraphHexToRGB 00ff00] 0 0
 
 # Change value 
 BlubCurve SetMean 4.0 0 
@@ -42,6 +42,6 @@ wm iconname $w Dialog
 
 GraphCreate Blub $w $Xlen $Xlen "" "0 0" 0 $Dimension 1 "" $Xmin  $Xmax $Xsca "%d" $Xmin $Xmax $Xsca $Yfor 1
 GraphCreateGaussianCurveRegion BlubCurve2 "4 3.7"  "0.1 0 0 0.2" 1.0 2 $Dimension $Xmin $Xmax $Xlen $Xmin $Xmax $Xlen 
-GraphAddCurveRegion Blub $w BlubCurve2 [GraphHexToRGB 00ff00] 0 0
+GraphAddCurveRegion Blub $w [BlubCurve2 GetOutput][GraphHexToRGB 00ff00] 0 0
 
 
