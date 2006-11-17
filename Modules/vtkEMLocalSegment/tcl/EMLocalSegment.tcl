@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMLocalSegment.tcl,v $
-#   Date:      $Date: 2006/09/16 18:32:33 $
-#   Version:   $Revision: 1.75 $
+#   Date:      $Date: 2006/11/17 19:26:27 $
+#   Version:   $Revision: 1.76 $
 # 
 #===============================================================================
 # FILE:        EMLocalSegment.tcl
@@ -269,7 +269,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.75 $} {$Date: 2006/09/16 18:32:33 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.76 $} {$Date: 2006/11/17 19:26:27 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -4850,9 +4850,9 @@ proc EMSegmentDrawDeleteCurveRegion {Sclass NumGraph} {
       EMSegmentCalcProb
       set flag [expr ($Sclass > 0 ? 0 : 1)]
       if {$Sclass} {
-      set EMSegment(Graph,$NumGraph,ID,$Sclass) [GraphAddCurveRegion EMSegment $EMSegment(Graph,$NumGraph,path) EMSegment(Graph,$NumGraph,Data,$Sclass) [GraphHexToRGB [string range $EMSegment(Cattrib,$Sclass,ColorCode) 1 6]] $flag $flag]
+      set EMSegment(Graph,$NumGraph,ID,$Sclass) [GraphAddCurveRegion EMSegment $EMSegment(Graph,$NumGraph,path) [EMSegment(Graph,$NumGraph,Data,$Sclass) GetOutput] [GraphHexToRGB [string range $EMSegment(Cattrib,$Sclass,ColorCode) 1 6]] $flag $flag]
       } else {
-      set EMSegment(Graph,$NumGraph,ID,$Sclass) [GraphAddCurveRegion EMSegment $EMSegment(Graph,$NumGraph,path) EMSegment(Graph,$NumGraph,Data,$Sclass)Res [GraphHexToRGB [string range $EMSegment(Cattrib,$Sclass,ColorGraphCode) 1 6]] $flag $flag]
+      set EMSegment(Graph,$NumGraph,ID,$Sclass) [GraphAddCurveRegion EMSegment $EMSegment(Graph,$NumGraph,path) [EMSegment(Graph,$NumGraph,Data,$Sclass)Res GetOutput] [GraphHexToRGB [string range $EMSegment(Cattrib,$Sclass,ColorGraphCode) 1 6]] $flag $flag]
       }
  
       if {$Sclass > 0} {
