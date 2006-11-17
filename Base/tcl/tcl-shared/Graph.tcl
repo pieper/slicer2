@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Graph.tcl,v $
-#   Date:      $Date: 2006/11/13 16:41:10 $
-#   Version:   $Revision: 1.9 $
+#   Date:      $Date: 2006/11/17 19:41:33 $
+#   Version:   $Revision: 1.10 $
 # 
 #===============================================================================
 # FILE:        Graph.tcl
@@ -600,7 +600,7 @@ proc GraphRender {varName path} {
 # .ARGS
 # array          varName This is typically the name of the module.
 # widget         path    Frame where canvas should go on 
-# vtkImageSource data    Data to be ploted
+# vtkImageData   data    Data to be ploted
 # array          color   3Dim array from [0,1] defining the color of the curve 
 # int            type    Type of curve (0 = continous data /; 1 = for discrete data _|)
 # bool           ignore  Ignore the GraphMin/GraphMax definition of the Graph (1= Yes; 0 = No) 
@@ -615,7 +615,7 @@ proc GraphAddCurveRegion {varName path data color type ignore} {
    }
    incr localArray(Graph,$path,CurveIndex)
    # Kilian: Should check if it really got assigned a new ID => otherwise not added to the graph 
-   set localArray(Graph,$path,Curve,$localArray(Graph,$path,CurveIndex),ID) [${varName}(Graph,$path,vtkImageGraph) AddCurveRegion [$data GetOutput] [lindex $color 0] [lindex $color 1] [lindex $color 2] $type $ignore]
+   set localArray(Graph,$path,Curve,$localArray(Graph,$path,CurveIndex),ID) [${varName}(Graph,$path,vtkImageGraph) AddCurveRegion $data [lindex $color 0] [lindex $color 1] [lindex $color 2] $type $ignore]
    GraphRender $varName $path
    # puts [$data Print]
    return $localArray(Graph,$path,CurveIndex)
