@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Graph.tcl,v $
-#   Date:      $Date: 2006/11/17 19:41:33 $
-#   Version:   $Revision: 1.10 $
+#   Date:      $Date: 2006/11/17 20:36:23 $
+#   Version:   $Revision: 1.11 $
 # 
 #===============================================================================
 # FILE:        Graph.tcl
@@ -681,7 +681,6 @@ proc GraphCreateGaussianCurveRegion {varDataName mean covariance probability fct
 # .END
 #-------------------------------------------------------------------------------
 proc GraphCreateHistogramCurve {varDataName Volume Xmin Xmax Xlen} {
-    catch "${varDataName}Res Delete"  
     catch "${varDataName}Accu Delete"
   
     vtkImageAccumulate ${varDataName}Accu
@@ -721,31 +720,42 @@ proc GraphCreateHistogramCurve {varDataName Volume Xmin Xmax Xlen} {
 
     # This is necessary because otherwise you get a wired histograph (you could defined it also in vtkImageAccu... but results are not good
     set XInvUnit [GraphCalcInvUnit $Xmax $Xmin $Xlen 0]
-    vtkImageResample ${varDataName}Res
-    ${varDataName}Res SetDimensionality 1
-    ${varDataName}Res SetAxisOutputSpacing 0 1.0
-    ${varDataName}Res SetAxisMagnificationFactor 0 $XInvUnit
-    ${varDataName}Res InterpolateOff
-    ${varDataName}Res SetInput [${varDataName}Accu GetOutput] 
-    ${varDataName}Res Update 
+    GraphCreateResampledCurve ${varDataName} [${varDataName}Accu GetOutput] $XInvUnit
     # Believe it or not I still have to do the following check otherwise things go bad 
-    set output [${varDataName}Res GetOutput]
+    GraphAdjustResampledCurve ${varDataName} $XInvUnit $Xlen
+}
+
+proc GraphCreateResampledCurve {varResDataName Input ScaleFactor} {
+    catch "${varResDataName} Delete"  
+    vtkImageResample ${varResDataName}
+    ${varResDataName} SetDimensionality 1
+    ${varResDataName} SetAxisOutputSpacing 0 1.0
+    ${varResDataName} SetAxisMagnificationFactor 0 $ScaleFactor 
+    ${varResDataName} InterpolateOff
+    ${varResDataName} SetInput $Input
+    ${varResDataName} Update 
+} 
+
+proc GraphAdjustResampledCurve {varResDataName ScaleFactor Xlen} {
+    set output [$varResDataName GetOutput]
     set extent [$output GetExtent]
 
     while {[expr [lindex $extent 1] - [lindex $extent 0] + 1] > $Xlen } {
-      set XInvUnit [expr $XInvUnit * 0.99]
-      ${varDataName}Res SetAxisMagnificationFactor 0 $XInvUnit
-      ${varDataName}Res Update 
+      set ScaleFactor [expr $ScaleFactor * 0.99]
+      $varResDataName SetAxisMagnificationFactor 0 $ScaleFactor
+      $varResDataName Update 
       set extent [$output GetExtent]
     }
 
     while {[expr [lindex $extent 1] - [lindex $extent 0] + 1] < $Xlen } {
-      set XInvUnit [expr $XInvUnit * 1.001]
-      ${varDataName}Res SetAxisMagnificationFactor 0 $XInvUnit
-      ${varDataName}Res Update 
+      set ScaleFactor [expr $ScaleFactor * 1.001]
+      $varResDataName SetAxisMagnificationFactor 0 $ScaleFactor
+      $varResDataName Update 
       set extent [$output GetExtent]
     }
-}
+
+    return $ScaleFactor
+} 
 
 #-------------------------------------------------------------------------------
 # .PROC GraphRemoveCurve 
