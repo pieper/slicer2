@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup_sort.tcl,v $
-#   Date:      $Date: 2006/05/11 15:40:43 $
-#   Version:   $Revision: 1.23 $
+#   Date:      $Date: 2006/11/17 14:51:18 $
+#   Version:   $Revision: 1.24 $
 # 
 #===============================================================================
 # FILE:        dup_sort.tcl
@@ -280,7 +280,7 @@ itcl::body dup_sort::sort {} {
         return
     }
     if { $_defacedir == "" } {
-        dup_DevErrorWindow "Please set Destination Directory (temp area for deface processing)"
+        dup_DevErrorWindow "Please set Destination Directory (temp area for deface processing) using the preferences dialog."
         return
     }
 
