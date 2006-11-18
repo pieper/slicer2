@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
-#   Date:      $Date: 2006/11/18 00:09:34 $
-#   Version:   $Revision: 1.46 $
+#   Date:      $Date: 2006/11/18 00:18:06 $
+#   Version:   $Revision: 1.47 $
 # 
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
@@ -107,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-                                  {$Revision: 1.46 $} {$Date: 2006/11/18 00:09:34 $}]
+                                  {$Revision: 1.47 $} {$Date: 2006/11/18 00:18:06 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -1086,7 +1086,9 @@ proc EMAtlasBrainClassifier_NormalizeVolume {Vol OutVol Mode} {
 
     # Get maximum image value 
     set max [lindex [ia GetMax] 0]
-    puts "Absolute Min: [lindex [ia GetMin] 0] Max: $max"
+
+    puts "Histogram Parameters:"
+    puts "Image Intensity Min: [lindex [ia GetMin] 0] Max: $max"
 
     ia SetComponentExtent 0 $max 0 0 0 0
     ia Update
@@ -1116,7 +1118,6 @@ proc EMAtlasBrainClassifier_NormalizeVolume {Vol OutVol Mode} {
     set MaxItarations 6
     set iter 0
 
-    puts "Histogram Parameters:"
     # Kilian - Nov 06 In some images the second peak is too close to the first so that the smoothing width is too large and smoothes over the drop 
     #                 => the peak is not found 
     
@@ -1133,8 +1134,8 @@ proc EMAtlasBrainClassifier_NormalizeVolume {Vol OutVol Mode} {
     set ValList ""
 
     incr iter
-    puts "  Iteration: $iter"
-    puts "    Smoothing Width: $width"
+    puts "   ${iter}. Histogram Smoothing"
+    puts "    Width: $width"
     puts "    Max Intensity:   [expr $sHistMax + $min]"
 
         for {set x $min} {$x <= $sHistMax } {incr x} { 
