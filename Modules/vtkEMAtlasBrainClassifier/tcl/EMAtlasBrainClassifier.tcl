@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
-#   Date:      $Date: 2006/10/11 21:01:13 $
-#   Version:   $Revision: 1.44 $
+#   Date:      $Date: 2006/11/18 00:04:28 $
+#   Version:   $Revision: 1.45 $
 # 
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
@@ -107,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-                                  {$Revision: 1.44 $} {$Date: 2006/10/11 21:01:13 $}]
+                                  {$Revision: 1.45 $} {$Date: 2006/11/18 00:04:28 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -134,9 +134,19 @@ proc EMAtlasBrainClassifierInit {} {
     set EMAtlasBrainClassifier(AtlasDir)         $EMAtlasBrainClassifier(DefaultAtlasDir)  
     set EMAtlasBrainClassifier(XMLTemplate)      "$env(SLICER_HOME)/Modules/vtkEMAtlasBrainClassifier/data/template5_c2.xml"     
     
+    # Variables for normalization ! 
     set EMAtlasBrainClassifier(Normalize,SPGR) "90"
+    # For some images you need to adjust filter width to detect changes as the second and first peak in the intensity histogram are too close together 
+    # The smaller the value the larger the initial width of the filter
+    # Carefull - changing the width scale will impact the calculation of the expected value and therefore will normalize it slightly differntly 
+    # Kilian: Change it by having the x value at the middle of the filter width and not begining - how it is right now     
+    set EMAtlasBrainClassifier(InitialWidthScale,SPGR) 5
     set EMAtlasBrainClassifier(Normalize,T2W)  "310"
-    
+    set EMAtlasBrainClassifier(InitialWidthScale,T2W) 5
+    # Alternative Setting with similar scaling factor 
+    # set EMAtlasBrainClassifier(Normalize,T2W)  "329"
+    # set EMAtlasBrainClassifier(InitialWidthScale,T2W) 10
+   
     set EMAtlasBrainClassifier(MultiThreading) 0 
     set EMAtlasBrainClassifier(AlgorithmVersion) "Standard" 
     set EMAtlasBrainClassifier(NonRigidRegistrationFlag) 1
@@ -1064,7 +1074,7 @@ proc EMAtlasBrainClassifier_Normalize { Mode } {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc EMAtlasBrainClassifier_NormalizeVolume { Vol OutVol Mode} {
+proc EMAtlasBrainClassifier_NormalizeVolume {Vol OutVol Mode} {
     global Volume Matrix EMAtlasBrainClassifier
     vtkImageData hist
 
@@ -1076,8 +1086,7 @@ proc EMAtlasBrainClassifier_NormalizeVolume { Vol OutVol Mode} {
 
     # Get maximum image value 
     set max [lindex [ia GetMax] 0]
-
-    puts "Absolute Max: $max"
+    puts "Absolute Min: [lindex [ia GetMin] 0] Max: $max"
 
     ia SetComponentExtent 0 $max 0 0 0 0
     ia Update
@@ -1088,6 +1097,8 @@ proc EMAtlasBrainClassifier_NormalizeVolume { Vol OutVol Mode} {
 
     # Find out the intensity value which is an uppwer bound for 99% of the voxels 
     # => Cut of the tail of the the histogram
+    # Kilian Nov-06: In the future set it to 95% bc otherwise maybe fails on T2 images that have a large bump at the end from the ventricles 
+    #                => large filter width => smoothes over bump in the beginning 
     set Extent [$Vol GetExtent]
     set Boundary [expr ([lindex $Extent 1] - [lindex $Extent 0] +1) * ([lindex $Extent 3] - [lindex $Extent 2] +1) * ([lindex $Extent 5] - [lindex $Extent 4] +1) * 0.99]
     while {$i < $max && $count < $Boundary} {    
@@ -1099,40 +1110,68 @@ proc EMAtlasBrainClassifier_NormalizeVolume { Vol OutVol Mode} {
     # max is now the upper bound intensity value for 99% of the voxels  
     set max $i 
     set min 0
-    set width [expr $max / 5]
 
-    set fwidth [expr 1.0 / $width ]    
-    # Smooth histogram by applying a window of width with 20% of the intensity value 
-    set sHistMax  [expr ($max - $min) - $width]
+    set UnDetectedPeakFlag 1
+    set WidthScale [expr $EMAtlasBrainClassifier(InitialWidthScale,$Mode) - 1 ]
+    set MaxItarations 6
+    set iter 0
 
     puts "Histogram Parameters:"
-    puts "  Smoothing Width: $width"
-    puts "  Max Intensity:   $sHistMax"
-
-    for {set x 0} {$x <= $sHistMax } {incr x} { 
-        set sHist($x) 0
-        for {set k 0} {$k <= $width} {incr k} {
-            set sHist($x) [expr [hist GetScalarComponentAsFloat [expr $x + $k] 0 0 0] + $sHist($x)]
-        }
-        set sHist($x) [expr $sHist($x) * $fwidth]
-    }
+    # Kilian - Nov 06 In some images the second peak is too close to the first so that the smoothing width is too large and smoothes over the drop 
+    #                 => the peak is not found 
     
-    # Define the lower intensity value for calculating the mean of the historgram
-    # - When noise is set to 0 then we reached the first peak in the smoothed out histogram
-    #   We considere this area noise (or background) and therefore exclude it for the definition of the normalization factor  
-    # - When through is set we reached the first minimum after the first peak which defines the lower bound of the intensity 
-    #   value considered for calculating the Expected value of the histogram 
-    set x [expr $min + 1]
-    set trough [expr $min - 1]
-    set noise 1
-    incr  sHistMax -2 
-    while {$x < $sHistMax && $trough < $min} {
-        if {$noise == 1 && $sHist($x) > $sHist([expr $x + 1]) && $x > $min} {
-            set noise 0
-        } elseif { $sHist($x) < $sHist([expr $x + 1]) && $sHist([expr $x + 1]) < $sHist([expr $x + 2]) && $sHist([expr $x +2]) < $sHist([expr $x + 3]) } {
-            set trough $x
+    while {$iter < $MaxItarations && $UnDetectedPeakFlag } {
+    # Smooth histogram by applying a window of width with 20% of the intensity value 
+    incr WidthScale
+    set width [expr $max / $WidthScale]
+        
+    set fwidth [expr 1.0 / $width ]  
+    set sHistMax  [expr ($max - $min) - $width]
+
+    # For debugging purposes
+    set IndexList ""
+    set ValList ""
+
+    incr iter
+    puts "  Iteration: $iter"
+    puts "    Smoothing Width: $width"
+    puts "    Max Intensity:   [expr $sHistMax + $min]"
+
+        for {set x $min} {$x <= $sHistMax } {incr x} { 
+          set sHist($x) 0
+          for {set k 0} {$k <= $width} {incr k} {
+              set sHist($x) [expr [hist GetScalarComponentAsFloat [expr $x + $k] 0 0 0] + $sHist($x)]
+          }
+          set sHist($x) [expr $sHist($x) * $fwidth]
+ 
+          # For Debugging
+          lappend IndexList $x
+          lappend ValList $sHist($x)
         }
-        incr x
+    
+        # Define the lower intensity value for calculating the mean of the historgram
+        # - When noise is set to 0 then we reached the first peak in the smoothed out histogram
+        #   We considere this area noise (or background) and therefore exclude it for the definition of the normalization factor  
+        # - When through is set we reached the first minimum after the first peak which defines the lower bound of the intensity 
+        #   value considered for calculating the Expected value of the histogram 
+        set x [expr $min + 1]
+        set noise 1
+        incr  sHistMax -2 
+        set trough [expr $min - 1]
+        while {$x < $sHistMax && $UnDetectedPeakFlag} {
+          if {$noise == 1 && $sHist($x) > $sHist([expr $x + 1]) && $x > $min} {
+              set noise 0
+          # puts "End Of Noise $x"
+          } elseif { $sHist($x) < $sHist([expr $x + 1]) && $sHist([expr $x + 1]) < $sHist([expr $x + 2]) && $sHist([expr $x +2]) < $sHist([expr $x + 3]) } {
+              set trough $x
+          # puts "Peak $x"
+          set UnDetectedPeakFlag 0
+          }
+          incr x
+        }
+    }
+    if {$UnDetectedPeakFlag } {
+    puts "Warning: Intensity normalization filter could not detect first hump => Probably did not normalize images correctly"  
     }
 
     puts "Bounds for Expected Value Calculation:"
@@ -1150,12 +1189,15 @@ proc EMAtlasBrainClassifier_NormalizeVolume { Vol OutVol Mode} {
     set i $trough
     set total 0
     set num 0
-    while {$i < [expr $width * 5]} {    
+
+    set MaxIndex [expr $width * $WidthScale] 
+    while {$i < $MaxIndex} {    
         set val [hist GetScalarComponentAsFloat [expr $i - $trough] 0 0 0]
         set total [expr $total + ($i * $val)]
         set num [expr $num + $val]
         incr i
     }
+
     # Normalize image by factor ExpValue which is the expect value in this range 
     set ExpValue [expr $total * 1.0 / $num]
     set IntensityMul  [expr $EMAtlasBrainClassifier(Normalize,$Mode) / $ExpValue]
@@ -1178,6 +1220,8 @@ proc EMAtlasBrainClassifier_NormalizeVolume { Vol OutVol Mode} {
     hist Delete
 
     puts "=========== Normalization Completed ============ "
+    # Kilian: So we can look at output of smoothed histogram curve
+    return "{$IndexList} {$ValList}" 
 }
 
 
