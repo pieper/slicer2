@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
-#   Date:      $Date: 2006/11/18 00:04:28 $
-#   Version:   $Revision: 1.45 $
+#   Date:      $Date: 2006/11/18 00:09:34 $
+#   Version:   $Revision: 1.46 $
 # 
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
@@ -107,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-                                  {$Revision: 1.45 $} {$Date: 2006/11/18 00:04:28 $}]
+                                  {$Revision: 1.46 $} {$Date: 2006/11/18 00:09:34 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -1186,11 +1186,12 @@ proc EMAtlasBrainClassifier_NormalizeVolume {Vol OutVol Mode} {
     ia2 SetComponentExtent 0 [expr $max - $trough] 0 0 0 0
     ia2 Update
     hist DeepCopy [ia2 GetOutput]
-    set i $trough
+
     set total 0
     set num 0
-
     set MaxIndex [expr $width * $WidthScale] 
+
+    set i $trough
     while {$i < $MaxIndex} {    
         set val [hist GetScalarComponentAsFloat [expr $i - $trough] 0 0 0]
         set total [expr $total + ($i * $val)]
