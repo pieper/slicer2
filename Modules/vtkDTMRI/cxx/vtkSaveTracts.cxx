@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSaveTracts.cxx,v $
-  Date:      $Date: 2006/02/02 03:36:59 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2006/11/20 19:05:26 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 #include "vtkSaveTracts.h"
@@ -19,7 +19,7 @@
 #include "vtkMrmlModelNode.h"
 
 #include "vtkPolyData.h"
-#include "vtkTubeFilter.h"
+#include "vtkTubeFilter2.h"
 #include "vtkProbeFilter.h"
 #include "vtkPointData.h"
 #include "vtkMath.h"
@@ -105,8 +105,11 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
                                               char *name,
                                               vtkMrmlTree *colorTree)
 {
+
+  vtkCollection *currStreamlines;
+  vtkCollection *currTubeFilters;
   vtkHyperStreamline *currStreamline;
-  vtkTubeFilter *currTubeFilter;
+  vtkTubeFilter2 *currTubeFilter;
   vtkActor *currActor;
   vtkCollection *collectionOfModels;
   vtkAppendPolyData *currAppender;
@@ -158,12 +161,12 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
   this->Streamlines->InitTraversal();
   this->TubeFilters->InitTraversal();
   this->Actors->InitTraversal();
-  currStreamline= (vtkHyperStreamline *)this->Streamlines->GetNextItemAsObject();
-  currTubeFilter= (vtkTubeFilter *) this->TubeFilters->GetNextItemAsObject();
+  currStreamlines= (vtkCollection *)this->Streamlines->GetNextItemAsObject();
+  currTubeFilters= (vtkCollection *) this->TubeFilters->GetNextItemAsObject();
   currActor= (vtkActor *)this->Actors->GetNextItemAsObject();
 
   // test we have actors and streamlines
-  if (currActor == NULL || currStreamline == NULL || currTubeFilter == NULL)
+  if (currActor == NULL || currStreamlines == NULL || currTubeFilters == NULL)
     {
       vtkErrorMacro("No streamlines have been created yet.");
       return;      
@@ -180,8 +183,11 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
   B[0]=rgb[2];
 
   vtkDebugMacro( << "Traverse STREAMLINES" );
-  while(currStreamline && currActor && currTubeFilter)
+  while(currStreamlines && currActor && currTubeFilters)
     {
+
+    // WARNING (Raul): Color is now saved as Cell_Data, we should
+    // recover the color for each fiber from the Cell_data instead from the actor.
       vtkDebugMacro( << "stream " << currStreamline);
       currColor=0;
       newColor=1;
@@ -222,15 +228,23 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
 
       // Append this streamline to the chosen model using the appender
       if (this->SaveForAnalysis) {
-        currAppender->AddInput(currStreamline->GetOutput());
+        for (int i=0; i<currStreamlines->GetNumberOfItems(); i++)
+          {
+          currStreamline = (vtkHyperStreamline *) (currStreamlines->GetItemAsObject(i));
+          currAppender->AddInput(currStreamline->GetOutput());
+          }  
       } 
       else {
-        currAppender->AddInput(currTubeFilter->GetOutput());        
+        for (int i=0; i<currTubeFilters->GetNumberOfItems(); i++)
+          {
+          currTubeFilter = (vtkTubeFilter2 *) (currTubeFilters->GetItemAsObject(i));
+          currAppender->AddInput(currTubeFilter->GetOutput());  
+          }      
       }
       // get next objects in collections
-      currStreamline= (vtkHyperStreamline *)
+      currStreamlines= (vtkCollection *)
         this->Streamlines->GetNextItemAsObject();
-      currTubeFilter= (vtkTubeFilter *)
+      currTubeFilters= (vtkCollection *)
         this->TubeFilters->GetNextItemAsObject();
       currActor = (vtkActor *) this->Actors->GetNextItemAsObject();
     }
@@ -514,7 +528,7 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
         colorTreeTwo->GetNextItemAsObject();
     }
   
-  // Write the MRML file
+  // Write the MRML filef_
   fileNameStr.str("");
   fileNameStr << filename << ".xml";
   tree->Write((char *)fileNameStr.str().c_str());
