@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Graph.tcl,v $
-#   Date:      $Date: 2006/11/17 20:36:23 $
-#   Version:   $Revision: 1.11 $
+#   Date:      $Date: 2006/11/20 18:18:59 $
+#   Version:   $Revision: 1.12 $
 # 
 #===============================================================================
 # FILE:        Graph.tcl
@@ -331,8 +331,12 @@ proc GraphCalculateScnScp {varName path axis} {
     }
     if {$axis} {set Aname Y
     } else { set Aname X }
+    if {$localArray(Graph,$path,${Aname}sca) > 0.0 } {
     # Number of scalling lines
     set localArray(Graph,$path,${Aname}scn) [expr int(double($localArray(Graph,$path,${Aname}max) - $localArray(Graph,$path,${Aname}min) + $localArray(Graph,$path,${Aname}offset)) / double($localArray(Graph,$path,${Aname}sca)))]
+    } else {
+    set localArray(Graph,$path,${Aname}scn) [expr int(double($localArray(Graph,$path,${Aname}max) - $localArray(Graph,$path,${Aname}min) + $localArray(Graph,$path,${Aname}offset)))]
+    }
     # Distance between scalling lines 
     set dist [expr double($localArray(Graph,$path,${Aname}max) - $localArray(Graph,$path,${Aname}min) + $localArray(Graph,$path,${Aname}offset))]
     if {$dist > 0.0} {
@@ -703,21 +707,6 @@ proc GraphCreateHistogramCurve {varDataName Volume Xmin Xmax Xlen} {
     ${varDataName}Accu UpdateWholeExtent
     ${varDataName}Accu Update
 
-
-     if {0} {
-    vtkImageBimodalAnalysis ${varDataName}Bio
-    ${varDataName}Bio SetInput [${varDataName}Accu GetOutput] 
-    ${varDataName}Bio Update
-    set ext [${varDataName}Bio GetClipExtent]
-    # ${varDataName}Res SetInputClipExtent [lindex $ext 0] [lindex $ext 1] [lindex $ext 2] [lindex $ext 3] [lindex $ext 4] [lindex $ext 5] 
-    # ${varDataName}Res SetInput [${varDataName}Bio GetOutput] 
-    vtkImageResize ${varDataName}Res
-    ${varDataName}Res SetInputClipExtent 0 $extent 0 0 0 0
-    ${varDataName}Res SetInput [${varDataName}Accu GetOutput] 
-    ${varDataName}Res SetOutputWholeExtent 0 [expr $Xlen-1] 0 0 0 0 
-    ${varDataName}Res Update 
-    }
-
     # This is necessary because otherwise you get a wired histograph (you could defined it also in vtkImageAccu... but results are not good
     set XInvUnit [GraphCalcInvUnit $Xmax $Xmin $Xlen 0]
     GraphCreateResampledCurve ${varDataName} [${varDataName}Accu GetOutput] $XInvUnit
@@ -731,7 +720,8 @@ proc GraphCreateResampledCurve {varResDataName Input ScaleFactor} {
     ${varResDataName} SetDimensionality 1
     ${varResDataName} SetAxisOutputSpacing 0 1.0
     ${varResDataName} SetAxisMagnificationFactor 0 $ScaleFactor 
-    ${varResDataName} InterpolateOff
+    ${varResDataName} SetInterpolationModeToLinear
+    # ${varResDataName} InterpolateOff
     ${varResDataName} SetInput $Input
     ${varResDataName} Update 
 } 
@@ -753,7 +743,7 @@ proc GraphAdjustResampledCurve {varResDataName ScaleFactor Xlen} {
       $varResDataName Update 
       set extent [$output GetExtent]
     }
-
+    $output UpdateInformation 
     return $ScaleFactor
 } 
 
@@ -810,9 +800,11 @@ proc GraphCalcUnit {Min Max Length} {
 proc GraphCalcInvUnit {Min Max Length Offset} {
    set Dist [expr double($Max - $Min + $Offset ) ] 
    if {$Dist > 0} {
-    set InvUnit [expr double($Length) / $Dist ]
-    while {[expr $Dist * $InvUnit ] <  $Length} { set InvUnit [expr $InvUnit * 1.001] }
-    return $InvUnit
+      incr  Length -1 
+      set InvUnit [expr double($Length) / $Dist ]
+      while {[expr int($Dist * $InvUnit) ] >  $Length} { set InvUnit [expr $InvUnit * 0.995] }
+      while {[expr int($Dist * $InvUnit) ] <  $Length} { set InvUnit [expr $InvUnit * 1.001] }
+      return $InvUnit
     } 
     return 1.0
 }
