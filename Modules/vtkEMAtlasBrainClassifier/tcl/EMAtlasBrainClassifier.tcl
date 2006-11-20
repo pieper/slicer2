@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
-#   Date:      $Date: 2006/11/18 00:18:06 $
-#   Version:   $Revision: 1.47 $
+#   Date:      $Date: 2006/11/20 19:11:44 $
+#   Version:   $Revision: 1.48 $
 # 
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
@@ -107,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-                                  {$Revision: 1.47 $} {$Date: 2006/11/18 00:18:06 $}]
+                                  {$Revision: 1.48 $} {$Date: 2006/11/20 19:11:44 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -1085,10 +1085,14 @@ proc EMAtlasBrainClassifier_NormalizeVolume {Vol OutVol Mode} {
     ia Update
 
     # Get maximum image value 
+    set origMin [lindex [ia GetMin] 0]
     set max [lindex [ia GetMax] 0]
+    set origMax $max
 
     puts "Histogram Parameters:"
-    puts "Image Intensity Min: [lindex [ia GetMin] 0] Max: $max"
+    puts "  Image Intensity Min: $origMin Max: $max"
+    puts "  Initial Filter Scaling: $EMAtlasBrainClassifier(InitialWidthScale,$Mode)"
+    puts "  Expected Target Value:  $EMAtlasBrainClassifier(Normalize,$Mode) "
 
     ia SetComponentExtent 0 $max 0 0 0 0
     ia Update
@@ -1134,9 +1138,9 @@ proc EMAtlasBrainClassifier_NormalizeVolume {Vol OutVol Mode} {
     set ValList ""
 
     incr iter
-    puts "   ${iter}. Histogram Smoothing"
-    puts "    Width: $width"
-    puts "    Max Intensity:   [expr $sHistMax + $min]"
+    puts "  ${iter}. Histogram Smoothing"
+    puts "     Width:         $width"
+    puts "     Max Intensity: [expr $sHistMax + $min]"
 
         for {set x $min} {$x <= $sHistMax } {incr x} { 
           set sHist($x) 0
@@ -1222,8 +1226,12 @@ proc EMAtlasBrainClassifier_NormalizeVolume {Vol OutVol Mode} {
     hist Delete
 
     puts "=========== Normalization Completed ============ "
-    # Kilian: So we can look at output of smoothed histogram curve
-    return "{$IndexList} {$ValList}" 
+    # Kilian: Debugging parameters 
+    # Filter: Did Filter detect first valley - Width Scaler - Smoothing Width 
+    # Expected Value Calucultation: min - max 
+    # Filter Result: Intesity Normalization Factor 
+    # Smoothed Histogram" Intensity - Histogram Value  
+    return "$origMin $origMax $UnDetectedPeakFlag $WidthScale $width  $trough $max  $IntensityMul {$IndexList} {$ValList}" 
 }
 
 
