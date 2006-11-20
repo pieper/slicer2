@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
-#   Date:      $Date: 2006/11/20 19:11:44 $
-#   Version:   $Revision: 1.48 $
+#   Date:      $Date: 2006/11/20 19:21:09 $
+#   Version:   $Revision: 1.49 $
 # 
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
@@ -107,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-                                  {$Revision: 1.48 $} {$Date: 2006/11/20 19:11:44 $}]
+                                  {$Revision: 1.49 $} {$Date: 2006/11/20 19:21:09 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -1231,7 +1231,7 @@ proc EMAtlasBrainClassifier_NormalizeVolume {Vol OutVol Mode} {
     # Expected Value Calucultation: min - max 
     # Filter Result: Intesity Normalization Factor 
     # Smoothed Histogram" Intensity - Histogram Value  
-    return "$origMin $origMax $UnDetectedPeakFlag $WidthScale $width  $trough $max  $IntensityMul {$IndexList} {$ValList}" 
+    return "$origMin $origMax [expr 1 - $UnDetectedPeakFlag] $WidthScale $width  $trough $max  $IntensityMul {$IndexList} {$ValList}" 
 }
 
 
