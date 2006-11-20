@@ -154,14 +154,13 @@ set LOGFILE $LOGDIR/runvnclog-[pid]-$STARTDATE
 # a full X distribution
 #
 set fparg ""
-set fpdirs {/usr/X11R6/lib/X11/fonts ~/fonts birn/lib/fonts}
+set fpdirs {/usr/X11R6/lib/X11/fonts /usr/share/X11/fonts ~/fonts birn/lib/fonts}
 foreach fpdir $fpdirs {
     if { [file isdirectory $fpdir] } {
         set fparg "/dev/null" ;# start with a dummy for simplicity
         foreach fdir [glob $fpdir/*] {
             set fparg "$fparg,$fdir"
         }
-        break
     }
 }
 
