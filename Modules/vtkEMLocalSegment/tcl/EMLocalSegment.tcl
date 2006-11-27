@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMLocalSegment.tcl,v $
-#   Date:      $Date: 2006/11/17 19:26:27 $
-#   Version:   $Revision: 1.76 $
+#   Date:      $Date: 2006/11/27 01:23:53 $
+#   Version:   $Revision: 1.77 $
 # 
 #===============================================================================
 # FILE:        EMLocalSegment.tcl
@@ -269,7 +269,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.76 $} {$Date: 2006/11/17 19:26:27 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.77 $} {$Date: 2006/11/27 01:23:53 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -4049,7 +4049,7 @@ proc EMSegmentPlotCurveRegion {numGraph} {
     if {$NumIndex > -1} {
         EMSegment(Graph,$numGraph,Data,0)Accu SetInput [Volume($EMSegment(Graph,$numGraph,VolumeID,0),vol) GetOutput]
         EMSegment(Graph,$numGraph,Data,0)Accu Update
-        EMSegment(Graph,$numGraph,Data,0)Res Update
+        EMSegment(Graph,$numGraph,Data,0) Update
     }
 
     # Update Classes
@@ -4852,7 +4852,7 @@ proc EMSegmentDrawDeleteCurveRegion {Sclass NumGraph} {
       if {$Sclass} {
       set EMSegment(Graph,$NumGraph,ID,$Sclass) [GraphAddCurveRegion EMSegment $EMSegment(Graph,$NumGraph,path) [EMSegment(Graph,$NumGraph,Data,$Sclass) GetOutput] [GraphHexToRGB [string range $EMSegment(Cattrib,$Sclass,ColorCode) 1 6]] $flag $flag]
       } else {
-      set EMSegment(Graph,$NumGraph,ID,$Sclass) [GraphAddCurveRegion EMSegment $EMSegment(Graph,$NumGraph,path) [EMSegment(Graph,$NumGraph,Data,$Sclass)Res GetOutput] [GraphHexToRGB [string range $EMSegment(Cattrib,$Sclass,ColorGraphCode) 1 6]] $flag $flag]
+      set EMSegment(Graph,$NumGraph,ID,$Sclass) [GraphAddCurveRegion EMSegment $EMSegment(Graph,$NumGraph,path) [EMSegment(Graph,$NumGraph,Data,$Sclass) GetOutput] [GraphHexToRGB [string range $EMSegment(Cattrib,$Sclass,ColorGraphCode) 1 6]] $flag $flag]
       }
  
       if {$Sclass > 0} {
@@ -5581,20 +5581,20 @@ proc EMSegmentGraphXAxisUpdate {path Xmin Xmax Xsca} {
       EMSegment(Graph,$NumGraph,Data,0)Accu UpdateWholeExtent
       EMSegment(Graph,$NumGraph,Data,0)Accu Update
     # If only the scalling changed we do not have to go through all the fuss
-    if  {[ expr int($dist * [EMSegment(Graph,$NumGraph,Data,0)Res GetAxisMagnificationFactor 0])]  != $EMSegment(Graph,$path,Xlen)} {
+    if  {[ expr int($dist * [EMSegment(Graph,$NumGraph,Data,0) GetAxisMagnificationFactor 0])]  != $EMSegment(Graph,$path,Xlen)} {
         set XInvUnit $EMSegment(Graph,$path,XInvUnit) 
-        EMSegment(Graph,$NumGraph,Data,0)Res  SetAxisMagnificationFactor 0 $XInvUnit
-        EMSegment(Graph,$NumGraph,Data,0)Res  Update
+        EMSegment(Graph,$NumGraph,Data,0)  SetAxisMagnificationFactor 0 $XInvUnit
+        EMSegment(Graph,$NumGraph,Data,0)  Update
 
-        set extent [[EMSegment(Graph,$NumGraph,Data,0)Res GetOutput] GetExtent]
+        set extent [[EMSegment(Graph,$NumGraph,Data,0) GetOutput] GetExtent]
         while {[expr [lindex $extent 1] - [lindex $extent 0] + 1] <  $EMSegment(Graph,$path,Xlen) } {
         set XInvUnit [expr $XInvUnit * 1.001]
-        EMSegment(Graph,$NumGraph,Data,0)Res SetAxisMagnificationFactor 0 $XInvUnit
-        EMSegment(Graph,$NumGraph,Data,0)Res Update 
-        set extent [[EMSegment(Graph,$NumGraph,Data,0)Res GetOutput] GetExtent]
+        EMSegment(Graph,$NumGraph,Data,0) SetAxisMagnificationFactor 0 $XInvUnit
+        EMSegment(Graph,$NumGraph,Data,0) Update 
+        set extent [[EMSegment(Graph,$NumGraph,Data,0) GetOutput] GetExtent]
         }
     } else {
-        EMSegment(Graph,$NumGraph,Data,0)Res  Update
+        EMSegment(Graph,$NumGraph,Data,0)  Update
     }
     }
     # Update Classes
