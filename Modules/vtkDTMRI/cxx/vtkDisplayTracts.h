@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDisplayTracts.h,v $
-  Date:      $Date: 2006/08/15 16:37:28 $
-  Version:   $Revision: 1.9 $
+  Date:      $Date: 2006/12/06 00:16:56 $
+  Version:   $Revision: 1.10 $
 
 =========================================================================auto=*/
 // .NAME vtkDisplayTracts - 
@@ -115,13 +115,19 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
   // Get the streamline for a given group index and index in the group
   vtkHyperStreamline* GetStreamlineInGroup(int groupIndex, int indexInGroup);
 
-  // Description
+  // Description:
   // Find the group index and index inside the group for a given streamline
   void FindStreamline(vtkHyperStreamline *currStreamline, int & groupIndex, int & indexInGroup);
+
+  // Description:
+  // Find the index inside the group of a given streamline whose group index is known
+  void FindStreamlineInGroup(vtkHyperStreamline *currStreamline, int groupIndex, int & indexInGroup);
 
    // Description
   // Find the group index and index inside the group for a given streamline
   void FindStreamline(vtkCellPicker *picker, int & groupIndex, int & indexInGroup);
+
+  void FindStreamlineInGroup(vtkCellPicker *picker, int groupIndex, int & indexInGroup);
 
   // Description
   // Set/Get the color (RGBA) of a given streamline
@@ -132,9 +138,26 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
 
   void SetStreamlineRGB(vtkHyperStreamline *currStreamline, unsigned char R, unsigned char G, unsigned char B);
   void SetStreamlineRGB(vtkHyperStreamline *currStreamline, unsigned char RGB[3]);
+  void GetStreamlineRGB(vtkHyperStreamline *currStreamline, unsigned char RGB[3]);
+  void GetStreamlineRGB(vtkHyperStreamline *currStreamline, unsigned char &R, unsigned char &G, unsigned char &B);
 
   void SetStreamlineOpacity(vtkHyperStreamline *currStreamline, unsigned char opacity);
   void GetStreamlineOpacity(vtkHyperStreamline *currStreamline, unsigned char &opacity);
+
+  // Description
+  // Set/Get color of a given streamline when the Display group is known
+  void SetStreamlineRGBAInGroup(vtkHyperStreamline *currStreamline,int groupIndex, unsigned char RGBA[4]);
+  void SetStreamlineRGBAInGroup(vtkHyperStreamline *currStreamline,int groupIndex, unsigned char R, unsigned char G, unsigned char B, unsigned char A);
+  void GetStreamlineRGBAInGroup(vtkHyperStreamline *currStreamline,int groupIndex, unsigned char RGBA[4]);
+  void GetStreamlineRGBAInGroup(vtkHyperStreamline *currStreamline,int groupIndex, unsigned char &R, unsigned char &G, unsigned char &B, unsigned char &A);
+
+  void SetStreamlineRGBInGroup(vtkHyperStreamline *currStreamline,int groupIndex, unsigned char R, unsigned char G, unsigned char B);
+  void SetStreamlineRGBInGroup(vtkHyperStreamline *currStreamline,int groupIndex, unsigned char RGB[3]);
+  void GetStreamlineRGBInGroup(vtkHyperStreamline *currStreamline,int groupIndex, unsigned char RGB[3]);
+  void GetStreamlineRGBInGroup(vtkHyperStreamline *currStreamline,int groupIndex, unsigned char &R, unsigned char &G, unsigned char &B);
+
+  void SetStreamlineOpacityInGroup(vtkHyperStreamline *currStreamline, int groupIndex, unsigned char opacity);
+  void GetStreamlineOpacityInGroup(vtkHyperStreamline *currStreamline, int groupIndex, unsigned char &opacity);
 
   // Description
   // List of the output graphics objects

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDisplayTracts.cxx,v $
-  Date:      $Date: 2006/08/24 18:29:57 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2006/12/06 00:16:56 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 #include "vtkDisplayTracts.h"
@@ -439,6 +439,28 @@ void vtkDisplayTracts::FindStreamline(vtkHyperStreamline *currStreamline,int & g
    indexInGroup = -1;
 }
 
+void vtkDisplayTracts::FindStreamlineInGroup(vtkHyperStreamline *currStreamline,int groupIndex, int & indexInGroup)
+{
+
+  int numGroups = this->StreamlinesGroup->GetNumberOfItems();
+  int item;
+
+  vtkDebugMacro(<<"Number of Groups: "<<numGroups);
+  
+  if (groupIndex >= numGroups ) {
+    indexInGroup = -1;
+    return;
+  }
+  
+  item = ((vtkCollection *) this->StreamlinesGroup->GetItemAsObject(groupIndex))->IsItemPresent(currStreamline); 
+  if (item > 0) {
+    indexInGroup = item-1;
+    return;
+  }
+
+  indexInGroup = -1;
+}
+
 
 // Find a streamline after being selected from the user interface
 //----------------------------------------------------------------------------
@@ -447,6 +469,13 @@ void vtkDisplayTracts::FindStreamline(vtkCellPicker *picker,int &groupIndex, int
 
   vtkActor *pickedActor = picker->GetActor();
   groupIndex = this->GetStreamlineGroupIndexFromActor(pickedActor);
+  indexInGroup = this->GetStreamlineIndexFromActor(groupIndex,picker);
+
+}
+
+void vtkDisplayTracts::FindStreamlineInGroup(vtkCellPicker *picker,int groupIndex, int &indexInGroup)
+{
+
   indexInGroup = this->GetStreamlineIndexFromActor(groupIndex,picker);
 
 }
@@ -484,6 +513,19 @@ void vtkDisplayTracts::GetStreamlineRGBA(vtkHyperStreamline *currStreamline, uns
   this->GetStreamlineRGBA(currStreamline,RGBA[0],RGBA[1],RGBA[2],RGBA[3]);
 
 }
+
+void vtkDisplayTracts::GetStreamlineRGB(vtkHyperStreamline *currStreamline, unsigned char RGB[3])
+{
+  unsigned char tmp;
+  this->GetStreamlineRGBA(currStreamline,RGB[0],RGB[1],RGB[2],tmp);
+}
+
+void vtkDisplayTracts::GetStreamlineRGB(vtkHyperStreamline *currStreamline, unsigned char &R, unsigned char &G, unsigned char &B)
+{
+  unsigned char tmp;
+  this->GetStreamlineRGBA(currStreamline,R,B,G,tmp);
+}
+
 
 void vtkDisplayTracts::SetStreamlineRGBA(vtkHyperStreamline *currStreamline, unsigned char R, unsigned char G, unsigned char B, unsigned char A)
 {
@@ -567,6 +609,131 @@ void vtkDisplayTracts::GetStreamlineOpacity(vtkHyperStreamline *currStreamline, 
   opacity= (unsigned char) colorarray->GetComponent(0,3);
 }
 
+// Changes color properties of a single streamline by knowing the group index
+//----------------------------------------------------------------------------
+void vtkDisplayTracts::SetStreamlineRGBAInGroup(vtkHyperStreamline *currStreamline, int groupIndex, unsigned char R, unsigned char G, unsigned char B, unsigned char A)
+{
+  int indexInGroup;
+  vtkMergeDataObjectFilter *currMergeFilter;
+  this->FindStreamlineInGroup(currStreamline,groupIndex,indexInGroup);
+  if (indexInGroup == -1) {
+    return;
+  }
+  vtkCollection *currMergeFilters = (vtkCollection *) this->MergeFiltersGroup->GetItemAsObject(groupIndex);
+  currMergeFilter = (vtkMergeDataObjectFilter *) currMergeFilters->GetItemAsObject(indexInGroup);
+  vtkUnsignedCharArray *colorarray = (vtkUnsignedCharArray *) ((vtkPolyData *) currMergeFilter->GetDataObject())->GetFieldData()->GetArray("Color");
+  if (colorarray == NULL) {
+      return;
+  }
+
+  colorarray->SetComponent(0,0,R);
+  colorarray->SetComponent(0,1,G);
+  colorarray->SetComponent(0,2,B);
+  colorarray->SetComponent(0,3,A);
+  colorarray->SetComponent(1,0,R);
+  colorarray->SetComponent(1,1,G);
+  colorarray->SetComponent(1,2,B);
+  colorarray->SetComponent(1,3,A);
+  // Input has changed
+  currMergeFilter->GetDataObject()->Modified();
+}
+
+void vtkDisplayTracts::SetStreamlineRGBAInGroup(vtkHyperStreamline *currStreamline, int groupIndex, unsigned char RGBA[4])
+{
+  this->SetStreamlineRGBAInGroup(currStreamline,groupIndex,RGBA[0],RGBA[1],RGBA[2],RGBA[3]);
+}
+
+void vtkDisplayTracts::SetStreamlineRGBInGroup(vtkHyperStreamline *currStreamline, int groupIndex, unsigned char R, unsigned char G, unsigned char B)
+{
+  unsigned char opacity;
+  this->GetStreamlineOpacityInGroup(currStreamline, groupIndex,opacity);
+  this->SetStreamlineRGBAInGroup(currStreamline,groupIndex,R,G,B,opacity);
+}
+
+void vtkDisplayTracts::SetStreamlineRGBInGroup(vtkHyperStreamline *currStreamline, int groupIndex, unsigned char RGB[3])
+{
+  this->SetStreamlineRGBInGroup(currStreamline,groupIndex,RGB[0],RGB[1],RGB[2]);
+}
+
+
+// Get color properties of a single streamline
+//----------------------------------------------------------------------------
+void vtkDisplayTracts::GetStreamlineRGBAInGroup(vtkHyperStreamline *currStreamline, int groupIndex, unsigned char &R, unsigned char &G, unsigned char &B, unsigned char &A)
+{
+  int indexInGroup;
+  vtkMergeDataObjectFilter *currMergeFilter;
+
+  this->FindStreamlineInGroup(currStreamline,groupIndex,indexInGroup);
+  if (indexInGroup == -1) {
+    return;
+  }
+  vtkCollection *currMergeFilters = (vtkCollection *) this->MergeFiltersGroup->GetItemAsObject(groupIndex);
+  currMergeFilter = (vtkMergeDataObjectFilter *) currMergeFilters->GetItemAsObject(indexInGroup);
+
+  vtkUnsignedCharArray *colorarray = (vtkUnsignedCharArray *) ((vtkPolyData *) currMergeFilter->GetDataObject())->GetFieldData()->GetArray("Color");
+
+  if (colorarray == NULL) {
+    //cout<<"Fiber does not have a color assigned"<<endl;
+    return;
+  }
+  R=(unsigned char) colorarray->GetComponent(0,0);
+  G=(unsigned char) colorarray->GetComponent(0,1);
+  B=(unsigned char) colorarray->GetComponent(0,2);
+  A=(unsigned char) colorarray->GetComponent(0,3);
+}
+
+void vtkDisplayTracts::GetStreamlineRGBAInGroup(vtkHyperStreamline *currStreamline, int groupIndex, unsigned char RGBA[4])
+{
+  this->GetStreamlineRGBAInGroup(currStreamline,groupIndex,RGBA[0],RGBA[1],RGBA[2],RGBA[3]);
+
+}
+
+void vtkDisplayTracts::GetStreamlineRGBInGroup(vtkHyperStreamline *currStreamline, int groupIndex, unsigned char RGB[3])
+{
+  unsigned char tmp;
+  this->GetStreamlineRGBAInGroup(currStreamline,groupIndex,RGB[0],RGB[1],RGB[2],tmp);
+}
+
+void vtkDisplayTracts::GetStreamlineRGBInGroup(vtkHyperStreamline *currStreamline, int groupIndex, unsigned char &R, unsigned char &G, unsigned char &B)
+{
+  unsigned char tmp;
+  this->GetStreamlineRGBAInGroup(currStreamline,groupIndex,R,G,B,tmp);
+}
+
+
+void vtkDisplayTracts::SetStreamlineOpacityInGroup(vtkHyperStreamline *currStreamline, int groupIndex, unsigned char opacity)
+{
+
+  int indexInGroup;
+  vtkMergeDataObjectFilter *currMergeFilter;
+
+  this->FindStreamlineInGroup(currStreamline,groupIndex,indexInGroup);
+  if (indexInGroup == -1) {
+    return;
+  }
+  vtkCollection *currMergeFilters = (vtkCollection *) this->MergeFiltersGroup->GetItemAsObject(groupIndex);
+  currMergeFilter = (vtkMergeDataObjectFilter *) currMergeFilters->GetItemAsObject(indexInGroup);
+  vtkUnsignedCharArray *colorarray = (vtkUnsignedCharArray *) ((vtkPolyData *) currMergeFilter->GetDataObject())->GetFieldData()->GetArray("Color");
+  colorarray->SetComponent(0,3,opacity);
+  colorarray->SetComponent(1,3,opacity);
+  // Input has changed
+  currMergeFilter->GetDataObject()->Modified();
+}
+
+void vtkDisplayTracts::GetStreamlineOpacityInGroup(vtkHyperStreamline *currStreamline, int groupIndex, unsigned char &opacity)
+{
+  int indexInGroup;
+  vtkMergeDataObjectFilter *currMergeFilter;
+
+  this->FindStreamlineInGroup(currStreamline,groupIndex,indexInGroup);
+  if (groupIndex == -1 || indexInGroup == -1) {
+    return;
+  }
+  vtkCollection *currMergeFilters = (vtkCollection *) this->MergeFiltersGroup->GetItemAsObject(groupIndex);
+  currMergeFilter = (vtkMergeDataObjectFilter *) currMergeFilters->GetItemAsObject(indexInGroup);
+  vtkUnsignedCharArray *colorarray = (vtkUnsignedCharArray *) ((vtkPolyData *)currMergeFilter->GetDataObject())->GetFieldData()->GetArray("Color");
+  opacity= (unsigned char) colorarray->GetComponent(0,3);
+}
 
 
 // Make Streamlines Group, ClippedStreamline Group, Merge Filter, Tube Filter group and Transform Filter group.
