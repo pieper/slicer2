@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSaveTracts.h,v $
-  Date:      $Date: 2006/01/06 17:57:26 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2006/12/06 02:32:14 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 // .NAME vtkSaveTracts - 
@@ -28,6 +28,7 @@
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"
 #include "vtkCollection.h"
+#include "vtkDisplayTracts.h"
 #include "vtkTransform.h"
 #include "vtkMrmlTree.h"
 #include "vtkImageData.h"
@@ -74,7 +75,7 @@ class VTK_DTMRI_EXPORT vtkSaveTracts : public vtkObject
   // Description
   // Input to this class (for grabbing colors). This 
   // may change to a colorID array.
-  vtkSetObjectMacro(Actors, vtkCollection);
+  vtkSetObjectMacro(Display, vtkDisplayTracts);
 
   // Example usage is as follows:
   // 1) If tensors are to be saved in a coordinate system
@@ -154,7 +155,8 @@ class VTK_DTMRI_EXPORT vtkSaveTracts : public vtkObject
 
   vtkCollection *Streamlines;
   vtkCollection *TubeFilters;
-  vtkCollection *Actors;
+
+  vtkDisplayTracts *Display;
 
 
   int SaveForAnalysis;
