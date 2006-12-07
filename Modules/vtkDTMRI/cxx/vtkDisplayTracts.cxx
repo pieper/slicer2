@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDisplayTracts.cxx,v $
-  Date:      $Date: 2006/12/06 00:16:56 $
-  Version:   $Revision: 1.18 $
+  Date:      $Date: 2006/12/07 15:39:24 $
+  Version:   $Revision: 1.19 $
 
 =========================================================================auto=*/
 #include "vtkDisplayTracts.h"
@@ -565,9 +565,30 @@ void vtkDisplayTracts::SetStreamlineRGBA(vtkHyperStreamline *currStreamline, uns
 
 void vtkDisplayTracts::SetStreamlineRGB(vtkHyperStreamline *currStreamline, unsigned char R, unsigned char G, unsigned char B)
 {
-  unsigned char opacity;
-  this->GetStreamlineOpacity(currStreamline,opacity);
-  this->SetStreamlineRGBA(currStreamline,R,G,B,opacity);
+
+ int groupIndex, indexInGroup;
+  vtkMergeDataObjectFilter *currMergeFilter;
+  this->FindStreamline(currStreamline,groupIndex,indexInGroup);
+  if (groupIndex == -1 || indexInGroup == -1) {
+    return;
+  }
+  vtkCollection *currMergeFilters = (vtkCollection *) this->MergeFiltersGroup->GetItemAsObject(groupIndex);
+  currMergeFilter = (vtkMergeDataObjectFilter *) currMergeFilters->GetItemAsObject(indexInGroup);
+  vtkUnsignedCharArray *colorarray = (vtkUnsignedCharArray *) ((vtkPolyData *) currMergeFilter->GetDataObject())->GetFieldData()->GetArray("Color");
+  if (colorarray == NULL) {
+      return;
+  }
+
+  colorarray->SetComponent(0,0,R);
+  colorarray->SetComponent(0,1,G);
+  colorarray->SetComponent(0,2,B);
+  colorarray->SetComponent(1,0,R);
+  colorarray->SetComponent(1,1,G);
+  colorarray->SetComponent(1,2,B);
+
+  // Input has changed
+  currMergeFilter->GetDataObject()->Modified();
+
 }
 
 void vtkDisplayTracts::SetStreamlineRGB(vtkHyperStreamline *currStreamline, unsigned char RGB[3])
