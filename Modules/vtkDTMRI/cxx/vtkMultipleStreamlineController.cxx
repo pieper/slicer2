@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMultipleStreamlineController.cxx,v $
-  Date:      $Date: 2006/12/06 02:32:26 $
-  Version:   $Revision: 1.71 $
+  Date:      $Date: 2006/12/07 15:40:14 $
+  Version:   $Revision: 1.72 $
 
 =========================================================================auto=*/
 #include "vtkMultipleStreamlineController.h"
@@ -341,7 +341,7 @@ void vtkMultipleStreamlineController::ClusterTracts(int tmp)
         {
           lut->GetColor(clusters->GetValue(idx),rgb);
           vtkDebugMacro("rgb " << rgb[0] << " " << rgb[1] << " " << rgb[2]);
-          this->DisplayTracts->SetStreamlineRGB(currStreamline,(unsigned char) rgb[0]*255, (unsigned char) rgb[1]*255, (unsigned char) rgb[2]*255);
+          this->DisplayTracts->SetStreamlineRGB(currStreamline,(unsigned char) (rgb[0]*255), (unsigned char) (rgb[1]*255), (unsigned char) (rgb[2]*255));
         }
       else
         {
