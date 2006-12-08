@@ -8,7 +8,8 @@
 
 \documentclass{InsightArticle}
 
-\usepackage[dvips]{graphicx}
+%\usepackage[dvips]{graphicx}
+\usepackage{graphicx}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -22,6 +23,7 @@ backref,
 colorlinks,linkcolor={blue},citecolor={blue},urlcolor={blue},
 ]{hyperref}
 
+\graphicspath{Images/}
 
 %  This is a template for Papers to the Insight Journal. 
 %  It is comparable to a technical report format.
@@ -88,8 +90,8 @@ The goal of this paper is to give a high-level overview of the
 functionality available in the DTMRI software.  We begin with a very
 brief background section to familiarize the reader with the concept of
 the diffusion tensor, then the remaining sections demonstrate the
-capabilities of the software especially including the types of images
-and 3D views that can be generated.  Finally we conclude with
+capabilities of the software especially emphasizing the types of
+images and 3D views that can be generated.  Finally we conclude with
 instructions to obtain the software and additional references of
 interest.
 
@@ -97,46 +99,68 @@ interest.
 \section{Background on the Diffusion Tensor and Scalar Invariants}
 Diffusion MRI measures the diffusion of water molecules in the brain.
 The water molecules may diffuse faster in some directions than others,
-depending on the cellular structure of the tissue. The diffusion
-tensor is a mathematical model used to describe the amount of
-diffusion in all directions, and from this model the principal, or
-fastest, diffusion direction can be estimated. In white matter regions
-where fibers do not cross, the direction of fastest diffusion
-corresponds to the orientation of the white matter fiber tract.
+depending on the cellular structure of the tissue \cite{beaulieu02,
+pierpaoli96} . The diffusion tensor is a mathematical model
+\cite{basserBIOPHYS94} used to describe the amount of diffusion in all
+directions, and from this model the principal, or fastest, diffusion
+direction can be estimated. In white matter regions where fibers do
+not cross, the direction of fastest diffusion corresponds to the
+orientation of the white matter fiber tract.
 
-The diffusion tensor is a $3 \times 3$ symmetric positive-definite
-matrix that is proportional to the covariance matrix of water molecule
-displacements during the imaging time.  Its major eigenvector
-corresponds to the principal diffusion direction.  The tensor has
-three eigenvalues ($formula ***** $) that quantify the diffusivity of water
-in the principal diffusion direction and in two perpendicular
-directions. From the tensor, various scalar invariants can be
-calculated that describe the ``shape'' of the diffusion.  (The word
-``scalar'' means a single number, as opposed to a vector or tensor.
-The word ``invariant'' refers to the fact that these numbers are
-invariant to rotation of the brain in the MRI machine, i.e. they do
-not depend on the directions in which diffusion was measured, though
-it is important to measure using enough directions).  By ``shape'' of
-diffusion, we mean whether the diffusion is approximately equal in all
-directions (spherical), in a plane or pancake shape (planar), or
-mainly in one direction (linear).
+The diffusion tensor ${\bf D}$ is a $3 \times 3$ symmetric
+positive-definite matrix that is proportional to the covariance matrix
+of water molecule displacements during the imaging time.  Its major
+eigenvector corresponds to the principal diffusion direction.  The
+tensor has three eigenvalues ($\lambda_1 \geq \lambda_2 \geq \lambda_3
+\geq 0$) that quantify the diffusivity of water in the principal
+diffusion direction and in two perpendicular directions. From the
+tensor, various scalar invariants can be calculated that describe the
+``shape'' of the diffusion.  (The word ``scalar'' means a single
+number, as opposed to a vector or tensor.  The word ``invariant''
+refers to the fact that these numbers are invariant to rotation of the
+brain in the MRI machine, i.e. they do not depend on the directions in
+which diffusion was measured, though it is important to measure using
+enough directions).  By ``shape'' of diffusion, we mean whether the
+diffusion is approximately equal in all directions (spherical), in a
+plane or pancake shape (planar), or mainly in one direction (linear).
 
-For reference we include formulas for three common scalar invariants,
-the trace, the fractional anisotropy (FA), and the linear measure
-($c_L$). *******
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  Example on how to insert an equation.
-%  Never forget to put an equation in your paper. 
-%  They make them look professional and impress the reviewers.
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+For reference we include formulas for three common scalar invariants:
+the trace, the fractional anisotropy (FA) \cite{basserJMR96}, and the
+linear measure ($c_L$) \cite{westin02,westin97}.
 
 \begin{equation}
-\label{eqn:ShapeInfluenceTerm}
-\xi \left(\psi^{*}(\mathbf{x}) - \psi(\mathbf{x})\right)
+  {\rm trace}({\bf D}) = \sum_{i=1}^{3}{\bf D}_{ii} = \sum_{i=1}^{3}\lambda_i
 \end{equation}
+
+Note that the mean diffusivity (MD) and the ADC refer to the average
+rather than the sum of the eigenvalues, that is ${\rm trace}({\bf
+D})/3$.
+
+\begin{eqnarray}
+\label{eq:FA}
+{\rm FA} &= \frac{1}{\sqrt{2}} \frac{\sqrt{(\lambda_1-\hat\lambda)^2 +
+     (\lambda_2-\hat\lambda)^2 + (\lambda_1-\hat\lambda)^2}}
+     {\sqrt{\lambda_1^2 + \lambda_2^2 + \lambda_3^2}} =
+     \frac{\sqrt{3}}{\sqrt{2}} \frac{{\rm norm}({\bf D} - \frac{1}{3}{\rm
+     trace}({\bf D}){\bf I})}{{\rm norm}({\bf D})}
+\end{eqnarray}
+
+\begin{equation}
+\label{eq:diffMeasuresWestin}
+c_L = \frac{\lambda_1 - \lambda_2}{\lambda_1}
+\end{equation}
+
+\begin{figure}
+\center
+\includegraphics[width=0.8\textwidth]{EllipseDiagram}
+
+\itkcaption[Diagram of tensor eigensystem]{Diagram of tensor 
+eigensystem. The eigenvalues and eigenvectors are shown for this
+example tensor in two dimensions.}
+
+\label{fig:TensorDiagram}
+\end{figure}
+
 
 
 
@@ -148,40 +172,38 @@ The tensor is calculated as described in \cite{}.
 
 \subsection{Glyphs}
 A glyph is a 3D object which is oriented according to the tensor
-eigenvector(s) and scaled by the tensor eigenvalue(s).  In addition,
-color can be used with glyphs to indicate orientation or a scalar
-invariant of the tensor.  Example images follow.
+eigenvector(s) and scaled by the tensor eigenvalue(s)
+\cite{basserBIOPHYS94,kindlmann04}.  In addition, color can be used
+with glyphs to indicate orientation or a scalar invariant of the
+tensor.  Example images follow.
+
+\begin{figure}
+\center
+\includegraphics[width=0.8\textwidth]{}
+\itkcaption[Major Eigenvector Glyphs]{The direction of the major eigenvector of each tensor is indicated with a line.  The lines are colored by $c_L$.}
+\label{fig:GlyphLineLinear}
+\end{figure}
+
+
+
 
 \subsection{Major Eigenvector Orientation as RGB Color}
 
 In 3D Slicer, the coordinate system is RAS (right-anterior-superior)
 and these directions are mapped to the red, green, and blue color
-channels to produce images such as the following.
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  Example on how to insert a figure
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{figure}
-\center
-\includegraphics[width=0.8\textwidth]{RegistrationComponentsDiagram.eps}
-\itkcaption[Registration Framework Components]{The basic components of the
-registration framework are two input images, a transform, a metric, an
-interpolator and an optimizer.}
-\label{fig:RegistrationComponents}
-\end{figure}
-
+channels \cite{pajevic99} to produce images such as the following.
 
 
 \section{Scalar Invariant Calculation}
 The scalar invariants that can be calculated in DTMRI are listed in table \ref{table:Scalars}.
 
 \section{Tractography}
+Tractography is performed by sequentially stepping in the principal
+diffusion direction \cite{basser00,conturo99,mori99,westin99}.  Our
+tractography class inherits from vtkHyperStreamline.
 
 \subsection{Tractography Clustering}
+\subsection{Tractography Selection using Regions of Interest}
 
 
 \section{Software Requirements}
@@ -198,6 +220,10 @@ Please refer to the following page for download information
 
 \url{http://www.na-mic.org/Wiki/index.php/Slicer}
 
+\section{User Tutorial}
+Please refer to the following page for Slicer tutorial information
+
+\url{http://www.na-mic.org/Wiki/index.php/Slicer}
 
 % The preceding sections will have been written in a gentler,
 % introductory style.  You may also wish to include a reference
