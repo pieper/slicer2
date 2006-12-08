@@ -8,29 +8,28 @@
 
 \documentclass{InsightArticle}
 
-%\usepackage[dvips]{graphicx}
-\usepackage{graphicx}
+\usepackage[dvips]{graphicx}
+%\usepackage{graphicx}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %  hyperref should be the last package to be loaded.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\usepackage[dvips,
-bookmarks,
+\usepackage[bookmarks,
 bookmarksopen,
 backref,
 colorlinks,linkcolor={blue},citecolor={blue},urlcolor={blue},
 ]{hyperref}
 
-\graphicspath{Images/}
+\graphicspath{{Images/}}
 
 %  This is a template for Papers to the Insight Journal. 
 %  It is comparable to a technical report format.
 
 % The title should be descriptive enough for people to be able to find
 % the relevant document. 
-\title{Diffusion Tensor MRI Visualization in 3D Slicer 2.0}
+\title{Diffusion Tensor MRI in 3D Slicer 2.0}
 
 % Increment the release number whenever significant changes are made.
 % The author and/or editor can define 'significant' however they like.
@@ -38,8 +37,11 @@ colorlinks,linkcolor={blue},citecolor={blue},urlcolor={blue},
 
 % At minimum, give your name and an email address.  You can include a
 % snail-mail address if you like.
-\author{Lauren O'Donnell$^{1}$ and Raul San Jose Estepar$^{1}$}
-\authoraddress{$^{1}$Brigham and Women's Hospital, Harvard Medical School, Boston MA USA}
+\author{Lauren O'Donnell$^{1,2,3}$ and Raul San Jose Estepar$^{1}$}
+\authoraddress{$^{1}$Lab for Mathematics in Imaging (LMI), Brigham and Women's Hospital, Harvard Medical School, Boston MA USA\\
+$^{2}$Golby Lab, Department of Neurosurgery, Brigham and Women's Hospital, Harvard Medical School, Boston MA USA\\
+$^{3}$MIT CSAIL and HST, Harvard MA USA\\
+}
 
 \begin{document}
 
@@ -92,8 +94,8 @@ brief background section to familiarize the reader with the concept of
 the diffusion tensor, then the remaining sections demonstrate the
 capabilities of the software especially emphasizing the types of
 images and 3D views that can be generated.  Finally we conclude with
-instructions to obtain the software and additional references of
-interest.
+instructions to obtain the software, acknowledgements, and additional
+references of interest.
 
 
 \section{Background on the Diffusion Tensor and Scalar Invariants}
@@ -179,7 +181,7 @@ tensor.  Example images follow.
 
 \begin{figure}
 \center
-\includegraphics[width=0.8\textwidth]{}
+%\includegraphics[width=0.8\textwidth]{}
 \itkcaption[Major Eigenvector Glyphs]{The direction of the major eigenvector of each tensor is indicated with a line.  The lines are colored by $c_L$.}
 \label{fig:GlyphLineLinear}
 \end{figure}
@@ -206,7 +208,7 @@ tractography class inherits from vtkHyperStreamline.
 \subsection{Tractography Selection using Regions of Interest}
 
 
-\section{Software Requirements}
+\section{Software Download and Tutorial}
 
 You need to have the following software installed:
 
@@ -220,10 +222,21 @@ Please refer to the following page for download information
 
 \url{http://www.na-mic.org/Wiki/index.php/Slicer}
 
-\section{User Tutorial}
 Please refer to the following page for Slicer tutorial information
-
+(???)
 \url{http://www.na-mic.org/Wiki/index.php/Slicer}
+
+\section{Acknowledgements}
+The module has been developed by members of Carl-Fredrik Westin's
+Laboratory for Mathematics in Imaging at Brigham and Women's Hospital,
+Harvard Medical School.  Original module development (beginning in
+2001) was performed by Lauren O'Donnell, then a graduate student at
+MIT in the CSAIL and HST departments.  In 2003 (*****????)  Raul San
+Jose Estepar became a primary maintainer and developer of the DTMRI module.
+
+??????  maybe make a table about who did what and include others who have contributed
+
+The following grants .... ****
 
 % The preceding sections will have been written in a gentler,
 % introductory style.  You may also wish to include a reference
