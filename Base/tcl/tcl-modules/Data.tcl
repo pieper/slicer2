@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Data.tcl,v $
-#   Date:      $Date: 2006/09/01 21:16:52 $
-#   Version:   $Revision: 1.59 $
+#   Date:      $Date: 2006/12/15 20:08:58 $
+#   Version:   $Revision: 1.60 $
 # 
 #===============================================================================
 # FILE:        Data.tcl
@@ -65,7 +65,7 @@ proc DataInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.59 $} {$Date: 2006/09/01 21:16:52 $}]
+        {$Revision: 1.60 $} {$Date: 2006/12/15 20:08:58 $}]
 
     set Data(index) ""
     set Data(clipboard) ""
@@ -749,7 +749,7 @@ proc DataAddTransformFromSelection {} {
         set lastSel [Mrml(dataTree) GetNthItem [lindex $selection end]]
     }
 
-    DataAddTransform append $firstSel $lastSel 
+    DataAddTransform $append $firstSel $lastSel 
 }
 
 #-------------------------------------------------------------------------------
