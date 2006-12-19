@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.cxx,v $
-  Date:      $Date: 2006/07/06 21:01:16 $
-  Version:   $Revision: 1.42 $
+  Date:      $Date: 2006/12/19 17:14:44 $
+  Version:   $Revision: 1.43 $
 
 =========================================================================auto=*/
 
@@ -518,6 +518,14 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
             *outPtr = (T)w[2];
             break;
 
+          case VTK_TENS_PARALLEL_DIFFUSIVITY:
+            *outPtr = static_cast<T> (vtkTensorMathematics::ParallelDiffusivity(w));
+            break;
+
+          case VTK_TENS_PERPENDICULAR_DIFFUSIVITY:
+            *outPtr = static_cast<T> (vtkTensorMathematics::PerpendicularDiffusivity(w));
+            break;
+
           case VTK_TENS_MAX_EIGENVALUE_PROJX:
             *outPtr = static_cast<T> (vtkTensorMathematics::MaxEigenvalueProjectionX(v,w));
             break;
@@ -686,6 +694,8 @@ void vtkTensorMathematics::ThreadedExecute(vtkImageData **inData,
     case VTK_TENS_COLOR_ORIENTATION:
     case VTK_TENS_MODE:
     case VTK_TENS_COLOR_MODE:
+    case VTK_TENS_PARALLEL_DIFFUSIVITY:
+    case VTK_TENS_PERPENDICULAR_DIFFUSIVITY:
       switch (outData->GetScalarType())
       {
         vtkTemplateMacro6(vtkTensorMathematicsExecute1Eigen,
@@ -792,6 +802,17 @@ vtkFloatingPointType vtkTensorMathematics::MinEigenvalue(vtkFloatingPointType w[
 {
   return w[2];
 }
+
+vtkFloatingPointType vtkTensorMathematics::ParallelDiffusivity(vtkFloatingPointType w[3])
+{
+  return w[0];
+}
+
+vtkFloatingPointType vtkTensorMathematics::PerpendicularDiffusivity(vtkFloatingPointType w[3])
+{
+  return ( ( w[1] + w[2] ) / 2 );
+}
+
 
 vtkFloatingPointType vtkTensorMathematics::RAIMaxEigenvecX(vtkFloatingPointType **v, vtkFloatingPointType w[3]) 
 {

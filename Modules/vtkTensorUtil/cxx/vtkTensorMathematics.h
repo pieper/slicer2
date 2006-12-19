@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.h,v $
-  Date:      $Date: 2006/07/06 21:34:54 $
-  Version:   $Revision: 1.19 $
+  Date:      $Date: 2006/12/19 17:14:44 $
+  Version:   $Revision: 1.20 $
 
 =========================================================================auto=*/
 // .NAME vtkTensorMathematics - Trace, determinant, anisotropy measures
@@ -50,6 +50,8 @@
 #define VTK_TENS_RAI_MAX_EIGENVEC_PROJX 19
 #define VTK_TENS_RAI_MAX_EIGENVEC_PROJY 20
 #define VTK_TENS_RAI_MAX_EIGENVEC_PROJZ 21
+#define VTK_TENS_PARALLEL_DIFFUSIVITY   22
+#define VTK_TENS_PERPENDICULAR_DIFFUSIVITY   23
 
 
 #include "vtkTensorUtilConfigure.h"
@@ -67,7 +69,7 @@ public:
   // Description:
   // Get the Operation to perform.
   vtkGetMacro(Operation,int);
-  vtkSetClampMacro(Operation,int, VTK_TENS_TRACE, VTK_TENS_RAI_MAX_EIGENVEC_PROJZ);
+  vtkSetClampMacro(Operation,int, VTK_TENS_TRACE, VTK_TENS_PERPENDICULAR_DIFFUSIVITY);
 
   // Description:
   // Output the trace (sum of eigenvalues = sum along diagonal)
@@ -95,6 +97,10 @@ public:
   // (thanks to Gordon Lothar (of the Hill People) Kindlmann)
   void SetOperationToMode() 
     {this->SetOperation(VTK_TENS_MODE);};
+  void SetOperationToParallelDiffusivity()
+    {this->SetOperation(VTK_TENS_PARALLEL_DIFFUSIVITY);};
+  void SetOperationToPerpendicularDiffusivity()
+    {this->SetOperation(VTK_TENS_PERPENDICULAR_DIFFUSIVITY);};
 
   // Description:
   // Output a selected eigenvalue
@@ -211,6 +217,8 @@ public:
   static vtkFloatingPointType SphericalMeasure(vtkFloatingPointType w[3]);
   static vtkFloatingPointType MaxEigenvalue(vtkFloatingPointType w[3]);
   static vtkFloatingPointType MiddleEigenvalue(vtkFloatingPointType w[3]);
+  static vtkFloatingPointType ParallelDiffusivity(vtkFloatingPointType w[3]);
+  static vtkFloatingPointType PerpendicularDiffusivity(vtkFloatingPointType w[3]);
   static vtkFloatingPointType MinEigenvalue(vtkFloatingPointType w[3]);
   static vtkFloatingPointType RAIMaxEigenvecX(vtkFloatingPointType **v, vtkFloatingPointType w[3]);
   static vtkFloatingPointType RAIMaxEigenvecY(vtkFloatingPointType **v, vtkFloatingPointType w[3]);
