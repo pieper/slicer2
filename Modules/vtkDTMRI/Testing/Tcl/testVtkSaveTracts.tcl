@@ -105,8 +105,8 @@ displayTracts ScalarVisibilityOn
 vtkSaveTracts saveTracts
 
 saveTracts SetStreamlines [seedTracts GetStreamlines]
-saveTracts SetTubeFilters [displayTracts GetTubeFilters]
-saveTracts SetActors [displayTracts GetActors]
+saveTracts SetTubeFilters [displayTracts GetTubeFiltersGroup]
+saveTracts SetDisplay displayTracts
 
 saveTracts SaveStreamlinesAsPolyData tractsVisualization tractV
 
@@ -173,3 +173,4 @@ iren AddObserver UserEvent {wm deiconify .vtkInteract}
 wm withdraw .
 
 
+exit
