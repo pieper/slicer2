@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSaveTracts.cxx,v $
-  Date:      $Date: 2006/12/06 13:27:39 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2006/12/20 11:32:10 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
 #include "vtkSaveTracts.h"
@@ -213,6 +213,7 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
   vtkDebugMacro( << "Traverse STREAMLINES" );
   // loop throug each color in the color table
   int groupIndex,indexInGroup;
+  currColor = 0;
   for (iter = colorTable.begin(); iter != colorTable.end();iter++) 
     {
      //rgbvec = static_cast<std::vector<unsigned char>> (iter->first);
@@ -226,6 +227,7 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
      R[currColor]=rgbvec[0];
      G[currColor]=rgbvec[1];
      B[currColor]=rgbvec[2];
+     currColor++;
      for (int k = 0; k<indexArray->GetNumberOfTuples(); k++)
        {
        groupIndex= (int) indexArray->GetComponent(k,0);
@@ -478,9 +480,9 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
       if (found == 0) 
         {
           currColorNode = vtkMrmlColorNode::New();
-          rgb_vtk_float[0] = (float) R[idx]/255.0;
-          rgb_vtk_float[1] = (float) G[idx]/255.0;
-          rgb_vtk_float[2] = (float) B[idx]/255.0;
+          rgb_vtk_float[0] = ((float) R[idx])/255.0;
+          rgb_vtk_float[1] = ((float) G[idx])/255.0;
+          rgb_vtk_float[2] = ((float) B[idx])/255.0;
           currColorNode->SetDiffuseColor(rgb_vtk_float);
           colorNameStr.str("");
           colorNameStr << "class_" << idx ;
