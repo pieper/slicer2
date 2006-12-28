@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EdGeometryDraw.tcl,v $
-#   Date:      $Date: 2006/01/03 21:42:33 $
-#   Version:   $Revision: 1.1 $
+#   Date:      $Date: 2006/12/28 21:54:17 $
+#   Version:   $Revision: 1.2 $
 # 
 #===============================================================================
 # FILE:        EdGeometryDraw.tcl
@@ -307,6 +307,8 @@ proc EdGeometryDrawSphere {i j k radius label} {
     # Need to call this here so working volume extents are set up.
     EdSetupBeforeApplyEffect $v $Ed($e,scope) Native
 
+
+    if {0} {
     # Create a sphere using a vtk implicit function.
     # The coordinate system is scaled ijk of the working labelmap.
     # So this means the radius is in mm.
@@ -340,20 +342,29 @@ proc EdGeometryDrawSphere {i j k radius label} {
     # in the sphere (the "background"), use this label value
     _stencil SetBackgroundValue $label
     #_stencil Update
-
+}
     # Text on the progress bar
     set Gui(progressText) "Draw sphere on [Volume($w,node) GetName]"
 
     # progress bar
     MainStartProgress
 
+    if {0} {
     # Update the filter pipeline
     # This line makes sure our pipeline has the correct input volume.
     # I thought this would be handled by EdSetupBeforeApplyEffect but 
     # it isn't.
     Ed(editor) SetInput [ Volume($w,vol) GetOutput ]
     Ed(editor) UseInputOn
+    # changes for vtk 5 compatibility
     Ed(editor) Apply  _stencil _stencil
+}
+    catch {_egd Delete}
+    vtkEditorGeometryDrawSphere _egd
+    _egd SetVol Volume($w,vol)
+    _egd SetEd Ed(editor)
+    _egd ApplySphere $i $j $k $radius $label 
+# Volume($w,vol) Ed(editor)
 
     # progress bar
     MainEndProgress
@@ -365,17 +376,19 @@ proc EdGeometryDrawSphere {i j k radius label} {
     # This allows undoing and puts the output into the working volume.
     EdUpdateAfterApplyEffect $v
 
+    if {0} {
     # Putting the output into a slicer volume is done in EdUpdateAfterApplyEffect.
     # However it leaves the pipeline hooked up, so its filters never delete.
     # This caused a memory leak when we created new temporary objects here.  
     # So detach the pipeline with a data copy.
     vtkImageData _tmp
     _tmp DeepCopy [ _stencil GetOutput ] 
-
+}
     # Get rid of external object reference counting to our temp objects
     Ed(editor)  SetFirstFilter ""
     Ed(editor)  SetLastFilter ""
 
+    if {0} {
     # Delete temporary "local" objects (names begin with underscores).
     _stencil Delete
     _functionToStencil Delete
@@ -386,7 +399,7 @@ proc EdGeometryDrawSphere {i j k radius label} {
     # This does not really get rid of the object as Volume($w,vol) has
     # a reference to it already.
     _tmp Delete
-
+}
     # This does not need to be done as EdUpdateAfterApplyEffect does it.
     # Mark the volume as changed
     #set Volume($w,dirty) 1
