@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageRealtimeScan.cxx,v $
-  Date:      $Date: 2006/10/26 16:18:13 $
-  Version:   $Revision: 1.15.8.3.2.11 $
+  Date:      $Date: 2007/02/09 16:36:15 $
+  Version:   $Revision: 1.15.8.3.2.12 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -219,7 +219,7 @@ int vtkImageRealtimeScan::OperateScanner(int cmd)
     long n, len;
     char buf[100];
     
-
+#ifndef _WIN32
     // Return if not connected yet
     if (sockfd < 0) return -1;
 
@@ -255,6 +255,9 @@ int vtkImageRealtimeScan::OperateScanner(int cmd)
     }
 
     return 0; 
+#endif
+
+    return 1;
 }
 
 
