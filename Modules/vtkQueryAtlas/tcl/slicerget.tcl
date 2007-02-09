@@ -10,8 +10,8 @@ exec tclsh "$0" "$@"
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: slicerget.tcl,v $
-#   Date:      $Date: 2006/05/26 19:58:14 $
-#   Version:   $Revision: 1.4 $
+#   Date:      $Date: 2007/02/09 21:01:48 $
+#   Version:   $Revision: 1.5 $
 # 
 #===============================================================================
 # FILE:        slicerget.tcl
@@ -25,7 +25,7 @@ exec tclsh "$0" "$@"
 #
 
 array set vtk_to_nrrd_types { 2 char 3 "unsigned char" 4 short 5 ushort 6 int 7 uint 10 float 11 double }
-array set vtk_types_sizes { 2 1  3 1  4 2  5 2  6 3  7 4  10 4  11 8 }
+array set vtk_types_sizes { 2 1  3 1  4 2  5 2  6 4  7 4  10 4  11 8 }
 
 set id [lindex $argv 0]
 if { $id == "" } {
@@ -38,13 +38,19 @@ puts $sock "get $id"
 flush $sock
 
 gets $sock line ;# should be "image $volid" 
+if {$line eq "get error: bad id"} {
+     puts stderr "No volume with id or name $id currently loaded in Slicer.\n"
+     puts stdout "No volume with id or name $id currently loaded in Slicer.\n"
+     exit 1
+}
+gets $sock name; set name [lindex $name 1]
 gets $sock scalar_type; set scalar_type [lindex $scalar_type 1]
 gets $sock dimensions; set dimensions [lrange $dimensions 1 3]
 gets $sock space_origin; set space_origin [lrange $space_origin 1 end]
 gets $sock space_directions; set space_directions [lrange $space_directions 1 end]
 
 puts stderr "NRRD0001"
-puts stderr "content: slicerget $id"
+puts stderr "content: $name"
 puts stderr "type: [set vtk_to_nrrd_types($scalar_type)]"
 puts stderr "dimension: 3"
 puts stderr "space: right-anterior-superior"
@@ -54,7 +60,7 @@ puts stderr "space_directions $space_directions"
 puts stderr "" ;# blank line before data
 
 puts stdout "NRRD0001"
-puts stdout "content: slicerget $id"
+puts stdout "content: $name"
 puts stdout "type: [set vtk_to_nrrd_types($scalar_type)]"
 puts stdout "dimension: 3"
 puts stdout "space: right-anterior-superior"
