@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: slicerd.tcl,v $
-#   Date:      $Date: 2006/05/26 19:58:13 $
-#   Version:   $Revision: 1.11 $
+#   Date:      $Date: 2007/02/09 21:03:05 $
+#   Version:   $Revision: 1.12 $
 # 
 #===============================================================================
 # FILE:        slicerd.tcl
@@ -166,7 +166,8 @@ proc slicerd_sock_fileevent {sock} {
             # TODO: should add direction cosines and label_map status
             set im [Volume($volid,vol) GetOutput]
 
-            puts stderr "image $volid" 
+            puts stderr "image $volid"
+            puts stderr "name [Volume($volid,node) GetName]" 
             puts stderr "scalar_type [$im GetScalarType]" 
             puts stderr "dimensions [$im GetDimensions]" 
             puts stderr "space_origin $space_origin"
@@ -174,6 +175,7 @@ proc slicerd_sock_fileevent {sock} {
 
             fconfigure $sock -translation auto
             puts $sock "image $volid" 
+            puts $sock "name [Volume($volid,node) GetName]" 
             puts $sock "scalar_type [$im GetScalarType]" 
             puts $sock "dimensions [$im GetDimensions]" 
             puts $sock "space_origin $space_origin"
