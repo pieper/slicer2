@@ -78,7 +78,7 @@ INCLUDE_DIRECTORIES(
 )
 
 FIND_LIBRARY(OPENTRACKER
-  NAMES opentrackerd 
+  NAMES opentrackerd opentracker  
   PATHS C:/projects/igttechdev/libs/opentracker/lib
 )
 
@@ -220,11 +220,11 @@ ENDIF (VTK_WRAP_JAVA AND VTKSLICER_WRAP_JAVA)
 
 LINK_LIBRARIES (
   vtkSlicerBase
-  vtkCommon
   vtkIO
   vtkGraphics
   vtkImaging 
   vtkFiltering
+  vtkCommon
 )
 
   IF (APPLE)
