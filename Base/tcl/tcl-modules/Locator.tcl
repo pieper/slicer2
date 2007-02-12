@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2007/02/12 15:17:05 $
-#   Version:   $Revision: 1.38.12.2.2.23 $
+#   Date:      $Date: 2007/02/12 19:48:02 $
+#   Version:   $Revision: 1.38.12.2.2.24 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -92,7 +92,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.23 $} {$Date: 2007/02/12 15:17:05 $}]
+        {$Revision: 1.38.12.2.2.24 $} {$Date: 2007/02/12 19:48:02 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -1714,7 +1714,11 @@ proc LocatorUseLocatorMatrix {} {
         $Locator(nx) $Locator(ny) $Locator(nz) \
         $Locator(tx) $Locator(ty) $Locator(tz) \
         $Locator(px) $Locator(py) $Locator(pz) 
+
+
 }
+
+
 
 #-------------------------------------------------------------------------------
 # .PROC LocatorFormat
@@ -2047,6 +2051,10 @@ proc LocatorLoopOpenTracker {} {
         $cb
     }
 
+    # Update the three Slice slider
+    set Slice(0,offset) $Locator(pz)
+    set Slice(1,offset) $Locator(px)
+    set Slice(2,offset) $Locator(py)
 
     # Render the slices that the locator is driving
     foreach s $Slice(idList) {
