@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkOpenTracker.cxx,v $
-  Date:      $Date: 2006/11/15 16:48:49 $
-  Version:   $Revision: 1.1.2.1 $
+  Date:      $Date: 2007/02/12 15:20:13 $
+  Version:   $Revision: 1.1.2.2 $
 
 =========================================================================auto=*/
 
@@ -51,6 +51,7 @@ vtkOpenTracker::vtkOpenTracker()
 
     this->UseRegistration = 0;
     this->NumberOfPoints = 0;
+    this->MultiRate = 1.0;
 }
 
 
@@ -167,9 +168,9 @@ void vtkOpenTracker::callbackF(const Node&, const Event &event, void *data)
     vtkOpenTracker *VOT=(vtkOpenTracker *)data;
 
     // the original values are in the unit of meters
-    position[0]=(float)(event.getPosition())[0] * 1000.0; 
-    position[1]=(float)(event.getPosition())[1] * 1000.0;
-    position[2]=(float)(event.getPosition())[2] * 1000.0;
+    position[0]=(float)(event.getPosition())[0] * VOT->MultiRate; 
+    position[1]=(float)(event.getPosition())[1] * VOT->MultiRate;
+    position[2]=(float)(event.getPosition())[2] * VOT->MultiRate;
 
     orientation[0]=(float)(event.getOrientation())[0];
     orientation[1]=(float)(event.getOrientation())[1];

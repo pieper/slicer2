@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkOpenTracker.h,v $
-  Date:      $Date: 2006/11/15 16:48:42 $
-  Version:   $Revision: 1.1.2.1 $
+  Date:      $Date: 2007/02/12 15:18:50 $
+  Version:   $Revision: 1.1.2.2 $
 
 =========================================================================auto=*/
 
@@ -39,6 +39,8 @@ public:
 
     vtkGetMacro(NumberOfPoints,int);
 
+    vtkSetMacro(MultiRate,float);
+
     void Init(char *configfile);
     void CloseConnection();
     void PollRealtime();
@@ -59,6 +61,7 @@ protected:
 
     int NumberOfPoints;
     int UseRegistration;
+    float MultiRate;
     vtkPoints *SourceLandmarks;
     vtkPoints *TargetLandmarks;
     vtkMatrix4x4 *LandmarkTransformMatrix;
