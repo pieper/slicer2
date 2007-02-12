@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2006/11/15 16:52:46 $
-#   Version:   $Revision: 1.38.12.2.2.22 $
+#   Date:      $Date: 2007/02/12 15:17:05 $
+#   Version:   $Revision: 1.38.12.2.2.23 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -92,7 +92,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.22 $} {$Date: 2006/11/15 16:52:46 $}]
+        {$Revision: 1.38.12.2.2.23 $} {$Date: 2007/02/12 15:17:05 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -167,6 +167,7 @@ proc LocatorInit {} {
     set Locator(csysVisible) 0
     # OpenTracker
     set Locator(OpenTracker,msPoll) 100
+    set Locator(OpenTracker,multiBy) 1.0
     set dir [pwd]
     set Locator(OpenTracker,cfg) [file join $dir defaultConfig.xml] 
 
@@ -1219,12 +1220,13 @@ proc LocatorBuildGUIForSetup {parent} {
         "Browse for a config file" "" "Absolute"
 
     set f $parent.f1.fBot
-    set x "msPoll"
-    DevAddLabel $f.l$x "Update period (ms):"
-    eval {entry $f.e$x -textvariable Locator($s,$x) -width 13} $Gui(WEA)
-    grid $f.l$x $f.e$x -pady $Gui(pad) -padx $Gui(pad) -sticky e
-    grid $f.e$x -sticky w
- 
+    foreach x "multiBy msPoll" name "{Multiply by:} {Update period (ms):}" {
+        DevAddLabel $f.l$x $name 
+        eval {entry $f.e$x -textvariable Locator($s,$x) -width 13} $Gui(WEA)
+
+        grid $f.l$x $f.e$x -pady $Gui(pad) -padx $Gui(pad) -sticky e
+        grid $f.e$x -sticky w
+    }
 }
 
 
@@ -1971,6 +1973,7 @@ host='$Locator(Flashpoint,host)' port='$Locator(Flashpoint,port)'"
 
     "OpenTracker" {
         # Initialize
+        Locator(OpenTracker,src) SetMultiRate $Locator(OpenTracker,multiBy)
         Locator(OpenTracker,src) Init $Locator(OpenTracker,cfg)
         set Locator(loop) 1
         $Locator(mbActive) config -state disabled
@@ -2059,6 +2062,10 @@ proc LocatorLoopOpenTracker {} {
     if {[ValidateInt $Locator(OpenTracker,msPoll)] == 0} {
         set Locator(OpenTracker,msPoll) 100
     }
+    if {[ValidateFloat $Locator(OpenTracker,multiBy)] == 0} {
+        set Locator(OpenTracker,multiBy) 1.0
+    }
+
     after $Locator(OpenTracker,msPoll) LocatorLoopOpenTracker
 }
 
