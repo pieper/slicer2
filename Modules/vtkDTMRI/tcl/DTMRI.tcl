@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRI.tcl,v $
-#   Date:      $Date: 2006/07/07 18:31:06 $
-#   Version:   $Revision: 1.120.2.4.2.2 $
+#   Date:      $Date: 2007/02/20 14:56:31 $
+#   Version:   $Revision: 1.120.2.4.2.3 $
 # 
 #===============================================================================
 # FILE:        DTMRI.tcl
@@ -481,7 +481,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.120.2.4.2.2 $} {$Date: 2006/07/07 18:31:06 $}]
+                  {$Revision: 1.120.2.4.2.3 $} {$Date: 2007/02/20 14:56:31 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -996,7 +996,7 @@ especially Diffusion DTMRI MRI.
 # .END
 #-------------------------------------------------------------------------------
 proc DTMRICreateBindings {} {
-    global Gui Ev; # CustomCsys Csys
+    global Gui Ev Locator; # CustomCsys Csys
     
     #EvDeclareEventHandler DTMRICsysEvents <KeyPress-c> {CustomCsysDoSomethingCool}
 
@@ -1006,8 +1006,12 @@ proc DTMRICreateBindings {} {
           {  eval DTMRISelectStartHyperStreamline $Select(xyz); Render3D } }
     # this seeds a stream when the s key is hit
     EvDeclareEventHandler DTMRISlicesStreamlineEvents <KeyPress-s> \
-    { if { [SelectPick2D %W %x %y] != 0 } \
-          {  eval DTMRISelectStartHyperStreamline $Select(xyz); Render3D } }
+    { if {$Locator(server) == "OpenTracker" && $Locator(loop) == 1} { \
+            set Select(xyz) "$Locator(px) $Locator(py) $Locator(pz)"; \
+          eval DTMRISelectStartHyperStreamline $Select(xyz); Render3D} \
+      else { if {[SelectPick2D %W %x %y] != 0} { \
+          eval DTMRISelectStartHyperStreamline $Select(xyz); Render3D }}}
+
     
     EvAddWidgetToBindingSet DTMRISlice0Events $Gui(fSl0Win) {DTMRISlicesStreamlineEvents}
     EvAddWidgetToBindingSet DTMRISlice1Events $Gui(fSl1Win) {DTMRISlicesStreamlineEvents}
@@ -1019,16 +1023,22 @@ proc DTMRICreateBindings {} {
           { eval DTMRISelectStartHyperStreamline $Select(xyz);Render3D } }
     # this seeds a stream when the s key is hit
     EvDeclareEventHandler DTMRI3DStreamlineEvents <KeyPress-s> \
-    { if { [SelectPick DTMRI(vtk,picker) %W %x %y] != 0 } \
-          { eval DTMRISelectStartHyperStreamline $Select(xyz);Render3D } }
+    { if {$Locator(server) == "OpenTracker" && $Locator(loop) == 1} { \
+            set Select(xyz) "$Locator(px) $Locator(py) $Locator(pz)"; \
+          eval DTMRISelectStartHyperStreamline $Select(xyz); Render3D} \
+      else { if {[SelectPick DTMRI(vtk,picker) %W %x %y] != 0} { \
+          eval DTMRISelectStartHyperStreamline $Select(xyz); Render3D }}}
+
+
     # this deletes a stream when the d key is hit
     EvDeclareEventHandler DTMRI3DStreamlineEvents <KeyPress-d> \
-    { if { [SelectPick DTMRI(vtk,picker) %W %x %y] != 0 } \
-          { eval DTMRISelectRemoveHyperStreamline $Select(xyz);Render3D } }
+    { if {[SelectPick DTMRI(vtk,picker) %W %x %y] != 0} { \
+          eval DTMRISelectRemoveHyperStreamline $Select(xyz);Render3D}}
+
     # this chooses a streamline when c is hit
     EvDeclareEventHandler DTMRI3DStreamlineEvents <KeyPress-c> \
-    { if { [SelectPick DTMRI(vtk,picker) %W %x %y] != 0 } \
-          { eval DTMRISelectChooseHyperStreamline $Select(xyz);Render3D } }
+    { if {[SelectPick DTMRI(vtk,picker) %W %x %y] != 0} { \
+          eval DTMRISelectChooseHyperStreamline $Select(xyz);Render3D}}
 
     # This contains all the regular events from tkInteractor.tcl, 
     # which will happen after ours.  For some reason we don't need 
