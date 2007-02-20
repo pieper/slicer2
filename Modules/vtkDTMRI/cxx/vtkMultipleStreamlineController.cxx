@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMultipleStreamlineController.cxx,v $
-  Date:      $Date: 2006/12/07 15:40:14 $
-  Version:   $Revision: 1.72 $
+  Date:      $Date: 2007/02/20 20:46:20 $
+  Version:   $Revision: 1.73 $
 
 =========================================================================auto=*/
 #include "vtkMultipleStreamlineController.h"
@@ -191,6 +191,8 @@ void vtkMultipleStreamlineController::SetTensorRotationMatrix(vtkMatrix4x4 *tran
   // helper class pipelines
   // ----------------------
   this->SaveTracts->SetTensorRotationMatrix(trans);
+
+  this->SeedTracts->SetTensorRotationMatrix(trans);
 }
 
 

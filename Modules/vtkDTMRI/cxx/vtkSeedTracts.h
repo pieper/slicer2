@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.h,v $
-  Date:      $Date: 2006/07/06 22:37:18 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2007/02/20 20:46:20 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
 // .NAME vtkSeedTracts - 
@@ -131,6 +131,21 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   vtkSetObjectMacro(WorldToTensorScaledIJK, vtkTransform);
   vtkGetObjectMacro(WorldToTensorScaledIJK, vtkTransform);
 
+  // Description:
+  // Example usage is as follows:
+  // 1) If tensors are to be saved in a coordinate system
+  //    that is not IJK (array-based), and the whole volume is
+  //    being rotated, each tensor needs also to be rotated.
+  //    First find the matrix that positions your tensor volume.
+  //    This is how the entire volume is positioned, not 
+  //    the matrix that positions an arbitrary reformatted slice.
+  // 2) Remove scaling and translation from this matrix; we
+  //    just need to rotate each tensor.
+  // 3) Set TensorRotationMatrix to this rotation matrix.
+  //
+  // TO DO: slicer3 clean up matrix vs transform in these classes
+  vtkSetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
+  vtkGetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
 
   // Description
   // Whether to seed once in each voxel or isotropically 
@@ -144,6 +159,12 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   vtkSetMacro(IsotropicSeedingResolution,double)
   vtkGetMacro(IsotropicSeedingResolution,double)
 
+  // Description:
+  // Whether to randomly jitter seed points. 
+  // (They stay within same grid cube or voxel.)
+  vtkSetMacro(RandomGrid,int)
+  vtkGetMacro(RandomGrid,int)
+  vtkBooleanMacro(RandomGrid,int)
 
   // Description
   // List of the output vtkHyperStreamlines (or subclasses)
@@ -224,9 +245,12 @@ class VTK_DTMRI_EXPORT vtkSeedTracts : public vtkObject
   vtkTransform *ROIToWorld;
   vtkTransform *ROI2ToWorld;
   vtkTransform *WorldToTensorScaledIJK;
+  vtkMatrix4x4 *TensorRotationMatrix;
 
   int IsotropicSeeding;
   double IsotropicSeedingResolution;
+
+  int RandomGrid;
 
   vtkImageData *InputTensorField;
   vtkImageData *InputROI;

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.cxx,v $
-  Date:      $Date: 2006/07/25 13:48:04 $
-  Version:   $Revision: 1.22 $
+  Date:      $Date: 2007/02/20 20:46:20 $
+  Version:   $Revision: 1.23 $
 
 =========================================================================auto=*/
 
@@ -21,6 +21,10 @@
 #include "vtkTransformPolyDataFilter.h"
 #include "vtkPolyDataWriter.h"
 #include "vtkTimerLog.h"
+
+#include "vtkMath.h"
+
+#include "vtkPointData.h"
 
 #include <sstream>
 #include <string>
@@ -46,6 +50,7 @@ vtkSeedTracts::vtkSeedTracts()
   this->ROIToWorld = vtkTransform::New();
   this->ROI2ToWorld = vtkTransform::New();
   this->WorldToTensorScaledIJK = vtkTransform::New();
+  this->TensorRotationMatrix = vtkMatrix4x4::New();
 
   // The user must set these for the class to function.
   this->InputTensorField = NULL;
@@ -57,6 +62,7 @@ vtkSeedTracts::vtkSeedTracts()
   this->InputROI2 = NULL;
   this->IsotropicSeeding = 0;
   this->IsotropicSeedingResolution = 2;
+  this->RandomGrid = 0;
 
   // if the user doesn't set these they will be ignored
   this->VtkHyperStreamlineSettings=NULL;
@@ -976,6 +982,33 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
                   point[1]=idxY;
                   point[2]=idxZ;
                   this->ROIToWorld->TransformPoint(point,point2);
+
+                  // jitter about seed point if requested
+                  // (now we are in a mm space, not voxels)
+                  if (this->RandomGrid)
+                    {
+                      //Call random twice to avoid init problems
+                      double rand=vtkMath::Random();
+
+                      int ridx;
+                      for (ridx = 0; ridx < 3; ridx++)
+                        {
+                          if (this->IsotropicSeeding) 
+                            {
+                              // rand was from [0 .. 1], now from +/- half grid spacing
+                              rand = vtkMath::Random( - this->IsotropicSeedingResolution / 2.0, this->IsotropicSeedingResolution / 2.0 );
+                            }
+                          else
+                            {
+                              // use half of the x voxel dimension
+                              rand = vtkMath::Random( - spacing[0] / 2.0 , spacing[0] / 2.0 );
+                            }
+
+                          // add the random offset
+                          point2[ridx] = point2[ridx] + rand;
+                        }
+                    }
+
                   // Now transform to scaled ijk of the input tensors
                   this->WorldToTensorScaledIJK->TransformPoint(point2,point);
 
@@ -990,7 +1023,11 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
                       newStreamline->SetInput(this->InputTensorField);
                       newStreamline->SetStartPosition(point[0],point[1],point[2]);
                       //newStreamline->DebugOn();
-                      
+
+                      // Ask it to output tensors and to only do one trajectory per start point
+                      newStreamline->OutputTensorsOn();
+                      newStreamline->OneTrajectoryPerSeedPointOn();
+
                       // Force it to execute
                       newStreamline->Update();
 
@@ -1006,9 +1043,80 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
                           
                           // transform model
                           transformer->SetInput(newStreamline->GetOutput());
+
+                          // force update to get correct number of points
+                          transformer->Update();
+
+                          // transform any tensors as well (rotate them)
+                          // this should be a vtk class but leave that for slicer3/vtk5
+                          // Here we rotate the tensors into the same (world) coordinate system.
+                          // -------------------------------------------------
+                          vtkDebugMacro("Rotating tensors");
+                          int numPts = transformer->GetOutput()->GetNumberOfPoints();
+                          vtkFloatArray *newTensors = vtkFloatArray::New();
+                          newTensors->SetNumberOfComponents(9);
+                          newTensors->Allocate(9*numPts);
                           
+                          vtkDebugMacro("Rotating tensors: init");
+                          double (*matrix)[4] = this->TensorRotationMatrix->Element;
+                          double tensor[9];
+                          double tensor3x3[3][3];
+                          double temp3x3[3][3];
+                          double matrix3x3[3][3];
+                          double matrixTranspose3x3[3][3];
+                          for (int row = 0; row < 3; row++)
+                            {
+                              for (int col = 0; col < 3; col++)
+                                {
+                                  matrix3x3[row][col] = matrix[row][col];
+                                  matrixTranspose3x3[row][col] = matrix[col][row];
+                                }
+                            }
+                          
+                          vtkDebugMacro("Rotating tensors: get tensors from probe");        
+                          vtkDataArray *oldTensors = transformer->GetOutput()->GetPointData()->GetTensors();
+                          
+                          vtkDebugMacro("Rotating tensors: rotate");
+                          for (vtkIdType i = 0; i < numPts; i++)
+                            {
+                              oldTensors->GetTuple(i,tensor);
+                              int idx = 0;
+                              for (int row = 0; row < 3; row++)
+                                {
+                                  for (int col = 0; col < 3; col++)
+                                    {
+                                      tensor3x3[row][col] = tensor[idx];
+                                      idx++;
+                                    }
+                                }          
+                              // rotate by our matrix
+                              // R T R'
+                              vtkMath::Multiply3x3(matrix3x3,tensor3x3,temp3x3);
+                              vtkMath::Multiply3x3(temp3x3,matrixTranspose3x3,tensor3x3);
+                              
+                              idx =0;
+                              for (int row = 0; row < 3; row++)
+                                {
+                                  for (int col = 0; col < 3; col++)
+                                    {
+                                      tensor[idx] = tensor3x3[row][col];
+                                      idx++;
+                                    }
+                                }  
+                              newTensors->InsertNextTuple(tensor);
+                            }
+                          
+                          vtkDebugMacro("Rotating tensors: add to new pd");
+                          vtkPolyData *data = vtkPolyData::New();
+                          data->SetLines(transformer->GetOutput()->GetLines());
+                          data->SetPoints(transformer->GetOutput()->GetPoints());
+                          data->GetPointData()->SetTensors(newTensors);
+                          vtkDebugMacro("Done rotating tensors");
+                          // End of tensor rotation code.
+                          // -------------------------------------------------
+        
                           // Save the model to disk
-                          writer->SetInput(transformer->GetOutput());
+                          writer->SetInput(data);
                           writer->SetFileType(2);
                           
                           // clear the buffer (set to empty string)
