@@ -10,7 +10,7 @@
 #include "vtkImageData.h"
 
 
-vtkCxxRevisionMacro(vtkHyperStreamlineTeem, "$Revision: 1.4 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineTeem, "$Revision: 1.5 $");
 vtkStandardNewMacro(vtkHyperStreamlineTeem);
 
 
@@ -83,7 +83,7 @@ void vtkHyperStreamlineTeem::StartFiberFrom( const vtkFloatingPointType position
 
 void vtkHyperStreamlineTeem::VisualizeFibers( const Nrrd *fibers )
 {
-  Streamers = new vtkHyperArray[1];
+  Streamers = new vtkTractographyArray[1];
   NumberOfStreamers = 1;
   Streamers[0].Direction = 1;
   
@@ -100,7 +100,7 @@ void vtkHyperStreamlineTeem::VisualizeFibers( const Nrrd *fibers )
           nrrdSample_nva( &indexPoints[axis], fibers, pos );
       }
       
-      vtkHyperPoint *point = Streamers[0].InsertNextHyperPoint();
+      vtkTractographyPoint *point = Streamers[0].InsertNextTractographyPoint();
       point->X[0] = indexPoints[0];
       point->X[1] = indexPoints[1];
       point->X[2] = indexPoints[2];
@@ -110,7 +110,7 @@ void vtkHyperStreamlineTeem::VisualizeFibers( const Nrrd *fibers )
       // Measure distance between points
       if( fiber > 1 )
       {
-          vtkHyperPoint *prevPoint = Streamers[0].GetHyperPoint( fiber-2 );
+          vtkTractographyPoint *prevPoint = Streamers[0].GetTractographyPoint( fiber-2 );
           point->D = prevPoint->D + vtkMath::Distance2BetweenPoints( point->X, prevPoint->X );
       }
       else

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.h,v $
-  Date:      $Date: 2006/04/18 17:01:20 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2007/02/20 20:44:22 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
 // .NAME vtkHyperStreamlineDTMRI - generate hyperstreamline in arbitrary dataset
@@ -39,6 +39,7 @@
 #include "vtkTensorUtilConfigure.h"
 #include "vtkHyperStreamline.h"
 #include "vtkTensorMathematics.h" // for VTK_TENS_FRACTIONAL_ANISOTROPY
+#include "vtkTractographyPointAndArray.h"
 
 class VTK_TENSORUTIL_EXPORT vtkHyperStreamlineDTMRI : public vtkHyperStreamline
 {
@@ -83,6 +84,21 @@ public:
   vtkGetMacro(StoppingThreshold,vtkFloatingPointType);
   vtkSetMacro(StoppingThreshold,vtkFloatingPointType);
 
+  // Description:
+  // Whether to output the interpolated tensor at each point
+  // of the output streamline
+  vtkGetMacro(OutputTensors, int);
+  vtkSetMacro(OutputTensors, int);
+  vtkBooleanMacro(OutputTensors, int);
+
+  // Description:
+  // Whether to produce one polyline per integration direction
+  // (so two per seed point), or one polyline per seed point.
+  // Superclass behavior would be two per seed point.
+  vtkGetMacro(OneTrajectoryPerSeedPoint, int);
+  vtkSetMacro(OneTrajectoryPerSeedPoint, int);
+  vtkBooleanMacro(OneTrajectoryPerSeedPoint, int);
+
 protected:
   vtkHyperStreamlineDTMRI();
   ~vtkHyperStreamlineDTMRI();
@@ -94,6 +110,12 @@ protected:
   vtkFloatingPointType RadiusOfCurvature;
   int StoppingMode;
   vtkFloatingPointType StoppingThreshold;
+
+  int OutputTensors;
+
+  int OneTrajectoryPerSeedPoint;
+
+  vtkTractographyArray *Streamers;
 
 private:
   vtkHyperStreamlineDTMRI(const vtkHyperStreamlineDTMRI&);  // Not implemented.

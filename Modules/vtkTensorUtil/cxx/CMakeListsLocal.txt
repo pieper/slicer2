@@ -35,12 +35,12 @@ vtkHyperStreamlineDTMRI.cxx
 vtkSuperquadricTensorGlyph.cxx
 vtkSuperquadricSource2.cxx
 vtkTensorFlip.cxx
-vtkHyperPointandArray.cxx
+vtkTractographyPointAndArray.cxx
 vtkHyperStreamlineTeem.cxx
 )
 
 SET_SOURCE_FILES_PROPERTIES(
-vtkHyperPointandArray
+vtkTractographyPointAndArray
 PROPERTIES
 WRAP_EXCLUDE TRUE
 )
