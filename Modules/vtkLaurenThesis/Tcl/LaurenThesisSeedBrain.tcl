@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: LaurenThesisSeedBrain.tcl,v $
-#   Date:      $Date: 2006/07/16 13:40:39 $
-#   Version:   $Revision: 1.3 $
+#   Date:      $Date: 2007/02/20 20:49:33 $
+#   Version:   $Revision: 1.4 $
 # 
 #===============================================================================
 # FILE:        LaurenThesisSeedBrain.tcl
@@ -161,9 +161,14 @@ proc LaurenThesisSeedBrainBuildGUI {} {
     DevAddLabel $f.lSeedRes "Seeding Resolution (mm)"
     eval {entry $f.eSeedRes -width 4 \
               -textvariable LaurenThesis(seedResolution)} $Gui(WEA)
-    
-    pack $f.lSeedRes $f.eSeedRes -side left \
+ 
+    eval {checkbutton $f.cJitter -text " Jitter " -variable LaurenThesis(seedJitter) -indicatoron 0 } $Gui(WCA)
+ 
+    pack $f.lSeedRes $f.eSeedRes $f.cJitter -side left \
         -padx $Gui(pad) -pady $Gui(pad)
+
+    set tip "No grid bias: Randomly jitter seed locations up to Seeding Resolution/2"
+    TooltipAdd  $f.cJitter $tip
 
     #-------------------------------------------
     # SeedBrain->Middle->Length frame
@@ -336,6 +341,12 @@ proc LaurenThesisValidateParametersAndRunDataset {} {
         return
     }
 
+    puts "Seed point random jitter: $LaurenThesis(seedJitter)"
+
+    if { !( $LaurenThesis(seedJitter) == 1  || $LaurenThesis(seedJitter) == 0 ) } {
+        puts "Seed random jitter must be 0 or 1"
+        return
+    }
 
     puts "Length threshold: $LaurenThesis(lengthThreshold)"
 
@@ -365,6 +376,7 @@ proc LaurenThesisValidateParametersAndRunDataset {} {
         $LaurenThesis(seedThreshold) \
         $LaurenThesis(stopThreshold) \
         $LaurenThesis(seedResolution) \
+        $LaurenThesis(seedJitter) \
         $LaurenThesis(lengthThreshold) \
         $doErosion \
         $LaurenThesis(savecL) \
@@ -375,7 +387,7 @@ proc LaurenThesisValidateParametersAndRunDataset {} {
 }
 
 
-proc LaurenThesisRunWholeDatasetFromTensors {tTensor vICCMask dataSetName seedThreshold stopThreshold seedResolution lengthThreshold doErosion {savecL 0} {saveFA 0} {saveB0 0}} {
+proc LaurenThesisRunWholeDatasetFromTensors {tTensor vICCMask dataSetName seedThreshold stopThreshold seedResolution seedJitter lengthThreshold doErosion {savecL 0} {saveFA 0} {saveB0 0}} {
 
     # find the label for the intercranial cavity mask
     set maskLabel [LaurenThesisFindMaskLabelValue $vICCMask]
@@ -383,8 +395,9 @@ proc LaurenThesisRunWholeDatasetFromTensors {tTensor vICCMask dataSetName seedTh
     # create linear measure mask in which to seed
     set vLMMask [LaurenThesisCreateLMMask $vICCMask $maskLabel $tTensor $seedThreshold $doErosion]
 
+
     # seed everywhere in this mask (second mask is for cL/FA volume creation)
-    set directory [LaurenThesisSeedEverywhere $vLMMask $tTensor $dataSetName $stopThreshold $seedResolution $lengthThreshold $savecL $saveFA $vICCMask $saveB0 $doErosion]
+    set directory [LaurenThesisSeedEverywhere $vLMMask $tTensor $dataSetName $stopThreshold $seedResolution $seedJitter $lengthThreshold $savecL $saveFA $vICCMask $saveB0 $doErosion]
 
     # Save our settings
     set fid [open [file join $directory "TractographySettings_$dataSetName.txt"] w]
@@ -393,9 +406,11 @@ proc LaurenThesisRunWholeDatasetFromTensors {tTensor vICCMask dataSetName seedTh
     puts $fid "seedThreshold: $seedThreshold"
     puts $fid "stopThreshold: $stopThreshold"
     puts $fid "seedResolution: $seedResolution"
+    puts $fid "seedJitter: $seedJitter"
     puts $fid "lengthThreshold: $lengthThreshold"
 
     close $fid
+
 }
 
 
@@ -767,7 +782,7 @@ proc LaurenThesisSaveScalarVolume {volumeType tTensor vBrainMask directory {doEr
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc LaurenThesisSeedEverywhere {vSeedMask tTensor dataSetName stopThreshold seedResolution lengthThreshold {savecL 0} {saveFA 0} {vBrainMask -1} {saveB0 0} {doErosion 0}} {
+proc LaurenThesisSeedEverywhere {vSeedMask tTensor dataSetName stopThreshold seedResolution seedJitter lengthThreshold {savecL 0} {saveFA 0} {vBrainMask -1} {saveB0 0} {doErosion 0}} {
     global DTMRI
     
 
@@ -788,6 +803,11 @@ proc LaurenThesisSeedEverywhere {vSeedMask tTensor dataSetName stopThreshold see
     [DTMRI(vtk,streamlineControl) GetSeedTracts] IsotropicSeedingOn
     [DTMRI(vtk,streamlineControl) GetSeedTracts] SetIsotropicSeedingResolution \
         $seedResolution
+
+    # Turn on jitter if requested
+    if { $seedJitter == 1 } {
+        [DTMRI(vtk,streamlineControl) GetSeedTracts] RandomGridOn
+    }
 
     # Directly set the length threshold in the vtk object
     [DTMRI(vtk,streamlineControl) GetSeedTracts] SetMinimumPathLength \
