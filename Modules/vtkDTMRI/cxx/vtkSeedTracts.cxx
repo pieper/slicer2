@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.cxx,v $
-  Date:      $Date: 2007/02/20 20:46:20 $
-  Version:   $Revision: 1.23 $
+  Date:      $Date: 2007/02/21 17:18:15 $
+  Version:   $Revision: 1.24 $
 
 =========================================================================auto=*/
 
@@ -1114,6 +1114,10 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
                           vtkDebugMacro("Done rotating tensors");
                           // End of tensor rotation code.
                           // -------------------------------------------------
+
+                          // Remove the scalars if any, we don't need
+                          // to save anything but the tensors
+                          data->GetPointData()->SetScalars(NULL);
         
                           // Save the model to disk
                           writer->SetInput(data);
