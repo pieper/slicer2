@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRI.tcl,v $
-#   Date:      $Date: 2006/07/10 18:23:43 $
-#   Version:   $Revision: 1.132 $
+#   Date:      $Date: 2007/02/21 18:38:19 $
+#   Version:   $Revision: 1.133 $
 # 
 #===============================================================================
 # FILE:        DTMRI.tcl
@@ -481,14 +481,14 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.132 $} {$Date: 2006/07/10 18:23:43 $}]
+                  {$Revision: 1.133 $} {$Date: 2007/02/21 18:38:19 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
     #------------------------------------
-    set Module($m,row1List) "Help Input Conv Glyph Tract Regist"
-    set Module($m,row1Name) "{Help} {Input} {Conv} {Glyph} {Tract} {Reg}"
-    set Module($m,row1,tab) Input
+    set Module($m,row1List) "Help Conv Glyph Tract Regist"
+    set Module($m,row1Name) "{Help} {Conv} {Glyph} {Tract} {Reg}"
+    set Module($m,row1,tab) Conv
     # Use these lines to add a second row of tabs
     set Module($m,row2List) "Scalars ROI TC Save ODF Vox VTK"
     set Module($m,row2Name) "{Scalars} {ROI} {TC} {Save} {ODF} {Vox} {VTK}"
@@ -758,7 +758,6 @@ proc DTMRIBuildGUI {} {
     # Frame Hierarchy:
     #-------------------------------------------
     # Help
-    # Input
     #-------------------------------------------
 
     #-------------------------------------------
@@ -798,189 +797,6 @@ especially Diffusion DTMRI MRI.
     regsub -all "\n" $help {} help
     MainHelpApplyTags DTMRI $help
     MainHelpBuildGUI DTMRI
-
-
-
-#############################################################################################
-#############################################################################################
-#############################################################################################
-
-    #-------------------------------------------
-    # Input frame
-    #-------------------------------------------
- 
-    set fInput $Module(DTMRI,fInput)
-
-
-
-    set f $fInput
-    frame $f.fTitle -bg $Gui(backdrop)
-    pack $f.fTitle -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
-    
-    if { [catch "package require BLT" ] } {
-        DevErrorWindow "Must have the BLT package to create GUI."
-        return
-    }
-
-    #--- create blt notebook
-    blt::tabset $f.fNotebook -relief flat -borderwidth 0
-    pack $f.fNotebook -fill both -expand 1
-
-    #--- notebook configure
-    $f.fNotebook configure -width 260
-    $f.fNotebook configure -height 270
-    $f.fNotebook configure -background $::Gui(activeWorkspace)
-    $f.fNotebook configure -activebackground $::Gui(activeWorkspace)
-    $f.fNotebook configure -selectbackground $::Gui(activeWorkspace)
-    $f.fNotebook configure -tabbackground $::Gui(activeWorkspace)
-    $f.fNotebook configure -foreground black
-    $f.fNotebook configure -activeforeground black
-    $f.fNotebook configure -selectforeground black
-    $f.fNotebook configure -tabforeground black
-    $f.fNotebook configure -relief flat
-    $f.fNotebook configure -tabrelief raised     
-    $f.fNotebook configure -highlightbackground $::Gui(activeWorkspace)
-    $f.fNotebook configure -highlightcolor $::Gui(activeWorkspace) 
-        #--- tab configure
-    set i 0
-    foreach t "{Option1} {Option2}" {
-        $f.fNotebook insert $i $t
-        frame $f.fNotebook.f$t -bg $Gui(activeWorkspace) -bd 2
-        $f.fNotebook tab configure $t -window $f.fNotebook.f$t  \
-            -fill both -padx $::Gui(pad) -pady $::Gui(pad)
-        incr i
-    } 
-
-    set f $fInput.fNotebook
-
-     set FrameOption1 "$f.fOption1"
-     set FrameOption2 "$f.fOption2"
-         
-    # $f.fTitle configure -bg $Gui(backdrop)
-    foreach frame "$FrameOption1 $FrameOption2" {
-        $frame configure  -relief groove -bd 3 
-        foreach secframe "OptionNumber Input What How" {
-        frame $frame.f$secframe -bg $Gui(activeWorkspace)
-        pack $frame.f$secframe -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
-    }
-    DevAddLabel $frame.fInput.l1 "The input is:"
-    $frame.fInput.l1 configure -font {helvetica 10 normal}
-    DevAddLabel $frame.fWhat.l1 "What to do:"
-    $frame.fWhat.l1 configure -font {helvetica 10 normal}
-    DevAddLabel $frame.fHow.l1 "How to:"
-    $frame.fHow.l1 configure -font {helvetica 10 normal}
-
-    foreach secframe "Input What How" {
-        pack $frame.f$secframe.l1 -side top -anchor w -padx $Gui(pad) -pady 0
-        }
-    }
-
-
-
-    #-------------------------------------------
-    # Input->Title frame
-    #-------------------------------------------
-    set f $fInput.fTitle
-
-    foreach frame "Wellcome Select" {
-        frame $f.f$frame -bg $Gui(backdrop)
-        pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
-    }
-
-    #-------------------------------------------
-    # Input->Title frame->Wellcome
-    #-------------------------------------------
-    set f $fInput.fTitle.fWellcome
-    
-    DevAddLabel $f.lWellcome "Welcome to the DTMRI Module"
-    $f.lWellcome configure -fg White -font {helvetica 10 bold}  -bg $Gui(backdrop) -bd 0 -relief groove
-    pack $f.lWellcome -side top -padx $Gui(pad) -pady $Gui(pad)
-
-    DevAddLabel $f.lOption "Select Option"
-    $f.lOption configure -fg White -font {helvetica 9 normal}  -bg $Gui(backdrop) -bd 0
-    pack $f.lOption -side top -padx $Gui(pad) -pady 0
-
-
-
-    #-------------------------------------------
-    # Input->Option1 frame->OptionNumber
-    #-------------------------------------------
-    set f $FrameOption1.fOptionNumber
-
-    DevAddLabel $f.lnumber "Option 1"
-    $f.lnumber configure -font {helvetica 10 bold}
-    pack $f.lnumber -side top -padx $Gui(pad) -pady $Gui(pad) -anchor w
-    
-
-    #-------------------------------------------
-    # Input->Option1 frame->Input
-    #-------------------------------------------
-    set f $FrameOption1.fInput
-
-    DevAddLabel $f.l2 "You have loaded DTMRI gradient data\n \
-                                 (LSDI or EPI).  A sequence of volumes\n \
-                                  are displayed in the Slice viewer"
-    $f.l2 configure -font {helvetica 8 bold}
-    pack $f.l2 -side top -padx 10 -pady 2 -anchor w
-    
-
-    #-------------------------------------------
-    # Input->Option1 frame->What
-    #-------------------------------------------
-    set f $FrameOption1.fWhat
-
-    DevAddLabel $f.l2 "Calculate tensors from gradient data"
-    $f.l2 configure -font {helvetica 8 bold}
-    pack $f.l2 -side top -padx 10 -pady 2 -anchor w
-    
-
-    #-------------------------------------------
-    # Input->Option1 frame->How
-    #-------------------------------------------
-    set f $FrameOption1.fHow
-
-    DevAddLabel $f.l2 "Press 'Convert' Tab above\n and follow instructions"
-    $f.l2 configure -font {helvetica 8 bold}
-    pack $f.l2 -side top -padx 10 -pady 2 -anchor w
-
-    #-------------------------------------------
-    # Input->Option2 frame->OptionNumber
-    #-------------------------------------------
-    set f $FrameOption2.fOptionNumber
-
-    DevAddLabel $f.lnumber "Option 2"
-    $f.lnumber configure -font {helvetica 10 bold}
-    pack $f.lnumber -side top -padx $Gui(pad) -pady $Gui(pad) -anchor w
-    
-
-    #-------------------------------------------
-    # Input->Option2 frame->Input
-    #-------------------------------------------
-    set f $FrameOption2.fInput
-
-    DevAddLabel $f.l2 "You have loaded a vtk tensor volume"
-    $f.l2 configure -font {helvetica 8 bold}
-    pack $f.l2 -side top -padx 10 -pady 2 -anchor w
-    
-
-    #-------------------------------------------
-    # Input->Option2 frame->What
-    #-------------------------------------------
-    set f $FrameOption2.fWhat
-
-    DevAddLabel $f.l2 "The data does not need to be\n further converted. Ready to start\n visualizing and working"
-    $f.l2 configure -font {helvetica 8 bold}
-    pack $f.l2 -side top -padx 10 -pady 2 -anchor w
-
-
-    #-------------------------------------------
-    # Input->Option2 frame->How
-    #-------------------------------------------
-    set f $FrameOption2.fHow
-
-    DevAddLabel $f.l2 "Press 'Display',\n 'ROI' or 'Scalar' Tab"
-    $f.l2 configure -font {helvetica 8 bold} -justify left
-    pack $f.l2 -side top -padx 10 -pady 2 -anchor w
 
 }
 
