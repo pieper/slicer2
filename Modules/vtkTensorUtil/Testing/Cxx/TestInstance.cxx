@@ -1,5 +1,5 @@
 #include "vtkBSplineInterpolateImageFunction.h"
-#include "vtkHyperPointandArray.h"
+#include "vtkTractographyPointandArray.h"
 #include "vtkHyperStreamlineDTMRI.h"
 //#include "vtkHyperStreamlineTeem.h"
 #include "vtkImageGetTensorComponents.h"
@@ -38,8 +38,8 @@ int TestInstance(int argc, char *argv[])
   // Test non-vtkObject
   vtkPreciseHyperPoint a;
   vtkPreciseHyperArray b;
-  vtkHyperPoint c;
-  vtkHyperArray d;
+  vtkTractographyPoint c;
+  vtkTractographyArray d;
   //vtkHyperPointandArray::New()->Delete();
   //vtkHyperStreamlineTeem::New()->Delete();
   //vtkPreciseHyperArray::New()->Delete();
