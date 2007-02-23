@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.cxx,v $
-  Date:      $Date: 2007/02/23 16:41:32 $
-  Version:   $Revision: 1.28 $
+  Date:      $Date: 2007/02/23 19:06:47 $
+  Version:   $Revision: 1.29 $
 
 =========================================================================auto=*/
 #include "vtkHyperStreamlineDTMRI.h"
@@ -28,7 +28,7 @@
 //#include "vtkHyperPointandArray.cxx"
 #endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.28 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.29 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()
@@ -544,6 +544,15 @@ void vtkHyperStreamlineDTMRI::Execute()
 
 void vtkHyperStreamlineDTMRI::BuildLines()
 {
+
+  if ( this->OneTrajectoryPerSeedPoint == 1  )
+    this->BuildLinesForSingleTrajectory();
+  else
+    this->BuildLinesForTwoTrajectories();
+}
+
+void vtkHyperStreamlineDTMRI::BuildLinesForTwoTrajectories()
+{
   vtkTractographyPoint *sPtr;
   vtkPoints *newPoints;
   vtkCellArray *newLines;
@@ -611,11 +620,6 @@ void vtkHyperStreamlineDTMRI::BuildLines()
       sPtr=this->Streamers[ptId].GetTractographyPoint(i);
       while (i < numIntPts && sPtr->CellId >= 0)
         {
-          //for (j=0; j<3; j++) // grab point's coordinates
-          //{
-          //cout << sPtr->X[j] << " ";
-          //}
-          //cout << endl;
           newPoints->InsertPoint(strIdx,sPtr->X);
           newLines->InsertCellPoint(strIdx);
 
@@ -676,11 +680,213 @@ void vtkHyperStreamlineDTMRI::BuildLines()
 
   output->SetLines(newLines);
   newLines->Delete();
-
+    
   output->Squeeze();
 
 }
 
+
+void vtkHyperStreamlineDTMRI::BuildLinesForSingleTrajectory()
+{
+  vtkTractographyPoint *sPtr;
+  vtkPoints *newPoints;
+  vtkCellArray *newLines;
+  vtkFloatArray *newScalars=NULL;
+  vtkFloatArray *newTensors=NULL;
+#if (VTK_MAJOR_VERSION >= 5)
+  vtkDataSet *input = this->GetPolyDataInput(0);
+#else
+  vtkDataSet *input = this->GetInput();
+#endif
+  vtkPolyData *output = this->GetOutput();
+  vtkPointData *outPD = output->GetPointData();
+
+  vtkIdType numIntPts;
+  //
+  // Initialize
+  //
+  vtkDebugMacro(<<"Creating hyperstreamline tube");
+  if ( this->NumberOfStreamers <= 0 )
+    {
+    return;
+    }
+
+  //
+  // Allocate
+  //
+  newPoints  = vtkPoints::New();
+  numIntPts = 0;
+  for (int streamerId=0; streamerId < this->NumberOfStreamers; streamerId++)
+    {
+      numIntPts+=this->Streamers[streamerId].GetNumberOfPoints();
+    }
+
+  // don't count the seed point twice
+  numIntPts--;
+
+  newPoints ->Allocate(numIntPts);
+  newLines = vtkCellArray::New();
+
+  if ( input->GetPointData()->GetScalars() )
+    {
+    newScalars = vtkFloatArray::New();
+    newScalars->Allocate(numIntPts);
+    }
+
+  if ( this->OutputTensors )
+    {
+    newTensors = vtkFloatArray::New();
+    newTensors->SetNumberOfComponents(9);
+    newTensors->Allocate(numIntPts * 9);
+    }
+
+  // index into the whole point array
+  int strIdx = 0;
+
+
+  // single cell indicates line connectivity
+  newLines->InsertNextCell(numIntPts);
+
+  vtkDebugMacro("Handling first streamer");
+
+  // go backwards through first streamer and skip seed point
+  // --------------------------------------------------------
+  int streamerId = 0;
+
+  // if no points give up
+  if ( (numIntPts=this->Streamers[streamerId].GetNumberOfPoints()) > 0 )
+    {
+    
+    // loop through all points on the path and make a line
+    int i = numIntPts-1;
+    sPtr=this->Streamers[streamerId].GetTractographyPoint(i);
+    // > 0 skips initial (seed) point
+    while (i > 0 )
+      {
+ 
+      // if this was a good point add it
+      if ( sPtr->CellId >= 0)
+        {
+        newPoints->InsertPoint(strIdx,sPtr->X);
+        newLines->InsertCellPoint(strIdx);
+        
+        if ( newScalars ) // add scalars at points
+          {
+          double s = sPtr->S;
+          newScalars->InsertNextTuple(&s);
+          }
+        
+        if ( newTensors ) // add tensors at points
+          {
+          double tensor[9];
+          int row, col, idx;
+          idx =0;
+          for (int row = 0; row < 3; row++)
+            {
+            for (int col = 0; col < 3; col++)
+              {
+              tensor[idx] = sPtr->T[row][col];
+              idx++;
+              }
+            }  
+          
+          newTensors->InsertNextTuple(tensor);
+          }
+
+        // count of number of points added
+        strIdx++;
+        
+        }
+      
+      i--;
+      sPtr=this->Streamers[streamerId].GetTractographyPoint(i);
+        
+      } //while
+    
+
+
+    } //for this hyperstreamline
+  
+  vtkDebugMacro("Handling second streamer");
+
+  // go forwards through second streamer and include seed point
+  // --------------------------------------------------------
+  streamerId = 1;
+
+  // if no points give up
+  if ( (numIntPts=this->Streamers[streamerId].GetNumberOfPoints()) > 0 )
+    {
+    
+    // loop through all points on the path and make a line
+    int i=0;
+    sPtr=this->Streamers[streamerId].GetTractographyPoint(i);
+    while (i < numIntPts && sPtr->CellId >= 0)
+      {
+      newPoints->InsertPoint(strIdx,sPtr->X);
+      newLines->InsertCellPoint(strIdx);
+      
+      if ( newScalars ) // add scalars at points
+        {
+        double s = sPtr->S;
+        newScalars->InsertNextTuple(&s);
+        }
+      
+      if ( newTensors ) // add tensors at points
+        {
+        double tensor[9];
+        int row, col, idx;
+        idx =0;
+        for (int row = 0; row < 3; row++)
+          {
+          for (int col = 0; col < 3; col++)
+            {
+            tensor[idx] = sPtr->T[row][col];
+            idx++;
+            }
+          }  
+        
+        newTensors->InsertNextTuple(tensor);
+        }
+      
+      i++;
+      sPtr=this->Streamers[streamerId].GetTractographyPoint(i);
+      strIdx++;
+          
+      }
+    }
+
+  // in case we ended earlier than numIntPts because sPtr->CellID=0
+  // this gets rid of empty cell points at the end
+  newLines->UpdateCellCount(strIdx);
+    
+  vtkDebugMacro("Assigning output values");
+
+  //
+  // Update ourselves
+  //
+  output->SetPoints(newPoints);
+  newPoints->Delete();
+  
+  if ( newScalars )
+    {
+    int idx = outPD->AddArray(newScalars);
+    outPD->SetActiveAttribute(idx, vtkDataSetAttributes::SCALARS);
+    newScalars->Delete();
+    }
+
+  if ( newTensors )
+    {
+    int idx = outPD->AddArray(newTensors);
+    outPD->SetActiveAttribute(idx, vtkDataSetAttributes::TENSORS);
+    newTensors->Delete();
+    }
+
+  output->SetLines(newLines);
+  newLines->Delete();
+    
+  output->Squeeze();
+
+}
 
 void vtkHyperStreamlineDTMRI::PrintSelf(ostream& os, vtkIndent indent)
 {

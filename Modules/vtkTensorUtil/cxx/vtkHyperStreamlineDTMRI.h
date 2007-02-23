@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.h,v $
-  Date:      $Date: 2007/02/20 20:44:22 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2007/02/23 19:06:47 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 // .NAME vtkHyperStreamlineDTMRI - generate hyperstreamline in arbitrary dataset
@@ -106,6 +106,8 @@ protected:
   // Integrate data
   void Execute();
   void BuildLines();
+  void BuildLinesForSingleTrajectory();
+  void BuildLinesForTwoTrajectories();
 
   vtkFloatingPointType RadiusOfCurvature;
   int StoppingMode;
