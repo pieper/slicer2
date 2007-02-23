@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.cxx,v $
-  Date:      $Date: 2007/02/23 19:06:47 $
-  Version:   $Revision: 1.29 $
+  Date:      $Date: 2007/02/23 23:25:04 $
+  Version:   $Revision: 1.30 $
 
 =========================================================================auto=*/
 #include "vtkHyperStreamlineDTMRI.h"
@@ -28,7 +28,7 @@
 //#include "vtkHyperPointandArray.cxx"
 #endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.29 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.30 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()
@@ -157,7 +157,7 @@ void vtkHyperStreamlineDTMRI::Execute()
   // set up working matrices
   v[0] = v0; v[1] = v1; v[2] = v2;
   m[0] = m0; m[1] = m1; m[2] = m2;
-  float meanEV, stop;
+  float stop;
   //static const float sqrt3halves = sqrt((float)3/2);
   int keepIntegrating;
 
@@ -253,16 +253,23 @@ void vtkHyperStreamlineDTMRI::Execute()
         for (i=0; i<3; i++) 
           {
           m[i][j] += tensor[i+3*j] * w[k];
+
           }
+        }
+      }
+    
+    // store tensor at start point
+    for (j=0; j<3; j++) 
+      {
+      for (i=0; i<3; i++) 
+        {
+        sPtr->T[i][j] = m[i][j];
         }
       }
 
     //vtkMath::Jacobi(m, sPtr->W, sPtr->V);
     vtkTensorMathematics::TeemEigenSolver(m,sPtr->W,sPtr->V);
     FixVectors(NULL, sPtr->V, iv, ix, iy);
-
-    // compute invariants
-    meanEV=(sPtr->W[0]+sPtr->W[1]+sPtr->W[2])/3;
 
     if ( inScalars )
       {
