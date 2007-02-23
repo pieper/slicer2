@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.cxx,v $
-  Date:      $Date: 2007/02/21 17:18:15 $
-  Version:   $Revision: 1.24 $
+  Date:      $Date: 2007/02/23 22:13:46 $
+  Version:   $Revision: 1.25 $
 
 =========================================================================auto=*/
 
@@ -1121,7 +1121,7 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
         
                           // Save the model to disk
                           writer->SetInput(data);
-                          writer->SetFileType(2);
+                          //writer->SetFileType(2);
                           
                           // clear the buffer (set to empty string)
                           fileNameStr.str("");
@@ -1172,38 +1172,32 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
 void vtkSeedTracts::SaveStreamlineAsTextFile(ofstream &filePoints,
                                              vtkPolyData *currStreamline)
 {
-  vtkPoints *hs0, *hs1;
+  vtkPoints *hs;
   int ptidx, numPts;
   double point[3];
 
-  
-  //GetHyperStreamline0/1 and write their points.
-  hs0=currStreamline->GetCell(0)->GetPoints();
-
-  // Write the first one in reverse order since both lines
-  // travel outward from the initial point.
-  // Also, skip the first point in the second line since it
-  // is a duplicate of the initial point.
-  numPts=hs0->GetNumberOfPoints();
-  ptidx=numPts-1;
-  while (ptidx >= 0)
+  if ( currStreamline == NULL )
     {
-      hs0->GetPoint(ptidx,point);
-      filePoints << point[0] << "," << point[1] << "," << point[2] << " ";
-      ptidx--;
+      vtkErrorMacro("NULL streamline as input");
+      return;
     }
 
-  hs1=currStreamline->GetCell(1)->GetPoints();
-  numPts=hs1->GetNumberOfPoints();
-  ptidx=1;
-  while (ptidx < numPts)
-    {
-      hs1->GetPoint(ptidx,point);
-      filePoints << point[0] << "," << point[1] << "," << point[2] << " ";
-      ptidx++;
-    }
-  filePoints << endl;
+  // Assume we have a streamline that contains a single line
 
+  if ( currStreamline->GetCell(0) )
+    {
+
+      hs=currStreamline->GetCell(0)->GetPoints();
+      numPts=hs->GetNumberOfPoints();
+      ptidx=0;
+      while (ptidx < numPts)
+        {
+          hs->GetPoint(ptidx,point);
+          filePoints << point[0] << "," << point[1] << "," << point[2] << " ";
+          ptidx++;
+        }
+      filePoints << endl;
+    }
 }
 
 
