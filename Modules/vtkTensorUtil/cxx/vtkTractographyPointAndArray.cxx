@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTractographyPointAndArray.cxx,v $
-  Date:      $Date: 2007/02/20 20:44:22 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2007/02/23 19:04:54 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================auto=*/
 #include "vtkTractographyPointAndArray.h"
@@ -23,6 +23,13 @@ vtkTractographyPoint::vtkTractographyPoint()
   this->T[0] = this->T0;
   this->T[1] = this->T1;
   this->T[2] = this->T2;
+
+  // init cell ID to 0 because this is the marker 
+  // for points unused during tractography.
+  this->CellId = 0;
+  this->S = 0;
+  this->D = 0;
+
 }
 
 vtkTractographyPoint& vtkTractographyPoint::operator=(const vtkTractographyPoint& hp)
