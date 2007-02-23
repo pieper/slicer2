@@ -1,5 +1,5 @@
 #include "vtkBSplineInterpolateImageFunction.h"
-#include "vtkTractographyPointandArray.h"
+#include "vtkTractographyPointAndArray.h"
 #include "vtkHyperStreamlineDTMRI.h"
 //#include "vtkHyperStreamlineTeem.h"
 #include "vtkImageGetTensorComponents.h"
