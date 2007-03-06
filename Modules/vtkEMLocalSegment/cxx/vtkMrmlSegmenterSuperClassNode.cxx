@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterSuperClassNode.cxx,v $
-  Date:      $Date: 2006/05/11 22:02:12 $
-  Version:   $Revision: 1.18 $
+  Date:      $Date: 2007/03/06 22:41:46 $
+  Version:   $Revision: 1.19 $
 
 =========================================================================auto=*/
 //#include <stdio.h>
@@ -54,6 +54,29 @@ vtkMrmlSegmenterSuperClassNode::vtkMrmlSegmenterSuperClassNode() {
   this->ParameterSetFromFile  =  0;
 
   this->PredefinedLabelID = -1;
+
+  this->PCARegistrationNumOfPCAParameters = -1;
+  this->PCARegistrationVectorDimension = -1;
+  this->PCARegistrationMean = NULL;
+  this->PCARegistrationEigenMatrix = NULL; 
+  this->PCARegistrationEigenValues = NULL;
+}
+
+vtkMrmlSegmenterSuperClassNode::~vtkMrmlSegmenterSuperClassNode() {
+  this->AtlasNode->Delete();
+  if (this->PCARegistrationMean) {
+    delete[] this->PCARegistrationMean;
+    this->PCARegistrationMean = NULL;
+  }
+
+  if (this->PCARegistrationEigenMatrix) {
+    delete[] this->PCARegistrationEigenMatrix;
+    this->PCARegistrationEigenMatrix = NULL; 
+  }
+  if (this->PCARegistrationEigenValues) {
+    delete[] this->PCARegistrationEigenValues;
+    this->PCARegistrationEigenValues = NULL;
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -80,8 +103,13 @@ void vtkMrmlSegmenterSuperClassNode::Write(ofstream& of, int nIndent)
   if (this->ParameterInitSubClass)  of << " ParameterInitSubClass='"<< this->ParameterInitSubClass << "'";
   if (this->ParameterSaveToFile)    of << " ParameterSaveToFile='"<< this->ParameterSaveToFile << "'";
   if (this->ParameterSetFromFile)   of << " ParameterSetFromFile='"<< this->ParameterSetFromFile << "'";
-  of << ">\n";
 
+  if (this->PCARegistrationNumOfPCAParameters > 0) of << " PCARegistrationNumOfPCAParameters ='" << this->PCARegistrationNumOfPCAParameters << "'";
+  if (this->PCARegistrationVectorDimension > 0) of << " PCARegistrationVectorDimension ='" << this->PCARegistrationVectorDimension << "'";
+  if (this->PCARegistrationMean        && strcmp(this->PCARegistrationMean, "")) of << " PCARegistrationMean ='" << this->PCARegistrationMean << "'";
+  if (this->PCARegistrationEigenMatrix && strcmp(this->PCARegistrationEigenMatrix, "")) of << " PCARegistrationEigenMatrix ='" << this->PCARegistrationEigenMatrix << "'";
+  if (this->PCARegistrationEigenValues && strcmp(this->PCARegistrationEigenValues, "")) of << " PCARegistrationEigenValues ='" << this->PCARegistrationEigenValues << "'";
+  of << ">\n";
 }
 
 //----------------------------------------------------------------------------
@@ -107,7 +135,13 @@ void vtkMrmlSegmenterSuperClassNode::Copy(vtkMrmlNode *anode)
   this->PredefinedLabelID             = node->PredefinedLabelID;
   this->ParameterInitSubClass         = node->ParameterInitSubClass;
   this->ParameterSaveToFile           = node->ParameterSaveToFile;
-  this->ParameterSetFromFile           = node->ParameterSetFromFile;
+  this->ParameterSetFromFile          = node->ParameterSetFromFile;
+
+  this->PCARegistrationNumOfPCAParameters = node->PCARegistrationNumOfPCAParameters;
+  this->PCARegistrationVectorDimension    = node->PCARegistrationVectorDimension;
+  this->SetPCARegistrationMean(node->PCARegistrationMean);
+  this->SetPCARegistrationEigenMatrix(node->PCARegistrationEigenMatrix); 
+  this->SetPCARegistrationEigenValues(node->PCARegistrationEigenValues);
 }
 
 //----------------------------------------------------------------------------
@@ -131,4 +165,10 @@ void vtkMrmlSegmenterSuperClassNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "ParameterInitSubClass:         " << this->ParameterInitSubClass << "\n";
   os << indent << "ParameterSaveToFile:           " << this->ParameterSaveToFile << "\n";
   os << indent << "ParameterSetFromFile:          " << this->ParameterSetFromFile << "\n";
+
+  os << indent << "PCARegistrationNumOfPCAParameters: " << this->PCARegistrationNumOfPCAParameters << "\n";
+  os << indent << "PCARegistrationVectorDimension:    " << this->PCARegistrationVectorDimension << "\n";
+  os << indent << "PCARegistrationMean:               " << (this->PCARegistrationMean ? this->PCARegistrationMean : "(none)" ) << "\n";
+  os << indent << "PCARegistrationEigenMatrix:        " << (this->PCARegistrationEigenMatrix ? this->PCARegistrationEigenMatrix :"(none)" )<< "\n";
+  os << indent << "PCARegistrationEigenValues:        " << (this->PCARegistrationEigenValues ? this->PCARegistrationEigenValues : "(none)" )<< "\n";
 }

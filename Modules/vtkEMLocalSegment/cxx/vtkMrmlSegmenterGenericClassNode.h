@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterGenericClassNode.h,v $
-  Date:      $Date: 2006/02/14 21:24:27 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2007/03/06 22:41:46 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSegmenterClassNode - MRML node to represent transformation matrices.
@@ -86,6 +86,9 @@ public:
   vtkSetMacro(ExcludeFromIncompleteEStepFlag,int);
   vtkBooleanMacro(ExcludeFromIncompleteEStepFlag,int);
 
+  vtkGetMacro(PCARegistrationFlag,int);
+  vtkSetMacro(PCARegistrationFlag,int);
+
 protected:
   vtkMrmlSegmenterGenericClassNode();
   ~vtkMrmlSegmenterGenericClassNode(){};
@@ -105,6 +108,7 @@ protected:
   double RegistrationCovariance[9];
   int    RegistrationClassSpecificRegistrationFlag; 
   int    ExcludeFromIncompleteEStepFlag;
+  int    PCARegistrationFlag;
 
 private:
   vtkMrmlSegmenterGenericClassNode(const vtkMrmlSegmenterGenericClassNode&);

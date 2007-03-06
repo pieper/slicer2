@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterSuperClassNode.h,v $
-  Date:      $Date: 2006/06/27 14:00:03 $
-  Version:   $Revision: 1.21 $
+  Date:      $Date: 2007/03/06 22:41:46 $
+  Version:   $Revision: 1.22 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSegmenterClassNode - MRML node to represent transformation matrices.
@@ -203,10 +203,20 @@ public:
   vtkGetMacro(PredefinedLabelID,int); 
   vtkSetMacro(PredefinedLabelID,int); 
 
- 
+  vtkSetMacro(PCARegistrationNumOfPCAParameters,int);
+  vtkGetMacro(PCARegistrationNumOfPCAParameters,int);
+  vtkSetMacro(PCARegistrationVectorDimension,int);
+  vtkGetMacro(PCARegistrationVectorDimension,int);
+  vtkSetStringMacro(PCARegistrationMean);
+  vtkGetStringMacro(PCARegistrationMean);
+  vtkSetStringMacro(PCARegistrationEigenMatrix);
+  vtkGetStringMacro(PCARegistrationEigenMatrix);
+  vtkSetStringMacro(PCARegistrationEigenValues);
+  vtkGetStringMacro(PCARegistrationEigenValues);
+
 protected:
   vtkMrmlSegmenterSuperClassNode();
-  ~vtkMrmlSegmenterSuperClassNode(){this->AtlasNode->Delete();};
+  ~vtkMrmlSegmenterSuperClassNode();
 
   vtkMrmlSegmenterAtlasSuperClassNode *AtlasNode;
 
@@ -226,6 +236,12 @@ protected:
   int ParameterInitSubClass;
   int ParameterSaveToFile; 
   int ParameterSetFromFile; 
+
+  int   PCARegistrationNumOfPCAParameters;
+  int   PCARegistrationVectorDimension;
+  char *PCARegistrationMean;
+  char *PCARegistrationEigenMatrix; 
+  char *PCARegistrationEigenValues;
 
 private:
   vtkMrmlSegmenterSuperClassNode(const vtkMrmlSegmenterSuperClassNode&);

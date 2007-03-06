@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMSegmentAlgorithm.tcl,v $
-#   Date:      $Date: 2006/05/11 22:05:18 $
-#   Version:   $Revision: 1.55 $
+#   Date:      $Date: 2007/03/06 22:41:46 $
+#   Version:   $Revision: 1.56 $
 # 
 #===============================================================================
 # FILE:        EMSegmentAlgorithm.tcl
@@ -54,7 +54,12 @@ proc EMSegmentSetVtkGenericClassSetting {vtkGenericClass Sclass} {
   eval $vtkGenericClass SetPrintRegistrationSimularityMeasure         $EMSegment(Cattrib,$Sclass,PrintRegistrationSimularityMeasure) 
   eval $vtkGenericClass SetRegistrationClassSpecificRegistrationFlag  $EMSegment(Cattrib,$Sclass,RegistrationClassSpecificRegistrationFlag) 
   $vtkGenericClass      SetExcludeFromIncompleteEStepFlag             $EMSegment(Cattrib,$Sclass,ExcludeFromIncompleteEStepFlag) 
-  
+
+  if {$EMSegment(SegmentMode)} {
+      if {$EMSegment(Cattrib,$Sclass,PCARegistrationFlag} {$vtkGenericClass SetPCARegistrationOn
+      } else { $vtkGenericClass SetPCARegistrationOff }
+  }
+    
   if {$EMSegment(Cattrib,$Sclass,ProbabilityData) != $Volume(idNone) } {
     # Pipeline does not automatically update volumes bc of fake first input  
     Volume($EMSegment(Cattrib,$Sclass,ProbabilityData),vol) Update
@@ -210,6 +215,18 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass} {
       }
       incr x
   }
+
+  # PCA  Registration parameters 
+  if {$EMSegment(Cattrib,$Sclass,PCARegistrationFlag)} {
+     EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCARegistrationVectorDimension $EMSegment(Cattrib,$SuperClass,PCARegistrationVectorDimension) 
+     EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCARegistrationNumOfPCAParameters $EMSegment(Cattrib,$SuperClass,PCARegistrationNumOfPCAParameters)
+
+     EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCARegistrationMean        "$EMSegment(Cattrib,$SuperClass,PCARegistrationMean)"
+     EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCARegistrationEigenMatrix "$EMSegment(Cattrib,$SuperClass,PCARegistrationEigenMatrix)"
+     EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCARegistrationEigenValues "$EMSegment(Cattrib,$SuperClass,PCARegistrationEigenValues)"
+  }
+
+
   # Automatically all the subclass are updated too and checked if values are set correctly 
   # puts  "======== Start Updated here  $SuperClass";
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) Update
