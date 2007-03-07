@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMSegmentAlgorithm.tcl,v $
-#   Date:      $Date: 2007/03/06 22:41:46 $
-#   Version:   $Revision: 1.56 $
+#   Date:      $Date: 2007/03/07 18:37:27 $
+#   Version:   $Revision: 1.57 $
 # 
 #===============================================================================
 # FILE:        EMSegmentAlgorithm.tcl
@@ -56,7 +56,7 @@ proc EMSegmentSetVtkGenericClassSetting {vtkGenericClass Sclass} {
   $vtkGenericClass      SetExcludeFromIncompleteEStepFlag             $EMSegment(Cattrib,$Sclass,ExcludeFromIncompleteEStepFlag) 
 
   if {$EMSegment(SegmentMode)} {
-      if {$EMSegment(Cattrib,$Sclass,PCARegistrationFlag} {$vtkGenericClass SetPCARegistrationOn
+      if {$EMSegment(Cattrib,$Sclass,PCARegistrationFlag) } {$vtkGenericClass SetPCARegistrationOn
       } else { $vtkGenericClass SetPCARegistrationOff }
   }
     
@@ -217,7 +217,7 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass} {
   }
 
   # PCA  Registration parameters 
-  if {$EMSegment(Cattrib,$Sclass,PCARegistrationFlag)} {
+  if {$EMSegment(Cattrib,$SuperClass,PCARegistrationFlag)} {
      EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCARegistrationVectorDimension $EMSegment(Cattrib,$SuperClass,PCARegistrationVectorDimension) 
      EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCARegistrationNumOfPCAParameters $EMSegment(Cattrib,$SuperClass,PCARegistrationNumOfPCAParameters)
 

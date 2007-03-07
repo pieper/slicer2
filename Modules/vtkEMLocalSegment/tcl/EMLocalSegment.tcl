@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMLocalSegment.tcl,v $
-#   Date:      $Date: 2006/11/27 01:23:53 $
-#   Version:   $Revision: 1.77 $
+#   Date:      $Date: 2007/03/07 18:37:26 $
+#   Version:   $Revision: 1.78 $
 # 
 #===============================================================================
 # FILE:        EMLocalSegment.tcl
@@ -269,7 +269,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.77 $} {$Date: 2006/11/27 01:23:53 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.78 $} {$Date: 2007/03/07 18:37:26 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -2627,7 +2627,7 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
             }
             foreach Attribute $EMSegment(Gui${Name}AttributeList) {
               if {$Attribute != "LocalPriorName" && $Attribute != "LocalPriorSpatialWeightName" } { 
-                if {$Attribute  == "InitialBiasFilePrefix" || $Attribute  == "PredefinedLabelMapPrefix" } {
+                if {$Attribute  == "InitialBiasFilePrefix" || $Attribute  == "PredefinedLabelMapPrefix" ||  $Attribute  == "PCARegistrationMean"  ||  $Attribute  == "PCARegistrationEigenMatrix" ||  $Attribute  == "PCARegistrationEigenValues" } {
                   SegmenterSuperClass($pid,node) Set$Attribute "$EMSegment(Cattrib,$i,$Attribute)"
                 } else {
                   eval SegmenterSuperClass($pid,node) Set$Attribute $EMSegment(Cattrib,$i,$Attribute) 
@@ -5974,12 +5974,13 @@ proc EMSegmentGenerateJointModelsBatch {startLabel endLabel prefix } {
   global ModelMaker Volume 
   set ModelMaker(startLabel) $startLabel
   set ModelMaker(endLabel)   $endLabel
-  set ModelMaker(jointSmooth) 1
+  set ModelMaker(jointSmooth) 0
   # Very Smooth Model 
-  set ModelMaker(smooth) 30
-  set ModelMaker(decimate) 0
-  set ModelMaker(UseSinc) 0
-  set ModelMaker(SplitNormals) Off
+  # set ModelMaker(smooth) 30
+  set ModelMaker(smooth) 20
+  set ModelMaker(decimate) 1
+  set ModelMaker(UseSinc) 1
+  set ModelMaker(SplitNormals) On
 
   set ModelMaker(idVolume) [lindex $Volume(idList) 0]
 
