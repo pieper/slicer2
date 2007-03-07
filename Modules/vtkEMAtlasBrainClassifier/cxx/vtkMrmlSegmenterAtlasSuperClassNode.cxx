@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterAtlasSuperClassNode.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:31 $
-  Version:   $Revision: 1.8 $
+  Date:      $Date: 2007/03/07 18:15:22 $
+  Version:   $Revision: 1.9 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -61,9 +61,9 @@ void vtkMrmlSegmenterAtlasSuperClassNode::Write(ofstream& of)
 {
   // Write all attributes not equal to their defaults
   of << " NumClasses ='" << this->NumClasses << "'";
-  of << " PrintBias='" << this->PrintBias << "'";
-  of << " PrintLabelMap='" << this->PrintLabelMap << "'";
-  of << " PrintFrequency='" << this->PrintFrequency << "'";
+  if (this->PrintBias)      of << " PrintBias='" << this->PrintBias << "'";
+  if (this->PrintLabelMap)  of << " PrintLabelMap='" << this->PrintLabelMap << "'";
+  if (this->PrintFrequency) of << " PrintFrequency='" << this->PrintFrequency << "'";
 
   of << " StopEMType='" << this->StopEMType  <<  "'";
   of << " StopEMValue='" << this->StopEMValue <<  "'";
