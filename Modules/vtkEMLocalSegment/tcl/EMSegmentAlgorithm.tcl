@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMSegmentAlgorithm.tcl,v $
-#   Date:      $Date: 2007/03/07 18:37:27 $
-#   Version:   $Revision: 1.57 $
+#   Date:      $Date: 2007/03/08 02:26:06 $
+#   Version:   $Revision: 1.58 $
 # 
 #===============================================================================
 # FILE:        EMSegmentAlgorithm.tcl
@@ -218,12 +218,23 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass} {
 
   # PCA  Registration parameters 
   if {$EMSegment(Cattrib,$SuperClass,PCARegistrationFlag)} {
-     EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCARegistrationVectorDimension $EMSegment(Cattrib,$SuperClass,PCARegistrationVectorDimension) 
-     EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCARegistrationNumOfPCAParameters $EMSegment(Cattrib,$SuperClass,PCARegistrationNumOfPCAParameters)
+      EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCARegistrationVectorDimension $EMSegment(Cattrib,$SuperClass,PCARegistrationVectorDimension) 
+      EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCARegistrationNumOfPCAParameters $EMSegment(Cattrib,$SuperClass,PCARegistrationNumOfPCAParameters)
 
-     EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCARegistrationMean        "$EMSegment(Cattrib,$SuperClass,PCARegistrationMean)"
-     EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCARegistrationEigenMatrix "$EMSegment(Cattrib,$SuperClass,PCARegistrationEigenMatrix)"
-     EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCARegistrationEigenValues "$EMSegment(Cattrib,$SuperClass,PCARegistrationEigenValues)"
+      foreach TYPE "Mean EigenMatrix EigenValues" {
+      set LIST    "$EMSegment(Cattrib,$SuperClass,PCARegistration$TYPE)"
+      set LENGTH  [llength $LIST ]
+
+      vtkFloatArray ENTRY_VECTOR
+      ENTRY_VECTOR SetNumberOfValues $LENGTH
+      set index 0 
+      foreach ENTRY $LIST {
+          ENTRY_VECTOR  SetValue $index $ENTRY
+          incr index 
+      }
+      EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCARegistration$TYPE ENTRY_VECTOR 
+      ENTRY_VECTOR Delete
+      }
   }
 
 
