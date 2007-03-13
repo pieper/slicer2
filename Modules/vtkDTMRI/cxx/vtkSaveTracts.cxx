@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSaveTracts.cxx,v $
-  Date:      $Date: 2006/12/20 11:32:10 $
-  Version:   $Revision: 1.12 $
+  Date:      $Date: 2007/03/13 21:47:07 $
+  Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
 #include "vtkSaveTracts.h"
@@ -121,8 +121,8 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
   vtkTransform *currTransform;
   unsigned char *R, *G, *B;
   int arraySize=1000;
-  int lastColor;
-  int currColor, newColor, idx, found;
+//  int lastColor, newColor;
+  int currColor, idx, found;
   vtkFloatingPointType rgb_vtk_float[3];
   unsigned char rgb[3];
   std::stringstream fileNameStr;

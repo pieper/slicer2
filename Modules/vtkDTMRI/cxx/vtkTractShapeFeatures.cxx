@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTractShapeFeatures.cxx,v $
-  Date:      $Date: 2006/03/06 21:07:30 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2007/03/13 21:47:08 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 // for vtk objects we use here
@@ -33,7 +33,7 @@
 // for debug output of features
 #include "vtkImageData.h"
 
-vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.17 $");
+vtkCxxRevisionMacro(vtkTractShapeFeatures, "$Revision: 1.18 $");
 vtkStandardNewMacro(vtkTractShapeFeatures);
 
 vtkCxxSetObjectMacro(vtkTractShapeFeatures, InputStreamlines, vtkCollection);
@@ -220,7 +220,8 @@ void vtkTractShapeFeatures::ComputeFeaturesHausdorff()
     }
 
   vtkDebugMacro( "Traverse STREAMLINES" );
-  double sumDist, sumSqDist, maxMinDist, countDist, minDist, currDist;
+  // double sumSqDist;
+  double sumDist, maxMinDist, countDist, minDist, currDist;
   TractPointsListType::InstanceIdentifier count1, count2, increment;
   unsigned int size1, size2;
   increment = this->HausdorffN;
