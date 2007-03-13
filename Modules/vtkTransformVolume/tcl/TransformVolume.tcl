@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: TransformVolume.tcl,v $
-#   Date:      $Date: 2006/05/16 22:11:17 $
-#   Version:   $Revision: 1.30 $
+#   Date:      $Date: 2007/03/13 21:36:51 $
+#   Version:   $Revision: 1.31 $
 # 
 #===============================================================================
 # FILE:        TransformVolume.tcl
@@ -157,7 +157,7 @@ proc TransformVolumeInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.30 $} {$Date: 2006/05/16 22:11:17 $}]
+        {$Revision: 1.31 $} {$Date: 2007/03/13 21:36:51 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -609,7 +609,7 @@ proc TransformVolumeRun {} {
 
 
         # check for Tensor
-        if { [string match "Tensor*" $n"] } {
+        if { [string match "Tensor*" $n] } {
             append resVolName "_" [Tensor($id,node) GetName]
             $isv configure -volume [Tensor($id,data) GetOutput] -tensor "true"
             $isv configure -interpolation $TransformVolume(InterpolationMode)
