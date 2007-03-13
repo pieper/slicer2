@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlModuleNode.cxx,v $
-  Date:      $Date: 2006/07/27 15:59:52 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2007/03/13 21:54:15 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -55,7 +55,7 @@ vtkMrmlModuleNode::~vtkMrmlModuleNode()
         this->ModuleRefID = NULL;
     }
     
-    for (int i = 0; i < this->ValueVector.size(); i++)
+    for (unsigned int i = 0; i < this->ValueVector.size(); i++)
     {
         // clear the array, the destructor will theoretically free memory properly
         this->ValueVector[i].clear();
@@ -67,7 +67,7 @@ vtkMrmlModuleNode::~vtkMrmlModuleNode()
 void vtkMrmlModuleNode::Write(ofstream& of, int nIndent)
 {
   // Write all attributes not equal to their defaults
-    int indx;
+  unsigned int indx;
     
   vtkIndent i1(nIndent);
 
@@ -211,8 +211,9 @@ const char * vtkMrmlModuleNode::GetKeys()
 // id as well as the node's name
 const char * vtkMrmlModuleNode::GetTitle()
 {
-    char tmp[200], classname[100], nickname[100];
-    int len;
+    char tmp[200], classname[100];
+    //char nickname[100];
+    //int len;
 
     // make sure we have a name
     if (this->Name == NULL) 

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkIsingMeanfieldApproximation.cxx,v $
-  Date:      $Date: 2006/06/01 21:54:02 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2007/03/13 21:58:39 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 
@@ -57,7 +57,7 @@ void vtkIsingMeanfieldApproximation::SimpleExecute(vtkImageData *input, vtkImage
   // in case of anatomical label map input
   if (numberOfInputs == 3){
     segMArray = vtkIntArray::New();
-    for (unsigned long int i=0; i<size; i++){
+    for (unsigned long int idx=0; idx<size; idx++){
       segMArray->InsertNextValue(0);
     }
     register int i, j, k;     
