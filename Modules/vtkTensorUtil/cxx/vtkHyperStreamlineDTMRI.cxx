@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.cxx,v $
-  Date:      $Date: 2007/02/23 23:25:04 $
-  Version:   $Revision: 1.30 $
+  Date:      $Date: 2007/03/13 21:55:04 $
+  Version:   $Revision: 1.31 $
 
 =========================================================================auto=*/
 #include "vtkHyperStreamlineDTMRI.h"
@@ -28,7 +28,7 @@
 //#include "vtkHyperPointandArray.cxx"
 #endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.30 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.31 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()
@@ -639,7 +639,7 @@ void vtkHyperStreamlineDTMRI::BuildLinesForTwoTrajectories()
           if ( newTensors ) // add tensors at points
             {
               double tensor[9];
-              int row, col, idx;
+              int idx;
               idx =0;
               for (int row = 0; row < 3; row++)
                 {
@@ -723,9 +723,9 @@ void vtkHyperStreamlineDTMRI::BuildLinesForSingleTrajectory()
   //
   newPoints  = vtkPoints::New();
   numIntPts = 0;
-  for (int streamerId=0; streamerId < this->NumberOfStreamers; streamerId++)
+  for (int streamerIdx=0; streamerIdx < this->NumberOfStreamers; streamerIdx++)
     {
-      numIntPts+=this->Streamers[streamerId].GetNumberOfPoints();
+      numIntPts+=this->Streamers[streamerIdx].GetNumberOfPoints();
     }
 
   // don't count the seed point twice
