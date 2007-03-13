@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkIsingMeanfieldApproximation.cxx,v $
-  Date:      $Date: 2007/03/13 21:58:39 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2007/03/13 22:04:19 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 
@@ -158,9 +158,13 @@ void vtkIsingMeanfieldApproximation::SimpleExecute(vtkImageData *input, vtkImage
   helpArray = new float[nType];
 
   // initialization of class probability output volume
-  for (int n=0; n<nType; n++)
-    for (unsigned long int i=0; i<size; i++)
+  for (int ndx=0; ndx<nType; ndx++)
+    {
+    for (unsigned long int idx=0; idx<size; idx++)
+      {
       outputArray->InsertNextValue((1.0/nType));
+      }
+    }
   
   // meanfield iteration     
   register int i, j, k, n;     

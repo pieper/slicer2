@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlModuleNode.cxx,v $
-  Date:      $Date: 2007/03/13 21:54:15 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2007/03/13 22:08:08 $
+  Version:   $Revision: 1.4 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -148,7 +148,7 @@ void vtkMrmlModuleNode::PrintSelf(ostream& os, vtkIndent indent)
 //----------------------------------------------------------------------------
 void vtkMrmlModuleNode::SetValue(const char *key, const char *value)
 {
-    int i;
+    unsigned int i;
     
 
     // check to see that it's not already in the list
@@ -176,7 +176,7 @@ void vtkMrmlModuleNode::SetValue(const char *key, const char *value)
 // return an empty string if can't find the key
 const char * vtkMrmlModuleNode::GetValue(const char *key)
 {
-    int i;
+    unsigned int i;
     for (i = 0; i < this->ValueVector.size(); i++)
     {
         if (strcmp(ValueVector[i][0].c_str(),key) == 0)
@@ -196,7 +196,7 @@ const char * vtkMrmlModuleNode::GetKeys()
         return "";
     }
     vtkstd::string returnString = "";
-    for (int i = 0; i < this->ValueVector.size(); i++)
+    for (unsigned int i = 0; i < this->ValueVector.size(); i++)
     {
         returnString += "\"" + this->ValueVector[i][0] + "\"";
         if (i < this->ValueVector.size() - 1)
@@ -211,7 +211,7 @@ const char * vtkMrmlModuleNode::GetKeys()
 // id as well as the node's name
 const char * vtkMrmlModuleNode::GetTitle()
 {
-    char tmp[200], classname[100];
+    char tmp[200]; // classname[100];
     //char nickname[100];
     //int len;
 
