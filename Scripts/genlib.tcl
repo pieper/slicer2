@@ -665,7 +665,14 @@ if { ![file exists $::ITK_TEST_FILE] } {
 if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FILE] } {
     cd $SLICER_LIB
 
+    # switching to new url
+    if { [file exists NAMICSandBox] } {
+        cd NAMICSandBox
+        runcmd $::SVN switch --relocate $::OLD_SANDBOX_TAG $::SANDBOX_TAG
+        cd ..
+    }
     runcmd $::SVN checkout $::SANDBOX_TAG NAMICSandBox 
+
 
     file mkdir $SLICER_LIB/NAMICSandBox-build
     cd $SLICER_LIB/NAMICSandBox-build
