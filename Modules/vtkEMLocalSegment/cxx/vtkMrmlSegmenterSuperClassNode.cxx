@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterSuperClassNode.cxx,v $
-  Date:      $Date: 2007/03/14 01:45:16 $
-  Version:   $Revision: 1.20 $
+  Date:      $Date: 2007/03/14 02:01:27 $
+  Version:   $Revision: 1.21 $
 
 =========================================================================auto=*/
 //#include <stdio.h>
@@ -83,7 +83,7 @@ vtkMrmlSegmenterSuperClassNode::~vtkMrmlSegmenterSuperClassNode() {
 
   if (this->InhomogeneityInitialDataNames) {
     delete[] InhomogeneityInitialDataNames;
-    this->InhomogeneityInitialDataNames = NULL:
+    this->InhomogeneityInitialDataNames = NULL;
   }
 }
 
