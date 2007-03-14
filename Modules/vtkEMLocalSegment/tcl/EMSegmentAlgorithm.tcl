@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMSegmentAlgorithm.tcl,v $
-#   Date:      $Date: 2007/03/08 02:26:06 $
-#   Version:   $Revision: 1.58 $
+#   Date:      $Date: 2007/03/14 01:46:56 $
+#   Version:   $Revision: 1.59 $
 # 
 #===============================================================================
 # FILE:        EMSegmentAlgorithm.tcl
@@ -192,6 +192,14 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass} {
            EMSegment(Cattrib,$i,vtkImageEMClass) SetPCALogisticBoundary   $EMSegment(Cattrib,$i,PCALogisticBoundary)
       } 
 
+      if {$EMSegment(Cattrib,$i,FixedWeightsData) !=  $Volume(idNone) } {
+      Volume($EMSegment(Cattrib,$i,FixedWeightsData),vol) Update
+          set OUTPUT [Volume($EMSegment(Cattrib,$i,FixedWeightsData),vol) GetOutput]
+          # puts "gggg [$OUTPUT GetExtent]" 
+          # puts "gfff [$OUTPUT GetWholeExtent]" 
+      EMSegment(Cattrib,$i,vtkImageEMClass) SetFixedWeights $OUTPUT 
+      }
+
       EMSegment(Cattrib,$i,vtkImageEMClass) SetPrintQuality $EMSegment(Cattrib,$i,PrintQuality)
       EMSegment(Cattrib,$i,vtkImageEMClass) SetPrintPCA $EMSegment(Cattrib,$i,PrintPCA)
       # After everything is defined add CLASS to its SUPERCLASS
@@ -237,6 +245,19 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass} {
       }
   }
 
+  set Flag 1
+  set y 0
+  while {$Flag && ($y < $EMSegment(NumInputChannel)) }  {
+      if { ([info exists EMSegment(Cattrib,$SuperClass,InhomogeneityInitialData,$y)] == 0) || ($EMSegment(Cattrib,$SuperClass,InhomogeneityInitialData,$y) == $Volume(idNone)) } { set Flag 0 }
+      incr y 
+  } 
+  if ($Flag) {
+    puts "Load in image inhomogneity " 
+    for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
+    set pid $EMSegment(Cattrib,$SuperClass,InhomogeneityInitialData,$y)
+    EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetInhomogeneityInitialData [Volume($pid,vol) GetOutput] $y
+    }
+  } 
 
   # Automatically all the subclass are updated too and checked if values are set correctly 
   # puts  "======== Start Updated here  $SuperClass";

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterSuperClassNode.h,v $
-  Date:      $Date: 2007/03/06 22:41:46 $
-  Version:   $Revision: 1.22 $
+  Date:      $Date: 2007/03/14 01:45:21 $
+  Version:   $Revision: 1.23 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSegmenterClassNode - MRML node to represent transformation matrices.
@@ -214,6 +214,9 @@ public:
   vtkSetStringMacro(PCARegistrationEigenValues);
   vtkGetStringMacro(PCARegistrationEigenValues);
 
+  vtkGetStringMacro(InhomogeneityInitialDataNames);
+  vtkSetStringMacro(InhomogeneityInitialDataNames);
+
 protected:
   vtkMrmlSegmenterSuperClassNode();
   ~vtkMrmlSegmenterSuperClassNode();
@@ -237,11 +240,14 @@ protected:
   int ParameterSaveToFile; 
   int ParameterSetFromFile; 
 
+  // MICCAI 2007
   int   PCARegistrationNumOfPCAParameters;
   int   PCARegistrationVectorDimension;
   char *PCARegistrationMean;
   char *PCARegistrationEigenMatrix; 
   char *PCARegistrationEigenValues;
+
+  char *InhomogeneityInitialDataNames; 
 
 private:
   vtkMrmlSegmenterSuperClassNode(const vtkMrmlSegmenterSuperClassNode&);

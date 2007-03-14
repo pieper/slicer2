@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterClassNode.h,v $
-  Date:      $Date: 2006/05/11 22:02:12 $
-  Version:   $Revision: 1.19 $
+  Date:      $Date: 2007/03/14 01:45:21 $
+  Version:   $Revision: 1.20 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSegmenterClassNode - MRML node to represent transformation matrices.
@@ -96,6 +96,11 @@ public:
   vtkSetStringMacro(SamplingLogCovariance);
   vtkGetStringMacro(SamplingLogCovariance);
 
+  //Description: 
+  // For MICCAI 2007 - Weights can be loaded from outside and be fixed 
+  vtkSetStringMacro(FixedWeightsName);
+  vtkGetStringMacro(FixedWeightsName);
+  
 protected:
   vtkMrmlSegmenterClassNode();
   ~vtkMrmlSegmenterClassNode();
@@ -111,6 +116,8 @@ protected:
 
   char   *SamplingLogMean;
   char   *SamplingLogCovariance;
+
+  char *FixedWeightsName;
 
 private:
   vtkMrmlSegmenterClassNode(const vtkMrmlSegmenterClassNode&);

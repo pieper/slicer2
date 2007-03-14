@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterSuperClassNode.cxx,v $
-  Date:      $Date: 2007/03/06 22:41:46 $
-  Version:   $Revision: 1.19 $
+  Date:      $Date: 2007/03/14 01:45:16 $
+  Version:   $Revision: 1.20 $
 
 =========================================================================auto=*/
 //#include <stdio.h>
@@ -60,6 +60,9 @@ vtkMrmlSegmenterSuperClassNode::vtkMrmlSegmenterSuperClassNode() {
   this->PCARegistrationMean = NULL;
   this->PCARegistrationEigenMatrix = NULL; 
   this->PCARegistrationEigenValues = NULL;
+
+  this->InhomogeneityInitialDataNames = NULL;
+
 }
 
 vtkMrmlSegmenterSuperClassNode::~vtkMrmlSegmenterSuperClassNode() {
@@ -76,6 +79,11 @@ vtkMrmlSegmenterSuperClassNode::~vtkMrmlSegmenterSuperClassNode() {
   if (this->PCARegistrationEigenValues) {
     delete[] this->PCARegistrationEigenValues;
     this->PCARegistrationEigenValues = NULL;
+  }
+
+  if (this->InhomogeneityInitialDataNames) {
+    delete[] InhomogeneityInitialDataNames;
+    this->InhomogeneityInitialDataNames = NULL:
   }
 }
 
@@ -109,6 +117,8 @@ void vtkMrmlSegmenterSuperClassNode::Write(ofstream& of, int nIndent)
   if (this->PCARegistrationMean        && strcmp(this->PCARegistrationMean, "")) of << " PCARegistrationMean ='" << this->PCARegistrationMean << "'";
   if (this->PCARegistrationEigenMatrix && strcmp(this->PCARegistrationEigenMatrix, "")) of << " PCARegistrationEigenMatrix ='" << this->PCARegistrationEigenMatrix << "'";
   if (this->PCARegistrationEigenValues && strcmp(this->PCARegistrationEigenValues, "")) of << " PCARegistrationEigenValues ='" << this->PCARegistrationEigenValues << "'";
+ 
+  if (this->InhomogeneityInitialDataNames &&  strcmp(this->InhomogeneityInitialDataNames, "")) of << " InhomogeneityInitialDataNames ='" << this->InhomogeneityInitialDataNames << "'";
   of << ">\n";
 }
 
@@ -142,6 +152,7 @@ void vtkMrmlSegmenterSuperClassNode::Copy(vtkMrmlNode *anode)
   this->SetPCARegistrationMean(node->PCARegistrationMean);
   this->SetPCARegistrationEigenMatrix(node->PCARegistrationEigenMatrix); 
   this->SetPCARegistrationEigenValues(node->PCARegistrationEigenValues);
+  this->SetInhomogeneityInitialDataNames(node->InhomogeneityInitialDataNames);
 }
 
 //----------------------------------------------------------------------------
@@ -169,6 +180,7 @@ void vtkMrmlSegmenterSuperClassNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "PCARegistrationNumOfPCAParameters: " << this->PCARegistrationNumOfPCAParameters << "\n";
   os << indent << "PCARegistrationVectorDimension:    " << this->PCARegistrationVectorDimension << "\n";
   os << indent << "PCARegistrationMean:               " << (this->PCARegistrationMean ? this->PCARegistrationMean : "(none)" ) << "\n";
-  os << indent << "PCARegistrationEigenMatrix:        " << (this->PCARegistrationEigenMatrix ? this->PCARegistrationEigenMatrix :"(none)" )<< "\n";
-  os << indent << "PCARegistrationEigenValues:        " << (this->PCARegistrationEigenValues ? this->PCARegistrationEigenValues : "(none)" )<< "\n";
+  os << indent << "PCARegistrationEigenMatrix:        " << (this->PCARegistrationEigenMatrix ? this->PCARegistrationEigenMatrix :"(none)" ) << "\n";
+  os << indent << "PCARegistrationEigenValues:        " << (this->PCARegistrationEigenValues ? this->PCARegistrationEigenValues : "(none)" ) << "\n";
+  os << indent << "InhomogeneityInitialDataNames:     " << (this->InhomogeneityInitialDataNames ? this->InhomogeneityInitialDataNames : "(none)") << "\n";
 }

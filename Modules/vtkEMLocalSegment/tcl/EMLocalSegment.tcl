@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMLocalSegment.tcl,v $
-#   Date:      $Date: 2007/03/07 18:37:26 $
-#   Version:   $Revision: 1.78 $
+#   Date:      $Date: 2007/03/14 01:46:56 $
+#   Version:   $Revision: 1.79 $
 # 
 #===============================================================================
 # FILE:        EMLocalSegment.tcl
@@ -269,7 +269,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.78 $} {$Date: 2007/03/07 18:37:26 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.79 $} {$Date: 2007/03/14 01:46:56 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -1999,21 +1999,27 @@ proc EMSegmentUpdateMRML {} {
            set EMSegment(Cattrib,$NumClass,$NodeAttribute)     [SegmenterClass($pid,node) Get${NodeAttribute}]
     }
 
-    set VolumeName  [SegmenterClass($pid,node) GetLocalPriorName]
-    set VolumeIndex [lsearch $VolumeNameList $VolumeName]
-    if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMSegment(Cattrib,$NumClass,ProbabilityData) [lindex $Volume(idList) $VolumeIndex]
-    } else { set EMSegment(Cattrib,$NumClass,ProbabilityData) $Volume(idNone) }
+        set VolumeName  [SegmenterClass($pid,node) GetLocalPriorName]
+        set VolumeIndex [lsearch $VolumeNameList $VolumeName]
+        if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMSegment(Cattrib,$NumClass,ProbabilityData) [lindex $Volume(idList) $VolumeIndex]
+        } else { set EMSegment(Cattrib,$NumClass,ProbabilityData) $Volume(idNone) }
+        
+        set VolumeName  [SegmenterClass($pid,node) GetPCAMeanName]
+        set VolumeIndex [lsearch $VolumeNameList $VolumeName]
+        if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMSegment(Cattrib,$NumClass,PCAMeanData) [lindex $Volume(idList) $VolumeIndex]
+        } else { set EMSegment(Cattrib,$NumClass,PCAMeanData) $Volume(idNone) }
+        
+        set VolumeName  [SegmenterClass($pid,node) GetReferenceStandardFileName]
+        set VolumeIndex [lsearch $VolumeNameList $VolumeName]
+        if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMSegment(Cattrib,$NumClass,ReferenceStandardData) [lindex $Volume(idList) $VolumeIndex]
+        } else { set EMSegment(Cattrib,$NumClass,ReferenceStandardData) $Volume(idNone) }
 
-    set VolumeName  [SegmenterClass($pid,node) GetPCAMeanName]
-    set VolumeIndex [lsearch $VolumeNameList $VolumeName]
-    if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMSegment(Cattrib,$NumClass,PCAMeanData) [lindex $Volume(idList) $VolumeIndex]
-    } else { set EMSegment(Cattrib,$NumClass,PCAMeanData) $Volume(idNone) }
+    set VolumeName  [SegmenterClass($pid,node) GetFixedWeightsName]
+        set VolumeIndex [lsearch $VolumeNameList $VolumeName]
+        if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMSegment(Cattrib,$NumClass,FixedWeightsData) [lindex $Volume(idList) $VolumeIndex]
+        } else { set EMSegment(Cattrib,$NumClass,FixedWeightsData) $Volume(idNone) }
 
-    set VolumeName  [SegmenterClass($pid,node) GetReferenceStandardFileName]
-      set VolumeIndex [lsearch $VolumeNameList $VolumeName]
-      if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMSegment(Cattrib,$NumClass,ReferenceStandardData) [lindex $Volume(idList) $VolumeIndex]
-      } else { set EMSegment(Cattrib,$NumClass,ReferenceStandardData) $Volume(idNone) }
-         set index 0
+        set index 0
         set LogCovariance  [SegmenterClass($pid,node) GetLogCovariance]
         set LogMean [SegmenterClass($pid,node) GetLogMean]
         set InputChannelWeights [SegmenterClass($pid,node) GetInputChannelWeights]
@@ -2657,6 +2663,13 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
              SegmenterClass($pid,node) SetLocalPriorName   ""
           }
 
+      if {$EMSegment(Cattrib,$i,FixedWeightsData) != $Volume(idNone) } {
+             SegmenterClass($pid,node) SetFixedWeightsName  [Volume($EMSegment(Cattrib,$i,FixedWeightsData),node) GetName]
+          } else {
+             SegmenterClass($pid,node) SetFixedWeightsName  ""
+          }
+
+
           if {$EMSegment(Cattrib,$i,PCAMeanData) != $Volume(idNone) } {
              SegmenterClass($pid,node) SetPCAMeanName  [Volume($EMSegment(Cattrib,$i,PCAMeanData),node) GetName]
           } else {
@@ -2702,11 +2715,11 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
           SegmenterClass($pid,node) SetLogCovariance "[lrange $LogCovariance 0 [expr [llength $LogCovariance]-2]]"
 
           # Print Functions 
-      SegmenterClass($pid,node) SetPrintWeights    $EMSegment(Cattrib,$i,PrintWeights)  
-      SegmenterClass($pid,node) SetPrintPCA       $EMSegment(Cattrib,$i,PrintPCA)  
-
-      SegmenterClass($pid,node) SetPrintQuality        $EMSegment(Cattrib,$i,PrintQuality)  
-      set v $EMSegment(Cattrib,$i,ReferenceStandardData)
+          SegmenterClass($pid,node) SetPrintWeights    $EMSegment(Cattrib,$i,PrintWeights)  
+          SegmenterClass($pid,node) SetPrintPCA       $EMSegment(Cattrib,$i,PrintPCA)  
+          
+          SegmenterClass($pid,node) SetPrintQuality        $EMSegment(Cattrib,$i,PrintQuality)  
+          set v $EMSegment(Cattrib,$i,ReferenceStandardData)
           if {$v != $Volume(idNone) } {
              SegmenterClass($pid,node) SetReferenceStandardFileName "[Volume($v,node) GetName]" 
           } else {
@@ -3300,6 +3313,8 @@ proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
      set EMSegment(Cattrib,$Sclass,ProbabilityData) $Volume(idNone)
      set EMSegment(Cattrib,$Sclass,ReferenceStandardData) $Volume(idNone)
      set EMSegment(Cattrib,$Sclass,PCAMeanData) $Volume(idNone)
+     set EMSegment(Cattrib,$Sclass,FixedWeightsData) $Volume(idNone)
+
 
      foreach EigenList $EMSegment(Cattrib,$Sclass,PCAEigen) {
      if {[lindex $EigenList 3] != ""} { MainMrmlDeleteNode SegmenterPCAEigen [[lindex $EigenList 3] GetID] }
@@ -3345,6 +3360,7 @@ proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
      }
      set EMSegment(Cattrib,$Sclass,ProbabilityData) $Volume(idNone)
      set EMSegment(Cattrib,$Sclass,ReferenceStandardData) $Volume(idNone)
+     set EMSegment(Cattrib,$Sclass,FixedWeightsData) $Volume(idNone)
      set EMSegment(Cattrib,$Sclass,PCAMeanData) $Volume(idNone)
 
      # 2.) Remove from SuperClass List and add to Class List
@@ -4457,6 +4473,7 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses {HeadClass 1
 
       set EMSegment(Cattrib,$i,PCAMeanData) $Volume(idNone)
       set EMSegment(Cattrib,$i,ReferenceStandardData) $Volume(idNone)
+      set EMSegment(Cattrib,$i,FixedWeightsData) $Volume(idNone)
     }
     # Define CIM Field as Matrix M(Class1,Class2,Relation of Pixels)
     # where the "Relation of the Pixels" can be set as Pixel with "left", 
