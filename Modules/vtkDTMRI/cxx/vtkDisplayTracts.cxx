@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDisplayTracts.cxx,v $
-  Date:      $Date: 2007/03/13 21:47:07 $
-  Version:   $Revision: 1.20 $
+  Date:      $Date: 2007/03/15 19:43:22 $
+  Version:   $Revision: 1.21 $
 
 =========================================================================auto=*/
 #include "vtkDisplayTracts.h"
@@ -326,7 +326,7 @@ void vtkDisplayTracts::ApplyUserSettingsToGraphicsObject(int index)
 
 int vtkDisplayTracts::IsPropertyEqual(vtkProperty *a, vtkProperty *b)
 {
-  int p1,p2,p3,p4,p5;
+  int p1,p2,p3,p4;
 
   vtkDebugMacro(<<" In IsPropertyEqual");
   if (a == NULL || b == NULL) {
@@ -916,9 +916,9 @@ void vtkDisplayTracts::CreateGraphicsObjects()
 {
   int numActorsCreated, numStreamlinesGroup;
 #if (VTK_MAJOR_VERSION >= 5)
-  vtkPolyDataAlgorithm *currStreamline;
+  //vtkPolyDataAlgorithm *currStreamline;
 #else
-  vtkPolyDataSource *currStreamline;
+  //vtkPolyDataSource *currStreamline;
 #endif
   vtkPolyDataMapper *currMapper;
   vtkActor *currActor;
@@ -927,7 +927,7 @@ void vtkDisplayTracts::CreateGraphicsObjects()
   //vtkTransformPolyDataFilter *currTransFilter;
 
   //vtkCollection *currStreamlines;
-  vtkCollection *currTransFilters;
+  //vtkCollection *currTransFilters;
   vtkAppendPolyData *currAppendFilter;
 
 

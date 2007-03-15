@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkThinning.cxx,v $
-  Date:      $Date: 2006/08/14 14:27:06 $
-  Version:   $Revision: 1.11 $
+  Date:      $Date: 2007/03/15 19:43:22 $
+  Version:   $Revision: 1.12 $
 
 =========================================================================auto=*/
 
@@ -379,9 +379,8 @@ Boolean vtkThinning::IsSimple(vtkImageData* im, int x, int y, int z, int& cstar,
 {
 
   int cc[27];
-  int i,j,k,n,l,n1;
+  int i,j,k,n,n1;
   int nb_cc;
-  int neighbor;
   int domain[27];
 
   // position of the points 6-adjacents to the central point
@@ -477,7 +476,6 @@ void vtkThinning::ExecuteData(vtkDataObject* output)
     Boolean         contour;
     TrialPoint      p;
     int             it;
-    char            name[100];
     int             remove_number;
     int             cstar,cbar;
     vtkMinHeap<TrialPoint>  heap;
@@ -511,7 +509,7 @@ void vtkThinning::ExecuteData(vtkDataObject* output)
 
   heapPtr = (unsigned short*)im_heap->GetScalarPointer();
 
-  for(n=0; n<im_heap->GetPointData()->GetScalars()->GetNumberOfTuples(); n++) {
+  for(n=0; n<(unsigned long)(im_heap->GetPointData()->GetScalars()->GetNumberOfTuples()); n++) {
     *heapPtr = 0;
     heapPtr++;
   }
@@ -520,7 +518,7 @@ void vtkThinning::ExecuteData(vtkDataObject* output)
   outputPtr = (unsigned short*)OutputImage->GetScalarPointer();
   inputPtr = (unsigned short*)input_image->GetScalarPointer();
 
-  for(n=0; n<input_image->GetPointData()->GetScalars()->GetNumberOfTuples(); n++) {
+  for(n=0; n<(unsigned long)(input_image->GetPointData()->GetScalars()->GetNumberOfTuples()); n++) {
 
     if (*inputPtr>0)
       *outputPtr=255;

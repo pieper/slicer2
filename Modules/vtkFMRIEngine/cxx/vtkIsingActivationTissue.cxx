@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkIsingActivationTissue.cxx,v $
-  Date:      $Date: 2006/06/01 21:54:02 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2007/03/15 19:43:23 $
+  Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 
@@ -71,12 +71,14 @@ void vtkIsingActivationTissue::SimpleExecute(vtkImageData *input, vtkImageData *
       segMArray->InsertNextValue(0);
     }
     register int i, j, k;     
-    for (k=0; k<z; k++)
-      for (j=0; j<y; j++)
+    for (k=0; k<z; k++){
+      for (j=0; j<y; j++){
         for (i=0; i<x; i++){
           labelValue = (short int *) (GetInput(1)->GetScalarPointer(i,j,k));
           segMArray->SetValue((k*x*y)+(j*x)+i,(int)(*labelValue));
         }
+      }
+    }
     for (int j=0; j<segInput; j++){
       if ((segLabel->GetValue(j)) == greyValue){
         nGreyValue = j;

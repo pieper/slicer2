@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlModuleNode.cxx,v $
-  Date:      $Date: 2007/03/13 22:08:08 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2007/03/15 19:44:18 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -122,7 +122,7 @@ void vtkMrmlModuleNode::Copy(vtkMrmlNode *anode)
   vtkMrmlNode::MrmlNodeCopy(anode);
   vtkMrmlModuleNode *node = (vtkMrmlModuleNode *) anode;
 
-  for (int i = 0; i < this->ValueVector.size(); i++)
+  for (unsigned int i = 0; i < this->ValueVector.size(); i++)
   {
       this->ValueVector.push_back(node->ValueVector[i]);
   }
@@ -131,7 +131,7 @@ void vtkMrmlModuleNode::Copy(vtkMrmlNode *anode)
 //----------------------------------------------------------------------------
 void vtkMrmlModuleNode::PrintSelf(ostream& os, vtkIndent indent)
 {
-    int indx;
+    unsigned int indx;
     
     vtkMrmlNode::PrintSelf(os,indent);
     os << indent << "Name: " << (this->Name ? this->Name : "(none)") << "\n";

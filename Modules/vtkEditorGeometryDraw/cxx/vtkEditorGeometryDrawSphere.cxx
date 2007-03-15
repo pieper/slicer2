@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkEditorGeometryDrawSphere.cxx,v $
-  Date:      $Date: 2006/12/28 21:54:17 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2007/03/15 19:43:22 $
+  Version:   $Revision: 1.2 $
 
 =========================================================================auto=*/
 #include "vtkObjectFactory.h"
@@ -16,7 +16,7 @@
 #include "vtkEditorGeometryDrawSphere.h"
 
 
-//vtkCxxRevisionMacro(vtkEditorGeometryDrawSphere, "$Revision: 1.1 $");
+//vtkCxxRevisionMacro(vtkEditorGeometryDrawSphere, "$Revision: 1.2 $");
 //vtkStandardNewMacro(vtkEditorGeometryDrawSphere);
 
 //------------------------------------------------------------------------------
@@ -60,7 +60,7 @@ void vtkEditorGeometryDrawSphere::ExecuteData(vtkDataObject *)
   outData->SetExtent(this->GetOutput()->GetWholeExtent());
   outData->AllocateScalars();
 
-  int outExt[6], s;
+  int outExt[6];
   outData->GetWholeExtent(outExt);
   void *inPtr = inData->GetScalarPointerForExtent(outExt);
   void *outPtr = outData->GetScalarPointerForExtent(outExt);

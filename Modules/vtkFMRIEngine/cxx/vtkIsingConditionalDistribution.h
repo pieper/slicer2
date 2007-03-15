@@ -92,7 +92,7 @@ public:
   vtkSetMacro(densityEstimate, int);
   vtkSetMacro(numSearchSteps, int);
   vtkSetMacro(numCrossValFolds, int);
-  vtkSetMacro(maxTraining, int);
+  vtkSetMacro(maxTraining, unsigned long int);
   
 private:
   int x;                           // x dimension of activation volume 
@@ -102,7 +102,7 @@ private:
   int densityEstimate;             // indicator of density estimate (0 GAU,1 MG2,2 PAR)
   int numSearchSteps;               // number of search steps    
   int numCrossValFolds;               // number of cross validation folds 
-  int maxTraining;                 // limit for size of training sample
+  unsigned long int maxTraining;                 // limit for size of training sample
   unsigned long int entryNumber;   // position in training sample
   int posEntryNumber;              // position in training sample
   int negEntryNumber;              // position in training sample

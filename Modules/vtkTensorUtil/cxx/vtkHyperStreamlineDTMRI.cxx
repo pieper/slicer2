@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.cxx,v $
-  Date:      $Date: 2007/03/13 21:55:04 $
-  Version:   $Revision: 1.31 $
+  Date:      $Date: 2007/03/15 19:43:23 $
+  Version:   $Revision: 1.32 $
 
 =========================================================================auto=*/
 #include "vtkHyperStreamlineDTMRI.h"
@@ -28,7 +28,7 @@
 //#include "vtkHyperPointandArray.cxx"
 #endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.31 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.32 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()
@@ -786,7 +786,7 @@ void vtkHyperStreamlineDTMRI::BuildLinesForSingleTrajectory()
         if ( newTensors ) // add tensors at points
           {
           double tensor[9];
-          int row, col, idx;
+          int idx;
           idx =0;
           for (int row = 0; row < 3; row++)
             {

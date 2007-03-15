@@ -86,8 +86,8 @@ void vtkIsingConditionalDistribution::SimpleExecute(vtkImageData *input, vtkImag
   dims[2] = z*nType;
   size = x*y*z;
 
-  if (maxTraining > size)
-    maxTraining = size;
+  if (this->maxTraining > size)
+    this->maxTraining = size;
 
   vtkIntArray *classArray = (vtkIntArray *)this->GetInput(0)->GetPointData()->GetScalars();
   vtkFloatArray *activation = (vtkFloatArray *)this->GetInput(1)->GetPointData()->GetScalars();
@@ -114,15 +114,15 @@ void vtkIsingConditionalDistribution::SimpleExecute(vtkImageData *input, vtkImag
           trainingDataPar[entryNumber] = activation->GetValue(i);
           entryNumber++;
         }
-      if (entryNumber <= maxTraining){
+      if (entryNumber <= this->maxTraining){
         for (unsigned long int i=0; i<entryNumber; i++)
           trainingUseC->InsertNextValue(trainingDataPar[i]);  
       }      
       else{
-        random_shuffle(trainingDataPar, trainingDataPar+maxTraining);
-        for (unsigned long int i=0; i<maxTraining; i++)
+        random_shuffle(trainingDataPar, trainingDataPar+this->maxTraining);
+        for (unsigned long int i=0; i<this->maxTraining; i++)
           trainingUseC->InsertNextValue(trainingDataPar[i]);
-        entryNumber = maxTraining;
+        entryNumber = this->maxTraining;
       }
       delete [] trainingDataPar;
       if (entryNumber != 0) {

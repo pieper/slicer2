@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkIsingMeanfieldApproximation.cxx,v $
-  Date:      $Date: 2007/03/13 22:04:19 $
-  Version:   $Revision: 1.4 $
+  Date:      $Date: 2007/03/15 19:43:23 $
+  Version:   $Revision: 1.5 $
 
 =========================================================================auto=*/
 
@@ -88,8 +88,8 @@ void vtkIsingMeanfieldApproximation::SimpleExecute(vtkImageData *input, vtkImage
   if (sum == 0){      
     // construction of a matrix indicating the transition strength between classes      
     register int i, j, k;
-    for (i=0; i<x; i++)
-      for (j=0; j<y; j++)
+    for (i=0; i<x; i++){
+      for (j=0; j<y; j++){
         for (k=0; k<z; k++){
           if (i != 0){
             index1 = classArray->GetValue((k*x*y)+(j*x)+i);
@@ -122,6 +122,8 @@ void vtkIsingMeanfieldApproximation::SimpleExecute(vtkImageData *input, vtkImage
             transitionMatrix->SetValue((index1*nType)+index2, (transitionMatrix->GetValue((index1*nType)+index2)+1));
           }
         }
+      }
+    }
         
     // neighborhoods were counted double
     for (int i=0; i<nType; i++)
@@ -139,11 +141,12 @@ void vtkIsingMeanfieldApproximation::SimpleExecute(vtkImageData *input, vtkImage
   
   // construction of log transition matrix
   logTransitionMatrix->SetNumberOfValues(nType*nType);
-  for (int i=0; i<nType; i++)
+  for (int i=0; i<nType; i++){
     for (int j=0; j<nType; j++){
       logHelp = (float) log((transitionMatrix->GetValue((i*nType)+j))/sqrt(((activationFrequence->GetValue(i))*size)*((activationFrequence->GetValue(j))*size)));                  
       logTransitionMatrix->SetValue((i*nType)+j, logHelp);
     }
+  }
   
   vtkFloatArray *probGivenClassArray = (vtkFloatArray *)this->GetInput(1)->GetPointData()->GetScalars();
   vtkFloatArray *outputArray = vtkFloatArray::New();
@@ -169,8 +172,8 @@ void vtkIsingMeanfieldApproximation::SimpleExecute(vtkImageData *input, vtkImage
   // meanfield iteration     
   register int i, j, k, n;     
   for (n=0; n<iterations; n++){
-    for (k=0; k<z; k++)
-      for (j=0; j<y; j++)
+    for (k=0; k<z; k++){
+      for (j=0; j<y; j++) {
         for (i=0; i<x; i++){
           sumHelpArray = 0.0;
           for (int l=0; l<nType; l++){
@@ -206,7 +209,9 @@ void vtkIsingMeanfieldApproximation::SimpleExecute(vtkImageData *input, vtkImage
           for (int l=0; l<nType; l++){
             outputArray->SetValue((l*size)+(k*x*y)+(j*x)+i, helpArray[l]/sumHelpArray);
           }
-        }   
+        }
+      }
+    }
     UpdateProgress(n * (1.0/iterations));   
   }
   
