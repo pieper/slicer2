@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkIsingMeanfieldApproximation.cxx,v $
-  Date:      $Date: 2007/03/15 19:43:23 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2007/03/16 21:48:40 $
+  Version:   $Revision: 1.5.2.1 $
 
 =========================================================================auto=*/
 
@@ -141,10 +141,10 @@ void vtkIsingMeanfieldApproximation::SimpleExecute(vtkImageData *input, vtkImage
   
   // construction of log transition matrix
   logTransitionMatrix->SetNumberOfValues(nType*nType);
-  for (int i=0; i<nType; i++){
+  for (int idx=0; idx<nType; idx++){
     for (int j=0; j<nType; j++){
-      logHelp = (float) log((transitionMatrix->GetValue((i*nType)+j))/sqrt(((activationFrequence->GetValue(i))*size)*((activationFrequence->GetValue(j))*size)));                  
-      logTransitionMatrix->SetValue((i*nType)+j, logHelp);
+      logHelp = (float) log((transitionMatrix->GetValue((idx*nType)+j))/sqrt(((activationFrequence->GetValue(idx))*size)*((activationFrequence->GetValue(j))*size)));                  
+      logTransitionMatrix->SetValue((idx*nType)+j, logHelp);
     }
   }
   
@@ -170,44 +170,44 @@ void vtkIsingMeanfieldApproximation::SimpleExecute(vtkImageData *input, vtkImage
     }
   
   // meanfield iteration     
-  register int i, j, k, n;     
+  register int i2, j, k, n;     
   for (n=0; n<iterations; n++){
     for (k=0; k<z; k++){
       for (j=0; j<y; j++) {
-        for (i=0; i<x; i++){
+        for (i2=0; i2<x; i2++){
           sumHelpArray = 0.0;
           for (int l=0; l<nType; l++){
             eValue = 0.0;          
-            if (i != 0){
+            if (i2 != 0){
               for (int s=0; s<nType; s++)
-                eValue += ((outputArray->GetValue((s*size)+(k*x*y)+(j*x)+i-1))*(logTransitionMatrix->GetValue((l*nType)+s))); 
+                eValue += ((outputArray->GetValue((s*size)+(k*x*y)+(j*x)+i2-1))*(logTransitionMatrix->GetValue((l*nType)+s))); 
             }    
-            if (i != x-1){
+            if (i2 != x-1){
               for (int s=0; s<nType; s++)
-                eValue += ((outputArray->GetValue((s*size)+(k*x*y)+(j*x)+i+1))*(logTransitionMatrix->GetValue((l*nType)+s)));                             
+                eValue += ((outputArray->GetValue((s*size)+(k*x*y)+(j*x)+i2+1))*(logTransitionMatrix->GetValue((l*nType)+s)));                             
             }           
             if (j != 0){
               for (int s=0; s<nType; s++)
-                eValue += ((outputArray->GetValue((s*size)+(k*x*y)+((j-1)*x)+i))*(logTransitionMatrix->GetValue((l*nType)+s))); 
+                eValue += ((outputArray->GetValue((s*size)+(k*x*y)+((j-1)*x)+i2))*(logTransitionMatrix->GetValue((l*nType)+s))); 
             }           
             if (j != y-1){
               for (int s=0; s<nType; s++)
-                eValue += ((outputArray->GetValue((s*size)+(k*x*y)+((j+1)*x)+i))*(logTransitionMatrix->GetValue((l*nType)+s)));
+                eValue += ((outputArray->GetValue((s*size)+(k*x*y)+((j+1)*x)+i2))*(logTransitionMatrix->GetValue((l*nType)+s)));
             }        
             if (k != 0){
               for (int s=0; s<nType; s++)
-                eValue += ((outputArray->GetValue((s*size)+((k-1)*x*y)+(j*x)+i))*(logTransitionMatrix->GetValue((l*nType)+s))); 
+                eValue += ((outputArray->GetValue((s*size)+((k-1)*x*y)+(j*x)+i2))*(logTransitionMatrix->GetValue((l*nType)+s))); 
             }    
             if (k != z-1){
               for (int s=0; s<nType; s++)
-                eValue += ((outputArray->GetValue((s*size)+((k+1)*x*y)+(j*x)+i))*(logTransitionMatrix->GetValue((l*nType)+s))); 
+                eValue += ((outputArray->GetValue((s*size)+((k+1)*x*y)+(j*x)+i2))*(logTransitionMatrix->GetValue((l*nType)+s))); 
             }        
                         
-            helpArray[l] = (activationFrequence->GetValue(l)) * (probGivenSegM->GetValue((segMArray->GetValue((k*x*y)+(j*x)+i))*nType+l)) * (probGivenClassArray->GetValue((l*size)+(k*x*y)+(j*x)+i)) * exp(eValue);                    
+            helpArray[l] = (activationFrequence->GetValue(l)) * (probGivenSegM->GetValue((segMArray->GetValue((k*x*y)+(j*x)+i2))*nType+l)) * (probGivenClassArray->GetValue((l*size)+(k*x*y)+(j*x)+i2)) * exp(eValue);                    
             sumHelpArray += helpArray[l];
           }
           for (int l=0; l<nType; l++){
-            outputArray->SetValue((l*size)+(k*x*y)+(j*x)+i, helpArray[l]/sumHelpArray);
+            outputArray->SetValue((l*size)+(k*x*y)+(j*x)+i2, helpArray[l]/sumHelpArray);
           }
         }
       }
