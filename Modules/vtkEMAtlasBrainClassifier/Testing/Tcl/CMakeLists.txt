@@ -1,5 +1,5 @@
 ADD_TEST("VTKEMATLASBRAINCLASSIFIER.TestSegmentation" 
-"${SLICER_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../TestOutAndInput/EMAtlasBrainClassifier.xml" "--no-tkcon" "--exec EMAtlasBrainClassifier_BatchMode")
+"${SLICER_EXECUTABLE}" "--agree_to_license" "${CMAKE_CURRENT_SOURCE_DIR}/../TestOutAndInput/EMAtlasBrainClassifier.xml" "--no-tkcon" "--exec EMAtlasBrainClassifier_BatchMode")
 
 SET_TESTS_PROPERTIES("VTKEMATLASBRAINCLASSIFIER.TestSegmentation" PROPERTIES FAIL_REGULAR_EXPRESSION "ERROR;FAIL;Test failed")
 SET_TESTS_PROPERTIES("VTKEMATLASBRAINCLASSIFIER.TestSegmentation" PROPERTIES PASS_REGULAR_EXPRESSION "Test passed")
@@ -12,7 +12,7 @@ FOREACH(tclfile ${TCL_TESTS})
 ADD_TEST("VTKEMATLASBRAINCLASSIFIER.CompareResult"			
   "${CTEST_SLICER_HOME}/Scripts/runvnc" "--Xvnc"
   "${CTEST_XVNC_EXECUTABLE}" "-d" "44" "--not-secure" "--" 
-  "${SLICER_EXECUTABLE}" "--agree_to_license"		
+  "${SLICER_EXECUTABLE}"	
   "${CTEST_SLICER_HOME}/Scripts/ImageRegressionTest.tcl" "${CMAKE_CURRENT_SOURCE_DIR}/TestEMAtlasBrainClassifier.tcl"
    "-D" "${CMAKE_CURRENT_SOURCE_DIR}")
 
