@@ -112,8 +112,15 @@ wm withdraw .
 puts [[[streamControl GetDisplayTracts] GetClippedStreamlines] Print]
 
 # test deletion
-streamControl DeleteStreamline \
-    [[[streamControl GetDisplayTracts] GetActors] GetItemAsObject 2]
+vtkCellPicker cp
+foreach a [[streamControl GetDisplayTracts] GetActors] {
+    if {[cp SafeDownCast $a] == $a} {
+    streamControl DeleteStreamline $a
+    }
+}
+cp Delete
+
+ #   [[[streamControl GetDisplayTracts] GetActors] GetItemAsObject 2]
 
 #streamControl DeleteStreamline 2
 
