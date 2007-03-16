@@ -6,8 +6,8 @@
 # 
 #  Program:   3D Slicer
 #  Module:    $RCSfile: Go.tcl,v $
-#  Date:      $Date: 2006/05/27 15:55:55 $
-#  Version:   $Revision: 1.122 $
+#  Date:      $Date: 2007/03/16 20:01:41 $
+#  Version:   $Revision: 1.123 $
 #===============================================================================
 # FILE:        Go.tcl
 # PROCEDURES:  
@@ -75,7 +75,7 @@ set ::SLICER(major_version) 2
 
 # bump minor when features accumulate to a stable state for release
 
-set ::SLICER(minor_version) 7
+set ::SLICER(minor_version) 8
 
 # bump revision for something that has been given out to non-developers
 # (e.g. bump revsion before packaging, then again after packaging
@@ -991,7 +991,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.122 2006/05/27 15:55:55 pieper Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.123 2007/03/16 20:01:41 nicole Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
