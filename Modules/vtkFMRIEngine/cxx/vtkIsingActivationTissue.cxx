@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkIsingActivationTissue.cxx,v $
-  Date:      $Date: 2007/03/15 19:43:23 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2007/03/16 21:54:36 $
+  Version:   $Revision: 1.3.2.1 $
 
 =========================================================================auto=*/
 
@@ -67,7 +67,7 @@ void vtkIsingActivationTissue::SimpleExecute(vtkImageData *input, vtkImageData *
   // in case of anatomical label map input
   if (numberOfInputs == 2){
     segMArray = vtkIntArray::New();
-    for (unsigned long int i=0; i<size; i++){
+    for (unsigned long int idx=0; idx<size; idx++){
       segMArray->InsertNextValue(0);
     }
     register int i, j, k;     

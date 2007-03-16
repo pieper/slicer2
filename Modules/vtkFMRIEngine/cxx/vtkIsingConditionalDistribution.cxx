@@ -198,12 +198,12 @@ void vtkIsingConditionalDistribution::SimpleExecute(vtkImageData *input, vtkImag
         }
         else{
           expectedValue = 0.0;
-          for (unsigned long int i=0; i<posEntryNumber; i++){
+          for (int i=0; i<posEntryNumber; i++){
             expectedValue += posTrainingData[i];
           }
           expectedValue = expectedValue/posEntryNumber;
           sum = 0.0;
-          for (unsigned long int i=0; i<posEntryNumber; i++){      
+          for (int i=0; i<posEntryNumber; i++){      
             sum += pow((posTrainingData[i]-expectedValue),2);
           }
           var = sum/posEntryNumber;
@@ -214,12 +214,12 @@ void vtkIsingConditionalDistribution::SimpleExecute(vtkImageData *input, vtkImag
             outputArray->InsertNextValue((posEntryNumber/(float)entryNumber)*(1/sqrt(2*pi*var)*exp(-1/(2*var)*pow(activation->GetValue(i) - expectedValue,2))));
           }
           expectedValue = 0.0;
-          for (unsigned long int i=0; i<negEntryNumber; i++){
+          for (int i=0; i<negEntryNumber; i++){
             expectedValue += negTrainingData[i];
           }
           expectedValue = expectedValue/negEntryNumber;
           sum = 0.0;
-          for (unsigned long int i=0; i<negEntryNumber; i++){      
+          for (int i=0; i<negEntryNumber; i++){      
             sum += pow((negTrainingData[i]-expectedValue),2);
           }
           var = sum/negEntryNumber;
