@@ -18,6 +18,10 @@ set Ysca 0.5
 set Yfor "%0.2f"
 set Blub(blubber) 1
 
+if {[info command GraphCreate] == ""} {
+  puts "\nCannot find command GraphCreate\n"
+  exit 5
+}
 
 # Display value
 GraphCreate Blub $w $Xlen $Ylen "" "0 0" 0 $Dimension 1 "" $Xmin  $Xmax $Xsca "%d" $Ymin $Ymax $Ysca $Yfor 1
