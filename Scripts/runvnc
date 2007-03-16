@@ -145,7 +145,7 @@ if { ![file exists "$LOGDIR"] } {
     file mkdir $LOGDIR
 }
 
-set STARTDATE [exec date -Iseconds]
+set STARTDATE [exec date  +%F-%H-%M-%S]
 
 set LOGFILE $LOGDIR/runvnclog-[pid]-$STARTDATE
 
