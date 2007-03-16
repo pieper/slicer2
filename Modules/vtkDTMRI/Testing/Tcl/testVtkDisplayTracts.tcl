@@ -160,7 +160,7 @@ wm withdraw .
 
 
 # test deletion
-displayTracts DeleteStreamline 2
+#displayTracts DeleteStreamline 2
 
 displayTracts DeleteStreamline [[displayTracts GetActors] GetItemAsObject 2]
 
