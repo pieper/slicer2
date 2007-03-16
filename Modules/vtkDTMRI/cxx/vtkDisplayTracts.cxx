@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDisplayTracts.cxx,v $
-  Date:      $Date: 2007/03/15 19:43:22 $
-  Version:   $Revision: 1.21 $
+  Date:      $Date: 2007/03/16 18:27:45 $
+  Version:   $Revision: 1.21.2.1 $
 
 =========================================================================auto=*/
 #include "vtkDisplayTracts.h"
@@ -1276,7 +1276,10 @@ vtkHyperStreamline* vtkDisplayTracts::GetStreamlineInGroup(int groupindex, int i
 void vtkDisplayTracts::DeleteStreamline(vtkCellPicker *picker)
 {
   int groupindex,index;
-
+  if (picker == NULL || picker->GetActor() == NULL)
+    {
+        return;
+    }
   vtkActor *pickedActor = picker->GetActor();
   groupindex = this->GetStreamlineGroupIndexFromActor(pickedActor);
   index = this->GetStreamlineIndexFromActor(groupindex,picker);
