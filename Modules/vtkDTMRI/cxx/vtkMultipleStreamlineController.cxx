@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMultipleStreamlineController.cxx,v $
-  Date:      $Date: 2007/02/20 20:46:20 $
-  Version:   $Revision: 1.73 $
+  Date:      $Date: 2007/03/19 14:35:22 $
+  Version:   $Revision: 1.74 $
 
 =========================================================================auto=*/
 #include "vtkMultipleStreamlineController.h"
@@ -331,7 +331,7 @@ void vtkMultipleStreamlineController::ClusterTracts(int tmp)
   lut->Build();
 
   double rgb[3];
-  vtkPolyDataMapper *currMapper;
+//  vtkPolyDataMapper *currMapper;
   vtkHyperStreamline *currStreamline;
   for (int idx = 0; idx < clusters->GetNumberOfTuples(); idx++)
     {
