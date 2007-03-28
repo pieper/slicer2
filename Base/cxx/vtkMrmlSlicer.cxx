@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.cxx,v $
-  Date:      $Date: 2006/06/29 16:49:12 $
-  Version:   $Revision: 1.68 $
+  Date:      $Date: 2007/03/28 15:10:55 $
+  Version:   $Revision: 1.68.2.1 $
 
 =========================================================================auto=*/
 #include "vtkMrmlSlicer.h"
@@ -17,6 +17,7 @@
 #include "vtkCamera.h"
 #include "vtkImageReformatIJK.h"
 #include "vtkImageReformat.h"
+#include "vtkImageExtractComponents.h"
 #include "vtkImageOverlay.h"
 #include "vtkImageMapToColors.h"
 #include "vtkMatrix4x4.h"
@@ -92,6 +93,7 @@ vtkMrmlSlicer::vtkMrmlSlicer()
   this->ZoomCenter1[0] = this->ZoomCenter1[1] = 0.0;
   this->ZoomCenter2[0] = this->ZoomCenter2[1] = 0.0;
   this->FieldOfView = 240.0;
+  this->ScalarComponent = 0;
   this->LabelIndirectLUT = NULL;
   this->PolyDraw = vtkImageDrawROI::New();
   this->AxiPolyStack = vtkStackOfPolygons::New();
@@ -134,6 +136,10 @@ vtkMrmlSlicer::vtkMrmlSlicer()
     this->SetForeVolume(s, this->NoneVolume);
     this->LabelVolume[s] = NULL;
     this->SetLabelVolume(s, this->NoneVolume);
+
+    //Extract filters
+    this->BackExtract[s] = vtkImageExtractComponents::New();
+    this->ForeExtract[s] = vtkImageExtractComponents::New();
 
     // Reformatters
     this->BackReformat[s]  = vtkImageReformat::New();
@@ -367,9 +373,11 @@ vtkMrmlSlicer::~vtkMrmlSlicer()
 {
   for (int s=0; s<NUM_SLICES; s++)
   {
-      this->BackReformat[s]->Delete();
-      this->ForeReformat[s]->Delete();
-      this->LabelReformat[s]->Delete();
+    this->BackExtract[s]->Delete();
+    this->ForeExtract[s]->Delete();
+    this->BackReformat[s]->Delete();
+    this->ForeReformat[s]->Delete();
+    this->LabelReformat[s]->Delete();
     this->Overlay[s]->Delete();
     this->BackMapper[s]->Delete();
     this->ForeMapper[s]->Delete();
@@ -542,6 +550,10 @@ void vtkMrmlSlicer::DeepCopy(vtkMrmlSlicer *src)
           this->SetBackVolume(s, src->GetBackVolume(s));
           this->SetForeVolume(s, src->GetForeVolume(s));
           this->SetLabelVolume(s, src->GetLabelVolume(s));
+          
+          //Extractors: set scalar component
+          this->BackExtract[s]->SetComponents(this->ScalarComponent);
+          this->ForeExtract[s]->SetComponents(this->ScalarComponent);
 
           // Reformatters: set matrices to new ones
           this->BackReformat[s]->SetReformatMatrix(this->ReformatMatrix[s]);
@@ -1015,6 +1027,7 @@ void vtkMrmlSlicer::SetLastFilter(int s, vtkImageSource *filter)
 void vtkMrmlSlicer::BuildUpper(int s)
 {
   vtkMrmlDataVolume *v;
+  vtkImageData *ev;
   int filter = 0;
 
   // Error checking
@@ -1049,19 +1062,31 @@ void vtkMrmlSlicer::BuildUpper(int s)
   v = this->BackVolume[s];
   vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) v->GetMrmlNode();
 
+  // Extract component if this volume has more than 3 components
+  if (v->GetOutput()->GetNumberOfScalarComponents()>3) {
+    this->BackExtract[s]->SetInput(v->GetOutput());
+    this->BackExtract[s]->ReleaseDataFlagOff();
+    this->BackExtract[s]->SetComponents(this->ScalarComponent);
+    ev = this->BackExtract[s]->GetOutput();
+  } else {
+    ev = v->GetOutput();
+    this->BackExtract[s]->SetInput(NULL);
+    this->BackExtract[s]->ReleaseDataFlagOn();
+  }  
+    
   // Reformatter
-  this->BackReformat[s]->SetInput(v->GetOutput());
+  this->BackReformat[s]->SetInput(ev);
   this->BackReformat[s]->SetInterpolate(node->GetInterpolate());
   this->BackReformat[s]->SetWldToIjkMatrix(node->GetWldToIjk());
 
   // >> AT 11/09/01
-  this->BackReformat3DView[s]->SetInput(v->GetOutput());
+  this->BackReformat3DView[s]->SetInput(ev);
   this->BackReformat3DView[s]->SetInterpolate(node->GetInterpolate());
   this->BackReformat3DView[s]->SetWldToIjkMatrix(node->GetWldToIjk());
   // << AT 11/09/01
 
   // If data has more than one scalar component, then don't use the mapper,
-  if (v->GetOutput()->GetNumberOfScalarComponents() > 1)
+  if (ev->GetNumberOfScalarComponents() > 1)
   {
     // Overlay
     this->Overlay[s]->SetInput(0, this->BackReformat[s]->GetOutput());
@@ -1108,19 +1133,34 @@ void vtkMrmlSlicer::BuildUpper(int s)
   } 
   else 
   {
+   
+    // Extract component if this volume has more than 3 components
+    if (v->GetOutput()->GetNumberOfScalarComponents()>3) 
+    {
+      this->ForeExtract[s]->SetInput(v->GetOutput());
+      this->ForeExtract[s]->ReleaseDataFlagOff();
+      this->ForeExtract[s]->SetComponents(this->ScalarComponent);
+      ev = this->ForeExtract[s]->GetOutput();
+    } 
+    else 
+    {
+      ev = v->GetOutput();
+      this->ForeExtract[s]->SetInput(NULL);
+      this->ForeExtract[s]->ReleaseDataFlagOff();
+    }  
     // Reformatter
-    this->ForeReformat[s]->SetInput(v->GetOutput());
+    this->ForeReformat[s]->SetInput(ev);
     this->ForeReformat[s]->SetInterpolate(node->GetInterpolate());
     this->ForeReformat[s]->SetWldToIjkMatrix(node->GetWldToIjk());
 
     // >> AT 11/09/01
-    this->ForeReformat3DView[s]->SetInput(v->GetOutput());
+    this->ForeReformat3DView[s]->SetInput(ev);
     this->ForeReformat3DView[s]->SetInterpolate(node->GetInterpolate());
     this->ForeReformat3DView[s]->SetWldToIjkMatrix(node->GetWldToIjk());
     // << AT 11/09/01
 
     // If data has more than one scalar component, then don't use the mapper,
-    if (v->GetOutput()->GetNumberOfScalarComponents() > 1)
+    if (ev->GetNumberOfScalarComponents() > 1)
     {
       // jc - 4.21.05 
       // Overlay

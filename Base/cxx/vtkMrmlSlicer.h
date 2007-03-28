@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.h,v $
-  Date:      $Date: 2006/04/13 18:20:37 $
-  Version:   $Revision: 1.52 $
+  Date:      $Date: 2007/03/28 15:10:55 $
+  Version:   $Revision: 1.52.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSlicer - main core of the 3D Slicer
@@ -62,6 +62,7 @@
 
 class vtkCamera;
 class vtkImageReformatIJK;
+class vtkImageExtractComponents;
 class vtkImageReformat;
 class vtkImageMapToColors;
 class vtkMatrix4x4;
@@ -816,6 +817,7 @@ protected:
   vtkFloatingPointType FieldOfView;
   vtkFloatingPointType ForeOpacity;
   int ForeFade;
+  int ScalarComponent;
 
   double CamN[3];
   double CamT[3];
@@ -838,6 +840,8 @@ protected:
   int Orient[NUM_SLICES];
   vtkFloatingPointType Offset[NUM_SLICES][MRML_SLICER_NUM_ORIENT];
 
+  vtkImageExtractComponents *BackExtract[NUM_SLICES];
+  vtkImageExtractComponents *ForeExtract[NUM_SLICES];
   vtkImageReformat     *BackReformat[NUM_SLICES];
   vtkImageReformat     *ForeReformat[NUM_SLICES];
   vtkImageReformat     *LabelReformat[NUM_SLICES];
