@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITractography.tcl,v $
-#   Date:      $Date: 2007/04/02 19:26:01 $
-#   Version:   $Revision: 1.53.2.2 $
+#   Date:      $Date: 2007/04/02 19:35:25 $
+#   Version:   $Revision: 1.53.2.3 $
 # 
 #===============================================================================
 # FILE:        DTMRITractography.tcl
@@ -57,7 +57,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.53.2.2 $} {$Date: 2007/04/02 19:26:01 $}]
+                                 {$Revision: 1.53.2.3 $} {$Date: 2007/04/02 19:35:25 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -173,7 +173,7 @@ proc DTMRITractographyInit {} {
     # What type of value to use for a threshold
     # default must match the vtk class
     set DTMRI(teem,StoppingMode) LinearMeasure; 
-    set DTMRI(teem,StoppingMode,menu) {LinearMeasure PlanarMeasure SphericalMeasure FractionalAnisotropy}    
+    set DTMRI(teem,StoppingMode,menu) {LinearMeasure FractionalAnisotropy}    
     # threshold of above value
     set DTMRI(teem,StoppingThreshold) 0.15
 
