@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITractography.tcl,v $
-#   Date:      $Date: 2007/04/02 19:35:25 $
-#   Version:   $Revision: 1.53.2.3 $
+#   Date:      $Date: 2007/04/02 21:04:45 $
+#   Version:   $Revision: 1.53.2.4 $
 # 
 #===============================================================================
 # FILE:        DTMRITractography.tcl
@@ -57,7 +57,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.53.2.3 $} {$Date: 2007/04/02 19:35:25 $}]
+                                 {$Revision: 1.53.2.4 $} {$Date: 2007/04/02 21:04:45 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -228,8 +228,15 @@ proc DTMRITractographyInit {} {
     set DTMRI(ROILabelColorID) ""
     # Color value corresponding to the label
     set DTMRI(ROI2LabelColorID) ""
+    # Threshold for seeding
+    set DTMRI(ROISeedThreshold) 0.3
+    # Type of threshold
+    set DTMRI(ROISeedAnisotropyForThreshold) LinearMeasure
+    set DTMRI(ROISeedAnisotropyForThreshold,label) cL
+    set DTMRI(ROISeedAnisotropyForThreshold,list) {LinearMeasure FractionalAnisotropy}
+    set DTMRI(ROISeedAnisotropyForThreshold,labelList) {cL FA}
 
-
+    
     #------------------------------------
     # Tab 3: Selection (select tracts using ROI)
     #------------------------------------  
@@ -618,7 +625,7 @@ proc DTMRITractographyBuildGUI {} {
     # Tract->Notebook->Seeding->ROIMethod frame
     #-------------------------------------------
     set f $fSeeding.fROIMethod
-    foreach frame "ROI ChooseLabel ROI2 ChooseLabel2 Apply" {
+    foreach frame "ROI ChooseLabel SeedThreshold ROI2 ChooseLabel2 Apply" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx $Gui(pad) -pady 2 -fill both
     }
@@ -660,6 +667,46 @@ proc DTMRITractographyBuildGUI {} {
     TooltipAdd  $f.bOutput $tip
     TooltipAdd  $f.eOutput $tip
     TooltipAdd  $f.eName $tip
+
+
+    #-------------------------------------------
+    # Tract->Notebook->Seeding->ROIMethod->SeedThreshold frame
+    #-------------------------------------------
+    set f $fSeeding.fROIMethod.fSeedThreshold
+
+    DevAddLabel $f.lSeedThresh "Seed where"
+
+    # menu for type of seeding threshold
+    eval {menubutton $f.mb$entry -text "$DTMRI(ROISeedAnisotropyForThreshold,label)" \
+              -relief raised -bd 2 -width 3 \
+              -menu $f.mb$entry.m} $Gui(WMBA)
+    eval {menu $f.mb$entry.m} $Gui(WMA)
+
+    # save menubutton for config
+    #set DTMRI(ROISeed,mb$entry) $f.mb$entry
+    # Add a tooltip
+    TooltipAdd $f.mb$entry $tip
+    
+    # add menu items
+    foreach item $DTMRI(ROISeedAnisotropyForThreshold,list) \
+        text $DTMRI(ROISeedAnisotropyForThreshold,labelList) {
+        $f.mb$entry.m add command \
+            -label $text \
+            -command "set DTMRI(ROISeedAnisotropyForThreshold) $item; \
+                    $f.mb$entry config -text $text"
+        }
+
+    DevAddLabel $f.lSeedThresh2 ">"
+    eval {entry $f.eSeedThresh -width 4 \
+              -textvariable DTMRI(ROISeedThreshold)} $Gui(WEA)
+    
+    pack $f.lSeedThresh $f.mb$entry $f.lSeedThresh2 $f.eSeedThresh -side left \
+        -padx $Gui(pad) -pady $Gui(pad)
+
+
+    set tip "Anisotropy threshold for seeding tractography."
+    TooltipAdd  $f.eSeedThresh $tip
+    TooltipAdd  $f.lSeedThresh $tip
 
     #-------------------------------------------
     # Tract->Notebook->Seeding->ROIMethod->ROI2 frame
@@ -1411,6 +1458,17 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
 
     }
 
+    # validate inputs
+    if {[ValidateFloat $DTMRI(ROISeedThreshold)] == 0} {
+        puts "Seed threshold must be a number between 0 and 1."
+        return
+    }
+
+    if {$DTMRI(ROISeedThreshold) < 0  || $DTMRI(ROISeedThreshold) > 1} {
+        puts "Seed threshold must be between 0 and 1"
+        return
+    }    
+
     # ask for user confirmation first
     if {$verbose == "1"} {
         set name [Volume($v,node) GetName]
@@ -1423,19 +1481,76 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
     # set mode to On (the Display Tracts button will go On)
     set DTMRI(mode,visualizationType,tractsOn) On
 
+
+    # set up the input segmented volume
+    set seedTracts [DTMRI(vtk,streamlineControl) GetSeedTracts]
+
     # cast to short (as these are labelmaps the values are really integers
     # so this prevents errors with float labelmaps which come from editing
     # scalar volumes derived from the tensors).
     vtkImageCast castVSeedROI
     castVSeedROI SetOutputScalarTypeToShort
-    castVSeedROI SetInput [Volume($v,vol) GetOutput] 
+
+    # threshold the seed ROI according to anisotropy if requested
+    #---------------------
+    if { $DTMRI(ROISeedThreshold) > 0 } {
+        
+        vtkTensorMask _mask
+        _mask SetMaskInput [Volume($v,vol) GetOutput] 
+        _mask SetImageInput [Tensor($t,data) GetOutput]
+        puts "Masking..."
+        _mask Update
+
+        vtkTensorMathematics _math
+        _math SetScaleFactor 1000
+        _math SetInput 0 [_mask GetOutput]
+        _math SetInput 1 [_mask GetOutput]
+        
+        _math SetOperationToLinearMeasure
+        puts "Calculating linear anisotropy measure..."    
+        _math Update
+        
+        # Now we threshold this masked linear measure
+        vtkImageThreshold _thresh
+        _thresh ThresholdBetween [expr $DTMRI(ROISeedThreshold) * 1000] 1000
+        _thresh SetReplaceIn 1
+        _thresh SetReplaceOut 1
+        # pick 10 so we can see it well in slicer, the number is not important
+        _thresh SetInValue 10
+        _thresh SetOutValue 0
+        _thresh SetInput [_math GetOutput]
+
+        puts "Thresholding..."
+        _thresh Update
+
+        castVSeedROI SetInput [_thresh GetOutput] 
+        $seedTracts SetInputROIValue 10
+
+        vtkImageWriter _tmp
+        _tmp SetFileDimensionality 2
+        _tmp SetFilePrefix "/tmp/test"
+        _tmp SetFilePattern "%s.%04d"
+        _tmp SetInput [_thresh GetOutput]
+        _tmp Write 
+        _tmp Delete
+
+        _thresh Delete
+        _math Delete
+        _mask Delete
+
+
+    } else {
+
+        castVSeedROI SetInput [Volume($v,vol) GetOutput] 
+        $seedTracts SetInputROIValue $DTMRI(ROILabel)
+
+    }
+
+
     castVSeedROI Update
-
-    # set up the input segmented volume
-    set seedTracts [DTMRI(vtk,streamlineControl) GetSeedTracts]
     $seedTracts SetInputROI [castVSeedROI GetOutput] 
-    $seedTracts SetInputROIValue $DTMRI(ROILabel)
-
+    castVSeedROI Delete
+    
     # color the streamlines like this ROI
     set DTMRI(TractLabel) $DTMRI(ROILabel)
     DTMRIUpdateTractColorToSolid
@@ -1462,7 +1577,6 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
     # (this is the slow part since it causes pipeline execution)
     [DTMRI(vtk,streamlineControl) GetDisplayTracts] AddStreamlinesToScene
 
-    castVSeedROI Delete
 }
 
 
