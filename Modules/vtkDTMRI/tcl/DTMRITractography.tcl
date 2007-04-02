@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITractography.tcl,v $
-#   Date:      $Date: 2006/08/15 16:44:56 $
-#   Version:   $Revision: 1.53 $
+#   Date:      $Date: 2007/04/02 18:47:12 $
+#   Version:   $Revision: 1.53.2.1 $
 # 
 #===============================================================================
 # FILE:        DTMRITractography.tcl
@@ -58,7 +58,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.53 $} {$Date: 2006/08/15 16:44:56 $}]
+                                 {$Revision: 1.53.2.1 $} {$Date: 2007/04/02 18:47:12 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -79,9 +79,9 @@ proc DTMRITractographyInit {} {
 
     # types of tractography: subclasses of vtkHyperStreamline
     #------------------------------------
-    set DTMRI(stream,tractingMethod) NoSpline
+    set DTMRI(stream,tractingMethod) VTK
     # put the default last so its GUI is built on top.
-    set DTMRI(stream,tractingMethodList) {BSpline NoSpline Teem}
+    set DTMRI(stream,tractingMethodList) {BSpline VTK Teem}
     set DTMRI(stream,tractingMethodList,tooltip) {Method for interpolating signal}
 
 
@@ -121,7 +121,7 @@ proc DTMRITractographyInit {} {
     set DTMRI(stream,RadiusOfCurvature) 0.87
 
 
-    # "NoSpline" tractography variables (lists are for GUI creation)
+    # "VTK" tractography variables (lists are for GUI creation)
     #------------------------------------
     set DTMRI(stream,variableList) \
         [list \
@@ -374,7 +374,7 @@ proc DTMRITractographyBuildGUI {} {
     #                MethodOrder
     #                MethodVariables ...
     #                PreciseVariables ...
-    #             NoSpline
+    #             VTK
     #                Variables...
     #             Teem
     #                Variables...
@@ -540,7 +540,7 @@ proc DTMRITractographyBuildGUI {} {
     }
 
     #-------------------------------------------
-    # Tract->Notebook->Settings->TractingVar->NoSpline->Variables frames
+    # Tract->Notebook->Settings->TractingVar->VTK->Variables frames
     #-------------------------------------------
 
     foreach entry $DTMRI(stream,variableList) \
@@ -548,7 +548,7 @@ proc DTMRITractographyBuildGUI {} {
         tip $DTMRI(stream,variableList,tooltips) \
         type $DTMRI(stream,variableList,type) {
 
-            set f $DTMRI(stream,tractingFrame,NoSpline)
+            set f $DTMRI(stream,tractingFrame,VTK)
 
             frame $f.f$entry -bg $Gui(activeWorkspace)
             pack $f.f$entry -side top -padx 0 -pady 1 -fill x
@@ -592,10 +592,10 @@ proc DTMRITractographyBuildGUI {} {
         }
 
     #-------------------------------------------
-    # Tract->Notebook->Settings->TractingVar->NoSpline
+    # Tract->Notebook->Settings->TractingVar->VTK
     #-------------------------------------------
 
-    set f $DTMRI(stream,tractingFrame,NoSpline)
+    set f $DTMRI(stream,tractingFrame,VTK)
 
     eval {button $f.bApply -text "Apply to all tracts" \
               -command "DTMRITractographyUpdateAllStreamlineSettings"} $Gui(WBA)
@@ -1253,7 +1253,7 @@ proc DTMRIUpdateStreamlineSettings {} {
 
         }
 
-        "NoSpline" {
+        "VTK" {
             # What type of streamline object to create
             $seedTracts UseVtkHyperStreamlinePoints
 
@@ -1359,9 +1359,9 @@ proc DTMRIUpdateTractingMethod { TractingMethod } {
     if {$TractingMethod != $DTMRI(stream,tractingMethod) } {
         set DTMRI(stream,tractingMethod) $TractingMethod
         switch $DTMRI(stream,tractingMethod) {
-            "NoSpline" {
-                raise $DTMRI(stream,tractingFrame,NoSpline)
-                focus $DTMRI(stream,tractingFrame,NoSpline)
+            "VTK" {
+                raise $DTMRI(stream,tractingFrame,VTK)
+                focus $DTMRI(stream,tractingFrame,VTK)
                 $DTMRI(gui,mbTractingMethod)    config -text $TractingMethod
                 
             }
