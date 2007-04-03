@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITractography.tcl,v $
-#   Date:      $Date: 2007/04/02 21:04:45 $
-#   Version:   $Revision: 1.53.2.4 $
+#   Date:      $Date: 2007/04/03 15:57:55 $
+#   Version:   $Revision: 1.53.2.5 $
 # 
 #===============================================================================
 # FILE:        DTMRITractography.tcl
@@ -57,7 +57,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.53.2.4 $} {$Date: 2007/04/02 21:04:45 $}]
+                                 {$Revision: 1.53.2.5 $} {$Date: 2007/04/03 15:57:55 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -1469,6 +1469,12 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
         return
     }    
 
+    if {$DTMRI(ROISeedAnisotropyForThreshold) == "FractionalAnisotropy"  || $DTMRI(ROISeedAnisotropyForThreshold) == "LinearMeasure"} {
+    } else {
+        puts "Anisotropy selection must be linear measure (cL) or FA."
+        return
+    }
+
     # ask for user confirmation first
     if {$verbose == "1"} {
         set name [Volume($v,node) GetName]
@@ -1495,19 +1501,31 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
     #---------------------
     if { $DTMRI(ROISeedThreshold) > 0 } {
         
+        # get rid of any other values in the labelmap of interest
+        vtkImageThreshold _thresh1
+        _thresh1 ThresholdBetween $DTMRI(ROILabel) $DTMRI(ROILabel)
+        _thresh1 SetInput [Volume($v,vol) GetOutput] 
+        _thresh1 SetReplaceIn 1
+        _thresh1 SetReplaceOut 1
+        _thresh1 SetInValue 1
+        _thresh1 SetOutValue 0
+        _thresh1 Update
+
+        # mask tensors
         vtkTensorMask _mask
-        _mask SetMaskInput [Volume($v,vol) GetOutput] 
+        _mask SetMaskInput  [_thresh1 GetOutput] 
         _mask SetImageInput [Tensor($t,data) GetOutput]
         puts "Masking..."
         _mask Update
 
+        # calculate anisotropy of masked tensors
         vtkTensorMathematics _math
         _math SetScaleFactor 1000
         _math SetInput 0 [_mask GetOutput]
         _math SetInput 1 [_mask GetOutput]
         
-        _math SetOperationToLinearMeasure
-        puts "Calculating linear anisotropy measure..."    
+        _math SetOperationTo$DTMRI(ROISeedAnisotropyForThreshold)
+        puts "Calculating anisotropy measure $DTMRI(ROISeedAnisotropyForThreshold)..."    
         _math Update
         
         # Now we threshold this masked linear measure
@@ -1537,7 +1555,7 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
         _thresh Delete
         _math Delete
         _mask Delete
-
+        _thresh1 Delete
 
     } else {
 
