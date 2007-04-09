@@ -190,6 +190,7 @@ switch $tcl_platform(os) {
 
 if ($isRelease) {
     set ::VTK_BUILD_TYPE "Release"
+    set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
     if ($isWindows) {
         set ::VTK_BUILD_SUBDIR "Release"
     } else {
