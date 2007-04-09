@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: VolNrrd.tcl,v $
-#   Date:      $Date: 2006/07/06 16:06:34 $
-#   Version:   $Revision: 1.7 $
+#   Date:      $Date: 2007/04/09 08:26:07 $
+#   Version:   $Revision: 1.7.2.1 $
 # 
 #===============================================================================
 # FILE:        VolNrrd.tcl
@@ -520,8 +520,9 @@ proc VolNrrdFillVolumeMrmlNode {v in} {
     vtkImageAppend ap
     ap SetAppendAxis 2
     set ncomp [$in GetNumberOfScalarComponents]
-    puts "Num comp: $ncomp"
-    if { $ncomp > 3 } {
+
+#    if { $ncomp > 3 }
+     if { 0 } {
        for {set i 0} {$i < $ncomp} {incr i} {
          catch "e$i Delete"
          vtkImageExtractComponents e$i
@@ -529,21 +530,19 @@ proc VolNrrdFillVolumeMrmlNode {v in} {
          e$i SetComponents $i
          e$i Update
          ap AddInput [e$i GetOutput]
-      }
-      ap Update  
-        for {set i 0} {$i <$ncomp} {incr i} {
+       }
+       ap Update  
+       for {set i 0} {$i <$ncomp} {incr i} {
           e$i Delete
        }
-      Volume($v,vol) SetImageData [ap GetOutput]
-    } else {       
-      Volume($v,vol) SetImageData $in
-   }
-   
-    set n [[[$in GetPointData] GetScalars] GetNumberOfComponents]
-    Volume($v,node) SetNumScalars $n
-    
-    catch "ap Delete"
- 
+       Volume($v,vol) SetImageData [ap GetOutput]
+     } else {
+       Volume($v,vol) SetImageData $in
+     }
+     set n [[[$in GetPointData] GetScalars] GetNumberOfComponents]
+     Volume($v,node) SetNumScalars $n
+
+     catch "ap Delete"
 
     set Volume(fileType) ""
 }
