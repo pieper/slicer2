@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.cxx,v $
-  Date:      $Date: 2007/03/28 15:10:55 $
-  Version:   $Revision: 1.68.2.1 $
+  Date:      $Date: 2007/04/09 08:21:25 $
+  Version:   $Revision: 1.68.2.2 $
 
 =========================================================================auto=*/
 #include "vtkMrmlSlicer.h"
@@ -93,7 +93,6 @@ vtkMrmlSlicer::vtkMrmlSlicer()
   this->ZoomCenter1[0] = this->ZoomCenter1[1] = 0.0;
   this->ZoomCenter2[0] = this->ZoomCenter2[1] = 0.0;
   this->FieldOfView = 240.0;
-  this->ScalarComponent = 0;
   this->LabelIndirectLUT = NULL;
   this->PolyDraw = vtkImageDrawROI::New();
   this->AxiPolyStack = vtkStackOfPolygons::New();
@@ -552,8 +551,8 @@ void vtkMrmlSlicer::DeepCopy(vtkMrmlSlicer *src)
           this->SetLabelVolume(s, src->GetLabelVolume(s));
           
           //Extractors: set scalar component
-          this->BackExtract[s]->SetComponents(this->ScalarComponent);
-          this->ForeExtract[s]->SetComponents(this->ScalarComponent);
+          this->BackExtract[s]->SetComponents(0);
+          this->ForeExtract[s]->SetComponents(0);
 
           // Reformatters: set matrices to new ones
           this->BackReformat[s]->SetReformatMatrix(this->ReformatMatrix[s]);
@@ -1062,11 +1061,12 @@ void vtkMrmlSlicer::BuildUpper(int s)
   v = this->BackVolume[s];
   vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) v->GetMrmlNode();
 
-  // Extract component if this volume has more than 3 components
-  if (v->GetOutput()->GetNumberOfScalarComponents()>3) {
+  // Extract component if this volume has more than 4 components, i.e. is not
+  // a RGBA volume
+  if (v->GetOutput()->GetNumberOfScalarComponents()>4) {
     this->BackExtract[s]->SetInput(v->GetOutput());
     this->BackExtract[s]->ReleaseDataFlagOff();
-    this->BackExtract[s]->SetComponents(this->ScalarComponent);
+    this->BackExtract[s]->SetComponents(node->GetScalarComponent());
     ev = this->BackExtract[s]->GetOutput();
   } else {
     ev = v->GetOutput();
@@ -1134,12 +1134,13 @@ void vtkMrmlSlicer::BuildUpper(int s)
   else 
   {
    
-    // Extract component if this volume has more than 3 components
-    if (v->GetOutput()->GetNumberOfScalarComponents()>3) 
+    // Extract component if this volume has more than 4 components, i.e. is not
+    // a RGBA volume
+    if (v->GetOutput()->GetNumberOfScalarComponents()>4) 
     {
       this->ForeExtract[s]->SetInput(v->GetOutput());
       this->ForeExtract[s]->ReleaseDataFlagOff();
-      this->ForeExtract[s]->SetComponents(this->ScalarComponent);
+      this->ForeExtract[s]->SetComponents(node->GetScalarComponent());
       ev = this->ForeExtract[s]->GetOutput();
     } 
     else 

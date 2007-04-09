@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.h,v $
-  Date:      $Date: 2007/03/28 15:10:55 $
-  Version:   $Revision: 1.52.2.1 $
+  Date:      $Date: 2007/04/09 08:21:26 $
+  Version:   $Revision: 1.52.2.2 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSlicer - main core of the 3D Slicer
@@ -817,7 +817,6 @@ protected:
   vtkFloatingPointType FieldOfView;
   vtkFloatingPointType ForeOpacity;
   int ForeFade;
-  int ScalarComponent;
 
   double CamN[3];
   double CamT[3];
