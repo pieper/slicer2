@@ -13,6 +13,8 @@
 # note: - SET replaced SOURCE_FILES for cmake 1.6
 SET(LOCAL_MODULE_SRCS
 vtkNRRDReader.cxx
+vtkNRRDWriter.cxx
+vtkTeemEstimateDiffusionTensor.cxx
 )
 
 ## classes that one does not want tcl wrapped
