@@ -160,11 +160,6 @@ if { [file exists $localvarsfile] } {
     exit 1
 }
 
-if ($isRelease) {
-    set ::VTK_BUILD_TYPE "Release"
-    puts "Overriding slicer_variables.tcl; VTK_BUILD_TYPE is $::env(VTK_BUILD_TYPE)"
-}
-
 #initialize platform variables
 switch $tcl_platform(os) {
     "SunOS" {
@@ -191,6 +186,16 @@ switch $tcl_platform(os) {
         set isDarwin 0
         set isLinux 0
     }
+}
+
+if ($isRelease) {
+    set ::VTK_BUILD_TYPE "Release"
+    if ($isWindows) {
+        set ::VTK_BUILD_SUBDIR "Release"
+    } else {
+        set ::VTK_BUILD_SUBDIR ""
+    }
+    puts "Overriding slicer_variables.tcl; VTK_BUILD_TYPE is $::env(VTK_BUILD_TYPE)"
 }
 
 # tcl file delete is broken on Darwin, so use rm -rf instead
