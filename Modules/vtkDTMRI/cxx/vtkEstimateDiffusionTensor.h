@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkEstimateDiffusionTensor.h,v $
-  Date:      $Date: 2006/02/14 20:57:40 $
-  Version:   $Revision: 1.3 $
+  Date:      $Date: 2007/04/09 08:03:38 $
+  Version:   $Revision: 1.3.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkEstimateDiffusionTensor - 
@@ -18,35 +18,15 @@
 #define __vtkEstimateDiffusionTensor_h
 
 #include "vtkDTMRIConfigure.h"
-#include "vtkImageMultipleInputFilter.h"
+#include "vtkImageToImageFilter.h"
 #include "vtkDoubleArray.h"
 #include "vtkTransform.h"
 
-class VTK_DTMRI_EXPORT vtkEstimateDiffusionTensor : public vtkImageMultipleInputFilter
+class VTK_DTMRI_EXPORT vtkEstimateDiffusionTensor : public vtkImageToImageFilter
 {
  public:
   static vtkEstimateDiffusionTensor *New();
-  vtkTypeMacro(vtkEstimateDiffusionTensor,vtkImageMultipleInputFilter);
-
-  // Description:
-  // Set the image created without diffusion gradients as gradient {0 0 0}.
-  // WARNING: This is a deprecetead method to keep compatibility with
-  // vtkImageDiffusionTensor.  Use instead SetInput.
-  void SetNoDiffusionImage(vtkImageData *img) 
-    {this->SetInput(0,img);
-     double grad[3];
-     grad[0]=0.0;
-     grad[1]=0.0;
-     grad[2]=0.0;
-     this->SetDiffusionGradient(0,grad);
-    }
-
-  // Description:
-  // Set the image corresponding to diffusion gradient number num
-  // WARNING: This is a deprecetead method to keep compatibility with
-  // vtkImageDiffusionTensor.  Use instead SetInput.
-  void SetDiffusionImage(int num, vtkImageData *img) 
-    {this->SetInput(num+1,img);}
+  vtkTypeMacro(vtkEstimateDiffusionTensor,vtkImageToImageFilter);
 
   // Description:
   // The number of gradients is the same as the number of input
@@ -57,29 +37,52 @@ class VTK_DTMRI_EXPORT vtkEstimateDiffusionTensor : public vtkImageMultipleInput
   // Description:
   // Set the 3-vectors describing the gradient directions
   void SetDiffusionGradient(int num, vtkFloatingPointType gradient[3])
-    {this->DiffusionGradient->SetTuple(num,gradient);}
+    {
+     this->DiffusionGradients->SetTuple(num,gradient);
+     this->Modified();
+    }
   void SetDiffusionGradient(int num, vtkFloatingPointType g0, vtkFloatingPointType g1, vtkFloatingPointType g2)
-    {this->DiffusionGradient->SetComponent(num,0,g0);
-      this->DiffusionGradient->SetComponent(num,1,g1);
-      this->DiffusionGradient->SetComponent(num,2,g2);}
+    {
+     this->DiffusionGradients->SetComponent(num,0,g0);
+     this->DiffusionGradients->SetComponent(num,1,g1);
+     this->DiffusionGradients->SetComponent(num,2,g2);
+     this->Modified();
+     }
+   void SetDiffusionGradients(vtkDoubleArray *grad);  
+   vtkGetObjectMacro(DiffusionGradients,vtkDoubleArray);  
 
   // Description:
   // Get the 3-vectors describing the gradient directions
   void GetDiffusionGradient(int num,double grad[3])
-  { grad[0]=this->DiffusionGradient->GetComponent(num,0);
-     grad[1]=this->DiffusionGradient->GetComponent(num,1);
-     grad[2]=this->DiffusionGradient->GetComponent(num,2);
+  { 
+    if (num<this->DiffusionGradients->GetNumberOfTuples()) {
+       grad[0]=this->DiffusionGradients->GetComponent(num,0);
+       grad[1]=this->DiffusionGradients->GetComponent(num,1);
+       grad[2]=this->DiffusionGradients->GetComponent(num,2);
+     } else {
+       vtkErrorMacro("Gradient number is out of range");
+     }
   }
   // the following look messy but are copied from vtkSetGet.h,
   // just adding the num parameter we need.
 
 
-  void SetB(int num,double b)
+  void SetBValue(int num,double b)
    {
-     this->B->SetValue(num,b);
+     this->BValues->SetValue(num,b);
+     this->Modified();
     } 
-  
-  
+  void SetBValues(vtkDoubleArray *bValues);  
+  vtkGetObjectMacro(BValues,vtkDoubleArray);
+
+  // Description:
+  // Get Baseline Image
+  vtkGetObjectMacro(Baseline,vtkImageData);
+
+  // Description:
+  // Get Average of all DWI images
+  vtkGetObjectMacro(AverageDWI,vtkImageData);
+
    //Description
   vtkGetMacro(WeightedFitting,int);
   vtkSetMacro(WeightedFitting,int);
@@ -95,7 +98,7 @@ class VTK_DTMRI_EXPORT vtkEstimateDiffusionTensor : public vtkImageMultipleInput
 
   // Description:
   // Internal class use only
-  vtkFloatingPointType** GetPinvA() {return this->PinvA;}
+  double** GetPinvA() {return this->PinvA;}
   double **GetA(){return this->A;}
   
   // Description:
@@ -105,9 +108,12 @@ class VTK_DTMRI_EXPORT vtkEstimateDiffusionTensor : public vtkImageMultipleInput
   
   void EstimateLSTensorModel(double *dwi,double **PinvA, double D[3][3],
   double &B0);
-  void EstimateWLSTensorModel(double *dwi,double **AT, double D[3][3],
+  void EstimateWLSTensorModel(double *dwi,double **A,double **ATW2, double **invATW2A, double **ATW2A, double **localPinvA,  double D[3][3],
   double &B0);
   
+  double **AllocateMatrix(int rows, int columns);
+  void DeallocateMatrix(double **M,int rows, int columns);
+
   //ETX
 
  protected:
@@ -119,8 +125,11 @@ class VTK_DTMRI_EXPORT vtkEstimateDiffusionTensor : public vtkImageMultipleInput
 
   int NumberOfGradients;
 
-  vtkDoubleArray *B;
-  vtkDoubleArray *DiffusionGradient;
+  vtkDoubleArray *BValues;
+  vtkDoubleArray *DiffusionGradients;
+
+  vtkImageData *Baseline;
+  vtkImageData *AverageDWI;
 
   int WeightedFitting;
 
@@ -134,12 +143,10 @@ class VTK_DTMRI_EXPORT vtkEstimateDiffusionTensor : public vtkImageMultipleInput
   
   void CalculatePseudoInverse();
   void CalculateA();
-  double **AllocateMatrix(int rows, int columns);
-  void DeallocateMatrix(double **M,int rows, int columns);
 
-  void ExecuteInformation(vtkImageData **inDatas, vtkImageData *outData);
-  void ExecuteInformation(){this->vtkImageMultipleInputFilter::ExecuteInformation();};
-  void ThreadedExecute(vtkImageData **inDatas, vtkImageData *outData,
+  void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
+  void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
+  void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,
         int extent[6], int id);
 
   // We override this in order to allocate output tensors
