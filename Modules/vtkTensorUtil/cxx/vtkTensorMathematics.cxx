@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.cxx,v $
-  Date:      $Date: 2006/12/19 17:14:44 $
-  Version:   $Revision: 1.43 $
+  Date:      $Date: 2007/04/09 19:22:03 $
+  Version:   $Revision: 1.43.2.1 $
 
 =========================================================================auto=*/
 
@@ -553,6 +553,12 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
       case VTK_TENS_MODE:
             *outPtr = static_cast<T> (vtkTensorMathematics::Mode(w));
             break;
+      case VTK_TENS_ISOTROPIC_P:
+            *outPtr = static_cast<T> (vtkTensorMathematics::IsotropicP(w));
+            break;
+      case VTK_TENS_ANISOTROPIC_Q:
+            *outPtr = static_cast<T> (vtkTensorMathematics::AnisotropicQ(w));
+            break;
 
           case VTK_TENS_COLOR_MODE:
 
@@ -696,6 +702,8 @@ void vtkTensorMathematics::ThreadedExecute(vtkImageData **inData,
     case VTK_TENS_COLOR_MODE:
     case VTK_TENS_PARALLEL_DIFFUSIVITY:
     case VTK_TENS_PERPENDICULAR_DIFFUSIVITY:
+    case VTK_TENS_ISOTROPIC_P:
+    case VTK_TENS_ANISOTROPIC_Q:
       switch (outData->GetScalarType())
       {
         vtkTemplateMacro6(vtkTensorMathematicsExecute1Eigen,
@@ -861,6 +869,22 @@ vtkFloatingPointType vtkTensorMathematics::Mode(vtkFloatingPointType w[3])
                          (2*w[0] - w[1] - w[2]) * 
                          (w[0] - 2*w[1] + w[2]))/(27*norm)); 
 }
+
+vtkFloatingPointType vtkTensorMathematics::IsotropicP(vtkFloatingPointType w[3])
+{
+  // square root of sum of eigenvalues. the "isotropic part" 
+  return ( sqrt( w[0] + w[1] + w[2] ) );
+}
+
+vtkFloatingPointType vtkTensorMathematics::AnisotropicQ(vtkFloatingPointType w[3])
+{
+  // the "anisotropic part"
+  vtkFloatingPointType mean = (w[0] + w[1] + w[2])/3;  
+  return( sqrt( (w[0] - mean)*(w[0] - mean) + 
+                (w[1] - mean)*(w[1] - mean) + 
+                (w[2] - mean)*(w[2] - mean) ) );
+}
+
 
 void vtkTensorMathematics::ColorByMode(vtkFloatingPointType w[3], vtkFloatingPointType &R, 
                                                        vtkFloatingPointType &G, vtkFloatingPointType &B)

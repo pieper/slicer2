@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.h,v $
-  Date:      $Date: 2006/12/19 17:14:44 $
-  Version:   $Revision: 1.20 $
+  Date:      $Date: 2007/04/09 19:22:03 $
+  Version:   $Revision: 1.20.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkTensorMathematics - Trace, determinant, anisotropy measures
@@ -52,6 +52,9 @@
 #define VTK_TENS_RAI_MAX_EIGENVEC_PROJZ 21
 #define VTK_TENS_PARALLEL_DIFFUSIVITY   22
 #define VTK_TENS_PERPENDICULAR_DIFFUSIVITY   23
+#define VTK_TENS_ISOTROPIC_P            24
+#define VTK_TENS_ANISOTROPIC_Q          25
+
 
 
 #include "vtkTensorUtilConfigure.h"
@@ -69,7 +72,7 @@ public:
   // Description:
   // Get the Operation to perform.
   vtkGetMacro(Operation,int);
-  vtkSetClampMacro(Operation,int, VTK_TENS_TRACE, VTK_TENS_PERPENDICULAR_DIFFUSIVITY);
+  vtkSetClampMacro(Operation,int, VTK_TENS_TRACE, VTK_TENS_ANISOTROPIC_Q);
 
   // Description:
   // Output the trace (sum of eigenvalues = sum along diagonal)
@@ -101,6 +104,11 @@ public:
     {this->SetOperation(VTK_TENS_PARALLEL_DIFFUSIVITY);};
   void SetOperationToPerpendicularDiffusivity()
     {this->SetOperation(VTK_TENS_PERPENDICULAR_DIFFUSIVITY);};
+  void SetOperationToIsotropicP()
+    {this->SetOperation(VTK_TENS_ISOTROPIC_P);};
+  void SetOperationToAnisotropicQ()
+    {this->SetOperation(VTK_TENS_ANISOTROPIC_Q);};
+
 
   // Description:
   // Output a selected eigenvalue
@@ -227,6 +235,8 @@ public:
   static vtkFloatingPointType MaxEigenvalueProjectionY(vtkFloatingPointType **v, vtkFloatingPointType w[3]);
   static vtkFloatingPointType MaxEigenvalueProjectionZ(vtkFloatingPointType **v, vtkFloatingPointType w[3]);
   static vtkFloatingPointType Mode(vtkFloatingPointType w[3]);
+  static vtkFloatingPointType IsotropicP(vtkFloatingPointType w[3]);
+  static vtkFloatingPointType AnisotropicQ(vtkFloatingPointType w[3]);
   static void ColorByMode(vtkFloatingPointType w[3], vtkFloatingPointType &R,vtkFloatingPointType &G, vtkFloatingPointType &B);
 
   //Description
