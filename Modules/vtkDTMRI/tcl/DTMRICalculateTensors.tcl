@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRICalculateTensors.tcl,v $
-#   Date:      $Date: 2006/07/06 17:38:17 $
-#   Version:   $Revision: 1.43 $
+#   Date:      $Date: 2007/04/09 08:28:47 $
+#   Version:   $Revision: 1.43.2.1 $
 # 
 #===============================================================================
 # FILE:        DTMRICalculateTensors.tcl
@@ -22,7 +22,7 @@
 #   DTMRILoadPattern
 #   DTMRIUpdateTipsPattern
 #   DTMRIViewProps
-#   ConvertVolumeToTensors
+#   DTMRIConvertVolumeToTensors
 #   DTMRICreateNewNode node:
 #   DTMRICreateNewNode refnode voldata name description
 #   DTMRICreateNewVolume volume name desc scanOrder
@@ -45,7 +45,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.43 $} {$Date: 2006/07/06 17:38:17 $}]
+                                 {$Revision: 1.43.2.1 $} {$Date: 2007/04/09 08:28:47 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -119,6 +119,12 @@ proc DTMRICalculateTensorsInit {} {
     set DTMRI(convert,nrrd,bValues) " "
     set DTMRI(convert,nrrd,skip) ""
     
+    # Solver information
+    set DTMRI(convert,estimationMethodList) {"Least_Squares" "Weighted_Least_Squares" "Teem_Least_Squares" "Teem_Weighted_Least_Squares"}
+    set DTMRI(convert,estimationMethod) "Least_Squares"
+    set DTMRI(convert,estimationMethodList,tooltips) [list \
+                                "Method to fit the tensor model to the diffusion weigthed data"]
+    
     # DWMRI key-value pair version supported by the slicer
     set DTMRI(convert,nrrd,version) 2
     
@@ -135,7 +141,6 @@ proc DTMRICalculateTensorsInit {} {
 
     #Volume to convert is nrrd
     set DTMRI(convert,nrrd) 0
-    
     set DTMRI(convert,makeDWIasVolume) 0
     set DTMRI(convertID) $Volume(idNone)
 
@@ -172,7 +177,7 @@ proc DTMRICalculateTensorsBuildGUI {} {
     #-------------------------------------------
     set f $fConvert.fConvert
 
-    foreach frame "Title Select Pattern Repetitions Average  Mask Apply" {
+    foreach frame "Title Select Estimation Pattern Mask Apply" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         $f.fTitle configure -bg $Gui(backdrop)
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
@@ -211,6 +216,25 @@ proc DTMRICalculateTensorsBuildGUI {} {
 
 
     #-------------------------------------------
+    # Convert->Convert->Solver frame
+    #-------------------------------------------
+    set f $fConvert.fConvert.fEstimation
+
+    eval {label $f.lEstimation -text "Estimation Method: "} $Gui(WLA)
+    eval {menubutton $f.mbEstimation -text $DTMRI(convert,estimationMethod) \
+              -relief raised -bd 2 -width 20 \
+              -menu $f.mbEstimation.m} $Gui(WMBA)
+    eval {menu $f.mbEstimation.m} $Gui(WMA)
+    pack $f.lEstimation -side left -pady 1 -padx $Gui(pad)
+    pack $f.mbEstimation -side right -pady 1 -padx $Gui(pad)
+    foreach solver $DTMRI(convert,estimationMethodList) {
+        $f.mbEstimation.m add command -label $solver \
+            -command "$f.mbEstimation config -text $solver; set DTMRI(convert,estimationMethod) $solver"
+    }
+    # Add a tooltip
+    TooltipAdd $f.mbEstimation $DTMRI(convert,estimationMethodList,tooltips)
+
+    #-------------------------------------------
     # Convert->Convert->Pattern frame
     #-------------------------------------------
     set f $fConvert.fConvert.fPattern
@@ -230,44 +254,6 @@ proc DTMRICalculateTensorsBuildGUI {} {
     TooltipAdd $f.lLabel "Choose a protocol to convert tensors.\n If desired does not exist, create one in the frame below."
 
 
-    #-------------------------------------------
-    # Convert->Convert->Repetitions frame
-    #-------------------------------------------
-    set f $fConvert.fConvert.fRepetitions
-    
-    DevAddLabel $f.l "Num. Repetitions:"
-    $f.l configure -bg $Gui(backdrop) -fg white
-    eval {entry $f.e -width 3 \
-          -textvariable DTMRI(convert,numberOfRepetitions)} \
-        $Gui(WEA)
-    eval {scale $f.s -from $DTMRI(convert,numberOfRepetitions,min) \
-                          -to $DTMRI(convert,numberOfRepetitions,max)    \
-          -variable  DTMRI(convert,numberOfRepetitions)\
-          -orient vertical     \
-          -resolution 1      \
-          } $Gui(WSA)
-      
-     pack $f.l $f.e $f.s -side left -padx $Gui(pad) -pady $Gui(pad)
-     
-    #-------------------------------------------
-    # Convert->Convert->Average frame
-    #-------------------------------------------
-    set f $fConvert.fConvert.fAverage
-    
-    DevAddLabel $f.l "Average Repetitions: "
-    pack $f.l -side left -pady $Gui(pad) -padx $Gui(pad)  
-    # Add menu items
-    foreach vis $DTMRI(convert,averageRepetitionsList) val $DTMRI(convert,averageRepetitionsValue) \
-            tip $DTMRI(convert,averageRepetitionsList,tooltips) {
-        eval {radiobutton $f.r$vis \
-              -text "$vis" \
-              -value $val \
-              -variable DTMRI(convert,averageRepetitions) \
-              -indicatoron 0} $Gui(WCA)
-        pack $f.r$vis -side left -padx 0 -pady 0
-        TooltipAdd  $f.r$vis $tip     
-    }
-     
 #    #-------------------------------------------
 #    # Convert->Convert->Mask frame
 #    #-------------------------------------------         
@@ -310,9 +296,8 @@ proc DTMRICalculateTensorsBuildGUI {} {
 #    # Convert->Convert->Apply frame
 #    #-------------------------------------------
     set f $fConvert.fConvert.fApply
-    DevAddButton $f.bTest "Convert Volume" ConvertVolumeToTensors 20
+    DevAddButton $f.bTest "Convert Volume" DTMRIConvertVolumeToTensors 20
     pack $f.bTest -side top -padx 0 -pady $Gui(pad) -fill x -padx $Gui(pad)
-
 
     #-------------------------------------------
     # Convert->ShowPattern frame
@@ -326,8 +311,6 @@ proc DTMRICalculateTensorsBuildGUI {} {
         after 250 DTMRIDisplayScrollBar DTMRI Conv}
     TooltipAdd $f.bShow "Press this button to enter Create-Protocol Frame"
     pack $f.lLabel $f.bShow -side top -pady 2 -fill x
-
-
 
 
     #-------------------------------------------
@@ -527,8 +510,6 @@ proc DTMRICalculateTensorsBuildGUI {} {
         #-------------------------------------------
 
 
-
-
     # This frame is supposed to hold the entries for needed parameters in tensors conversion.
 
     #    set f $fConvert.fPattern.fParameter
@@ -590,11 +571,6 @@ proc DTMRIConvertUpdate {} {
   if {$headerkey == ""} {
     #Active protocol frame
     $f.fPattern.mbPattern configure -state normal
-    $f.fRepetitions.e configure -state normal
-    $f.fRepetitions.s configure -state normal
-    foreach vis $DTMRI(convert,averageRepetitionsList) {
-      $f.fAverage.r$vis configure -state normal
-    }
     
     set DTMRI(convert,nrrd) 0
     set DTMRI(convert,nrrd,skip) ""  
@@ -622,11 +598,6 @@ proc DTMRIConvertUpdate {} {
   
   #Disable protocol frame
   $f.fPattern.mbPattern configure -state disable
-  $f.fRepetitions.e configure -state disable
-  $f.fRepetitions.s configure -state disable
-  foreach vis $DTMRI(convert,averageRepetitionsList) {
-      $f.fAverage.r$vis configure -state disable
-  }  
 
   #Build protocol from headerKeys
   set key DWMRI_b-value
@@ -849,7 +820,7 @@ proc DTMRIParseNrrdKeyValuePairs {} {
   #Compute list from b Value from factor List and max factor extracted from
   # gradient vector norms.
   foreach factor $factorList {
-    lappend DTMRI(convert,nrrd,bValues) [expr $bValueBase * ($factor / $maxfactor)]
+    lappend DTMRI(convert,nrrd,bValues) [expr $bValueBase * ($factor / $maxfactor) * ($factor/$maxfactor)]
   }
         
 }
@@ -1196,12 +1167,23 @@ proc DTMRIViewProps {} {
 ################################################################
 
 #-------------------------------------------------------------------------------
-# .PROC ConvertVolumeToTensors
+# .PROC DTMRIConvertVolumeToTensors
 # 
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc ConvertVolumeToTensors {} {
+proc DTMRIConvertVolumeToTensors {} {
+global DTMRI
+
+  if {$DTMRI(convert,nrrd) == 1} {
+    DTMRIConvertDWIToTensorNRRD
+  } else {
+    DTMRIConvertDWIToTensorLegacy
+  }
+  
+}  
+  
+proc DTMRIConvertDWIToTensorLegacy {} {
     global DTMRI Volume Tensor
 
     set v $DTMRI(convertID)
@@ -1779,7 +1761,7 @@ proc ConvertVolumeToTensors {} {
 
 proc DTMRIConvertDWIToTensorNRRD {} {
 
-    global DTMRI Volume Tensor
+    global DTMRI Volume Tensor Gui
 
     set v $DTMRI(convertID)
     if {$v == "" || $v == $Volume(idNone)} {
@@ -1789,39 +1771,34 @@ proc DTMRIConvertDWIToTensorNRRD {} {
     
     # volume we use for input
     set input [Volume($v,vol) GetOutput]
-
+    puts "Range: [[[$input GetPointData] GetScalars] GetRange]"
     # DTMRI creation filter
-    set _tensorEstim [DevNewInstance vtkEstimateDiffusionTensor _tensorEstim]
+    switch $DTMRI(convert,estimationMethod) {
+      "Least_Squares" {
+        set _tensorEstim [DevNewInstance vtkEstimateDiffusionTensor _tensorEstim]
+        $_tensorEstim WeightedFittingOff
+      }
+      "Weighted_Least_Squares" {
+        set _tensorEstim [DevNewInstance vtkEstimateDiffusionTensor _tensorEstim]
+        $_tensorEstim WeightedFittingOn
+      }
+      "Teem_Least_Squares" {
+        set _tensorEstim [DevNewInstance vtkTeemEstimateDiffusionTensor _tensorEstim]
+    $_tensorEstim SetEstimationMethodToLLS
+      }
+      "Teem_Weighted_Least_Squares" {
+        set _tensorEstim [DevNewInstance vtkTeemEstimateDiffusionTensor _tensorEstim]
+    $_tensorEstim SetEstimationMethodToWLS
+      }
+  }
     
     set numGradients $DTMRI(convert,nrrd,numberOfGradients)
-    
-    # Appender in a multicomponent image
-    set _appender [DevNewInstance vtkImageAppendComponents _appender]
-    
-    # Extract all the volumes
-    for {set slice 0} { $slice < $numGradients } {incr slice} {
-        catch "extract$slice Delete"
-        vtkImageExtractSlices extract$slice
-        extract$slice SetInput $input
-        extract$slice SetModeToVOLUME
-        extract$slice SetSliceOffset $slice
-        extract$slice SetSlicePeriod $numGradients
-        $_appender AddInput [extract$slice GetOutput]
-    }
-    
-    $_appender Update
-    
-    #Delete extractors
-    for {set slice 0} { $slice < $numGradients } { incr slice} {
-       extract$slice Delete
-    }   
-    
-    
+
     # Compute a transformation to bring gradients to Ijk frame
     set _trans [DevNewInstance vtkTransform _trans]
-    DTMRIComputeGradientTransformation $input $_trans
+    DTMRIComputeGradientTransformation $v $_trans
 
-    $_tensorEstim SetInput 0 [$_appender GetOutput]
+    $_tensorEstim SetInput $input
     $_tensorEstim SetNumberOfGradients $numGradients
     $_tensorEstim SetTransform $_trans
     
@@ -1830,42 +1807,58 @@ proc DTMRIConvertDWIToTensorNRRD {} {
     for {set grad 0} { $grad < $numGradients } {incr grad} {
        eval "$_tensorEstim SetDiffusionGradient $grad" \
             [lindex $DTMRI(convert,nrrd,gradients) $grad] 
-       $_tensorEstim SetB $grad [lindex $DTMRI(convert,nrrd,bValues) $grad]
+       $_tensorEstim SetBValue $grad [lindex $DTMRI(convert,nrrd,bValues) $grad]
+       puts "Assigning Grad num $grad:  [lindex $DTMRI(convert,nrrd,gradients) $grad]  B-value: [lindex $DTMRI(convert,nrrd,bValues) $grad]"
     }
     
+    #Set Progress bar
+    $_tensorEstim AddObserver StartEvent MainStartProgress
+    $_tensorEstim AddObserver ProgressEvent "MainShowProgress $_tensorEstim"
+    $_tensorEstim AddObserver EndEvent MainEndProgress
+    set Gui(progressText) "Estimating Tensor"
+
     #Perform tensor Estimation
     $_tensorEstim Update
-    
-    
+
     #Get gradient image and baseline and make mrml nodes
     #Make a MRML node with BaseLine
     set name [Volume($v,node) GetName]
     set description "Baseline from volume $name"
     set name ${name}_Baseline
-    set id [DTMRICreateNewNode Volume($v,node) [$_tensorEstim GetOutput] $name $description]
-     
-    
+    set idBaseline [DTMRICreateNewNode Volume($v,node) [$_tensorEstim GetBaseline] $name $description]
+
+    #Get gradient image and baseline and make mrml nodes
+    #Make a MRML node with BaseLine
+    set name [Volume($v,node) GetName]
+    set description "Average gradient from volume $name"
+    set name ${name}_AvGradient
+    set id [DTMRICreateNewNode Volume($v,node) [$_tensorEstim GetAverageDWI] $name $description]
+
     #Mrml node for tensor output  
     set newvol [MainMrmlAddNode Volume Tensor]
     #Take the baseline as node to copy
-    $newvol Copy Volume($id,node)
+    $newvol Copy Volume($v,node)
     $newvol SetDescription "DTMRI volume"
     $newvol SetName "[Volume($v,node) GetName]_Tensor"
     set n [$newvol GetID]
 
-    #puts "SPACING [$newvol GetSpacing] DIMS [$newvol GetDimensions] MAT [$newvol GetRasToIjkMatrix]"
     # fix the image range in the node (less slices than the original)
-    set extent [[Volume($id,vol) GetOutput] GetExtent]
+    set extent [[Volume($v,vol) GetOutput] GetExtent]
     set range "[expr [lindex $extent 4] +1] [expr [lindex $extent 5] +1]"
     eval {$newvol SetImageRange} $range
     # recompute the matrices using this offset to center vol in the cube
     set order [$newvol GetScanOrder]
-            
+
     puts "SPACING [$newvol GetSpacing] DIMS [$newvol GetDimensions] MAT [$newvol GetRasToIjkMatrix]"
-    TensorCreateNew $n     
-    
+    TensorCreateNew $n
+
+    #$_tensorEstim Update
     Tensor($n,data) SetImageData [$_tensorEstim GetOutput]
-    
+
+    #Remove scalar info from tensor volume
+    #[[Tensor($n,data) GetOutput] GetPointData] SetScalars ""
+    #[Tensor($n,data) GetOutput] SetNumberOfScalarComponents 0
+
     #Set Tensor matrices
     set spacing [Tensor($n,node) GetSpacing]
     DTMRIComputeRasToIjkFromCorners Volume($v,node) Tensor($n,node) [[Tensor($n,data) GetOutput] GetExtent] $spacing
@@ -1884,23 +1877,44 @@ proc DTMRIConvertDWIToTensorNRRD {} {
         Mrml(dataTree) InsertAfterItem Volume($v,node) Tensor($n,node)
         MainUpdateMRML
     }
-    
-    #Compute tensor Mask
-    #I need Baseline Image
-    # Not done yet: DTMRIComputeTensorMask
-    
+
+    #Compute Mask: Try to extract an rough mask for whitematter
+    set mid [DTMRIComputeTensorMask Volume($idBaseline,node)]
+
+    #Save in a table the relation between mask and associated tensor
+    set DTMRI(maskTable,$n) $mid
+
+    # If failed, then it's no longer in the idList
+    if {[lsearch $Tensor(idList) $n] == -1} {
+        DevWarningWindow "Tensor node has not been created. Error in the conversion process."
+    } else {
+        # Activate the new data object
+        DTMRISetActive $n
+    }
+
     #Delete objects
-    $_appender Delete
     $_trans Delete
+    #$_tensorEstim SetOutput ""
     $_tensorEstim Delete
+
+    # reset blue bar text
+    set Gui(progressText) ""
+
+    # This updates all the buttons to say that the
+    # Volume List has changed.
+    MainUpdateMRML
+
+    # display volume so the user knows something happened
+    MainSlicesSetVolumeAll Back $idBaseline
+
+    # display the new volume in the slices
+    RenderSlices
 }
 
 
 proc DTMRIComputeGradientTransformation { v trans } {
 
    global DTMRI Volume
-
-   set v $DTMRI(convertID)
    
    #Get RAS To vtk Matrix
    set _RasToVtk [DevNewInstance vtkMatrix4x4 _RasToVTk] 
@@ -2059,7 +2073,6 @@ proc DTMRIComputeTensorMask {node} {
 proc DTMRICreateNewNode {refnode voldata name description} {
     global Volume
     
-        
     set scanorder [$refnode GetScanOrder]
     set id [DTMRICreateNewVolume $voldata $name $description \
                                  $scanorder]
