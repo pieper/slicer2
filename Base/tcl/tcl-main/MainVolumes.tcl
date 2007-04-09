@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainVolumes.tcl,v $
-#   Date:      $Date: 2006/09/22 18:42:59 $
-#   Version:   $Revision: 1.99 $
+#   Date:      $Date: 2007/04/09 08:24:12 $
+#   Version:   $Revision: 1.99.2.1 $
 # 
 #===============================================================================
 # FILE:        MainVolumes.tcl
@@ -54,9 +54,9 @@ proc MainVolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.99 $} {$Date: 2006/09/22 18:42:59 $}]
+    {$Revision: 1.99.2.1 $} {$Date: 2007/04/09 08:24:12 $}]
 
-    set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001"
+    set Volume(defaultOptions) "interpolate 1 autoThreshold 0  lowerThreshold -32768 upperThreshold 32767 showAbove -32768 showBelow 32767 edit None lutID 0 rangeAuto 1 rangeLow -1 rangeHigh 1001 scalarComponent 0 numScalars 1"
 
     set Volume(histWidth) 140
     set Volume(histHeight) 55
@@ -68,6 +68,10 @@ proc MainVolumesInit {} {
     # Append widgets to list that's refreshed in MainVolumesUpdateSliderRange
     set Volume(sWindowList) ""
     set Volume(sLevelList) ""
+
+    # Append widgets to list that's refreshed in MainVolumesUpdateComponentRange 
+    set Volume(sCompList) ""
+    set Volume(eCompList) ""
 
     set Volume(idNone) 0
     set Volume(activeID)  $Volume(idNone)
@@ -723,8 +727,9 @@ proc MainVolumesBuildGUI {} {
     frame $f.fActive -bg $Gui(inactiveWorkspace)
     frame $f.fWinLvl -bg $Gui(activeWorkspace) -bd 2 -relief raised
     frame $f.fThresh -bg $Gui(activeWorkspace) -bd 2 -relief raised
+    frame $f.fComp -bg $Gui(activeWorkspace) -bd 2 -relief raised
     pack $f.fActive -side top -pady $Gui(pad) -padx $Gui(pad)
-    pack $f.fWinLvl $f.fThresh -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
+    pack $f.fWinLvl $f.fThresh $f.fComp -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
     pack $f.bClose -side top -pady $Gui(pad)
 
     #-------------------------------------------
@@ -841,6 +846,32 @@ proc MainVolumesBuildGUI {} {
     lappend Volume(sLevelList) $f.sLower
     lappend Volume(sLevelList) $f.sUpper
 
+    #-------------------------------------------
+    # Popup->Thresh frame
+    #-------------------------------------------
+    set f $w.fComp
+
+    #-------------------------------------------
+    # Component Sliders
+    #-------------------------------------------
+    foreach slider "Comp" text "Component" {
+        eval {label $f.l${slider} -text "$text:"} $Gui(WLA)
+        eval {entry $f.e${slider} -width 6 \
+            -textvariable Volume(scalarComponent)} $Gui(WEA)
+            bind $f.e${slider} <Return>   \
+                "MainVolumesSetParam ScalarComponent; MainVolumesRender"
+            bind $f.e${slider} <FocusOut> \
+                "MainVolumesSetParam ScalarComponent; MainVolumesRender"
+        eval {scale $f.s${slider} -from 1 -to 1 -length 140 \
+            -variable Volume(scalarComponent)  -resolution 1 \
+            -command "MainVolumesSetParam ScalarComponent; MainVolumesRender"} \
+            $Gui(WSA) {-sliderlength 14}
+        grid $f.l${slider} $f.e${slider} $f.s${slider} -padx 2 -pady $Gui(pad) \
+            -sticky news
+    }
+    # Append widgets to list that's refreshed in MainVolumesUpdateComponentRange
+    lappend Volume(sCompList) $f.sComp
+    lappend Volume(eCompList) $f.eComp
 }
 
 #-------------------------------------------------------------------------------
@@ -1032,9 +1063,13 @@ proc MainVolumesSetActive {v} {
         set Volume(scalarType)  [Volume($v,node) GetScalarType]
         MainVolumesUpdateSliderRange
 
+        # Component range
+        set Volume(numScalars) [Volume($v,node) GetNumScalars]
+        MainVolumesUpdateComponentRange
+
         # Update GUI
         foreach item "Window Level AutoWindowLevel UpperThreshold LowerThreshold \
-            AutoThreshold ApplyThreshold Interpolate" {
+            AutoThreshold ApplyThreshold ScalarComponent Interpolate" {
             set Volume([Uncap $item]) [Volume($v,node) Get$item]
         }
 
@@ -1133,7 +1168,7 @@ proc MainVolumesSetParam {Param {value ""}} {
     }
 
     #
-    # Window/Level/Threshold
+    # Window/Level/Threshold/ScalarComponent
     #
     if {[lsearch "AutoWindowLevel Level Window UpperThreshold LowerThreshold \
         AutoThreshold ApplyThreshold" $Param] != -1} {
@@ -1269,7 +1304,19 @@ proc MainVolumesSetParam {Param {value ""}} {
         Slicer Update
 
         Volume($v,vol) Update
+    #
+    # Scalar Component
+    #
+    } elseif {$Param == "ScalarComponent"} {
+        # If no change, return
+        if {$value == [Volume($v,node) Get$Param]} {return}
 
+        set Volume(numScalars)  [Volume($v,node) GetNumScalars]
+        # Update value
+        Volume($v,node) Set$Param $value
+        MainVolumesUpdateComponentRange
+        Slicer ReformatModified
+        Slicer Update
     # 
     # Booboo
     #
@@ -1315,6 +1362,30 @@ proc MainVolumesUpdateSliderRange {} {
     foreach s $Volume(sWindowList) {
         $s config -from 1 -to $width -resolution $res 
     }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC MainVolumesUpdateComponentRange
+# Update the range of the component slider
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainVolumesUpdateComponentRange {} {
+   global Volume
+   if {$Volume(numScalars) < 5} {
+      set stat disabled
+   } else {
+      set stat normal
+   }
+
+   foreach s $Volume(sCompList) e $Volume(eCompList) {
+     $s config -state $stat
+     $e config -state $stat
+   }
+
+   foreach s $Volume(sCompList) {
+       $s config -from 0 -to [expr $Volume(numScalars) - 1] -resolution 1
+   }
 }
 
 #-------------------------------------------------------------------------------

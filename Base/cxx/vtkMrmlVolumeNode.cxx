@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlVolumeNode.cxx,v $
-  Date:      $Date: 2006/03/06 19:02:27 $
-  Version:   $Revision: 1.66 $
+  Date:      $Date: 2007/04/09 08:22:08 $
+  Version:   $Revision: 1.66.2.1 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -68,6 +68,7 @@ vtkMrmlVolumeNode::vtkMrmlVolumeNode()
   this->LowerThreshold = VTK_SHORT_MIN;
   this->UpperThreshold = VTK_SHORT_MAX;
   this->UseRasToVtkMatrix = 1;
+  this->ScalarComponent = 0;
 
   // odonnell.  Fixes for diffusion tensor image data
   this->FrequencyPhaseSwap = 0;
@@ -497,6 +498,7 @@ void vtkMrmlVolumeNode::Copy(vtkMrmlNode *anode)
     this->SetUpperThreshold(node->UpperThreshold);
     this->SetLowerThreshold(node->LowerThreshold);
     this->SetInterpolate(node->Interpolate);
+    this->SetScalarComponent(node->ScalarComponent);
 
   // Matrices
   this->RasToIjk->DeepCopy(node->RasToIjk);
@@ -707,6 +709,7 @@ void vtkMrmlVolumeNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "UpperThreshold:    " << this->UpperThreshold << "\n";
   os << indent << "LowerThreshold:    " << this->LowerThreshold << "\n";
   os << indent << "Interpolate:       " << this->Interpolate << "\n";
+  os << indent << "ScalarComponent:   " << this-ScalarComponent << "\n";
   os << indent << "UseRasToVtkMatrix: " << this->UseRasToVtkMatrix << "\n";
 
   os << "Spacing:\n";

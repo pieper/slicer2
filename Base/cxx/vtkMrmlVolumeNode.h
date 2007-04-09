@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlVolumeNode.h,v $
-  Date:      $Date: 2006/02/22 23:47:16 $
-  Version:   $Revision: 1.43 $
+  Date:      $Date: 2007/04/09 08:22:08 $
+  Version:   $Revision: 1.43.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlVolumeNode - MRML node for representing a volume (image stack).
@@ -229,6 +229,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
   vtkGetMacro(LowerThreshold, vtkFloatingPointType);
   vtkSetMacro(LowerThreshold, vtkFloatingPointType);
 
+  vtkGetMacro(ScalarComponent, int);
+  vtkSetMacro(ScalarComponent, int);
+
   // Description:
   // MR Diffusion Tensor Images may be saved on disk with 
   // the frequency encode direction non-standard.  For supine
@@ -410,6 +413,7 @@ protected:
   vtkFloatingPointType Level;
   vtkFloatingPointType UpperThreshold;
   vtkFloatingPointType LowerThreshold;
+  int ScalarComponent;
 
   // odonnell.  Fixes for diffusion tensor image data
   int FrequencyPhaseSwap;

@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Volumes.tcl,v $
-#   Date:      $Date: 2006/09/01 21:16:09 $
-#   Version:   $Revision: 1.139 $
+#   Date:      $Date: 2007/04/09 08:24:30 $
+#   Version:   $Revision: 1.139.2.1 $
 # 
 #===============================================================================
 # FILE:        Volumes.tcl
@@ -101,7 +101,7 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-                                  {$Revision: 1.139 $} {$Date: 2006/09/01 21:16:09 $}]
+                                  {$Revision: 1.139.2.1 $} {$Date: 2007/04/09 08:24:30 $}]
 
     # Props
     if { $::env(SLICER_OPTIONS_DEFAULT_FILE_FORMAT) == "nrrd"} {
@@ -270,9 +270,10 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
     frame $f.fActive    -bg $Gui(backdrop) -relief sunken -bd 2
     frame $f.fWinLvl    -bg $Gui(activeWorkspace) -relief groove -bd 2
     frame $f.fThresh    -bg $Gui(activeWorkspace) -relief groove -bd 2
+    frame $f.fComponent -bg $Gui(activeWorkspace)
     frame $f.fHistogram -bg $Gui(activeWorkspace)
     frame $f.fInterpolate -bg $Gui(activeWorkspace)
-    pack $f.fActive $f.fWinLvl $f.fThresh $f.fHistogram $f.fInterpolate \
+    pack $f.fActive $f.fWinLvl $f.fThresh $f.fComponent $f.fHistogram $f.fInterpolate \
         -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
 
     #-------------------------------------------
@@ -289,7 +290,6 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
     # Append widgets to list that gets refreshed during UpdateMRML
     lappend Volume(mbActiveList) $f.mbActive
     lappend Volume(mActiveList)  $f.mbActive.m
-
 
     #-------------------------------------------
     # Display->WinLvl frame
@@ -341,7 +341,6 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
     lappend Volume(sWindowList) $f.sWindow
     lappend Volume(sLevelList)  $f.sLevel
 
-    
     #-------------------------------------------
     # Display->Thresh frame
     #-------------------------------------------
@@ -396,6 +395,29 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
     lappend Volume(sLevelList) $f.sLower
     lappend Volume(sLevelList) $f.sUpper
 
+    #-------------------------------------------
+    # Display->Component frame
+    #-------------------------------------------
+    set f $fDisplay.fComponent
+
+    foreach slider "Comp" text "Component" {
+        DevAddLabel $f.l${slider} "$text:"
+        eval {entry $f.e${slider} -width 6 \
+            -textvariable Volume(scalarComponent)} $Gui(WEA)
+            bind $f.e${slider} <Return>   \
+                "MainVolumesSetParam ScalarComponent; MainVolumesRender"
+            bind $f.e${slider} <FocusOut> \
+                "MainVolumesSetParam ScalarComponent; MainVolumesRender"
+        eval {scale $f.s${slider} -from 0 -to 0 -length 100 \
+            -variable Volume(scalarComponent)  -resolution 1 \
+            -command "MainVolumesSetParam ScalarComponent; MainVolumesRender"} \
+            $Gui(WSA) {-sliderlength 14}
+        grid $f.l${slider} $f.e${slider} $f.s${slider} -padx 2 -pady $Gui(pad) \
+            -sticky news
+    }
+    # Append widgets to list that's refreshed in MainVolumesUpdateSliderRange
+    lappend Volume(sCompList) $f.sComp
+    lappend Volume(eCompList) $f.eComp
 
     #-------------------------------------------
     # Display->Histogram frame
@@ -405,7 +427,7 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
     frame $f.fHistBorder -bg $Gui(activeWorkspace) -relief sunken -bd 2
     frame $f.fLut -bg $Gui(activeWorkspace)
     pack $f.fLut $f.fHistBorder -side left -padx $Gui(pad) -pady $Gui(pad)
-    
+
     #-------------------------------------------
     # Display->Histogram->Lut frame
     #-------------------------------------------
