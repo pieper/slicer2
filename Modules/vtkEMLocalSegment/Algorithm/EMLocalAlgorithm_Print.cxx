@@ -24,10 +24,10 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 // ------------------------------------------------------------------
 // This has always to be defined when using vtkLocalDataTimeDef . Do not ask me why
-extern "C" {
-  struct timeval preciseTimeEnd;
-  struct timeval preciseTimeStart;
-}
+// extern "C" {
+//  struct timeval preciseTimeEnd;
+//  struct timeval preciseTimeStart;
+//}
 
 #include "vtkImageWriter.h"
 
