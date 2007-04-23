@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkOpenTracker.h,v $
-  Date:      $Date: 2007/02/12 15:18:50 $
-  Version:   $Revision: 1.1.2.2 $
+  Date:      $Date: 2007/04/23 16:24:47 $
+  Version:   $Revision: 1.1.2.3 $
 
 =========================================================================auto=*/
 
@@ -18,8 +18,8 @@
 #include "vtkPoints.h"
 #include "vtkMatrix4x4.h"
 #include "vtkSlicer.h"
-#include "OpenTracker.h"
-#include "common/CallbackModule.h"
+#include "OpenTracker/OpenTracker.h"
+#include "OpenTracker/common/CallbackModule.h"
 
 
 using namespace ot;
