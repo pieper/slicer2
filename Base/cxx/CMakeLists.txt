@@ -74,16 +74,17 @@ ADD_LIBRARY (vtkSlicerBase ${Base_SRCS})
 
 
 INCLUDE_DIRECTORIES(
-  C:/projects/igttechdev/libs/opentracker/src
+  /home/hliu/projects/navitrack/NaviTrack/include 
 )
 
-FIND_LIBRARY(OPENTRACKER
-  NAMES opentrackerd opentracker  
-  PATHS C:/projects/igttechdev/libs/opentracker/lib
+FIND_LIBRARY(NAVITRACK_LIB
+  NAMES NaviTrack 
+  PATHS /home/hliu/projects/navitrack/NaviTrack-build 
+
 )
 
 TARGET_LINK_LIBRARIES(vtkSlicerBase
-  ${OPENTRACKER}
+  ${NAVITRACK_LIB}
 )
 
 
