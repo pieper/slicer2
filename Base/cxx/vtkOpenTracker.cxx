@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkOpenTracker.cxx,v $
-  Date:      $Date: 2007/04/23 16:24:53 $
-  Version:   $Revision: 1.1.2.3 $
+  Date:      $Date: 2007/05/08 18:29:44 $
+  Version:   $Revision: 1.1.2.4 $
 
 =========================================================================auto=*/
 
@@ -159,7 +159,6 @@ void vtkOpenTracker::PollRealtime()
 
 void vtkOpenTracker::callbackF(const Node&, const Event &event, void *data)
 {
-    unsigned short button;
     float position[3];
     float orientation[4];
     float norm[3];
@@ -178,9 +177,7 @@ void vtkOpenTracker::callbackF(const Node&, const Event &event, void *data)
     orientation[2]=(float)(event.getOrientation())[2];
     orientation[3]=(float)(event.getOrientation())[3];
 
-    button = (unsigned short)(event.getButton());
-    cout << "\n button = " << button << endl;
-
+    VOT->Button = (short)(event.getButton());
 
     VOT->quaternion2xyz(orientation, norm, transnorm);
 

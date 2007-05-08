@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkOpenTracker.h,v $
-  Date:      $Date: 2007/04/23 16:24:47 $
-  Version:   $Revision: 1.1.2.3 $
+  Date:      $Date: 2007/05/08 18:29:36 $
+  Version:   $Revision: 1.1.2.4 $
 
 =========================================================================auto=*/
 
@@ -37,6 +37,8 @@ public:
     vtkSetMacro(UseRegistration,int);
     vtkGetMacro(UseRegistration,int);
 
+    vtkGetMacro(Button,short);
+
     vtkGetMacro(NumberOfPoints,int);
 
     vtkSetMacro(MultiRate,float);
@@ -59,6 +61,7 @@ protected:
     ~vtkOpenTracker();
     Context *context;
 
+    short Button;
     int NumberOfPoints;
     int UseRegistration;
     float MultiRate;
