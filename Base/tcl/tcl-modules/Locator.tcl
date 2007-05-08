@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2007/02/12 20:06:03 $
-#   Version:   $Revision: 1.38.12.2.2.25 $
+#   Date:      $Date: 2007/05/08 18:31:56 $
+#   Version:   $Revision: 1.38.12.2.2.26 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -92,7 +92,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.25 $} {$Date: 2007/02/12 20:06:03 $}]
+        {$Revision: 1.38.12.2.2.26 $} {$Date: 2007/05/08 18:31:56 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -2029,21 +2029,30 @@ proc LocatorLoopOpenTracker {} {
     #----------------    
     # NEW LOCATOR
     #----------------
-        set locMatrix [Locator(OpenTracker,src) GetLocatorMatrix]
-            
+    set locMatrix [Locator(OpenTracker,src) GetLocatorMatrix]
 
-        # Read matrix
-        set Locator(px) [$locMatrix GetElement 0 0]
-        set Locator(py) [$locMatrix GetElement 1 0]
-        set Locator(pz) [$locMatrix GetElement 2 0]
-        set Locator(nx) [$locMatrix GetElement 0 1]
-        set Locator(ny) [$locMatrix GetElement 1 1]
-        set Locator(nz) [$locMatrix GetElement 2 1]
-        set Locator(tx) [$locMatrix GetElement 0 2]
-        set Locator(ty) [$locMatrix GetElement 1 2]
-        set Locator(tz) [$locMatrix GetElement 2 2]
 
-        LocatorUseLocatorMatrix
+    # Read matrix
+    set Locator(px) [$locMatrix GetElement 0 0]
+    set Locator(py) [$locMatrix GetElement 1 0]
+    set Locator(pz) [$locMatrix GetElement 2 0]
+    set Locator(nx) [$locMatrix GetElement 0 1]
+    set Locator(ny) [$locMatrix GetElement 1 1]
+    set Locator(nz) [$locMatrix GetElement 2 1]
+    set Locator(tx) [$locMatrix GetElement 0 2]
+    set Locator(ty) [$locMatrix GetElement 1 2]
+    set Locator(tz) [$locMatrix GetElement 2 2]
+
+    LocatorUseLocatorMatrix
+
+    # If we get a button press, draw the fiber
+    # at the tip location of the locator
+    set button [Locator(OpenTracker,src) GetButton]
+    if {$button} { 
+        set Select(xyz) "$Locator(px) $Locator(py) $Locator(pz)"
+        eval DTMRISelectStartHyperStreamline $Select(xyz)
+    }
+
 
     # simond - service callback list.
     # Perform realtime image processing
