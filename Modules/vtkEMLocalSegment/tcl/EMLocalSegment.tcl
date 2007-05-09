@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMLocalSegment.tcl,v $
-#   Date:      $Date: 2007/03/14 01:46:56 $
-#   Version:   $Revision: 1.79 $
+#   Date:      $Date: 2007/05/09 20:32:04 $
+#   Version:   $Revision: 1.80 $
 # 
 #===============================================================================
 # FILE:        EMLocalSegment.tcl
@@ -269,7 +269,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.79 $} {$Date: 2007/03/14 01:46:56 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.80 $} {$Date: 2007/05/09 20:32:04 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -2633,7 +2633,8 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
             }
             foreach Attribute $EMSegment(Gui${Name}AttributeList) {
               if {$Attribute != "LocalPriorName" && $Attribute != "LocalPriorSpatialWeightName" } { 
-                if {$Attribute  == "InitialBiasFilePrefix" || $Attribute  == "PredefinedLabelMapPrefix" ||  $Attribute  == "PCARegistrationMean"  ||  $Attribute  == "PCARegistrationEigenMatrix" ||  $Attribute  == "PCARegistrationEigenValues" } {
+                if {$Attribute  == "InitialBiasFilePrefix" || $Attribute  == "PredefinedLabelMapPrefix" ||  $Attribute  == "PCARegistrationMean"  
+            ||  $Attribute  == "PCARegistrationEigenMatrix" ||  $Attribute  == "PCARegistrationEigenValues" ||  $Attribute  == "InhomogeneityInitialDataNames" } {
                   SegmenterSuperClass($pid,node) Set$Attribute "$EMSegment(Cattrib,$i,$Attribute)"
                 } else {
                   eval SegmenterSuperClass($pid,node) Set$Attribute $EMSegment(Cattrib,$i,$Attribute) 
