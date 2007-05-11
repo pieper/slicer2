@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMLocalSegment.tcl,v $
-#   Date:      $Date: 2007/05/09 20:32:04 $
-#   Version:   $Revision: 1.80 $
+#   Date:      $Date: 2007/05/11 14:47:14 $
+#   Version:   $Revision: 1.81 $
 # 
 #===============================================================================
 # FILE:        EMLocalSegment.tcl
@@ -269,7 +269,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.80 $} {$Date: 2007/05/09 20:32:04 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.81 $} {$Date: 2007/05/11 14:47:14 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -2846,7 +2846,7 @@ proc  EMSegmentCheckCurrentClassParameters {Class {WarningFlag 1}} {
     }
     } elseif {$WarningFlag} {
     if {[EMSegmentProbabilityDataExists $Class]} {
-        DevWarningWindow "Prob Data Weight of Class $EMSegment(Cattrib,$i,Label) is set to 0.0 even through prior data is defined in classes or subclasses! "
+        DevWarningWindow "Prob Data Weight of Class $EMSegment(Cattrib,$Class,Label) is set to 0.0 even through prior data is defined in classes or subclasses! "
         return -1
     }
     }
