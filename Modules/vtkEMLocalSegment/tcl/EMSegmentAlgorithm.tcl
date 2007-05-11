@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMSegmentAlgorithm.tcl,v $
-#   Date:      $Date: 2007/03/14 01:46:56 $
-#   Version:   $Revision: 1.59 $
+#   Date:      $Date: 2007/05/11 14:49:09 $
+#   Version:   $Revision: 1.60 $
 # 
 #===============================================================================
 # FILE:        EMSegmentAlgorithm.tcl
@@ -431,12 +431,12 @@ proc EMSegmentTrainCIMField {} {
 #-------------------------------------------------------------------------------
 proc EMSegmentAlgorithmDeleteVtkEMSuperClass { SuperClass } {
    global EMSegment
-   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) Delete
+   catch { EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) Delete }
    foreach i $EMSegment(Cattrib,$SuperClass,ClassList) {
          if {$EMSegment(Cattrib,$i,IsSuperClass)} {
             EMSegmentAlgorithmDeleteVtkEMSuperClass  $i
          } else {
-            EMSegment(Cattrib,$i,vtkImageEMClass) Delete
+         catch { EMSegment(Cattrib,$i,vtkImageEMClass) Delete }
          }
    }  
 }
@@ -448,6 +448,6 @@ proc EMSegmentAlgorithmDeleteVtkEMSuperClass { SuperClass } {
 #-------------------------------------------------------------------------------
 proc EMSegmentAlgorithmDeletevtkEMSegment { } {
      global EMSegment
-     EMSegment(vtkEMSegment) Delete
+     catch {EMSegment(vtkEMSegment) Delete}
      EMSegmentAlgorithmDeleteVtkEMSuperClass 0
 }
