@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMAtlasSegmenter.cxx,v $
-  Date:      $Date: 2006/03/30 22:32:16 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2007/05/11 14:46:00 $
+  Version:   $Revision: 1.14 $
 
 =========================================================================auto=*/
 // Since 22-Apr-02 vtkImageEMAtlas3DSegmenter is called vtkImageEMAtlasSegmenter - Kilian
@@ -111,12 +111,14 @@ int EMAtlasSegment_CalcWeightedCovariance(vtkImageEMAtlasSegmenter* self,double*
     SqrtDetWeightedInvCov =0;
     return 1;
   }
-  double** InvLogCov     = new double*[VirtualDim];
+  double** VirtualInvLogCov     = new double*[VirtualDim];
+  double** VirtualWeightedInvLogCov     = new double*[VirtualDim];
   double** VirtualLogCov = new double*[VirtualDim];
   Xindex = 0; 
   // Take out rows with zeros to decrease dimension
   for (x=0; x < VirtualDim ; x++) {
-    InvLogCov[x] = new double[VirtualDim];
+    VirtualInvLogCov[x] = new double[VirtualDim];
+    VirtualWeightedInvLogCov[x] = new double[VirtualDim];
     VirtualLogCov[x] = new double[VirtualDim];
     while (Weights[Xindex] == 0.0) Xindex ++;
     Yindex = 0;
@@ -128,7 +130,7 @@ int EMAtlasSegment_CalcWeightedCovariance(vtkImageEMAtlasSegmenter* self,double*
     Xindex ++;
   }
   // Calculate Invers of the matrix
-  if (vtkImageEMGeneral::InvertMatrix(VirtualLogCov,InvLogCov,VirtualDim) == 0 ) return 0;
+  if (vtkImageEMGeneral::InvertMatrix(VirtualLogCov,VirtualInvLogCov,VirtualDim) == 0 ) return 0;
  
   // Theory behind calculating weighted inverse 
   // P(x|tissue) = 1/(2pi)^(n/2)  * 1/ Det(S)^0.5 * e^ -0.5( (x-m) S^-1 (x-m) )
@@ -147,20 +149,22 @@ int EMAtlasSegment_CalcWeightedCovariance(vtkImageEMAtlasSegmenter* self,double*
     Yindex = 0;
     for (y=0;y < VirtualDim; y++) {
        while (Weights[Yindex] == 0.0) Yindex ++;
-       WeightedInvCov[Xindex][Yindex] = InvLogCov[x][y] * double(Weights[Xindex] * Weights[Yindex]); 
+       WeightedInvCov[Xindex][Yindex] = VirtualWeightedInvLogCov[x][y] = VirtualInvLogCov[x][y] * double(Weights[Xindex] * Weights[Yindex]); 
        Yindex ++;
     }
     Xindex ++;
   }
 
   // Calculate the weighted determinant 
-  SqrtDetWeightedInvCov = sqrt(vtkImageEMGeneral::determinant(WeightedInvCov,VirtualDim));
+  SqrtDetWeightedInvCov = sqrt(vtkImageEMGeneral::determinant(VirtualWeightedInvLogCov,VirtualDim));
   // Take out rows with zeros to dcrease dimension
   for (x=0; x < VirtualDim ; x++) {
-    delete[] InvLogCov[x];
+    delete[] VirtualInvLogCov[x];
+    delete[] VirtualWeightedInvLogCov[x];
     delete[] VirtualLogCov[x];
   }
-  delete[] InvLogCov;
+  delete[] VirtualInvLogCov;
+  delete[] VirtualWeightedInvLogCov;
   delete[] VirtualLogCov;
 
   if (SqrtDetWeightedInvCov != SqrtDetWeightedInvCov)  return 0;
