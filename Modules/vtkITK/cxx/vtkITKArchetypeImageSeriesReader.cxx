@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
-  Date:      $Date: 2006/03/06 20:09:58 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2007/06/04 23:39:54 $
+  Version:   $Revision: 1.16 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2006/03/06 20:09:58 $
-  Version:   $Revision: 1.15 $
+  Date:      $Date: 2007/06/04 23:39:54 $
+  Version:   $Revision: 1.16 $
 
   Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -74,7 +74,7 @@
 #include "itkGDCMImageIO.h"
 #include <itksys/SystemTools.hxx>
 
-vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.15 $");
+vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.16 $");
 vtkStandardNewMacro(vtkITKArchetypeImageSeriesReader);
 
 //----------------------------------------------------------------------------
@@ -342,16 +342,29 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
         imageIO = seriesReader->GetImageIO();
         if (imageIO.GetPointer() == NULL) 
           {
+              // this is the case where there is more than one file, but it's not a dicom
+              // -- in this case, the only imageIO instances were local to the readers inside
+              // the series reader and weren't exposed  So, we make a new one here.
+          itk::ImageFileReader<ImageType>::Pointer imageReader =
+            itk::ImageFileReader<ImageType>::New();
+          imageReader->SetFileName(this->Archetype);
+          imageReader->GenerateOutputInformation();
+          seriesReader->SetImageIO(imageReader->GetImageIO());
+          imageIO = seriesReader->GetImageIO();
+          
+
             //itkGenericExceptionMacro ( "vtkITKArchetypeImageSeriesReader::ExecuteInformation: ImageIO for file " << fileNameCollapsed.c_str() << " does not exist.");
             //return;  TODO - figure out why imageIO is NULL for image series with more than one file
 
           // handle the situation where the file contains a 3D image, but is in a
           // directory that has multiple files that 'look' like a series to the 
           // file name generator
+#if 0
           this->FileNames.resize(0);
           this->FileNames.push_back(this->Archetype);
           seriesReader->SetFileNames(this->FileNames);
           imageIO = seriesReader->GetImageIO();
+        // this isn't needed -- the case of null imageIO is handled below.
           if (imageIO.GetPointer() == NULL) 
             {
             vtkErrorMacro (<< "\nCould not load file \"" << this->Archetype << "\"\n\nIf there is a numerical series of files in this directory, please move the desired file to a directory by itself for reading.");
@@ -359,6 +372,7 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
             return;
             
             }
+#endif
          }
       }
     if (this->UseNativeCoordinateOrientation)
