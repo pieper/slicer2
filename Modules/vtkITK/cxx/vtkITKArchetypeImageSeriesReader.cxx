@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
-  Date:      $Date: 2007/06/04 23:39:54 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2007/06/12 13:01:16 $
+  Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2007/06/04 23:39:54 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2007/06/12 13:01:16 $
+  Version:   $Revision: 1.17 $
 
   Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -74,7 +74,7 @@
 #include "itkGDCMImageIO.h"
 #include <itksys/SystemTools.hxx>
 
-vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.16 $");
+vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.17 $");
 vtkStandardNewMacro(vtkITKArchetypeImageSeriesReader);
 
 //----------------------------------------------------------------------------
@@ -177,6 +177,7 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
   int extent[6];  
   std::string fileNameCollapsed = itksys::SystemTools::CollapseFullPath( this->Archetype);
 
+
   // First see if the archetype exists
   if (!itksys::SystemTools::FileExists (fileNameCollapsed.c_str()))
     {
@@ -274,6 +275,7 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
   FilterType::Pointer filter;
 
   itk::ImageIOBase::Pointer imageIO = NULL;
+
 
   // If there is only one file in the series, just use an image file reader
   if (this->FileNames.size() == 1)
