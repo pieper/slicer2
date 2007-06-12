@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: VolNrrd.tcl,v $
-#   Date:      $Date: 2007/04/09 08:26:07 $
-#   Version:   $Revision: 1.7.2.1 $
+#   Date:      $Date: 2007/06/12 19:15:56 $
+#   Version:   $Revision: 1.7.2.2 $
 # 
 #===============================================================================
 # FILE:        VolNrrd.tcl
@@ -359,7 +359,7 @@ proc VolNrrdApply {} {
     #
     # Filling headerKeys in the volume array. This key might eventually belong to the MrmlNode
     #
-    puts "Header Keys = [nrrdReader GetHeaderKeys]"
+    #puts "Header Keys = [nrrdReader GetHeaderKeys]"
     foreach key [nrrdReader GetHeaderKeys] {
         set Volume($i,headerKeys,$key) [nrrdReader GetHeaderValue $key]
     }
@@ -367,14 +367,14 @@ proc VolNrrdApply {} {
     #
     # Setting measurement frame as a key value. This might eventually be part of the MrmlNode
     set mframe ""
-    foreach r "0 1 2" {
+    foreach c "0 1 2" {
       set axis ""
-      foreach c "0 1 2" {
+      foreach r "0 1 2" {
         lappend axis [[nrrdReader GetMeasurementFrameMatrix] GetElement $r $c]
       }
       lappend mframe $axis
     }
-    puts "Measurement frame: $mframe"
+    #puts "VolNrrdApply: Measurement frame: $mframe"
     
     set Volume($i,headerKeys,measurementframe) $mframe    
     
@@ -473,7 +473,6 @@ proc VolNrrdReaderProc {v} {
 
     # Filling headerKeys in the volume array. This key might eventually belong to the MrmlNode
     #
-    puts "Header Keys = [readerProc_nrrdReader1 GetHeaderKeys]"
     foreach key [readerProc_nrrdReader1 GetHeaderKeys] {
         set Volume($v,headerKeys,$key) [readerProc_nrrdReader1 GetHeaderValue $key]
     }
@@ -481,14 +480,13 @@ proc VolNrrdReaderProc {v} {
     #
     # Setting measurement frame as a key value. This might eventually be part of the MrmlNode
     set mframe ""
-    foreach r "0 1 2" {
+    foreach c "0 1 2" {
       set axis ""
-      foreach c "0 1 2" {
+      foreach r "0 1 2" {
         lappend axis [[readerProc_nrrdReader1 GetMeasurementFrameMatrix] GetElement $r $c]
       }
       lappend mframe $axis
     }
-    puts "Measurement frame: $mframe"
     
     set Volume($v,headerKeys,measurementframe) $mframe    
     # Done filling header keys
