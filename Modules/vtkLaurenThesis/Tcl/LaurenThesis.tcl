@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: LaurenThesis.tcl,v $
-#   Date:      $Date: 2006/06/26 02:10:42 $
-#   Version:   $Revision: 1.1 $
+#   Date:      $Date: 2007/06/13 21:20:17 $
+#   Version:   $Revision: 1.2 $
 # 
 #===============================================================================
 # FILE:        LaurenThesis.tcl
@@ -36,8 +36,8 @@ proc LaurenThesisInit {} {
 
     set Module($m,category) "Example"
 
-    set Module($m,row1List) "Help SeedBrain ProbeClusters ColorROI"
-    set Module($m,row1Name) "Help SeedBrain ProbeClusters ColorROI"
+    set Module($m,row1List) "Help SeedBrain ProbeClusters ColorROI ROISelect"
+    set Module($m,row1Name) "Help SeedBrain ProbeClusters ColorROI ROISelect"
     set Module($m,row1,tab) SeedBrain
 
     set Module($m,procMRML) LaurenThesisUpdateMRML
@@ -51,11 +51,11 @@ proc LaurenThesisInit {} {
 
 
     lappend Module(versions) [ParseCVSInfo $m \
-                                  {$Revision: 1.1 $} {$Date: 2006/06/26 02:10:42 $}]
+                                  {$Revision: 1.2 $} {$Date: 2007/06/13 21:20:17 $}]
 
     # Initialize module-level variables
     #------------------------------------
-    set LaurenThesis(submodules) {Help SeedBrain ProbeClusters ColorROI}
+    set LaurenThesis(submodules) {Help SeedBrain ProbeClusters ColorROI ROISelect}
 
     foreach submodule $LaurenThesis(submodules) {
         source "$::env(SLICER_HOME)/Modules/vtkLaurenThesis/Tcl/LaurenThesis$submodule.tcl"
@@ -106,6 +106,12 @@ proc LaurenThesisBuildGUI {} {
     #-------------------------------------------
     
     LaurenThesisColorROIBuildGUI
+
+    #-------------------------------------------
+    # ROISelect frame
+    #-------------------------------------------
+    
+    LaurenThesisROISelectBuildGUI
 
     
 }
