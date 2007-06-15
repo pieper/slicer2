@@ -9,6 +9,8 @@ proc LaurenThesisROISelectInit {} {
 
     # directory where the vtk tract models are
     set LaurenThesis(clusterDirectory) ""
+    set LaurenThesis(ROISelectOutputDirectory) ""
+    set LaurenThesis(outputFilename) "ClusterROISelect.vtk"
 }
 
 proc LaurenThesisROISelectBuildGUI {} {
@@ -38,7 +40,7 @@ proc LaurenThesisROISelectBuildGUI {} {
     # ROISelect->Middle frame
     #-------------------------------------------
     set f $fROISelect.fMiddle
-    foreach frame "ROIA ROIB Directory" {
+    foreach frame "ROIA ROIB Directory OutputDirectory" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     }
@@ -80,6 +82,17 @@ proc LaurenThesisROISelectBuildGUI {} {
     pack $f.e -side left -padx $Gui(pad) -fill x -expand 1
 
     #-------------------------------------------
+    # ROISelect->Middle->Output Directory frame
+    #-------------------------------------------
+    set f $fROISelect.fMiddle.fOutputDirectory
+
+    eval {button $f.b -text "Output directory:" -width 16 \
+        -command "LaurenThesisSelectOutputDirectory"} $Gui(WBA)
+    eval {entry $f.e -textvariable LaurenThesis(ROISelectOutputDirectory) -width 51} $Gui(WEA)
+    bind $f.e <Return> {LaurenThesisSelectOutputDirectory}
+    pack $f.b -side left -padx $Gui(pad)
+    pack $f.e -side left -padx $Gui(pad) -fill x -expand 1
+    #-------------------------------------------
     # ROISelect->Bottom frame
     #-------------------------------------------
     set f $fROISelect.fBottom
@@ -105,6 +118,19 @@ proc LaurenThesisSelectDirectory {} {
     set LaurenThesis(clusterDirectory) $filename
 }
 
+proc LaurenThesisSelectOutputDirectory {} {
+    global LaurenThesis
+
+    set dir $LaurenThesis(clusterDirectory)
+
+    if {[catch {set filename [tk_chooseDirectory -title "Output Directory" \
+                                  -initialdir "$dir"]} errMsg] == 1} {
+        DevErrorWindow "LaurenThesisSelectOutputDirectory: error selecting output directory:\n$errMsg"
+        return ""
+    }
+
+    set LaurenThesis(ROISelectOutputDirectory) $filename
+}
 
 proc LaurenThesisROISelectUpdateMRML {} {
 
@@ -113,10 +139,10 @@ proc LaurenThesisROISelectUpdateMRML {} {
     # Update volume selection widgets if the MRML tree has changed
 
     DevUpdateNodeSelectButton Volume LaurenThesis vROIA vROIA \
-        DevSelectNode 0 0 0 
+        DevSelectNode 0 0 1 
 
     DevUpdateNodeSelectButton Volume LaurenThesis vROIB vROIB \
-        DevSelectNode 0 0 0 
+        DevSelectNode 0 0 1 
 
 
 }
@@ -138,6 +164,8 @@ proc LaurenThesisValidateParametersAndSelectTracts {} {
 # this actually reads in all the models in the directory
 proc LaurenThesisSelectTracts {vROIA vROIB directory} {
 
+    global LaurenThesis
+
     # Load all models in the directory of the form $pattern
     # for now look at all vtk models in the directory
     # perhaps make this match the case name
@@ -151,7 +179,7 @@ proc LaurenThesisSelectTracts {vROIA vROIB directory} {
         return
     }
 
-
+    catch {appender Delete}
     vtkAppendPolyData appender
 
     # go through all model filenames
@@ -159,6 +187,7 @@ proc LaurenThesisSelectTracts {vROIA vROIB directory} {
         puts $model
 
         # read in the model as polydata
+        catch {_reader Delete}
         vtkPolyDataReader _reader
         _reader SetFileName $model
         _reader Update
@@ -187,37 +216,100 @@ proc LaurenThesisSelectTracts {vROIA vROIB directory} {
     }
 
     # write out the tracts that passed the ROI test
+    catch {_writer Delete}
     vtkPolyDataWriter _writer
     # get output from the vtkAppendPolyData
     _writer SetInput [appender GetOutput]
-    _writer SetFileName test.vtk
+    _writer SetFileName $LaurenThesis(ROISelectOutputDirectory)/$LaurenThesis(outputFilename)
     _writer Write
     
     _writer Delete
     appender Delete
 }
 
-# TO DO
 # arguments: ID number of the labelmaps and the polydata object
+# return 1 when model passes the test, otherwise return 0
 proc LaurenThesisTestTractIntersectsROI {vROIA vROIB polyData } {
-
     global Model Tensor Module
+    
+    catch {_probe Delete}
+    vtkProbeFilter _probe
+    
+    _probe SetSource [Volume($vROIA,vol) GetOutput]
+    
+    # transform model into IJK of data
+    # This assumes the model is already aligned
+    # with the tensors in the world coordinate system.
+    catch {_transform Delete}
+    vtkTransform _transform
+    #_transform PreMultiply
+    _transform SetMatrix [Volume($vROIA,node) GetWldToIjk]
+    # remove scaling from matrix
+    # invert it to give ijk->ras, so we can scale with i,j,k spacing
+    _transform Inverse
+    scan [Volume($vROIA,node) GetSpacing] "%g %g %g" res_x res_y res_z
+    _transform Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] \
+        [expr 1.0 / $res_z]
+    _transform Inverse
+    
+    catch {_transformPD Delete}
+    vtkTransformPolyDataFilter _transformPD
+    _transformPD SetTransform _transform
+    _transformPD SetInput $polyData
+    _transformPD Update
 
-    # do whatever Raul says with this polydata and these volumes
+    # probe with model in IJK
+    _probe SetInput [_transformPD GetOutput]
+    _probe Update
+    
+    set pd [_probe GetOutput] 
+    #puts "Number of points for this tract:[$pd GetNumberOfPoints]"
+    
+    set scalars [[$pd GetPointData] GetScalars]
+    set scalar_range [[[$pd GetPointData] GetScalars] GetRange]
+    #puts "Range: $scalar_range"
 
-    #raul's filter SetInput $polyData
-    # vtkImage data ROI:
-    Volume($vROIA,vol) Print
-    # node information (matrices RAS->IJK)
-    Volume($vROIA,node) Print
+    _probe Delete
+    _transform Delete
+    _transformPD Delete
+    
+    # repeat for ROIB
+    catch {_probe2 Delete}
+    vtkProbeFilter _probe2
+    
+    _probe2 SetSource [Volume($vROIB,vol) GetOutput]
+    catch {_transform2 Delete}
+    vtkTransform _transform2
+    _transform2 SetMatrix [Volume($vROIB,node) GetWldToIjk]
+    _transform2 Inverse
+    scan [Volume($vROIB,node) GetSpacing] "%g %g %g" res_x res_y res_z
+    _transform2 Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] \
+        [expr 1.0 / $res_z]
+    _transform2 Inverse
+    
+    catch {_transformPD2 Delete}
+    vtkTransformPolyDataFilter _transformPD2
+    _transformPD2 SetTransform _transform2
+    _transformPD2 SetInput $polyData
+    _transformPD2 Update
+    
+    _probe2 SetInput  [_transformPD2 GetOutput]
+    _probe2 Update
+    
+    set pd2 [_probe2 GetOutput] 
+    #puts "Number of points for this tract:[$pd2 GetNumberOfPoints]"
 
-    # for transformations info:
-    # read code LaurenThesisProbeClusters.tcl
-    # LaurenThesisProbeTensorWithPolyData
-
-    # polydata is in RAS space already. image data is in IJK.
-
-    # return whether the tract passed the test
-    return 1
+    set scalar_range2 [[[$pd2 GetPointData] GetScalars] GetRange]
+    #puts "Range for ROIB: $scalar_range2"
+  
+    _probe2 Delete
+    _transform2 Delete
+    _transformPD2 Delete
+    
+    if { ([lindex $scalar_range 1] != 0) & ([lindex $scalar_range2 1] != 0) } {
+        return 1
+    } else {
+        return 0
+    }
 }
 
