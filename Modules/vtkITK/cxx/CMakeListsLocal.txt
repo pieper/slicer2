@@ -57,6 +57,7 @@ vtkITKTobogganImageFilter.h
 vtkITKWatershedImageFilter.cxx
 vtkITKVersion.cxx
 vtkITKNewOtsuThresholdImageFilter.cxx
+vtkITKHistogramMatchingImageFilter.cxx
 )
 
 SET_SOURCE_FILES_PROPERTIES (
