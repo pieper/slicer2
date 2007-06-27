@@ -1,4 +1,3 @@
-
 proc LaurenThesisROISelectInit {} {
 
     global LaurenThesis Volume
@@ -6,7 +5,9 @@ proc LaurenThesisROISelectInit {} {
     # labelmap ID numbers
     set LaurenThesis(vROIA) -1
     set LaurenThesis(vROIB) -1
-
+    set LaurenThesis(vROIC) -1
+    set LaurenThesis(vROID) -1
+    
     # directory where the vtk tract models are
     set LaurenThesis(clusterDirectory) ""
     set LaurenThesis(ROISelectOutputDirectory) ""
@@ -40,7 +41,7 @@ proc LaurenThesisROISelectBuildGUI {} {
     # ROISelect->Middle frame
     #-------------------------------------------
     set f $fROISelect.fMiddle
-    foreach frame "ROIA ROIB Directory OutputDirectory" {
+    foreach frame "ROIA ROIB ROIC ROID Directory OutputDirectory" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
     }
@@ -69,6 +70,29 @@ proc LaurenThesisROISelectBuildGUI {} {
         "ROIB" \
         25
 
+    #-------------------------------------------
+    # ROISelect->Middle->ROIA frame
+    #-------------------------------------------
+    set f $fROISelect.fMiddle.fROIC
+
+    # menu to select a volume: will set LaurenThesis(vROI)
+    # works with DevUpdateNodeSelectButton in UpdateMRML
+    set name vROIC
+    DevAddSelectButton  LaurenThesis $f $name "ROI C:" Pack \
+        "ROIC" \
+        25
+
+    #-------------------------------------------
+    # ROISelect->Middle->ROIB frame
+    #-------------------------------------------
+    set f $fROISelect.fMiddle.fROID
+
+    # menu to select a volume: will set LaurenThesis(vROI)
+    # works with DevUpdateNodeSelectButton in UpdateMRML
+    set name vROID
+    DevAddSelectButton  LaurenThesis $f $name "ROI D:" Pack \
+        "ROID" \
+        25
     #-------------------------------------------
     # ROISelect->Middle->Directory frame
     #-------------------------------------------
@@ -139,11 +163,16 @@ proc LaurenThesisROISelectUpdateMRML {} {
     # Update volume selection widgets if the MRML tree has changed
 
     DevUpdateNodeSelectButton Volume LaurenThesis vROIA vROIA \
-        DevSelectNode 0 0 1 
+        DevSelectNode 1 0 1 
 
     DevUpdateNodeSelectButton Volume LaurenThesis vROIB vROIB \
-        DevSelectNode 0 0 1 
+        DevSelectNode 1 0 1 
+ 
+    DevUpdateNodeSelectButton Volume LaurenThesis vROIC vROIC \
+        DevSelectNode 1 0 1 
 
+    DevUpdateNodeSelectButton Volume LaurenThesis vROID vROID \
+        DevSelectNode 1 0 1 
 
 }
 
@@ -153,16 +182,19 @@ proc LaurenThesisValidateParametersAndSelectTracts {} {
 
     # check that the user entered parameters are okay
     # fill this in if needed
-    puts $LaurenThesis(vROIA)
-    puts $LaurenThesis(vROIB)
+    
+    puts "This is ROI a: $LaurenThesis(vROIA)"
+    puts "This is ROI b:$LaurenThesis(vROIB)"
+    puts "This is ROI c:$LaurenThesis(vROIC)"
+   puts "This is ROI d:$LaurenThesis(vROID)"
     
     # call the code that does something
-    LaurenThesisSelectTracts $LaurenThesis(vROIA) $LaurenThesis(vROIB) $LaurenThesis(clusterDirectory)
+    LaurenThesisSelectTracts $LaurenThesis(vROIA) $LaurenThesis(vROIB) $LaurenThesis(vROIC) $LaurenThesis(vROID) $LaurenThesis(clusterDirectory)
 
 }
 
 # this actually reads in all the models in the directory
-proc LaurenThesisSelectTracts {vROIA vROIB directory} {
+proc LaurenThesisSelectTracts {vROIA vROIB vROIC vROID directory} {
 
     global LaurenThesis
 
@@ -198,16 +230,17 @@ proc LaurenThesisSelectTracts {vROIA vROIB directory} {
             _reader Delete
             return
         } else {
-            puts " read model $model "
+            puts "Read model $model "
         }
 
         # call the code to see if this model intersects the ROI
         set intersectROI [LaurenThesisTestTractIntersectsROI \
-                              $vROIA $vROIB [_reader GetOutput]]
+                              $vROIA $vROIB $vROIC $vROID [_reader GetOutput]]
 
         # if it passes
         # append to vtkAppendPolyData
         if { $intersectROI == 1} {
+            puts "This fiber passes all the ROIs: $model"
             appender AddInput [_reader GetOutput]
         }
 
@@ -229,87 +262,61 @@ proc LaurenThesisSelectTracts {vROIA vROIB directory} {
 
 # arguments: ID number of the labelmaps and the polydata object
 # return 1 when model passes the test, otherwise return 0
-proc LaurenThesisTestTractIntersectsROI {vROIA vROIB polyData } {
+proc LaurenThesisTestTractIntersectsROI {vROIA vROIB vROIC vROID polyData } {
     global Model Tensor Module
-    
-    catch {_probe Delete}
-    vtkProbeFilter _probe
-    
-    _probe SetSource [Volume($vROIA,vol) GetOutput]
-    
-    # transform model into IJK of data
-    # This assumes the model is already aligned
-    # with the tensors in the world coordinate system.
-    catch {_transform Delete}
-    vtkTransform _transform
-    #_transform PreMultiply
-    _transform SetMatrix [Volume($vROIA,node) GetWldToIjk]
-    # remove scaling from matrix
-    # invert it to give ijk->ras, so we can scale with i,j,k spacing
-    _transform Inverse
-    scan [Volume($vROIA,node) GetSpacing] "%g %g %g" res_x res_y res_z
-    _transform Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] \
-        [expr 1.0 / $res_z]
-    _transform Inverse
-    
-    catch {_transformPD Delete}
-    vtkTransformPolyDataFilter _transformPD
-    _transformPD SetTransform _transform
-    _transformPD SetInput $polyData
-    _transformPD Update
 
-    # probe with model in IJK
-    _probe SetInput [_transformPD GetOutput]
-    _probe Update
-    
-    set pd [_probe GetOutput] 
-    #puts "Number of points for this tract:[$pd GetNumberOfPoints]"
-    
-    set scalars [[$pd GetPointData] GetScalars]
-    set scalar_range [[[$pd GetPointData] GetScalars] GetRange]
-    #puts "Range: $scalar_range"
+    set select_this_fiber 1
 
-    _probe Delete
-    _transform Delete
-    _transformPD Delete
-    
-    # repeat for ROIB
-    catch {_probe2 Delete}
-    vtkProbeFilter _probe2
-    
-    _probe2 SetSource [Volume($vROIB,vol) GetOutput]
-    catch {_transform2 Delete}
-    vtkTransform _transform2
-    _transform2 SetMatrix [Volume($vROIB,node) GetWldToIjk]
-    _transform2 Inverse
-    scan [Volume($vROIB,node) GetSpacing] "%g %g %g" res_x res_y res_z
-    _transform2 Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] \
-        [expr 1.0 / $res_z]
-    _transform2 Inverse
-    
-    catch {_transformPD2 Delete}
-    vtkTransformPolyDataFilter _transformPD2
-    _transformPD2 SetTransform _transform2
-    _transformPD2 SetInput $polyData
-    _transformPD2 Update
-    
-    _probe2 SetInput  [_transformPD2 GetOutput]
-    _probe2 Update
-    
-    set pd2 [_probe2 GetOutput] 
-    #puts "Number of points for this tract:[$pd2 GetNumberOfPoints]"
+    foreach labelmap "$vROIA $vROIB $vROIC $vROID" {
+        # check if labelmap equals the none volume
+        if {$labelmap != 0} {  
+            
+            catch {_probe Delete}
+            vtkProbeFilter _probe
+            _probe SetSource [Volume($labelmap,vol) GetOutput]
+            
+              # transform model into IJK of data
+            # This assumes the model is already aligned
+            # with the tensors in the world coordinate system.
+            catch {_transform Delete}
+            vtkTransform _transform
+            #_transform PreMultiply
+            _transform SetMatrix [Volume($labelmap,node) GetWldToIjk]
+            # remove scaling from matrix
+            # invert it to give ijk->ras, so we can scale with i,j,k spacing
+            _transform Inverse
+            scan [Volume($labelmap,node) GetSpacing] "%g %g %g" res_x res_y res_z
+            _transform Scale [expr 1.0 / $res_x] [expr 1.0 / $res_y] \
+                [expr 1.0 / $res_z]
+            _transform Inverse
+            
+            catch {_transformPD Delete}
+            vtkTransformPolyDataFilter _transformPD
+            _transformPD SetTransform _transform
+            _transformPD SetInput $polyData
+            _transformPD Update
 
-    set scalar_range2 [[[$pd2 GetPointData] GetScalars] GetRange]
-    #puts "Range for ROIB: $scalar_range2"
-  
-    _probe2 Delete
-    _transform2 Delete
-    _transformPD2 Delete
-    
-    if { ([lindex $scalar_range 1] != 0) & ([lindex $scalar_range2 1] != 0) } {
-        return 1
-    } else {
-        return 0
+            # probe with model in IJK
+            _probe SetInput [_transformPD GetOutput]
+            _probe Update
+            
+            set pd [_probe GetOutput] 
+            #puts "Number of points for this tract:[$pd GetNumberOfPoints]"
+            
+            set scalars [[$pd GetPointData] GetScalars]
+            set scalar_range [[[$pd GetPointData] GetScalars] GetRange]
+            #puts "Range: $scalar_range"
+
+            _probe Delete
+            _transform Delete
+            _transformPD Delete
+            
+            if { ([lindex $scalar_range 1] == 0) } {
+                # in this case this fiber doesn't run through one of the ROIs
+                return 0
+            }
+        }
     }
+    # if proc has not retuned 0 up to this point the fiber runs through all labelmaps    
+    return 1
 }
-
