@@ -110,7 +110,7 @@ proc LaurenThesisROISelectBuildGUI {} {
     #-------------------------------------------
     set f $fROISelect.fMiddle.fOutputDirectory
 
-    eval {button $f.b -text "Output directory:" -width 16 \
+    eval {button $f.b -text "Output file:" -width 16 \
         -command "LaurenThesisSelectOutputDirectory"} $Gui(WBA)
     eval {entry $f.e -textvariable LaurenThesis(ROISelectOutputDirectory) -width 51} $Gui(WEA)
     bind $f.e <Return> {LaurenThesisSelectOutputDirectory}
@@ -147,11 +147,17 @@ proc LaurenThesisSelectOutputDirectory {} {
 
     set dir $LaurenThesis(clusterDirectory)
 
-    if {[catch {set filename [tk_chooseDirectory -title "Output Directory" \
-                                  -initialdir "$dir"]} errMsg] == 1} {
+    if {[catch {set filename [tk_getSaveFile -title "Output file" -defaultextension ".vtk"\
+                                  -initialdir "$dir" -initialfile $LaurenThesis(outputFilename)]} errMsg] == 1} {
         DevErrorWindow "LaurenThesisSelectOutputDirectory: error selecting output directory:\n$errMsg"
         return ""
     }
+
+  #  if {[catch {set filename [tk_chooseDirectory -title "Output Directory" \
+  #                                -initialdir "$dir"]} errMsg] == 1} {
+  #      DevErrorWindow "LaurenThesisSelectOutputDirectory: error selecting output directory:\n$errMsg"
+  #      return ""
+  #  }
 
     set LaurenThesis(ROISelectOutputDirectory) $filename
 }
@@ -186,8 +192,14 @@ proc LaurenThesisValidateParametersAndSelectTracts {} {
     puts "This is ROI a: $LaurenThesis(vROIA)"
     puts "This is ROI b:$LaurenThesis(vROIB)"
     puts "This is ROI c:$LaurenThesis(vROIC)"
-   puts "This is ROI d:$LaurenThesis(vROID)"
+    puts "This is ROI d:$LaurenThesis(vROID)"
     
+    # check if an output file has been selected
+    if {($LaurenThesis(ROISelectOutputDirectory) == "") || [file exists [file dirname $LaurenThesis(ROISelectOutputDirectory)]] ==0 } {
+        DevErrorWindow "LaurenThesisValidateParametersAndSelectTracts: No output direcoty selected or selected direcoty does not exist: [file dirname $LaurenThesis(ROISelectOutputDirectory)]"
+        return ""
+    }
+        
     # call the code that does something
     LaurenThesisSelectTracts $LaurenThesis(vROIA) $LaurenThesis(vROIB) $LaurenThesis(vROIC) $LaurenThesis(vROID) $LaurenThesis(clusterDirectory)
 
@@ -253,7 +265,7 @@ proc LaurenThesisSelectTracts {vROIA vROIB vROIC vROID directory} {
     vtkPolyDataWriter _writer
     # get output from the vtkAppendPolyData
     _writer SetInput [appender GetOutput]
-    _writer SetFileName $LaurenThesis(ROISelectOutputDirectory)/$LaurenThesis(outputFilename)
+    _writer SetFileName $LaurenThesis(ROISelectOutputDirectory)
     _writer Write
     
     _writer Delete
