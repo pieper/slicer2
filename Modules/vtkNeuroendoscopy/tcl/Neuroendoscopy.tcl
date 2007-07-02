@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Neuroendoscopy.tcl,v $
-#   Date:      $Date: 2007/07/02 16:23:18 $
-#   Version:   $Revision: 1.1.2.2 $
+#   Date:      $Date: 2007/07/02 19:21:27 $
+#   Version:   $Revision: 1.1.2.3 $
 # 
 #===============================================================================
 # FILE:        Neuroendoscopy.tcl
@@ -278,7 +278,7 @@ proc NeuroendoscopyInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.1.2.2 $} {$Date: 2007/07/02 16:23:18 $}] 
+    {$Revision: 1.1.2.3 $} {$Date: 2007/07/02 19:21:27 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -2909,7 +2909,6 @@ proc NeuroendoscopyStartICP {} {
 
   Neuroendoscopy(OpenTracker,ICPControlSet) SetPoints Neuroendoscopy(ControlPoints)
   Neuroendoscopy(OpenTracker,ICPTargetSet) SetPoints  Neuroendoscopy(TargetPoints)
-
 
   Neuroendoscopy(ICPTransformation) SetSource Neuroendoscopy(OpenTracker,ICPControlSet)
   Neuroendoscopy(ICPTransformation) SetTarget Neuroendoscopy(OpenTracker,ICPTargetSet) 
