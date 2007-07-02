@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: LevelSets.tcl,v $
-#   Date:      $Date: 2005/12/20 22:56:07 $
-#   Version:   $Revision: 1.35.2.2 $
+#   Date:      $Date: 2007/07/02 19:42:47 $
+#   Version:   $Revision: 1.35.2.2.2.1 $
 # 
 #===============================================================================
 # FILE:        LevelSets.tcl
@@ -184,7 +184,7 @@ proc LevelSetsInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.35.2.2 $} {$Date: 2005/12/20 22:56:07 $}]
+        {$Revision: 1.35.2.2.2.1 $} {$Date: 2007/07/02 19:42:47 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -1391,6 +1391,9 @@ proc LevelSetsBindingCallback { event W X Y x y t } {
     scan [$Interactor(activeSlicer) GetIjkPoint] "%g %g %g" xi yi zi
     
     if {[string compare $event "KeyPress-p"] == 0} {
+        puts "Adding Fiducial..."
+    }
+    if {[string compare $event "KeyPress-i"] == 0} {
         puts "Adding Fiducial..."
     }
     if {[string compare $event "KeyPress-d"] == 0} {

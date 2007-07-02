@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Select.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:45 $
-#   Version:   $Revision: 1.14.2.1 $
+#   Date:      $Date: 2007/07/02 19:42:23 $
+#   Version:   $Revision: 1.14.2.1.2.1 $
 # 
 #===============================================================================
 # FILE:        Select.tcl
@@ -109,6 +109,9 @@ proc SelectBuildGUI {} {
         $Gui(fSl0Win),<KeyPress-p> {addGlyphPoint2D %W 0 %x %y} \
         $Gui(fSl1Win),<KeyPress-p> {addGlyphPoint2D %W 1 %x %y} \
         $Gui(fSl2Win),<KeyPress-p> {addGlyphPoint2D %W 2 %x %y} \
+        $Gui(fSl0Win),<KeyPress-i> {addGlyphPoint2D %W 0 %x %y} \
+        $Gui(fSl1Win),<KeyPress-i> {addGlyphPoint2D %W 1 %x %y} \
+        $Gui(fSl2Win),<KeyPress-i> {addGlyphPoint2D %W 2 %x %y} \
         $Gui(fViewWin),<Shift-Control-1> {selGlyphPoint %W %x %y} \
         $Gui(fViewWin),<Control-2> {selGlyphPoint %W %x %y} \
         $Gui(fViewWin),<KeyPress-q> {selGlyphPoint %W %x %y} \

@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Alignments.tcl,v $
-#   Date:      $Date: 2006/07/07 17:30:10 $
-#   Version:   $Revision: 1.35.2.1.2.2 $
+#   Date:      $Date: 2007/07/02 19:42:04 $
+#   Version:   $Revision: 1.35.2.1.2.3 $
 # 
 #===============================================================================
 # FILE:        Alignments.tcl
@@ -126,7 +126,7 @@ proc AlignmentsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.35.2.1.2.2 $} {$Date: 2006/07/07 17:30:10 $}]
+            {$Revision: 1.35.2.1.2.3 $} {$Date: 2007/07/02 19:42:04 $}]
 
     # Props
     set Matrix(propertyType) Basic
@@ -2523,8 +2523,18 @@ proc AlignmentsFidAlignGo {} {
                 if { [AlignmentsPick2D %W %x %y] != 0 } \
                 {   eval FiducialsCreatePointFromWorldXYZ "default" $Matrix(xyz) ; MainUpdateMRML; Render3D}
             }
+         
         }
-    }
+ set widgets "$Gui(fSl0Win) $Gui(fSl1Win) $Gui(fSl2Win)"
+        foreach widget $widgets {
+            bind $widget <KeyPress-i> {
+                # like SelectPick2D, sets right coords in Alignments(xyz)
+                # returns 0 if nothing picked
+                if { [AlignmentsPick2D %W %x %y] != 0 } \
+                {   eval FiducialsCreatePointFromWorldXYZ "registration" $Matrix(xyz) "registration"; MainUpdateMRML; Render3D; NeuroendoscopyPointSelection $Fiducials($Fiducials(activeList),fid)}
+            }
+        }
+}
 }
 
 #-------------------------------------------------------------------------------
@@ -2667,8 +2677,17 @@ proc AlignmentsFidAlignResetVars {} {
              if { [SelectPick2D %W %x %y] != 0 } \
              { eval FiducialsCreatePointFromWorldXYZ "default" $Select(xyz) ; MainUpdateMRML; Render3D}
          }
+   
     }
-
+ set widgets "$Gui(fSl0Win) $Gui(fSl1Win) $Gui(fSl2Win)"
+    foreach widget $widgets {
+      bind $widget <KeyPress-i> {
+             # like SelectPick2D, sets right coords in Alignments(xyz)
+             # returns 0 if nothing picked
+             if { [SelectPick2D %W %x %y] != 0 } \
+             { eval FiducialsCreatePointFromWorldXYZ "registration" $Select(xyz) "registration"; MainUpdateMRML; Render3D; NeuroendoscopyPointSelection $Fiducials($Fiducials(activeList),fid)}
+         }
+     } 
 }
 
 #-------------------------------------------------------------------------------

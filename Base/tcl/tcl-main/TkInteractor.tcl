@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: TkInteractor.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:31 $
-#   Version:   $Revision: 1.35.2.1 $
+#   Date:      $Date: 2007/07/02 19:41:31 $
+#   Version:   $Revision: 1.35.2.1.2.1 $
 # 
 #===============================================================================
 # FILE:        TkInteractor.tcl
@@ -101,6 +101,11 @@ proc CreateAndBindTkEvents { widget } {
         EvDeclareEventHandler tkRegularEvents <KeyPress-d> {
             if { [SelectPick Fiducials(picker) %W %x %y] != 0} \
                 {FiducialsDeleteFromPicker $Select(actor) $Select(cellId)}
+        }
+      # added for registration
+       EvDeclareEventHandler tkRegularEvents <KeyPress-i> { 
+            if { [SelectPick Fiducials(picker) %W %x %y] != 0 } \
+                { eval FiducialsCreatePointFromWorldXYZ "registration" $Select(xyz) "registration" ; MainUpdateMRML; Render3D; NeuroendoscopyPointSelection $Fiducials($Fiducials(activeList),fid)}
         }
     }
 

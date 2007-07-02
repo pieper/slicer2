@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainInteractor.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:27 $
-#   Version:   $Revision: 1.63.2.1 $
+#   Date:      $Date: 2007/07/02 19:41:15 $
+#   Version:   $Revision: 1.63.2.1.2.1 $
 # 
 #===============================================================================
 # FILE:        MainInteractor.tcl
@@ -76,7 +76,7 @@ proc MainInteractorInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorBind {widget} {
-    global Gui
+    global Gui Fiducials
 
 
     # NOTE: <Motion> is not called when <B1-Motion> is called
@@ -156,6 +156,14 @@ proc MainInteractorBind {widget} {
     bind $widget <KeyPress-p> {
          if { [SelectPick2D %W %x %y] != 0 } \
              { set ::Fiducial(Pick2D) 1; eval FiducialsCreatePointFromWorldXYZ "default" $Select(xyz) ; set ::Fiducial(Pick2D) 0; MainUpdateMRML; Render3D}
+     }
+    }
+
+#for registration point creation
+   if {[IsModule Fiducials] == 1 || [IsModule Alignments] == 1} {
+    bind $widget <KeyPress-i> {
+         if { [SelectPick2D %W %x %y] != 0 } \
+             { set ::Fiducial(Pick2D) 1; eval FiducialsCreatePointFromWorldXYZ "registration" $Select(xyz) "registration"; set ::Fiducial(Pick2D) 0; MainUpdateMRML; Render3D; NeuroendoscopyPointSelection $Fiducials($Fiducials(activeList),fid)}
      }
     }
 
