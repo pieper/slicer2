@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkNeuroendoscopy.h,v $
-  Date:      $Date: 2007/07/02 19:10:17 $
-  Version:   $Revision: 1.2.2.2 $
+  Date:      $Date: 2007/07/02 19:34:23 $
+  Version:   $Revision: 1.2.2.3 $
 
 =========================================================================auto=*/
 #ifndef __vtkNeuroendoscopy_h

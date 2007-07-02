@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Neuroendoscopy.tcl,v $
-#   Date:      $Date: 2007/07/02 19:21:27 $
-#   Version:   $Revision: 1.1.2.3 $
+#   Date:      $Date: 2007/07/02 19:33:05 $
+#   Version:   $Revision: 1.1.2.4 $
 # 
 #===============================================================================
 # FILE:        Neuroendoscopy.tcl
@@ -278,7 +278,7 @@ proc NeuroendoscopyInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.1.2.3 $} {$Date: 2007/07/02 19:21:27 $}] 
+    {$Revision: 1.1.2.4 $} {$Date: 2007/07/02 19:33:05 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -604,6 +604,9 @@ proc NeuroendoscopyInit {} {
     vtkStructuredGrid Neuroendoscopy(OpenTracker,ICPControlSet)
     vtkStructuredGrid Neuroendoscopy(OpenTracker,ICPTargetSet)
     vtkIterativeClosestPointTransform Neuroendoscopy(ICPTransformation)
+    vtkLandmarkTransform Neuroendoscopy(LandmarkTransformation)
+    vtkTransform Neuroendoscopy(EndTransformation)
+    vtkMatrix4x4 Neuroendoscopy(transmatrix)
 }
 
 #-------------------------------------------------------------------------------
@@ -2906,17 +2909,48 @@ lappend Locator(actors) $axis
 
 proc NeuroendoscopyStartICP {} {
   global Neuroendoscopy Fiducials
+  Neuroendoscopy(TargetPoints) InsertNextPoint 1 1 0
+Neuroendoscopy(TargetPoints) Modified
+  Neuroendoscopy(TargetPoints) InsertNextPoint 1 0 0
+Neuroendoscopy(TargetPoints) Modified
+  Neuroendoscopy(TargetPoints) InsertNextPoint 0 1 0
+Neuroendoscopy(TargetPoints) Modified
+  Neuroendoscopy(TargetPoints) InsertNextPoint 0 0 0
 
-  Neuroendoscopy(OpenTracker,ICPControlSet) SetPoints Neuroendoscopy(ControlPoints)
-  Neuroendoscopy(OpenTracker,ICPTargetSet) SetPoints  Neuroendoscopy(TargetPoints)
+  Neuroendoscopy(ControlPoints) InsertNextPoint 0 1 1
+Neuroendoscopy(ControlPoints) Modified
+  Neuroendoscopy(ControlPoints) InsertNextPoint 0 1 0
+Neuroendoscopy(ControlPoints) Modified
+  Neuroendoscopy(ControlPoints) InsertNextPoint 0 0 1
+Neuroendoscopy(ControlPoints) Modified
+  Neuroendoscopy(ControlPoints) InsertNextPoint 0 0 0
+  
+
+
+  Neuroendoscopy(OpenTracker,ICPControlSet) SetPoints Neuroendoscopy(ControlPoints) 
+  Neuroendoscopy(OpenTracker,ICPTargetSet) SetPoints Neuroendoscopy(TargetPoints) 
+
+  
+  
 
   Neuroendoscopy(ICPTransformation) SetSource Neuroendoscopy(OpenTracker,ICPControlSet)
   Neuroendoscopy(ICPTransformation) SetTarget Neuroendoscopy(OpenTracker,ICPTargetSet) 
   Neuroendoscopy(ICPTransformation) SetCheckMeanDistance 1
   Neuroendoscopy(ICPTransformation) SetMaximumMeanDistance 0.001
   Neuroendoscopy(ICPTransformation) SetMaximumNumberOfIterations 30
-                Neuroendoscopy(ICPTransformation) SetMaximumNumberOfLandmarks 50
- puts "ICP done..."
+  Neuroendoscopy(ICPTransformation) SetMaximumNumberOfLandmarks 50
+  #Neuroendoscopy(ICPTransformation) Update
+#Neuroendoscopy(transmatrix) DeepCopy [Neuroendoscopy(ICPTransformation) GetMatrix]
+Neuroendoscopy(LandmarkTransformation)  SetSourceLandmarks Neuroendoscopy(ControlPoints) 
+Neuroendoscopy(LandmarkTransformation) SetTargetLandmarks Neuroendoscopy(TargetPoints)
+Neuroendoscopy(LandmarkTransformation) SetModeToRigidBody
+Neuroendoscopy(LandmarkTransformation) Update
+
+  
+
+Neuroendoscopy(EndTransformation) SetInput [Neuroendoscopy(LandmarkTransformation) MakeTransform]
+set meanDis [Neuroendoscopy(EndTransformation) GetPosition]
+  puts "ICP done $meanDis..."
 
 
 }
@@ -2967,7 +3001,7 @@ after 2000
         set test [expr $controlamount - 1 ]
         if {$targetamount ==  $test} {
           Neuroendoscopy(TargetPoints) InsertNextPoint $x1 $y1 $z1
-          
+          Neuroendoscopy(TargetPoints) Modified
           if {$Neuroendoscopy(registration,points) != $controlamount} {
             NeuroendoscopyLoopOpenTracker
           } else {
@@ -3038,6 +3072,7 @@ set locMatrix [Neuroendoscopy(OpenTracker,src) GetLocatorMatrix]
   puts "Data from Opentracker $buttonvar $locatortest1 $locatortest2 $locatortest3..."
     
     Neuroendoscopy(ControlPoints) InsertNextPoint $locatortest1 $locatortest2 $locatortest3
+Neuroendoscopy(ControlPoints) Modified
     set amount [Neuroendoscopy(ControlPoints) GetNumberOfPoints]
         puts "we are waitin for TargetPoints..."
   #  lappend Neuroendoscopy(selectedPoint) $locatortest1 $locatortest2 $locatortest3
