@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Developer.tcl,v $
-#   Date:      $Date: 2006/07/27 17:54:27 $
-#   Version:   $Revision: 1.56 $
+#   Date:      $Date: 2007/07/30 19:25:52 $
+#   Version:   $Revision: 1.57 $
 # 
 #===============================================================================
 # FILE:        Developer.tcl
@@ -518,7 +518,7 @@ proc DevSelectNode { type id ArrayName ModelLabel ModelName} {
     }
 
     if {0 == [info exists LocalArray]} {
-        DevErrorWindow "Error finding $TabName in DevAddSelectButton"
+        DevErrorWindow "Error finding $ArrayName in DevAddSelectButton"
         return
     }
     if {$id == ""} {
