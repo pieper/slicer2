@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: AG.tcl,v $
-#   Date:      $Date: 2006/05/26 19:21:41 $
-#   Version:   $Revision: 1.24 $
+#   Date:      $Date: 2007/07/30 19:21:40 $
+#   Version:   $Revision: 1.25 $
 # 
 #===============================================================================
 # FILE:        AG.tcl
@@ -194,7 +194,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.24 $} {$Date: 2006/05/26 19:21:41 $}]
+        {$Revision: 1.25 $} {$Date: 2007/07/30 19:21:40 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -264,6 +264,8 @@ proc AGInit {} {
     set AG(Use_bias)        0
     set AG(Boundaries)      {}
 
+
+    set AG(AskFlag) 1 
    # set AG(StandardDev)   "1"
    # set AG(Threshold)     "10"
    # set AG(Attachment)    "0.05"
@@ -949,20 +951,20 @@ proc ModifyOptions {optClass value} {
     global  AG Volume Gui 
   
     switch $optClass {
-LinearRegistration  { 
-    set AG(LRName)  $value
-    $AG(mbLR) config -text $AG(LRName)
+      LinearRegistration  { 
+         set AG(LRName)  $value
+         $AG(mbLR) config -text $AG(LRName)
 
-    switch $value {
+         switch $value {
                 "translation" { 
-    set AG(Linear_group) -1
-                    puts "translation"
-}
-"rigid group" {
-    set AG(Linear_group) 0
+                    set AG(Linear_group) -1
+                    puts "translation" 
+                }
+                "rigid group" {
+                    set AG(Linear_group) 0
                     puts "rigid group"
 
-}
+                }
 "similarity group" {
     set AG(Linear_group) 1
     puts "similarity group"
@@ -1020,27 +1022,22 @@ IntensityTFM {
     }
 }
 
-Criterion {
-
-    set AG(CriterionName)  $value
-    $AG(mbCriterion) config -text $AG(CriterionName)
+    Criterion {
+       set AG(CriterionName)  $value
+      $AG(mbCriterion) config -text $AG(CriterionName)
       switch $value {
-"GCR L1 norm" {
-    set  AG(Gcr_criterion) 1
-}
-"GCR L2 norm" {
-    set AG(Gcr_criterion)  2
-
-}
-"Correlation" {
-    set AG(Gcr_criterion)  3
-
-}
-
-"mutual information" {
-    set AG(Gcr_criterion)  4
-
-}
+        "GCR L1 norm" {
+             set  AG(Gcr_criterion) 1
+        }
+        "GCR L2 norm" {
+             set AG(Gcr_criterion)  2
+        }
+        "Correlation" {
+             set AG(Gcr_criterion)  3
+        }
+        "mutual information" {
+             set AG(Gcr_criterion)  4
+        }
 default {
     set AG(Gcr_criterion)  1
   
@@ -1170,7 +1167,7 @@ proc AGCheckErrors {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc AGPrepareResultVolume {}  {
+proc AGPrepareResultVolume { }  {
      global AG Volume
    
     #Make or Copy the result volume node from target volume ( but should keep
@@ -1199,10 +1196,11 @@ proc AGPrepareResultVolume {}  {
         # If so, let's ask. If no, return.
     
         set v2name  [Volume($v2,node) GetName]
-        set continue [DevOKCancel "Overwrite $v2name?"]
-          
+    if { $AG(AskFlag) } {
+        set continue [DevOKCancel "Overwrite $v2name?"]    
         if {$continue == "cancel"} { return 1 }
         # They say it is OK, so overwrite!
+    }
               
         Volume($v2,node) Copy Volume($v1,node)
     }
@@ -2589,7 +2587,7 @@ proc AGBatchProcessResampling  {  }  {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc AGCoregister {} {
+proc AGCoregister {{ResultVolume -5}} {
    global AG Volume Gui
     if {$AG(CoregVol)==$Volume(idNone)} {
       DevErrorWindow "Please select a volume for coregistration."
@@ -2600,7 +2598,7 @@ proc AGCoregister {} {
       return
     }
     if {[info exist AG(Transform)]} {
-      AGTransformOneVolume $AG(CoregVol) $AG(InputVolTarget)
+      AGTransformOneVolume $AG(CoregVol) $AG(InputVolTarget) $ResultVolume
     } else {
       DevErrorWindow "Please run a registration first."
     }
@@ -2615,22 +2613,27 @@ proc AGCoregister {} {
 # .ARGS
 # string SouceVolume
 # string TargetVolume
+# string ResultVolume
 # .END
 #-------------------------------------------------------------------------------
-proc AGTransformOneVolume {SourceVolume TargetVolume} {
+proc AGTransformOneVolume {SourceVolume TargetVolume {ResultVolume -5} } {
  global AG Volume Gui
 # Create a new volume based on the name of the source volume and the node descirption of the target volume
 
     set v1 $TargetVolume
     set v2name  [Volume($SourceVolume,node) GetName]
+    if {$ResultVolume < 0 } {
     set v2 [DevCreateNewCopiedVolume $v1 ""  "resample_$v2name" ]
     set node [Volume($v2,vol) GetMrmlNode]
     Mrml(dataTree) RemoveItem $node 
     set nodeBefore [Volume($v1,vol) GetMrmlNode]
     Mrml(dataTree) InsertAfterItem $nodeBefore $node
-   
     #VolumesUpdateMRML
     MainUpdateMRML
+    } else {
+    set v2 $ResultVolume
+    set node [Volume($v2,vol) GetMrmlNode]
+    }
     
     catch "Source Delete"
     vtkImageData Source  
@@ -3907,3 +3910,4 @@ proc AGCommandLine { {targetname} {sourcename} {coregname} {paramfile} } {
   append gridtransname "_gridtrans.vtk"
   AGWriteLinearNonLinearTransform $lintransname $gridtransname
 }
+
