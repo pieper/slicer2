@@ -387,12 +387,22 @@ proc LaurenThesisColorROI {vROI modelGroupName colorBy} {
     # export output to the slicer environment:
     # slicer MRML volume creation and display
     set output [colorROI GetOutputROIForColoring]
-    set volumeName "TractColors_$vROI"
+    set volumeName "TractColors_[Volume($vROI,node) GetName]"
     set v2 [DevCreateNewCopiedVolume $vROI "Color back from clusters" $volumeName]
     Volume($v2,vol) SetImageData $output
     MainVolumesUpdate $v2
     # tell the node what type of data so MRML file will be okay
     Volume($v2,node) SetScalarType [$output GetScalarType]
+
+    # export output to the slicer environment:
+    # slicer MRML volume creation and display
+    set output2 [colorROI GetOutputMaxFiberCount]
+    set volumeName "TractCount_[Volume($vROI,node) GetName]"
+    set v3 [DevCreateNewCopiedVolume $vROI "Fiber count from clusters" $volumeName]
+    Volume($v3,vol) SetImageData $output2
+    MainVolumesUpdate $v3
+    # tell the node what type of data so MRML file will be okay
+    Volume($v3,node) SetScalarType [$output2 GetScalarType]
 
     # Registration
     # put the new volume inside the same transform as the original volume
@@ -407,6 +417,18 @@ proc LaurenThesisColorROI {vROI modelGroupName colorBy} {
     if { $widx < $nitems } {
         Mrml(dataTree) RemoveItem $widx
         Mrml(dataTree) InsertAfterItem Volume($vROI,node) Volume($v2,node)
+        MainUpdateMRML
+    }
+
+    set nitems [Mrml(dataTree) GetNumberOfItems]
+    for {set widx 0} {$widx < $nitems} {incr widx} {
+        if { [Mrml(dataTree) GetNthItem $widx] == "Volume($v3,node)" } {
+            break
+        }
+    }
+    if { $widx < $nitems } {
+        Mrml(dataTree) RemoveItem $widx
+        Mrml(dataTree) InsertAfterItem Volume($vROI,node) Volume($v3,node)
         MainUpdateMRML
     }
 
