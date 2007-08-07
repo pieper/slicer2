@@ -7,8 +7,8 @@ or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
 Module:    $RCSfile: vtkColorROIFromPolyLines.cxx,v $
-Date:      $Date: 2006/02/05 18:04:43 $
-Version:   $Revision: 1.2 $
+Date:      $Date: 2007/08/07 20:12:20 $
+Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
 
@@ -39,6 +39,7 @@ vtkColorROIFromPolyLines::vtkColorROIFromPolyLines()
 
   this->InputROIForColoring = NULL;
   this->OutputROIForColoring = NULL;
+  this->OutputMaxFiberCount = NULL;
   this->PolyLineClusters = NULL;
   this->Labels = NULL;
 
@@ -55,6 +56,8 @@ vtkColorROIFromPolyLines::~vtkColorROIFromPolyLines()
     this->InputROIForColoring->Delete();
   if (this->OutputROIForColoring != NULL)
     this->OutputROIForColoring->Delete();
+  if (this->OutputMaxFiberCount != NULL)
+    this->OutputMaxFiberCount->Delete();
   if (this->PolyLineClusters != NULL)
     this->PolyLineClusters->Delete();
   if (this->Labels != NULL)
@@ -120,8 +123,11 @@ void vtkColorROIFromPolyLines::ColorROIFromStreamlines()
   currentPathCount->SetExtent(this->InputROIForColoring->GetWholeExtent());
   currentPathCount->AllocateScalars();
 
-  // Create scratch space for saving max # of tract paths in a voxel
-  vtkImageData *maxPathCount = vtkImageData::New();
+ // Create output for saving max # of tract paths in a voxel
+  if (this->OutputMaxFiberCount != NULL)
+    this->OutputMaxFiberCount->Delete();
+  this->OutputMaxFiberCount = vtkImageData::New();
+  vtkImageData *maxPathCount = this->OutputMaxFiberCount;
   maxPathCount->CopyTypeSpecificInformation( this->InputROIForColoring );
   maxPathCount->SetExtent(this->InputROIForColoring->GetWholeExtent());
   maxPathCount->AllocateScalars();
@@ -131,15 +137,11 @@ void vtkColorROIFromPolyLines::ColorROIFromStreamlines()
   this->OutputROIForColoring->GetDimensions(dims);
   int size = dims[0]*dims[1]*dims[2];
   short *outPtr = (short *) this->OutputROIForColoring->GetScalarPointer();
-  short *currentPathCountPtr = (short *) currentPathCount->GetScalarPointer();
   short *maxPathCountPtr = (short *) maxPathCount->GetScalarPointer();
   for(int i=0; i<size; i++)
     {
       *outPtr = (short) 0;
       outPtr++;
-
-      *currentPathCountPtr = (short) 0;
-      currentPathCountPtr++;
 
       *maxPathCountPtr = (short) 0;
       maxPathCountPtr++;
@@ -159,7 +161,14 @@ void vtkColorROIFromPolyLines::ColorROIFromStreamlines()
   int clusterIndex = 0;
   while (currCluster)
     {
-      
+    // initialize current cluster path count output volume to all 0's
+    short *currentPathCountPtr1 = (short *) currentPathCount->GetScalarPointer();
+    for(int i=0; i<size; i++)
+      {
+      *currentPathCountPtr1 = (short) 0;
+      currentPathCountPtr1++;
+      }
+
       int numberOfPaths = currCluster->GetNumberOfCells();
 
       // Loop over all paths in this cluster
@@ -250,6 +259,8 @@ void vtkColorROIFromPolyLines::ColorROIFromStreamlines()
 
     }
 
+  // Delete scratch space
+  currentPathCount->Delete();
 
 }
 
