@@ -332,3 +332,96 @@ proc LaurenThesisTestTractIntersectsROI {vROIA vROIB vROIC vROID polyData } {
     # if proc has not retuned 0 up to this point the fiber runs through all labelmaps    
     return 1
 }
+
+# this function loads labelmap_files 1 to 4 (if stated) and calls LaurenThesisSelectTracts
+proc LaurenThesis_ROISelect_Batch {clusterDir outputFile {labelmap_file1 ""} {labelmap_file2 ""} {labelmap_file3 ""} {labelmap_file4 ""}} {
+    
+    global LaurenThesis Volumes Volume
+    
+    # directory where the vtk tract models are
+    if {![file exists $clusterDir]} { 
+        DevErrorWindow "LaurenThesis_ROISelect_Batch: Directory $clusterDir does not exist\n"
+        return ""
+    } 
+    if {![file exists [file dirname $outputFile]]} {
+        DevErrorWindow "LaurenThesis_ROISelect_Batch: File $outputFile does not exist\n"
+        return ""
+    } 
+
+    set LaurenThesis(clusterDirectory) $clusterDir
+    puts "Cluster directory set to $LaurenThesis(clusterDirectory)"
+    set LaurenThesis(ROISelectOutputDirectory) $outputFile
+    puts "Output file set to $LaurenThesis(ROISelectOutputDirectory)"
+
+    # labelmap ID numbers
+    set LaurenThesis(vROIA) -1
+    set LaurenThesis(vROIB) -1
+    set LaurenThesis(vROIC) -1
+    set LaurenThesis(vROID) -1
+    
+    if {$labelmap_file1 != ""} {
+        if {[file exists $labelmap_file1]} {
+            # load labelmap
+            puts "Load labelmap $labelmap_file1 ..."
+            set Volume(labelMap) 1
+            set Volume(VolNrrd,FileName) $labelmap_file1
+            VolNrrdSetFileName
+            set LaurenThesis(vROIA) [VolNrrdApply]
+            puts "This is now LaurenThesis(vROIA): $LaurenThesis(vROIA) "
+        } else {
+            DevErrorWindow "LaurenThesis_ROISelect_Batch: Labelmap file $labelmap_file1 does not exist\n"
+            return ""
+        } 
+    }
+    if {$labelmap_file2 != ""} {
+         if {[file exists $labelmap_file2]} {
+             # load labelmap
+             puts "Load labelmap $labelmap_file2 ..."
+             set Volume(labelMap) 1
+             set Volume(VolNrrd,FileName) $labelmap_file2
+             VolNrrdSetFileName
+             set LaurenThesis(vROIB) [VolNrrdApply]
+             puts "This is now LaurenThesis(vROIB): $LaurenThesis(vROIB) "
+         } else {
+             DevErrorWindow "LaurenThesis_ROISelect_Batch: Labelmap file $labelmap_file2 does not exist\n"
+             return ""
+         } 
+
+     }
+    if {$labelmap_file3 != ""} {
+         if {[file exists $labelmap_file3]} {
+             # load labelmap
+             puts "Load labelmap $labelmap_file3 ..."
+             set Volume(labelMap) 1
+             set Volume(VolNrrd,FileName) $labelmap_file3
+             VolNrrdSetFileName
+             set LaurenThesis(vROIC) [VolNrrdApply]
+         } else {
+             DevErrorWindow "LaurenThesis_ROISelect_Batch: Labelmap file $labelmap_file3 does not exist\n"
+             return ""
+         } 
+    }
+    if {$labelmap_file4 != ""} {
+        if {[file exists $labelmap_file4]} {
+             # load labelmap
+             puts "Load labelmap $labelmap_file4 ..."
+             set Volume(labelMap) 1
+             set Volume(VolNrrd,FileName) $labelmap_file4
+             VolNrrdSetFileName
+             set LaurenThesis(vROID) [VolNrrdApply]
+         } else {
+             DevErrorWindow "LaurenThesis_ROISelect_Batch: Labelmap file $labelmap_file4 does not exist\n"
+             return ""
+         } 
+
+     }
+
+    puts ""    
+    puts "This is ROI a: $LaurenThesis(vROIA)"
+    puts "This is ROI b: $LaurenThesis(vROIB)"
+    puts "This is ROI c: $LaurenThesis(vROIC)"
+    puts "This is ROI d: $LaurenThesis(vROID)"
+    
+    LaurenThesisSelectTracts $LaurenThesis(vROIA) $LaurenThesis(vROIB) $LaurenThesis(vROIC) $LaurenThesis(vROID) $LaurenThesis(clusterDirectory)
+                                                                                          
+}
