@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Neuroendoscopy.tcl,v $
-#   Date:      $Date: 2007/07/12 15:40:56 $
-#   Version:   $Revision: 1.1.2.5 $
+#   Date:      $Date: 2007/08/10 00:34:31 $
+#   Version:   $Revision: 1.1.2.6 $
 # 
 #===============================================================================
 # FILE:        Neuroendoscopy.tcl
@@ -278,7 +278,7 @@ proc NeuroendoscopyInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.1.2.5 $} {$Date: 2007/07/12 15:40:56 $}] 
+    {$Revision: 1.1.2.6 $} {$Date: 2007/08/10 00:34:31 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -450,7 +450,7 @@ proc NeuroendoscopyInit {} {
     set Neuroendoscopy(cam,rxStr,old) 0
     set Neuroendoscopy(cam,ryStr,old) 0
     set Neuroendoscopy(cam,rzStr,old) 0
-    set Neuroendoscopy(cam,shape) "old olympus"
+    set Neuroendoscopy(cam,shape) "oldstyle neuroendoscope"
     set Neuroendoscopy(cam,shapetemp) ""
     
 
@@ -460,8 +460,17 @@ proc NeuroendoscopyInit {} {
     set Neuroendoscopy(Box,name) "Camera Box"
     set Neuroendoscopy(Box,color) "1 .4 .5" 
 
+    set Neuroendoscopy(Box2,name) "Camera Box 2"
+    set Neuroendoscopy(Box2,color) "0 0 0" 
+
     set Neuroendoscopy(Lens,name) "Camera Lens"
     set Neuroendoscopy(Lens,color) ".4 .2 .6" 
+    
+    set Neuroendoscopy(Lens2,name) "Camera Lens 2"
+    set Neuroendoscopy(Lens2,color) "0 0 0"
+    
+    set Neuroendoscopy(Lens3,name) "Camera Lens 3"
+    set Neuroendoscopy(Lens3,color) "0 0 1"
 
     set Neuroendoscopy(fp,name) "Focal Point"    
     set Neuroendoscopy(fp,visibility) 1    
@@ -620,6 +629,9 @@ proc NeuroendoscopyInit {} {
     vtkActor actor2
     vtkActor actor
 
+    set Neuroendoscopy(SnapShot) 0
+    set Neuroendoscopy(cam,showAngle) 1
+
 }
 
 #-------------------------------------------------------------------------------
@@ -777,7 +789,12 @@ proc NeuroendoscopyCreateCamera {} {
     vtkCylinderSource ccamCyl2
     vtkTransform cCylXform2        
     
-    NeuroendoscopyCameraParams -1 "old"
+    vtkConeSource ccamAngle
+    vtkTransform cConeXform
+
+
+
+    NeuroendoscopyCameraParams -1 "oldstyle"
 
 
     # make the actor (camera)
@@ -805,6 +822,14 @@ proc NeuroendoscopyCreateCamera {} {
     cCubeXformFilter3 SetInput [ccamCube3 GetOutput]
     cCubeXformFilter3 SetTransform cCubeXform3
     
+    vtkTransformPolyDataFilter cConeXformFilter
+    cConeXformFilter SetInput [ccamAngle GetOutput]
+    cConeXformFilter SetTransform cConeXform
+
+
+    #---------------------------------------------------
+    # Mapper
+    #---------------------------------------------------
     vtkPolyDataMapper cBoxMapper
     cBoxMapper SetInput [cCubeXformFilter GetOutput]
     
@@ -820,6 +845,13 @@ proc NeuroendoscopyCreateCamera {} {
     vtkPolyDataMapper cLensMapper2
     cLensMapper2 SetInput [cCylXformFilter2 GetOutput]
     
+    vtkPolyDataMapper cLensMapper3
+    cLensMapper3 SetInput [cConeXformFilter GetOutput]
+    
+    #---------------------------------------------------
+    # Actors
+    #---------------------------------------------------
+    
     vtkActor Neuroendoscopy(Box,actor)
     Neuroendoscopy(Box,actor) SetMapper cBoxMapper
     eval [Neuroendoscopy(Box,actor) GetProperty] SetColor $Neuroendoscopy(Box,color)
@@ -832,7 +864,7 @@ proc NeuroendoscopyCreateCamera {} {
     
     vtkActor Neuroendoscopy(Box3,actor)
     Neuroendoscopy(Box3,actor) SetMapper cBoxMapper3
-    eval [Neuroendoscopy(Box3,actor) GetProperty] SetColor 0 0 0 
+    eval [Neuroendoscopy(Box3,actor) GetProperty] SetColor $Neuroendoscopy(Box2,color) 
     Neuroendoscopy(Box3,actor) PickableOff
     
     vtkActor Neuroendoscopy(Lens,actor)
@@ -842,8 +874,18 @@ proc NeuroendoscopyCreateCamera {} {
     
     vtkActor Neuroendoscopy(Lens2,actor)
     Neuroendoscopy(Lens2,actor) SetMapper cLensMapper2
-    [Neuroendoscopy(Lens2,actor) GetProperty] SetColor 0 0 0
+    eval [Neuroendoscopy(Lens2,actor) GetProperty] SetColor $Neuroendoscopy(Lens2,color) 
     Neuroendoscopy(Lens2,actor) PickableOff
+    
+    vtkActor Neuroendoscopy(Lens3,actor)
+    Neuroendoscopy(Lens3,actor) SetMapper cLensMapper3
+    eval [Neuroendoscopy(Lens3,actor) GetProperty] SetColor $Neuroendoscopy(Lens3,color) 
+    eval [Neuroendoscopy(Lens3,actor) GetProperty] SetOpacity 0.5 
+    Neuroendoscopy(Lens3,actor) PickableOff
+    
+    #---------------------------------------------------
+    # Actor addings
+    #---------------------------------------------------
     
     set Neuroendoscopy(cam,actor) [vtkAssembly Neuroendoscopy(cam,actor)]
     Neuroendoscopy(cam,actor) AddPart Neuroendoscopy(Box,actor)
@@ -851,6 +893,7 @@ proc NeuroendoscopyCreateCamera {} {
     Neuroendoscopy(cam,actor) AddPart Neuroendoscopy(Box3,actor)
     Neuroendoscopy(cam,actor) AddPart Neuroendoscopy(Lens,actor)
     Neuroendoscopy(cam,actor) AddPart Neuroendoscopy(Lens2,actor)
+    Neuroendoscopy(cam,actor) AddPart Neuroendoscopy(Lens3,actor)
 
     Neuroendoscopy(cam,actor) PickableOn
 
@@ -890,7 +933,7 @@ proc NeuroendoscopyCameraParams {{size -1} {shape ""}} {
     # set parameters for cube (body) geometry and transform
     set Neuroendoscopy(cam,shapetemp) $shape
     
-    if { $shape == "olympus" } { 
+    if { $shape == "neuroendoscope" } { 
     #here is the ol
     
     set Neuroendoscopy(cam,boxlength) [expr $Neuroendoscopy(cam,size) * 6]
@@ -920,7 +963,20 @@ proc NeuroendoscopyCameraParams {{size -1} {shape ""}} {
     
     cCubeXform3 Identity
     cCubeXform3 Translate 0 0 0
+
+    if {$Neuroendoscopy(cam,viewAngle) < 80 && $Neuroendoscopy(cam,showAngle) == 1} {
+      ccamAngle SetAngle $Neuroendoscopy(cam,viewAngle)
     
+    } else {
+      ccamAngle SetAngle 0
+    }
+    ccamAngle SetResolution 40
+    ccamAngle SetHeight 40
+
+    cConeXform Identity
+    cConeXform Translate 0 30 0
+    cConeXform RotateZ -90
+
     # set parameters for cylinder (lens) geometry and transform
     ccamCyl SetRadius [expr $Neuroendoscopy(cam,boxlength) /3]
     ccamCyl SetHeight [expr $Neuroendoscopy(cam,boxwidth) ]
@@ -985,11 +1041,24 @@ proc NeuroendoscopyCameraParams {{size -1} {shape ""}} {
     
     cCylXform2 Identity
     cCylXform2 Translate 0 [expr {$Neuroendoscopy(cam,boxwidth) / 2} + $unit] 0
-    
+
+    if {$Neuroendoscopy(cam,viewAngle) < 80 && $Neuroendoscopy(cam,showAngle) == 1} {
+      ccamAngle SetAngle $Neuroendoscopy(cam,viewAngle)
+    } else {
+           ccamAngle SetAngle 0
+    }
+    ccamAngle SetResolution 40
+    ccamAngle SetHeight 40
+
+    cConeXform Identity
+    cConeXform Translate 0 30 0
+    cConeXform RotateZ -90
     #also, set the size of the focal Point actor
     set Neuroendoscopy(fp,size) [expr $Neuroendoscopy(cam,size) * 4]
     Neuroendoscopy(fp,source) SetRadius $Neuroendoscopy(fp,size)
     }
+
+
 }
 
 
@@ -1912,6 +1981,10 @@ proc NeuroendoscopyPopBindings {} {
     EvDeactivateBindingSet Slice0Events
     EvDeactivateBindingSet Slice1Events
     EvDeactivateBindingSet Slice2Events
+
+    EvDeactivateBindingSet NeuroendoscopySlice0Events
+    EvDeactivateBindingSet NeuroendoscopySlice1Events
+    EvDeactivateBindingSet NeuroendoscopySlice2Events
     
 #    EvDeactivateBindingSet 3DEvents
 }
@@ -1930,6 +2003,10 @@ proc NeuroendoscopyPushBindings {} {
     EvActivateBindingSet Slice0Events
     EvActivateBindingSet Slice1Events
     EvActivateBindingSet Slice2Events
+
+    EvActivateBindingSet NeuroendoscopySlice0Events
+    EvActivateBindingSet NeuroendoscopySlice1Events
+    EvActivateBindingSet NeuroendoscopySlice2Events
     
 #    EvActivateBindingSet 3DEvents
 #  puts "binding pushed"       
@@ -1965,8 +2042,49 @@ proc NeuroendoscopyCreateBindings {} {
 #   EvDeclareEventHandler EndoKeySelect3DEvents <KeyPress-t> { if { [SelectPick Neuroendoscopy(picker) %W %x %y] != 0 } \
     { eval NeuroendoscopyAddTargetFromWorldCoordinates [lindex $Select(xyz) 0] [lindex $Select(xyz) 1] [lindex $Select(xyz) 2] $Select(cellId) }}
     
+#  Slice View get coordinates
+    EvDeclareEventHandler NeuroendoscopySlicesEvents <1> \
+        {set xc %x; set yc %y; NeuroendoscopyProcessMouseEvent $xc $yc}
+
+    EvAddWidgetToBindingSet NeuroendoscopySlice0Events $Gui(fSl0Win) {NeuroendoscopySlicesEvents}
+    EvAddWidgetToBindingSet NeuroendoscopySlice1Events $Gui(fSl1Win) {NeuroendoscopySlicesEvents}
+    EvAddWidgetToBindingSet NeuroendoscopySlice2Events $Gui(fSl2Win) {NeuroendoscopySlicesEvents}    
+
+
+
 #   EvAddWidgetToBindingSet 3DEvents $Gui(fViewWin) {EndoKeySelect3DEvents}
 }
+
+
+proc NeuroendoscopyProcessMouseEvent {x y} {
+    global Locator Interactor Anno
+
+
+
+    # Which slice was picked?
+    set s $Interactor(s)
+    if {$s == ""} {
+        DevErrorWindow "No slice was picked."
+        return
+    }
+
+    # Get RAS coordinates
+    set R [Anno($s,cur1,mapper) GetInput]
+    set rl [split $R " "]
+    set R [lindex $rl 1]
+
+    set A [Anno($s,cur2,mapper) GetInput]
+    set al [split $A " "]
+    set A [lindex $al 1]
+
+    set S [Anno($s,cur3,mapper) GetInput]
+    set sl [split $S " "]
+    set S [lindex $sl 1]
+
+    # One point
+    set Locator(entry,slicerCoords) "$R   $A   $S"
+}
+
 
 #-------------------------------------------------------------------------------
 # .PROC NeuroendoscopyBuildGUI
@@ -2213,12 +2331,12 @@ proc NeuroendoscopyBuildGUI {} {
     set f $fRegistration
     
     frame $f.fTop -bg $Gui(backdrop) -relief sunken -bd 2
-    frame $f.fBot -bg $Gui(activeWorkspace) -height 300
+    frame $f.fBot -bg $Gui(activeWorkspace) -height 340
 
     pack $f.fTop -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
     pack $f.fBot -side top -pady $Gui(pad) -padx $Gui(pad) -fill both -expand yes
 
-    set PathMenu2 {STEP1 STEP2 STEP3 STEP4 STEP5 STEP6 STEP7 STEP8}
+    set PathMenu2 {ICP1 ICP2 ICP3 ICP4 LM1 LM2 LM3 LM4}
 
     
     #--------------------------------------------
@@ -2257,104 +2375,42 @@ proc NeuroendoscopyBuildGUI {} {
    }
 
    #press the first tab button and show the first tab
-   $f.0.rSTEP1 invoke
+   $f.0.rICP1 invoke
 
-    #-------------------------------------------
-    # Registration->Top frame 
-    #-------------------------------------------
-    set f $fRegistration.fBot.fSTEP1
-
-    
-    #-------------------------------------------
-    # Registration->Step1
-    #-------------------------------------------
-    
-    eval {label $f.c1StepLabel -text "1 STEP: General and Patient Specific Data"} $Gui(WLA)
-    pack $f.c1StepLabel -side top -pady 3 -padx 2
-
-   #---------------------------------------------------------------------
-    frame $f.fData-1   -bg $Gui(activeWorkspace) 
-    frame $f.fData-2   -bg $Gui(activeWorkspace)
-    frame $f.fData-3   -bg $Gui(activeWorkspace)
-    frame $f.fData-4   -bg $Gui(activeWorkspace)
-    frame $f.fData-5   -bg $Gui(activeWorkspace)
-    frame $f.fData-6   -bg $Gui(activeWorkspace)
-    frame $f.fData-7   -bg $Gui(activeWorkspace)
-
-
-    pack  $f.fData-1 $f.fData-2 $f.fData-3 $f.fData-4 $f.fData-5 $f.fData-6 $f.fData-7 -side top
-    
-    set f $fRegistration.fBot.fSTEP1.fData-1
-    eval {label $f.c1PaID -text "Patient ID"} $Gui(WLA)
-
-    eval {entry $f.c1ePaID -width 5 -textvariable View(PaID)} $Gui(WEA)
-    pack $f.c1PaID $f.c1ePaID -side left -padx 2
-
-    set f $fRegistration.fBot.fSTEP1.fData-2
-       eval {label $f.c1PaDateBirth -text "Patient's date of birth"} $Gui(WLA)
-    eval {entry $f.c1ePaDateBirth  -width 5 -textvariable View(PaDaBi)} $Gui(WEA)
-     pack $f.c1PaDateBirth $f.c1ePaDateBirth -side left -padx 2 -pady 2
-
-    set f $fRegistration.fBot.fSTEP1.fData-3
-    eval {label $f.c1PaLN -text "Patient's last name"} $Gui(WLA)
-    eval {entry $f.c1ePaLN  -width 5 -textvariable View(PaLN)} $Gui(WEA)
-    pack $f.c1PaLN $f.c1ePaLN -side left -padx 2 -pady 2
-
-    set f $fRegistration.fBot.fSTEP1.fData-4
-    eval {label $f.c1PaFN -text "Patient's first name"} $Gui(WLA)
-    eval {entry $f.c1ePaFN -width 5 -textvariable View(PaFN)} $Gui(WEA)
-    pack $f.c1PaFN $f.c1ePaFN -side left -expand yes -pady 3 -padx 2
-
-    set f $fRegistration.fBot.fSTEP1.fData-5
-    eval {label $f.c1PaSN -text "Surgeon's name"} $Gui(WLA)
-    eval {entry $f.c1ePaSN -width 5 -textvariable View(PaSN)} $Gui(WEA)
-    pack $f.c1PaSN $f.c1ePaSN -side left -expand yes -pady 3 -padx 2
-
-    set f $fRegistration.fBot.fSTEP1.fData-6
-    eval {label $f.c1PaRN -text "Operating Room number"} $Gui(WLA)
-    eval {entry $f.c1ePaRN -width 5 -textvariable View(PaRN)} $Gui(WEA)
-    pack $f.c1PaRN $f.c1ePaRN -side left -expand yes -pady 3 -padx 2
-    set f $fRegistration.fBot.fSTEP1.fData-7
-
-   
-    DevAddButton $f.bNext "->->NEXT->->" "NeuroendoscopySTEP1" 10
-    DevAddButton $f.bGenTestSet "Generate Test Set" "NeuroendoscopyGenerateTestCoordinateFile" 20
-
-
-    pack  $f.bNext $f.bGenTestSet -side left -pady 3 -padx 2
+  
     #-------------------------------------------
     # Registration->Step2
     #-------------------------------------------
     
-    set f $fRegistration.fBot.fSTEP2
+    set f $fRegistration.fBot.fICP1
     frame $f.fClipping -bg $Gui(activeWorkspace)
     pack $f.fClipping -side top -fill x -pady $Gui(pad) 
 
-    set f $fRegistration.fBot.fSTEP2.fClipping
-    eval {label $f.c1StepLabel -text "2 STEP: Calibration of device for point selection"} $Gui(WLA)
+    set f $fRegistration.fBot.fICP1.fClipping
+    eval {label $f.c1StepLabel -text "1 STEP: Calibration of device for point selection"} $Gui(WLA)
 
     #---------------------------------------------------------------------
     
-    DevAddButton $f.bNext "->->NEXT->->" "NeuroendoscopySTEP2" 10
-    DevAddButton $f.bCalib "(Re) - Start probe calibration" "NeuroendoscopySTEP2"  30
+    DevAddButton $f.bNext "->->NEXT->->" "NeuroendoscopyICP2" 10
+    DevAddButton $f.bCalib "(Re) - Start probe calibration" "NeuroendoscopyICP1"  30
 
     pack $f.c1StepLabel $f.bCalib $f.bNext -side top -pady 3 -padx 2
    
     #--------------------------------------------
     # Registration->Step3
     #--------------------------------------------
-    set f $fRegistration.fBot.fSTEP3
+    set f $fRegistration.fBot.fICP2
     frame $f.fData   -bg $Gui(activeWorkspace)
     pack  $f.fData -side top 
 
-    set f $fRegistration.fBot.fSTEP3.fData
+    set f $fRegistration.fBot.fICP2.fData
      
-    eval {label $f.c1StepLabel -text "3 STEP: Point selection by surgeon"} $Gui(WLA)
+    eval {label $f.c1StepLabel -text "2 STEP: Point selection by surgeon"} $Gui(WLA)
     pack $f.c1StepLabel -side top -pady 3 -padx 2
 
     #---------------------------------------------------------------------
     
-    DevAddButton $f.bNext "->->NEXT->->" "NeuroendoscopySTEP3" 10
+    DevAddButton $f.bNext "->->NEXT->->" "NeuroendoscopyICP2" 10
     
     eval {radiobutton $f.bNaviCon -text "Read Points from Tracking device" -width 25  -variable Neuroendoscopy(connect) -command "NeuroendoscopyNaviTrackConnect" } $Gui(WBA)
     #DevAddButton $f.bNaviCon "Connect to Navitrack" "NeuroendoscopyNaviTrackConnect" 10
@@ -2368,18 +2424,18 @@ proc NeuroendoscopyBuildGUI {} {
     #--------------------------------------------
 
 
-    set f $fRegistration.fBot.fSTEP4
+    set f $fRegistration.fBot.fICP3
     frame $f.fData   -bg $Gui(activeWorkspace)
     pack  $f.fData -side top 
     
-    set f $fRegistration.fBot.fSTEP4.fData
+    set f $fRegistration.fBot.fICP3.fData
      
-    eval {label $f.c1StepLabel -text "4 STEP: Coarse Registration"} $Gui(WLA)
+    eval {label $f.c1StepLabel -text "3 STEP: Coarse Registration"} $Gui(WLA)
     pack $f.c1StepLabel -side top -pady 3 -padx 2
 
     #---------------------------------------------------------------------
     
-    DevAddButton $f.bNext "->->NEXT->->" "NeuroendoscopySTEP4" 10
+    DevAddButton $f.bNext "->->NEXT->->" "NeuroendoscopyICP3" 10
     DevAddButton $f.bCalib "(Re) - Start coarse calibration" "NeuroendoscopyStartICP"  30
     DevAddButton $f.bShowRes "Show me the result!" "NeuroendoscopyShowICP" 30
     pack $f.bCalib $f.bShowRes $f.bNext -side top -pady 3 -padx 2
@@ -2389,86 +2445,174 @@ proc NeuroendoscopyBuildGUI {} {
     #--------------------------------------------
 
 
-     set f $fRegistration.fBot.fSTEP5
+     set f $fRegistration.fBot.fICP4
     frame $f.fData   -bg $Gui(activeWorkspace)
     pack  $f.fData -side top 
     
-    set f $fRegistration.fBot.fSTEP5.fData
+    set f $fRegistration.fBot.fICP4.fData
      
-    eval {label $f.c1StepLabel -text "5 STEP: Point acquisition"} $Gui(WLA)
+    eval {label $f.c1StepLabel -text "4 STEP: Point acquisition"} $Gui(WLA)
     pack $f.c1StepLabel -side top -pady 3 -padx 2
 
     #---------------------------------------------------------------------
     
-    DevAddButton $f.bNext "->->NEXT->->" "NeuroendoscopySTEP5" 10
+    #DevAddButton $f.bNext "->->NEXT->->" "NeuroendoscopySTEP5" 10
     
-    DevAddButton $f.bCalibstart "Start aquisition of fiducials" "NeuroendoscopySTEP5"  30
+    DevAddButton $f.bCalibstart "Start aquisition of fiducials" "NeuroendoscopyICP4"  30
     eval {checkbutton $f.bFootsw -width 7 \
                     -text "Footswitch" -variable Neuroendoscopy(footswitch) \
                     -indicatoron 0} $Gui(WCA)
                
-    DevAddButton $f.bCalibstop "Stop acquisition of fiducials" "NeuroendoscopySTEP5"  30
+    DevAddButton $f.bCalibstop "Stop acquisition of fiducials" "NeuroendoscopyICP4"  30
 
 
-    pack $f.bCalibstart  $f.bFootsw $f.bCalibstop $f.bNext -side top -pady 3 -padx 2
+    pack $f.bCalibstart  $f.bFootsw $f.bCalibstop  -side top -pady 3 -padx 2
     #--------------------------------------------
-    # Registration->Step6
+    # Registration->Landmark Step 1
     #--------------------------------------------
 
-    set f $fRegistration.fBot.fSTEP6
+    set f $fRegistration.fBot.fLM1
     frame $f.fData   -bg $Gui(activeWorkspace)
     pack  $f.fData -side top 
     
-    set f $fRegistration.fBot.fSTEP6.fData
-     
-    eval {label $f.c1StepLabel -text "6 STEP: Fine registration"} $Gui(WLA)
+    set f $fRegistration.fBot.fLM1.fData
+    
+    
+    #-------------------------------------------
+    # Server->Bot->OpenTracker frame
+    #-------------------------------------------
+    #set f $fServer.fBot.fOpenTracker
+
+    #--- create blt notebook
+    blt::tabset $f.tsNotebook -relief flat -borderwidth 0
+    pack $f.tsNotebook -side top
+
+    #--- notebook configure
+    $f.tsNotebook configure -width 250
+    $f.tsNotebook configure -height 800 
+    $f.tsNotebook configure -background $::Gui(activeWorkspace)
+    $f.tsNotebook configure -activebackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -selectbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -tabbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -highlightbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -highlightcolor $::Gui(activeWorkspace)
+    $f.tsNotebook configure -foreground black
+    $f.tsNotebook configure -activeforeground black
+    $f.tsNotebook configure -selectforeground black
+    $f.tsNotebook configure -tabforeground black
+    $f.tsNotebook configure -relief flat
+    $f.tsNotebook configure -tabrelief raised
+
+    #--- tab configure
+    set i 0
+    foreach t "Setup Registration" {
+        $f.tsNotebook insert $i $t
+        frame $f.tsNotebook.f$t -bg $Gui(activeWorkspace) -bd 2 
+        LocatorBuildGUIFor${t} $f.tsNotebook.f$t
+
+        $f.tsNotebook tab configure $t -window $f.tsNotebook.f$t 
+        $f.tsNotebook tab configure $t -activebackground $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -selectbackground $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -background $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -fill both -padx 2 -pady 1 
+
+        incr i
+    }
+
+    #--------------------------------------------------------------------------------------
+ 
+    eval {label $f.c1StepLabel -text "1 STEP: ProbeCalibration"} $Gui(WLA)
     pack $f.c1StepLabel -side top -pady 3 -padx 2
 
     #---------------------------------------------------------------------
     
-    DevAddButton $f.bNext "->->NEXT->->" "NeuroendoscopySTEP6" 10
-    DevAddButton $f.bCalib "Start registration" "NeuroendoscopySTEP6"  30
+    DevAddButton $f.bNext "->->NEXT->->" "NeuroendoscopyLM1" 10
+    DevAddButton $f.bCalib "Start registration" "NeuroendoscopyLM1"  30
 
     pack $f.bCalib $f.bNext -side top -pady 3 -padx 2
 
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     #-------------------------------------------
-    # Registration->Step7
+    # Registration->Landmark Step 2
     #-------------------------------------------
-    set f $fRegistration.fBot.fSTEP7
+    set f $fRegistration.fBot.fLM2
     frame $f.fData   -bg $Gui(activeWorkspace)
     pack  $f.fData -side top 
     
-    set f $fRegistration.fBot.fSTEP7.fData
+    set f $fRegistration.fBot.fLM2.fData
      
-    eval {label $f.c1StepLabel -text "7 STEP: Tracker coil Calibration"} $Gui(WLA)
+    eval {label $f.c1StepLabel -text "2 STEP: Tracker coil Calibration"} $Gui(WLA)
     pack $f.c1StepLabel -side top -pady 3 -padx 2
 
     #---------------------------------------------------------------------
     
-    DevAddButton $f.bNext "->->NEXT->->" "NeuroendoscopySTEP7" 10
-    DevAddButton $f.bCalib "(RE-)START coil calibration" "NeuroendoscopySTEP7"  30
+    DevAddButton $f.bNext "->->NEXT->->" "NeuroendoscopyLM2" 10
+    DevAddButton $f.bCalib "(RE-)START coil calibration" "NeuroendoscopyLM2"  30
    
     pack $f.bCalib $f.bNext -side top -pady 3 -padx 2
 
     #-------------------------------------------
-    # Registration->Step8
+    # Registration->Landmark Step 3
     #-------------------------------------------
-    set f $fRegistration.fBot.fSTEP8
+    set f $fRegistration.fBot.fLM3
     frame $f.fData   -bg $Gui(activeWorkspace)
     pack  $f.fData -side top 
     
-    set f $fRegistration.fBot.fSTEP8.fData
+    set f $fRegistration.fBot.fLM3.fData
      
-    eval {label $f.c1StepLabel -text "8 STEP: All finished - Tracking started"} $Gui(WLA)
+    eval {label $f.c1StepLabel -text "3 STEP: All finished - Tracking started"} $Gui(WLA)
     pack $f.c1StepLabel -side top -pady 3 -padx 2
 
     #---------------------------------------------------------------------
     
-    DevAddButton $f.bNext "->->NEXT->->" "NeuroendoscopySTEP8" 10
+    DevAddButton $f.bNext "->->NEXT->->" "NeuroendoscopyLM3" 10
 
     DevAddButton $f.bCalib "Footswitch" "NeuroendoscopyStartTracking"  30
 
     pack $f.bCalib $f.bNext -side top -pady 3 -padx 2
+
+
+
+    #-------------------------------------------
+    # Registration->Landmark Step 4
+    #-------------------------------------------
+    set f $fRegistration.fBot.fLM4
+    frame $f.fData   -bg $Gui(activeWorkspace)
+    pack  $f.fData -side top 
+    
+    set f $fRegistration.fBot.fLM4.fData
+     
+    eval {label $f.c1StepLabel -text "4 STEP: All finished - Tracking started"} $Gui(WLA)
+    pack $f.c1StepLabel -side top -pady 3 -padx 2
+
+    #---------------------------------------------------------------------
+    
+    
+
+    DevAddButton $f.bCalib "Footswitch" "NeuroendoscopyStartTracking"  30
+
+    pack $f.bCalib -side top -pady 3 -padx 2
+
 
     #----------------------------------------------------------------------
     ##########################################################################
@@ -2688,11 +2832,23 @@ Rotate the axis by pressing the right mouse button and moving the mouse."
     frame $f.fToggle -bg $Gui(activeWorkspace)
     frame $f.fVis    -bg $Gui(activeWorkspace)
     
-    pack $f.fAngle $f.fToggle $f.fVis  -side top -padx 1 -pady 1
+
+    
+    pack $f.fAngle $f.fTitle $f.fToggle  $f.fVis  -side top -padx 1 -pady 1
     
    
+    
+    set f $fCamera.fBot.fShape.fTop.fTitle
+    NeuroendoscopyCreateCheckButton $f.cShowAngle Neuroendoscopy(cam,showAngle) "Show Lens Angle"  "NeuroendoscopySetCameraViewAngle; Render3D"
+    pack $f.cShowAngle
 
     set f $fCamera.fBot.fShape.fTop.fToggle
+    
+    NeuroendoscopyCreateAdvancedGUI $f cam  shape visible noColor size
+    
+    
+   
+    
     eval {label $f.lV -text Visibility} $Gui(WLA)
     eval {label $f.lO -text Color} $Gui(WLA)
         eval {label $f.lS -text "  Size"} $Gui(WLA)
@@ -2702,20 +2858,28 @@ Rotate the axis by pressing the right mouse button and moving the mouse."
     # Done in NeuroendoscopyCreateAdvancedGUI
 
 
+
     #NeuroendoscopyCreateAdvancedGUI $f cam shape visible noColor size
-    NeuroendoscopyCreateAdvancedGUI $f cam  shape visible   noColor size
+    
     NeuroendoscopyCreateAdvancedGUI $f Lens all notvisible color
+    NeuroendoscopyCreateAdvancedGUI $f Lens2 all notvisible color
     NeuroendoscopyCreateAdvancedGUI $f Box  all notvisible color
+    NeuroendoscopyCreateAdvancedGUI $f Box2 all notvisible color
     NeuroendoscopyCreateAdvancedGUI $f fp   all visible    color
     NeuroendoscopyCreateAdvancedGUI $f gyro all   visible   noColor size
     
     set f $fCamera.fBot.fShape.fTop.fAngle
     NeuroendoscopyCreateLabelAndSlider $f l2 2 "Lens Angle" "Angle" horizontal 0 360 110 Neuroendoscopy(cam,AngleStr) "NeuroendoscopySetCameraViewAngle" 5 90
+
+
+
     #-------------------------------------------
     # Camera->Shape->Mid->Vis frame
     #-------------------------------------------
     
     set f $fCamera.fBot.fShape.fTop.fVis
+
+
     
     NeuroendoscopyCreateCheckButton $f.cmodels Neuroendoscopy(ModelsVisibilityInside) "Show Inside Models"  "NeuroendoscopySetModelsVisibilityInside"
 
@@ -2724,7 +2888,7 @@ Rotate the axis by pressing the right mouse button and moving the mouse."
 
     # reinstating the show path toggle button
     NeuroendoscopyCreateCheckButton $f.cPath Neuroendoscopy(path,showPath) "Show Path" "NeuroendoscopyShowPath; Render3D"
-    pack $f.cPath
+    pack $f.cPath 
 
       
     #-------------------------------------------
@@ -2744,16 +2908,10 @@ Rotate the axis by pressing the right mouse button and moving the mouse."
     frame $f.fProbeActivation  -bg $Gui(activeWorkspace)
     frame $f.fSensorActivation  -bg $Gui(activeWorkspace)
     frame $f.fRuler -bg $Gui(activeWorkspace)
-    frame $f.fxcoord -bg $Gui(activeWorkspace)
-    frame $f.fycoord -bg $Gui(activeWorkspace)
-    frame $f.fzcoord -bg $Gui(activeWorkspace)
-    frame $f.frotate -bg $Gui(activeWorkspace)
-    frame $f.fxpic -bg $Gui(activeWorkspace)
-    frame $f.fypic -bg $Gui(activeWorkspace)
-    frame $f.fzpic -bg $Gui(activeWorkspace)
+    
     frame $f.fView -bg $Gui(activeWorkspace)
     
-    pack  $f.fProbeActivation $f.fSensorActivation $f.fRuler $f.fxcoord $f.fycoord $f.fzcoord $f.frotate $f.fxpic $f.fypic $f.fzpic $f.fView -side top 
+    pack  $f.fProbeActivation $f.fSensorActivation $f.fRuler $f.fView -side top 
 
 #-------------------------------------------
     # Camera->Probe->Top frame ->ProbeActivation
@@ -2761,14 +2919,14 @@ Rotate the axis by pressing the right mouse button and moving the mouse."
 
      set f $fCamera.fBot.fProbe.fTop.fProbeActivation
      eval {checkbutton $f.cLocator \
-        -text "Show Locator" -variable Neuroendoscopy(visibility) -width 16 \
+        -text "Show Sensor" -variable Neuroendoscopy(visibility) -width 16 \
         -indicatoron 0 -command "NeuroendoscopySetLocator; LocatorSetVisibility; Render3D"} $Gui(WCA)
      eval {checkbutton $f.cRuler \
         -text "Show Ruler" -variable Neuroendoscopy(rulerVisibility) -width 16 \
         -indicatoron 0 -command "NeuroendoscopySetRuler; Render3D"} $Gui(WCA)
      eval {checkbutton $f.cSensor \
-        -text "Show Sensor" -variable Neuroendoscopy(sensorVisibility) -width 16 \
-        -indicatoron 0 -command "NeuroendoscopySetSensor; Render3D"} $Gui(WCA)
+        -text "Show Probe" -variable Neuroendoscopy(probeVisibility) -width 16 \
+        -indicatoron 0 -command "NeuroendoscopySetProbe; Render3D"} $Gui(WCA)
 
      
      #only for testing!!!
@@ -2778,17 +2936,14 @@ Rotate the axis by pressing the right mouse button and moving the mouse."
      #   
 
      #}
-     eval {checkbutton $f.cTexture \
-        -text "Add Texture" -variable Neuroendoscopy(textureVisibility) -width 16 \
-        -indicatoron 0 -command "NeuroendoscopyTextureInits; Render3D"} $Gui(WCA)
+    
 
-
-     pack  $f.cLocator $f.cRuler $f.cSensor $f.cTexture -side top
+     pack  $f.cLocator $f.cRuler $f.cSensor -side top
      
      set f $fCamera.fBot.fProbe.fTop.fView
      eval {radiobutton $f.ffreeview -variable Neuroendoscopy(cam,probe) -text "Free view" -value "freeview" -command "NeuroendoscopySetFreeView; Render3D"} $Gui(WBA)
      eval {radiobutton $f.fprobeview -variable Neuroendoscopy(cam,probe) -text "Probe locked view" -value "probeview" -command "NeuroendoscopySetProbeView; Render3D"} $Gui(WBA)
-     eval {radiobutton $f.fsensorview -variable Neuroendoscopy(cam,probe) -text "Sensor locked view" -value "sensorview" -command "NeuroendoscopySetSensorView; Render3D"} $Gui(WBA)
+     eval {radiobutton $f.fsensorview -variable Neuroendoscopy(cam,probe) -text "Sensor locked view" -value "sensorview" -command "NeuroendoscopySetProbeView; Render3D"} $Gui(WBA)
       
     pack  $f.ffreeview $f.fprobeview $f.fsensorview -side top
     
@@ -2796,21 +2951,7 @@ Rotate the axis by pressing the right mouse button and moving the mouse."
     set calcLength [expr $::Locator(guideSteps) * 2]
     set f $fCamera.fBot.fProbe.fTop.fRuler
     NeuroendoscopyCreateLabelAndSlider $f lguidelength 3 "ruler (mm)" "glength" horizontal 0 $calcLength 130 Neuroendoscopy(guide,length) "NeuroendoscopySetRulerLength;  Render3D" 5 1
-    set f $fCamera.fBot.fProbe.fTop.fxcoord
-    NeuroendoscopyCreateLabelAndSlider $f lxcoord 0 "rotateX" "xcoord" horizontal -400 400 110 Neuroendoscopy(texture,xcoordi) "NeuroendoscopyTextureInits; Render3D" 5 0
-    set f $fCamera.fBot.fProbe.fTop.fycoord
-    NeuroendoscopyCreateLabelAndSlider $f ly 0 "rotateY" "ycoord" horizontal -400 400 110 Neuroendoscopy(texture,ycoordi) "NeuroendoscopyTextureInits; Render3D" 5 0
-    set f $fCamera.fBot.fProbe.fTop.fzcoord
-    NeuroendoscopyCreateLabelAndSlider $f langle 0 "angle" "angle" horizontal 0 90 110 Neuroendoscopy(texture,angle) "NeuroendoscopyTextureInits; Render3D" 5 25
-    
-set f $fCamera.fBot.fProbe.fTop.frotate
-    NeuroendoscopyCreateLabelAndSlider $f lr 0 "rotateZ" "rotate" horizontal -400 400 110 Neuroendoscopy(texture,rotate) "NeuroendoscopyTextureInits; Render3D" 5 0
-set f $fCamera.fBot.fProbe.fTop.fxpic
-    NeuroendoscopyCreateLabelAndSlider $f lxpic 3 "xpic" "xpic" horizontal -1 1 130 Neuroendoscopy(texture,xpic) "NeuroendoscopyTextureInits; Render3D" 5 1
-set f $fCamera.fBot.fProbe.fTop.fypic
-    NeuroendoscopyCreateLabelAndSlider $f lypic 3 "ypic" "ypic" horizontal -1 1 130 Neuroendoscopy(texture,ypic) "NeuroendoscopyTextureInits; Render3D" 5 1
-set f $fCamera.fBot.fProbe.fTop.fzpic
-    NeuroendoscopyCreateLabelAndSlider $f lzpic 3 "zpic" "zpic" horizontal -1 1 130 Neuroendoscopy(texture,zpic) "NeuroendoscopyTextureInits; Render3D" 5 1
+   
     #-------------------------------------------
     # Camera->Color->Top frame 
     #-------------------------------------------
@@ -2832,19 +2973,86 @@ set f $fCamera.fBot.fProbe.fTop.fzpic
     set f $fCamera.fBot.fCapture.fTop.fVis
     eval {checkbutton $f.cextWindow \
         -text "Open extra Window"  -width 16 \
-        -indicatoron 0 -command "NeuroendoscopyMakeCaptureWindow;"} $Gui(WCA)
-     
+        -indicatoron 0 -variable Neuroendoscopy(captWindow) -command "NeuroendoscopyMakeCaptureWindow;"} $Gui(WCA)
+    eval {checkbutton $f.cextWindow2 \
+        -text "Open extra Window CXX"  -width 16 \
+        -indicatoron 0 -command "NeuroendoscopyMakeCaptureWindow2;"} $Gui(WCA)
     eval {checkbutton $f.cgenSTL \
         -text "Generate a STL File"  -width 16 \
         -indicatoron 0 -command "NeuroendoscopyGenSTL;"} $Gui(WCA)
+
+    button $f.cextSnapShot -text "SnapShot" -font fixed -bg white \
+           -command "set Neuroendoscopy(SnapShot) 1" -width 8 
+
+    pack  $f.cextWindow $f.cextWindow2 $f.cgenSTL $f.cextSnapShot -side top
+
+
+    #--------------------------------------------------
+    # Texture Frame
+    #--------------------------------------------------
+
+    set f $fCamera.fBot.fTexture
     
-    pack  $f.cextWindow $f.cgenSTL -side top
+    frame $f.fTop -bg $Gui(activeWorkspace)
 
+    pack $f.fTop -pady $Gui(pad) -padx $Gui(pad) -side top  -expand yes -fill both
+   
+    #-------------------------------------------
+    # Camera->Probe->Mid frame 
+    #-------------------------------------------
+    set f $fCamera.fBot.fTexture.fTop
+    
+    frame $f.fTextureActivation  -bg $Gui(activeWorkspace)
+    frame $f.fxcoord -bg $Gui(activeWorkspace)
+    frame $f.fycoord -bg $Gui(activeWorkspace)
+    frame $f.fzcoord -bg $Gui(activeWorkspace)
+    frame $f.frotate -bg $Gui(activeWorkspace)
+    frame $f.fxpic -bg $Gui(activeWorkspace)
+    frame $f.fypic -bg $Gui(activeWorkspace)
+    frame $f.fzpic -bg $Gui(activeWorkspace)
+    
+    
 
-#set Neuroendoscopy(actors) "ruler sensormain senstortip rulerAxis"
+    pack  $f.fTextureActivation $f.fxcoord $f.fycoord $f.fzcoord $f.frotate $f.fxpic $f.fypic $f.fzpic -side top 
+    
+    #-------------------------------------------------
+    
+    set f $fCamera.fBot.fTexture.fTop.fTextureActivation
+    set m $Model(activeID)
+    
+     eval {label $f.lCurrModel -text "no Model selected" } $Gui(WLA) 
+    eval {checkbutton $f.cTexture \
+        -text "Add Texture" -variable Neuroendoscopy(textureVisibility) -width 16 \
+        -indicatoron 0 -command "NeuroendoscopyTextureInits; Render3D"} $Gui(WCA)
+    
+    #$Model($head,name)
+    pack $f.cTexture $f.lCurrModel -side top
+    
+    set f $fCamera.fBot.fTexture.fTop.fxcoord
+    NeuroendoscopyCreateLabelAndSlider $f lxcoord 0 "rotateX" "xcoord" horizontal -400 400 110 Neuroendoscopy(texture,xcoordi) "NeuroendoscopyTextureInits; Render3D" 5 0
+    set f $fCamera.fBot.fTexture.fTop.fycoord
+    NeuroendoscopyCreateLabelAndSlider $f ly 0 "rotateY" "ycoord" horizontal -400 400 110 Neuroendoscopy(texture,ycoordi) "NeuroendoscopyTextureInits; Render3D" 5 0
+    set f $fCamera.fBot.fTexture.fTop.fzcoord
+    NeuroendoscopyCreateLabelAndSlider $f langle 0 "angle" "angle" horizontal 0 90 110 Neuroendoscopy(texture,angle) "NeuroendoscopyTextureInits; Render3D" 5 25
+    
+    set f $fCamera.fBot.fTexture.fTop.frotate
+    NeuroendoscopyCreateLabelAndSlider $f lr 0 "rotateZ" "rotate" horizontal -400 400 110 Neuroendoscopy(texture,rotate) "NeuroendoscopyTextureInits; Render3D" 5 0
+    set f $fCamera.fBot.fTexture.fTop.fxpic
+    NeuroendoscopyCreateLabelAndSlider $f lxpic 3 "xpic" "xpic" horizontal -1 1 130 Neuroendoscopy(texture,xpic) "NeuroendoscopyTextureInits; Render3D" 5 1
+    set f $fCamera.fBot.fTexture.fTop.fypic
+    NeuroendoscopyCreateLabelAndSlider $f lypic 3 "ypic" "ypic" horizontal -1 1 130 Neuroendoscopy(texture,ypic) "NeuroendoscopyTextureInits; Render3D" 5 1
+    set f $fCamera.fBot.fTexture.fTop.fzpic
+    NeuroendoscopyCreateLabelAndSlider $f lzpic 3 "zpic" "zpic" horizontal -1 1 130 Neuroendoscopy(texture,zpic) "NeuroendoscopyTextureInits; Render3D" 5 1
 
-set actor ruler 
- MakeVTKObject Cylinder ${actor}
+   #========================================================
+   
+   #set Neuroendoscopy(actors) "ruler sensormain senstortip rulerAxis"
+
+   #-----------------------------------------
+   # Actor Ruler
+   #-----------------------------------------
+   set actor ruler 
+   MakeVTKObject Cylinder ${actor}
             ${actor}Source SetRadius 1.1 
             ${actor}Source SetHeight 10.
             eval [${actor}Actor GetProperty] SetColor 1 0 0
@@ -2969,10 +3177,21 @@ Render3D
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
+proc NeuroendoscopyMakeCaptureWindow2 {} {
+global Neuroendoscopy MultiVolumeReader
+
+  vtkNeuroendoscopy cap
+  cap openXWindow
+
+
+}
+
+
+
 proc NeuroendoscopyMakeCaptureWindow {} {
     global Neuroendoscopy MultiVolumeReader
 
-
+if {$Neuroendoscopy(captWindow) == 1}  {
 
     set plotGeometry "+335+200"
     set plotHeight 250 
@@ -2983,47 +3202,251 @@ proc NeuroendoscopyMakeCaptureWindow {} {
     set plotTitle "Capture Window"
     # Plot the time course
 
-        set w .tcren
-        toplevel $w -bg white
-        wm title $w $plotTitle 
-        wm minsize $w $plotWidth $plotHeight
-        wm geometry $w $plotGeometry 
+  #vtkNeuroendoscopy cap
+  #set pic [cap getCurrentPic2]
 
-        blt::graph $w.graph -bg white -width $graphWidth 
-        pack $w.graph -side top  
+#vtkVideoSource video
+#vtkV4L2VideoSource video
+#video SetFrameBufferSize 20
+#video Grab
+#video Play
+vtkCaptureFrames Neuroendoscopy(capFrames)
 
-        $w.graph legend configure -position bottom -relief raised \
-            -font fixed -fg black -bg white 
-        $w.graph axis configure y -title "Intensity"
-        # $w.graph grid on
-        # $w.graph grid configure -color black
+Neuroendoscopy(capFrames) Initialize
+#set pic [df getNextFrame]
+#puts $pic
 
-        frame $w.fButtons -bg white
-        pack $w.fButtons -side top
-        button $w.fButtons.bSave -text "Save" -font fixed -bg white \
-            -command "" -width 8 
-        button $w.fButtons.bClose -text "Close" -font fixed -bg white \
-            -command "NeuroendoscopyCloseCaptureWindow" -width 8 
-        pack $w.fButtons.bSave $w.fButtons.bClose -side left -pady 5 -padx 1 
 
-        wm protocol $w WM_DELETE_WINDOW "NeuroendoscopyCloseCaptureWindow" 
 
-        set Neuroendoscopy(timeCourseToplevel) $w
-        set Neuroendoscopy(timeCourseGraph) $w.graph
+  
+  #vtkImageImport reader
+  #reader SetImportVoidPointer [df getNextFrame]
+  #vtkPNMReader2 reader
+  puts "set the reader"
+  
+  #reader SetFileName "/tmp/myfile.ppm"
+  #reader SetDataArray $pic
+  puts "set the array"
+
+
+#vtkImageShiftScale shiftScale
+#  shiftScale SetInput [df getNextFrame]
+#  shiftScale SetShift 0
+#  shiftScale SetScale 0.07
+#  shiftScale SetOutputScalarTypeToUnsignedChar
+
+#df startGrabbing
+
+#set pic [Neuroendoscopy(capFrames) startGrabbing]
+#puts $pic
+
+vtkImageDataStreamer Neuroendoscopy(imageStreamer)
+Neuroendoscopy(imageStreamer) SetInput [Neuroendoscopy(capFrames) getNextFrame]
+#Neuroendoscopy(imageStreamer) SetInput [Neuroendoscopy(capFrames) startGrabbing]
+#imageStreamer SetInput [shiftScale GetOutput]
+Neuroendoscopy(imageStreamer) SetNumberOfStreamDivisions 20
+# make sure we get the correct translator.
+Neuroendoscopy(imageStreamer) UpdateInformation
+#[Neuroendoscopy(imageStreamer) GetExtentTranslator] SetSplitModeToBlock
+#[Neuroendoscopy(imageStreamer) GetExtentTranslator] SetWholeExtent 0 639 0 479 0 0
+
+
+vtkImageActor Neuroendoscopy(ImageActor)
+  Neuroendoscopy(ImageActor) SetInput [Neuroendoscopy(capFrames) getNextFrame]
+  Neuroendoscopy(ImageActor) SetDisplayExtent 0 639 0 479 0 0
+  Neuroendoscopy(ImageActor) InterpolateOff
+
+
+#  vtkImageImport importer 
+#  importer SetWholeExtent 0 640 0 480 0 0;
+#  importer SetDataExtentToWholeExtent
+#  importer SetDataScalarTypeToShort
+#  importer SetImportVoidPointer $pic
+
+
+#  vtkImageViewer viewer 
+#  viewer SetInputConnection [importer GetOutputPort]
+#  viewer SetZSlice 45
+#  viewer SetColorWindow 2000
+#  viewer SetColorLevel 1000
+
+#  viewer Render
+
+# Create the RenderWindow, Renderer and both Actors
+vtkRenderer ren1
+#ren1 ResetCamera 0 640 0 480 0 0
+#vtkCamera camera
+#[ren1 GetActiveCamera] SetFocalPoint 0 0 0
+#camera SetPosition 0 0 0 
+
+vtkRenderWindow renWin
+    renWin AddRenderer ren1
+#vtkRenderWindowInteractor iren
+#    iren SetRenderWindow renWin
+
+#vtkInteractorStyleImage interactor
+#  iren SetInteractorStyle interactor
+#  interactor AddObserver LeftButtonPressEvent {StartZoom}
+#  interactor AddObserver MouseMoveEvent {MouseMove}
+#  interactor AddObserver LeftButtonReleaseEvent {EndZoom}
+
+# Add the actors to the renderer, set the background and size
+ren1 AddActor Neuroendoscopy(ImageActor)
+ren1 SetBackground 0.7 0.2 0.4
+renWin SetSize 640 480
+#renWin FullScreenOn
+
+# render the image
+#iren AddObserver UserEvent {wm deiconify .vtkInteract}
+renWin Render
+
+
+NeuroendoscopyCaptureLoop
+
+
+}
+
+
+#vtkImageMandelbrotSource mandelbrot1
+#  mandelbrot1 SetMaximumNumberOfIterations [expr int($MAX_ITERATIONS_1)]
+#  mandelbrot1 SetWholeExtent [expr -$XRAD] [expr $XRAD-1] \
+#                             [expr -$YRAD] [expr $YRAD-1] \
+#                             0 0
+
+#  set sample [expr 1.3 / $XRAD]
+#  mandelbrot1 SetSampleCX $sample $sample $sample $sample 
+#  mandelbrot1 SetOriginCX -0.72 0.22  0.0 0.0
+#  mandelbrot1 SetProjectionAxes 0 1 2
+
+#vtkLookupTable table1
+#  table1 SetTableRange 0 $RANGE
+#  table1 SetNumberOfColors $RANGE
+#  table1 Build
+#  table1 SetTableValue [expr $RANGE - 1]  0.0 0.0 0.0 0.0
+
+#vtkImageMapToColors map1
+#  map1 SetInputConnection [mandelbrot1 GetOutputPort]
+#  map1 SetOutputFormatToRGB
+#  map1 SetLookupTable table1
+
+#vtkImageViewer viewer
+#  viewer SetInputConnection [map1 GetOutputPort]
+#  viewer SetColorWindow 255.0
+#  viewer SetColorLevel 127.5
+#  [viewer GetActor2D] SetPosition $XRAD $YRAD
+
+
+
+#wm withdraw
+#set top [toplevel .top] 
+#wm protocol .top WM_DELETE_WINDOW ::vtk::cb_exit
+#wm title .top "Mandelbrot Viewer"
+
+
+
+
+#        set Neuroendoscopy(w) .tcren
+#        toplevel $Neuroendoscopy(w) -bg white
+#        wm title $Neuroendoscopy(w) $plotTitle 
+#        wm minsize $Neuroendoscopy(w) 640 480
+#        wm geometry $Neuroendoscopy(w) $plotGeometry 
+
+
+
+#        blt::graph $w.graph -bg white -width $graphWidth 
+#        pack $w.graph -side top  
+
+#        $w.graph legend configure -position bottom -relief raised \
+#            -font fixed -fg black -bg white 
+#        $w.graph axis configure y -title "Intensity"
+#        # $w.graph grid on
+#        # $w.graph grid configure -color black
+
+#puts $pic
+
+
+#set fdata [read [open "testpic.gif"]]
+#label .l1 -image [image create photo -format gif -data $fdata]
+#pack .l1
+
+
+
+#         label $Neuroendoscopy(w).labelpic -image [image create photo -file "/tmp/myfile.ppm"]
+
+
+#label $w.labelpic -image [image create photo -format gif  -data $fdata]
+
+
+
+#        frame $Neuroendoscopy(w).fButtons -bg white
+#        pack $Neuroendoscopy(w).fButtons -side top
+#        button $Neuroendoscopy(w).fButtons.bSave -text "Save" -font fixed -bg white \
+#            -command "" -width 8 
+#        button $Neuroendoscopy(w).fButtons.bClose -text "Close" -font fixed -bg white \
+#            -command "NeuroendoscopyCloseCaptureWindow" -width 8 
+#        pack $Neuroendoscopy(w).fButtons.bSave $Neuroendoscopy(w).fButtons.bClose  $Neuroendoscopy(w).labelpic -side left -pady 5 -padx 1 
+
+
+
+
+
+#NeuroendoscopyCaptureLoop
+
+#        wm protocol $w WM_DELETE_WINDOW "NeuroendoscopyCloseCaptureWindow" 
+
+#        set Neuroendoscopy(timeCourseToplevel) $w
+#        set Neuroendoscopy(timeCourseGraph) $w.graph
  
 
-   
 }
+
+proc NeuroendoscopyCaptureLoop {} {
+global Neuroendoscopy
+if {$Neuroendoscopy(captWindow) == 1} {
+
+set pic [Neuroendoscopy(capFrames) getNextFrame]
+Neuroendoscopy(ImageActor) SetInput $pic
+#Neuroendoscopy(ImageActor) Update
+  if {$Neuroendoscopy(SnapShot) == 1} {
+    puts "make new picture"
+
+    set Neuroendoscopy(SnapShot) 0
+  }
+renWin Render
+update
+
+       after 50 NeuroendoscopyCaptureLoop
+
+} else {
+  
+  ren1 Delete
+  renWin Delete
+  Neuroendoscopy(ImageActor) Delete
+  Neuroendoscopy(capFrames) Delete
+  Neuroendoscopy(imageStreamer) Delete
+}
+
+}  
+
+proc NeuroendoscopyTakeSnapshot {} {
+global Neuroendoscopy
+
+Neuroendoscopy(capFrames) getNextFrame
+
+
+
+}  
+
 proc NeuroendoscopyCloseCaptureWindow {} {
     global Neuroendoscopy
 
-    destroy $Neuroendoscopy(timeCourseGraph)
-    unset -nocomplain Neuroendoscopy(timeCourseGraph)
+    #destroy $Neuroendoscopy(timeCourseGraph)
+   # unset -nocomplain Neuroendoscopy(timeCourseGraph)
    # unset -nocomplain Neuroendoscopy(signalCurve)]
    # unset -nocomplain Neuroendoscopy(baselineCurve)]
 
-    destroy $Neuroendoscopy(timeCourseToplevel)
-    unset Neuroendoscopy(timeCourseToplevel)
+    destroy $Neuroendoscopy(w)
+    unset Neuroendoscopy(w)
 }
 
 proc NeuroendoscopyGenSTL {} {
@@ -3531,7 +3954,7 @@ global Neuroendoscopy Locator View tip tipActor
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc NeuroendoscopySetSensorView {} {
+proc NeuroendoscopySetProbeView {} {
 global Neuroendoscopy Locator
    global Neuroendoscopy Locator View
     
@@ -3597,7 +4020,7 @@ global Neuroendoscopy Locator
 
     update
     if {$Neuroendoscopy(cam,probe) == "sensorview"} {
-       after $Neuroendoscopy(cam,polling) NeuroendoscopySetSensorView
+       after $Neuroendoscopy(cam,polling) NeuroendoscopySetProbeView
     }
 }
 
@@ -3654,11 +4077,11 @@ global Neuroendoscopy Locator
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc NeuroendoscopySetSensor {} {
+proc NeuroendoscopySetProbe {} {
     global Neuroendoscopy Locator
    # set Locator(guideVisibility) $Neuroendoscopy(rulerVisibility)
 
-    if {$Neuroendoscopy(sensorVisibility) == 1 } {
+    if {$Neuroendoscopy(probeVisibility) == 1 } {
       eval [sensortipActor GetProperty] SetColor 1 0 0
       eval [sensormainActor GetProperty] SetColor 1 1 0
       sensortipActor SetVisibility 1
@@ -3730,7 +4153,7 @@ proc ModelsSetPropertyType {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc NeuroendoscopySTEP1 {} {
+proc NeuroendoscopyICP1 {} {
 global Module  
 set fRegistration $Module(Neuroendoscopy,fRegistration)
 set f $fRegistration.fTop 
@@ -3743,7 +4166,7 @@ set f $fRegistration.fTop
 #ver Delete
 
 
-$f.0.rSTEP2 invoke
+$f.0.rICP2 invoke
 
 
 }
@@ -3753,11 +4176,11 @@ $f.0.rSTEP2 invoke
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc NeuroendoscopySTEP2 {} {
+proc NeuroendoscopyICP2 {} {
 global Module  
 set fRegistration $Module(Neuroendoscopy,fRegistration)
 set f $fRegistration.fTop
- $f.0.rSTEP3 invoke
+ $f.0.rICP3 invoke
 }
 #-------------------------------------------------------------------------------
 # .PROC EndoscopyNEWCount
@@ -3765,11 +4188,11 @@ set f $fRegistration.fTop
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc NeuroendoscopySTEP3 {} {
+proc NeuroendoscopyICP3 {} {
 global Module  
 set fRegistration $Module(Neuroendoscopy,fRegistration)
 set f $fRegistration.fTop
- $f.0.rSTEP4 invoke
+ $f.0.rICP4 invoke
 }
 #-------------------------------------------------------------------------------
 # .PROC EndoscopyNEWCount
@@ -3777,11 +4200,11 @@ set f $fRegistration.fTop
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc NeuroendoscopySTEP4 {} {
+proc NeuroendoscopyICP4 {} {
 global Module 
 set fRegistration $Module(Neuroendoscopy,fRegistration)
 set f $fRegistration.fTop
- $f.1.rSTEP5 invoke
+ #$f.1.rSTEP5 invoke
 
 }
 #-------------------------------------------------------------------------------
@@ -3790,11 +4213,11 @@ set f $fRegistration.fTop
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc NeuroendoscopySTEP5 {} {
+proc NeuroendoscopyLM1 {} {
 global Module  
 set fRegistration $Module(Neuroendoscopy,fRegistration)
 set f $fRegistration.fTop
- $f.1.rSTEP6 invoke
+ #$f.1.rSTEP6 invoke
 
 }
 
@@ -3804,25 +4227,25 @@ set f $fRegistration.fTop
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc NeuroendoscopySTEP6 {} {
+proc NeuroendoscopyLM2 {} {
 global Module 
 set fRegistration $Module(Neuroendoscopy,fRegistration)
 set f $fRegistration.fTop
- $f.1.rSTEP7 invoke
+ #$f.1.rSTEP7 invoke
 }
 
 
-proc NeuroendoscopySTEP7 {} {
+proc NeuroendoscopyLM3 {} {
 global Module 
 set fRegistration $Module(Neuroendoscopy,fRegistration)
 set f $fRegistration.fTop
- $f.1.rSTEP8 invoke
+ #$f.1.rSTEP8 invoke
 }
-proc NeuroendoscopySTEP8 {} {
+proc NeuroendoscopyLM4 {} {
 global Module  
 set fRegistration $Module(Neuroendoscopy,fRegistration)
 set f $fRegistration.fTop
- $f.1.rSTEP8 invoke
+ #$f.1.rSTEP8 invoke
 }
 
 #-------------------------------------------------------------------------------
@@ -4638,6 +5061,16 @@ proc NeuroendoscopySetCameraViewAngle {} {
 
     set Neuroendoscopy(cam,viewAngle) $Neuroendoscopy(cam,AngleStr)
     $Neuroendoscopy(activeCam) SetViewAngle $Neuroendoscopy(cam,viewAngle)
+    
+    #Show the viewing angle in the camera
+    
+    if {$Neuroendoscopy(cam,viewAngle) < 80 && $Neuroendoscopy(cam,showAngle) == 1} {
+      ccamAngle SetAngle $Neuroendoscopy(cam,viewAngle)
+
+    } else {
+     ccamAngle SetAngle 0
+    }
+    #Render3D
     
 }
 
