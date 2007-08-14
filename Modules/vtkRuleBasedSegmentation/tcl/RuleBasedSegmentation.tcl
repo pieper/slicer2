@@ -21,7 +21,7 @@ proc RuleBasedSegmentationInit {} {
     #  reached for any questions people may have regarding your module. 
     #  This is included in the  Help->Module Credits menu item.
     set Module($m,author) "John Melonakos, Georgia Tech jmelonak@ece.gatech.edu"
-
+    
     #  Set the level of development that this module falls under, from the list defined in Main.tcl,
     #  Module(categories) or pick your own
     #  This is included in the Help->Module Categories menu item
@@ -105,7 +105,7 @@ proc RuleBasedSegmentationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-                                  {$Revision: 1.1 $} {$Date: 2007/05/31 13:20:01 $}]
+                                  {$Revision: 1.2 $} {$Date: 2007/08/14 20:31:31 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -119,10 +119,14 @@ proc RuleBasedSegmentationInit {} {
     # added by Delphine to be able to input to the bayesian
     # it will be set in RuleBasedSegmentationApply
     set RuleBasedSegmentation(DLPFCSubVolumeID) $Volume(idNone)
-
-
+    
+    # added by Tauseef (Prg Wk: Jun2007) to expose the Bayesian Filter Params
+    set RuleBasedSegmentation(DLPFCNumClasses) "3"
+    set RuleBasedSegmentation(DLPFCLabelNum) "2"
+    
     set RuleBasedSegmentation(OutputName) "roi"
     set RuleBasedSegmentation(OutputName2) "labelmap_roi"
+
     set RuleBasedSegmentation(StriatumLabelVolumeIn)  $Volume(idNone) 
     set RuleBasedSegmentation(StriatumVolumeIn) $Volume(idNone)
     set RuleBasedSegmentation(Striatum_OutputName) ""
@@ -188,10 +192,6 @@ proc RuleBasedSegmentationInit {} {
     set RuleBasedSegmentation(Striatum,Ext3D,CorMin,title) "Cor Min:"
     
     
-
-
-    
-
     set RuleBasedSegmentation(diff,Right) 0
     set RuleBasedSegmentation(diff,Left) 0
 }
@@ -244,7 +244,7 @@ proc RuleBasedSegmentationBuildGUI {} {
     
     # Write the "help" in the form of psuedo-html.  
     # Refer to the documentation for details on the syntax.
-    #
+    # Updated: Prog Wk Jun 2007 (Tauseef)
     set help "
     The RuleBasedSegmentation module allows one to extract a volume of interest for further processing.
     <P>
@@ -270,7 +270,8 @@ proc RuleBasedSegmentationBuildGUI {} {
     temporal tip in the coronal slice window.  Use the axial slice window and repeat
     the process for the most inferior and superior slices containing the cortex.
     <P>
-    <B>4.</B>  Click 'ApplyBoundaryConditions' in Box 3 to create the SubVolume.
+    <B>4.</B>  Click 'ApplyBoundaryConditions' in Box 3 to create the SubVolume. The 3D Cube
+    will disappear to confirm the completion of this step
     <P>
     <B>5.</B>  Go to the editor tab and create a labelmap that roughly encloses the DLPFC.
     <P>
@@ -278,7 +279,11 @@ proc RuleBasedSegmentationBuildGUI {} {
     <P>
     <B>7.</B>  Optional: Change the name of the labelmap output in the text box in Box 6.
     <P>
-    <B>8.</B>  Click the 'ApplyBayesianSegmentation' button in Box 7.
+    <B>8.</B>  Optional: Change the number of output classes for the Bayesian Segmentation (Default = 3).
+    <P>
+    <B>9.</B>  Optional: Change the label map number to the one used in editor to create the lable map (Default = 2).
+    <P>
+    <B>10.</B>  Click the 'ApplyBayesianSegmentation' button in Box 7.
     "
     regsub -all "\n" $help {} help
     MainHelpApplyTags RuleBasedSegmentation $help
@@ -290,7 +295,8 @@ proc RuleBasedSegmentationBuildGUI {} {
     set fDLPFC $Module(RuleBasedSegmentation,fDLPFC)
     set f $fDLPFC
     
-    foreach frame "IO 3D Apply Render DLPFCLabelmapInput DLPFCLabelmapOutput ApplyBayesian" {
+    #Added two new frames for Bayesian Parameters (Tauseef Prog Wk Jun2007)
+    foreach frame "IO 3D Apply Render DLPFCLabelmapInput DLPFCLabelmapOutput DLPFCNumClasses DLPFCLabelNum ApplyBayesian" {
         frame $f.f$frame -bg $Gui(activeWorkspace) -relief groove -bd 3
         pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
     }
@@ -363,10 +369,10 @@ proc RuleBasedSegmentationBuildGUI {} {
     
     set f $fControl.fAxMin
     eval {button $f.bAxMin -text "Pick" -width 4 -command {RuleBasedSegmentationPick3D DLPFC AxMin} } $Gui(WBA)
-    TooltipAdd $f.bAxMin "Choose the current Axial slice"
+    TooltipAdd $f.bAxMin "Set the Inferior tip position"
     set f $fControl.fAxMax
     eval {button $f.bAxMax -text "Pick" -width 4 -command {RuleBasedSegmentationPick3D DLPFC AxMax} } $Gui(WBA)
-    TooltipAdd $f.bAxMax "Choose the current Axial slice"
+    TooltipAdd $f.bAxMax "Set the Superior tip position"
     #set f $fControl.fSagMin
     #eval {button $f.bSagMin -text "Pick" -width 4 -command {RuleBasedSegmentationPick3D DLPFC SagMin} } $Gui(WBA)
     #TooltipAdd $f.bSagMin "Choose the current Sagittal slice"
@@ -375,10 +381,10 @@ proc RuleBasedSegmentationBuildGUI {} {
     #TooltipAdd $f.bSagMax "Choose the current Sagittal slice"
     set f $fControl.fCorMin
     eval {button $f.bCorMin -text "Pick" -width 4 -command {RuleBasedSegmentationPick3D DLPFC CorMin} } $Gui(WBA)
-    TooltipAdd $f.bCorMin "Choose the current Coronal slice"
+    TooltipAdd $f.bCorMin "Set the Temporal tip position"
     set f $fControl.fCorMax
     eval {button $f.bCorMax -text "Pick" -width 4 -command {RuleBasedSegmentationPick3D DLPFC CorMax} } $Gui(WBA)
-    TooltipAdd $f.bCorMax "Choose the current Coronal slice"
+    TooltipAdd $f.bCorMax "Set the Frontol pole position"
     
     foreach type "AxMin AxMax CorMin CorMax" {  
         set f $fControl.f$type
@@ -429,8 +435,8 @@ proc RuleBasedSegmentationBuildGUI {} {
               -command { RuleBasedSegmentation3DOpacity DLPFC} \
           } $Gui(WSA)
     
-    pack  $f.lOpacity $f.eOpacity $f.sOpacity -side left -padx 3 -pady 2 -expand 0
-    
+    pack  $f.lOpacity $f.eOpacity $f.sOpacity -side left -padx 3 -pady 2 -expand 0    
+   
     #-------------------------------------------
     # DLPFC->DLPFCLabelmapInput
     #-------------------------------------------
@@ -449,6 +455,27 @@ proc RuleBasedSegmentationBuildGUI {} {
     pack $f.r $f.e -side left -padx $Gui(pad) -pady 0
 
     #-------------------------------------------
+    # DLPFC->Number of classes Bayesian Parameter for the Bayesian Filter
+    #-------------------------------------------
+    set f $fDLPFC.fDLPFCNumClasses
+
+    DevAddLabel $f.r "\# of Classes for Segmentation:"      
+    eval {entry $f.e -justify right -width 10 \
+              -textvariable RuleBasedSegmentation(DLPFCNumClasses)  } $Gui(WEA)
+    pack $f.r $f.e -side left -padx $Gui(pad) -pady 0
+
+    #-------------------------------------------
+    # DLPFC->Label Number correponding to the Map
+    #-------------------------------------------
+    set f $fDLPFC.fDLPFCLabelNum
+
+    DevAddLabel $f.r "Label Number Used for Mask:"      
+    eval {entry $f.e -justify right -width 10 \
+              -textvariable RuleBasedSegmentation(DLPFCLabelNum)  } $Gui(WEA)
+    pack $f.r $f.e -side left -padx $Gui(pad) -pady 0
+
+
+    #-------------------------------------------
     # DLPFC->Apply ITK Bayesian Segmentation
     #-------------------------------------------
     set f $fDLPFC.fApplyBayesian
@@ -460,9 +487,6 @@ proc RuleBasedSegmentationBuildGUI {} {
 
     pack $f.bApplyBayesian -side top -pady $Gui(pad) -padx $Gui(pad) \
         -fill x -expand true
-
-
-
 
 
     ######### WORKING HERE#####################################
@@ -532,11 +556,6 @@ proc RuleBasedSegmentationBuildGUI {} {
 
 
 
-
-
-
-
-
 proc RuleBasedSegmentation3DOpacity {tab opacity} {
     global RuleBasedSegmentation
     
@@ -547,7 +566,7 @@ proc RuleBasedSegmentation3DOpacity {tab opacity} {
 }
 
 #----------------------------------------------------------------------
-#
+#Call back for Apply Boundary Conditions Button
 #
 #
 #----------------------------------------------------------------------
@@ -558,7 +577,7 @@ proc RuleBasedSegmentationApply {} {
     #START HERE..
 
 
-    global RuleBasedSegmentation Volume
+    global RuleBasedSegmentation Volume Module
 
     set volID $RuleBasedSegmentation(DLPFCVolumeIn)
 
@@ -579,7 +598,6 @@ proc RuleBasedSegmentationApply {} {
 
     #set y1 [expr round(($y2 + $u1)/2)]
     set y1 [expr round([lindex $RuleBasedSegmentation(DLPFC,Ext3D,Ijk) 2])]
-
 
     vtkExtractVOI op
     op SetInput [Volume($volID,vol) GetOutput]
@@ -620,6 +638,8 @@ proc RuleBasedSegmentationApply {} {
     set range   [Volume($volID,node) GetImageRange]
     Volume($newvol,node) SetImageRange $z1 $z2
 
+    # set the new volume to be in the background slice 
+# whatever $newvol
 
     MainUpdateMRML
     MainVolumesUpdate $newvol
@@ -689,11 +709,13 @@ proc RuleBasedSegmentationApply {} {
     ras2ras1    Delete
     transf      Delete
 
+   #Disable the 3D cube (Added Prog Wk Jun2007 (Tauseef))
+    $Module(RuleBasedSegmentation,fDLPFC).fRender.c3D deselect
+    RuleBasedSegmentationRenderCube "DLPFC"
 
+    RenderAll
 
     # END HERE
-
-
 
 
 
@@ -756,8 +778,9 @@ proc RuleBasedSegmentationApplyBayesian {} {
     #puts $v2
     if {$v2 == -5} {
         set name [Volume($v1,node) GetName]
-        set v2 [DevCreateNewCopiedVolume $v1 ""  ${name}_filter ]
+        set v2 [DevCreateNewCopiedVolume $v1 ""  $RuleBasedSegmentation(OutputName2)]
         set node [Volume($v2,vol) GetMrmlNode]
+        Volume($v2,node) LabelMapOn 
         Mrml(dataTree) RemoveItem $node
         set nodeBefore [Volume($v1,vol) GetMrmlNode]
         Mrml(dataTree) InsertAfterItem $nodeBefore $node
@@ -800,8 +823,10 @@ proc RuleBasedSegmentationApplyBayesian {} {
 
     _filter SetInput [Volume($v1,vol) GetOutput]
     _filter SetMaskImage [Volume($v0,vol) GetOutput]
-    _filter SetNumberOfClasses 3
-    _filter SetMaskValue 2
+    _filter SetNumberOfClasses $::RuleBasedSegmentation(DLPFCNumClasses)
+    _filter SetMaskValue $::RuleBasedSegmentation(DLPFCLabelNum) 
+# Add Label Number Here !!
+
 
     RuleBasedSegmentationITKFiltersBeforeUpdate
 
@@ -810,10 +835,13 @@ proc RuleBasedSegmentationApplyBayesian {} {
     _filter AddObserver ProgressEvent "MainShowProgress _filter"
     _filter Update
 
-    RuleBasedSegmentationITKFiltersAfterUpdate
+    RuleBasedSegmentationITKFiltersAfterUpdate 
 
     #Assign output
     [Volume($v2,vol) GetOutput] DeepCopy [_filter GetOutput]
+
+    # put it in the label layer
+    MainSlicesSetVolumeAll Label $v2
 
     #Disconnect pipeline
 
@@ -852,6 +880,8 @@ proc RuleBasedSegmentationITKFiltersBeforeUpdate { } {
 #-------------------------------------------------------------------------------
 proc RuleBasedSegmentationITKFiltersAfterUpdate { } {
 
+
+ 
 }
 
 
@@ -977,6 +1007,9 @@ proc RuleBasedSegmentationUpdateGUI {} {
     
     # this is for the DLPFC tab
     DevUpdateNodeSelectButton Volume RuleBasedSegmentation DLPFCVolumeIn DLPFCVolumeIn DevSelectNode 1 0 1 {RuleBasedSegmentationGetInitParams DLPFC}
+
+puts "DBM: Node Selection Button Update Called"
+
     DevUpdateNodeSelectButton Volume RuleBasedSegmentation DLPFCLabelVolumeIn DLPFCLabelVolumeIn DevSelectNode 1 0 1 {RuleBasedSegmentationGetInitParams DLPFC}
 
 
@@ -1154,7 +1187,14 @@ proc RuleBasedSegmentationGetInitParams {tab} {
 proc RuleBasedSegmentationPick3D { tab type } {
 
     global RuleBasedSegmentation 
-    set RuleBasedSegmentation($tab,Ext3D,$type) [Slicer GetOffset $RuleBasedSegmentation($tab,Ext3D,$type,Id)]
+    #set RuleBasedSegmentation($tab,Ext3D,$type) [Slicer GetOffset $RuleBasedSegmentation($tab,Ext3D,$type,Id)]
+    Slicer SetOffset $::RuleBasedSegmentation($tab,Ext3D,$type,Id) $::RuleBasedSegmentation($tab,Ext3D,$type)
+    MainSlicesSetOffset $::RuleBasedSegmentation($tab,Ext3D,$type,Id) $::RuleBasedSegmentation($tab,Ext3D,$type)
+    if {$::Module(verbose)} {
+        puts "Pick3D: tab = $tab, type = $type, offset = [Slicer GetOffset $RuleBasedSegmentation($tab,Ext3D,$type,Id)] "
+    }
+    
+    #puts "Cube bounds = [::RuleBasedSegmentation($tab,Ext3D,Cube) GetCenter]"
     RuleBasedSegmentationUpdate3DScales $tab 0
 }  
 
@@ -1171,6 +1211,7 @@ proc RuleBasedSegmentationUpdate3DScales { tab notUsed } {
     set Ext $RuleBasedSegmentation(InExtent)
     
     if {$tab == "DLPFC"} {
+puts "Update3DScales: setting scales from DLPFC Volume In...volume in = $RuleBasedSegmentation(DLPFCVolumeIn), label volume in = $RuleBasedSegmentation(DLPFCLabelVolumeIn)"
         set volID $RuleBasedSegmentation(DLPFCVolumeIn)
     } elseif {$tab == "Striatum"} {
         if {$RuleBasedSegmentation(StriatumVolumeIn) == 0} {
@@ -1275,7 +1316,7 @@ proc RuleBasedSegmentationCreate3DCube {tab} {
 
     global RuleBasedSegmentation
     
-    vtkCubeSource RuleBasedSegmentation($tab,Ext3D,Cube)
+    vtkCubeSource ::RuleBasedSegmentation($tab,Ext3D,Cube)
     vtkOutlineFilter RuleBasedSegmentation($tab,Ext3D,Outline)
     vtkTubeFilter RuleBasedSegmentation($tab,Ext3D,Tube)
     vtkTransform  RuleBasedSegmentation($tab,Ext3D,CubeXform)
@@ -1287,7 +1328,7 @@ proc RuleBasedSegmentationCreate3DCube {tab} {
     #Create Pipeline
     
     RuleBasedSegmentation($tab,Ext3D,XformFilter) SetTransform RuleBasedSegmentation($tab,Ext3D,CubeXform)
-    RuleBasedSegmentation($tab,Ext3D,XformFilter) SetInput [RuleBasedSegmentation($tab,Ext3D,Cube) GetOutput]
+    RuleBasedSegmentation($tab,Ext3D,XformFilter) SetInput [::RuleBasedSegmentation($tab,Ext3D,Cube) GetOutput]
     RuleBasedSegmentation($tab,Ext3D,Outline) SetInput [RuleBasedSegmentation($tab,Ext3D,XformFilter) GetOutput]
     RuleBasedSegmentation($tab,Ext3D,Tube) SetInput [RuleBasedSegmentation($tab,Ext3D,Outline) GetOutput]
     RuleBasedSegmentation($tab,Ext3D,Tube) SetRadius 0.1
@@ -1323,7 +1364,7 @@ proc RuleBasedSegmentationDelete3DCube {tab} {
     Render3D
     
     #Delete Objects
-    RuleBasedSegmentation($tab,Ext3D,Cube) Delete
+    ::RuleBasedSegmentation($tab,Ext3D,Cube) Delete
     RuleBasedSegmentation($tab,Ext3D,Outline) Delete
     RuleBasedSegmentation($tab,Ext3D,Tube) Delete
     RuleBasedSegmentation($tab,Ext3D,CubeXform) Delete
