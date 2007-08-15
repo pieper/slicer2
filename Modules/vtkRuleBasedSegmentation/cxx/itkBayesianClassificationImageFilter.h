@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkBayesianClassificationImageFilter.h,v $
   Language:  C++
-  Date:      $Date: 2007/05/31 13:20:00 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2007/08/15 05:13:42 $
+  Version:   $Revision: 1.2 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -38,7 +38,10 @@
 #include "itkBayesianClassifierImageFilter.h"
 #include "itkBayesianClassifierInitializationImageFilter.h"
 #include "itkProcessObject.h"
-
+#include "itkGradientAnisotropicDiffusionImageFilter.h"
+#include "itkMaskImageFilter.h"
+#include "itkImageRegionIterator.h"
+#include "itkImageRegionConstIterator.h"
 
 namespace itk
 {
@@ -52,7 +55,7 @@ public:
   typedef TInputImage                                InputImageType;
   typedef TLabelImage                                OutputImageType;
   typedef ImageToImageFilter< 
-    InputImageType, OutputImageType >          Superclass;
+  InputImageType, OutputImageType >          Superclass;
 
   typedef SmartPointer<Self>   Pointer;
   typedef SmartPointer<const Self>  ConstPointer;
@@ -66,7 +69,11 @@ public:
   /** Input and Output image types */
   typedef typename InputImageType::ConstPointer      InputImagePointer;
   typedef typename OutputImageType::Pointer          OutputImagePointer;
+  typedef typename InputImageType::RegionType        ImageRegionType;
   
+  /** Relabeled image iterator */
+  typedef ImageRegionIterator< OutputImageType >     RelabeledImageIteratorType;
+
   /** Set/Get methods for the number of classes. The user must supply this. */
   itkSetMacro( NumberOfClasses, unsigned int );
   itkGetMacro( NumberOfClasses, unsigned int );
@@ -80,6 +87,9 @@ public:
   typedef typename MaskImageType::Pointer      MaskImagePointer ;
   typedef typename MaskImageType::ConstPointer MaskImageConstPointer ;
   typedef typename MaskImageType::PixelType    MaskPixelType ;
+  typedef ImageRegionConstIterator< MaskImageType > MaskImageIteratorType;
+  typedef itk::MaskImageFilter< OutputImageType, MaskImageType, OutputImageType >
+    MaskFilterType;
   
   /** Method to set/get the image */
   void SetInput( const InputImageType* image ) ;
@@ -106,14 +116,14 @@ protected:
 
   // Initialization filter
   typedef BayesianClassifierInitializationImageFilter< 
-    InputImageType, MaskImageType >                    BayesianInitializerType;
+  InputImageType, MaskImageType >                    BayesianInitializerType;
   typedef typename BayesianInitializerType::Pointer    BayesianInitializerPointer;
   typedef typename BayesianInitializerType::OutputImageType 
-  InitializerOutputImageType;
+    InitializerOutputImageType;
   // Classifier 
   typedef BayesianClassifierImageFilter< 
-    InitializerOutputImageType, typename OutputImageType::PixelType >
-  ClassifierFilterType;
+  InitializerOutputImageType, typename OutputImageType::PixelType >
+    ClassifierFilterType;
   typedef typename ClassifierFilterType::Pointer       ClassifierFilterPointer;
 
 private:

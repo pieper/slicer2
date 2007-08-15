@@ -3,8 +3,8 @@
   Program:   Insight Segmentation & Registration Toolkit
   Module:    $RCSfile: itkBayesianClassificationImageFilter.txx,v $
   Language:  C++
-  Date:      $Date: 2007/05/31 13:20:00 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2007/08/15 05:13:43 $
+  Version:   $Revision: 1.2 $
 
   Copyright (c) Insight Software Consortium. All rights reserved.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
@@ -21,8 +21,6 @@
 #define _itkBayesianClassificationImageFilter_txx
 
 #include "itkBayesianClassificationImageFilter.h"
-#include "itkGradientAnisotropicDiffusionImageFilter.h"
-#include "itkMaskImageFilter.h"
 
 namespace itk
 {
@@ -124,13 +122,132 @@ BayesianClassificationImageFilter< TInputImage, TLabelImage, TMaskImage >
   smoother->SetTimeStep( 0.0625 );
   smoother->SetConductanceParameter( 3 );  
   m_Classifier->SetSmoothingFilter( smoother );
+  m_Classifier->Update();
 
+  OutputImagePointer relabeledImage = m_Classifier->GetOutput();
+  ImageRegionType imageRegion = m_Classifier->GetOutput()->GetBufferedRegion();
+  RelabeledImageIteratorType    itrRelabeledImage( relabeledImage, imageRegion );
+
+  m_Classifier->GetOutput()->DisconnectPipeline();
+
+  // Relabel the output image
   if( maskImage )
     {
-    typedef itk::MaskImageFilter< OutputImageType, MaskImageType, OutputImageType >
-      MaskFilterType;
+    MaskImageIteratorType  itrMaskImage( this->GetMaskImage(), this->GetMaskImage()->GetBufferedRegion() );
+    if( (int)this->GetNumberOfClasses() == 2 )
+      {
+      for( itrRelabeledImage.GoToBegin(), itrMaskImage.GoToBegin();
+           !itrRelabeledImage.IsAtEnd();
+           ++itrRelabeledImage, ++itrMaskImage )
+        {
+        if( (int)itrMaskImage.Get() == (int)this->GetMaskValue() )
+          {
+          if( (int)itrRelabeledImage.Get() == 0 )
+            {
+            itrRelabeledImage.Set( 3 );
+            }
+          else if( (int)itrRelabeledImage.Get() == 1 )
+            {
+            itrRelabeledImage.Set( 4 );
+            }
+          }
+        else
+          {
+          itrRelabeledImage.Set( 0 );
+          }
+        }
+      }
+    else if( (int)this->GetNumberOfClasses() == 3 )
+      {
+      for( itrRelabeledImage.GoToBegin(), itrMaskImage.GoToBegin();
+           !itrRelabeledImage.IsAtEnd();
+           ++itrRelabeledImage, ++itrMaskImage )
+        {
+        if( (int)itrMaskImage.Get() == (int)this->GetMaskValue() )
+          {
+          if( (int)itrRelabeledImage.Get() == 0 )
+            {
+            itrRelabeledImage.Set( 2 );
+            }
+          else if( (int)itrRelabeledImage.Get() == 1 )
+            {
+            itrRelabeledImage.Set( 3 );
+            }
+          else if( (int)itrRelabeledImage.Get() == 2 )
+            {
+            itrRelabeledImage.Set( 4 );
+            }
+          }
+        else
+          {
+          itrRelabeledImage.Set( 0 );
+          }
+        }
+      }
+    else
+      {
+      for( itrRelabeledImage.GoToBegin(), itrMaskImage.GoToBegin();
+           !itrRelabeledImage.IsAtEnd();
+           ++itrRelabeledImage, ++itrMaskImage )
+        {
+        if( (int)itrMaskImage.Get() == (int)this->GetMaskValue() )
+          {
+          itrRelabeledImage.Set( itrRelabeledImage.Get() + 2 );
+          }
+        else
+          {
+          itrRelabeledImage.Set( 0 );
+          }
+        }
+      }
+    }
+  else
+    {
+    if( (int)this->GetNumberOfClasses() == 2 )
+      {
+      for( itrRelabeledImage.GoToBegin(); !itrRelabeledImage.IsAtEnd(); ++itrRelabeledImage )
+        {
+        if( (int)itrRelabeledImage.Get() == 0 )
+          {
+          itrRelabeledImage.Set( 3 );
+          }
+        else if( (int)itrRelabeledImage.Get() == 1 )
+          {
+          itrRelabeledImage.Set( 4 );
+          }
+        }
+      }
+    else if( (int)this->GetNumberOfClasses() == 3 )
+      {
+      for( itrRelabeledImage.GoToBegin(); !itrRelabeledImage.IsAtEnd(); ++itrRelabeledImage )
+        {
+        if( (int)itrRelabeledImage.Get() == 0 )
+          {
+          itrRelabeledImage.Set( 2 );
+          }
+        else if( (int)itrRelabeledImage.Get() == 1 )
+          {
+          itrRelabeledImage.Set( 3 );
+          }
+        else if( (int)itrRelabeledImage.Get() == 2 )
+          {
+          itrRelabeledImage.Set( 4 );
+          }
+        }
+      }
+    else
+      {
+      for( itrRelabeledImage.GoToBegin(); !itrRelabeledImage.IsAtEnd(); ++itrRelabeledImage )
+        {
+        itrRelabeledImage.Set( itrRelabeledImage.Get() + 2 );
+        }
+      }
+    }
+  
+  if( maskImage )
+    {
     typename MaskFilterType::Pointer maskFilter = MaskFilterType::New();
-    maskFilter->SetInput1( m_Classifier->GetOutput() );
+    maskFilter->SetInput1( relabeledImage );
     maskFilter->SetInput2( maskImage );
     maskFilter->SetOutsideValue( 0 );
     maskFilter->GraftOutput( this->GetOutput() );
@@ -141,7 +258,7 @@ BayesianClassificationImageFilter< TInputImage, TLabelImage, TMaskImage >
     {
     m_Classifier->GraftOutput( this->GetOutput() );
     m_Classifier->Update();
-    this->GraftOutput( m_Classifier->GetOutput() );
+    this->GraftOutput( relabeledImage );
     }
 
 }
