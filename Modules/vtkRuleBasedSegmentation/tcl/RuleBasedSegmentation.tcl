@@ -105,7 +105,7 @@ proc RuleBasedSegmentationInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-                                  {$Revision: 1.2 $} {$Date: 2007/08/14 20:31:31 $}]
+                                  {$Revision: 1.3 $} {$Date: 2007/09/13 15:11:35 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -436,7 +436,7 @@ proc RuleBasedSegmentationBuildGUI {} {
           } $Gui(WSA)
     
     pack  $f.lOpacity $f.eOpacity $f.sOpacity -side left -padx 3 -pady 2 -expand 0    
-   
+    
     #-------------------------------------------
     # DLPFC->DLPFCLabelmapInput
     #-------------------------------------------
@@ -639,7 +639,7 @@ proc RuleBasedSegmentationApply {} {
     Volume($newvol,node) SetImageRange $z1 $z2
 
     # set the new volume to be in the background slice 
-# whatever $newvol
+    # whatever $newvol
 
     MainUpdateMRML
     MainVolumesUpdate $newvol
@@ -709,7 +709,7 @@ proc RuleBasedSegmentationApply {} {
     ras2ras1    Delete
     transf      Delete
 
-   #Disable the 3D cube (Added Prog Wk Jun2007 (Tauseef))
+    #Disable the 3D cube (Added Prog Wk Jun2007 (Tauseef))
     $Module(RuleBasedSegmentation,fDLPFC).fRender.c3D deselect
     RuleBasedSegmentationRenderCube "DLPFC"
 
@@ -756,14 +756,14 @@ proc RuleBasedSegmentationApplyBayesian {} {
     set RuleBasedSegmentation(filter) vtkITKBayesianClassificationImageFilter  
     set filter $RuleBasedSegmentation(filter)
 
-#     set RuleBasedSegmentation($filter,params) SetNumberOfClasses
-#     set param SetNumberOfClasses
-#     set RuleBasedSegmentation($filter,$param) 3
-#     set RuleBasedSegmentation($filter,$param,type) "scalar"
-#     set RuleBasedSegmentation($filter,$param,text) "Number of Classes"
-#     set RuleBasedSegmentation($filter,$param,maxmin) "1 10"
-#     set RuleBasedSegmentation($filter,$param,res) 1
-#     set RuleBasedSegmentation($filter,$param,widget) "scale"
+    #     set RuleBasedSegmentation($filter,params) SetNumberOfClasses
+    #     set param SetNumberOfClasses
+    #     set RuleBasedSegmentation($filter,$param) 3
+    #     set RuleBasedSegmentation($filter,$param,type) "scalar"
+    #     set RuleBasedSegmentation($filter,$param,text) "Number of Classes"
+    #     set RuleBasedSegmentation($filter,$param,maxmin) "1 10"
+    #     set RuleBasedSegmentation($filter,$param,res) 1
+    #     set RuleBasedSegmentation($filter,$param,widget) "scale"
 
     # first input
     set v1 $RuleBasedSegmentation(DLPFCSubVolumeID)
@@ -781,6 +781,7 @@ proc RuleBasedSegmentationApplyBayesian {} {
         set v2 [DevCreateNewCopiedVolume $v1 ""  $RuleBasedSegmentation(OutputName2)]
         set node [Volume($v2,vol) GetMrmlNode]
         Volume($v2,node) LabelMapOn 
+        Volume($v2,node) InterpolateOff
         Mrml(dataTree) RemoveItem $node
         set nodeBefore [Volume($v1,vol) GetMrmlNode]
         Mrml(dataTree) InsertAfterItem $nodeBefore $node
@@ -794,38 +795,38 @@ proc RuleBasedSegmentationApplyBayesian {} {
         Volume($v2,node) Copy Volume($v1,node)
     }
 
-#     #Caster
-#     vtkImageCast _cast
-#     _cast SetOutputScalarTypeToFloat
-#     _cast SetInput [Volume($v1,vol) GetOutput]
-#     _cast Update
-#     #Create Object
+    #     #Caster
+    #     vtkImageCast _cast
+    #     _cast SetOutputScalarTypeToFloat
+    #     _cast SetInput [Volume($v1,vol) GetOutput]
+    #     _cast Update
+    #     #Create Object
 
     catch "_filter Delete"
     $filter _filter
 
-#     foreach param $RuleBasedSegmentation($filter,params) {
-#         switch -exact -- $RuleBasedSegmentation($filter,$param,type) {
-#             "scalar" {
-#                 _filter $param $RuleBasedSegmentation($filter,$param)
-#             }
-#             "darray" {
-#                 catch "vals Delete"
-#                 vtkDoubleArray vals
-#                 foreach val $RuleBasedSegmentation($filter,$param) {
-#                     vals InsertNextValue $val
-#                 }
-#                 _filter $param vals
-#                 vals Delete
-#             }
-#         }
-#     }
+    #     foreach param $RuleBasedSegmentation($filter,params) {
+    #         switch -exact -- $RuleBasedSegmentation($filter,$param,type) {
+    #             "scalar" {
+    #                 _filter $param $RuleBasedSegmentation($filter,$param)
+    #             }
+    #             "darray" {
+    #                 catch "vals Delete"
+    #                 vtkDoubleArray vals
+    #                 foreach val $RuleBasedSegmentation($filter,$param) {
+    #                     vals InsertNextValue $val
+    #                 }
+    #                 _filter $param vals
+    #                 vals Delete
+    #             }
+    #         }
+    #     }
 
     _filter SetInput [Volume($v1,vol) GetOutput]
     _filter SetMaskImage [Volume($v0,vol) GetOutput]
     _filter SetNumberOfClasses $::RuleBasedSegmentation(DLPFCNumClasses)
     _filter SetMaskValue $::RuleBasedSegmentation(DLPFCLabelNum) 
-# Add Label Number Here !!
+    # Add Label Number Here !!
 
 
     RuleBasedSegmentationITKFiltersBeforeUpdate
@@ -845,7 +846,7 @@ proc RuleBasedSegmentationApplyBayesian {} {
 
     #Disconnect pipeline
 
-#    _cast Delete
+    #    _cast Delete
     _filter SetOutput ""
     _filter Delete
 
@@ -881,7 +882,7 @@ proc RuleBasedSegmentationITKFiltersBeforeUpdate { } {
 proc RuleBasedSegmentationITKFiltersAfterUpdate { } {
 
 
- 
+    
 }
 
 
@@ -1008,7 +1009,7 @@ proc RuleBasedSegmentationUpdateGUI {} {
     # this is for the DLPFC tab
     DevUpdateNodeSelectButton Volume RuleBasedSegmentation DLPFCVolumeIn DLPFCVolumeIn DevSelectNode 1 0 1 {RuleBasedSegmentationGetInitParams DLPFC}
 
-puts "DBM: Node Selection Button Update Called"
+    puts "DBM: Node Selection Button Update Called"
 
     DevUpdateNodeSelectButton Volume RuleBasedSegmentation DLPFCLabelVolumeIn DLPFCLabelVolumeIn DevSelectNode 1 0 1 {RuleBasedSegmentationGetInitParams DLPFC}
 
@@ -1117,12 +1118,12 @@ proc RuleBasedSegmentationGetInitParams {tab} {
         
         set RuleBasedSegmentation($t,Ext3D,volId) $volID
         
-                                if {$t == "DLPFC"} {
-                                                foreach type "AxMin AxMax CorMin CorMax" {
-                                                                $f.f3D.fControl.f$type.s$type configure -from $RuleBasedSegmentation($t,Ext3D,$type,min) -to $RuleBasedSegmentation($t,Ext3D,$type,max)
-                                                }
-                                }
-                                
+        if {$t == "DLPFC"} {
+            foreach type "AxMin AxMax CorMin CorMax" {
+                $f.f3D.fControl.f$type.s$type configure -from $RuleBasedSegmentation($t,Ext3D,$type,min) -to $RuleBasedSegmentation($t,Ext3D,$type,max)
+            }
+        }
+        
         set RuleBasedSegmentation($t,Ext3D,AxMin) [lindex $RASmin 2]
         set RuleBasedSegmentation($t,Ext3D,AxMax) [lindex $RASmax 2]
         set RuleBasedSegmentation($t,Ext3D,SagMax) [lindex $RASmax 0]
@@ -1156,12 +1157,12 @@ proc RuleBasedSegmentationGetInitParams {tab} {
         
         set RuleBasedSegmentation($t,Ext3D,volId2) $volID2
         
-                                if {$t == "DLPFC"} {
-                                                foreach type "AxMin AxMax CorMin CorMax" {
-                                                                $f.f3D.fControl.f$type.s$type configure -from $RuleBasedSegmentation($t,Ext3D,$type,min) -to $RuleBasedSegmentation($t,Ext3D,$type,max)
-                                                }
-                                }
-                                
+        if {$t == "DLPFC"} {
+            foreach type "AxMin AxMax CorMin CorMax" {
+                $f.f3D.fControl.f$type.s$type configure -from $RuleBasedSegmentation($t,Ext3D,$type,min) -to $RuleBasedSegmentation($t,Ext3D,$type,max)
+            }
+        }
+        
         set RuleBasedSegmentation($t,Ext3D,AxMin) [lindex $RASmin 2]
         set RuleBasedSegmentation($t,Ext3D,AxMax) [lindex $RASmax 2]
         set RuleBasedSegmentation($t,Ext3D,SagMax) [lindex $RASmax 0]
@@ -1211,7 +1212,7 @@ proc RuleBasedSegmentationUpdate3DScales { tab notUsed } {
     set Ext $RuleBasedSegmentation(InExtent)
     
     if {$tab == "DLPFC"} {
-puts "Update3DScales: setting scales from DLPFC Volume In...volume in = $RuleBasedSegmentation(DLPFCVolumeIn), label volume in = $RuleBasedSegmentation(DLPFCLabelVolumeIn)"
+        puts "Update3DScales: setting scales from DLPFC Volume In...volume in = $RuleBasedSegmentation(DLPFCVolumeIn), label volume in = $RuleBasedSegmentation(DLPFCLabelVolumeIn)"
         set volID $RuleBasedSegmentation(DLPFCVolumeIn)
     } elseif {$tab == "Striatum"} {
         if {$RuleBasedSegmentation(StriatumVolumeIn) == 0} {
