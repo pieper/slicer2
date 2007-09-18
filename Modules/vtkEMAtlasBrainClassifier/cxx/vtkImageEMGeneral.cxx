@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMGeneral.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:30 $
-  Version:   $Revision: 1.5 $
+  Date:      $Date: 2007/09/18 23:25:42 $
+  Version:   $Revision: 1.6 $
 
 =========================================================================auto=*/
 #include "vtkImageEMGeneral.h"
@@ -164,8 +164,19 @@ float vtkImageEMGeneral_qgauss_sqrt(float inverse_sigma, float x)
     inv_mat[0][1] = -det * mat[0][1];
     inv_mat[1][0] = -det * mat[1][0];
     return 1;
-  } 
-  return vtkMath::InvertMatrix(mat,inv_mat,dim);
+  }
+ 
+  double**  tmp_mat = new double*[dim];
+  for (int i = 0 ; i < dim ; i++) {
+    tmp_mat[i] = new double[dim];  
+    memcpy(tmp_mat[i],mat[i],dim*sizeof(double)); 
+  }
+  int result = vtkMath::InvertMatrix(tmp_mat,inv_mat,dim);
+
+  for (int i = 0 ; i < dim ; i++) delete[] tmp_mat[i]; 
+  delete[] tmp_mat; 
+
+  return result;
 }
 
 // Description:
