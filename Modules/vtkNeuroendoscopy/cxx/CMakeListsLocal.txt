@@ -13,13 +13,22 @@
 # note: - SET replaced SOURCE_FILES for cmake 1.6
 SET(LOCAL_MODULE_SRCS
 vtkNeuroendoscopy.cxx
-
+vtkCaptureFrames.cxx
 )
 
 ## classes that one does not want tcl wrapped
 SET ( LOCAL_NO_WRAP_SRCS
 
 Point.cxx
+ tsai/cal_main.h
+        tsai/cal_eval.c
+        tsai/cal_main.c
+        tsai/cal_tran.c
+        tsai/cal_util.c
+        tsai/ecalmain.c
+        tsai/gasdev.c
+        tsai/matrix/matrix.c
+
 )
 
 
