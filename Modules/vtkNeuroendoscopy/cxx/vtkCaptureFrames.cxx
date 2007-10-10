@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkCaptureFrames.cxx,v $
-  Date:      $Date: 2007/08/10 00:35:30 $
-  Version:   $Revision: 1.1.2.1 $
+  Date:      $Date: 2007/10/10 20:06:59 $
+  Version:   $Revision: 1.1.2.2 $
   Programmed by: Christoph Ruetz (ruetz@bwh.harvard.edu
 =========================================================================auto=*/
 #ifndef __vtkCaptureFrames_cxx
@@ -16,14 +16,18 @@
 #include "vtkObjectFactory.h"
 #include "vtkCaptureFrames.h"
 #include <vtkImageFlip.h>
+#include <sstream>
+#include <string>
 
 
 vtkStandardNewMacro(vtkCaptureFrames);
 
-int vtkCaptureFrames::Initialize(void)
+int vtkCaptureFrames::Initialize(int width, int height)
 {
 
- 
+ this->width = width;
+ this->height = height;
+
     //if (device == NULL)
         device = "/dev/video0";
 //opendevice
@@ -68,18 +72,38 @@ int vtkCaptureFrames::Initialize(void)
         return 1;
     }
 
-        fmt.fmt.pix.width = 640;
-        fmt.fmt.pix.height = 480;
+        fmt.fmt.pix.width = this->width;
+        fmt.fmt.pix.height = this->height;
         fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_BGR24;
    
-       err = ioctl(vid,VIDIOC_S_FMT,&fmt) < 0;
-       if (err)
-     {
-         fprintf(stderr, "G_FMT returned error %d\n", errno);
-         return 1;
-     }
+    err = ioctl(vid,VIDIOC_S_FMT,&fmt) < 0;
+    if (err)
+    {
+        fprintf(stderr, "VIDIOC_S_FMT returned error %d\n", errno);
+        return 1;
+    }
 
+    v4l2_std_id std_id;
+    std_id = V4L2_STD_NTSC_M;
+    err = ioctl(vid,VIDIOC_S_STD, &std_id);
+    
+    if (err) {
+        fprintf(stderr, "VIDIOC_S_STD returned error %d\n", errno);
+        return 1;
+    }
 
+     int index;
+
+     index = 2;
+     err = ioctl(vid, VIDIOC_S_INPUT, &index);
+    
+   
+    if (err) {
+        
+        fprintf(stderr, "VIDIOC_S_INPUT returned error %d\n", errno);
+        return 1;
+    }
+      
 
     if ((fmt.fmt.pix.pixelformat == V4L2_PIX_FMT_RGB24 && bgr) ||
         (fmt.fmt.pix.pixelformat == V4L2_PIX_FMT_BGR24 && rgb))
@@ -153,9 +177,18 @@ vtkImageData * vtkCaptureFrames::getNextFrame()
     }
 
 // fprintf(stderr, "after bgr changing \n");
+std::stringstream ss;
+std::string str;
+ss << this->width << " " << this->height;
+ss >> str;
 
-char * header = "P6\n640 480\n255\n ";
-offset = 15;
+
+
+std::string header = "P6\n" + str + "\n255\n ";
+
+//char * header = "P6\n640 480\n255\n ";
+offset = header.size();
+
         char ppmarray[n+offset];
         //char * ppmarray;
 
@@ -261,19 +294,8 @@ return flip->GetOutput();
 
 }
 
-void vtkCaptureFrames::concat( char *a, char *b, char *c)
-{
-        while( *a )  {           /* while( *c++ = *a++ );  */
-            *c = *a; ++a; ++c;
-        }
-        while( *b )  {
-            *c = *b; ++b; ++c;
-        }
-        *c = '\0';
-}
-int vtkCaptureFrames::getNextFrame2() {
 
-}
+
 
 
 #endif
