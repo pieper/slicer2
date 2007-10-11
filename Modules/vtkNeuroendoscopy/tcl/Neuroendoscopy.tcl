@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Neuroendoscopy.tcl,v $
-#   Date:      $Date: 2007/08/10 00:34:31 $
-#   Version:   $Revision: 1.1.2.6 $
+#   Date:      $Date: 2007/10/11 00:45:40 $
+#   Version:   $Revision: 1.1.2.7 $
 # 
 #===============================================================================
 # FILE:        Neuroendoscopy.tcl
@@ -152,7 +152,7 @@
 # .END
 #-------------------------------------------------------------------------------
 proc NeuroendoscopyEnter {} {
-    global Neuroendoscopy View viewWin viewRen Fiducials Csys 
+    global Neuroendoscopy View viewWin viewRen Fiducials Csys Model Module Mrml Matrix
     
 
     
@@ -169,6 +169,7 @@ proc NeuroendoscopyEnter {} {
     NeuroendoscopyPushBindings
     
 
+
     # show the actors based on their visibility parameter
     #foreach a $Neuroendoscopy(actors) {
     #NeuroendoscopyUpdateVisibility $a
@@ -178,8 +179,8 @@ proc NeuroendoscopyEnter {} {
         NeuroendoscopySetPickable $a 1
     }
     set Csys(active) 1
-    
-   
+
+showAllTextures
 
     Render3D
     if {$Neuroendoscopy(endoview,visibility) == 1} {
@@ -278,7 +279,7 @@ proc NeuroendoscopyInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.1.2.6 $} {$Date: 2007/08/10 00:34:31 $}] 
+    {$Revision: 1.1.2.7 $} {$Date: 2007/10/11 00:45:40 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -586,6 +587,8 @@ proc NeuroendoscopyInit {} {
     set Neuroendoscopy(texture,atext) ""
     set Neuroendoscopy(texture,model) ""
     set Neuroendoscopy(texture,actors,id) 0
+    set Neuroendoscopy(redLaser) ""
+    set Neuroendoscopy(texture,LaserClipper) ""
 
     vtkNeuroendoscopy ver
     vtkMatrix4x4 Neuroendoscopy(texture,transmatrix)
@@ -626,12 +629,21 @@ proc NeuroendoscopyInit {} {
     vtkPolyData Neuroendoscopy(pointcloud)
     vtkPolyDataMapper headmapper
     vtkPolyDataMapper headmapper2
+    vtkPolyDataMapper headmapper3
     vtkActor actor2
     vtkActor actor
+    vtkActor actor3
 
     set Neuroendoscopy(SnapShot) 0
     set Neuroendoscopy(cam,showAngle) 1
 
+    set Neuroendoscopy(ImageCounter) 0
+    set Neuroendoscopy(pointPairList) ""
+    set Neuroendoscopy(locator1old) 0
+    set Neuroendoscopy(locator2old) 0
+    set Neuroendoscopy(locator3old) 0
+set Neuroendoscopy(boolean) 0
+   set Neuroendoscopy(shortestDistance) 1
 }
 
 #-------------------------------------------------------------------------------
@@ -752,16 +764,21 @@ proc NeuroendoscopyBuildVTK {} {
     carrowXformFilter SetTransform carrowXform
 
     vtkTransform Neuroendoscopy(texture,transform) 
-    vtkCone Neuroendoscopy(texture,cone)  
+    vtkCone Neuroendoscopy(texture,cone)
+    vtkCylinder Neuroendoscopy(texture,cylinder)    
     vtkClipPolyData Neuroendoscopy(texture,clipper) 
+    vtkClipPolyData Neuroendoscopy(texture,LaserClipper)
+    
     vtkProjectedTexture Neuroendoscopy(texture,tmapper) 
     vtkTransformTextureCoords Neuroendoscopy(texture,xform) 
     vtkDataSetMapper Neuroendoscopy(texture,mapper) 
-    vtkPNGReader Neuroendoscopy(texture,pngReader) 
+    vtkPNMReader Neuroendoscopy(texture,pngReader) 
     vtkTexture Neuroendoscopy(texture,atext) 
     vtkPlane Neuroendoscopy(texture,frontPlane)
     vtkPlane Neuroendoscopy(texture,basePlane)
     vtkImplicitBoolean Neuroendoscopy(texture,theCone)
+    vtkImplicitBoolean Neuroendoscopy(redLaser)
+    
 }
 
 #-------------------------------------------------------------------------------
@@ -1060,8 +1077,521 @@ proc NeuroendoscopyCameraParams {{size -1} {shape ""}} {
 
 
 }
+proc NeuroendoscopyCalibration { {filename ""} } {
+
+global Neuroendoscopy
+
+vtkImageCompare Neuroendoscopy(imgcompare)
+
+#imgcompare LoadOriginalPicture "/projects/igtdev/ruetz/slicer2-mrt/slicer2/myfile1.ppm"
+#imgcompare SetOutputPicture "myfile_undistort.ppm"
+Neuroendoscopy(imgcompare) SetOriginalPicture "/projects/igtdev/ruetz/slicer2-mrt/slicer2/myfile1.ppm"
 
 
+set XRAD [Neuroendoscopy(imgcompare) GetWidth]
+set YRAD [Neuroendoscopy(imgcompare) GetHeight]
+
+puts "$XRAD $XRAD $filename"
+Neuroendoscopy(imgcompare) searchCorners 10 
+
+
+vtkPNMReader Neuroendoscopy(pnmReader2)
+Neuroendoscopy(pnmReader2) SetFileName "/projects/igtdev/ruetz/slicer2-mrt/slicer2/myfile1.ppm"
+Neuroendoscopy(pnmReader2) Update
+
+vtkImageCanvasSource2D Neuroendoscopy(imageCanvasTexture)
+
+Neuroendoscopy(imageCanvasTexture) SetScalarTypeToUnsignedChar
+Neuroendoscopy(imageCanvasTexture) SetNumberOfScalarComponents 3
+Neuroendoscopy(imageCanvasTexture) SetExtent 0 640 0 480 0 0
+
+# background black
+Neuroendoscopy(imageCanvasTexture) SetDrawColor 255 0 0
+Neuroendoscopy(imageCanvasTexture) FillBox 0 640 0 480
+
+
+
+Neuroendoscopy(imageCanvasTexture) DrawImage 0 0 [ Neuroendoscopy(pnmReader2) GetOutput ]
+set twoDcoord [Neuroendoscopy(imgcompare) getFeatureCoordinates]
+for {set i 0} {$i< [$twoDcoord GetNumberOfPoints]} {incr i 1} {
+
+  set coord [$twoDcoord GetPoint $i]
+  set coordx [lindex $coord 0]
+  set coordy [lindex $coord 1]
+
+
+#Neuroendoscopy(imageCanvasTexture) DrawCircle [expr $coordx] [expr 480-$coordy] 10
+Neuroendoscopy(imageCanvasTexture) DrawSegment [expr $coordx-10] [expr 480-$coordy-10] [expr $coordx+10] [expr 480-$coordy+10]
+Neuroendoscopy(imageCanvasTexture) DrawSegment [expr $coordx+10] [expr 480-$coordy-10] [expr $coordx-10] [expr 480-$coordy+10]
+}
+
+
+
+vtkImageViewer Neuroendoscopy(distortviewer)
+  Neuroendoscopy(distortviewer) SetInput [Neuroendoscopy(imageCanvasTexture) GetOutput]
+  Neuroendoscopy(distortviewer) SetColorWindow 256.0
+  Neuroendoscopy(distortviewer) SetColorLevel 127.5
+  #[viewer GetActor2D] SetPosition 1 1
+
+#
+# Create second Mandelbrot viewer
+#
+#vtkPNMReader Neuroendoscopy(texture,pngReader)
+Neuroendoscopy(texture,pngReader) SetFileName $filename
+Neuroendoscopy(texture,pngReader) Update
+
+
+vtkImageViewer Neuroendoscopy(distortviewer2)
+  Neuroendoscopy(distortviewer2) SetInput [Neuroendoscopy(texture,pngReader) GetOutput]
+  Neuroendoscopy(distortviewer2) SetColorWindow 256.0
+  Neuroendoscopy(distortviewer2) SetColorLevel 127.5
+  #[viewer2 GetActor2D] SetPosition 1 1
+
+#
+# Create the GUI: two vtkTkImageViewer widgets and a quit/reset buttons
+#
+wm withdraw .
+set top [toplevel .top] 
+wm protocol .top WM_DELETE_WINDOW "deleteDistortWindows;destroy .top"
+wm title .top "Distortion Viewer"
+
+set f1 [frame $top.f1] 
+
+pack $f1 \
+        -side bottom \
+        -fill both -expand f
+
+#
+# Create the image viewer widget for set 1
+#
+set manFrame [frame $f1.man]
+set julFrame [frame $f1.jul]
+
+pack $manFrame $julFrame \
+        -side left \
+        -padx 3 -pady 3 \
+        -fill both -expand f
+
+set manView [vtkTkImageViewerWidget $manFrame.view \
+        -iv Neuroendoscopy(distortviewer) \
+        -width [expr $XRAD] \
+        -height [expr $YRAD]]
+
+set manRange [label $manFrame.range \
+        -text "Distorted Picture"]
+
+set quit [button $manFrame.quit  \
+        -text "Quit" \
+        -command "deleteDistortWindows;destroy .top"]
+
+#
+# Create the image viewer widget for set 2
+#
+pack $manView $manRange $quit \
+        -side top \
+        -padx 2 -pady 2 \
+        -fill both -expand f
+
+set julView [vtkTkImageViewerWidget $julFrame.view \
+        -iv Neuroendoscopy(distortviewer2) \
+        -width [expr $XRAD] \
+        -height [expr $YRAD]]
+
+set julRange [label $julFrame.range \
+        -text "Undistorted Picture"]
+
+set reset [button $julFrame.reset  \
+        -text "Undistort" \
+        -command "NeuroendoscopyUndistort $filename"]
+set calibdat [button $julFrame.calibdat  \
+        -text "Create Calibration file" \
+        -command "exec /projects/igtdev/ruetz/daten/tsai/Tsai-method-v3.0b3/ImageCompare myfile1.ppm myfile_undistort.ppm 640 480 calibdata.dat 10"]
+
+pack $julView $julRange $reset $calibdat \
+        -side top \
+        -padx 2 -pady 2 \
+        -fill both -expand f
+#
+# The equation label
+#
+set equation [label $top.equation \
+        -text "Distort ==> Undistort"]
+
+pack $equation \
+        -side bottom \
+        -fill x -expand f
+
+#
+# Create the default bindings
+#
+::vtk::bind_tk_imageviewer_widget $manView
+::vtk::bind_tk_imageviewer_widget $julView
+
+
+
+}
+
+proc deleteDistortWindows { } {
+global Neuroendoscopy
+set Neuroendoscopy(captWindow) 0
+Neuroendoscopy(imgcompare) Delete
+Neuroendoscopy(pnmReader2) Delete
+#Neuroendoscopy(pnmReader) Delete
+Neuroendoscopy(distortviewer) Delete
+Neuroendoscopy(distortviewer2) Delete
+Neuroendoscopy(imageCanvasTexture) Delete
+}
+#
+# Update the display
+#
+proc NeuroendoscopyUndistort { {filename ""} } {
+  global Neuroendoscopy
+
+Neuroendoscopy(imgcompare) performUndistortion $filename
+
+
+Neuroendoscopy(texture,pngReader) SetFileName $filename
+Neuroendoscopy(texture,pngReader) Modified
+Neuroendoscopy(texture,pngReader) Update
+
+  Neuroendoscopy(distortviewer2) SetInput [Neuroendoscopy(texture,pngReader) GetOutput]
+  Neuroendoscopy(distortviewer2) SetColorWindow 256.0
+  Neuroendoscopy(distortviewer2) SetColorLevel 127.5
+  Neuroendoscopy(distortviewer2) Modified
+  Neuroendoscopy(distortviewer2) Render
+
+Render3D
+}
+
+proc showAllTextures {} {
+global Neuroendoscopy Model Module Matrix 
+
+
+set nitems [Mrml(dataTree) GetNumberOfItems]
+set openparse 0
+set TextureMatrixIDs 0
+set TextureModelIDs 0
+set localmatrix 0
+set filename ""
+
+for {set i 0} {$i<$nitems} {incr i} {
+
+set node [Mrml(dataTree) GetNthItem $i]
+set nodename [$node GetName]
+set nodetitle [$node GetTitle]
+
+  if {[string match "StartTrafo*" $nodename]} {
+  
+   incr Neuroendoscopy(texture,actors,id)
+   set openparse 1
+  }
+  if {$openparse == 1 && [string match "TextureMatrix*" $nodename] == 1} {
+    set TextureMatrixIDs [$node GetID]
+   #load the matrix (position of the texture)
+    set localmatrix [Matrix($TextureMatrixIDs,node) GetMatrix]
+    
+  }
+  if {$openparse == 1 && [string match "TextureModel*" $nodename] == 1} {
+    set TextureModelIDs [$node GetID]
+    set filename [$node GetDescription]
+    
+    #load the textures
+    
+  }
+
+  if {$openparse == 1 && [string match "EndTransform*" $nodetitle] == 1} {
+  
+   
+    vtkProjectedTexture Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) 
+   Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) SetInput $Model($TextureModelIDs,polyData)
+  
+   Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) SetPosition [lindex $localmatrix 0] [lindex $localmatrix 1] [lindex $localmatrix 2]
+   Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) SetFocalPoint [lindex $localmatrix 4] [lindex $localmatrix 5] [lindex $localmatrix 6]
+  
+   Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) SetUp [lindex $localmatrix 8] [lindex $localmatrix 9] [lindex $localmatrix 10]
+   
+   #the sides of the pyramid which represent the viewing and the lenght
+   set fruLength [ver coneAngle2FrustumLength $Neuroendoscopy(texture,angle)]
+   Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) SetAspectRatio $fruLength $fruLength 50
+
+
+   vtkTransformTextureCoords Neuroendoscopy(texture,xform,$Neuroendoscopy(texture,actors,id))
+   Neuroendoscopy(texture,xform,$Neuroendoscopy(texture,actors,id)) SetInput [Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) GetOutput]
+
+ vtkDataSetMapper Neuroendoscopy(texture,mapper,$Neuroendoscopy(texture,actors,id))
+   Neuroendoscopy(texture,mapper,$Neuroendoscopy(texture,actors,id)) SetInput [Neuroendoscopy(texture,xform,$Neuroendoscopy(texture,actors,id)) GetOutput]
+
+###load picture
+vtkPNMReader tempTextImageReader
+tempTextImageReader SetFileName "/projects/igtdev/ruetz/models/TextureImage2.pnm"
+puts [Model($TextureModelIDs,node) GetDescription]
+  vtkTexture Neuroendoscopy(texture,atext,$Neuroendoscopy(texture,actors,id))
+  # Neuroendoscopy(texture,atext,$Neuroendoscopy(texture,actors,id)) SetInput [tempTextImageReader GetOutput]
+   Neuroendoscopy(texture,atext,$Neuroendoscopy(texture,actors,id)) SetInput [tempTextImageReader GetOutput]
+   Neuroendoscopy(texture,atext,$Neuroendoscopy(texture,actors,id)) InterpolateOn
+
+    foreach r $Module(Renderers) {
+       # Model($m,mapper,$r) SetInput [Neuroendoscopy(texture,xform) GetOutput]
+     
+        Model($TextureModelIDs,actor,$r) SetMapper Neuroendoscopy(texture,mapper,$Neuroendoscopy(texture,actors,id))
+        Model($TextureModelIDs,actor,$r) SetTexture Neuroendoscopy(texture,atext,$Neuroendoscopy(texture,actors,id))
+    }
+
+   
+################################################
+tempTextImageReader Delete
+   
+   set openparse 0
+  }
+}
+
+
+}
+proc NeuroendoscopyRegisterTexture {} {
+global Neuroendoscopy Locator
+if {$Neuroendoscopy(textureVisibility) == 1} {
+puts "set texture to locator"
+LocatorRegisterCallback  NeuroendoscopyTextureInits
+} else {
+puts "unset texture to locator"
+LocatorUnRegisterCallback NeuroendoscopyTextureInits 
+}
+}
+
+
+proc NeuroendoscopySetTexture {} {
+global Neuroendoscopy Model ver tipActor Locator ModelMaker Module
+
+
+
+incr Neuroendoscopy(texture,actors,id)
+
+###save the picture
+vtkPNMWriter tmppnmwrite
+tmppnmwrite SetInput [Neuroendoscopy(imageStreamer) GetOutput]
+tmppnmwrite SetFileName "/projects/igtdev/ruetz/models/TextureImage$Neuroendoscopy(texture,actors,id).pnm"
+tmppnmwrite Write
+puts "write image TextureImage$Neuroendoscopy(texture,actors,id)"
+
+vtkImageCompare imgcompare
+#imgcompare SetOriginalPictureFromArray [Neuroendoscopy(imageStreamer) GetOutput]
+imgcompare SetOriginalPicture "/projects/igtdev/ruetz/models/TextureImage$Neuroendoscopy(texture,actors,id).pnm"
+
+imgcompare searchCorners 10 
+
+imgcompare performUndistortion "/projects/igtdev/ruetz/models/TextureImage$Neuroendoscopy(texture,actors,id).pnm"
+
+set startTransform [MainMrmlAddNode Transform]
+set trafoid [$startTransform GetID]
+$startTransform SetName "StartTrafo$trafoid"
+    set prefix "TextureModel$Neuroendoscopy(texture,actors,id)"
+    set n [MainMrmlAddNode Model]
+    $n SetName  "TextureModel$Neuroendoscopy(texture,actors,id)"
+    $n SetColor 1
+    $n SetDescription [tmppnmwrite GetFileName]
+    # Guess the prefix
+   # set ModelMaker(prefix) $ModelMaker(name)
+
+tmppnmwrite Delete
+    # Create the model
+    set m [$n GetID]
+    
+    puts "ModelMakerCreate m = $m"
+  
+    MainModelsCreate $m
+    
+    $Model($m,polyData) DeepCopy [Neuroendoscopy(texture,clipper) GetOutput]
+    $Model($m,polyData) Modified
+    $Model($m,polyData) Update
+
+ foreach r $Module(Renderers) {
+        Model($m,mapper,$r) SetInput $Model($m,polyData)
+    }
+    
+
+
+    #Mrml(dataTree) AddItem  Model($m,node)
+    
+
+    
+
+    #set m $Model(activeID)
+    #set ModelMaker(prefix) [MainFileSaveModel $m $prefix]
+    if {$prefix == ""} {
+        if {$::Module(verbose)} { 
+            puts "ModelMakerWrite: empty prefix for model $m" 
+        }
+        return
+    }
+    
+    # Write
+    MainModelsWrite $m $prefix
+
+    # Prefix changed, so update the Models->Props tab
+    
+   # MainModelsSetActive $m
+
+
+#ADD VOLUME to hold image somthing is strange here##############################################################
+#    set newvol [MainMrmlAddNode Volume]
+  
+#    set id [Neuroendoscopy(texture,pngReader) GetOutput]
+#    $id SetNumberOfScalarComponents 1
+#    set v [$newvol GetID]
+    
+#    $newvol SetName "ImageTexture$Neuroendoscopy(texture,actors,id)"
+#    $newvol SetDescription "ImageTexture$Neuroendoscopy(texture,actors,id)" 
+    # not for distance vols
+#   MainVolumesCreate $v
+
+    #return $n
+   
+
+
+
+    #eval Volume($v,node) SetSpacing [$id GetSpacing]
+    #Volume($i,node) SetScanOrder PA
+    #Volume($v,node) SetScanOrder IS
+    #Volume($v,node) SetNumScalars [$id GetNumberOfScalarComponents]
+    #set ext [$id GetWholeExtent]
+    #Volume($v,node) SetImageRange [lindex $ext 4] [lindex $ext 5]
+    #Volume($v,node) SetScalarType [$id GetScalarType]
+    #Volume($v,node) SetDimensions [lindex [$id GetDimensions] 0] [lindex [$id GetDimensions] 1]
+    #Volume($v,node) ComputeRasToIjkFromScanOrder [::Volume($v,node) GetScanOrder]
+#    puts "created volume $v"
+
+    # debug
+    #puts [[$source GetOutput] Print]
+
+
+
+#  Volume($v,vol) SetImageData $id
+#      MainUpdateMRML
+    # update slicer stuff
+   # MainVolumesUpdate $v
+#    MainVolumesWrite $v "/projects/igtdev/ruetz/models/ImageTexture$Neuroendoscopy(texture,actors,id)"
+    # display this volume so the user knows something happened
+   # MainSlicesSetVolumeAll Back $v
+###########Save coordinates of displaying the texture#######################################################
+
+
+    vtkMatrix4x4 tempMatrix
+  
+
+
+  set matrixortho [Neuroendoscopy(texture,transform) GetMatrix] 
+  ####SHOULD NORMALY THE COORDINATES OF THE FOCAL POINT OF THE CAMERA!!!!
+  set coordinates [tipActor GetPosition]
+  #focalpoint
+  #tempMatrix SetElement 0 0 0 
+  #tempMatrix SetElement 0 1 0 
+  #tempMatrix SetElement 0 2 0
+  tempMatrix SetElement 0 0 [lindex $coordinates 0] 
+  tempMatrix SetElement 0 1 [lindex $coordinates 1] 
+  tempMatrix SetElement 0 2 [lindex $coordinates 2]
+
+  tempMatrix SetElement 1 0 [$matrixortho GetElement 0 0]
+  tempMatrix SetElement 1 1 [$matrixortho GetElement 0 1]
+  tempMatrix SetElement 1 2 [$matrixortho GetElement 0 2]
+  #viewup
+  tempMatrix SetElement 2 0 [$matrixortho GetElement 1 0]
+  tempMatrix SetElement 2 1 [$matrixortho GetElement 1 1]
+  tempMatrix SetElement 2 2 [$matrixortho GetElement 1 2]
+
+
+  #Position
+
+
+   
+
+      set TextureMatrix [MainMrmlAddNode Matrix]
+set maid [$TextureMatrix GetID]
+$TextureMatrix SetName "TextureMatrix$maid"
+
+
+set strPosition [Matrix($maid,node) GetMatrixToString tempMatrix]
+Matrix($maid,node) SetMatrix $strPosition
+
+
+set endTransform [MainMrmlAddNode EndTransform]
+$endTransform SetName "EndTrafo$trafoid"
+
+#puts [lindex $strPosition 0]
+#puts $strPosition
+  MainUpdateMRML
+#RenderAll   
+
+
+
+
+
+########################################################3 show me
+
+   set tempMatrix [Matrix($maid,node) GetMatrix]
+   
+   vtkProjectedTexture Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) 
+   Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) SetInput $Model($m,polyData)
+   #Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) SetPosition [$tempMatrix GetElement 2 0] [$tempMatrix GetElement 2 1] [$tempMatrix GetElement 2 2]
+   #Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) SetFocalPoint [$tempMatrix GetElement 0 0] [$tempMatrix GetElement 0 1] [$tempMatrix GetElement 0 2]
+   #Neuroendoscopy(texture,tmapper) SetFocalPoint $Neuroendoscopy(texture,xcoordi) $Neuroendoscopy(texture,ycoordi) $Neuroendoscopy(texture,zcoordi)  
+   #Neuroendoscopy(texture,tmapper) SetUp $Neuroendoscopy(texture,xpic) $Neuroendoscopy(texture,ypic) $Neuroendoscopy(texture,zpic)
+   #set the orientation of the texture
+   #Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) SetUp [$tempMatrix GetElement 1 0] [$tempMatrix GetElement 1 1] [$tempMatrix GetElement 1 2]
+  
+   Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) SetPosition [lindex $tempMatrix 0] [lindex $tempMatrix 1] [lindex $tempMatrix 2]
+   Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) SetFocalPoint [lindex $tempMatrix 4] [lindex $tempMatrix 5] [lindex $tempMatrix 6]
+   #Neuroendoscopy(texture,tmapper) SetFocalPoint $Neuroendoscopy(texture,xcoordi) $Neuroendoscopy(texture,ycoordi) $Neuroendoscopy(texture,zcoordi)  
+   #Neuroendoscopy(texture,tmapper) SetUp $Neuroendoscopy(texture,xpic) $Neuroendoscopy(texture,ypic) $Neuroendoscopy(texture,zpic)
+   #set the orientation of the texture
+   Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) SetUp [lindex $tempMatrix 8] [lindex $tempMatrix 9] [lindex $tempMatrix 10]
+   
+   #the sides of the pyramid which represent the viewing and the lenght
+   set fruLength [ver coneAngle2FrustumLength $Neuroendoscopy(texture,angle)]
+   Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) SetAspectRatio $fruLength $fruLength 50
+
+
+ vtkTransformTextureCoords Neuroendoscopy(texture,xform,$Neuroendoscopy(texture,actors,id))
+   Neuroendoscopy(texture,xform,$Neuroendoscopy(texture,actors,id)) SetInput [Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) GetOutput]
+
+ vtkDataSetMapper Neuroendoscopy(texture,mapper,$Neuroendoscopy(texture,actors,id))
+   Neuroendoscopy(texture,mapper,$Neuroendoscopy(texture,actors,id)) SetInput [Neuroendoscopy(texture,xform,$Neuroendoscopy(texture,actors,id)) GetOutput]
+
+###load picture
+vtkPNMReader tempTextImageReader
+tempTextImageReader SetFileName [Model($m,node) GetDescription]
+
+  vtkTexture Neuroendoscopy(texture,atext,$Neuroendoscopy(texture,actors,id))
+  # Neuroendoscopy(texture,atext,$Neuroendoscopy(texture,actors,id)) SetInput [tempTextImageReader GetOutput]
+   Neuroendoscopy(texture,atext,$Neuroendoscopy(texture,actors,id)) SetInput [tempTextImageReader GetOutput]
+   Neuroendoscopy(texture,atext,$Neuroendoscopy(texture,actors,id)) InterpolateOn
+
+    foreach r $Module(Renderers) {
+       # Model($m,mapper,$r) SetInput [Neuroendoscopy(texture,xform) GetOutput]
+        Model($m,actor,$r) SetMapper Neuroendoscopy(texture,mapper,$Neuroendoscopy(texture,actors,id))
+        Model($m,actor,$r) SetTexture Neuroendoscopy(texture,atext,$Neuroendoscopy(texture,actors,id))
+    }
+
+   
+################################################
+tempTextImageReader Delete
+ tempMatrix Delete
+imgcompare Delete
+}
+proc NeuroendoscopyVideoTexture {} {
+global Neuroendoscopy
+ if {$Neuroendoscopy(videoVisibility) == 1} {
+   vtkCaptureFrames Neuroendoscopy(capFrames)
+ Neuroendoscopy(capFrames) Initialize 640 480
+
+vtkImageDataStreamer Neuroendoscopy(imageStreamer)
+ 
+ } else {
+  Neuroendoscopy(imageStreamer) Delete
+  Neuroendoscopy(capFrames) Delete
+}
+}
+
+#
 #-------------------------------------------------------------------------------
 # .PROC NeuroendoscopyCreateFocalPoint
 #  Create the vtk FocalPoint actor
@@ -1069,10 +1599,12 @@ proc NeuroendoscopyCameraParams {{size -1} {shape ""}} {
 # .END
 #-------------------------------------------------------------------------------
 proc NeuroendoscopyTextureInits {{pic ""}} {
-global Neuroendoscopy Model ver tipActor Locator
+global Neuroendoscopy Model ver tipActor Locator ModelMaker Module
 if {$Neuroendoscopy(textureVisibility) == 1} {
 
-   set Neuroendoscopy(texture,model) [lindex $Model(idList) 3]
+
+   #set Neuroendoscopy(texture,model) [lindex $Model(idList) 3]
+   set Neuroendoscopy(texture,model) $Model(activeID)
 
 #transformation for the cone to put the clipping cone in the right direction
 
@@ -1080,35 +1612,40 @@ if {$Neuroendoscopy(textureVisibility) == 1} {
 #Neuroendoscopy(gyro,actor) SetUserMatrix Locator(normalMatrix)
 #    Neuroendoscopy(gyro,actor) SetOrientation 180 0 0
 #    Neuroendoscopy(gyro,actor) SetPosition [lindex $coordinates 0] [lindex $coordinates 1] [lindex $coordinates 2]
+
+#set position normaly of camera because we have a little tranformation between sensor and focalpoint 
 set coordinates [tipActor GetPosition]
 
 
  #Neuroendoscopy(texture,transmatrix) Invert Locator(normalMatrix) Neuroendoscopy(texture,invertedmatrix)
 #set Neuroendoscopy(texture,transmatrix) Locator(normalMatrix)
-Neuroendoscopy(texture,transmatrix) SetElement 0 0 [Locator(normalMatrix) GetElement 0 0]
-Neuroendoscopy(texture,transmatrix) SetElement 0 1 [Locator(normalMatrix) GetElement 0 1]
-Neuroendoscopy(texture,transmatrix) SetElement 0 2 [Locator(normalMatrix) GetElement 0 2]
-Neuroendoscopy(texture,transmatrix) SetElement 1 0 [Locator(normalMatrix) GetElement 1 0]
-Neuroendoscopy(texture,transmatrix) SetElement 1 1 [Locator(normalMatrix) GetElement 1 1]
-Neuroendoscopy(texture,transmatrix) SetElement 1 2 [Locator(normalMatrix) GetElement 1 2]
-Neuroendoscopy(texture,transmatrix) SetElement 2 0 [Locator(normalMatrix) GetElement 2 0]
-Neuroendoscopy(texture,transmatrix) SetElement 2 1 [Locator(normalMatrix) GetElement 2 1]
-Neuroendoscopy(texture,transmatrix) SetElement 2 2 [Locator(normalMatrix) GetElement 2 2]
-Neuroendoscopy(texture,transmatrix) SetElement 3 0 [lindex $coordinates 0]
-Neuroendoscopy(texture,transmatrix) SetElement 3 1 [lindex $coordinates 1]
-Neuroendoscopy(texture,transmatrix) SetElement 3 2 [lindex $coordinates 2]
+#Neuroendoscopy(texture,transmatrix) SetElement 0 0 [Locator(tipMatrix) GetElement 0 0]
+#Neuroendoscopy(texture,transmatrix) SetElement 0 1 [Locator(tipMatrix) GetElement 0 1]
+#Neuroendoscopy(texture,transmatrix) SetElement 0 2 [Locator(tipMatrix) GetElement 0 2]
+#Neuroendoscopy(texture,transmatrix) SetElement 1 0 [Locator(normalMatrix) GetElement 1 0]
+#Neuroendoscopy(texture,transmatrix) SetElement 1 1 [Locator(normalMatrix) GetElement 1 1]
+#Neuroendoscopy(texture,transmatrix) SetElement 1 2 [Locator(normalMatrix) GetElement 1 2]
+#Neuroendoscopy(texture,transmatrix) SetElement 2 0 [Locator(normalMatrix) GetElement 2 0]
+#Neuroendoscopy(texture,transmatrix) SetElement 2 1 [Locator(normalMatrix) GetElement 2 1]
+#Neuroendoscopy(texture,transmatrix) SetElement 2 2 [Locator(normalMatrix) GetElement 2 2]
+#Neuroendoscopy(texture,transmatrix) SetElement 3 0 [lindex $coordinates 0]
+#Neuroendoscopy(texture,transmatrix) SetElement 3 1 [lindex $coordinates 1]
+#Neuroendoscopy(texture,transmatrix) SetElement 3 2 [lindex $coordinates 2]
 
 
 #  Neuroendoscopy(texture,transform) SetMatrix Neuroendoscopy(texture,invertedmatrix)
-  #Neuroendoscopy(texture,transform) SetMatrix Locator(normalMatrix)
-Neuroendoscopy(texture,transform) SetMatrix Neuroendoscopy(texture,transmatrix)
-
-#Neuroendoscopy(texture,transform) Identity
-
-#Neuroendoscopy(texture,transform) Translate [lindex $coordinates 0] [lindex $coordinates 1] [lindex $coordinates 2]  
- Neuroendoscopy(texture,transform) RotateX $Neuroendoscopy(texture,xcoordi)
-Neuroendoscopy(texture,transform) RotateY $Neuroendoscopy(texture,ycoordi)
-Neuroendoscopy(texture,transform) RotateZ $Neuroendoscopy(texture,rotate)
+#  Neuroendoscopy(texture,transform) SetMatrix Locator(normalMatrix)
+#Neuroendoscopy(texture,transform) SetMatrix Neuroendoscopy(texture,transmatrix)
+  
+Neuroendoscopy(texture,transform) Identity
+Neuroendoscopy(texture,transform) Concatenate Locator(normalMatrix)
+Neuroendoscopy(texture,transform) Translate  0 [expr $Locator(normalLen) / -2.] 0  
+# Neuroendoscopy(texture,transform) RotateX $Neuroendoscopy(texture,xcoordi)
+#Neuroendoscopy(texture,transform) RotateX 90
+#Neuroendoscopy(texture,transform) RotateY $Neuroendoscopy(texture,ycoordi)
+#Neuroendoscopy(texture,transform) RotateY -90
+#Neuroendoscopy(texture,transform) RotateZ $Neuroendoscopy(texture,rotate)
+Neuroendoscopy(texture,transform) RotateZ -90
 Neuroendoscopy(texture,transform) Inverse
   # Neuroendoscopy(texture,transform) RotateZ $Neuroendoscopy(texture,rotate)
 
@@ -1120,36 +1657,55 @@ Neuroendoscopy(texture,transform) Inverse
 
 
     Neuroendoscopy(texture,cone) SetAngle $Neuroendoscopy(texture,angle)
+
     
    
+#vtkTransform CylinderTransform
+#CylinderTransform RotateZ 90
+
+
+#Neuroendoscopy(texture,cylinder)  SetRadius 5
+#Neuroendoscopy(texture,cylinder)  SetTransform CylinderTransform
+   
    #Neuroendoscopy(texture,cone) SetTransform Neuroendoscopy(texture,transform)
-#for cutting the cone
- 
-    Neuroendoscopy(texture,frontPlane) SetOrigin 400 0 0
+   
+   #for cutting the cone
+    Neuroendoscopy(texture,frontPlane) SetOrigin 200 0 0
     Neuroendoscopy(texture,frontPlane) SetNormal 1 0  0
  
     Neuroendoscopy(texture,basePlane) SetOrigin 0.1 0 0
     Neuroendoscopy(texture,basePlane) SetNormal -1 0 0
 
 
+
+
+
+
     Neuroendoscopy(texture,theCone) SetOperationTypeToIntersection
     Neuroendoscopy(texture,theCone) AddFunction Neuroendoscopy(texture,cone)
+    #Neuroendoscopy(texture,theCone) AddFunction Neuroendoscopy(texture,cylinder)
     Neuroendoscopy(texture,theCone) AddFunction Neuroendoscopy(texture,frontPlane)
     Neuroendoscopy(texture,theCone) AddFunction Neuroendoscopy(texture,basePlane)
     Neuroendoscopy(texture,theCone) SetTransform Neuroendoscopy(texture,transform) 
-
+    Neuroendoscopy(texture,theCone) Modified
 #vtkClipPolyData Neuroendoscopy(texture,clipper)
     
+
+
     Neuroendoscopy(texture,clipper) SetInput $Model($Neuroendoscopy(texture,model),polyData)
     Neuroendoscopy(texture,clipper) SetClipFunction Neuroendoscopy(texture,theCone)
     Neuroendoscopy(texture,clipper) InsideOutOn
 
-#vtkDataSetMapper mapperclipped
-#  mapperclipped SetInput [clipper GetOutput]
 
-#vtkTextureMapToPlane tmapper
-#tmapper SetInput [clipper GetOutput]
 
+
+
+
+## here we will calculate just the visible points of the texture mapper
+#    vtkSelectVisiblePoints visPts
+#    visPts SetInput [Neuroendoscopy(texture,clipper) GetOutput]
+#    visPts SetRenderer neuroendoscopyScreen
+   
   set matrixortho [Neuroendoscopy(texture,transform) GetMatrix] 
 
   set FocalPointX [$matrixortho GetElement 0 0]
@@ -1160,13 +1716,15 @@ Neuroendoscopy(texture,transform) Inverse
   set ViewUpY [$matrixortho GetElement 1 1]
   set ViewUpZ [$matrixortho GetElement 1 2]
 #tmapper AutomaticPlaneGenerationOn
+#puts "$FocalPointX $FocalPointY $FocalPointZ $ViewUpX $ViewUpY $ViewUpZ"
 
 #the projection of the z axis must be near 0 but not 0 because than we will not see any texture
 #vtkProjectedTexture Neuroendoscopy(texture,tmapper)
    Neuroendoscopy(texture,tmapper) SetInput [Neuroendoscopy(texture,clipper) GetOutput]
-   Neuroendoscopy(texture,tmapper) SetPosition 0 0 0
-#Neuroendoscopy(texture,tmapper) SetPosition [lindex $coordinates 0] [lindex $coordinates 1] [lindex $coordinates 2]   
-Neuroendoscopy(texture,tmapper) SetFocalPoint $FocalPointX $FocalPointY $FocalPointZ
+#Neuroendoscopy(texture,tmapper) SetInput [visPts GetOutput]
+   #Neuroendoscopy(texture,tmapper) SetPosition 0 0 0
+Neuroendoscopy(texture,tmapper) SetPosition [lindex $coordinates 0] [lindex $coordinates 1] [lindex $coordinates 2]   
+   Neuroendoscopy(texture,tmapper) SetFocalPoint $FocalPointX $FocalPointY $FocalPointZ
    
    #Neuroendoscopy(texture,tmapper) SetFocalPoint $Neuroendoscopy(texture,xcoordi) $Neuroendoscopy(texture,ycoordi) $Neuroendoscopy(texture,zcoordi)  
    #Neuroendoscopy(texture,tmapper) SetUp $Neuroendoscopy(texture,xpic) $Neuroendoscopy(texture,ypic) $Neuroendoscopy(texture,zpic)
@@ -1174,13 +1732,17 @@ Neuroendoscopy(texture,tmapper) SetFocalPoint $FocalPointX $FocalPointY $FocalPo
    Neuroendoscopy(texture,tmapper) SetUp $ViewUpX $ViewUpY $ViewUpZ
    
 
-   Neuroendoscopy(texture,transform) Pop
+   
    
    #the sides of the pyramid which represent the viewing and the lenght
 
-   
+  #NeuroendoscopyCalcDistance 
+set Neuroendoscopy(shortestDistance) [ver GetDistance neuroendoscopyScreen $Model($Neuroendoscopy(texture,model),polyData)]
+  #[expr 1/$Neuroendoscopy(shortestDistance)]
+   puts "short distance $Neuroendoscopy(shortestDistance)"
    set fruLength [ver coneAngle2FrustumLength $Neuroendoscopy(texture,angle)]
-   Neuroendoscopy(texture,tmapper) SetAspectRatio $fruLength $fruLength 50
+   #Neuroendoscopy(texture,tmapper) SetAspectRatio $fruLength $fruLength [expr 1250/$Neuroendoscopy(shortestDistance)]
+   Neuroendoscopy(texture,tmapper) SetAspectRatio $fruLength $fruLength $Neuroendoscopy(shortestDistance)
 
 
 #vtkTransformTextureCoords Neuroendoscopy(texture,xform)
@@ -1191,35 +1753,142 @@ Neuroendoscopy(texture,tmapper) SetFocalPoint $FocalPointX $FocalPointY $FocalPo
   
 
 #vtkPNGReader Neuroendoscopy(texture,pngReader)
-   Neuroendoscopy(texture,pngReader) SetFileName "/projects/igtdev/ruetz/models/testpic6.png"
+  # Neuroendoscopy(texture,pngReader) SetFileName "/projects/igtdev/ruetz/models/testpic6.png"
+ #vtkPNMReader Neuroendoscopy(texture,pngReader) 
+#Neuroendoscopy(texture,pngReader) SetFileName "/projects/igtdev/ruetz/slicer2-mrt/slicer2/myfile_undistort1.ppm"
 #vtkBMPReader bmpReader
 #  bmpReader SetFileName "/projects/igtdev/ruetz/models/Red_Sox.bmp"
-   #vtkTexture Neuroendoscopy(texture,atext)
-   Neuroendoscopy(texture,atext) SetInput [Neuroendoscopy(texture,pngReader) GetOutput]
+  # vtkTexture Neuroendoscopy(texture,atext)
+
+
+  Neuroendoscopy(imageStreamer) SetInput [Neuroendoscopy(capFrames) getNextFrame]
+  Neuroendoscopy(texture,atext) SetInput [Neuroendoscopy(imageStreamer) GetOutput]
+  # Neuroendoscopy(texture,atext) SetInput [Neuroendoscopy(texture,pngReader) GetOutput]
    Neuroendoscopy(texture,atext) InterpolateOn
 
+    #set Neuroendoscopy(texture,actors,id) [expr $Neuroendoscopy(texture,actors,id)+1]
     
-    set Neuroendoscopy(texture,actors,id) [expr $Neuroendoscopy(texture,actors,id)+1]
-    vtkActor Neuroendoscopy(texture,actor,$Neuroendoscopy(texture,actors,id))
-    Neuroendoscopy(texture,actor,$Neuroendoscopy(texture,actors,id)) SetMapper Neuroendoscopy(texture,mapper)
-    Neuroendoscopy(texture,actor,$Neuroendoscopy(texture,actors,id)) SetTexture Neuroendoscopy(texture,atext)
+#    lappend Neuroendoscopy(actors) Neuroendoscopy(texture,actor,$Neuroendoscopy(texture,actors,id))
+
+############CREATE MODEL#################
+   vtkActor Neuroendoscopy(texture,actor,0)
+    Neuroendoscopy(texture,actor,0) SetMapper Neuroendoscopy(texture,mapper)
+    #Neuroendoscopy(texture,actor,0) SetMapper Neuroendoscopy(texture,Clipmapper)
+    Neuroendoscopy(texture,actor,0) SetTexture Neuroendoscopy(texture,atext)
+
+
+
+
+#visPts Delete
+
+
+
+if {$Neuroendoscopy(boolean) != 1} {
+
     #create a new Actor
     
-    neuroendoscopyScreen AddActor Neuroendoscopy(texture,actor,$Neuroendoscopy(texture,actors,id))
-    viewRen AddActor Neuroendoscopy(texture,actor,$Neuroendoscopy(texture,actors,id))
-    lappend Neuroendoscopy(actors) Neuroendoscopy(texture,actor,$Neuroendoscopy(texture,actors,id))
+    neuroendoscopyScreen AddActor Neuroendoscopy(texture,actor,0)
 
-  } else {
-   if {$Neuroendoscopy(texture,actors,id) != 0 } {
+    viewRen AddActor Neuroendoscopy(texture,actor,0)
+
+}
+#Neuroendoscopy(texture,pngReader) Delete
+set Neuroendoscopy(boolean) 1
+
+    Neuroendoscopy(texture,actor,0) Delete
+
+
+
+
+
+} else {
+#   if {$Neuroendoscopy(texture,actors,id) != 0 } {
     #delete the actor before
-    neuroendoscopyScreen RemoveActor Neuroendoscopy(texture,actor,$Neuroendoscopy(texture,actors,id))
-    viewRen RemoveActor Neuroendoscopy(texture,actor,$Neuroendoscopy(texture,actors,id))
-    Neuroendoscopy(texture,actor,$Neuroendoscopy(texture,actors,id)) Delete
-    set Neuroendoscopy(texture,actors,id) [expr $Neuroendoscopy(texture,actors,id)-1]
-    }
-  }
+#    neuroendoscopyScreen RemoveActor Neuroendoscopy(texture,actor,$Neuroendoscopy(texture,actors,id))
+#    viewRen RemoveActor Neuroendoscopy(texture,actor,$Neuroendoscopy(texture,actors,id))
+#    Neuroendoscopy(texture,actor,$Neuroendoscopy(texture,actors,id)) Delete
+#    set Neuroendoscopy(texture,actors,id) [expr $Neuroendoscopy(texture,actors,id)-1]
+#    }
+set Neuroendoscopy(boolean) 0
+
+ }
+
+
 }
 
+
+proc NeuroendoscopyCalcDistance {} {
+global Neuroendoscopy Model ver tipActor Locator ModelMaker Module
+
+#vtkSelectVisiblePoints visPts
+#visPts SetInput [Neuroendoscopy(texture,clipper) GetOutput]
+#visPts SetRenderer neuroendoscopyScreen
+
+set renSize [neuroendoscopyScreen GetSize] 
+puts " size of $renSize"
+set centerview [neuroendoscopyScreen GetCenter] 
+puts " size of $centerview"
+
+set zPtr [neuroendoscopyScreen GetZ [expr [lindex $renSize 0]+[lindex $renSize 0]/2] [expr [lindex $renSize 1]/2]]
+#set zPtr [neuroendoscopyScreen GetZ 0 0]
+
+set aspects [neuroendoscopyScreen GetAspect]
+#puts "aspects $aspects"
+set asratio [expr [lindex $aspects 0]/[lindex $aspects 1]]
+set cam [neuroendoscopyScreen GetActiveCamera]
+
+#vtkTransform transformDisp 
+#transformDisp SetMatrix [$cam GetPerspectiveTransformMatrix $asratio -1 1]
+#transformDisp Inverse
+
+#vtkMatrix4x4 matrixDisp
+#matrixDisp DeepCopy [transformDips GetMatrix]
+
+#set zNumerator  [matrixDisp GetElement 2 3]
+#set zDenomMult  [matrixDisp GetElement 3 2]
+#set zDenomAdd   [matrixDisp GetElement 3 3]
+
+#set rangePointer [expr -$zNumerator / ( (($zPtr)*2.0 -1.0) *
+#           $zDenomMult + $zDenomAdd )]
+
+#vtkTransform transformView 
+#transformView SetMatrix [$cam GetViewTransformMatrix]
+#transformView Inverse
+
+#vtkMatrix4x4 viewMatrix
+#viewMatrix DeepCopy [transformView GetMatrix] 
+
+
+#viewMatrix Invert
+vtkTransform transformDisp 
+transformDisp SetMatrix [$cam GetCompositePerspectiveTransformMatrix $asratio 0 1]
+transformDisp Inverse
+ 
+vtkMatrix4x4 matrixDisp
+matrixDisp DeepCopy [transformDisp GetMatrix]
+
+set wcoords [matrixDisp MultiplyPoint 0.5 0.5 $zPtr 0]
+
+
+
+transformDisp Delete
+matrixDisp Delete
+
+set campos [$cam GetPosition]
+
+#ver GetZBuffer neuroendoscopyScreen [expr [lindex $renSize 0]+[lindex $renSize 0]/2] [expr [lindex $renSize 1]/2]
+ver GetDistance neuroendoscopyScreen $Model($Neuroendoscopy(texture,model),polyData)
+#set Neurorenderwindow [neuroendoscopyScreen GetRenderWindow]
+#set wcoords [viewMatrix MultiplyPoint [expr [lindex $renSize 0]+[lindex $renSize 0]/2] [expr [lindex $renSize 1]/2] $zvalue 0]
+#set renNeuroSize [$Neurorenderwindow GetSize]
+#puts " sizenuro of $renNeuroSize"
+#set zdata [$Neurorenderwindow GetZbufferData [expr ([lindex $renNeuroSize 0]/2)-1] [expr ([lindex $renNeuroSize 1]/2)-1] [expr ([lindex $renNeuroSize 0]/2)] [expr ([lindex $renNeuroSize 1]/2)]]
+#set zdata [$Neurorenderwindow GetZbufferData 299 299 300 300]
+#set Neuroendoscopy(shortestDistance)  [$cam GetDistance]
+puts "zbuffer data $wcoords ($zPtr)"
+puts "camera coordinates $campos"
+#viewMatrix Delete
+}
 #-------------------------------------------------------------------------------
 # .PROC NeuroendoscopyCreateFocalPoint
 #  Create the vtk FocalPoint actor
@@ -2412,12 +3081,14 @@ proc NeuroendoscopyBuildGUI {} {
     
     DevAddButton $f.bNext "->->NEXT->->" "NeuroendoscopyICP2" 10
     
-    eval {radiobutton $f.bNaviCon -text "Read Points from Tracking device" -width 25  -variable Neuroendoscopy(connect) -command "NeuroendoscopyNaviTrackConnect" } $Gui(WBA)
+    eval {radiobutton $f.bNaviCon -text "Read Points from Tracking device" -width 25  -variable Neuroendoscopy(connect) -command "NeuroendoscopyNaviTrackConnect; LocatorRegisterCallback NeuroendoscopyLoopOpenTracker" } $Gui(WBA)
     #DevAddButton $f.bNaviCon "Connect to Navitrack" "NeuroendoscopyNaviTrackConnect" 10
   
-    DevAddButton $f.bCalib "Footswitch" "NeuroendoscopyNaviTrackStop"  30
+    DevAddButton $f.bCalib "Footswitch Stop Collecting" "LocatorUnRegisterCallback NeuroendoscopyLoopOpenTracker"  30
+    DevAddButton $f.bModel "Generate model file" "NeuroendoscopyGenerateTestCoordinateFile skull.dat"  30
 
-    pack  $f.bNaviCon $f.bCalib $f.bNext -side top -pady 3 -padx 2
+
+    pack  $f.bNaviCon $f.bCalib $f.bModel $f.bNext -side top -pady 3 -padx 2
 
     #--------------------------------------------
     # Registration->Step4
@@ -2472,9 +3143,16 @@ proc NeuroendoscopyBuildGUI {} {
     #--------------------------------------------
 
     set f $fRegistration.fBot.fLM1
-    frame $f.fData   -bg $Gui(activeWorkspace)
-    pack  $f.fData -side top 
+    frame $f.fPause   -bg $Gui(activeWorkspace)
+    frame $f.fData   -bg   $Gui(activeWorkspace) -height 900
+    pack   $f.fData $f.fPause -side top 
     
+   set f $fRegistration.fBot.fLM1.fPause
+    eval {checkbutton $f.cPause \
+        -text "Run Locator" -variable Neuroendoscopy(Pause) -width 16 \
+        -indicatoron 0 -command "NeuroendoscopyPauseLocator"} $Gui(WCA)
+
+    pack $f.cPause -side top
     set f $fRegistration.fBot.fLM1.fData
     
     
@@ -2489,7 +3167,7 @@ proc NeuroendoscopyBuildGUI {} {
 
     #--- notebook configure
     $f.tsNotebook configure -width 250
-    $f.tsNotebook configure -height 800 
+    $f.tsNotebook configure -height 900 
     $f.tsNotebook configure -background $::Gui(activeWorkspace)
     $f.tsNotebook configure -activebackground $::Gui(activeWorkspace)
     $f.tsNotebook configure -selectbackground $::Gui(activeWorkspace)
@@ -2929,25 +3607,26 @@ Rotate the axis by pressing the right mouse button and moving the mouse."
         -indicatoron 0 -command "NeuroendoscopySetProbe; Render3D"} $Gui(WCA)
 
      
-     #only for testing!!!
-    #foreach slider $posAxi Ltext $LposTexts Rtext $RposTexts orient "x y z rotate" {
-      
-       
-     #   
-
-     #}
+   
     
 
      pack  $f.cLocator $f.cRuler $f.cSensor -side top
      
      set f $fCamera.fBot.fProbe.fTop.fView
-     eval {radiobutton $f.ffreeview -variable Neuroendoscopy(cam,probe) -text "Free view" -value "freeview" -command "NeuroendoscopySetFreeView; Render3D"} $Gui(WBA)
-     eval {radiobutton $f.fprobeview -variable Neuroendoscopy(cam,probe) -text "Probe locked view" -value "probeview" -command "NeuroendoscopySetProbeView; Render3D"} $Gui(WBA)
-     eval {radiobutton $f.fsensorview -variable Neuroendoscopy(cam,probe) -text "Sensor locked view" -value "sensorview" -command "NeuroendoscopySetProbeView; Render3D"} $Gui(WBA)
-      
-    pack  $f.ffreeview $f.fprobeview $f.fsensorview -side top
-    
-    
+     eval {radiobutton $f.ffreeview -variable Neuroendoscopy(cam,probe) -text "Free view" -value "freeview" -command "NeuroendoscopySetFreeView"} $Gui(WBA)
+     eval {radiobutton $f.fprobeview -variable Neuroendoscopy(cam,probe) -text "Sensor locked view" -value "probeview" -command "NeuroendoscopySetFreeView; LocatorRegisterCallback NeuroendoscopySetSensorView"} $Gui(WBA)
+     eval {radiobutton $f.fsensorview -variable Neuroendoscopy(cam,probe) -text "Probe locked view" -value "sensorview" -command "NeuroendoscopySetFreeView; LocatorRegisterCallback NeuroendoscopySetProbeView"} $Gui(WBA)
+     
+     eval {checkbutton $f.cCrosshair \
+        -text "Show Crosshair" -variable Neuroendoscopy(crossVisibility) -width 16 \
+        -indicatoron 0 -command "NeuroendoscopyCrossHairOnOff"} $Gui(WCA)
+     eval {checkbutton $f.cDriving \
+        -text "Driving" -variable Neuroendoscopy(driving) -width 16 \
+        -indicatoron 0 -command "NeuroendoscopyDrivingOnOff"} $Gui(WCA)
+    pack  $f.ffreeview $f.fprobeview $f.fsensorview $f.cCrosshair $f.cDriving -side top
+
+
+
     set calcLength [expr $::Locator(guideSteps) * 2]
     set f $fCamera.fBot.fProbe.fTop.fRuler
     NeuroendoscopyCreateLabelAndSlider $f lguidelength 3 "ruler (mm)" "glength" horizontal 0 $calcLength 130 Neuroendoscopy(guide,length) "NeuroendoscopySetRulerLength;  Render3D" 5 1
@@ -2984,7 +3663,50 @@ Rotate the axis by pressing the right mouse button and moving the mouse."
     button $f.cextSnapShot -text "SnapShot" -font fixed -bg white \
            -command "set Neuroendoscopy(SnapShot) 1" -width 8 
 
+    
     pack  $f.cextWindow $f.cextWindow2 $f.cgenSTL $f.cextSnapShot -side top
+
+    set f $fCamera.fBot.fCapture.fTop.fTitle
+    
+    eval {label $f.lTitle -text "Defined point pairs:"} $Gui(WTA)
+    scrollbar $f.vs -orient vertical -bg $Gui(activeWorkspace)
+    scrollbar $f.hs -orient horizontal -bg $Gui(activeWorkspace)
+    set Neuroendoscopy(PointsVerScroll) $f.vs
+    set Neuroendoscopy(PointsHonScroll) $f.hs
+    listbox $f.lb \
+        -height 5 -width 24 \
+        -bg $Gui(activeWorkspace) \
+        -xscrollcommand {$::Neuroendoscopy(PointsHonScroll) set} \
+        -yscrollcommand {$::Neuroendoscopy(PointsVerScroll) set}
+    set Neuroendoscopy(pointPairListBox) $f.lb
+    $Neuroendoscopy(PointsHonScroll) configure -command {$Neuroendoscopy(pointPairListBox) xview}
+    $Neuroendoscopy(PointsVerScroll) configure -command {$Neuroendoscopy(pointPairListBox) yview}
+
+    blt::table $f \
+        0,0 $f.lTitle -padx 10 -pady 7 \
+        1,0 $Neuroendoscopy(pointPairListBox) -padx 2 -pady 1 -fill x \
+        1,1 $Neuroendoscopy(PointsVerScroll) -fill y -padx 2 -pady 1 \
+        2,0 $Neuroendoscopy(PointsHonScroll) -fill x -padx 2 -pady 1
+
+
+    set f $fCamera.fBot.fCapture.fTop.fPos 
+    set cs $f
+    
+    # now put in a checkbox
+
+    if {[catch "package require iSlicer" errmsg] == 1} {
+        puts "Ooops, can't use the ischeckbox"
+        set cb [checkbox  $cs.cb]
+    } else {
+        set cb [iwidgets::ischeckbox $cs.cb -relief sunken -labeltext "Fiducials" -borderwidth 2 -labelmargin 10 -background $Gui(activeWorkspace) -labelfont {helvetica 8}]
+        if {$::Module(verbose)} {
+            puts "added checkbox $cb"
+        }
+    }
+
+
+   # bind $cb <Control-ButtonRelease-1> "FiducialsSelectionFromScroll $frame.fmenu.mbActive $cb yes" 
+   # bind $cb <ButtonRelease-1> "FiducialsSelectionFromScroll $frame.fmenu.mbActive $cb no" 
 
 
     #--------------------------------------------------
@@ -3022,21 +3744,35 @@ Rotate the axis by pressing the right mouse button and moving the mouse."
     
      eval {label $f.lCurrModel -text "no Model selected" } $Gui(WLA) 
     eval {checkbutton $f.cTexture \
-        -text "Add Texture" -variable Neuroendoscopy(textureVisibility) -width 16 \
-        -indicatoron 0 -command "NeuroendoscopyTextureInits; Render3D"} $Gui(WCA)
+        -text "Add Texture" -variable Neuroendoscopy(addTexture) -width 16 \
+        -indicatoron 0 -command "NeuroendoscopySetTexture; Render3D"} $Gui(WCA)
+
+eval {checkbutton $f.cAllTexture \
+        -text "Add ALL Texture" -variable Neuroendoscopy(showAllTextures) -width 16 \
+        -indicatoron 0 -command "showAllTextures; Render3D"} $Gui(WCA)
+    eval {checkbutton $f.cTextureVisible \
+        -text "Show Texture" -variable Neuroendoscopy(textureVisibility) -width 16 \
+        -indicatoron 0 -command "NeuroendoscopyRegisterTexture; Render3D"} $Gui(WCA)
     
+    eval {checkbutton $f.cVideoTextureVisible \
+        -text "Show Video Texture" -variable Neuroendoscopy(videoVisibility) -width 16 \
+        -indicatoron 0 -command "NeuroendoscopyVideoTexture; Render3D"} $Gui(WCA)
+    
+   eval {checkbutton $f.cCalibration \
+        -text "Calibrate" -variable Neuroendoscopy(calibrationStart) -width 16 \
+        -indicatoron 0 -command "NeuroendoscopyCalibration /projects/igtdev/ruetz/slicer2-mrt/slicer2/myfile_undistort.ppm; Render3D"} $Gui(WCA)
+
     #$Model($head,name)
-    pack $f.cTexture $f.lCurrModel -side top
+    pack $f.cTexture $f.cAllTexture $f.cTextureVisible $f.cVideoTextureVisible $f.cCalibration $f.lCurrModel -side top
     
     set f $fCamera.fBot.fTexture.fTop.fxcoord
-    NeuroendoscopyCreateLabelAndSlider $f lxcoord 0 "rotateX" "xcoord" horizontal -400 400 110 Neuroendoscopy(texture,xcoordi) "NeuroendoscopyTextureInits; Render3D" 5 0
+    NeuroendoscopyCreateLabelAndSlider $f lxcoord 0 "rotateX" "xcoord" horizontal -400 400 110 Neuroendoscopy(texture,xcoordi) "NeuroendoscopyTextureInits; Render3D" 5 90
     set f $fCamera.fBot.fTexture.fTop.fycoord
     NeuroendoscopyCreateLabelAndSlider $f ly 0 "rotateY" "ycoord" horizontal -400 400 110 Neuroendoscopy(texture,ycoordi) "NeuroendoscopyTextureInits; Render3D" 5 0
-    set f $fCamera.fBot.fTexture.fTop.fzcoord
-    NeuroendoscopyCreateLabelAndSlider $f langle 0 "angle" "angle" horizontal 0 90 110 Neuroendoscopy(texture,angle) "NeuroendoscopyTextureInits; Render3D" 5 25
-    
     set f $fCamera.fBot.fTexture.fTop.frotate
     NeuroendoscopyCreateLabelAndSlider $f lr 0 "rotateZ" "rotate" horizontal -400 400 110 Neuroendoscopy(texture,rotate) "NeuroendoscopyTextureInits; Render3D" 5 0
+    set f $fCamera.fBot.fTexture.fTop.fzcoord
+    NeuroendoscopyCreateLabelAndSlider $f langle 0 "angle" "angle" horizontal 0 90 110 Neuroendoscopy(texture,angle) "NeuroendoscopyTextureInits; Render3D" 5 25
     set f $fCamera.fBot.fTexture.fTop.fxpic
     NeuroendoscopyCreateLabelAndSlider $f lxpic 3 "xpic" "xpic" horizontal -1 1 130 Neuroendoscopy(texture,xpic) "NeuroendoscopyTextureInits; Render3D" 5 1
     set f $fCamera.fBot.fTexture.fTop.fypic
@@ -3132,6 +3868,50 @@ lappend Locator(actors) $axis
         ${actor}Actor SetVisibility 0
 }
 
+
+proc NeuroendoscopyPauseLocator {} {
+global Locator Neuroendoscopy
+
+set Locator(loop) $Neuroendoscopy(Pause)
+LocatorLoopOpenTracker
+}
+proc NeuroendoscopyDrivingOnOff {} {
+global Slice Anno Neuroendoscopy
+if {$Neuroendoscopy(driving) == 1} {
+
+    LocatorSetDriverAll Locator
+} else {
+    LocatorSetDriverAll User
+}
+RenderAll
+}
+
+
+
+proc NeuroendoscopyCrossHairOnOff {} {
+global Slice Anno Neuroendoscopy
+if {$Neuroendoscopy(crossVisibility) == 1} {
+MainAnnoSetCrossVisibility  slices 1
+MainAnnoSetCrossVisibility mag 1    
+
+ foreach s $Slice(idList) {
+        if {$Anno(outline) == 1} {
+            Slice($s,outlineActor) SetVisibility $Slice($s,visibility)
+        } else {
+            Slice($s,outlineActor) SetVisibility 0
+        } 
+        foreach name "$Anno(orientList)" {
+            Anno($s,$name,actor) SetVisibility 0
+        }
+    }
+} else {
+ MainAnnoSetCrossVisibility  slices 0
+ MainAnnoSetCrossVisibility mag 0    
+ 
+
+}
+RenderAll
+}
 #-------------------------------------------------------------------------------
 # .PROC NeuroendoscopyPointSelection
 # add a Point from Navitrack and in Dicom Viewer
@@ -3139,13 +3919,81 @@ lappend Locator(actors) $axis
 # .END
 #-------------------------------------------------------------------------------
 
+proc NeuroendoscopyAddImageCoord { {filename ""} } {
+    global Neuroendoscopy
+
+    set pc "$filename"
+    set pc [string trim $pc]
+    regsub -all {( )+} $pc "   " pc 
+
+    set sc Locator(tipMatrix)
+    set sc [string trim $sc]
+    regsub -all {( )+} $sc "   " sc 
+
+
+    set psc "($pc)($sc)"
+    set index [lsearch -exact $Neuroendoscopy(pointPairList) $psc]
+    if {$index != -1} { 
+        DevErrorWindow "The point pair is already added in."
+        return
+    }
+
+ 
+
+    # Keep the new point in the point list
+    lappend Neuroendoscopy(pointPairList) $psc
+
+    # Put the point pair list into the list box
+    $Neuroendoscopy(pointPairListBox) delete 0 end
+    foreach x $Neuroendoscopy(pointPairList) {
+        $Neuroendoscopy(pointPairListBox) insert end $x 
+    }
+}
+
+
+
+
 proc NeuroendoscopyStartICP {} {
-  global Neuroendoscopy Fiducials Model
+  global Neuroendoscopy Fiducials Model Locator
 
 
 set head1 $Model(activeID) 
 
 set HeadPoly $Model($head1,polyData)
+
+#set size [llength $Locator(pointPairList)]
+#    if {$size < 2} {
+#        DevErrorWindow "At least 2 pairs of landmarks are needed for registration."
+#        return
+#    }
+
+#    set size [llength $Locator(pointPairList)]
+#    Locator(OpenTracker,src) SetNumberOfPoints $size 
+
+
+#    set id 0 
+ #foreach x $Locator(pointPairList) {
+ #       set c [string trim $x]
+ #       set i [string first ")" $c]
+ #       if {$i < 0} {
+ #           DevErrorWindow "Wrong point pair found: $c."
+ #           return
+ #       }
+
+ #       set start 1
+ #       set done [expr $i - 1]
+ #       set pc [string range $c $start $done] 
+
+ #       set start [expr $i + 2] 
+ #       set sc [string range $c $start end-1] 
+
+
+ #       Locator(OpenTracker,src) AddPoint $id [lindex $sc 0] [lindex $sc 1] [lindex $sc 2] \
+ #                                             [lindex $pc 0] [lindex $pc 1] [lindex $pc 2]  
+
+ #       incr id
+ #   puts "put point nr $id"
+ #   }
 
 #Locator(OpenTracker,src) BuildSourceModel
 Locator(OpenTracker,src) SetTargetModel $HeadPoly
@@ -3160,13 +4008,22 @@ Locator(OpenTracker,src) DoRegistrationICP
 proc NeuroendoscopyShowICP {} {
  headmapper SetInput [Locator(OpenTracker,src) GetSourceModel]
  actor SetMapper headmapper
+ eval [actor GetProperty] SetColor 1 0 0
  viewRen AddActor actor
+ 
 #transformed representation
  headmapper2 SetInput [Locator(OpenTracker,src) GetSourceModel]
  actor2 SetMapper headmapper2
  actor2 SetUserMatrix [Locator(OpenTracker,src) GetLandmarkTransformMatrix]
+ eval [actor2 GetProperty] SetColor 1 1 1
  viewRen AddActor actor2
-Render3D
+ 
+ headmapper3 SetInput [Locator(OpenTracker,src) GetLandmarkSourceModel]
+ actor3 SetMapper headmapper3
+ eval [actor3 GetProperty] SetColor 0 1 0
+ viewRen AddActor actor3
+
+ Render3D
 
 
 }
@@ -3191,237 +4048,170 @@ global Neuroendoscopy MultiVolumeReader
 proc NeuroendoscopyMakeCaptureWindow {} {
     global Neuroendoscopy MultiVolumeReader
 
-if {$Neuroendoscopy(captWindow) == 1}  {
+ if {$Neuroendoscopy(captWindow) == 1}  {
 
-    set plotGeometry "+335+200"
-    set plotHeight 250 
+ #initialize the FrameGrabber
+ vtkCaptureFrames Neuroendoscopy(capFrames)
+ Neuroendoscopy(capFrames) Initialize 640 480
 
-    set plotWidth 700
-    set graphWidth 700
 
-    set plotTitle "Capture Window"
-    # Plot the time course
-
-  #vtkNeuroendoscopy cap
-  #set pic [cap getCurrentPic2]
-
-#vtkVideoSource video
-#vtkV4L2VideoSource video
-#video SetFrameBufferSize 20
-#video Grab
-#video Play
-vtkCaptureFrames Neuroendoscopy(capFrames)
-
-Neuroendoscopy(capFrames) Initialize
-#set pic [df getNextFrame]
-#puts $pic
+ vtkImageDataStreamer Neuroendoscopy(imageStreamer)
+  Neuroendoscopy(imageStreamer) SetInput [Neuroendoscopy(capFrames) getNextFrame]
+ #Neuroendoscopy(imageStreamer) SetInput [Neuroendoscopy(capFrames) startGrabbing]
+ #imageStreamer SetInput [shiftScale GetOutput]
+ Neuroendoscopy(imageStreamer) SetNumberOfStreamDivisions 20
+ # make sure we get the correct translator.
+ Neuroendoscopy(imageStreamer) Update
 
 
 
-  
-  #vtkImageImport reader
-  #reader SetImportVoidPointer [df getNextFrame]
-  #vtkPNMReader2 reader
-  puts "set the reader"
-  
-  #reader SetFileName "/tmp/myfile.ppm"
-  #reader SetDataArray $pic
-  puts "set the array"
+set XRAD             640
+set YRAD             480
+
+#
+# Create firt Mandelbrot viewer
+#
 
 
-#vtkImageShiftScale shiftScale
-#  shiftScale SetInput [df getNextFrame]
-#  shiftScale SetShift 0
-#  shiftScale SetScale 0.07
-#  shiftScale SetOutputScalarTypeToUnsignedChar
+vtkImageViewer Neuroendoscopy(captViewer)
+  Neuroendoscopy(captViewer) SetInput [Neuroendoscopy(imageStreamer) GetOutput]
+  Neuroendoscopy(captViewer) SetColorWindow 256.0
+  Neuroendoscopy(captViewer) SetColorLevel 127.5
+  #[viewer GetActor2D] SetPosition 1 1
 
-#df startGrabbing
-
-#set pic [Neuroendoscopy(capFrames) startGrabbing]
-#puts $pic
-
-vtkImageDataStreamer Neuroendoscopy(imageStreamer)
-Neuroendoscopy(imageStreamer) SetInput [Neuroendoscopy(capFrames) getNextFrame]
-#Neuroendoscopy(imageStreamer) SetInput [Neuroendoscopy(capFrames) startGrabbing]
-#imageStreamer SetInput [shiftScale GetOutput]
-Neuroendoscopy(imageStreamer) SetNumberOfStreamDivisions 20
-# make sure we get the correct translator.
-Neuroendoscopy(imageStreamer) UpdateInformation
-#[Neuroendoscopy(imageStreamer) GetExtentTranslator] SetSplitModeToBlock
-#[Neuroendoscopy(imageStreamer) GetExtentTranslator] SetWholeExtent 0 639 0 479 0 0
+#
+# Create second Mandelbrot viewer
+#
 
 
-vtkImageActor Neuroendoscopy(ImageActor)
-  Neuroendoscopy(ImageActor) SetInput [Neuroendoscopy(capFrames) getNextFrame]
-  Neuroendoscopy(ImageActor) SetDisplayExtent 0 639 0 479 0 0
-  Neuroendoscopy(ImageActor) InterpolateOff
+vtkImageViewer Neuroendoscopy(captViewer2)
+  Neuroendoscopy(captViewer2) SetInput [Neuroendoscopy(imageStreamer) GetOutput]
+  Neuroendoscopy(captViewer2) SetColorWindow 256.0
+  Neuroendoscopy(captViewer2) SetColorLevel 127.5
+  #[viewer2 GetActor2D] SetPosition 1 1
 
 
-#  vtkImageImport importer 
-#  importer SetWholeExtent 0 640 0 480 0 0;
-#  importer SetDataExtentToWholeExtent
-#  importer SetDataScalarTypeToShort
-#  importer SetImportVoidPointer $pic
+#
+# Create the GUI: two vtkTkImageViewer widgets and a quit/reset buttons
+#
+wm withdraw .
+set top [toplevel .top] 
+wm protocol .top WM_DELETE_WINDOW "deleteCapWindows;destroy .top"
+wm title .top "Distortion Viewer"
 
+set f1 [frame $top.f1] 
 
-#  vtkImageViewer viewer 
-#  viewer SetInputConnection [importer GetOutputPort]
-#  viewer SetZSlice 45
-#  viewer SetColorWindow 2000
-#  viewer SetColorLevel 1000
+pack $f1 \
+        -side bottom \
+        -fill both -expand f
 
-#  viewer Render
+#
+# Create the image viewer widget for set 1
+#
+set manFrame [frame $f1.man]
+set julFrame [frame $f1.jul]
 
-# Create the RenderWindow, Renderer and both Actors
-vtkRenderer ren1
-#ren1 ResetCamera 0 640 0 480 0 0
-#vtkCamera camera
-#[ren1 GetActiveCamera] SetFocalPoint 0 0 0
-#camera SetPosition 0 0 0 
+pack $manFrame $julFrame \
+        -side left \
+        -padx 3 -pady 3 \
+        -fill both -expand f
 
-vtkRenderWindow renWin
-    renWin AddRenderer ren1
-#vtkRenderWindowInteractor iren
-#    iren SetRenderWindow renWin
+set manView [vtkTkImageViewerWidget $manFrame.view \
+        -iv Neuroendoscopy(captViewer) \
+        -width [expr $XRAD] \
+        -height [expr $YRAD]]
 
-#vtkInteractorStyleImage interactor
-#  iren SetInteractorStyle interactor
-#  interactor AddObserver LeftButtonPressEvent {StartZoom}
-#  interactor AddObserver MouseMoveEvent {MouseMove}
-#  interactor AddObserver LeftButtonReleaseEvent {EndZoom}
+set manRange [label $manFrame.range \
+        -text "Movie: ${XRAD}X${YRAD}"]
 
-# Add the actors to the renderer, set the background and size
-ren1 AddActor Neuroendoscopy(ImageActor)
-ren1 SetBackground 0.7 0.2 0.4
-renWin SetSize 640 480
-#renWin FullScreenOn
+set quit [button $manFrame.quit  \
+        -text "Quit" \
+        -command "deleteCapWindows;destroy .top"]
 
-# render the image
-#iren AddObserver UserEvent {wm deiconify .vtkInteract}
-renWin Render
+#
+# Create the image viewer widget for set 2
+#
+pack $manView $manRange $quit \
+        -side top \
+        -padx 2 -pady 2 \
+        -fill both -expand f
 
+set julView [vtkTkImageViewerWidget $julFrame.view \
+        -iv Neuroendoscopy(captViewer2) \
+        -width [expr $XRAD] \
+        -height [expr $YRAD]]
+
+set julRange [label $julFrame.range \
+        -text "SnapShot"]
+
+set reset [button $julFrame.reset  \
+        -text "SnapShot" \
+        -command NeuroendoscopyTakeSnapshot]
+
+pack $julView $julRange $reset \
+        -side top \
+        -padx 2 -pady 2 \
+        -fill both -expand f
+#
+# The equation label
+#
+set equation [label $top.equation \
+        -text "video ===> picture"]
+
+pack $equation \
+        -side bottom \
+        -fill x -expand f
+
+set cSaveAsFile [checkbutton $top.cSaveAsFile -text "Save as File?" -variable Neuroendoscopy(capture,IsSaveAsFile) -indicatoron 1]
+pack $cSaveAsFile \
+        -side bottom \
+        -fill x -expand f
+#
+# Create the default bindings
+#
+::vtk::bind_tk_imageviewer_widget $manView
+::vtk::bind_tk_imageviewer_widget $julView
 
 NeuroendoscopyCaptureLoop
+#Neuroendoscopy(imageStreamer) Delete
 
 
 }
-
-
-#vtkImageMandelbrotSource mandelbrot1
-#  mandelbrot1 SetMaximumNumberOfIterations [expr int($MAX_ITERATIONS_1)]
-#  mandelbrot1 SetWholeExtent [expr -$XRAD] [expr $XRAD-1] \
-#                             [expr -$YRAD] [expr $YRAD-1] \
-#                             0 0
-
-#  set sample [expr 1.3 / $XRAD]
-#  mandelbrot1 SetSampleCX $sample $sample $sample $sample 
-#  mandelbrot1 SetOriginCX -0.72 0.22  0.0 0.0
-#  mandelbrot1 SetProjectionAxes 0 1 2
-
-#vtkLookupTable table1
-#  table1 SetTableRange 0 $RANGE
-#  table1 SetNumberOfColors $RANGE
-#  table1 Build
-#  table1 SetTableValue [expr $RANGE - 1]  0.0 0.0 0.0 0.0
-
-#vtkImageMapToColors map1
-#  map1 SetInputConnection [mandelbrot1 GetOutputPort]
-#  map1 SetOutputFormatToRGB
-#  map1 SetLookupTable table1
-
-#vtkImageViewer viewer
-#  viewer SetInputConnection [map1 GetOutputPort]
-#  viewer SetColorWindow 255.0
-#  viewer SetColorLevel 127.5
-#  [viewer GetActor2D] SetPosition $XRAD $YRAD
-
-
-
-#wm withdraw
-#set top [toplevel .top] 
-#wm protocol .top WM_DELETE_WINDOW ::vtk::cb_exit
-#wm title .top "Mandelbrot Viewer"
-
-
-
-
-#        set Neuroendoscopy(w) .tcren
-#        toplevel $Neuroendoscopy(w) -bg white
-#        wm title $Neuroendoscopy(w) $plotTitle 
-#        wm minsize $Neuroendoscopy(w) 640 480
-#        wm geometry $Neuroendoscopy(w) $plotGeometry 
-
-
-
-#        blt::graph $w.graph -bg white -width $graphWidth 
-#        pack $w.graph -side top  
-
-#        $w.graph legend configure -position bottom -relief raised \
-#            -font fixed -fg black -bg white 
-#        $w.graph axis configure y -title "Intensity"
-#        # $w.graph grid on
-#        # $w.graph grid configure -color black
-
-#puts $pic
-
-
-#set fdata [read [open "testpic.gif"]]
-#label .l1 -image [image create photo -format gif -data $fdata]
-#pack .l1
-
-
-
-#         label $Neuroendoscopy(w).labelpic -image [image create photo -file "/tmp/myfile.ppm"]
-
-
-#label $w.labelpic -image [image create photo -format gif  -data $fdata]
-
-
-
-#        frame $Neuroendoscopy(w).fButtons -bg white
-#        pack $Neuroendoscopy(w).fButtons -side top
-#        button $Neuroendoscopy(w).fButtons.bSave -text "Save" -font fixed -bg white \
-#            -command "" -width 8 
-#        button $Neuroendoscopy(w).fButtons.bClose -text "Close" -font fixed -bg white \
-#            -command "NeuroendoscopyCloseCaptureWindow" -width 8 
-#        pack $Neuroendoscopy(w).fButtons.bSave $Neuroendoscopy(w).fButtons.bClose  $Neuroendoscopy(w).labelpic -side left -pady 5 -padx 1 
-
-
-
-
-
-#NeuroendoscopyCaptureLoop
-
-#        wm protocol $w WM_DELETE_WINDOW "NeuroendoscopyCloseCaptureWindow" 
-
-#        set Neuroendoscopy(timeCourseToplevel) $w
-#        set Neuroendoscopy(timeCourseGraph) $w.graph
+ proc deleteCapWindows {} {
+  global Neuroendoscopy
+  set Neuroendoscopy(captWindow) 0
  
+  update
+  after 500
+ 
+  Neuroendoscopy(captViewer) Delete
+  Neuroendoscopy(captViewer2) Delete
 
+ }
 }
+
 
 proc NeuroendoscopyCaptureLoop {} {
 global Neuroendoscopy
 if {$Neuroendoscopy(captWindow) == 1} {
 
-set pic [Neuroendoscopy(capFrames) getNextFrame]
-Neuroendoscopy(ImageActor) SetInput $pic
-#Neuroendoscopy(ImageActor) Update
-  if {$Neuroendoscopy(SnapShot) == 1} {
-    puts "make new picture"
 
-    set Neuroendoscopy(SnapShot) 0
-  }
-renWin Render
+Neuroendoscopy(captViewer) SetInput [Neuroendoscopy(capFrames) getNextFrame]
+#Neuroendoscopy(ImageActor) Update
+  
+Neuroendoscopy(captViewer) Modified
+Neuroendoscopy(imageStreamer) UpdateInformation
+Neuroendoscopy(imageStreamer) Update
+Neuroendoscopy(captViewer) Render
+#renWin Render
 update
 
        after 50 NeuroendoscopyCaptureLoop
 
 } else {
   
-  ren1 Delete
-  renWin Delete
-  Neuroendoscopy(ImageActor) Delete
+
+  
   Neuroendoscopy(capFrames) Delete
   Neuroendoscopy(imageStreamer) Delete
 }
@@ -3431,10 +4221,23 @@ update
 proc NeuroendoscopyTakeSnapshot {} {
 global Neuroendoscopy
 
-Neuroendoscopy(capFrames) getNextFrame
 
 
-
+set pic [Neuroendoscopy(capFrames) getNextFrame]
+Neuroendoscopy(captViewer2) SetInput $pic
+Neuroendoscopy(captViewer2) Modified
+Neuroendoscopy(captViewer2) Render
+if {$Neuroendoscopy(capture,IsSaveAsFile) == 1} {
+  incr Neuroendoscopy(ImageCounter) 
+  vtkPNMWriter pnmwriter
+  pnmwriter SetInput $pic
+  #pnmwriter SetFileName "myfile$Neuroendoscopy(ImageCounter).ppm"
+pnmwriter SetFileName "myfile1.ppm"
+  pnmwriter Write
+  puts "writing file myfile1.ppm"
+  pnmwriter Delete
+ # NeuroendoscopyAddImageCoord
+}
 }  
 
 proc NeuroendoscopyCloseCaptureWindow {} {
@@ -3696,26 +4499,32 @@ after 2000
 
 }
 
-proc NeuroendoscopyGenerateTestCoordinateFile {} {
+proc NeuroendoscopyGenerateTestCoordinateFile { {filename ""} } {
   global Neuroendoscopy Model
 
   
-  set Neuroendoscopy(fhandle) [open $Model(name).dat w]
+  set Neuroendoscopy(fhandle) [open $filename w]
 
 
 #  set head1 [lindex $Model(idList) 3]
   set head1 $Model(activeID) 
 
-  set HeadPoly $Model($head1,polyData)
+  #set HeadPoly $Model($head1,polyData)
+set HeadPoly [Locator(OpenTracker,src) GetSourceModel]
   set numofpoints [$HeadPoly GetNumberOfPoints]
 
  
-  for {set i 0} {$i< 300} {incr i 1} {
+  for {set i 0} {$i< $numofpoints} {incr i 1} {
 
-    set p [$HeadPoly GetPoint [expr {int(rand()*$numofpoints)}]]
-    set x [expr [lindex $p 0]+120]
-    set y [expr [lindex $p 1]+120]
-    set z [expr [lindex $p 2]+120]
+    #set p [$HeadPoly GetPoint [expr {int(rand()*$numofpoints)}]]
+    set p [$HeadPoly GetPoint $i]
+    #set x [expr [lindex $p 0]+120]
+    #set y [expr [lindex $p 1]+120]
+    #set z [expr [lindex $p 2]+120]
+    set x [lindex $p 0]
+    set y [lindex $p 1]
+    set z [lindex $p 2]
+    
     set timestamp [clock seconds]
     set zero "000"
     set timestamp2 "$timestamp$zero"
@@ -3739,17 +4548,19 @@ proc NeuroendoscopyGenerateTestCoordinateFile {} {
 proc NeuroendoscopyNaviTrackConnect {} {
   global Neuroendoscopy Locator
 
-        Neuroendoscopy(OpenTracker,src) SetMultiRate $Neuroendoscopy(OpenTracker,multiBy)
-        Neuroendoscopy(OpenTracker,src) Init $Neuroendoscopy(OpenTracker,cfg)
         
+               Neuroendoscopy(OpenTracker,src) SetMultiRate $Neuroendoscopy(OpenTracker,multiBy)
+        Neuroendoscopy(OpenTracker,src) Init $Neuroendoscopy(OpenTracker,cfg)
         Locator(OpenTracker,src) SetMultiRate $Locator(OpenTracker,multiBy)
         Locator(OpenTracker,src) Init $Locator(OpenTracker,cfg)
-        Locator(OpenTracker,src) SetICPParams 1 1 0.001 60 
-    
+        #best parameters!!!! 1 1 0.00000001 150
+        Locator(OpenTracker,src) SetICPParams 1 1 0.00000001 150 
+
+
         set Neuroendoscopy(OpenTracker,started) 1
       #set Neuroendoscopy(fhandle) [open testset.pt w]
         set Neuroendoscopy(loop) 1
-        NeuroendoscopyLoopOpenTracker
+        #NeuroendoscopyLoopOpenTracker
        # NeuroendoscopyPointSelection
 
 
@@ -3781,7 +4592,8 @@ set locMatrix [Neuroendoscopy(OpenTracker,src) GetLocatorMatrix]
     set locatortest7 [$locMatrix GetElement 3 1]
     set locatortest8 [$locMatrix GetElement 0 2]
     set locatortest9 [$locMatrix GetElement 1 2]
-if {$locatortest1 != 1 && $locatortest2 != 0 && $locatortest3 != 0} {
+set Gui(progressText) "data from Opentracker $buttonvar $locatortest1 $locatortest2 $locatortest3"
+if {($locatortest1 != $Neuroendoscopy(locator1old) || $locatortest2 != $Neuroendoscopy(locator2old) || $locatortest3 != $Neuroendoscopy(locator3old)) && ($locatortest1 != 1 && $locatortest2 != 0 && $locatortest3 != 0)} {
   set Gui(progressText) "data from Opentracker $buttonvar $locatortest1 $locatortest2 $locatortest3"
  # puts "Data from Opentracker $buttonvar $locatortest1 $locatortest2 $locatortest3 $locatortest4 $locatortest5 $locatortest6 $locatortest7 $locatortest8 $locatortest9..."
     
@@ -3801,12 +4613,16 @@ if {$locatortest1 != 1 && $locatortest2 != 0 && $locatortest3 != 0} {
     #puts "after target point insertion..."
     #NeuroendoscopyPointSelection
     set Neuroendoscopy(tmp) $buttonvar
-
+    set Neuroendoscopy(locator1old) $locatortest1
+    set Neuroendoscopy(locator2old) $locatortest2
+    set Neuroendoscopy(locator3old) $locatortest3
   }
-if {$Neuroendoscopy(loop) == 1} {
-   update
-   after $Neuroendoscopy(OpenTracker,msPoll) NeuroendoscopyLoopOpenTracker 
-}
+
+
+#if {$Neuroendoscopy(loop) == 1} {
+#   update
+#   after $Neuroendoscopy(OpenTracker,msPoll) NeuroendoscopyLoopOpenTracker 
+#}
 }
 
 
@@ -3881,8 +4697,21 @@ global Neuroendoscopy
 #-------------------------------------------------------------------------------
 proc NeuroendoscopySetFreeView {} {
 global Neuroendoscopy Locator
+  # Neuroendoscopy(activeCam)
+   #vtkMatrix4x4 tempMatrix
+   #tempMatrix DeepCopy Locator(normalMatrix)
+   LocatorUnRegisterCallback NeuroendoscopySetProbeView
+   LocatorUnRegisterCallback NeuroendoscopySetSensorView
    Neuroendoscopy(gyro,actor) SetUserMatrix Neuroendoscopy(texture,identitymatrix)
-   NeuroendoscopyResetCameraPosition
+   #NeuroendoscopyResetCameraPosition
+   #Render3D
+   #tempMatrix Delete
+   NeuroendoscopyUpdateActorFromVirtualEndoscope $Neuroendoscopy(activeCam)
+   
+       
+
+
+
 }
 #-------------------------------------------------------------------------------
 # .PROC ModelsSetPropertyType
@@ -3890,11 +4719,11 @@ global Neuroendoscopy Locator
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc NeuroendoscopySetProbeView {} {
+proc NeuroendoscopySetSensorView {} {
 global Neuroendoscopy Locator View tip tipActor
     
     set collision 0
-    
+    #Locator(lmtMatrix)
     # get the View plane of the virtual camera because we want to move 
     # in and out along that plane
     set l [$Neuroendoscopy(activeCam) GetViewPlaneNormal]
@@ -3920,11 +4749,20 @@ global Neuroendoscopy Locator View tip tipActor
     
 
     set coordinates [tipActor GetPosition]
-    
 
+
+#    vtkTransform CameraTransform
+#    CameraTransform Identity
+#    CameraTransform Concatenate Locator(normalMatrix)
+#    CameraTransform Translate  0 [expr $Locator(normalLen) / -2.] 30  
+#    CameraTransform RotateZ 180 
+#    CameraTransform Inverse
+#    CameraTransform Modified
+
+#Neuroendoscopy(gyro,actor) SetUserTransform CameraTransform
     Neuroendoscopy(gyro,actor) SetUserMatrix Locator(normalMatrix)
     Neuroendoscopy(gyro,actor) SetOrientation 180 0 0
-    Neuroendoscopy(gyro,actor) SetPosition [lindex $coordinates 0] [lindex $coordinates 1] [lindex $coordinates 2]
+    Neuroendoscopy(gyro,actor) SetPosition [lindex $coordinates 0] [expr [lindex $coordinates 1] + [expr $Locator(normalLen) / -2. - 20 * ($Neuroendoscopy(guide,length)/2) + 70]] [lindex $coordinates 2]
 
     NeuroendoscopyUpdateVirtualEndoscope $Neuroendoscopy(activeCam)
 
@@ -3935,13 +4773,14 @@ global Neuroendoscopy Locator View tip tipActor
     #
     #*******************************************************************
     NeuroendoscopyCheckDriver $Neuroendoscopy(activeCam)
-
+    
+#    CameraTransform Delete
    # Render3D
 #EvDeactivateBindingSet bindFlatWindowEvents
     update
-    if {$Neuroendoscopy(cam,probe) == "probeview"} {
-       after $Neuroendoscopy(cam,polling) NeuroendoscopySetProbeView
-    }
+
+   # Render3D
+    
    
 }
 
@@ -3995,13 +4834,25 @@ global Neuroendoscopy Locator
         #set Neuroendoscopy(cam,y) [lindex $coordinates 1]
         #set Neuroendoscopy(cam,z) [lindex $coordinates 2]
 
+#    vtkTransform CameraTransform
+#    CameraTransform Identity
+#    CameraTransform Concatenate Locator(normalMatrix)
+#    CameraTransform Translate  0 [expr $Locator(normalLen) / -2.] 30  
+#    CameraTransform Inverse
+#    CameraTransform Modified
+
+#Neuroendoscopy(gyro,actor) SetUserTransform CameraTransform
+
     # set position of actor gyro (that will in turn set the position
     # of the camera and fp actor since their user matrix is linked to
     # the matrix of the gyro
     #Neuroendoscopy(gyro,actor) RotateWXYZ 180 1 0 0
+    Neuroendoscopy(gyro,actor) SetUserMatrix Locator(normalMatrix)
     Neuroendoscopy(gyro,actor) SetOrientation 0 0 0
-    Neuroendoscopy(gyro,actor) SetPosition [lindex $coordinates 0] [lindex $coordinates 1] [lindex $coordinates 2]
+    Neuroendoscopy(gyro,actor) SetPosition [lindex $coordinates 0] [expr [lindex $coordinates 1] + [expr $Locator(normalLen) / -2. - 20 * ($Neuroendoscopy(guide,length)/2) + 70]] [lindex $coordinates 2]
     
+
+#CameraTransform Delete
     #################################
     # should not be needed anymore
     #Neuroendoscopy(cam,actor) SetPosition $Neuroendoscopy(cam,x) $Neuroendoscopy(cam,y) $Neuroendoscopy(cam,z)
@@ -4019,9 +4870,8 @@ global Neuroendoscopy Locator
     NeuroendoscopyCheckDriver $Neuroendoscopy(activeCam)
 
     update
-    if {$Neuroendoscopy(cam,probe) == "sensorview"} {
-       after $Neuroendoscopy(cam,polling) NeuroendoscopySetProbeView
-    }
+    #Render3D
+  
 }
 
 #-------------------------------------------------------------------------------
@@ -4115,7 +4965,13 @@ rulerActor SetPosition 0 [expr $Locator(normalLen) / -2. - 10 * ($Neuroendoscopy
 rulerSource SetHeight [expr 10*$Neuroendoscopy(guide,length)]
 
 rulerAxisText SetText "$Neuroendoscopy(guide,length) mm"
-rulerAxisActor SetPosition 0 [expr $Locator(normalLen) / -2. - 20 * ($Neuroendoscopy(guide,length)/2) + 70] 0
+ rulerAxisActor SetPosition 0 [expr $Locator(normalLen) / -2. - 20 * ($Neuroendoscopy(guide,length)/2) + 70] 0
+if {$Neuroendoscopy(cam,probe) == "sensorview"} {
+ Neuroendoscopy(gyro,actor) SetPosition 0 [expr $Locator(normalLen) / -2. - 20 * ($Neuroendoscopy(guide,length)/2)] 0
+} 
+
+
+
 
 }
    
