@@ -10,25 +10,52 @@
 # and 'MYCLASS' to your module name (all CAPS)
 #
 
+#SET(NEUROENDOSCOPY_LOCAL_LIBS
+#    tsai 
+
+#)
+
+
 # note: - SET replaced SOURCE_FILES for cmake 1.6
 SET(LOCAL_MODULE_SRCS
 vtkNeuroendoscopy.cxx
 vtkCaptureFrames.cxx
+vtkImageCompare.cxx 
+
+#vtkMrmlModelTextureNode.cxx 
+#vtkV4L2VideoSource3.cxx
 )
 
 ## classes that one does not want tcl wrapped
 SET ( LOCAL_NO_WRAP_SRCS
-
+#HelloWorld.cxx
 Point.cxx
- tsai/cal_main.h
-        tsai/cal_eval.c
-        tsai/cal_main.c
-        tsai/cal_tran.c
-        tsai/cal_util.c
-        tsai/ecalmain.c
-        tsai/gasdev.c
-        tsai/matrix/matrix.c
+vtkCapture.cxx
+xc.cxx
 
+        tsai/cal_main.h 
+        tsai/cal_eval.c  
+        tsai/cal_main.c 
+        tsai/cal_tran.c 
+        tsai/cal_util.c 
+        tsai/ecalmain.c 
+        tsai/gasdev.c 
+        tsai/matrix/matrix.c 
+#TestFramework/path_builder.c 
+#TestFramework/cUnit.c 
+#TestFramework/list_test.c 
+#TestFramework/common_test.c 
+#TestFramework/vision_test.c 
+#TestFramework/camera_test.c 
+#TestFramework/hough_transform_test.c 
+#TestFramework/convolve2D_test.c 
+#TestFramework/image_test.c 
+#TestFramework/bitmap_test.c 
+#TestFramework/linalg_test.c 
+#TestFramework/matrixf_eigen_test.c 
+#eigenvalues/basis_r.cpp
+#eigenvalues/feigen.cpp
+#eigenvalues/vmblock.cpp
 )
 
 
@@ -42,9 +69,27 @@ Point.cxx
 #)
 
 # You can add additional include paths here
-#INCLUDE_DIRECTORIES(
+INCLUDE_DIRECTORIES(
 #${VTKMYCLASS_SOURCE_DIR}/include
-#)
+)
+ 
+#SET(LOCAL_GUI_SRCS
+#    HelloWorldGUI.fl
+#    )
+  
+#SET(LOCAL_SRCS
+#   HelloWorld.cxx
+#   )
+
+
+
+
+
+#FLTK_WRAP_UI(HelloWorld ${LOCAL_GUI_SRCS})
+#ADD_EXECUTABLE(HelloWorld ${HelloWorld_FLTK_UI_SRCS} ${LOCAL_SRCS})
+#TARGET_LINK_LIBRARIES(HelloWorld IGSTK)
+
+
 
 #### if you code depends on SlicerBase, uncomment the 
 #### INCLUDE_DIRECTORIES and LINK_LIBRARIES
@@ -53,13 +98,37 @@ Point.cxx
 INCLUDE_DIRECTORIES( 
    ${VTKSLICERBASE_SOURCE_DIR}/cxx 
    ${VTKSLICERBASE_BUILD_DIR}
+#${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/
+/usr/local/include/
+/usr/include/
+#   /projects/igtdev/ruetz/IGSTK-build/bin/
 )
 #LINK_LIBRARIES (${VTKSLICERBASE_BUILD_LIB})
+LINK_LIBRARIES (${NEUROENDOSCOPY_LOCAL_LIBS} 
+#/projects/igtdev/ruetz/slicer2-mrt/slicer2/Modules/vtkNeuroendoscopy/lib/libtsai.a  
+/usr/local/lib/libgandalf.a 
+/usr/local/lib/libminpack.a 
+/usr/lib64/libGLU.so 
+/usr/lib64/libGL.so 
+/usr/lib64/libglut.a 
+/usr/lib64/libXi.so 
+/usr/lib64/libX11.so 
+/usr/lib64/libm.a 
+/usr/lib64/libpng12.a 
+#/lib/libpng12.so.0.1.2.8 
 
+
+)
 
 # Add additional directories to look in for libraries
 LINK_DIRECTORIES(
-${VTKMYCLASS_SOURCE_DIR}/lib
+
+${LOCAL_LIBRARY_BASENAME}/cxx
+${LOCAL_LIBRARY_BASENAME}/cxx/tsai/minpack/
+${LOCAL_LIBRARY_BASENAME}/bin
+#${LOCAL_LIBRARY_BASENAME}/cxx/tsai/
+#/usr/local/lib/
+#/usr/local/include/
 )
 
 
@@ -68,6 +137,7 @@ ${VTKMYCLASS_SOURCE_DIR}/lib
 # the following line.  The library names should omit the "lib" and any
 # trailing suffix.
 # LINK_LIBRARIES (${LOCAL_LIBRARY_BASENAME} library_names_here)
+# LINK_LIBRARIES (${LOCAL_LIBRARY_BASENAME} /cxxgandalf mnpak)
 
 
 # Here's the rule to create the implementation C++ library.
