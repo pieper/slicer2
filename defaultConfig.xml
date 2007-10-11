@@ -6,6 +6,6 @@
 	</configuration>
 
 	<Callback name="cb1">
-            <NetworkSource mode="unicast" address="localhost" number="1" port="54321"/>
+            <NetworkSource mode="unicast" address="localhost" number="1" port="12345"/>
 	</Callback>
 </OpenTracker>
