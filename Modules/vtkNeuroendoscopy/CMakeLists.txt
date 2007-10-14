@@ -65,7 +65,9 @@ IF (VTKNEUROENDOSCOPY_CAN_BUILD)
   # You can put your include path(s) here
   #
 
-  INCLUDE_DIRECTORIES (${VTKNEUROENDOSCOPY_SOURCE_DIR}/cxx)
+  INCLUDE_DIRECTORIES (${VTKNEUROENDOSCOPY_SOURCE_DIR}/cxx
+  ${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/gandalf 
+  )
 
   #
   # Build examples too ?
