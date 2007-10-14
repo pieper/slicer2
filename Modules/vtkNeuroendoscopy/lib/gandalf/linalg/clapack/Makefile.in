@@ -1,0 +1,39 @@
+CC = @CC@
+CFLAGS = @CFLAGS@
+LIBS = @LIBS@
+LDFLAGS = @LDFLAGS@
+INSTALL = @INSTALL@
+prefix = @prefix@
+includedir = @includedir@
+
+include ../../make.inc
+include ../../config
+
+PACKAGE = linalg
+SUBPACKAGE = clapack
+OBJS = $(patsubst %.c,%$(OBJECT_SUFFIX).lo,$(CFILES))
+CFILES = dgetf2.c dgetri.c dpptrf.c dpptri.c dtptri.c dtrti2.c dgeqr2.c \
+	 dgelq2.c dlarf.c dlarfg.c dlapy2.c dorgl2.c dorg2l.c dorg2r.c \
+	 dgesv.c dgetrs.c dlaswp.c dgetrf.c \
+	 dlamch.c dspev.c dsptrd.c dlansp.c dlanst.c dlassq.c dlascl.c \
+	 dsterf.c dlae2.c dlaev2.c dopgtr.c dlasr.c dlasrt.c dsteqr.c \
+	 dlartg.c dlaset.c \
+	 sgetf2.c sgetri.c spptrf.c spptri.c stptri.c strti2.c sgeqr2.c \
+	 sgelq2.c slarf.c slarfg.c slapy2.c sorgl2.c sorg2l.c sorg2r.c \
+	 sgesv.c sgetrs.c slaswp.c sgetrf.c \
+	 slamch.c sspev.c ssptrd.c slansp.c slanst.c slassq.c slascl.c \
+	 ssterf.c slae2.c slaev2.c sopgtr.c slasr.c slasrt.c ssteqr.c \
+	 slartg.c slaset.c \
+	 ilaenv.c
+HFILES = $(patsubst %.c,%.h,$(CFILES)) extern.h \
+	 dtrtri.h dgeqrf.h dgelqf.h dorgqr.h dorglq.h \
+	 strtri.h sgeqrf.h sgelqf.h sorgqr.h sorglq.h
+TOPLEVEL = ../..
+
+all: $(OBJS)
+
+install: installsubh
+
+$(CFILES): ../$(SUBPACKAGE).h
+
+include ../../make.targets
