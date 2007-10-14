@@ -7,9 +7,10 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkOpenTracker.cxx,v $
-  Date:      $Date: 2007/05/08 18:29:44 $
-  Version:   $Revision: 1.1.2.4 $
+  Date:      $Date: 2007/10/14 02:35:08 $
+  Version:   $Revision: 1.1.2.5 $
 
+  add Author: Christoph Ruetz
 =========================================================================auto=*/
 
 #include <stdio.h>
@@ -33,6 +34,8 @@
 #include "vtkOpenTracker.h"
 #include "vtkObjectFactory.h"
 #include "vtkLandmarkTransform.h"
+#include "vtkTransform.h"
+
 
 #ifdef _WIN32
 #pragma warning ( disable : 4786 )
@@ -50,8 +53,14 @@ vtkOpenTracker::vtkOpenTracker()
     this->TargetLandmarks = NULL; 
 
     this->UseRegistration = 0;
+    this->UseICPRegistration = 0;
     this->NumberOfPoints = 0;
     this->MultiRate = 1.0;
+
+    this->SourceICPPoints = NULL;
+    this->SourceICPLandmarkPoints = NULL;
+    this->TargetICPPoints = NULL;
+
 }
 
 
@@ -75,6 +84,9 @@ vtkOpenTracker::~vtkOpenTracker()
     this->LocatorMatrix->Delete();
     this->SourceLandmarks->Delete();
     this->TargetLandmarks->Delete();
+    this->SourceICPPoints->Delete();
+    this->SourceICPLandmarkPoints->Delete();
+    this->TargetICPPoints->Delete();
 }
 
 
@@ -113,8 +125,7 @@ void vtkOpenTracker::Init(char *configfile)
     context->parseConfiguration(configfile);  // parse the configuration file
 
     callbackMod->setCallback( "cb1", (OTCallbackFunction*)&callbackF ,this);    // sets the callback function
-
-
+    callbackMod->setCallback( "cb2", (OTCallbackFunction*)&callbackF ,this);    // sets the callback function
     context->start();
 
 }
@@ -157,6 +168,7 @@ void vtkOpenTracker::PollRealtime()
 
 
 
+
 void vtkOpenTracker::callbackF(const Node&, const Event &event, void *data)
 {
     float position[3];
@@ -182,9 +194,12 @@ void vtkOpenTracker::callbackF(const Node&, const Event &event, void *data)
     VOT->quaternion2xyz(orientation, norm, transnorm);
 
 
+
+
+  
     // Apply the transform matrix 
     // to the postion, norm and transnorm
-    if (VOT->UseRegistration)
+    if (VOT->UseRegistration || VOT->UseICPRegistration)
         VOT->ApplyTransform(position, norm, transnorm);
 
     for (j=0; j<3; j++) {
@@ -280,15 +295,197 @@ int vtkOpenTracker::DoRegistration()
     }
 
     vtkLandmarkTransform *landmark = vtkLandmarkTransform::New();
+    this->LandmarkGlobalTransformation = vtkLandmarkTransform::New();
     landmark->SetTargetLandmarks(this->TargetLandmarks);
     landmark->SetSourceLandmarks(this->SourceLandmarks);
     landmark->SetModeToRigidBody();
     landmark->Update();
     this->LandmarkTransformMatrix->DeepCopy(landmark->GetMatrix());
-
+    this->LandmarkGlobalTransformation->DeepCopy(landmark);
     landmark->Delete();
 
     this->UseRegistration = 1;
 
     return 0; 
 }
+
+//VTK needs a Models to perform the registration, 
+//thus building a source model from the received points
+void vtkOpenTracker::BuildSourceModel(void)
+{
+   int noCells = this->SourceICPPoints->GetNumberOfPoints();
+   this->strips = vtkCellArray::New();
+   this->SourceModel = vtkPolyData::New();
+
+   this->strips->InsertNextCell(noCells);
+   
+   for (int i = 0; i < noCells; i++)
+   {
+       this->strips->InsertCellPoint(i);
+   }
+
+   this->SourceModel->SetPoints(this->SourceICPPoints);
+   this->SourceModel->SetLines(this->strips);
+}
+
+
+//VTK needs a Models to perform the registration, 
+//thus building a source model from the received points
+void vtkOpenTracker::BuildLandmarkSourceModel(void)
+{
+   int noCells = this->SourceICPLandmarkPoints->GetNumberOfPoints();
+   this->strips = vtkCellArray::New();
+   this->LandmarkSourceModel = vtkPolyData::New();
+
+   this->strips->InsertNextCell(noCells);
+   
+   for (int i = 0; i < noCells; i++)
+   {
+       this->strips->InsertCellPoint(i);
+   }
+
+   this->LandmarkSourceModel->SetPoints(this->SourceICPLandmarkPoints);
+   this->LandmarkSourceModel->SetLines(this->strips);
+}
+
+//Add a Source ICP Registration point
+void vtkOpenTracker::AddSourceICPPoint(float s1, float s2, float s3)
+{
+
+   fprintf(stderr,"Insert Point(%d) %f, %f, %f\n",this->SourceICPPoints->GetNumberOfPoints(),s1,s2,s3);
+   this->SourceICPPoints->InsertNextPoint(s1, s2, s3);
+   this->SourceICPPoints->Modified();
+   this->SourceICPLandmarkPoints->InsertNextPoint(this->LandmarkGlobalTransformation->TransformFloatPoint(s1, s2, s3));
+   this->SourceICPLandmarkPoints->Modified();
+
+ 
+}
+
+//Add a Target ICP Registration point
+void vtkOpenTracker::AddTargetICPPoint(float t1, float t2, float t3)
+{
+    this->TargetICPPoints->InsertNextPoint(t1, t2, t3);
+    this->TargetICPPoints->Modified();
+
+}
+//Target where the registration depends on, It must be a model
+void vtkOpenTracker::SetTargetModel(vtkDataSet *model)
+{
+    this->targetDataSet = model;
+}
+
+//returns the source model
+vtkPolyData * vtkOpenTracker::GetSourceModel(void)
+{
+BuildSourceModel();
+
+return this->SourceModel;
+}
+
+//returns the source model
+vtkPolyData * vtkOpenTracker::GetLandmarkSourceModel(void)
+{
+BuildLandmarkSourceModel();
+
+return this->LandmarkSourceModel;
+}
+
+//Build the initial point set
+void vtkOpenTracker::SetICPParams(int rms, int chkMean, double maxMean, int iter)
+{
+
+    this->ICPTransformation = vtkIterativeClosestPointTransform::New();
+    
+    if (this->TargetICPPoints)
+    {
+        this->TargetICPPoints->Delete();
+    }
+    this->TargetICPPoints = vtkPoints::New();
+    this->TargetICPPoints->SetDataTypeToFloat();
+    
+   
+    if (this->SourceICPPoints)
+    {
+        this->SourceICPPoints->Delete();
+    }
+    
+    this->SourceICPPoints = vtkPoints::New();
+    this->SourceICPPoints->SetDataTypeToFloat();
+    if (this->SourceICPLandmarkPoints)
+    {
+        this->SourceICPLandmarkPoints->Delete();
+    }
+    
+    this->SourceICPLandmarkPoints = vtkPoints::New();
+    this->SourceICPLandmarkPoints->SetDataTypeToFloat();
+
+    if (rms == 1)
+       ICPTransformation->SetMeanDistanceModeToRMS();
+
+    ICPTransformation->SetCheckMeanDistance(chkMean);
+    ICPTransformation->SetMaximumMeanDistance(maxMean);
+    ICPTransformation->SetMaximumNumberOfIterations(iter);
+
+}
+
+
+
+//Registration of ICP
+int vtkOpenTracker::DoRegistrationICP(void)
+{
+  fprintf(stderr,"start ICP \n");
+  BuildSourceModel();
+  BuildLandmarkSourceModel();
+  fprintf(stderr,"built model \n");
+  if (this->SourceModel == NULL || this->targetDataSet == NULL)
+  {
+       vtkErrorMacro(<< "vtkOpenTracker::DoRegistrationICP(): Got NULL pointer. No Models are created");
+       return 1;
+  }
+  
+  fprintf(stderr,"Set source \n");
+  this->ICPTransformation->SetSource(this->LandmarkSourceModel);
+  fprintf(stderr,"set Target \n");
+  this->ICPTransformation->SetTarget(this->targetDataSet);
+  //this->ICPTransformation->StartByMatchingCentroidsOn();
+
+  fprintf(stderr,"set rigid body \n");
+  this->ICPTransformation->GetLandmarkTransform()->SetModeToRigidBody();
+  //this->ICPTransformation->GetLandmarkTransform()->SetTargetLandmarks(this->TargetLandmarks);
+  //this->ICPTransformation->GetLandmarkTransform()->SetSourceLandmarks(this->SourceLandmarks);
+  //this->ICPTransformation->GetLandmarkTransform()->Update();
+  fprintf(stderr,"set max number of landmarks: %i\n",this->SourceICPPoints->GetNumberOfPoints());
+  this->ICPTransformation->SetMaximumNumberOfLandmarks(this->SourceICPPoints->GetNumberOfPoints());
+  fprintf(stderr,"update \n");
+  this->ICPTransformation->Update();
+  fprintf(stderr,"matrix deep copy \n");
+  //fill the Tranformation matrix of this class with context. 
+  //Using this Matrix in slicer will perform the necessary transformation
+ 
+  //temptransform->RotateZ(90);
+  //temptransform->RotateY(90);
+  vtkTransform *transform = vtkTransform::New();
+ 
+  //transform->DeepCopy(this->ICPTransformation);
+  //vtkTransform *transform2 = vtkTransform::New();
+  //transform2->DeepCopy(this->ICPTransformation);
+  transform->Concatenate(this->ICPTransformation);
+  transform->Concatenate(this->LandmarkGlobalTransformation);
+  
+  transform->Modified();
+  transform->Update();
+//   vtkMatrix4x4 *b = vtkMatrix4x4::New();
+//   vtkMatrix4x4 *c = vtkMatrix4x4::New();
+//   b->Multiply4x4(this->ICPTransformation->GetMatrix(),this->LandmarkGlobalTransformation->GetMatrix(), c);
+  this->LandmarkTransformMatrix->DeepCopy(transform->GetMatrix());
+//   this->LandmarkTransformMatrix->DeepCopy(c);
+  //this->LandmarkTransformMatrix->Invert();
+  ICPTransformation->Delete();
+ 
+  this->UseICPRegistration = 1;
+  fprintf(stderr,"ICP done\n");
+
+  return 0; 
+}
+
+
