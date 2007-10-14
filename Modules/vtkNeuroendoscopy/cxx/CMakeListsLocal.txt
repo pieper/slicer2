@@ -114,7 +114,7 @@ ${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/gandalf/libgandalf.so.1.1.1
 ${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/cminpack/libminpack.a
 /usr/lib64/libGLU.so 
 /usr/lib64/libGL.so 
-/usr/lib64/libglut.so.3
+${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/libglut.so
 /usr/lib64/libXi.so 
 /usr/lib64/libX11.so 
 /usr/lib64/libm.a 
