@@ -141,7 +141,7 @@ ${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/gandalf
 #cp ${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/gandalf/libgandalf.so.1 "/tmp/")
 #INSTALL_PROGRAMS(/projects/igtdev/ruetz/slicer2-new/slicer2/Modules/vtkNeuroendoscopy/builds/linux-x86_64/bin /projects/igtdev/ruetz/slicer2-new/slicer2/Modules/vtkNeuroendoscopy/lib/gandalf/libgandalf.so.1 )
 #CMake (-E copy ${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/gandalf/libgandalf.so.1 ${EXECUTEABLE_OUTPUT_PATH})
- EXEC_PROGRAM(${CMAKE_COMMAND} ARGS "-E copy \"${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/gandalf/libgandalf.so.1\" \"${EXECUTABLE_OUTPUT_PATH}\"")
+ EXEC_PROGRAM(${CMAKE_COMMAND} ARGS "-E copy \"${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/gandalf/libgandalf.so.1\" \"${EXECUTABLE_OUTPUT_PATH}/\"")
 
 
 
