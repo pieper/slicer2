@@ -1,0 +1,64 @@
+#!/bin/sh
+lst=`echo doc/reference/*.html`
+
+for x in `echo $lst`
+do
+  	if sed \
+   -e 's@>config.h</b>@>gandalf/config.h</b>@g' \
+   -e 's@>allocate.\([ch]\)</a>@>gandalf/common/allocate.\1</a>@g' \
+   -e 's@>compare.\([ch]\)</a>@>gandalf/common/compare.\1</a>@g' \
+   -e 's@>linked_list.\([ch]\)</a>@>gandalf/common/linked_list.\1</a>@g' \
+   -e 's@>array.\([ch]\)</a>@>gandalf/common/array.\1</a>@g' \
+   -e 's@>numerics.\([ch]\)</a>@>gandalf/common/numerics.\1</a>@g' \
+   -e 's@>bit_array.\([ch]\)</a>@>gandalf/common/bit_array.\1</a>@g' \
+   -e 's@>gan_err.\([ch]\)</a>@>gandalf/common/gan_err.\1</a>@g' \
+   -e 's@>gan_err_trace.\([ch]\)</a>@>gandalf/common/gan_err_trace.\1</a>@g' \
+   -e 's@>endian_io.\([ch]\)</a>@>gandalf/common/endian_io.\1</a>@g' \
+   -e 's@>misc_error.\([ch]\)</a>@>gandalf/common/misc_error.\1</a>@g' \
+   -e 's@>misc_defs.\([ch]\)</a>@>gandalf/common/misc_defs.\1</a>@g' \
+   -e 's@>complex.\([ch]\)</a>@>gandalf/common/complex.\1</a>@g' \
+   -e 's@>file_io.\([ch]\)</a>@>gandalf/common/file_io.\1</a>@g' \
+   -e 's@>memory_stack.\([ch]\)</a>@>gandalf/common/memory_stack.\1</a>@g' \
+   -e 's@>\([2-4]\)vec\([a-zA-Z0-9_]*\).\([ch]\)</a>@>gandalf/linalg/\1vec\2.\3</a>@g' \
+   -e 's@>\([2-4]\)\([a-zA-Z0-9_]*\)mat\([a-zA-Z0-9_]*\).\([ch]\)</a>@>gandalf/linalg/\1\2mat\3.\4</a>@g' \
+   -e 's@>linalg\([a-zA-Z0-9_]*\).\([ch]\)</a>@>gandalf/linalg/linalg\1.\2</a>@g' \
+   -e 's@>pseudo\([a-zA-Z0-9_]*\).\([ch]\)</a>@>gandalf/linalg/pseudo\1.\2</a>@g' \
+   -e 's@>symmat\([a-zA-Z0-9_]*\).\([ch]\)</a>@>gandalf/linalg/symmat\1.\2</a>@g' \
+   -e 's@>vec\([a-zA-Z0-9_]*\).\([ch]\)</a>@>gandalf/linalg/vec\1.\2</a>@g' \
+   -e 's@>mat\([a-zA-Z0-9_]*\).\([ch]\)</a>@>gandalf/linalg/mat\1.\2</a>@g' \
+   -e 's@>image_io.\([ch]\)</a>@>gandalf/image/io/image_io.\1</a>@g' \
+   -e 's@>pgm_io.\([ch]\)</a>@>gandalf/image/io/pgm_io.\1</a>@g' \
+   -e 's@>pbm_io.\([ch]\)</a>@>gandalf/image/io/pbm_io.\1</a>@g' \
+   -e 's@>ppm_io.\([ch]\)</a>@>gandalf/image/io/ppm_io.\1</a>@g' \
+   -e 's@>jpeg_io.\([ch]\)</a>@>gandalf/image/io/jpeg_io.\1</a>@g' \
+   -e 's@>png_io.\([ch]\)</a>@>gandalf/image/io/png_io.\1</a>@g' \
+   -e 's@>tiff_io.\([ch]\)</a>@>gandalf/image/io/tiff_io.\1</a>@g' \
+   -e 's@>targa_io.\([ch]\)</a>@>gandalf/image/io/targa_io.\1</a>@g' \
+   -e 's@>sgi_io.\([ch]\)</a>@>gandalf/image/io/sgi_io.\1</a>@g' \
+   -e 's@>dpx_io.\([ch]\)</a>@>gandalf/image/io/dpx_io.\1</a>@g' \
+   -e 's@>cineon_io.\([ch]\)</a>@>gandalf/image/io/cineon_io.\1</a>@g' \
+   -e 's@>movie.\([ch]\)</a>@>gandalf/image/io/movie.\1</a>@g' \
+   -e 's@>image\([a-zA-Z0-9_]*\).\([ch]\)</a>@>gandalf/image/image\1.\2</a>@g' \
+   -e 's@>pixel.\([ch]\)</a>@>gandalf/image/pixel.\1</a>@g' \
+   -e 's@>openGL_texture.\([ch]\)</a>@>gandalf/image/openGL_texture.\1</a>@g' \
+   -e 's@>camera\([a-zA-Z0-9_]*\).\([ch]\)</a>@>gandalf/vision/camera\1.\2</a>@g' \
+   -e 's@>homog\([a-zA-Z0-9_]*\).\([ch]\)</a>@>gandalf/vision/homog\1.\2</a>@g' \
+   -e 's@>affine\([a-zA-Z0-9_]*\).\([ch]\)</a>@>gandalf/vision/affine\1.\2</a>@g' \
+   -e 's@>mask\([a-zA-Z0-9_]*\)D.\([ch]\)</a>@>gandalf/vision/mask\1D.\2</a>@g' \
+   -e 's@>convolve\([a-zA-Z0-9_]*\)D.\([ch]\)</a>@>gandalf/vision/convolve\1D.\2</a>@g' \
+   -e 's@>\([a-zA-Z0-9_]*\)_disp.\([ch]\)</a>@>gandalf/vision/\1_disp.\2</a>@g' \
+   -e 's@>\([a-zA-Z0-9_]*\)_feature.\([ch]\)</a>@>gandalf/vision/\1_feature.\2</a>@g' \
+   -e 's@>canny_edge.\([ch]\)</a>@>gandalf/vision/canny_edge.\1</a>@g' \
+   -e 's@>harris_corner.\([ch]\)</a>@>gandalf/vision/harris_corner.\1</a>@g' \
+   -e 's@>orthog_line.\([ch]\)</a>@>gandalf/vision/orthog_line.\1</a>@g' \
+   -e 's@>\([a-zA-Z0-9_]*\)3D.\([ch]\)</a>@>gandalf/vision/\13D.\2</a>@g' \
+   -e 's@>lev_marq.\([ch]\)</a>@>gandalf/vision/lev_marq.\1</a>@g' \
+   -e 's@>fundamental.\([ch]\)</a>@>gandalf/vision/fundamental.\1</a>@g' \
+   -e 's@>essential.\([ch]\)</a>@>gandalf/vision/essential.\1</a>@g' \
+   -e 's@>modified_fht.\([ch]\)</a>@>gandalf/vision/modified_fht.\1</a>@g' \
+            $x > /tmp/rgb42hj; then
+        /bin/mv /tmp/rgb42hj $x
+	else
+	/bin/rm /tmp/rgb42hj
+	fi
+done

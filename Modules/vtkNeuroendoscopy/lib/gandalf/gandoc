@@ -1,0 +1,10 @@
+#!/bin/sh
+lst=`echo *.html`
+
+for x in `echo $lst`
+do
+  	if sed -e 's&@\([a-zA-Z0-9_]*\)&<b>\1</b>&g' -e 's@``@<tt>@g' -e "s@''@</tt> @g" -e 's@&quot;<A HREF="../../gandalf/\([a-zA-Z0-9_]*\)/\([a-zA-Z0-9_]*\)/\([a-zA-Z0-9_]*\).h">\([a-zA-Z0-9_]*\).h</A>&quot;@\&lt;gandalf/\1/\2/\4.h\&gt;@g' -e 's@&quot;<A HREF="../../gandalf/\([a-zA-Z0-9_]*\)/\([a-zA-Z0-9_]*\).h">\([a-zA-Z0-9_]*\).h</A>&quot;@\&lt;gandalf/\1/\3.h\&gt;@g' $x > /tmp/gan978; then
+        /bin/mv /tmp/gan978 $x
+#echo 'done'
+	fi
+done

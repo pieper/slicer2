@@ -1,0 +1,546 @@
+2006/9/21 Version 1.6 released
+------------------------------
+
+2006/3/17 Version 1.5 released
+------------------------------
+
+2005/02/23
+Updated GAN_UPPER to GAN_MATRIXPART_UPPER
+
+2005/07/11
+Added more image conversions and display options
+
+2006/02/20
+Added support for bit array inside image being preallocated
+
+2005/11/23
+Added conversion module image/image_convert.[ch]
+
+2005/11/11
+Added function to return boolean value indicating if an image has an alpha channel or not
+
+2005/11/02
+New source file common/file_io.[ch], with function to copy a file
+
+2005/10/10
+Added DPX, Cineon, SGI and Targa image I/O formats
+
+2005/07/08
+Added image/openGL_texture.[ch], code for OpenGL texture rendering of Gandalf images
+
+2005/06/30
+New image display test program image/image_display_test.[ch] to test displaying different formats
+
+2005/06/30
+Added the first set of extra formats for OpenRL
+
+2005/06/30
+Added new image formats:
+   GAN_RGBX,                   /**< RGB padded out to a word boundary */
+   GAN_RGBAS,                  /**< RGB with a small alpha channel */
+   GAN_YUVX444,                /**< YUV 4-4-4 padded out to a word boundary */
+   GAN_YUVA444,                /**< YUV with alpha */
+   GAN_YUV422,                 /**< YUV 4-2-2 arranged as UYVY */
+
+2005/06/28
+Added blending functions to image/image_composite.[ch]
+
+2005/06/10
+Added extra arguments to camera functions allowing previous transformations
+to be used in new ones
+
+2005/05/24
+Added auto-detect for image file formats
+
+2005/04/19
+Added cubic B-spline camera
+
+2005/04/12
+Added functions in image/image_channel.[ch] to insert a channel into an image and to fix up an image window
+
+2005/2/22 Version 1.4 released
+------------------------------
+
+2005/02/22
+Added code to compute eigenvectors and eigenvalues of symmetric matrices
+using modified CLAPACK source instead of CCMath with is buggy.
+
+2005/02/10
+Added 64-bit headers
+
+2005/02/08
+Added const declarations to convolution input images
+
+2005/01/26
+Added definitions for 32 bit float images
+
+2004/10/18
+Added function to compute homography using normalisation
+
+2004/10/18
+Fixed 3x3 homography fitting
+
+2004/10/09
+Added function to halve size of image
+
+2004/10/05
+Adjustments to essential matrix code
+
+2004/08/25
+Added critical section wrapper to make error handler thread-safe in Windows.
+We need to add pthread code for the other platforms.
+
+2004/07/23
+Added test function for cameras being identical
+
+2004/07/20
+Added 8/16 bit macros
+
+2004/07/14
+Added Mac OpenGL header includes.
+
+2004/07/14
+image_composite.c:
+Builds destination image with correct format, type and dimensions if it
+isn't initially compatible with source image
+
+2004/07/12
+Added an extra test to make sure the correct active subwindow was returned when the image height and width are 0.
+
+2004/07/05
+Added filling function with mask
+
+2004/06/22
+Corrected masking window function
+
+2004/06/06
+Added camera tests
+
+2004/06/04
+Added support for passing in alpha matte
+
+2004/06/03
+Removed gamma value from Gandalf camera
+
+2004/05/23
+Changed offset_x and offset_y in Gan_Image to be signed integers, with
+appropriate changes to oberon and Gandalf code
+
+2004/05/20
+Fixed 16 bit convolution
+
+2004/05/20
+Fixed convolution with image expansion
+
+2004/05/19
+Revised 1D convolution to allow different behaviour at edge of frame
+
+2004/05/18
+Added mask argument to composite function
+
+2004/05/14
+Added function to copy linked list with its data
+
+2004/05/13
+Added channel maximum value
+
+2004/05/13
+Added scaling and min/max functions
+
+2004/05/13
+Fixed bug in getting maximum value in channel
+
+2004/03/25
+Changed argument names for gandalf lists to avoid C++ namespace collision
+
+2004/03/25
+Added Angel's new 2D convolution code
+
+2004/03/22
+Added missing 64-bit function
+
+2004/03/18
+Added const flags where appropriate
+
+2004/03/17
+Added gan_image_clear_window() function to clear an image in a specified
+rectangular region
+
+2004/03/11
+Added setting of pix_data_ptr in gan_image_extract().
+Added const qualifiers where appropriate.
+
+2004/03/05
+Added UNDEFINED entries to enums
+
+2004/02/26
+Added cases for Y convolution from Angel
+
+2004/01/01
+Fixes for IA64 compatibility from Torsten Werner
+
+2004/04/01
+Added function for 9-grouping of bits in a binary image
+
+2004/01/06
+Adjusted Mac installation instructions
+Fixed file closing bug in image IO
+
+2003/12/29
+Added Torsten Werner's changes to make system.
+Fixed 64 bit compatibility problems in endian_io.[ch].
+
+2003/12/15
+Added #ifdef's around Schur call
+
+2003/12/15
+Added progress pointer arguments to Canny and line detector calls
+
+2003/12/15
+Fixed Testramework Makefile.in file to refer to GLUT
+
+2003/12/15
+Added Linux-specific installation notes
+
+2003/10/13 Version 1.3 released
+------------------------------
+
+2003/10/07
+Modified 3D Equalizer camera model to return GAN_ERROR_OUTSIDE_RANGE when
+failing to undistort a point.
+
+2003/10/01
+Changed do loop in bit array copy to memcpy() for performance reasons.
+
+2003/09/09
+Removed unnecessary calls to glFlush() in OpenGL functions
+
+2003/09/08
+Added pixel offset functions in image/pixel.[ch]
+
+2003/09/03
+Fixed undistort function in 3D Equalizer camera format
+
+2003/09/01
+Added Mac GL headers to vision/corner_disp.c
+
+2003/08/28
+If a point to be projected by a camera is out of range of the model in
+camera_radial_dist[12].[ch], sets the Jacobian to zero.
+
+2003/08/26
+Revised local feature maps for feature matching to allow for border around
+target image
+
+2003/08/26
+Split OpenGL configuration to allow OpenGL-based code that doesn't need
+the glut GUI library to be compiled into Gandalf. This is so that mokey can
+call the Gandalf OpenGL functions, e.g. in the camera lens distortion
+routines, without forcing glut to be present as well.
+
+So in the gandalf/config.h file you should have HAVE_OPENGL #defined
+but not HAVE_GLUT
+
+2003/08/24
+Fixed bugs in feature detectors
+
+2003/08/22
+Removed flush
+
+2003/08/11
+Corrected AND-NOT bit array operation
+
+2003/08/08
+Added not-and bit array functions
+
+2003/08/08
+Fixed active window function to work with images having one row or column
+
+2003/08/07
+Modified LAPACK search to look for lapack, blas and g2c libraries.
+
+2003/8/06
+Adjusted installation procedure to put more into configure options
+(compiler & linker flags), which are taken out of the config file.
+
+2003/07/22
+Changed image/image_composite.[ch] to allow subimage to be composited
+onto larger image
+
+2003/07/18
+Added proper floating point support top OpenGL image display
+
+2003/06/05
+Fixed bug calling triangular matrix inverse routine
+in linalg/mat_triangular.[ch].
+
+2003/05/19
+Added function gan_image_get_pixptr().
+
+2003/05/07
+Added boolean cases for grey <--> grey pixel conversion in image/pixel.c
+
+2003/04/04
+Fixed bit array insert function
+
+2003/03/30
+Added interlace argument to image flip function
+
+2003/03/21
+Removed trailing comma from enum definition in vision/camera_defs.h.
+
+2003/03/21
+Added image flip routine separately to copy, to allow in-place flip.
+
+2003/03/11
+Added transferring of offsets into copied images in convolve1D.c
+
+Added reset macro to affine homography fitter. Still doesn't work if the
+z-coordinates are not 1...
+
+2003/03/03
+New compositing routines in image/image_composite.[ch]
+
+2003/02/24
+Added 2x2 eigendecomposition of 2x2 symmetric matrices in
+linalg/2x2matrix_eigsym.[ch]
+
+2003/02/24
+Added Hough transform documentation
+
+
+
+12-2-2003 Gandalf 1.2 released
+------------------------------
+
+2003/01/31
+Added some new ports of CLAPACK/CBLAS code
+
+2002/11/08
+Added definitions of powf and sqrtf for platforms without these functions
+
+2002/11/08
+Added MAC OS X Project Builder project files and config.h file.
+
+2002/10/06
+Added config definition for LIBTOOL to allow for non-default libtool
+executable. Fixes problems on OS X.
+Added config.macosx which uses fink libtool
+
+2002/09/30
+Added Fast Hough Transform modules to vision package
+
+2002/09/30
+Added specific 8/16/32 bit macros
+
+2002/09/30
+Added memory stack code common/memory_stack.[ch] to support Fast Hough
+Transform
+
+2002/07/03
+Added complex number structure
+
+2002/06/14
+Added some extra matrix/matrix and matrix/vector multiplication functions
+
+2002/06/12
+Updated API of feature detectors
+
+2002/06/12
+Added outer linear model to radial distortion models
+
+2002/06/12
+Removed GIF format. Supporting it seems too fiddly right now.
+
+2002/06/07
+Added new files (PBM io)
+
+2002/06/07
+Fixed name of gan_symmat22f_sumsqr_s()
+
+2002/06/05
+Added array functions (macros) for 8, 16, 32 and 64 bit integers.
+
+2002/06/05
+PBM format files
+
+2002/05/27
+Removed my calculation of 3x3 matrix eigendecomposition, substituting
+the CLAPACK version. Changed name of gan_symmat44_eigsym() to
+gan_symmat44_eigen() to conform to 3x3 version. Added test program for
+fixed size matrix eigendecomposition.
+
+2002/05/24
+Added code to deal with degenerate eigenvalues
+
+2002/05/24
+Converted references to row_data in image directory to macro calls.
+
+
+25-4-2002 Gandalf 1.1 released
+------------------------------
+
+2002/04/22
+   Finished conversion to Doxygen comment format for documentation
+
+2002/04/19
+   Added copy functions with flipping: gan_image_copy_flip_q() and
+   gan_image_copy_flip_s().
+
+2002/04/18
+   Added Doxygen configuration file doxyfile. Removed ObjectOutline file
+   Gandalf.ool.
+
+2002/04/11
+   Fixed problem with deleting the only element of a singleton list in
+   common/linked_list.c. Special case for singletons, current_pos is set
+   to -1 and pFirst is set to NULL.
+
+2002/04/08
+   Added gan_image_get_pixptr_???() functions to return a pointer to a given
+   pixel in an image, to use instead of a direct reference to the row_data
+   field of the image.
+
+2002/03/28
+   Revision of error handling
+   Fixed png_image_read, fclose() was after return
+   Added code to clean up allocated memory and report memory leaks
+   Fixed memory leaks. Feature detectors now clean their local feature maps
+
+2002/03/27
+   New install-sh file provided by Matthias Fichtner, to fix Solaris problems
+   Added conversions for signed pixel types
+   Fixed threshold when adding distortion
+   Added gamma initialiser for images
+
+2002/03/26
+   Added inverse radial distortion model vision/camera[f]_radial_dist1_inv.[ch]
+
+2002/03/26
+   Added internalize function gan_camera_internalize() for cameras
+   Added new pixel conversions
+
+2002/03/25
+   Tested configuration file config.sunos for SunOS, using gcc
+   Fixed bug in ..._fill_part() in common/bit_array.c which failed with
+   zero offset
+
+2002/03/22
+   Added ..._unit_i() macros for fixed size matrices/vectors, which were
+   documented but didn't exist!
+
+2002/03/20
+   Convolution gan_convolve1D_ui() is now done in doubles instead in floats;
+   overflow bug on line 533 corrected;
+
+2002/03/19
+   Added new file vision/camera_defs.h of camera definitions
+   Adjusted argument list and meaning of Martin's threshold in
+   image_compare.[ch].
+   Added RealViz's inverse radial distortion model
+
+2002/03/19
+   Another major revision of camera stuff. Divided camera projection/
+   backprojection into modules for each camera model, in the manner of the
+   square matrix modules.
+
+2002/03/15
+   Added reshape function that actually works
+   Removed incorrect reshape function
+   Removed remaining glutDisplayFunc from image_display.c
+   common/endian_io.[ch] for file I/O independent of little/big endianness
+   Converted binary I/O to little-endian in I/O functions
+
+2002/03/13
+   Moved array of static strings into header file because of IRIX CC fussiness
+   in bitmap_test.[ch]
+   Added big-endian code to insert routine in bit_array.[ch]
+   Added signed integer definitions to common/misc_defs.h
+
+2002/03/11
+   Major review of camera code. Projection/backprojection now return
+   errors if pixel is out of range of distortion model. Stereographic and
+   similar models still need to be revised. Split camera.[ch] into five
+   modules.
+
+2002/03/07
+   New image comparison function in image/image_compare.[ch]
+
+2002/03/06 09:34:50
+   Added MSDEV Project Gandalf_TestSuite.dsp for Gandalf test suite
+   gandalf/TestFramework
+   Added use of acBuildPathName to generate test input path
+   Added defines for test input/output paths
+   Modified cUnit test program to loop menu until exit is selected
+
+2002/03/05
+   Added configuration header file config_win32.h for win32 platforms
+
+2002/03/04
+   Updated to TestFramework/TestInput/TestOutput structure
+   Added ground-truth comparison to bitmap test program
+   Renamed testframework to TestFramework
+   Moved test input files into TestInput directory
+   Removed display_test.c (functionality now in vision_test.c)
+   File DontRemove added to TestOutput directory to make sure that TestOutput
+   directory is not purged by cvs update -P
+
+2002/02/27
+   Added more tests. The conversion tests in image_test.c now works!
+   Changed image extraction routines to use fast copy routine where possible.
+   Added casts for pixel conversions to fix MSVC warnings.
+
+2002/02/26
+   Added gamma to camera structure
+   Fixed bugs in GLA header files and added conversions and conversion tests
+   New image inverse utility program utils/invimage.c
+
+2002/02/22
+   New image inversion function & macros in gandalf/image/image_invert.[ch]
+
+2002/02/20
+   Added pixel projection/back-projection routines which allow error
+   conditions to be returned in a pointer rather than calling
+   gan_err_register().
+   Added type definitions GAN_UINT8, GAN_UINT32 etc, #define'd appropriately
+   to the normal types GAN_UCHAR, GAN_USHORT etc. so that we can define
+   unsigned integer variables of specific bit size.
+   Added pixel conversion routine gan_image_pixel_convert() to image/pixel.[ch]
+   which error conditions to be returned in a pointer rather than calling
+   gan_err_register().
+
+2002/02/15
+   Added lots of new camera models!
+
+2002/01/24
+   Added Jacobian output to point projection using a Gandalf camera
+
+2002/01/18
+   Generalised image pyramid code to allow flexibility in the construction of
+   the low resolution images
+
+2002/01/16
+   Added data free function to image structure. Added basic JPEG image file
+   read/write and TIFF image file read capability.
+
+2002/01/03
+   Added GAN_ALL_CHANNELS to convolution specification in image processing
+   algorithms
+
+2002/01/02
+   Fixed bugs in image display and pixel conversions
+
+2001/12/20
+   Fixed clean operation to use RM defined symbol and to remove the libraries
+
+2001/12/20
+   Converted multi-pixel binary image operations to macros when NDEBUG is
+   defined.
+
+2001/12/14
+   Added mask to feature detectors so that you can find features in a region
+   Added algorithm for Canny edge detection in colour images
+   Added quadratic and cubic equation solvers in common/numerics.[ch]
+
+2-12-2001 Gandalf 1.0 released
+------------------------------

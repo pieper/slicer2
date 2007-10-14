@@ -1,0 +1,46 @@
+CC = @CC@
+CFLAGS = @CFLAGS@
+LIBS = @LIBS@
+LDFLAGS = @LDFLAGS@
+INSTALL = @INSTALL@
+PNG_LIBS = @PNG_LIBS@
+TIFF_LIB = @TIFF_LIB@
+JPEG_LIB = @JPEG_LIB@
+GIF_LIB = @GIF_LIB@
+LAPACK_LIBS = @LAPACK_LIBS@
+OPENGL_LIBS = @OPENGL_LIBS@
+X_LIBS = @X_LIBS@
+prefix = @prefix@
+includedir = $(DESTDIR)/@includedir@
+
+include ../make.inc
+include ../config
+
+PACKAGE = common
+OBJS = $(patsubst %.c,%$(OBJECT_SUFFIX).lo,$(CFILES))
+CFILES = misc_defs.c compare.c numerics.c allocate.c misc_error.c \
+	 linked_list.c array.c bit_array.c gan_err.c gan_err_trace.c \
+	 endian_io.c memory_stack.c file_io.c
+HFILES = $(patsubst %.c,%.h,$(CFILES)) complex.h
+TOPLEVEL = ..
+
+# header files not to be included by themselves
+EXTRA_HFILES = comp_noc.h
+
+targets: $(OBJS)
+
+all: test list-test
+
+test:
+	$(LIBTOOL) --mode=link $(CC) -I$(TOPLEVEL)/.. $(CFLAGS) -DCOMMON_TEST_MAIN common_test.c $(PATH_BUILDER_C) -o common_test $(LDFLAGS) $(LIB) $(LIBS)
+
+list-test:
+	$(LIBTOOL) --mode=link $(CC) -I$(TOPLEVEL)/.. $(CFLAGS) -DLIST_TEST_MAIN list_test.c $(PATH_BUILDER_C) -o list_test $(LDFLAGS) $(LIB) $(LIBS)
+
+install: installh
+
+$(CFILES): ../$(PACKAGE).h
+
+include ../make.targets
+
+GARBAGE += common_test list_test

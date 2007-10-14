@@ -1,0 +1,39 @@
+# Include this file at the bottom of your makefile.
+
+../$(PACKAGE).h: $(HFILES)
+	ls $(HFILES) | awk '{print "#include <gandalf/$(PACKAGE)" "/" $$1 ">"}' > ../$(PACKAGE).h
+
+../$(SUBPACKAGE).h: $(HFILES)
+	ls $(HFILES) | awk '{print "#include <gandalf/$(PACKAGE)/$(SUBPACKAGE)" "/" $$1 ">"}' > ../$(SUBPACKAGE).h
+
+clean::
+	$(RM) $(GARBAGE) $(OBJS)
+	$(RM) -r .libs
+
+installh:: ../$(PACKAGE).h
+	if [ ! -d $(includedir)/gandalf/$(PACKAGE) ]; then mkdir $(includedir)/gandalf/$(PACKAGE); fi
+	$(INSTALL) -m 644 ../$(PACKAGE).h $(includedir)/gandalf
+	$(INSTALL) -m 644 $(HFILES) $(EXTRA_HFILES) $(includedir)/gandalf/$(PACKAGE)
+
+installsubh:: ../$(SUBPACKAGE).h
+	if [ ! -d $(includedir)/gandalf/$(PACKAGE)/$(SUBPACKAGE) ]; then mkdir $(includedir)/gandalf/$(PACKAGE)/$(SUBPACKAGE); fi
+	$(INSTALL) -m 644 $(HFILES) $(EXTRA_HFILES) $(includedir)/gandalf/$(PACKAGE)/$(SUBPACKAGE)
+
+docsource:: $(CFILES) $(HFILES)
+	../preprocess ../.. $(CFILES) $(HFILES)
+
+docfinish::
+	$(RM) *_noc.[ch] *_test.[ch] ../$(PACKAGE).h
+	$(MV) tmp/*.[ch] .
+	$(RM) -r tmp
+
+docsubsource:: $(CFILES) $(HFILES)
+	../../preprocess ../../.. $(CFILES) $(HFILES)
+
+docsubfinish::
+	$(RM) *_noc.[ch] *_test.[ch] ../$(SUBPACKAGE).h
+	$(MV) tmp/*.[ch] .
+	$(RM) -r tmp
+
+%$(OBJECT_SUFFIX).lo : %.c
+	$(LIBTOOL) --mode=compile $(CC) -I$(TOPLEVEL)/.. $(CFLAGS) -c $*.c -o $*$(OBJECT_SUFFIX).o

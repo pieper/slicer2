@@ -1,0 +1,308 @@
+Gandalf Installation
+
+Prerequisites:
+
+1 Gnu Make (for Unix systems)
+
+  You will need the Gnu "make" program ("gmake" on some systems).
+
+2 Libtool (Unix again)
+
+  You will also need the Gnu "libtool" program to be installed on your system.
+  It is available from any Gnu software repository mirror, of which the main
+  location is www.gnu.org. See the section "The config file" to see how to
+  select a version of libtool that you want to use.
+
+3 Image I/O
+
+  Gandalf supports PGM, PPM, PNG, TIFF and JPEG images. PNG, JPEG and TIFF
+  support requires the corresponding libraries to be installed. PNG also
+  requires the Z compression library. Gandalf will compile and run without any
+  of these libraries, but in this case only PGM and PPM image I/O will be
+  available. On Unix systems the "configure" program in the Gandalf
+  distribution should auto-detect whatever libraries are installed.
+
+4 Numerical libraries
+
+  The Gandalf linear algebra package will use LAPACK libraries, if they
+  are installed. The "configure" script looks for liblapack and libscs
+  libraries (the latter for SGI machines). If optimised LAPACK libraries are
+  available for your machine, installing them before installing Gandalf will
+  probably yield higher performance. In the case that LAPACK is not installed,
+  Gandalf will use some internal routines, a combination of the CCMath
+  package written by Daniel Atkinson (DanAtk@aol.com) and CLAPACK routines
+  modified to a more standard C-style API.
+
+5 Visualisation 
+
+  To use the (limited) graphical programs, you will need to install Open GL,
+  with the Open GL user toolkit (glut). Mesa is a free version of Open GL,
+  available for many machine types at http://www.mesa3d.org.
+
+********************************************
+*       Installation on Unix Systems       *
+********************************************
+
+Gandalf uses "configure" to build Makefiles and a config.h file with
+host-specific information into them, in conjunction with the "libtool"
+program to perform machine independent build rules.
+
+If you want to update to your local "libtool" program, invoke the "libtoolize"
+program. cd to the "gandalf" directory and type
+
+   libtoolize --copy
+
+following any instructions it prints. So for instance if the output says
+"You should add the contents of `/usr/share/aclocal/libtool.m4' to `aclocal.m4'"
+then do it (copy the file if you don't have "aclocal.m4").
+Next type "autoconf" to regenerate the "configure" script.
+
+Now you have a "configure" script, either the one that came with your
+distribution or the one you have created. There are options in "configure",
+which are obtainable by typing "./configure --help". The relevant ones are
+
+ * Use a combination of --prefix, --exec-prefix, --includedir and --libdir
+   to specify Where you want the Gandalf library and header files to be
+   installed. The default directories are /usr/local/lib and /usr/local/include
+   respectively.
+ * Specifying the C compiler and flags you want to use. Using a
+   Bourne-compatible shell, you can do that on the command line like this:
+
+     CC=c89 CFLAGS=-O2 LIBS=-lposix ./configure
+
+   Or on systems that have the `env' program, you can do it like this:
+
+     env CFLAGS=-I/usr/local/include LDFLAGS=-s ./configure
+
+   The LDFLAGS and LIBS variables are passed to the linker when linking
+   the Gandalf test programs, indicating respectively linker flags and
+   libraries to link with.
+ * Disabling support for libraries you don't want or need to use. The
+   current options of this type are:
+      --without-png           disable PNG support
+      --without-tiff          disable TIFF support
+      --without-jpeg          disable JPEG support
+      --without-lapack        disable LAPACK support
+      --without-opengl        disable OpenGL support
+      --without-glut          disable GLUT support
+
+The NDEBUG compiler symbol
+--------------------------
+
+When compiling an optimised "release" version of your code, you will
+normally want to define the symbol NDEBUG by adding -DNDEBUG to the CFLAGS
+argument list. Defining NDEBUG has the effect of instructing the C
+preprocessor to ignore assert() tests. There are additional gandalf error
+test functions gan_err_test_...() which are also ignored when NDEBUG is
+defined. Finally Gandalf uses NDEBUG to convert some function calls into
+macros. This has the effect of altering some of the Gandalf structures,
+in particular the Gan_Image image structure, because some functions are
+included as methods in the structure. Because of this it is essential that
+if NDEBUG is defined when you compile Gandalf, you need to also define
+NDEBUG when compiling code that uses Gandalf.
+
+The config file
+---------------
+
+The "gandalf/config" file has user-selectable options. The default file
+will work on most architectures, but if you need to, edit the "config" file
+to indicate:-
+
+ * The locations of the "rm" and "mv" programs used by the software and
+   documentation installers.
+ * A different libtool program in case the provided libtool is not up to
+   the job. However the recommended way to update libtool is to use the
+   "libtoolize" program to update the provided libtool, as described above.
+ * A suffix for the object files, allowing you, for instance, to switch
+   easily between debug (suffix _db) and release (suffix _rl) builds
+   without having to remove the object files.
+
+You should then be able to build the Gandalf library with
+
+   cd gandalf
+   ./configure                        To determine system specifics
+                                      (see above for arguments to configure)
+   make                               To compile and build the Gandalf library
+
+If this works, compile and run the test program
+
+   cd TestFramework
+   make
+
+and then
+
+   ./cUnit -menu
+
+to run selected tests, or
+
+   ./cUnit -all
+
+to run through all the tests. This test program does not use any user
+interface; it tests Gandalf functions and prints any errors it encounters
+directly into the shell. If the tests pass, you can then install the
+Gandalf header and library files using
+
+   make install
+
+(you will probably need root access to do this last bit).
+There are also various test programs in individual packages. "make test"
+builds the test programs, followed by e.g. "./image_test" to run them.
+The cUnit program contains all the individual package test programs.
+The test program "vision_test" in the vision package allows you to view
+the output of image processing operations using the GLUT extension to
+OpenGL.
+
+Special cases:
+--------------
+
+Linux
+-----
+
+The GLUT header is normally installed in /usr/X11R6/include. So to make
+a debug build use the following call to configure:
+
+   env CFLAGS="-g -Wall -I/usr/X11R6/include" ./configure
+
+For a release build use
+
+   env CFLAGS="-O3 -DNDEBUG -I/usr/X11R6/include" ./configure
+
+IRIX
+----
+
+Our version of IRIX libtool (1.3.5) doesn't understand the IPA
+optimisation part of the MIPS compiler, so you will get IPA error related
+error messages when you create a shared library with -Ofast compilation or
+with IPA otherwise selected. You will need to add -IPA to the "LD" command
+line in the libtool script, so that the -IPA flag will always be used when
+libtool links a shared library. Fortunately this doesn't seem to screw things
+up when you compile without -Ofast.
+
+The PNG libraries up to at least IRIX 6.5 are very old and incompatible
+with the Gandalf PNG code which is based on newer versions. You will probably
+need to download newer PNG source from the web and compile it locally.
+
+MIPS CC (C++ compiler on SGI machines):
+So far as I (PM) can tell autoconf/configure doesn't work properly with C++
+compilers, due to the symbol name mangling that occurs. The configure script
+generated by autoconf needs to be manually edited. Note that the following
+changes will NOT break the script for other architectures/compilers, at least
+for those I have tried.
+
+1) Remove the calls to main() within main() in the test programs. MIPS CC
+   doesn't allow this.
+
+2) Add an initialiser to the declaration "const charset x". Changing it
+   to "const charset x={0,0}" seems to do the job.
+
+3) Wherever exit() is called in a test program, add an "#include <stdlib.h>"
+   declaration to the program.
+
+After you have modified and run the configure, you will also need to manually
+edit the config.h file. Add #define definitions for HAVE_ALLOCA, HAVE_ALLOCA_H
+and then later in the file HAVE_MEMCPY, ..., HAVE_STRTOL, since configure will
+fail to find the functions, even though they are implemented.
+
+Finally, you will need to edit the "gandalf/config" file to add --mode=compile
+and --mode=link options to the LIBTOOL_COMPILE and LIBTOOL_LINK symbols
+respectively, because the IRIX libtool needs a bit more help to work with CC.
+
+********************************************
+*     Windows 2000/NT/XP installation      *
+********************************************
+
+Gandalf has been compiled on various flavours of Microsoft Windows, and MSVC
+project files are provided in the Gandalf distribution. Gandalf.dsp can be
+used to build Gandalf, and TestFramework/Gandalf_TestSuite.dsp to build the
+test program. Obviously there is no "configure" program to look for installed
+libraries and build the config.h file. Instead copy the provided config_msvc6.h
+or config_msvc7.h file into config.h, depending on which version of Visual
+Studio you are using, and edit it to correspond to your system. The major item
+to be careful of is to make sure that the installed libraries correspond
+with the #define HAVE_... lines in config.h. The main options are:
+
+  * #define HAVE_OPENGL indicates whether OpenGL is installed, and HAVE_GLUT
+    indicates whether in addition the OpenGL user toolkit (glut) is installed,
+    which is also required for some of the Gandalf test programs.
+    You may have OpenGL without glut, in which case you will need to install
+    the binaries from http://www.xmission.com/~nate/glut.html. You will need
+    OpenGL to use any of the Gandalf display functionality.
+
+  * #define HAVE_PNG indicates the presence of the PNG image library, which
+    comes with the Z compression library. Binaries are obtainable from
+    http://www.libpng.org/pub/png/libpng.html and http://www.gzip.org/zlib/
+    respectively. It is recommended that you install PNG on your system
+    if you want to perform image file I/O with Gandalf.
+
+  * #define HAVE_TIFF/HAVE_GIF/HAVE_JPEG indicate the presence of TIFF, GIF
+    and JPEG libraries respectively, which Gandalf also supports.
+
+You will need to set the environment variable DEVDIR to use the provided
+.dsp project files. It should be set to the folder containing the Gandalf
+distribution. Also set the variables libpng and zlib to the folders containing
+the png and z libraries respectively. To set environment variables,
+right-click on "My Computer" and select "Properties". Then click on "Advanced"
+followed by "Environment variables" to bring up the window to add new
+environment variables.
+
+After copying config_win32.h into config.h, and installing the libraries
+you want, edit config.h to make sure the HAVE_... options fit with your
+system, before compiling Gandalf.
+
+********************************************
+*           MacOSX installation            *
+********************************************
+
+Copy the file config_macosx.h into config.h before building Gandalf.
+The file gandalf.pbproj/project.pbxproj is a ProjectBuilder project file
+for Gandalf.
+
+********************************************
+*      Generating the documentation        *
+********************************************
+
+Reference docs
+--------------
+
+Gandalf uses Doxygen (http://www.stack.nl/~dimitri/doxygen/) to generate
+the reference documentation for Gandalf. There are a couple of tricks
+needed to make it work with gandalf. Firstly, make a temporary copy of the
+Gandalf source tree. Then perform the following commands:--
+
+   cd gandalf
+   ./configure
+   gmake docsource
+
+This runs a preprocessor program (gandalf/preprocess.c) on each source file,
+and replaces the file in the source tree with the preprocessed result (this is
+why you should only do this on a temporary copy of the source). The main
+reason for doing this is to replace function names created by macro
+substitution with their actual names, both in the source and in the comments.
+Then you can run doxygen:
+
+   doxygen doxyfile
+
+using the provided configuration file "doxyfile". This generates HTML
+documentation in the gandalf/doc/reference directory. Finally you need
+to postprocess the HTML files:
+
+   ./postprocess
+
+This runs a sed script that corrects header file references. The Gandalf home
+page is now at gandalf/doc/reference/index.html.
+
+Tutorial docs
+-------------
+
+The tutorial docs are in LaTex. There is a Makefile to build an output
+PostScript file, which can then be converted to PDF format using ps2pdf.
+To generate the HTML version install latex2html and run the command
+
+latex2html report
+
+followed by
+
+./postprocess
+
+to convert links to the navigation icon images to internal file links,
+which will work whether or not the HTML docs are put on the internet.
