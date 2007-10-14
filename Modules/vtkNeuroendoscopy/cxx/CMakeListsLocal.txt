@@ -97,7 +97,8 @@ INCLUDE_DIRECTORIES(
 ####
 INCLUDE_DIRECTORIES( 
    ${VTKSLICERBASE_SOURCE_DIR}/cxx 
-   ${VTKSLICERBASE_BUILD_DIR}
+   ${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib
+   ${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/cminpack 
 #${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/
 /usr/local/include/
 /usr/include/
@@ -106,11 +107,14 @@ INCLUDE_DIRECTORIES(
 #LINK_LIBRARIES (${VTKSLICERBASE_BUILD_LIB})
 LINK_LIBRARIES (${NEUROENDOSCOPY_LOCAL_LIBS} 
 #/projects/igtdev/ruetz/slicer2-mrt/slicer2/Modules/vtkNeuroendoscopy/lib/libtsai.a  
-/usr/local/lib/libgandalf.a 
-/usr/local/lib/libminpack.a 
+${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/gandalf/libgandalf.a 
+${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/gandalf/libgandalf.so 
+${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/gandalf/libgandalf.so.1 
+${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/gandalf/libgandalf.so.1.1.1 
+${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/cminpack/libminpack.a
 /usr/lib64/libGLU.so 
 /usr/lib64/libGL.so 
-/usr/lib64/libglut.a 
+
 /usr/lib64/libXi.so 
 /usr/lib64/libX11.so 
 /usr/lib64/libm.a 
