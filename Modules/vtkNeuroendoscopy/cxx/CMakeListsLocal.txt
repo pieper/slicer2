@@ -81,6 +81,10 @@ INCLUDE_DIRECTORIES(
 #   HelloWorld.cxx
 #   )
 
+SET(LIBCOPY 
+   ${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/gandalf/libgandalf.so.1 
+
+)
 
 
 
@@ -127,22 +131,24 @@ ${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/libglut.so
 
 # Add additional directories to look in for libraries
 LINK_DIRECTORIES(
+${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/gandalf 
 
-${LOCAL_LIBRARY_BASENAME}/cxx
-${LOCAL_LIBRARY_BASENAME}/cxx/tsai/minpack/
-${LOCAL_LIBRARY_BASENAME}/bin
-
-#${LOCAL_LIBRARY_BASENAME}/cxx/tsai/
 #/usr/local/lib/
 #/usr/local/include/
 )
+
+#ADD_CUSTOM_TARGET(Foo
+#cp ${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/gandalf/libgandalf.so.1 "/tmp/")
+#INSTALL_PROGRAMS(/projects/igtdev/ruetz/slicer2-new/slicer2/Modules/vtkNeuroendoscopy/builds/linux-x86_64/bin /projects/igtdev/ruetz/slicer2-new/slicer2/Modules/vtkNeuroendoscopy/lib/gandalf/libgandalf.so.1 )
+#CMake (-E copy ${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/gandalf/libgandalf.so.1 ${EXECUTEABLE_OUTPUT_PATH})
+ EXEC_PROGRAM(${CMAKE_COMMAND} ARGS "-E copy \"${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/gandalf/libgandalf.so.1\" \"${EXECUTABLE_OUTPUT_PATH}\"")
 
 
 
 # To add a list of additional libraries you need to link with, uncomment
 # the following line.  The library names should omit the "lib" and any
 # trailing suffix.
-# LINK_LIBRARIES (${LOCAL_LIBRARY_BASENAME} library_names_here)
+# LINK_LIBRARIES (${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/gandalf/libgandalf.so.1 )
 # LINK_LIBRARIES (${LOCAL_LIBRARY_BASENAME} /cxxgandalf mnpak)
 
 
