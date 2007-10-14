@@ -1,0 +1,67 @@
+CC = @CC@
+CFLAGS = @CFLAGS@
+LIBS = @LIBS@
+LDFLAGS = @LDFLAGS@
+INSTALL = @INSTALL@
+PNG_LIBS = @PNG_LIBS@
+TIFF_LIB = @TIFF_LIB@
+JPEG_LIB = @JPEG_LIB@
+GIF_LIB = @GIF_LIB@
+LAPACK_LIBS = @LAPACK_LIBS@
+OPENGL_LIBS = @OPENGL_LIBS@
+GLUT_LIBS = @GLUT_LIBS@
+X_LIBS = @X_LIBS@
+prefix = @prefix@
+includedir = $(DESTDIR)/@includedir@
+
+include ../make.inc
+include ../config
+
+PACKAGE = vision
+OBJS = $(patsubst %.c,%$(OBJECT_SUFFIX).lo,$(CFILES))
+CFILES = camera.c  camera_linear.c  camera_affine.c  camera_stereographic.c  \
+	 cameraf.c cameraf_linear.c cameraf_affine.c cameraf_stereographic.c \
+	 camera_equidistant.c  camera_sine_law.c  camera_equi_solid_angle.c \
+	 cameraf_equidistant.c cameraf_sine_law.c cameraf_equi_solid_angle.c \
+	 camera_radial_dist1.c  camera_radial_dist2.c  camera_radial_dist3.c \
+	 cameraf_radial_dist1.c cameraf_radial_dist2.c cameraf_radial_dist3.c \
+	 camera_xy_dist4.c  camera_radial_dist1_inv.c  camera_cubic_Bspline.c  camera_cubic_Bspline_inv.c \
+	 cameraf_xy_dist4.c cameraf_radial_dist1_inv.c cameraf_cubic_Bspline.c cameraf_cubic_Bspline_inv.c \
+	 camera_convert.c \
+	 fundamental.c essential.c \
+	 homog33_fit.c affine33_fit.c homog34_fit.c \
+	 mask1D.c mask2D.c convolve1D.c convolve2D.c \
+	 local_feature.c corner_feature.c corner_disp.c harris_corner.c \
+	 edge_feature.c edge_disp.c canny_edge.c segment_strings.c \
+	 line_feature.c line_disp.c orthog_line.c \
+	 rotate3D.c euclid3D.c lev_marq.c \
+	 fast_hough_transform.c modified_fht2D.c
+HFILES = $(patsubst %.c,%.h,$(CFILES)) camera_defs.h
+TOPLEVEL = ..
+
+targets: $(OBJS)
+
+all: test camera-test hough-transform-test
+
+test:
+	$(LIBTOOL) --mode=link $(CC) -I$(TOPLEVEL)/.. $(CFLAGS) -DVISION_TEST_MAIN vision_test.c $(PATH_BUILDER_C) -o vision_test $(LDFLAGS) $(LIB) $(LIBS)
+# -lefence
+
+camera-test:
+	$(LIBTOOL) --mode=link $(CC) -I$(TOPLEVEL)/.. $(CFLAGS) -DCAMERA_TEST_MAIN camera_test.c $(PATH_BUILDER_C) -o camera_test $(LDFLAGS) $(LIB) $(LIBS)
+# -lefence
+
+hough-transform-test:
+	$(LIBTOOL) --mode=link $(CC) -I$(TOPLEVEL)/.. $(CFLAGS) -DHOUGH_TRANSFORM_TEST_MAIN hough_transform_test.c $(PATH_BUILDER_C) -o hough_transform_test $(LDFLAGS) $(LIB) $(LIBS)
+# -lefence
+
+convolve2D-test:
+	$(LIBTOOL) --mode=link $(CC) -I$(TOPLEVEL)/.. $(CFLAGS) -DCONVOLVE2D_TEST_MAIN convolve2D_test.c $(PATH_BUILDER_C) -o convolve2D_test $(LDFLAGS) $(LIB) $(LIBS)
+
+install: installh
+
+$(CFILES): ../$(PACKAGE).h
+
+include ../make.targets
+
+GARBAGE += vision_test camera_test hough_transform_test convolve2D_test
