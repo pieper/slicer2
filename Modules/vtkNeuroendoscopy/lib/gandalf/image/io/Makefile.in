@@ -1,0 +1,26 @@
+CC = @CC@
+CFLAGS = @CFLAGS@
+LIBS = @LIBS@
+LDFLAGS = @LDFLAGS@
+INSTALL = @INSTALL@
+prefix = @prefix@
+includedir = @includedir@
+
+include ../../make.inc
+include ../../config
+
+PACKAGE = image
+SUBPACKAGE = io
+OBJS = $(patsubst %.c,%$(OBJECT_SUFFIX).lo,$(CFILES))
+CFILES = image_io.c movie.c png_io.c pbm_io.c pgm_io.c ppm_io.c tiff_io.c \
+	 jpeg_io.c dpx_io.c cineon_io.c sgi_io.c targa_io.c
+HFILES = $(patsubst %.c,%.h,$(CFILES))
+TOPLEVEL = ../..
+
+all: $(OBJS)
+
+install: installsubh
+
+$(CFILES): ../$(SUBPACKAGE).h
+
+include ../../make.targets
