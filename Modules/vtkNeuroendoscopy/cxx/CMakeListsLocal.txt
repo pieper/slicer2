@@ -130,6 +130,7 @@ LINK_DIRECTORIES(
 ${LOCAL_LIBRARY_BASENAME}/cxx
 ${LOCAL_LIBRARY_BASENAME}/cxx/tsai/minpack/
 ${LOCAL_LIBRARY_BASENAME}/bin
+${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/gandalf/
 #${LOCAL_LIBRARY_BASENAME}/cxx/tsai/
 #/usr/local/lib/
 #/usr/local/include/
