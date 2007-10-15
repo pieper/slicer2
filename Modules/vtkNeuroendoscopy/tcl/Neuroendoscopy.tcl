@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Neuroendoscopy.tcl,v $
-#   Date:      $Date: 2007/10/11 00:45:40 $
-#   Version:   $Revision: 1.1.2.7 $
+#   Date:      $Date: 2007/10/15 05:08:39 $
+#   Version:   $Revision: 1.1.2.8 $
 # 
 #===============================================================================
 # FILE:        Neuroendoscopy.tcl
@@ -279,7 +279,7 @@ proc NeuroendoscopyInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.1.2.7 $} {$Date: 2007/10/11 00:45:40 $}] 
+    {$Revision: 1.1.2.8 $} {$Date: 2007/10/15 05:08:39 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -1589,6 +1589,33 @@ vtkImageDataStreamer Neuroendoscopy(imageStreamer)
   Neuroendoscopy(imageStreamer) Delete
   Neuroendoscopy(capFrames) Delete
 }
+}
+
+
+proc NeuroendoscopyAddPlane {} {
+global Neuroendoscopy Model
+
+vtkPlaneSource plane
+plane SetOrigin -135 0 101.75
+plane SetPoint1 135 0 101.75
+plane SetPoint2 -135 0 -101.75
+plane SetNormal 0 1 0
+plane SetXResolution 72
+plane SetYResolution 72
+
+vtkPolyDataMapper mapper
+
+    mapper SetInput [plane GetOutput]
+    #sphereMapper SetInput [plane GetOutput]
+    mapper GlobalImmediateModeRenderingOn
+
+vtkActor triangulation
+triangulation SetMapper mapper
+[triangulation GetProperty] SetOpacity 0.5
+[triangulation GetProperty] SetColor 1 0 1
+
+neuroendoscopyScreen AddActor triangulation
+viewRen AddActor triangulation
 }
 
 #
@@ -3005,7 +3032,8 @@ proc NeuroendoscopyBuildGUI {} {
     pack $f.fTop -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
     pack $f.fBot -side top -pady $Gui(pad) -padx $Gui(pad) -fill both -expand yes
 
-    set PathMenu2 {ICP1 ICP2 ICP3 ICP4 LM1 LM2 LM3 LM4}
+    set PathMenu2 {ICP1 ICP2 ICP3 ICP4 LM1}
+
 
     
     #--------------------------------------------
@@ -3122,6 +3150,47 @@ proc NeuroendoscopyBuildGUI {} {
     
     set f $fRegistration.fBot.fICP4.fData
      
+   #--- create blt notebook
+    blt::tabset $f.tsNotebook -relief flat -borderwidth 0
+    pack $f.tsNotebook -side top
+
+    #--- notebook configure
+    $f.tsNotebook configure -width 250
+    $f.tsNotebook configure -height 900 
+    $f.tsNotebook configure -background $::Gui(activeWorkspace)
+    $f.tsNotebook configure -activebackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -selectbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -tabbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -highlightbackground $::Gui(activeWorkspace)
+    $f.tsNotebook configure -highlightcolor $::Gui(activeWorkspace)
+    $f.tsNotebook configure -foreground black
+    $f.tsNotebook configure -activeforeground black
+    $f.tsNotebook configure -selectforeground black
+    $f.tsNotebook configure -tabforeground black
+    $f.tsNotebook configure -relief flat
+    $f.tsNotebook configure -tabrelief raised
+
+    #--- tab configure
+    set i 0
+    foreach t "Registration" {
+        $f.tsNotebook insert $i $t
+        frame $f.tsNotebook.f$t -bg $Gui(activeWorkspace) -bd 2 
+        NeuroendoscopyBuildGUIForICP${t} $f.tsNotebook.f$t
+
+        $f.tsNotebook tab configure $t -window $f.tsNotebook.f$t 
+        $f.tsNotebook tab configure $t -activebackground $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -selectbackground $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -background $::Gui(activeWorkspace)
+        $f.tsNotebook tab configure $t -fill both -padx 2 -pady 1 
+
+        incr i
+    }
+    #-----------------------------------------------------------------
+
+
+
+
+
     eval {label $f.c1StepLabel -text "4 STEP: Point acquisition"} $Gui(WLA)
     pack $f.c1StepLabel -side top -pady 3 -padx 2
 
@@ -3183,7 +3252,7 @@ proc NeuroendoscopyBuildGUI {} {
 
     #--- tab configure
     set i 0
-    foreach t "Setup Registration" {
+    foreach t "Registration" {
         $f.tsNotebook insert $i $t
         frame $f.tsNotebook.f$t -bg $Gui(activeWorkspace) -bd 2 
         LocatorBuildGUIFor${t} $f.tsNotebook.f$t
@@ -3211,87 +3280,7 @@ proc NeuroendoscopyBuildGUI {} {
 
 
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    #-------------------------------------------
-    # Registration->Landmark Step 2
-    #-------------------------------------------
-    set f $fRegistration.fBot.fLM2
-    frame $f.fData   -bg $Gui(activeWorkspace)
-    pack  $f.fData -side top 
-    
-    set f $fRegistration.fBot.fLM2.fData
-     
-    eval {label $f.c1StepLabel -text "2 STEP: Tracker coil Calibration"} $Gui(WLA)
-    pack $f.c1StepLabel -side top -pady 3 -padx 2
-
-    #---------------------------------------------------------------------
-    
-    DevAddButton $f.bNext "->->NEXT->->" "NeuroendoscopyLM2" 10
-    DevAddButton $f.bCalib "(RE-)START coil calibration" "NeuroendoscopyLM2"  30
-   
-    pack $f.bCalib $f.bNext -side top -pady 3 -padx 2
-
-    #-------------------------------------------
-    # Registration->Landmark Step 3
-    #-------------------------------------------
-    set f $fRegistration.fBot.fLM3
-    frame $f.fData   -bg $Gui(activeWorkspace)
-    pack  $f.fData -side top 
-    
-    set f $fRegistration.fBot.fLM3.fData
-     
-    eval {label $f.c1StepLabel -text "3 STEP: All finished - Tracking started"} $Gui(WLA)
-    pack $f.c1StepLabel -side top -pady 3 -padx 2
-
-    #---------------------------------------------------------------------
-    
-    DevAddButton $f.bNext "->->NEXT->->" "NeuroendoscopyLM3" 10
-
-    DevAddButton $f.bCalib "Footswitch" "NeuroendoscopyStartTracking"  30
-
-    pack $f.bCalib $f.bNext -side top -pady 3 -padx 2
-
-
-
-    #-------------------------------------------
-    # Registration->Landmark Step 4
-    #-------------------------------------------
-    set f $fRegistration.fBot.fLM4
-    frame $f.fData   -bg $Gui(activeWorkspace)
-    pack  $f.fData -side top 
-    
-    set f $fRegistration.fBot.fLM4.fData
-     
-    eval {label $f.c1StepLabel -text "4 STEP: All finished - Tracking started"} $Gui(WLA)
-    pack $f.c1StepLabel -side top -pady 3 -padx 2
-
-    #---------------------------------------------------------------------
-    
-    
-
-    DevAddButton $f.bCalib "Footswitch" "NeuroendoscopyStartTracking"  30
-
-    pack $f.bCalib -side top -pady 3 -padx 2
-
-
+  
     #----------------------------------------------------------------------
     ##########################################################################
     #-------------------------------------------
@@ -3762,8 +3751,12 @@ eval {checkbutton $f.cAllTexture \
         -text "Calibrate" -variable Neuroendoscopy(calibrationStart) -width 16 \
         -indicatoron 0 -command "NeuroendoscopyCalibration /projects/igtdev/ruetz/slicer2-mrt/slicer2/myfile_undistort.ppm; Render3D"} $Gui(WCA)
 
+   eval {checkbutton $f.cAddPlane \
+        -text "Add Plane" -variable Neuroendoscopy(addPlane) -width 16 \
+        -indicatoron 0 -command "NeuroendoscopyAddPlane; Render3D"} $Gui(WCA)
+
     #$Model($head,name)
-    pack $f.cTexture $f.cAllTexture $f.cTextureVisible $f.cVideoTextureVisible $f.cCalibration $f.lCurrModel -side top
+    pack $f.cTexture $f.cAllTexture $f.cTextureVisible $f.cVideoTextureVisible $f.cCalibration $f.lCurrModel $f.cAddPlane -side top
     
     set f $fCamera.fBot.fTexture.fTop.fxcoord
     NeuroendoscopyCreateLabelAndSlider $f lxcoord 0 "rotateX" "xcoord" horizontal -400 400 110 Neuroendoscopy(texture,xcoordi) "NeuroendoscopyTextureInits; Render3D" 5 90
@@ -3868,6 +3861,231 @@ lappend Locator(actors) $axis
         ${actor}Actor SetVisibility 0
 }
 
+
+proc NeuroendoscopyBuildGUIForICPRegistration {parent} {
+    global Neuroendoscopy Gui Model
+
+    set f $parent
+    foreach x "1 2 3" {
+        if {$x != 3} {
+            frame $f.f$x -bg $Gui(activeWorkspace) -relief groove -bd 2 
+        } else {
+            frame $f.f$x -bg $Gui(activeWorkspace)
+        }
+        pack $f.f$x -side top -pady 1 -fill x 
+    }
+
+    set f $parent.f1
+    eval {label $f.lTitle -text "Collect Points from Device:"} $Gui(WTA)
+ 
+#    eval {label $f.lPatient -text "Select active Model:"} $Gui(WLA)
+    eval {label $f.lPatient -text "Active Model: "} $Gui(BLA)
+    eval {menubutton $f.ePatient -text "None" -relief raised -bd 2 -width 20 \
+            -menu $f.ePatient.m } $Gui(WMBA)
+    eval {menu $f.ePatient.m} $Gui(WMA)
+    lappend Model(mbActiveList) $f.ePatient
+    lappend Model(mActiveList)  $f.ePatient.m 
+
+    #eval {entry $f.ePatient -width 20 -textvariable Locator(entry,patientCoords)} $Gui(WEA)
+    #eval {label $f.lSlicer -text "Slicer space:"} $Gui(WLA)
+    #eval {entry $f.eSlicer -width 20 -textvariable Locator(entry,slicerCoords)} $Gui(WEA)
+    DevAddButton $f.bGet "Collect"  "Locator(OpenTracker,src) SetICPParams 1 1 0.00000001 150; LocatorRegisterCallback NeuroendoscopyLoopOpenTracker" 10 
+    DevAddButton $f.bOK "Stop" "LocatorUnRegisterCallback NeuroendoscopyLoopOpenTracker" 10
+
+    eval {label $f.lAmount -text "Collect Points from Device:" -textvariable Neuroendoscopy(IPCPointsAmount)} $Gui(WTA)
+
+
+    blt::table $f \
+        0,0 $f.lTitle -padx 1 -pady 7 -fill x -cspan 2 \
+        1,0 $f.lPatient -padx 1 -pady 1 -anchor e \
+        1,1 $f.ePatient -fill x -padx 1 -pady 1 -anchor w \
+        2,0 $f.bGet  -fill x -padx 1 -pady 1 -anchor w \
+        2,1 $f.bOK -padx 1 -pady 3 -anchor w \
+        3,1 $f.lAmount -padx 1 -pady 7 -fill x -cspan 2 
+
+
+
+    set f $parent.f2
+    foreach x "Up Down" {
+        frame $f.f$x -bg $Gui(activeWorkspace) 
+        pack $f.f$x -side top 
+    }
+
+    set f $parent.f2.fUp
+    eval {label $f.lTitle -text "Defined point pairs:"} $Gui(WTA)
+    scrollbar $f.vs -orient vertical -bg $Gui(activeWorkspace)
+    scrollbar $f.hs -orient horizontal -bg $Gui(activeWorkspace)
+    set Neuroendoscopy(PointsVerScroll) $f.vs
+    set Neuroendoscopy(PointsHonScroll) $f.hs
+    listbox $f.lb \
+        -height 5 -width 24 \
+        -bg $Gui(activeWorkspace) \
+        -xscrollcommand {$::Neuroendoscopy(PointsHonScroll) set} \
+        -yscrollcommand {$::Neuroendoscopy(PointsVerScroll) set}
+    set Neuroendoscopy(ICPpointListBox) $f.lb
+    $Neuroendoscopy(PointsHonScroll) configure -command {$Neuroendoscopy(ICPpointListBox) xview}
+    $Neuroendoscopy(PointsVerScroll) configure -command {$Neuroendoscopy(ICPpointListBox) yview}
+
+    blt::table $f \
+        0,0 $f.lTitle -padx 10 -pady 7 \
+        1,0 $Neuroendoscopy(ICPpointListBox) -padx 2 -pady 1 -fill x \
+        1,1 $Neuroendoscopy(PointsVerScroll) -fill y -padx 2 -pady 1 \
+        2,0 $Neuroendoscopy(PointsHonScroll) -fill x -padx 2 -pady 1
+
+
+    set f $parent.f2.fDown
+    DevAddButton $f.bLoad "Load" "NeuroendoscopyLoadICPPoints" 8 
+    DevAddButton $f.bSave "Save" "NeuroendoscopySaveICPPoints" 8 
+    DevAddButton $f.bDelete "Delete" "NeuroendoscopyDeleteICPPoint" 8 
+    grid $f.bLoad $f.bSave $f.bDelete -padx 1 -pady 2
+
+   # DevAddButton $f.bCalib "(Re) - Start coarse calibration" "NeuroendoscopyStartICP"  30
+   # DevAddButton $f.bShowRes "Show me the result!" "NeuroendoscopyShowICP" 30
+    set f $parent.f3
+    DevAddButton $f.bReg "Register" "NeuroendoscopyRegister" 8 
+    DevAddButton $f.bResult "Result" "NeuroendoscopyShowICP" 8
+    DevAddButton $f.bReset "Reset" "LocatorResetRegistration" 8 
+
+    grid $f.bReg $f.bResult $f.bReset -padx 1 -pady 5 
+
+}
+
+
+proc NeuroendoscopyLoadICPPoints {} {
+    global Neuroendoscopy
+
+    # read data from file
+    set fileType {{"Text" *.txt}}
+    set fileName [tk_getOpenFile -filetypes $fileType -parent .]
+
+    # if user just wanted to cancel
+    if {[string length $fileName] <= 0} {
+        return
+    }
+    
+    set fd [open $fileName r]
+    set data [read $fd]
+    set lines [split $data "\n"]
+    foreach line $lines {
+        set line [string trim $line]
+        eval $line
+    }
+    close $fd
+   set size [llength $Neuroendoscopy(ICPpointList)]
+    set Neuroendoscopy(IPCPointsAmount) "Points $size"
+}
+
+proc NeuroendoscopySaveICPPoints {} {
+    global Neuroendoscopy
+
+    set dir [pwd]
+    set fileName [file join $dir "opentracker_icp_points.txt"]
+
+    set fd [open $fileName w]
+    puts $fd "\n\n\n\n\n"
+ 
+    set comment "# This text file saves the user input. Do not edit it.\n"
+    puts $fd $comment
+
+    set comment "# the point pair list"
+    puts $fd $comment
+    set str "set Neuroendoscopy(ICPpointList) \"\"\n"
+    puts $fd $str
+    set str "\$Neuroendoscopy(ICPpointListBox) delete 0 end\n"
+    puts $fd $str
+
+    foreach x $Neuroendoscopy(ICPpointList) {
+        set str "lappend Neuroendoscopy(ICPpointList) \{$x\}\n"
+        puts $fd $str
+        set str "\$Neuroendoscopy(ICPpointListBox) insert end \{$x\}\n" 
+        puts $fd $str
+    }
+
+    close $fd
+}
+
+
+proc NeuroendoscopyDeleteICPPoint {} {
+    global Neuroendoscopy
+
+    set curs [$Neuroendoscopy(ICPpointListBox) curselection]
+    if {$curs >= 0} {
+        $Neuroendoscopy(ICPpointListBox) delete $curs
+        set size [llength $Neuroendoscopy(ICPpointList)]
+        set Neuroendoscopy(ICPpointList) \
+            [lreplace $Neuroendoscopy(ICPpointList) $curs $curs]
+        set size [llength $Neuroendoscopy(ICPpointList)]
+        set Neuroendoscopy(IPCPointsAmount) "Points $size"
+    } else {
+        DevErrorWindow "Select a ICP Point to delete."
+    }
+
+}
+proc NeuroendoscopyAddICPPoint { {psc ""} } {
+    global Neuroendoscopy
+
+
+    # Keep the new point in the point list
+    lappend Neuroendoscopy(ICPpointList) "$psc"
+
+    # Put the point pair list into the list box
+    $Neuroendoscopy(ICPpointListBox) delete 0 end
+    foreach x $Neuroendoscopy(ICPpointList) {
+        $Neuroendoscopy(ICPpointListBox) insert end $x 
+    }
+    set size [llength $Neuroendoscopy(ICPpointList)]
+    set Neuroendoscopy(IPCPointsAmount) "Points $size"
+}
+
+proc NeuroendoscopyRegister {} {
+    global Neuroendoscopy
+
+    set size [llength $Neuroendoscopy(ICPpointList)]
+    if {$size < 50} {
+        DevErrorWindow "At least 50 points are needed for registration."
+        return
+    }
+
+    set size [llength $Neuroendoscopy(ICPpointList)]
+    Locator(OpenTracker,src) SetNumberOfPoints $size 
+
+
+    set id 0 
+    foreach x $Neuroendoscopy(ICPpointList) {
+        set c [string trim $x]
+        set i [string first ")" $c]
+        if {$i < 0} {
+            DevErrorWindow "Wrong point pair found: $c."
+            return
+        }
+
+        set start 1
+        set done [expr $i - 1]
+        set pc [string range $c $start $done] 
+
+       
+
+       Locator(OpenTracker,src) AddSourceICPPoint [lindex $pc 0] [lindex $pc 1] [lindex $pc 2]
+
+        puts "$pc "
+
+        incr id
+    }
+
+
+ NeuroendoscopyStartICP
+
+
+#    set error [Locator(OpenTracker,src) DoRegistration] 
+#    if {$error} {
+#        DevErrorWindow "Error registration between TargetLandmarks and SourceLandmarks."
+#        return
+#    }
+
+#    set Locator(lmtMatrix) [Locator(OpenTracker,src) GetLandmarkTransformMatrix] 
+#    puts [$Locator(lmtMatrix) Print]
+
+}
 
 proc NeuroendoscopyPauseLocator {} {
 global Locator Neuroendoscopy
@@ -4572,12 +4790,13 @@ proc NeuroendoscopyLoopOpenTracker {} {
 global Neuroendoscopy Locator Gui
 
 
-Neuroendoscopy(OpenTracker,src) PollRealtime
+#Neuroendoscopy(OpenTracker,src) PollRealtime
 Locator(OpenTracker,src) PollRealtime
 
 set buttonvar [Locator(OpenTracker,src) GetButton]
 
-set locMatrix [Neuroendoscopy(OpenTracker,src) GetLocatorMatrix]
+#set locMatrix [Neuroendoscopy(OpenTracker,src) GetLocatorMatrix]
+set locMatrix [Locator(OpenTracker,src) GetLocatorMatrix]
 
 
     # Read matrix
@@ -4603,12 +4822,13 @@ if {($locatortest1 != $Neuroendoscopy(locator1old) || $locatortest2 != $Neuroend
    #puts $Neuroendoscopy(fhandle) "$locatortest1 $locatortest2 $locatortest3"
    #the real points from the tracking device 
    #puts $Neuroendoscopy(fhandle) "$locatortest1 $locatortest2 $locatortest3"
-   Locator(OpenTracker,src) AddSourceICPPoint $locatortest1 $locatortest2 $locatortest3
-    Neuroendoscopy(ControlPoints) InsertNextPoint $locatortest1 $locatortest2 $locatortest3
-    Neuroendoscopy(ControlPoints) Modified
+   NeuroendoscopyAddICPPoint "($locatortest1 $locatortest2 $locatortest3)"
+  
+   # Neuroendoscopy(ControlPoints) InsertNextPoint $locatortest1 $locatortest2 $locatortest3
+   # Neuroendoscopy(ControlPoints) Modified
     
-    set amount [Neuroendoscopy(ControlPoints) GetNumberOfPoints]
-    puts "adding tracking point ($locatortest1 $locatortest2 $locatortest3) have now $amount of them"
+   # set amount [Neuroendoscopy(ControlPoints) GetNumberOfPoints]
+   # puts "adding tracking point ($locatortest1 $locatortest2 $locatortest3) have now $amount of them"
     #lappend Neuroendoscopy(selectedPoint) $locatortest1 $locatortest2 $locatortest3
     #puts "after target point insertion..."
     #NeuroendoscopyPointSelection
