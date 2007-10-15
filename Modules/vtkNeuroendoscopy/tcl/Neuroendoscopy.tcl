@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Neuroendoscopy.tcl,v $
-#   Date:      $Date: 2007/10/15 05:08:39 $
-#   Version:   $Revision: 1.1.2.8 $
+#   Date:      $Date: 2007/10/15 05:40:01 $
+#   Version:   $Revision: 1.1.2.9 $
 # 
 #===============================================================================
 # FILE:        Neuroendoscopy.tcl
@@ -279,7 +279,7 @@ proc NeuroendoscopyInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.1.2.8 $} {$Date: 2007/10/15 05:08:39 $}] 
+    {$Revision: 1.1.2.9 $} {$Date: 2007/10/15 05:40:01 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -3862,6 +3862,15 @@ lappend Locator(actors) $axis
 }
 
 
+
+#-------------------------------------------------------------------------------
+# .PROC NeuroendoscopyBuildGUIForICPRegistration
+# Generates a Gui for ICP registration. Scrolling doesn't work well
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+
 proc NeuroendoscopyBuildGUIForICPRegistration {parent} {
     global Neuroendoscopy Gui Model
 
@@ -3942,7 +3951,7 @@ proc NeuroendoscopyBuildGUIForICPRegistration {parent} {
    # DevAddButton $f.bCalib "(Re) - Start coarse calibration" "NeuroendoscopyStartICP"  30
    # DevAddButton $f.bShowRes "Show me the result!" "NeuroendoscopyShowICP" 30
     set f $parent.f3
-    DevAddButton $f.bReg "Register" "NeuroendoscopyRegister" 8 
+    DevAddButton $f.bReg "Register" "NeuroendoscopyICPRegister" 8 
     DevAddButton $f.bResult "Result" "NeuroendoscopyShowICP" 8
     DevAddButton $f.bReset "Reset" "LocatorResetRegistration" 8 
 
@@ -3950,7 +3959,13 @@ proc NeuroendoscopyBuildGUIForICPRegistration {parent} {
 
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC NeuroendoscopyLoadICPPoints
+# Load ICP points from file
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc NeuroendoscopyLoadICPPoints {} {
     global Neuroendoscopy
 
@@ -3975,6 +3990,14 @@ proc NeuroendoscopyLoadICPPoints {} {
     set Neuroendoscopy(IPCPointsAmount) "Points $size"
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC NeuroendoscopySaveICPPoints
+# Save ICP points to file
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc NeuroendoscopySaveICPPoints {} {
     global Neuroendoscopy
 
@@ -4004,7 +4027,13 @@ proc NeuroendoscopySaveICPPoints {} {
     close $fd
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC NeuroendoscopyDeleteICPPoint
+# Delete Certain points from list
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc NeuroendoscopyDeleteICPPoint {} {
     global Neuroendoscopy
 
@@ -4021,6 +4050,16 @@ proc NeuroendoscopyDeleteICPPoint {} {
     }
 
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC NeuroendoscopyAddICPPoint
+# Add points to the gui list
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+
 proc NeuroendoscopyAddICPPoint { {psc ""} } {
     global Neuroendoscopy
 
@@ -4037,7 +4076,15 @@ proc NeuroendoscopyAddICPPoint { {psc ""} } {
     set Neuroendoscopy(IPCPointsAmount) "Points $size"
 }
 
-proc NeuroendoscopyRegister {} {
+
+#-------------------------------------------------------------------------------
+# .PROC NeuroendoscopyICPRegister
+# Start ICP Registration
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc NeuroendoscopyICPRegister {} {
     global Neuroendoscopy
 
     set size [llength $Neuroendoscopy(ICPpointList)]
@@ -4087,12 +4134,27 @@ proc NeuroendoscopyRegister {} {
 
 }
 
+#-------------------------------------------------------------------------------
+# .PROC NeuroendoscopyPauseLocator
+# Pause the locator
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc NeuroendoscopyPauseLocator {} {
 global Locator Neuroendoscopy
 
 set Locator(loop) $Neuroendoscopy(Pause)
 LocatorLoopOpenTracker
 }
+
+#-------------------------------------------------------------------------------
+# .PROC NeuroendoscopyDrivingOnOff
+# Starts or stops driving of the locator
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc NeuroendoscopyDrivingOnOff {} {
 global Slice Anno Neuroendoscopy
 if {$Neuroendoscopy(driving) == 1} {
@@ -4105,7 +4167,13 @@ RenderAll
 }
 
 
-
+#-------------------------------------------------------------------------------
+# .PROC NeuroendoscopyCrossHairOnOff
+# turns the cross hair on off
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc NeuroendoscopyCrossHairOnOff {} {
 global Slice Anno Neuroendoscopy
 if {$Neuroendoscopy(crossVisibility) == 1} {
@@ -4169,7 +4237,13 @@ proc NeuroendoscopyAddImageCoord { {filename ""} } {
 }
 
 
-
+#-------------------------------------------------------------------------------
+# .PROC NeuroendoscopyCrossHairOnOff
+# Start the ICP Registration
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 
 proc NeuroendoscopyStartICP {} {
   global Neuroendoscopy Fiducials Model Locator
@@ -4222,7 +4296,16 @@ Locator(OpenTracker,src) DoRegistrationICP
 
 
 }
+
+
+#-------------------------------------------------------------------------------
+# .PROC NeuroendoscopyShowICP
 #show the result of the icp
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+
 proc NeuroendoscopyShowICP {} {
  headmapper SetInput [Locator(OpenTracker,src) GetSourceModel]
  actor SetMapper headmapper
@@ -4247,8 +4330,8 @@ proc NeuroendoscopyShowICP {} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC fMRIEngineMakeTimecoursePlotWindow
-# Makes a toplevel window for timecourse plotting
+# .PROC NeuroendoscopyMakeCaptureWindow2
+# create a capture window, based on xlib
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
@@ -4262,7 +4345,12 @@ global Neuroendoscopy MultiVolumeReader
 }
 
 
-
+#-------------------------------------------------------------------------------
+# .PROC NeuroendoscopyMakeCaptureWindow
+# create a capture window based on tcl windows
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc NeuroendoscopyMakeCaptureWindow {} {
     global Neuroendoscopy MultiVolumeReader
 
@@ -4395,6 +4483,14 @@ NeuroendoscopyCaptureLoop
 
 
 }
+
+#-------------------------------------------------------------------------------
+# .PROC deleteCapWindows
+# delete the capture window
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+
  proc deleteCapWindows {} {
   global Neuroendoscopy
   set Neuroendoscopy(captWindow) 0
@@ -4408,7 +4504,12 @@ NeuroendoscopyCaptureLoop
  }
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC NeuroendoscopyCaptureLoop
+# makes capture loop
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc NeuroendoscopyCaptureLoop {} {
 global Neuroendoscopy
 if {$Neuroendoscopy(captWindow) == 1} {
@@ -4436,6 +4537,13 @@ update
 
 }  
 
+
+#-------------------------------------------------------------------------------
+# .PROC NeuroendoscopyTakeSnapshot
+# takes a snapshot from the movie
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc NeuroendoscopyTakeSnapshot {} {
 global Neuroendoscopy
 
@@ -4456,8 +4564,14 @@ pnmwriter SetFileName "myfile1.ppm"
   pnmwriter Delete
  # NeuroendoscopyAddImageCoord
 }
-}  
-
+} 
+ 
+#-------------------------------------------------------------------------------
+# .PROC NeuroendoscopyCloseCaptureWindow
+# close capture window
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc NeuroendoscopyCloseCaptureWindow {} {
     global Neuroendoscopy
 
@@ -4470,6 +4584,12 @@ proc NeuroendoscopyCloseCaptureWindow {} {
     unset Neuroendoscopy(w)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC NeuroendoscopyGenSTL
+# generate a stl from actual model
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc NeuroendoscopyGenSTL {} {
 global Neuroendoscopy Model
 
@@ -4557,7 +4677,12 @@ Render3D
 
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC NeuroendoscopyStartICP2
+# start a icp2 registration
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc NeuroendoscopyStartICP2 {} {
   global Neuroendoscopy Fiducials Model
 
@@ -4717,6 +4842,14 @@ after 2000
 
 }
 
+
+#-------------------------------------------------------------------------------
+# .PROC NeuroendoscopyGenerateTestCoordinateFile
+# generate a navitrack readable file from the sourcemodel of collected points, random possible 
+# by uncomment
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc NeuroendoscopyGenerateTestCoordinateFile { {filename ""} } {
   global Neuroendoscopy Model
 
@@ -4785,7 +4918,12 @@ proc NeuroendoscopyNaviTrackConnect {} {
 }
 
 
-
+#-------------------------------------------------------------------------------
+# .PROC NeuroendoscopyLoopOpenTracker
+# Opentracker loop to read coordinates and send to the gui list
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc NeuroendoscopyLoopOpenTracker {} {
 global Neuroendoscopy Locator Gui
 
@@ -4845,7 +4983,12 @@ if {($locatortest1 != $Neuroendoscopy(locator1old) || $locatortest2 != $Neuroend
 #}
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC NeuroendoscopyStartTracking
+# Start tracking
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc NeuroendoscopyStartTracking {} {
 global Neuroendoscopy Locator tipActor normalActor openingActor transverseActor
 
@@ -4900,7 +5043,12 @@ set testmatrix  [${act}Actor GetMatrix]
 
 }
 
-
+#-------------------------------------------------------------------------------
+# .PROC NeuroendoscopyNaviTrackStop
+# stop navitrack loop
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
 proc NeuroendoscopyNaviTrackStop {} {
 global Neuroendoscopy
   
