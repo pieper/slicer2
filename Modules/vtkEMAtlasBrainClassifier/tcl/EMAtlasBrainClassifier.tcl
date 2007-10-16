@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
-#   Date:      $Date: 2006/11/20 19:21:09 $
-#   Version:   $Revision: 1.49 $
+#   Date:      $Date: 2007/10/16 20:36:16 $
+#   Version:   $Revision: 1.49.2.1 $
 # 
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
@@ -107,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-                                  {$Revision: 1.49 $} {$Date: 2006/11/20 19:21:09 $}]
+                                  {$Revision: 1.49.2.1 $} {$Date: 2007/10/16 20:36:16 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -2749,17 +2749,30 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
 # Execute: slicer2-... <XML-File> --exec "EMAtlasBrainClassifier_BatchMode"
 # <XML-File> = The first volume defines the spgr image and the second volume defines the aligned t2w images"
 #             The directory of the XML-File defines the working directory" 
-# <AlgorithmVersion>  = Optional - the pipeline can be run in different version. Look at EMAtlasBrainClassifierChangeAlgorithm 
-#                       for the different settings
+# <AlgorithmVersion>  = Optional - the pipeline can be run in different 
+#                       version. Can be either "Standard", "Rigid" or "RegSeg". 
+#                       Look at EMAtlasBrainClassifierChangeAlgorithm for the different setups.
 # <SegmmentationMode> = Optional - you can run a variaty of different versions, such as EMLocalSegment
 #                       which is the version defined in vtkEMLocalSegment
 # <TemplateXMLFile>   = Optional - if the pipeline should use an xml file other then the default - please make sure to define AtlasDir 
 #                       if structures are included that are not in the default atlas - otherwise the default atlas will be deleted and re-downloaded
-# <AtlasDir>          = Optional - Location of atlas directory   
+# <AtlasDir>          = Optional - Location of atlas directory  
+# <SPGRVolID>         = Optional - id of input T1 volume in the mrml tree
+# <T2VolID>           = Optional - id of input T2 volume in the mrml tree
+# <ExitFlag>          = Optional - "1" if slicer should exit after segmentation and "0" if not 
 # <FileFormat>        = Optional - file format in which segmentation result, atlas and normed imgages will be stored
 # <GenerateModels>    = Optional - default "0" will not generate models. In the end of the model generating process the user currently
 #                       gets informed about which models were created and this involves confirming a pop up window with "ok". This is
 #                       inconvenient for batch processing.
+# <AlignInput>        = Optional - If T1 and T2 should be aligned: "1", otherwise "0"
+# <WorkingDirectory>  = Optional - Path where the result and all selected volumes
+#                        will be saved to. Will be the current working directory of not stated. 
+# <SaveAlignedT2>     = Optional - "1" to save Aligned T2, otherwise "0"
+# <SaveSPGR>          = Optional - "1" to save Normalized T1, otherwise "0"
+# <SaveT2W>           = Optional - "1" to save Normalized T2, otherwise "0"
+# <SaveAtlas>         = Optional - "1" to save Aligned Atlad, otherwise "0"
+# <SaveXMLFile>       = Optional - "1" to save XML file, otherwise "0"
+# <SaveModels>        = Optional - "1" to save 3D Models, otherwise "0"
 # .ARGS
 # 
 # .END
@@ -2767,19 +2780,34 @@ proc EMAtlasBrainClassifierStartSegmentation { } {
 proc EMAtlasBrainClassifier_BatchMode {{AlgorithmVersion Standard} {SegmentationMode ""} \
                        {TemplateXMLFile ""} {AtlasDir "" } {SPGRVolID 1} \
                        {T2VolID 2} {ExitFlag 1} {FileFormat "nhdr"} \
-                       {GenerateModels 0} } {
+                       {GenerateModels 0} {AlignInput 0} \
+                       {WorkingDirectory ""} {SaveAlignedT2 1} {SaveSPGR 0} \
+                       {SaveT2W 0} {SaveAtlas 1} {SaveXMLFile 1} \
+                       {SaveModels 1} } {
+
     global Mrml EMAtlasBrainClassifier Volume
     
-    set EMAtlasBrainClassifier(WorkingDirectory) $Mrml(dir)
-
+    if {$WorkingDirectory != "" } {
+        set EMAtlasBrainClassifier(WorkingDirectory) $WorkingDirectory
+    } else {
+        set EMAtlasBrainClassifier(WorkingDirectory) $Mrml(dir)
+    }
+    
+    set EMAtlasBrainClassifier(AlignInput) $AlignInput
+    set EMAtlasBrainClassifier(Save,AlignedT2) $SaveAlignedT2 
+    set EMAtlasBrainClassifier(Save,SPGR) $SaveSPGR
+    set EMAtlasBrainClassifier(Save,T2W) $SaveT2W
+    set EMAtlasBrainClassifier(Save,Atlas) $SaveAtlas
+    set EMAtlasBrainClassifier(Save,XMLFile) $SaveXMLFile
+    set EMAtlasBrainClassifier(Save,Models) $SaveModels
+    
     set EMAtlasBrainClassifier(Volume,SPGR) [Volume($SPGRVolID,node) GetID]
     set EMAtlasBrainClassifier(Volume,T2W)  [Volume($T2VolID,node) GetID]
 
     # If you set EMAtlasBrainClassifier(BatchMode) to 1 also 
     # set EMAtlasBrainClassifier(Save,*) otherwise when saving xml file 
     # warning window comes up 
-    set EMAtlasBrainClassifier(Save,SPGR) 1
-    set EMAtlasBrainClassifier(Save,T2W)  1
+  
     set EMAtlasBrainClassifier(BatchMode) 1
     
     set EMAtlasBrainClassifier(AlgorithmVersion) $AlgorithmVersion
@@ -2803,7 +2831,7 @@ proc EMAtlasBrainClassifier_BatchMode {{AlgorithmVersion Standard} {Segmentation
 
     set EMAtlasBrainClassifier(GenerateModels) $GenerateModels
    
-    #kquintus: locally modified to enable full output for ctest:
+    # enable full output for ctest:
     puts "CTEST_FULL_OUTPUT"
     puts ""
     puts "Run segmentation with the following options:"
@@ -2811,7 +2839,19 @@ proc EMAtlasBrainClassifier_BatchMode {{AlgorithmVersion Standard} {Segmentation
     puts "Mode:      $EMAtlasBrainClassifier(SegmentationMode)"
     puts "Template:  $EMAtlasBrainClassifier(XMLTemplate)"
     puts "AtlasDir:  $EMAtlasBrainClassifier(AtlasDir)"
-
+    puts "Spgr Volume: [Volume($SPGRVolID,node) GetName]"
+    puts "T2 Volume: [Volume($T2VolID,node) GetName]"
+    puts "FileFormat $EMAtlasBrainClassifier(fileformat)"
+    puts "Generate Models: $EMAtlasBrainClassifier(GenerateModels)"
+    puts "Align Input: $EMAtlasBrainClassifier(AlignInput)"
+    puts "Working directory: $EMAtlasBrainClassifier(WorkingDirectory)"
+    puts "Save Aligned T2: $EMAtlasBrainClassifier(Save,AlignedT2)"
+    puts "Save Normalized spgr: $EMAtlasBrainClassifier(Save,SPGR)"
+    puts "Save normalized T2: $EMAtlasBrainClassifier(Save,T2W)"
+    puts "Save Aligned Atlas: $EMAtlasBrainClassifier(Save,Atlas)"
+    puts "Save xml file: $EMAtlasBrainClassifier(Save,XMLFile)"
+    puts "Save 3d Models: $EMAtlasBrainClassifier(Save,Models)"
+    
     SplashKill
     
     set SucessFlag [EMAtlasBrainClassifierStartSegmentation]
