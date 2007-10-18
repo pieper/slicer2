@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRICalculateScalars.tcl,v $
-#   Date:      $Date: 2006/12/19 17:14:43 $
-#   Version:   $Revision: 1.28 $
+#   Date:      $Date: 2007/10/18 20:19:35 $
+#   Version:   $Revision: 1.29 $
 # 
 #===============================================================================
 # FILE:        DTMRICalculateScalars.tcl
@@ -36,7 +36,7 @@ proc DTMRICalculateScalarsInit {} {
     #------------------------------------
     set m "CalculateScalars"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                         {$Revision: 1.28 $} {$Date: 2006/12/19 17:14:43 $}]
+                         {$Revision: 1.29 $} {$Date: 2007/10/18 20:19:35 $}]
 
 
     #------------------------------------
@@ -51,6 +51,7 @@ proc DTMRICalculateScalarsInit {} {
                       MiddleEigenvalue MinEigenvalue ColorByOrientation \
                       ColorByMode  MaxEigenvalueProjectionX \
                       MaxEigenvalueProjectionY MaxEigenvalueProjectionZ \
+                      IsotropicP AnisotropicQ \
               RAIMaxEigenvecX RAIMaxEigenvecY RAIMaxEigenvecZ D11 D22 D33 \
               ParallelDiffusivity PerpendicularDiffusivity]
 
@@ -338,7 +339,7 @@ proc DTMRIDoMath {{operation ""}} {
         {^(Trace|Determinant|D11|D22|D33|MaxEigenvalue|MiddleEigenvalue|MinEigenvalue)$} {
                 set DTMRI(scalars,scaleFactor) 1000
         }
-        {^(RelativeAnisotropy|FractionalAnisotropy|Mode|LinearMeasure|PlanarMeasure|SphericalMeasure|ColorByOrientation|ColorByMode)$} {
+        {^(RelativeAnisotropy|FractionalAnisotropy|Mode|LinearMeasure|PlanarMeasure|SphericalMeasure|ColorByOrientation|ColorByMode|IsotropicP|AnisotropicQ)$} {
                 set DTMRI(scalars,scaleFactor) 1000
         }
         }
