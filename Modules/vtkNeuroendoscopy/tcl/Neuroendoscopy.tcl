@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Neuroendoscopy.tcl,v $
-#   Date:      $Date: 2007/10/15 05:40:01 $
-#   Version:   $Revision: 1.1.2.9 $
+#   Date:      $Date: 2007/10/18 03:25:40 $
+#   Version:   $Revision: 1.1.2.10 $
 # 
 #===============================================================================
 # FILE:        Neuroendoscopy.tcl
@@ -279,7 +279,7 @@ proc NeuroendoscopyInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.1.2.9 $} {$Date: 2007/10/15 05:40:01 $}] 
+    {$Revision: 1.1.2.10 $} {$Date: 2007/10/18 03:25:40 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -642,8 +642,12 @@ proc NeuroendoscopyInit {} {
     set Neuroendoscopy(locator1old) 0
     set Neuroendoscopy(locator2old) 0
     set Neuroendoscopy(locator3old) 0
-set Neuroendoscopy(boolean) 0
+   set Neuroendoscopy(boolean) 0
    set Neuroendoscopy(shortestDistance) 1
+   set Neuroendoscopy(cam,zoom) 1
+   set Neuroendoscopy(needle,orientX) 0
+   set Neuroendoscopy(needle,orientY) 0
+   set Neuroendoscopy(needle,orientZ) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -1312,7 +1316,7 @@ set nodetitle [$node GetTitle]
    
    #the sides of the pyramid which represent the viewing and the lenght
    set fruLength [ver coneAngle2FrustumLength $Neuroendoscopy(texture,angle)]
-   Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) SetAspectRatio $fruLength $fruLength 50
+   Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) SetAspectRatio $fruLength $fruLength [expr 50*$Neuroendoscopy(cam,zoom)]
 
 
    vtkTransformTextureCoords Neuroendoscopy(texture,xform,$Neuroendoscopy(texture,actors,id))
@@ -1547,7 +1551,7 @@ $endTransform SetName "EndTrafo$trafoid"
    
    #the sides of the pyramid which represent the viewing and the lenght
    set fruLength [ver coneAngle2FrustumLength $Neuroendoscopy(texture,angle)]
-   Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) SetAspectRatio $fruLength $fruLength 50
+   Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) SetAspectRatio $fruLength $fruLength [expr 50*$Neuroendoscopy(cam,zoom)]
 
 
  vtkTransformTextureCoords Neuroendoscopy(texture,xform,$Neuroendoscopy(texture,actors,id))
@@ -1593,7 +1597,7 @@ vtkImageDataStreamer Neuroendoscopy(imageStreamer)
 
 
 proc NeuroendoscopyAddPlane {} {
-global Neuroendoscopy Model
+global Neuroendoscopy Model Module ModelMaker
 
 vtkPlaneSource plane
 plane SetOrigin -135 0 101.75
@@ -1602,20 +1606,83 @@ plane SetPoint2 -135 0 -101.75
 plane SetNormal 0 1 0
 plane SetXResolution 72
 plane SetYResolution 72
+plane Modified
+plane Update
 
-vtkPolyDataMapper mapper
 
-    mapper SetInput [plane GetOutput]
+
+#add plane in mrml tree
+    set prefix "Plane1"
+    set n [MainMrmlAddNode Model]
+    $n SetName  "Plane1"
+    $n SetColor 1
+    # Guess the prefix
+   # set ModelMaker(prefix) $ModelMaker(name)
+
+
+    # Create the model
+    set m [$n GetID]
+    
+    puts "ModelMakerCreate m = $m"
+  
+    MainModelsCreate $m
+    #$Model($m,polyData) SetInput [plane GetOutput]
+    $Model($m,polyData) DeepCopy [plane GetOutput]
+    $Model($m,polyData) Modified
+    $Model($m,polyData) Update
+
+MainUpdateMRML
+
+ foreach r $Module(Renderers) {
+        Model($m,mapper,$r) SetInput $Model($m,polyData)
+        Model($m,actor,$r) SetMapper Model($m,mapper,$r)
+    }
+    
+
+
+    #Mrml(dataTree) AddItem  Model($m,node)
+    
+
+#    vtkDataSetMapper planemapper
+#    planemapper SetInput $Model($m,polyData)
+
+#    foreach r $Module(Renderers) {
+       # Model($m,mapper,$r) SetInput [Neuroendoscopy(texture,xform) GetOutput]
+#        Model($m,actor,$r) SetMapper planemapper
+
+#    }
+
+    #set m $Model(activeID)
+    #set ModelMaker(prefix) [MainFileSaveModel $m $prefix]
+    if {$prefix == ""} {
+        if {$::Module(verbose)} { 
+            puts "ModelMakerWrite: empty prefix for model $m" 
+        }
+        return
+    }
+    
+    # Write
+    MainModelsWrite $m $prefix
+
+
+
+
+Render3D
+#vtkPolyDataMapper mapper
+
+#    mapper SetInput [plane GetOutput]
     #sphereMapper SetInput [plane GetOutput]
-    mapper GlobalImmediateModeRenderingOn
+#    mapper GlobalImmediateModeRenderingOn
 
-vtkActor triangulation
-triangulation SetMapper mapper
-[triangulation GetProperty] SetOpacity 0.5
-[triangulation GetProperty] SetColor 1 0 1
+#vtkActor triangulation
+#triangulation SetMapper mapper
+#[triangulation GetProperty] SetOpacity 0.5
+#[triangulation GetProperty] SetColor 1 0 1
 
-neuroendoscopyScreen AddActor triangulation
-viewRen AddActor triangulation
+#neuroendoscopyScreen AddActor triangulation
+#viewRen AddActor triangulation
+
+plane Delete
 }
 
 #
@@ -1641,8 +1708,8 @@ if {$Neuroendoscopy(textureVisibility) == 1} {
 #    Neuroendoscopy(gyro,actor) SetPosition [lindex $coordinates 0] [lindex $coordinates 1] [lindex $coordinates 2]
 
 #set position normaly of camera because we have a little tranformation between sensor and focalpoint 
-set coordinates [tipActor GetPosition]
-
+#set coordinates [tipActor GetPosition]
+set coordinates [Neuroendoscopy(gyro,actor) GetMatrix]
 
  #Neuroendoscopy(texture,transmatrix) Invert Locator(normalMatrix) Neuroendoscopy(texture,invertedmatrix)
 #set Neuroendoscopy(texture,transmatrix) Locator(normalMatrix)
@@ -1665,17 +1732,19 @@ set coordinates [tipActor GetPosition]
 #Neuroendoscopy(texture,transform) SetMatrix Neuroendoscopy(texture,transmatrix)
   
 Neuroendoscopy(texture,transform) Identity
-Neuroendoscopy(texture,transform) Concatenate Locator(normalMatrix)
-Neuroendoscopy(texture,transform) Translate  0 [expr $Locator(normalLen) / -2.] 0  
+#Neuroendoscopy(texture,transform) Concatenate Locator(normalMatrix)
+Neuroendoscopy(texture,transform) Concatenate [Neuroendoscopy(gyro,actor) GetMatrix]
+#Neuroendoscopy(texture,transform) Translate  0 [expr $Locator(normalLen) / -2.] 0  
 # Neuroendoscopy(texture,transform) RotateX $Neuroendoscopy(texture,xcoordi)
-#Neuroendoscopy(texture,transform) RotateX 90
+Neuroendoscopy(texture,transform) RotateX 180
 #Neuroendoscopy(texture,transform) RotateY $Neuroendoscopy(texture,ycoordi)
-#Neuroendoscopy(texture,transform) RotateY -90
+#Neuroendoscopy(texture,transform) RotateY 90
 #Neuroendoscopy(texture,transform) RotateZ $Neuroendoscopy(texture,rotate)
 Neuroendoscopy(texture,transform) RotateZ -90
 Neuroendoscopy(texture,transform) Inverse
   # Neuroendoscopy(texture,transform) RotateZ $Neuroendoscopy(texture,rotate)
-
+Neuroendoscopy(texture,transform) Modified
+Neuroendoscopy(texture,transform) Update
 
 
 #cone which clip the part of interest 
@@ -1735,29 +1804,33 @@ Neuroendoscopy(texture,transform) Inverse
    
   set matrixortho [Neuroendoscopy(texture,transform) GetMatrix] 
 
-  set FocalPointX [$matrixortho GetElement 0 0]
-  set FocalPointY [$matrixortho GetElement 0 1]
-  set FocalPointZ [$matrixortho GetElement 0 2]
+  #set FocalPointX [$matrixortho GetElement 0 0]
+  #set FocalPointY [$matrixortho GetElement 0 1]
+  #set FocalPointZ [$matrixortho GetElement 0 2]
+  
+  set FocalPoint [Neuroendoscopy(fp,actor) GetMatrix]
+  
 
   set ViewUpX [$matrixortho GetElement 1 0]
   set ViewUpY [$matrixortho GetElement 1 1]
   set ViewUpZ [$matrixortho GetElement 1 2]
 #tmapper AutomaticPlaneGenerationOn
-#puts "$FocalPointX $FocalPointY $FocalPointZ $ViewUpX $ViewUpY $ViewUpZ"
 
+  lappend focal [$FocalPoint GetElement 0 3] [$FocalPoint GetElement 1 3] [$FocalPoint GetElement 2 3]
+  lappend coordsgyro [$coordinates GetElement 0 3] [$coordinates GetElement 1 3] [$coordinates GetElement 2 3]
 #the projection of the z axis must be near 0 but not 0 because than we will not see any texture
 #vtkProjectedTexture Neuroendoscopy(texture,tmapper)
    Neuroendoscopy(texture,tmapper) SetInput [Neuroendoscopy(texture,clipper) GetOutput]
 #Neuroendoscopy(texture,tmapper) SetInput [visPts GetOutput]
    #Neuroendoscopy(texture,tmapper) SetPosition 0 0 0
-Neuroendoscopy(texture,tmapper) SetPosition [lindex $coordinates 0] [lindex $coordinates 1] [lindex $coordinates 2]   
-   Neuroendoscopy(texture,tmapper) SetFocalPoint $FocalPointX $FocalPointY $FocalPointZ
+Neuroendoscopy(texture,tmapper) SetPosition [$coordinates GetElement 0 3] [$coordinates GetElement 1 3] [$coordinates GetElement 2 3] 
+   Neuroendoscopy(texture,tmapper) SetFocalPoint [$FocalPoint GetElement 0 3] [$FocalPoint GetElement 1 3] [$FocalPoint GetElement 2 3] 
    
    #Neuroendoscopy(texture,tmapper) SetFocalPoint $Neuroendoscopy(texture,xcoordi) $Neuroendoscopy(texture,ycoordi) $Neuroendoscopy(texture,zcoordi)  
    #Neuroendoscopy(texture,tmapper) SetUp $Neuroendoscopy(texture,xpic) $Neuroendoscopy(texture,ypic) $Neuroendoscopy(texture,zpic)
    #set the orientation of the texture
    Neuroendoscopy(texture,tmapper) SetUp $ViewUpX $ViewUpY $ViewUpZ
-   
+   puts " $focal ($coordsgyro)"
 
    
    
@@ -1769,7 +1842,7 @@ set Neuroendoscopy(shortestDistance) [ver GetDistance neuroendoscopyScreen $Mode
    puts "short distance $Neuroendoscopy(shortestDistance)"
    set fruLength [ver coneAngle2FrustumLength $Neuroendoscopy(texture,angle)]
    #Neuroendoscopy(texture,tmapper) SetAspectRatio $fruLength $fruLength [expr 1250/$Neuroendoscopy(shortestDistance)]
-   Neuroendoscopy(texture,tmapper) SetAspectRatio $fruLength $fruLength $Neuroendoscopy(shortestDistance)
+   Neuroendoscopy(texture,tmapper) SetAspectRatio $fruLength $fruLength [expr 50*$Neuroendoscopy(cam,zoom)]
 
 
 #vtkTransformTextureCoords Neuroendoscopy(texture,xform)
@@ -3606,13 +3679,22 @@ Rotate the axis by pressing the right mouse button and moving the mouse."
      eval {radiobutton $f.fprobeview -variable Neuroendoscopy(cam,probe) -text "Sensor locked view" -value "probeview" -command "NeuroendoscopySetFreeView; LocatorRegisterCallback NeuroendoscopySetSensorView"} $Gui(WBA)
      eval {radiobutton $f.fsensorview -variable Neuroendoscopy(cam,probe) -text "Probe locked view" -value "sensorview" -command "NeuroendoscopySetFreeView; LocatorRegisterCallback NeuroendoscopySetProbeView"} $Gui(WBA)
      
+        eval {label $f.lXCamPos -text "X Position of Camera"} $Gui(WLA)
+        eval {entry $f.eNeedleOrientX -width 20 -textvariable Neuroendoscopy(needle,orientX)} $Gui(WEA)
+        eval {label $f.lYCamPos -text "Y Position of Camera"} $Gui(WLA)
+        eval {entry $f.eNeedleOrientY -width 20 -textvariable Neuroendoscopy(needle,orientY)} $Gui(WEA)
+        eval {label $f.lZCamPos -text "Z Position of Camera"} $Gui(WLA)
+        eval {entry $f.eNeedleOrientZ -width 20 -textvariable Neuroendoscopy(needle,orientZ)} $Gui(WEA)
+        eval {label $f.lCamZoom -text "Zoom Factor"} $Gui(WLA)
+    eval {entry $f.eDistance -width 20 -textvariable Neuroendoscopy(cam,zoom)} $Gui(WEA)
+    
      eval {checkbutton $f.cCrosshair \
         -text "Show Crosshair" -variable Neuroendoscopy(crossVisibility) -width 16 \
         -indicatoron 0 -command "NeuroendoscopyCrossHairOnOff"} $Gui(WCA)
      eval {checkbutton $f.cDriving \
         -text "Driving" -variable Neuroendoscopy(driving) -width 16 \
         -indicatoron 0 -command "NeuroendoscopyDrivingOnOff"} $Gui(WCA)
-    pack  $f.ffreeview $f.fprobeview $f.fsensorview $f.cCrosshair $f.cDriving -side top
+    pack  $f.ffreeview $f.fprobeview $f.fsensorview $f.cCrosshair $f.cDriving  $f.lCamZoom $f.eDistance $f.lXCamPos $f.eNeedleOrientX $f.lYCamPos $f.eNeedleOrientY $f.lZCamPos $f.eNeedleOrientZ -side top
 
 
 
@@ -5130,7 +5212,7 @@ global Neuroendoscopy Locator View tip tipActor
 #Neuroendoscopy(gyro,actor) SetUserTransform CameraTransform
     Neuroendoscopy(gyro,actor) SetUserMatrix Locator(normalMatrix)
     Neuroendoscopy(gyro,actor) SetOrientation 180 0 0
-    Neuroendoscopy(gyro,actor) SetPosition [lindex $coordinates 0] [expr [lindex $coordinates 1] + [expr $Locator(normalLen) / -2. - 20 * ($Neuroendoscopy(guide,length)/2) + 70]] [lindex $coordinates 2]
+    Neuroendoscopy(gyro,actor) SetPosition [expr [lindex $coordinates 0] + $Neuroendoscopy(needle,orientY)] [expr $Neuroendoscopy(needle,orientZ) + [lindex $coordinates 1] + [expr $Locator(normalLen) / -2. - 20 * ($Neuroendoscopy(guide,length)/2) + 70]] [expr [lindex $coordinates 2] + $Neuroendoscopy(needle,orientX)]
 
     NeuroendoscopyUpdateVirtualEndoscope $Neuroendoscopy(activeCam)
 
@@ -5217,7 +5299,7 @@ global Neuroendoscopy Locator
     #Neuroendoscopy(gyro,actor) RotateWXYZ 180 1 0 0
     Neuroendoscopy(gyro,actor) SetUserMatrix Locator(normalMatrix)
     Neuroendoscopy(gyro,actor) SetOrientation 0 0 0
-    Neuroendoscopy(gyro,actor) SetPosition [lindex $coordinates 0] [expr [lindex $coordinates 1] + [expr $Locator(normalLen) / -2. - 20 * ($Neuroendoscopy(guide,length)/2) + 70]] [lindex $coordinates 2]
+    Neuroendoscopy(gyro,actor) SetPosition [expr [lindex $coordinates 0] + $Neuroendoscopy(needle,orientY)] [expr $Neuroendoscopy(needle,orientZ) + [lindex $coordinates 1] + [expr $Locator(normalLen) / -2. - 20 * ($Neuroendoscopy(guide,length)/2) + 70]] [expr [lindex $coordinates 2] + $Neuroendoscopy(needle,orientX)]
     
 
 #CameraTransform Delete
