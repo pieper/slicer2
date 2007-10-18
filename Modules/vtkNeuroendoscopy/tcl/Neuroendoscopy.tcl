@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Neuroendoscopy.tcl,v $
-#   Date:      $Date: 2007/10/18 03:25:40 $
-#   Version:   $Revision: 1.1.2.10 $
+#   Date:      $Date: 2007/10/18 04:58:57 $
+#   Version:   $Revision: 1.1.2.11 $
 # 
 #===============================================================================
 # FILE:        Neuroendoscopy.tcl
@@ -279,7 +279,7 @@ proc NeuroendoscopyInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.1.2.10 $} {$Date: 2007/10/18 03:25:40 $}] 
+    {$Revision: 1.1.2.11 $} {$Date: 2007/10/18 04:58:57 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -1485,7 +1485,8 @@ tmppnmwrite Delete
 
   set matrixortho [Neuroendoscopy(texture,transform) GetMatrix] 
   ####SHOULD NORMALY THE COORDINATES OF THE FOCAL POINT OF THE CAMERA!!!!
-  set coordinates [tipActor GetPosition]
+  #set coordinates [tipActor GetPosition]
+  set coordinates [Neuroendoscopy(gyro,actor) GetMatrix]
   #focalpoint
   #tempMatrix SetElement 0 0 0 
   #tempMatrix SetElement 0 1 0 
@@ -1600,9 +1601,9 @@ proc NeuroendoscopyAddPlane {} {
 global Neuroendoscopy Model Module ModelMaker
 
 vtkPlaneSource plane
-plane SetOrigin -135 0 101.75
-plane SetPoint1 135 0 101.75
-plane SetPoint2 -135 0 -101.75
+plane SetOrigin -135 0.1 101.75
+plane SetPoint1 135 0.1 101.75
+plane SetPoint2 -135 0.1 -101.75
 plane SetNormal 0 1 0
 plane SetXResolution 72
 plane SetYResolution 72
@@ -1738,7 +1739,7 @@ Neuroendoscopy(texture,transform) Concatenate [Neuroendoscopy(gyro,actor) GetMat
 # Neuroendoscopy(texture,transform) RotateX $Neuroendoscopy(texture,xcoordi)
 Neuroendoscopy(texture,transform) RotateX 180
 #Neuroendoscopy(texture,transform) RotateY $Neuroendoscopy(texture,ycoordi)
-#Neuroendoscopy(texture,transform) RotateY 90
+Neuroendoscopy(texture,transform) RotateY 90
 #Neuroendoscopy(texture,transform) RotateZ $Neuroendoscopy(texture,rotate)
 Neuroendoscopy(texture,transform) RotateZ -90
 Neuroendoscopy(texture,transform) Inverse
@@ -1766,7 +1767,7 @@ Neuroendoscopy(texture,transform) Update
    #Neuroendoscopy(texture,cone) SetTransform Neuroendoscopy(texture,transform)
    
    #for cutting the cone
-    Neuroendoscopy(texture,frontPlane) SetOrigin 200 0 0
+    Neuroendoscopy(texture,frontPlane) SetOrigin 300 0 0
     Neuroendoscopy(texture,frontPlane) SetNormal 1 0  0
  
     Neuroendoscopy(texture,basePlane) SetOrigin 0.1 0 0
@@ -5211,7 +5212,7 @@ global Neuroendoscopy Locator View tip tipActor
 
 #Neuroendoscopy(gyro,actor) SetUserTransform CameraTransform
     Neuroendoscopy(gyro,actor) SetUserMatrix Locator(normalMatrix)
-    Neuroendoscopy(gyro,actor) SetOrientation 180 0 0
+    Neuroendoscopy(gyro,actor) SetOrientation 180 180 0
     Neuroendoscopy(gyro,actor) SetPosition [expr [lindex $coordinates 0] + $Neuroendoscopy(needle,orientY)] [expr $Neuroendoscopy(needle,orientZ) + [lindex $coordinates 1] + [expr $Locator(normalLen) / -2. - 20 * ($Neuroendoscopy(guide,length)/2) + 70]] [expr [lindex $coordinates 2] + $Neuroendoscopy(needle,orientX)]
 
     NeuroendoscopyUpdateVirtualEndoscope $Neuroendoscopy(activeCam)
