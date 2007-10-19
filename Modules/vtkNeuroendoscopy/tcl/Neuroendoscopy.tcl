@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Neuroendoscopy.tcl,v $
-#   Date:      $Date: 2007/10/18 04:58:57 $
-#   Version:   $Revision: 1.1.2.11 $
+#   Date:      $Date: 2007/10/19 16:47:06 $
+#   Version:   $Revision: 1.1.2.12 $
 # 
 #===============================================================================
 # FILE:        Neuroendoscopy.tcl
@@ -279,7 +279,7 @@ proc NeuroendoscopyInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.1.2.11 $} {$Date: 2007/10/18 04:58:57 $}] 
+    {$Revision: 1.1.2.12 $} {$Date: 2007/10/19 16:47:06 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -1316,7 +1316,7 @@ set nodetitle [$node GetTitle]
    
    #the sides of the pyramid which represent the viewing and the lenght
    set fruLength [ver coneAngle2FrustumLength $Neuroendoscopy(texture,angle)]
-   Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) SetAspectRatio $fruLength $fruLength [expr 50*$Neuroendoscopy(cam,zoom)]
+   Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) SetAspectRatio [expr $fruLength*1.33333] $fruLength [expr 50*$Neuroendoscopy(cam,zoom)]
 
 
    vtkTransformTextureCoords Neuroendoscopy(texture,xform,$Neuroendoscopy(texture,actors,id))
@@ -1487,22 +1487,23 @@ tmppnmwrite Delete
   ####SHOULD NORMALY THE COORDINATES OF THE FOCAL POINT OF THE CAMERA!!!!
   #set coordinates [tipActor GetPosition]
   set coordinates [Neuroendoscopy(gyro,actor) GetMatrix]
+  set FocalPoint [Neuroendoscopy(fp,actor) GetMatrix]
   #focalpoint
   #tempMatrix SetElement 0 0 0 
   #tempMatrix SetElement 0 1 0 
   #tempMatrix SetElement 0 2 0
-  tempMatrix SetElement 0 0 [lindex $coordinates 0] 
-  tempMatrix SetElement 0 1 [lindex $coordinates 1] 
-  tempMatrix SetElement 0 2 [lindex $coordinates 2]
+  tempMatrix SetElement 0 0 [$coordinates GetElement 0 3]
+  tempMatrix SetElement 0 1 [$coordinates GetElement 1 3] 
+  tempMatrix SetElement 0 2 [$coordinates GetElement 2 3]
+  #focalpoint
 
-  tempMatrix SetElement 1 0 [$matrixortho GetElement 0 0]
-  tempMatrix SetElement 1 1 [$matrixortho GetElement 0 1]
-  tempMatrix SetElement 1 2 [$matrixortho GetElement 0 2]
+  tempMatrix SetElement 1 0 [$FocalPoint GetElement 0 3]
+  tempMatrix SetElement 1 1 [$FocalPoint GetElement 1 3]
+  tempMatrix SetElement 1 2 [$FocalPoint GetElement 2 3]
   #viewup
   tempMatrix SetElement 2 0 [$matrixortho GetElement 1 0]
   tempMatrix SetElement 2 1 [$matrixortho GetElement 1 1]
   tempMatrix SetElement 2 2 [$matrixortho GetElement 1 2]
-
 
   #Position
 
@@ -1552,7 +1553,7 @@ $endTransform SetName "EndTrafo$trafoid"
    
    #the sides of the pyramid which represent the viewing and the lenght
    set fruLength [ver coneAngle2FrustumLength $Neuroendoscopy(texture,angle)]
-   Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) SetAspectRatio $fruLength $fruLength [expr 50*$Neuroendoscopy(cam,zoom)]
+   Neuroendoscopy(texture,tmapper,$Neuroendoscopy(texture,actors,id)) SetAspectRatio [expr $fruLength*1.33333] $fruLength [expr 50*$Neuroendoscopy(cam,zoom)]
 
 
  vtkTransformTextureCoords Neuroendoscopy(texture,xform,$Neuroendoscopy(texture,actors,id))
@@ -1843,7 +1844,7 @@ set Neuroendoscopy(shortestDistance) [ver GetDistance neuroendoscopyScreen $Mode
    puts "short distance $Neuroendoscopy(shortestDistance)"
    set fruLength [ver coneAngle2FrustumLength $Neuroendoscopy(texture,angle)]
    #Neuroendoscopy(texture,tmapper) SetAspectRatio $fruLength $fruLength [expr 1250/$Neuroendoscopy(shortestDistance)]
-   Neuroendoscopy(texture,tmapper) SetAspectRatio $fruLength $fruLength [expr 50*$Neuroendoscopy(cam,zoom)]
+   Neuroendoscopy(texture,tmapper) SetAspectRatio [expr $fruLength*1.33333] $fruLength [expr 50*$Neuroendoscopy(cam,zoom)]
 
 
 #vtkTransformTextureCoords Neuroendoscopy(texture,xform)
