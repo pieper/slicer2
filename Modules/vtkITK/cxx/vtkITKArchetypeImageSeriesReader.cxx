@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
-  Date:      $Date: 2007/06/12 13:01:16 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2007/10/24 15:13:58 $
+  Version:   $Revision: 1.18 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2007/06/12 13:01:16 $
-  Version:   $Revision: 1.17 $
+  Date:      $Date: 2007/10/24 15:13:58 $
+  Version:   $Revision: 1.18 $
 
   Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -74,7 +74,7 @@
 #include "itkGDCMImageIO.h"
 #include <itksys/SystemTools.hxx>
 
-vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.17 $");
+vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.18 $");
 vtkStandardNewMacro(vtkITKArchetypeImageSeriesReader);
 
 //----------------------------------------------------------------------------
@@ -177,7 +177,6 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
   int extent[6];  
   std::string fileNameCollapsed = itksys::SystemTools::CollapseFullPath( this->Archetype);
 
-
   // First see if the archetype exists
   if (!itksys::SystemTools::FileExists (fileNameCollapsed.c_str()))
     {
@@ -188,6 +187,7 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
   // Test whether the input file is a DICOM file
   itk::GDCMImageIO::Pointer dicomIO = itk::GDCMImageIO::New();
   bool isDicomFile = dicomIO->CanReadFile(this->Archetype);
+
   if (isDicomFile)
     {
     typedef itk::GDCMSeriesFileNames DICOMNameGeneratorType;
@@ -202,6 +202,7 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
 
     // Find the series that contains the archetype
     candidateSeries = inputImageFileGenerator->GetSeriesUIDs();
+
     int found = 0;
     for (int s = 0; s < candidateSeries.size() && found == 0; s++)
       {
@@ -232,20 +233,33 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
 
   // Reduce the selection of filenames
   int lastFile;
+  int firstFile = 0;     
+
   if (this->FileNameSliceCount == 0)
     {
     lastFile = candidateFiles.size();
     }
   else
     {
-    lastFile = this->FileNameSliceOffset + this->FileNameSliceCount - 1;
-    if (lastFile > candidateFiles.size())
+      // Kilian: Included this section so that the reader would start with the first file picked
+      // Remove all files of the list before Archtype !  
+      std::string ArchetypeUnix = this->Archetype;
+      itksys::SystemTools::ConvertToUnixSlashes(ArchetypeUnix);
+      std::string ArchetypeFileName =  itksys::SystemTools::GetFilenameName(ArchetypeUnix);
+      int f = 0;
+      while ((f < candidateFiles.size())  && strcmp(itksys::SystemTools::GetFilenameName(candidateFiles[f].c_str()).c_str(),ArchetypeFileName.c_str())) f++; 
+      firstFile = f; 
+
+      // Remove all Files from the list after predefined sequence ! 
+      lastFile = firstFile + this->FileNameSliceOffset + this->FileNameSliceCount;
+      if (lastFile > candidateFiles.size())
       {
-      lastFile = candidateFiles.size();      
+         lastFile = candidateFiles.size();      
       }
     }
+
   this->FileNames.resize(0);
-  for (int f = this->FileNameSliceOffset;
+  for (int f = firstFile + this->FileNameSliceOffset;
        f < lastFile;
        f += this->FileNameSliceSpacing)
     {
