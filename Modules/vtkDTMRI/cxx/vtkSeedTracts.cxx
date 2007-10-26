@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.cxx,v $
-  Date:      $Date: 2007/02/23 22:13:46 $
-  Version:   $Revision: 1.25 $
+  Date:      $Date: 2007/10/26 19:14:36 $
+  Version:   $Revision: 1.26 $
 
 =========================================================================auto=*/
 
@@ -822,7 +822,7 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   vtkPolyDataWriter *writer;
   std::stringstream fileNameStr;
   int idx;
-  ofstream filePoints, fileCoordinateSystemInfo;
+  ofstream fileCoordinateSystemInfo;
 
   // time
   vtkTimerLog *timer = vtkTimerLog::New();
@@ -839,12 +839,14 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
       vtkErrorMacro("No tensor data input.");
       return;      
     }
+
   // check ROI's value of interest
   if (this->InputROIValue <= 0)
     {
       vtkErrorMacro("Input ROI value has not been set or is 0. (value is "  << this->InputROIValue << ".");
       return;      
     }
+
   // make sure it is short type
   if (this->InputROI->GetScalarType() != VTK_SHORT)
     {
@@ -867,7 +869,7 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
 
   // Store information to put points into 
   // centered scaled IJK space, instead of just
-  // leaving them in scaled IJK. This way the output
+  // leaving them in RAS. This way the output
   // can be transformed into Lilla Zollei's coordinate
   // system so we can use her registration.
   // Also we save the world to scaled IJK transform,
@@ -903,6 +905,7 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   fileCoordinateSystemInfo << endl;
 
   writer = vtkPolyDataWriter::New();
+  writer->SetFileTypeToBinary();
 
   // currently this filter is not multithreaded, though in the future 
   // it could be (especially if it inherits from an image filter class)
@@ -935,20 +938,6 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
       gridIncZ = 1;
     }
   
-  // Save all points to the same text file.
-  fileNameStr.str("");
-  fileNameStr << pointsFilename << ".3dpts";
-
-  // Open file
-  filePoints.open(fileNameStr.str().c_str());
-  if (filePoints.fail())
-    {
-      vtkErrorMacro("Write: Could not open file " 
-                    << fileNameStr.str().c_str());
-      cerr << "Write: Could not open file " << fileNameStr.str().c_str();
-      return;
-    }                   
-
   // filename index
   idx=0;
 
@@ -1129,9 +1118,6 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
                           writer->SetFileName(fileNameStr.str().c_str());
                           writer->Write();
                           
-                          // Save the center points to disk
-                          this->SaveStreamlineAsTextFile(filePoints,transformer->GetOutput());
-
                           idx++;
                         }
 
@@ -1151,8 +1137,6 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   transformer->Delete();
   writer->Delete();
 
-  // Close text file
-  filePoints.close();
   
   // Tell user how many we wrote
   std::cout << "Wrote " << idx << "model files." << endl;
@@ -1163,41 +1147,6 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
 
   timer->StopTimer();
   std::cout << "Tractography in ROI time: " << timer->GetElapsedTime() << endl;
-}
-
-// Save only one streamline. Called from within functions that save 
-// many streamlines in a loop.
-// Current format is x1,y1,z1 x2,y2,z2 x3,y3,z3 \n
-//----------------------------------------------------------------------------
-void vtkSeedTracts::SaveStreamlineAsTextFile(ofstream &filePoints,
-                                             vtkPolyData *currStreamline)
-{
-  vtkPoints *hs;
-  int ptidx, numPts;
-  double point[3];
-
-  if ( currStreamline == NULL )
-    {
-      vtkErrorMacro("NULL streamline as input");
-      return;
-    }
-
-  // Assume we have a streamline that contains a single line
-
-  if ( currStreamline->GetCell(0) )
-    {
-
-      hs=currStreamline->GetCell(0)->GetPoints();
-      numPts=hs->GetNumberOfPoints();
-      ptidx=0;
-      while (ptidx < numPts)
-        {
-          hs->GetPoint(ptidx,point);
-          filePoints << point[0] << "," << point[1] << "," << point[2] << " ";
-          ptidx++;
-        }
-      filePoints << endl;
-    }
 }
 
 
