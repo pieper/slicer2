@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Neuroendoscopy.tcl,v $
-#   Date:      $Date: 2007/10/27 06:46:57 $
-#   Version:   $Revision: 1.1.2.14 $
+#   Date:      $Date: 2007/10/27 08:53:17 $
+#   Version:   $Revision: 1.1.2.15 $
 # 
 #===============================================================================
 # FILE:        Neuroendoscopy.tcl
@@ -279,7 +279,7 @@ proc NeuroendoscopyInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.1.2.14 $} {$Date: 2007/10/27 06:46:57 $}] 
+    {$Revision: 1.1.2.15 $} {$Date: 2007/10/27 08:53:17 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -2022,7 +2022,7 @@ if {$Neuroendoscopy(startTestData) == 1} {
 # .PROC NeuroendoscopyCalcShiftMatix
 #  Calculates the Shift Matrix if the Camera Position is not parallel to the bottom
 # .ARGS
-# .END
+# .END    
 #-------------------------------------------------------------------------------
 proc NeuroendoscopyCalcShiftMatix {} {
 global Locator Neuroendoscopy ver Model
@@ -3345,15 +3345,31 @@ proc NeuroendoscopyBuildGUI {} {
     set help "
     This module allows you to position an neuroendoscopy camera in the scene and 
     view through the camera's lens in the second window.
-    You can also create a fly-through trajectory and save it in the MRML file by selecting File -> 'Save Scene As'.
+    You can also create paint the loaded scene with a texture with images taken by the endoscope Camera. The added Textures can also be saved in the MRML file by selecting File -> 'Save Scene As'.
 
     <P>Tab content descriptions:<BR>
     <UL>
     <LI><B>Display</B> 
     <BR> This Tab permits you to set display parameters. It also allows you to open a separate window to view the flattened colon (if you plan to navigate along the flattened colon)
-    <BR> 
+    <BR>
+     <UL>
+    <LI><B>Registration Tab</B>
+    <BR> This tab allows to register a tracking device into a scene.
+    ,BR> before tracking a system you have to connect the locator to a tracking device. For this purpose using the Locator module and connect to a tracking server of your choice.
+    <BR><B>with the LM1 Tab you can do a Landmark registratio</B>
+    <BR>- Set the tip of the needle to a landmark in the real scene and press GET
+    <BR>- then choose the corresponding point in the slice view, by clicking the mouse on this point
+    <BR>- press OK and do the same prozedure at least 4 times with different points. 
+    <BR>- press register, the scene is now registrated
+    <BR>you also be able to delete points and reset the registration
+    <BR><B>Iterative Closest Point registration ICP2 - 4</B>
+    <BR>- this performes a ICP registration until the landmark registration is done
+    <BR>- collect at least 50 points from the real object by moving the needle over the survace.
+    <BR>- press stop to stop the collection
+    <BR>- start registration and with the result button you can see the lines. the red is before registration, the green after landmark and the white one is landmark+icp.
     <UL>
-    <LI><B>Camera</B> 
+    <LI><B>Camera</B>
+    <BR><B>Orientation SubTab</B>.
     <BR>This tab contains controls to navigate the camera and create landmarks.
     <P><B>To move and rotate the camera</B>:
     <BR>- select absolute mode (to move along the world's axis) or relative mode (to move along the camera's axis)
@@ -3361,23 +3377,6 @@ proc NeuroendoscopyBuildGUI {} {
     <BR>- to move the camera intuitively, use the 3D Gyro (read instructions on the tab). 
     <BR>- you can also move the camera by combining the shift or control key with mouse button press and motion. For example: Shift+moving the mouse with left button pressed down controls the camera's 'Pitch'. Shift + middle or right mouse button motion controls the camera's 'Roll' and 'Yaw' respectively. Control + Left, middle, or right mouse button press and motion controls the camera's 'L<->R', 'I<->S', and 'P<->A'. The precise amount of camera motion, as you use the key + mouse motion, can be read off from the sliders in the camera tab.
     <P>
-    <BR><B>To create a path</B>:
-    <BR><B>Automatically:</B>
-    <BR> -If you have a closed 3D model, you can create a path automatically by clicking the button <I>AutoExtractCenterLine</I>. A begin and end point will be automatically selected, and a path generated in between.
-    <BR><B>Manually</B>:
-    <BR> You have 2 options: you can pick a landmark position on a 2D slice or in the 3D world:
-    <BR> * <B>IN 3D</B>
-    <BR>- Position the camera where desired
-    <BR>- Click the button <I>AddLandmark</I>: this will add a landmark (a sphere) at the current camera position and another landmark at<BR> the current focal point position 
-    <BR>- Two paths will automatically be created: one that links all the camera landmarks and another one that links all the focal point landmarks
-    <BR> * <B>IN 2D</B>
-    <BR> - You need to have greyscale images loaded along with the model, otherwise this option won't work
-    <BR> - position the mouse in the slice window of your choice until the cross hair is on top of the region where you want to add a landmark
-    <BR> - press the <B>m</B> key, and the endoscope will jump to the corresponding location in 3D. You can then Click the button <I>AddLandmark</I>.
-    <BR> - by default, both a camera and focal point landmark will be added at this position
-    <BR><B>To constrain the camera on the path</B>:
-    <BR> -After a path or centerline is created, you can manually insert visible fiducials on the model while constrain the camera along the path.
-    <BR> -Point the cursor on the 3D model or on the 2D slices below, and press the key 't', the endoscope will jump to the closet point along the path, aim at the selected location, and create a visible target. If you have the flattened colon open, just press shift + double click left mouse button on the intended location, and the endoscope will perform the same task. You can also set the camera location and orientation manually and press <I>CreateTarget</I> to insert a visible fiducial point on the 3D model.
     <BR><B>To select a landmark</B>:
     <BR> - Click on the landmark position in the scrollable text area, the line will be highlighted in red and the camera will jump to that landmark in the 3D view.
     <BR> - or Point the mouse at a landmark in the 3D view and press 'p'.
@@ -3386,39 +3385,31 @@ proc NeuroendoscopyBuildGUI {} {
     <BR><B>To delete a camera landmark</B>:
     <BR>- Select the landmark a described above 
     <BR>- Click the <I>Delete</I> button
-    <BR><B> To Delete the whole path</B>:
-    <BR>- Click the <I>Delete All</I> button
-    <BR><B> To save a path </B>
-    <BR>- Go to File -> Save Scene As
-    <BR>- Next time you open that scene, the path will appear as well.
-    <BR><B> To Fly-Through on the path</B>:  
-    <BR>- Go to the Path Tab
     <P>
-    <LI><B>Path</B>
-    <BR>This Tab contains controls to fly-through on the path
-    <BR><B>Command buttons</B>: 
-    <BR>- <I>Fly-Through</I>: moves the camera along the path and orient its focal point along the focal point path
-    <BR><I>- Reset</I>: stops the motion of the camera and repositions it at the beginning of the path
-    <BR><I>- Stop</I>: stops the motion of the camera
-    <BR><B>FastForward or Backward</B>:
-    <BR> -If you have a series of targets along the path that you would look at, you can click the FastForward or Backward button to jump between the targets.
-    <BR><B>Command sliders</B>:
-    <BR><I>- Frame</I>: positions the camera on any part of the path
-    <BR><I>- Speed</I>: controls the speed of the camera's motion along the path (the number corresponds to the number of frames to skip)
-    <BR><I>- No of Interpolated Points </I>: this will recompute the path with approximately the number of interpolated points per mm specified in between key points (landmarks).
-    <BR><B>To drive the slices</B>:
-    <BR> Select which driver you want: 
-    <BR> - <B>User</B>: the user selects the slice position and orientation with the user interface
-    <BR> - <B>Camera</B>: the slices in the orientation 'InPlane', 'Perp', 'InPlane90' are reformatted to intersect at the camera position and be oriented along the 3 axes of the camera.
-    <BR> - <B>Focal Point</B>: same as above with the focal point instead of the camera.
-    <BR> - <B>Intersection</B>: the intersection is the point on the surface of the model in the center of the neuroendoscopy screen. It is the intersection between a 'ray' shot from the camera straight ahead and any triangulated surface that is first intersected.
-    <BR><B> Random Path </B>
-    <BR><I>- Compute Path</I>: creates a new random path at every click
-    <BR><I>- Delete Path</I>: deletes the random path (or any path previously created)
-    <BR>
-    <BR> The functionality of creating/deleting a random path is there for you to play around with difference fly-through options without having to create a path. If you feel like having a bit of fun, click on <I> Show Path </I> and then set the <I> RollerCoaster</I> option before doing a fly-through. <B>Enjoy the ride! </B>
-    
-    <P>
+    <BR><B>Shape SubTab</B>:
+    <BR>This Tab contains controls to change the appearence of the virtual camera.
+    <BR>- To change the Lens Angle of the Camera use the slider and the angle will change.
+    <BR>- To change the shape of the camera you can click on shapes
+    <BR>- To change the color use the colored buttons to choose another color
+    <BR>- To change the size of the gyro use the slider
+    <BR><B>Probe SubTab</B>:
+    <BR>- a ruler is implemented which can show the distance to an object
+    <BR>- using the sensor locked view to drive the virtual camera with the sensor
+    <BR>- with the camera x y z fields the position relative to the locator can be set, these datas are from the actual set of the endoscope. this must be measured.
+    <BR><B>Texture SubTab</B>:
+    <BR>video4linux required 
+    <BR> before using the texture mapping a calibdata file must be created. Press the undistort video button. Use a chess registration pattern which has a fields with the size of 10mmx10mm. Be sure that the black is really deep.
+    <BR> - the video of the endoscope is shown in the right field.
+    <BR> - use take snapshot to create make an image of the current video
+    <BR> - start the corner detection after. use the pattern before. be sure that each row has the same amount of detected corners (red crosses). if not or the algorithm detects more corners as supposed to be, start snapshot and cornerdetection again.
+    <BR> - count the number detected corners of one row and put it in the field above (Number of Corners in one Row)
+    <BR> - create a calibration file (in slicer2 directory and called calibdata.dat
+    <BR> - if you want you can click on undistort if you want see the result. is the result wrong than start the whole procedure again. (sometimes necessary)
+    <BR> - quit the program
+    <BR> <B>Texture mapping</B>
+    <BR> if the camera is locked to the sensor than press INIT TEXTURE and Show Texture after.
+    <BR> the texture will now placed on the surface of the active model. is the active model is changed (in Model Module) than you are able to put the texture on that object
+    <BR> - add the texture permanantly by pushing Add Texture. tsai algorithm will undistort the image if you add it
     <LI><B>Advanced</B>
     <BR>This Tab allows you to change color and size parameters for the camera, focal point, landmarks and path. You can also change the virtual camera's lens angle for a wider view.
     "
