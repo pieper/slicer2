@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Neuroendoscopy.tcl,v $
-#   Date:      $Date: 2007/10/27 06:12:11 $
-#   Version:   $Revision: 1.1.2.13 $
+#   Date:      $Date: 2007/10/27 06:46:57 $
+#   Version:   $Revision: 1.1.2.14 $
 # 
 #===============================================================================
 # FILE:        Neuroendoscopy.tcl
@@ -279,7 +279,7 @@ proc NeuroendoscopyInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.1.2.13 $} {$Date: 2007/10/27 06:12:11 $}] 
+    {$Revision: 1.1.2.14 $} {$Date: 2007/10/27 06:46:57 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -1681,17 +1681,17 @@ incr Neuroendoscopy(texture,actors,id)
 ###save the picture
 vtkPNMWriter tmppnmwrite
 tmppnmwrite SetInput [Neuroendoscopy(imageStreamer) GetOutput]
-tmppnmwrite SetFileName "/projects/igtdev/ruetz/models/TextureImage$Neuroendoscopy(texture,actors,id).pnm"
+tmppnmwrite SetFileName "TextureImage$Neuroendoscopy(texture,actors,id).pnm"
 tmppnmwrite Write
 puts "write image TextureImage$Neuroendoscopy(texture,actors,id)"
 
 vtkImageCompare imgcompare
 #imgcompare SetOriginalPictureFromArray [Neuroendoscopy(imageStreamer) GetOutput]
-imgcompare SetOriginalPicture "/projects/igtdev/ruetz/models/TextureImage$Neuroendoscopy(texture,actors,id).pnm"
+imgcompare SetOriginalPicture "TextureImage$Neuroendoscopy(texture,actors,id).pnm"
 
 imgcompare searchCorners 10 
 
-imgcompare performUndistortion "/projects/igtdev/ruetz/models/TextureImage$Neuroendoscopy(texture,actors,id).pnm"
+imgcompare performUndistortion "TextureImage$Neuroendoscopy(texture,actors,id).pnm"
 
 set startTransform [MainMrmlAddNode Transform]
 set trafoid [$startTransform GetID]
