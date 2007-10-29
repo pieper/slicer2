@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: TkInteractor.tcl,v $
-#   Date:      $Date: 2007/07/02 19:41:31 $
-#   Version:   $Revision: 1.35.2.1.2.1 $
+#   Date:      $Date: 2007/10/29 14:59:52 $
+#   Version:   $Revision: 1.35.2.1.2.2 $
 # 
 #===============================================================================
 # FILE:        TkInteractor.tcl
@@ -354,7 +354,6 @@ proc Rotate {widget x y} {
     #-------------------------------------------
     foreach m $Module(idList) {
         if {[info exists Module($m,procCameraMotion)] == 1} {
-            if {$Module(verbose) == 1} {puts "CameraMotion: $m"}
             $Module($m,procCameraMotion)
         }
     }
@@ -613,7 +612,6 @@ proc Pan {widget x y} {
     #-------------------------------------------
     foreach m $Module(idList) {
         if {[info exists Module($m,procCameraMotion)] == 1} {
-            if {$Module(verbose) == 1} {puts "CameraMotion: $m"}
             $Module($m,procCameraMotion)
         }
     }
@@ -676,7 +674,6 @@ proc Zoom {widget x y} {
     #-------------------------------------------
     foreach m $Module(idList) {
         if {[info exists Module($m,procCameraMotion)] == 1} {
-            if {$Module(verbose) == 1} {puts "CameraMotion: $m"}
             $Module($m,procCameraMotion)
         }
     }

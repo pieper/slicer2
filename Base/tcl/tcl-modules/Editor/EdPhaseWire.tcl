@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EdPhaseWire.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:42 $
-#   Version:   $Revision: 1.31.2.1 $
+#   Date:      $Date: 2007/10/29 15:02:55 $
+#   Version:   $Revision: 1.31.2.1.2.1 $
 # 
 #===============================================================================
 # FILE:        EdPhaseWire.tcl
@@ -191,9 +191,13 @@ proc EdPhaseWireSetOmega {omega} {
         # will multiply both real and imag parts
         # of the fft of the image this way)
         #-------------------------------------------
-
+            
         foreach input {0 1} {
-            Ed($e,phase,kernel$o) SetInput $input [ Ed($e,phase,cast$o) GetOutput]
+            if {[VTK_AT_LEAST 5] == 0} {
+                Ed($e,phase,kernel$o) SetInput $input [ Ed($e,phase,cast$o) GetOutput]
+            } else {
+                Ed($e,phase,kernel$o) AddInputConnection 0 [ Ed($e,phase,cast$o) GetOutputPort]
+            }
         }
         
     }
@@ -302,7 +306,7 @@ proc EdPhaseWireBuildVTK {} {
         Ed($e,phase,mult$o) SetOperationToMultiply
         Ed($e,phase,mult$o) SetInput 0 [Ed($e,phase,fftSlice) GetOutput]
         Ed($e,phase,mult$o) SetInput 1 [Ed($e,phase,kernel$o) GetOutput]
-        
+
         # reverse fft: back to spatial domain
         #-------------------------------------------
         vtkImageRFFT Ed($e,phase,rfft$o)

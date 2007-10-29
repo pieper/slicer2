@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainSlices.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:29 $
-#   Version:   $Revision: 1.61.2.1 $
+#   Date:      $Date: 2007/10/29 14:59:52 $
+#   Version:   $Revision: 1.61.2.1.2.1 $
 # 
 #===============================================================================
 # FILE:        MainSlices.tcl
@@ -86,7 +86,7 @@ proc MainSlicesInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainSlices \
-        {$Revision: 1.61.2.1 $} {$Date: 2005/12/20 22:54:29 $}]
+        {$Revision: 1.61.2.1.2.1 $} {$Date: 2007/10/29 14:59:52 $}]
 
     # Initialize Variables
     set Slice(idList) "0 1 2"
@@ -101,6 +101,7 @@ proc MainSlicesInit {} {
     set Slice(0,offset) 0
     set Slice(1,offset) 0
     set Slice(2,offset) 0
+
     set Slice(0,addedFunction) 0
     set Slice(1,addedFunction) 0
     set Slice(2,addedFunction) 0
@@ -802,7 +803,7 @@ proc MainSlicesSetActive {{s ""}} {
     } else {
         set Slice(activeID) $s
     }
-
+    
     Slicer SetActiveSlice $s
     Slicer Update
 
@@ -819,9 +820,13 @@ proc MainSlicesSetActive {{s ""}} {
 # Layer is Fore,Back,Label
 #
 # Usage: MainSlicesSetVolumeAll Layer id
+# .ARGS
+# str Layer Back, Fore, or Label
+# int id volume id
+# bool setOffSetFlag defaults to 1, if call MainSlicesSetSliderRange without resetting the slice offset
 # .END
 #-------------------------------------------------------------------------------
-proc MainSlicesSetVolumeAll {Layer v} {
+proc MainSlicesSetVolumeAll {Layer v {setOffSetFlag 1}} {
     global Slice Volume
 
     # Check if volume exists and use the None if not
@@ -849,23 +854,40 @@ proc MainSlicesSetVolumeAll {Layer v} {
         }
 
         # Always update Slider Range when change volume or orient
+        if {$s == 2 && $::Module(verbose)} {
+            puts "\tMainSlicesSetVolumeAll: calling MainSlicesSetSliderRange $s (setOffsetFlag = $setOffSetFlag)"
+        }
+        if {$setOffSetFlag == 0} {
+            # trick it into thinking that we're updating options
+            set savedPresets $::Options(recallingPresets)
+            set ::Options(recallingPresets) 1
+        }
         MainSlicesSetSliderRange $s
+        if {$setOffSetFlag == 0} {
+            # trick it into thinking that we're done updating options
+            set ::Options(recallingPresets) $savedPresets
+        }
 
         #--- Remove Ibrowser's control of viewer if Ibrowser is present
         #--- and update the Ibrowser's icons to reflect the change
+
         if { [catch "package require vtkIbrowser"] == 0 } {
             if { $Layer == "fore" || $Layer == "Fore" } {
                 if { [info exists ::IbrowserController(Icanvas)] } {
                     IbrowserDeselectFGIcon $::IbrowserController(Icanvas)
                 }
-                set ::Ibrowser(FGInterval) $::Ibrowser(NoInterval)
+                if { [info exists ::Ibrowser(NoInterval)] } {
+                    set ::Ibrowser(FGInterval) $::Ibrowser(NoInterval)
+                }
             } elseif { $Layer == "back" || $Layer == "Back" } {
                 if { [info exists ::IbrowserController(Icanvas)] } {
                     IbrowserDeselectBGIcon $::IbrowserController(Icanvas)
                 }
-                set ::Ibrowser(BGInterval) $::Ibrowser(NoInterval)
+                if { [info exists ::Ibrowser(NoInterval)] } {
+                    set ::Ibrowser(BGInterval) $::Ibrowser(NoInterval)
+                }
             }
-        }
+        } 
     }
 }
 
@@ -902,12 +924,13 @@ proc MainSlicesSetVolume {Layer s v} {
         MainSlicesConfigGui $s fVolume.mb${Layer}Volume$s \
             "-text \"[Volume($v,node) GetName]\""
     }
-
+    if {$::Module(verbose)} { puts "\tMainSlicesSetVolume layer = $Layer, calling Slicer Set Layer Volume fo slice $s, volume id $v" }
     # Set the volume in the Slicer
     Slicer Set${Layer}Volume $s Volume($v,vol)
     Slicer Update
 
     # Always update Slider Range when change volume or orient
+    if {$::Module(verbose)} { puts "\tMainSlicesSetVolume layer = $Layer, calling set slider range on $s (recalling presets =  $::Options(recallingPresets))"}
     MainSlicesSetSliderRange $s
 
     #--- Remove Ibrowser's control of viewer if Ibrowser is present
@@ -917,12 +940,16 @@ proc MainSlicesSetVolume {Layer s v} {
             if { [info exists ::IbrowserController(Icanvas)] } {
                 IbrowserDeselectFGIcon $::IbrowserController(Icanvas)
             }
-            set ::Ibrowser(FGInterval) $::Ibrowser(NoInterval)
+            if { [info exists ::Ibrowser(NoInterval) ] } {
+                set ::Ibrowser(FGInterval) $::Ibrowser(NoInterval)
+            }
         } elseif { $Layer == "back" || $Layer == "Back" } {
             if { [info exists ::IbrowserController(Icanvas)] } {
                 IbrowserDeselectBGIcon $::IbrowserController(Icanvas)
             }
-            set ::Ibrowser(BGInterval) $::Ibrowser(NoInterval)
+            if { [info exists ::Ibrowser(NoInterval) ] } {
+                set ::Ibrowser(BGInterval) $::Ibrowser(NoInterval)
+            }
         }
     }
 }
@@ -960,6 +987,7 @@ proc MainSlicesSetOffset {s {value ""}} {
         return
     }
    
+    set setSliderFlag 0
     # figure out what offset to use
     if {$value == ""} {
         # this means we were called directly from the slider w/ no value param
@@ -971,11 +999,14 @@ proc MainSlicesSetOffset {s {value ""}} {
     } elseif {$value == "Next"} {
         set value [expr $Slice($s,offset) + $Slice($s,offsetIncrement)]
         set Slice($s,offset) $value
+    } else {
+        # the value was passed in, we should save it in Slice(s,offset) so the slider is right
+        set setSliderFlag 1
     }
    
     if {$::Module(verbose)} {
-        puts "Main Slices Set Offset s = $s, value = $value"
-    } 
+        puts "Main Slices Set Offset s = $s, value = $value (set slider = $setSliderFlag)"
+    }
 
     # validate value
     if {[ValidateFloat $value] == 0}  {
@@ -995,6 +1026,14 @@ proc MainSlicesSetOffset {s {value ""}} {
     }
     
     MainSlicesRefreshClip $s
+
+    if {$setSliderFlag} {
+        # update the slice offset in the gui
+        if {$s == 2 && $::Module(verbose)} {
+            puts "\tMainSlicesSetOffest: setting offset from Slicer, s = $s, old offest = $Slice($s,offset), Slicer offset = [Slicer GetOffset $s]"
+        }
+        set Slice($s,offset) [Slicer GetOffset $s]
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -1009,13 +1048,19 @@ proc MainSlicesSetOffset {s {value ""}} {
 proc MainSlicesSetSliderRange {s} {
     global Slice 
 
+
     set lo [Slicer GetOffsetRangeLow  $s]
     set hi [Slicer GetOffsetRangeHigh $s]
 
     MainSlicesConfigGui $s fOffset.sOffset "-from $lo -to $hi"
 
     # Update Offset 
-    set Slice($s,offset) [Slicer GetOffset $s]
+    
+    if {$::Options(recallingPresets) == 0} {
+        set Slice($s,offset) [Slicer GetOffset $s]
+    } else {
+        if {$s == 2 && $::Module(verbose)} { puts "\tSKIPPING setting the offset for slice $s" }
+    }
 
     # adjust hidden scale widgets in Alignments if module is loaded
     if { [info command AlignmentsSlicesSetSliderRange] != "" } {
@@ -1572,10 +1617,16 @@ proc MainSlicesRecallPresets {p} {
     foreach s $Slice(idList) {
         set Slice($s,visibility) $Preset(Slices,$p,$s,visibility)
         MainSlicesSetVisibility $s
+        if {$s == 2 && $::Module(verbose)} {
+            puts "\tMainSlicesRecallPresets: setting volume layers for slice $s to preset id: back = $Preset(Slices,$p,$s,backVolID), fore = $Preset(Slices,$p,$s,foreVolID), label = $Preset(Slices,$p,$s,labelVolID)"
+        }
         MainSlicesSetVolume Back $s $Preset(Slices,$p,$s,backVolID)
         MainSlicesSetVolume Fore $s $Preset(Slices,$p,$s,foreVolID)
         MainSlicesSetVolume Label $s $Preset(Slices,$p,$s,labelVolID)
         MainSlicesSetOrient $s $Preset(Slices,$p,$s,orient)
+        if {$s == 2 && $::Module(verbose)} {
+            puts "\tMainSlicesRecallPresets: setting slice $s to preset offset $Preset(Slices,$p,$s,offset)"
+        }
         MainSlicesSetOffset    $s $Preset(Slices,$p,$s,offset)
         MainSlicesSetZoom $s $Preset(Slices,$p,$s,zoom)
         MainSlicesSetClipState $s $Preset(Slices,$p,$s,clipState)

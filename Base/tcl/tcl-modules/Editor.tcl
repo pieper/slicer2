@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Editor.tcl,v $
-#   Date:      $Date: 2006/07/07 17:34:31 $
-#   Version:   $Revision: 1.83.2.1.2.2 $
+#   Date:      $Date: 2007/10/29 15:00:23 $
+#   Version:   $Revision: 1.83.2.1.2.3 $
 # 
 #===============================================================================
 # FILE:        Editor.tcl
@@ -105,7 +105,7 @@ proc EditorInit {} {
     
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.83.2.1.2.2 $} {$Date: 2006/07/07 17:34:31 $}]
+        {$Revision: 1.83.2.1.2.3 $} {$Date: 2007/10/29 15:00:23 $}]
     
     # Initialize globals
     set Editor(idOriginal)  $Volume(idNone)
@@ -123,11 +123,11 @@ proc EditorInit {} {
     set Editor(nameComposite) Composite
     set Editor(eventManager)  {  }
     set Editor(fileformat) nhdr
-
+    
     # add display settings for editor here: 
     # whether to keep the label layer visible at all times
     set Editor(display,labelOn) 1
-
+    
     # Look for Editor effects and form an array, Ed, for them.
     # Each effect has a *.tcl file in the tcl-modules/Editor directory.
     set Ed(idList) ""
@@ -158,7 +158,7 @@ proc EditorInit {} {
     # source them
     set found ""
     foreach name $names {
-    
+        
         set path [GetFullPath $name tcl $local]
         if {$path != ""} {
             #puts "source $path"
@@ -255,11 +255,11 @@ proc EditorUpdateMRML {} {
         EditorSetOriginal $n
     }
     if {$Editor(idWorking) != "NEW" && \
-        [lsearch $Volume(idList) $Editor(idWorking)] == -1} {
+            [lsearch $Volume(idList) $Editor(idWorking)] == -1} {
         EditorSetWorking NEW
     }
     if {$Editor(idComposite) != "NEW" && \
-        [lsearch $Volume(idList) $Editor(idComposite)] == -1} {
+            [lsearch $Volume(idList) $Editor(idComposite)] == -1} {
         EditorSetComposite NEW
     }
 
@@ -267,7 +267,32 @@ proc EditorUpdateMRML {} {
     #---------------------------------------------------------------------------
     set m $Editor(mOriginal)
     $m delete 0 end
+
+    set volumeList ""
+    set labelList ""
+    # make two lists of volumes, so can have the grey scales or the label maps first 
+    # in the Original and Working Labelmap lists, as appropriate.
     foreach v $Volume(idList) {
+        if {[Volume($v,node) GetLabelMap] == 1} {
+            lappend labelList $v
+        } else {
+            lappend volumeList $v
+        }
+    }
+    if {$::Module(verbose)} {
+        puts "EditorUpdateMRML: built greyscale volume list: $volumeList, and label list: $labelList" 
+    }
+    # greyscales first
+    set greysFirst $volumeList
+    lappend greysFirst $labelList
+    set greysFirst [join $greysFirst]
+
+    # labels first
+    set labelsFirst $labelList
+    lappend labelsFirst $volumeList
+    set labelsFirst [join $labelsFirst]
+
+    foreach v $greysFirst {
         set colbreak [MainVolumesBreakVolumeMenu $m] 
         $m add command -label [Volume($v,node) GetName] \
             -command "EditorSetOriginal $v; RenderAll" \
@@ -279,7 +304,7 @@ proc EditorUpdateMRML {} {
     set m $Editor(mWorking)
     $m delete 0 end
     set idWorking ""
-    foreach v $Volume(idList) {
+    foreach v $labelsFirst {
         if {$v != $Volume(idNone) && $v != $Editor(idComposite)} {
             set colbreak [MainVolumesBreakVolumeMenu $m] 
             $m add command -label [Volume($v,node) GetName] \
@@ -434,8 +459,8 @@ proc EditorBuildGUI {} {
     TabbedFrame MeasureVol $f ""\
         {Setup Merge Undo File} {"Setup" "Merge" "Undo" "Save"} \
         {"Choose volumes before editing." \
-        "Merge two labelmaps." "Clear or re-read a labelmap from disk." \
-        "Save a labelmap."}
+             "Merge two labelmaps." "Clear or re-read a labelmap from disk." \
+             "Save a labelmap."}
 
     #-------------------------------------------
     # Volumes->TabbedFrame->Setup frame
@@ -456,7 +481,7 @@ proc EditorBuildGUI {} {
     set f $fVolumes.fTabbedFrame.fSetup.fHelp
     
     eval {label $f.l -text \
-        "First choose the volumes to edit.\n Type a name for any NEW labelmap.\nThen click `Start Editing'."} \
+              "First choose the volumes to edit.\n Type a name for any NEW labelmap.\nThen click `Start Editing'."} \
         $Gui(WLA)
     pack $f.l
 
@@ -478,7 +503,7 @@ proc EditorBuildGUI {} {
     eval {label $f.lOriginal -text "Original Grayscale:"} $Gui(WTA)
     
     eval {menubutton $f.mbOriginal -text "None" -relief raised -bd 2 -width 18 \
-        -menu $f.mbOriginal.m} $Gui(WMBA)
+              -menu $f.mbOriginal.m} $Gui(WMBA)
     eval {menu $f.mbOriginal.m} $Gui(WMA)
     TooltipAdd $f.mbOriginal "Choose the input grayscale volume for editing."
     pack $f.lOriginal -padx $Gui(pad) -side left -anchor e
@@ -508,7 +533,7 @@ proc EditorBuildGUI {} {
     eval {label $f.lWorking -text "Working Labelmap:"} $Gui(WTA)
     
     eval {menubutton $f.mbWorking -text "NEW" -relief raised -bd 2 -width 18 \
-        -menu $f.mbWorking.m} $Gui(WMBA)
+              -menu $f.mbWorking.m} $Gui(WMBA)
     eval {menu $f.mbWorking.m} $Gui(WMA)
     TooltipAdd $f.mbWorking "Choose a labelmap to edit, or NEW for a new one."
     pack $f.lWorking $f.mbWorking -padx $Gui(pad) -side left
@@ -540,7 +565,7 @@ proc EditorBuildGUI {} {
     DevAddButton $f.bStart "Start Editing" "Tab Editor row1 Effects"
     TooltipAdd $f.bStart "Go go go!"  
     pack $f.bStart -side top -padx $Gui(pad) -pady $Gui(pad)
- 
+    
     
     #-------------------------------------------
     # Volumes->TabbedFrame->Merge frame
@@ -581,7 +606,7 @@ proc EditorBuildGUI {} {
     eval {label $f.lComposite -text "Composite Labelmap:"} $Gui(WTA)
     
     eval {menubutton $f.mbComposite -text "NEW" -relief raised -bd 2 -width 18 \
-        -menu $f.mbComposite.m} $Gui(WMBA)
+              -menu $f.mbComposite.m} $Gui(WMBA)
     eval {menu $f.mbComposite.m} $Gui(WMA)
     TooltipAdd $f.mbComposite "Choose a labelmap, or NEW for a new one."
     pack $f.lComposite $f.mbComposite -padx $Gui(pad) -side left
@@ -612,7 +637,7 @@ proc EditorBuildGUI {} {
     eval {label $f.lTitle -text "Combine 2 Label Maps"} $Gui(WTA)
     frame $f.f  -bg $Gui(activeWorkspace)
     eval {button $f.b -text "Merge" -width 6 \
-        -command "EditorMerge merge 0; RenderAll"} $Gui(WBA)
+              -command "EditorMerge merge 0; RenderAll"} $Gui(WBA)
     pack $f.lTitle $f.f $f.b -pady $Gui(pad) -side top
 
     TooltipAdd $f.b "Merge the labelmaps."
@@ -622,7 +647,7 @@ proc EditorBuildGUI {} {
     eval {label $f.l1 -text "Write"} $Gui(WLA)
     
     eval {menubutton $f.mbFore -text "$Editor(fgName)" -relief raised -bd 2 -width 9 \
-        -menu $f.mbFore.m} $Gui(WMBA)
+              -menu $f.mbFore.m} $Gui(WMBA)
     eval {menu $f.mbFore.m} $Gui(WMA)
     set Editor(mbFore) $f.mbFore
     set m $Editor(mbFore).m
@@ -633,7 +658,7 @@ proc EditorBuildGUI {} {
     eval {label $f.l2 -text "over"} $Gui(WLA)
     
     eval {menubutton $f.mbBack -text "$Editor(bgName)" -relief raised -bd 2 -width 9 \
-        -menu $f.mbBack.m} $Gui(WMBA)
+              -menu $f.mbBack.m} $Gui(WMBA)
     eval {menu $f.mbBack.m} $Gui(WMA)
     set Editor(mbBack) $f.mbBack
     set m $Editor(mbBack).m
@@ -690,10 +715,10 @@ proc EditorBuildGUI {} {
     set f $fVolumes.fTabbedFrame.fUndo.fWorking.fBtns
 
     eval {button $f.bClear -text "Clear to 0's" -width 12 \
-        -command "EditorClear Working; RenderAll"} $Gui(WBA)
+              -command "EditorClear Working; RenderAll"} $Gui(WBA)
     TooltipAdd $f.bClear "Clear the Working Volume."
     eval {button $f.bRead -text "Re-read" -width 7 \
-        -command "EditorRead Working; RenderAll"} $Gui(WBA)
+              -command "EditorRead Working; RenderAll"} $Gui(WBA)
     TooltipAdd $f.bRead "Re-read the Working Volume from disk."
     pack  $f.bRead $f.bClear -side left -padx $Gui(pad)    
 
@@ -721,10 +746,10 @@ proc EditorBuildGUI {} {
     set f $fVolumes.fTabbedFrame.fUndo.fComposite.fBtns
 
     eval {button $f.bClear -text "Clear to 0's" -width 12 \
-        -command "EditorClear Composite; RenderAll"} $Gui(WBA)
+              -command "EditorClear Composite; RenderAll"} $Gui(WBA)
     TooltipAdd $f.bClear "Clear the Composite Volume."
     eval {button $f.bRead -text "Re-read" -width 7 \
-        -command "EditorRead Composite; RenderAll"} $Gui(WBA)
+              -command "EditorRead Composite; RenderAll"} $Gui(WBA)
     TooltipAdd $f.bRead "Re-read the Composite Volume from disk."
     pack  $f.bRead $f.bClear -side left -padx $Gui(pad)    
     
@@ -759,13 +784,16 @@ proc EditorBuildGUI {} {
     pack $f.fPrefix -side top -pady $Gui(pad) -fill x
     pack $f.fBtns -side top -pady $Gui(pad)
 
+    
+
     #-------------------------------------------
     # Volumes->TabbedFrame->File->Vol->Menu
     #-------------------------------------------
+    
     set f $fVolumes.fTabbedFrame.fFile.fVol.fMenu
     
     # Volume menu
-    DevAddSelectButton  Editor $f VolumeSelect "Volume to save:" Pack \
+    DevAddSelectButton Editor $f VolumeSelect "Volume to save:" Pack \
         "Volume to save." 14
 
     # bind menubutton to update stuff when volume changes.
@@ -773,7 +801,7 @@ proc EditorBuildGUI {} {
         "EditorSetSaveVolume" 
     # have this binding execute after the menu updates
     bindtags $Editor(mVolumeSelect) [list Menu \
-        $Editor(mVolumeSelect) all]
+                                         $Editor(mVolumeSelect) all]
 
     # Append menu and button to lists that get refreshed during UpdateMRML
     lappend Volume(mbActiveList) $f.mbVolumeSelect
@@ -798,36 +826,9 @@ proc EditorBuildGUI {} {
     TooltipAdd $f.fRight.ePrefix "To save the Volume, enter the prefix here or just click Save."
     pack $f.fRight.ePrefix -side top -pady 3 -padx 5 -anchor w
 
-    #set f $fVolumes.fTabbedFrame.fFile.fVol.fPrefix
-    
-    #eval {label $f.l -text "Filename Prefix:"} $Gui(WLA)
-    #eval {entry $f.e -textvariable Editor(prefixSave)} $Gui(WEA)
-    #TooltipAdd $f.e "To save the Volume, enter the prefix here or just click Save."
-    #pack $f.l -padx 3 -side left
-    #pack $f.e -padx 3 -side left -expand 1 -fill x
-
     #-------------------------------------------
     # Volumes->TabbedFrame->File->Vol->Btns
     #-------------------------------------------
-    #set f $fVolumes.fTabbedFrame.fFile.fVol.fBtns
-    
-    #eval {label $f.l -text "Pick Format"} $Gui(WLA)
-    #eval {menubutton $f.mbFormat -text $Editor(fileformat) -relief raised \
-    #    -bd 2 -width 12 -menu $f.mbFormat.m} $Gui(WMBA)
-    #eval {menu $f.mbFormat.m} $Gui(WMA)
-    #set formatMenu $f.mbFormat.m
-    #$formatMenu add command -label "Standard" \
-    #    -command "set Editor(fileformat) Standard; \
-    #              $f.mbFormat config -text Standard"
-    #$formatMenu add command -label ".pts" \
-    #    -command "set Editor(fileformat) .pts; \
-    #              $f.mbFormat config -text .pts"
-
-    #eval {button $f.bWrite -text "Save" -width 5 \
-    #    -command "EditorWriteVolume"} $Gui(WBA)
-    #TooltipAdd $f.bWrite "Save the Volume."
-    #pack  $f.l $f.mbFormat $f.bWrite -side left -padx $Gui(pad)    
-
     eval {label $f.fLeft.lFormat -text "         Pick Format:"} $Gui(WLA)
     pack $f.fLeft.lFormat -side top -padx $Gui(pad) -pady 2  -anchor w
     
@@ -837,9 +838,11 @@ proc EditorBuildGUI {} {
     set Editor(formatMenu) $f.fRight.mbFormat     
     
     #  Add menu items
-    foreach FileType {{Standard} {.pts} {hdr} {nrrd} {nhdr} {mhd} {mha} {nii} {img} {img.gz} {vtk}} \
+    # Saving of nifti extentions .img and .img.gz doesn't work right now. For the extention .img itk defers to analyze.
+    # Saving of nifti extention .img.gz is not supported yet by itk.
+    foreach FileType {{Standard} {.pts} {hdr} {nrrd} {nhdr} {mhd} {mha} {nii} {nii.gz} {vtk}} \
         name {{Headerless} {.pts} {Analyze (.hdr)} {NRRD(.nrrd)} {NRRD(.nhdr)} \
-                  {Meta (.mhd)} {Meta (.mha)} {Nifti (.nii)} {Nifti (.img)} {Nifti (.img.gz)} {VTK (.vtk)}} { 
+                  {Meta (.mhd)} {Meta (.mha)} {Nifti (.nii)} {Nifti (.nii.gz)} {VTK (.vtk)}} { 
                       set Editor($FileType) $name
                       $f.fRight.mbFormat.m add command -label $name \
                           -command "EditorExportSetFileType $FileType"
@@ -869,8 +872,7 @@ proc EditorBuildGUI {} {
               -command "EditorWriteVolume"} $Gui(WBA)
     TooltipAdd $fVolumes.fTabbedFrame.fFile.fVol.fSaveButton.bWrite "Save the Volume."
     pack $fVolumes.fTabbedFrame.fFile.fVol.fSaveButton.bWrite -side top -padx 2 -pady 2     
-   
-
+    
     ############################################################################
     #                                 Effects
     ############################################################################
@@ -899,8 +901,8 @@ proc EditorBuildGUI {} {
     
     foreach s $Slice(idList) text "Red Yellow Green" width "4 7 6" {
         eval {radiobutton $f.r$s -width $width -indicatoron 0\
-            -text "$text" -value "$s" -variable Slice(activeID) \
-            -command "MainSlicesSetActive"} $Gui(WCA) {-selectcolor $Gui(slice$s)}
+                  -text "$text" -value "$s" -variable Slice(activeID) \
+                  -command "MainSlicesSetActive"} $Gui(WCA) {-selectcolor $Gui(slice$s)}
         pack $f.r$s -side left -fill x -anchor e
     }
     
@@ -930,7 +932,8 @@ proc EditorBuildGUI {} {
     
     eval {checkbutton $f.cEditorDisplayLabel \
         -text  "Outline Labelmap" -variable Editor(display,labelOn) \
-        -width 21 -indicatoron 0 -command "EditorResetDisplay"} $Gui(WCA)
+              -width 21 -indicatoron 0 -command "EditorResetDisplay; RenderSlices"} $Gui(WCA)
+
     pack $f.cEditorDisplayLabel -side right -pady $Gui(pad) -padx $Gui(pad)
     TooltipAdd $f.cEditorDisplayLabel "Press to show/hide the label layer (the outline around your labelmap)."
 
@@ -976,11 +979,11 @@ proc EditorBuildGUI {} {
     }
     if {$Editor(more) == 1} {
         eval {menubutton $f.mbMore -text "More:" -relief raised -bd 2 \
-            -width 6 -menu $f.mbMore.m} $Gui(WMBA)
+                  -width 6 -menu $f.mbMore.m} $Gui(WMBA)
         eval {menu $f.mbMore.m} $Gui(WMA)
         eval {radiobutton $f.rMore -width 13 \
-            -text "None" -variable Editor(moreBtn) -value 1 \
-            -command "EditorSetEffect Menu" -indicatoron 0} $Gui(WCA)
+                  -text "None" -variable Editor(moreBtn) -value 1 \
+                  -command "EditorSetEffect Menu" -indicatoron 0} $Gui(WCA)
         pack $f.mbMore $f.rMore -side left -padx $Gui(pad) -pady 0 
         
         set Editor(mbMore) $f.mbMore
@@ -1006,8 +1009,8 @@ proc EditorBuildGUI {} {
             # Either make a button for it, or add it to the "more" menu
             if {$Ed($e,more) == 0} {
                 eval {radiobutton $f.$row.r$e -width 13 \
-                    -text "$Ed($e,name)" -variable Editor(btn) -value $e \
-                    -command "EditorSetEffect $e" -indicatoron 0} $Gui(WCA)
+                          -text "$Ed($e,name)" -variable Editor(btn) -value $e \
+                          -command "EditorSetEffect $e" -indicatoron 0} $Gui(WCA)
                 pack $f.$row.r$e -side left -padx 0 -pady 0
             } else {
                 if {$firstMore == ""} {
@@ -1031,7 +1034,7 @@ proc EditorBuildGUI {} {
     set f $fEffects.fEffects.fUndo
     
     eval {button $f.bUndo -text "Undo last effect" -width 17 \
-        -command "EditorUndo; RenderAll"} $Gui(WBA) {-state disabled}
+              -command "EditorUndo; RenderAll"} $Gui(WBA) {-state disabled}
     pack $f.bUndo -side left -padx $Gui(pad) -pady 0
     
     set Editor(bUndo) $f.bUndo
@@ -1065,8 +1068,8 @@ proc EditorBuildGUI {} {
     set f $fDetails.fTitle.fBar
     foreach e [lrange $Ed(idList) 0 7] {
         eval {radiobutton $f.r$e -width 2 -indicatoron 0\
-            -text $Ed($e,initials) -value $e -variable Editor(btn) \
-            -command "EditorSetEffect $e"} $Gui(WCA)
+                  -text $Ed($e,initials) -value $e -variable Editor(btn) \
+                  -command "EditorSetEffect $e"} $Gui(WCA)
         TooltipAdd $f.r$e $Ed($e,name)
         pack $f.r$e -side left -fill x -anchor e
     }
@@ -1305,6 +1308,14 @@ proc EditorB1 {x y} {
                 }
                 "Select" {
                     Slicer DrawStartSelectBox $x $y
+                }
+            }
+
+            if { $::Editor(toggleAutoSample) } {
+                if { [[Slicer DrawGetPoints] GetNumberOfPoints] == "1" } {
+                    # if this is the first point clicked and you are in Auto mode, 
+                    # then update the color to be the current foreground color
+                    EdDrawUpdate "CurrentSample"
                 }
             }
         }
@@ -1645,7 +1656,7 @@ proc EditorSetOriginal {v} {
     }
 
     if { $v != $Volume(idNone)
-            && [[Volume($v,vol) GetOutput] GetNumberOfScalarComponents] != 1 } {
+         && [[Volume($v,vol) GetOutput] GetNumberOfScalarComponents] != 1 } {
         DevErrorWindow "Original (background) volume must have 1 scalar component.\n\nTry editing with a different volume and changing the background using the Bg button on the slice views."
         return
     }
@@ -1692,7 +1703,7 @@ proc EditorSetWorking {v} {
     } else {
         $Editor(mbWorking) config -text [Volume($v,node) GetName]
         set Editor(prefixWorking) [MainFileGetRelativePrefix \
-            [Volume($v,node) GetFilePrefix]]
+                                       [Volume($v,node) GetFilePrefix]]
         set Editor(nameWorking) [Volume($v,node) GetName]
         # Disable name entry field if not NEW volume
         eval {$Editor(eNameWorking) configure -state disabled} $Gui(WEDA)
@@ -1730,7 +1741,7 @@ proc EditorSetComposite {v} {
     } else {
         $Editor(mbComposite) config -text [Volume($v,node) GetName]
         set Editor(prefixComposite) [MainFileGetRelativePrefix \
-            [Volume($v,node) GetFilePrefix]]
+                                         [Volume($v,node) GetFilePrefix]]
         set Editor(nameComposite) [Volume($v,node) GetName]
         # Disable name entry field if not NEW volume
         eval {$Editor(eNameComposite) configure -state disabled} $Gui(WEDA)
@@ -2015,7 +2026,11 @@ proc EditorShowWorking {} {
     
     set w [EditorGetWorkingID]    
     MainSlicesSetVolumeAll Fore  $w
-    MainSlicesSetVolumeAll Label $w
+    if {$Editor(display,labelOn) == 1} {
+        MainSlicesSetVolumeAll Label $w
+    } else {
+        MainSlicesSetVolumeAll Label $Volume(idNone)
+    }
     
     RenderSlices
 }
@@ -2230,8 +2245,8 @@ proc EdBuildScopeGUI {f var {not ""}} {
     frame $f.f -bg $Gui(activeWorkspace)
     foreach mode $modes name $names tip $tips {
         eval {radiobutton $f.f.r$mode -width [expr [string length $name]+1]\
-            -text "$name" -variable $var -value $mode \
-            -indicatoron 0} $Gui(WCA)
+                  -text "$name" -variable $var -value $mode \
+                  -indicatoron 0} $Gui(WCA)
         pack $f.f.r$mode -side left -padx 0 -pady 0
         TooltipAdd $f.f.r$mode $tip
     }
@@ -2252,7 +2267,7 @@ proc EdBuildMultiGUI {f var} {
     
     foreach s "Native Active" text "Native Active" width "7 7" {
         eval {radiobutton $f.r$s -width $width -indicatoron 0\
-            -text "$text" -value "$s" -variable $var} $Gui(WCA)
+                  -text "$text" -value "$s" -variable $var} $Gui(WCA)
         pack $f.r$s -side left -fill x -anchor e
     }
 }
@@ -2273,8 +2288,8 @@ proc EdBuildInputGUI {f var {options ""}} {
 
     foreach input "Original Working" tip $tips {
         eval {radiobutton $f.f.r$input \
-            -text "$input" -variable $var -value $input -width 8 \
-            -indicatoron 0} $options $Gui(WCA)
+                  -text "$input" -variable $var -value $input -width 8 \
+                  -indicatoron 0} $options $Gui(WCA)
         pack $f.f.r$input -side left -padx 0
         TooltipAdd $f.f.r$input $tip
     }
@@ -2300,8 +2315,8 @@ proc EdBuildInteractGUI {f var {options ""}} {
     frame $f.f -bg $Gui(activeWorkspace)
     foreach mode $modes name $names tip $tips {
         eval {radiobutton $f.f.r$mode -width [expr [string length $name]+1]\
-            -text "$name" -variable $var -value $mode \
-            -indicatoron 0} $options $Gui(WCA)
+                  -text "$name" -variable $var -value $mode \
+                  -indicatoron 0} $options $Gui(WCA)
         pack $f.f.r$mode -side left -padx 0 -pady 0
         TooltipAdd $f.f.r$mode $tip
     }
@@ -2327,8 +2342,8 @@ proc EdBuildRenderGUI {f var {options ""}} {
     frame $f.f -bg $Gui(activeWorkspace)
     foreach mode $modes name $names tip $tips {
         eval {radiobutton $f.f.r$mode -width [expr [string length $name]+1]\
-            -text "$name" -variable $var -value $mode \
-            -indicatoron 0} $options $Gui(WCA)
+                  -text "$name" -variable $var -value $mode \
+                  -indicatoron 0} $options $Gui(WCA)
         pack $f.f.r$mode -side left -padx 0 -pady 0
         TooltipAdd $f.f.r$mode $tip
     }
@@ -2544,9 +2559,8 @@ proc EditorSetSaveVolume {} {
 
     # update File (Save) GUI
     set Editor(prefixSave) [MainFileGetRelativePrefix \
-        [Volume($v,node) GetFilePrefix]]
+                                [Volume($v,node) GetFilePrefix]]
 }
-
 
 #-------------------------------------------------------------------------------
 # .PROC EditorExportSetFileType
@@ -2573,7 +2587,6 @@ proc EditorWriteVolume {} {
     global Volume Editor
 
     # Lauren this can become the general Volumes->Save that people want
-
     # get the chosen volume
     set v $Volume(activeID)
 
@@ -2586,10 +2599,8 @@ proc EditorWriteVolume {} {
     # Show user a File dialog box
     set Editor(prefixSave) [MainFileSaveVolume $v $Editor(prefixSave)]
     if {$Editor(prefixSave) == ""} {return}
-    
     # Write
     MainVolumesWrite $v $Editor(prefixSave)
-    
     # Prefix changed, so update the Volumes->Props tab
     MainVolumesSetActive $v
 
@@ -2677,7 +2688,7 @@ proc EditorClear {data} {
     MainVolumesUpdate $v
     RenderAll
 }
-    
+
 #-------------------------------------------------------------------------------
 # .PROC EditorMerge
 # 
@@ -2704,15 +2715,15 @@ proc EditorMerge {op arg} {
         Working   {set fg [EditorGetWorkingID]}
         Composite {set fg [EditorGetCompositeID]}
         default   {tk_messageBox \
-            -message "Merge the Original, Working, or Composite, not '$fgName'";\
-            return}
+                       -message "Merge the Original, Working, or Composite, not '$fgName'";\
+                       return}
     }
     switch $Editor(bgName) {
         Working   {set bg [EditorGetWorkingID]}
         Composite {set bg [EditorGetCompositeID]}
         default   {tk_messageBox \
-            -message "Merge with the Working or Composite, not '$bgName'";\
-            return}
+                       -message "Merge with the Working or Composite, not '$bgName'";\
+                       return}
     }
     
     # Do nothing if fg=bg

@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainViewer.tcl,v $
-#   Date:      $Date: 2006/05/04 19:14:22 $
-#   Version:   $Revision: 1.35.8.2.2.1 $
+#   Date:      $Date: 2007/10/29 14:59:52 $
+#   Version:   $Revision: 1.35.8.2.2.2 $
 # 
 #===============================================================================
 # FILE:        MainViewer.tcl
@@ -39,7 +39,7 @@ proc MainViewerInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainViewer \
-    {$Revision: 1.35.8.2.2.1 $} {$Date: 2006/05/04 19:14:22 $}]
+    {$Revision: 1.35.8.2.2.2 $} {$Date: 2007/10/29 14:59:52 $}]
 
     # Props
     set Gui(midHeight) 1
@@ -416,6 +416,14 @@ proc MainViewerSetLargeImageOn {} {
 proc MainViewerSetMode {{mode ""} {verbose ""}} {
     global Slice View Gui Anno Module
 
+    # if the view mode hasn't changed, return
+    if {$View(mode) == $mode} {
+        if {$::Module(verbose)} {
+            puts "MainViewerSetMode: No change in view mode ($mode)..."
+        }
+#        return
+    }
+
     # set View(mode) if called with an argument
     if {$mode != ""} {
         if {$mode == "Normal" || $mode == "Quad256"  || $mode == "Quad512" \
@@ -598,13 +606,19 @@ proc MainViewerSetMode {{mode ""} {verbose ""}} {
                 MainViewerAnno $s 256
             }
         }
-        "MRT640x480" {            
-puts "MRT 640 by 480 with 480^2 3d, and 160^2 2d"
+        "MRT640x480" {
             pack $f.fSlice0 $f.fSlice1 $f.fSlice2  -in $Gui(fBot) -side top 
             pack $Gui(fTop) -side left -anchor n
             pack $Gui(fBot) -side right -anchor n
             pack $f.fViewWin -in $Gui(fTop) -side top -anchor n
 
+            if {0} {
+                # to try and circumvent slice controls popping up under viewwin
+                grid $f.fSlice0 -in $Gui(fTop) -row 1 -column 2
+                grid $f.fSlice1 -in $Gui(fTop) -row 2 -column 2
+                grid $f.fSlice2 -in $Gui(fTop) -row 3 -column 2
+                grid $f.fViewWin -in $Gui(fTop) -row 1 -column 1 -rowspan 3
+            }
             wm geometry .tViewer 640x480
             $Gui(fViewWin) config -width 480 -height 480
             $Gui(fSl0Win) config -width 160 -height 160

@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainInteractor.tcl,v $
-#   Date:      $Date: 2007/07/02 19:41:15 $
-#   Version:   $Revision: 1.63.2.1.2.1 $
+#   Date:      $Date: 2007/10/29 14:59:51 $
+#   Version:   $Revision: 1.63.2.1.2.2 $
 # 
 #===============================================================================
 # FILE:        MainInteractor.tcl
@@ -66,6 +66,11 @@ proc MainInteractorInit {} {
     #it easier to allow window interactions in the same manner 
     #if ever another vtkMrmlSlicer object is added.
     set Interactor(activeSlicer) Slicer
+
+    # if 1, the crosshairs follow the mouse motion when it's over a slice
+    # window, and the crosshairs get recentered when it leaves the window
+    # if 0, only have the cross hairs follow if the shift key is down
+    set Interactor(crosshairFollowsMouse) 0
 }
 
 #-------------------------------------------------------------------------------
@@ -76,7 +81,7 @@ proc MainInteractorInit {} {
 # .END
 #-------------------------------------------------------------------------------
 proc MainInteractorBind {widget} {
-    global Gui Fiducials
+    global Gui Interactor
 
 
     # NOTE: <Motion> is not called when <B1-Motion> is called
@@ -137,6 +142,7 @@ proc MainInteractorBind {widget} {
     bind $widget <KeyPress-c>        {MainInteractorKeyPress c %W %x %y}
     bind $widget <KeyPress-equal>    {MainInteractorKeyPress = %W %x %y}
     bind $widget <KeyPress-minus>    {MainInteractorKeyPress - %W %x %y}
+    bind $widget <KeyPress-backslash>    {MainInteractorKeyPress \\ %W %x %y}
     bind $widget <Control-a>         {MainInteractorKeyPress Ctla %W %x %y}
     bind $widget <Control-x>         {MainInteractorKeyPress Ctlx %W %x %y}
     bind $widget <Control-c>         {MainInteractorKeyPress Ctlc %W %x %y}
@@ -144,6 +150,12 @@ proc MainInteractorBind {widget} {
     bind $widget <Control-d>         {MainInteractorKeyPress Ctld %W %x %y}
     # toggle between fore and background volumes
     bind $widget <KeyPress-g>        {MainInteractorKeyPress g %W %x %y}
+    # toggle cross hairs on and off
+    bind $widget <KeyPress-h>        {MainInteractorKeyPress h %W %x %y}
+
+    # Show the slice full controls when the user holds down the left ALT key in this slice window
+    bind $widget <KeyPress-Alt_L>    {MainInteractorKeyPress Altl %W %x %y}
+    bind $widget <KeyRelease-Alt_L>  {MainInteractorKeyPress Altl_release %W %x %y}
 
     # bind all the digits on the top row and the key pad
     for {set i 0} {$i < 10} {incr i} {
@@ -156,14 +168,6 @@ proc MainInteractorBind {widget} {
     bind $widget <KeyPress-p> {
          if { [SelectPick2D %W %x %y] != 0 } \
              { set ::Fiducial(Pick2D) 1; eval FiducialsCreatePointFromWorldXYZ "default" $Select(xyz) ; set ::Fiducial(Pick2D) 0; MainUpdateMRML; Render3D}
-     }
-    }
-
-#for registration point creation
-   if {[IsModule Fiducials] == 1 || [IsModule Alignments] == 1} {
-    bind $widget <KeyPress-i> {
-         if { [SelectPick2D %W %x %y] != 0 } \
-             { set ::Fiducial(Pick2D) 1; eval FiducialsCreatePointFromWorldXYZ "registration" $Select(xyz) "registration"; set ::Fiducial(Pick2D) 0; MainUpdateMRML; Render3D; NeuroendoscopyPointSelection $Fiducials($Fiducials(activeList),fid)}
      }
     }
 
@@ -202,8 +206,13 @@ proc MainInteractorBind {widget} {
 proc MainInteractorXY {s x y} {
     global Interactor
 
-    # Compute screen coordinates
-    set y [expr $Interactor(ySize) - 1 - $y]
+    # Compute screen coordinates for this slice
+    if {$Interactor(s) == $s} {
+        set ySize $Interactor(ySize)
+    } else {
+        set ySize [lindex [$::Gui(fSl${s}Win) configure -height] end]
+    }
+    set y [expr $ySize - 1 - $y]
     set xs $x
     set ys $y
 
@@ -219,13 +228,15 @@ proc MainInteractorXY {s x y} {
 # 
 # .ARGS
 # int s slice window number
-# int xs
-# int ys
-# int x
+# int xs screen x
+# int ys screen y
+# int x 
 # int y
+# int mainSlice if 1, move the mag window, otherwise it's called to update the cursor on the shift linked slice windows. Defaults to 1.
+# int shiftMotion if 1, over ride the crosshair follows mouse flag being 0. Defaults to 0.
 # .END
 #-------------------------------------------------------------------------------
-proc MainInteractorCursor {s xs ys x y} {
+proc MainInteractorCursor {s xs ys x y {mainSlice 1} {shiftMotion 0}} {
     global Slice Anno View Interactor
 
     # pixel value
@@ -308,6 +319,7 @@ proc MainInteractorCursor {s xs ys x y} {
         }
         set forenode [[$Interactor(activeSlicer) GetForeVolume $s] GetMrmlNode]
         set ::Anno(curFore,label) ""
+        set ::Anno(curForePix) $forePix
         if { [$forenode GetLUTName] == -1 } {
             set curtext [Anno($s,curFore,mapper) GetInput] 
             set labelid [MainColorsGetColorFromLabel $forePix]
@@ -329,12 +341,16 @@ proc MainInteractorCursor {s xs ys x y} {
         }
     }
 
-    # Move cursor
-    $Interactor(activeSlicer) SetCursorPosition $s $xs $ys
-    
+    if {$Interactor(crosshairFollowsMouse) || $shiftMotion} {
+        # Move cursor
+        $Interactor(activeSlicer) SetCursorPosition $s $xs $ys
+        if {$::Module(verbose)} { puts "MainInteractorCursor: set cursor position:\n\ts = $s\n\txs = $xs, ys = $ys" }
+    }
+
     # Show close-up image
-    if {$View(createMagWin) == "Yes" && $View(closeupVisibility) == "On"
-            && [info command View(mag)] != "" } {
+    if {$mainSlice && 
+        $View(createMagWin) == "Yes" && $View(closeupVisibility) == "On"
+        && [info command View(mag)] != "" } {
         View(mag) SetX $x
         View(mag) SetY $y
     }
@@ -349,7 +365,7 @@ proc MainInteractorCursor {s xs ys x y} {
 # Up and Down moves the slice offset.
 # Left and Right calles EditApplyFilter from Edit.tcl
 # .ARGS
-# string key  one of Right, Left, Up, Down, Delete, d, c, 0, g, Ctla, Ctlx, Ctlc, Ctlv, Ctld
+# string key  one of Right, Left, Up, Down, Delete, d, c, 0, g, Ctla, Ctlx, Ctlc, Ctlv, Ctld, Altl, Altl_release
 # windowpath widget
 # int x
 # int y
@@ -357,6 +373,7 @@ proc MainInteractorCursor {s xs ys x y} {
 #-------------------------------------------------------------------------------
 proc MainInteractorKeyPress {key widget x y} {
     global View Slice Interactor Module Editor
+
 
     focus $widget
 
@@ -434,6 +451,7 @@ proc MainInteractorKeyPress {key widget x y} {
          }
          "=" - 
          "-" - 
+         "\\\\" - 
          "\[0-9\]" {
             switch $Module(activeID) {
                 "Editor" {
@@ -514,6 +532,28 @@ proc MainInteractorKeyPress {key widget x y} {
                 }  
             }  
         }
+        "Altl" {
+            # only pop up the slice controls if not in Normal or 3D mode, 
+            # assume MainViewer will deal with duplicate calls
+            if {$::View(mode) != "Normal" &&
+                $::View(mode) != "3D"} {
+                    MainViewerShowSliceControls $s
+                }
+        }
+        "Altl_release" {
+            # only hide slice controls if not in Normal or 3D mode, 
+            # assume MainViewer will deal with duplicate calls
+            if {$::View(mode) != "Normal" &&
+                $::View(mode) != "3D"} {
+                MainViewerHideSliceControls
+            }
+        }
+        "h" {
+            # toggle cross hairs visibility
+            set ::Anno(cross) [expr ! $::Anno(cross)]
+            MainAnnoSetCrossVisibility slices $::Anno(cross)
+            RenderSlices
+        }
     }
 }
 
@@ -524,9 +564,10 @@ proc MainInteractorKeyPress {key widget x y} {
 # windowpath widget
 # int x
 # int y
+# int shiftMotionFlag passed through to MainInteractorCursor, defaults to 0, when 1 it means that it can over ride the cross hairs following mouse flag being 0
 # .END
 #-------------------------------------------------------------------------------
-proc MainInteractorMotion {widget x y} {
+proc MainInteractorMotion {widget x y {shiftMotionFlag 0}} {
     global Interactor Module
 
     set s $Interactor(s)
@@ -541,8 +582,7 @@ proc MainInteractorMotion {widget x y} {
     }
 
     # Cursor
-    MainInteractorCursor $s $xs $ys $x $y
-
+    MainInteractorCursor $s $xs $ys $x $y 1 $shiftMotionFlag
 
     # Render this slice
     MainInteractorRender
@@ -560,21 +600,52 @@ proc MainInteractorMotion {widget x y} {
 proc MainInteractorShiftMotion {widget x y} {
     global Interactor Module
 
-    MainInteractorMotion $widget $x $y
+    if {$::Module(verbose)} { 
+        puts "\nMainInteractorShiftMotion widget = $widget, x = $x, y = $y" 
+    }
+
+    # this will set up the calls to the MainInteractorCursor so that the cross 
+    # hairs will follow the mouse when shift is down
+    set shiftMotionFlag 1
+
+    MainInteractorMotion $widget $x $y $shiftMotionFlag    
 
     set s $Interactor(s)
     scan [MainInteractorXY $s $x $y] "%d %d %d %d" xs ys x y 
 
     $Interactor(activeSlicer) SetReformatPoint $s $x $y
     scan [$Interactor(activeSlicer) GetWldPoint] "%g %g %g" rRas aRas sRas 
+    scan [$Interactor(activeSlicer) GetIjkPoint] "%g %g %g" iIjk jIjk kIjk
+
+    if {$::Module(verbose)} { 
+        puts "MainInteractorShiftMotion:\n\tAfter call to MainInteractorXY:\n\txs = $xs, ys = $ys\n\tx = $x, y = $y"
+        puts "MainInteractorShiftMotion after call to SetReformatPoint:\n\trRas = $rRas, aRas = $aRas, sRas = $sRas\n\tiIjk = $iIjk, jIjk = $jIjk, kIjk = $kIjk\n\tAxes follow active voxel = $::Anno(axesFollowCrossHairs)" }
+
+    if {$::Anno(axesFollowCrossHairs)} {
+        MainAnnoUpdateAxesPosition $rRas $aRas $sRas
+    }
 
     for {set slice 0} {$slice < 3} {incr slice} {
         if {$slice != $s} {
-            
+            scan [MainInteractorRasToXy $slice $rRas $aRas $sRas] "%d %d" sX sY
+            scan [MainInteractorXY $slice $sX $sY] "%d %d %d %d" sliceXS sliceYS sliceX sliceY
+            if {$::Module(verbose) == 1} {
+                puts "\nMainInteractorShiftMotion: In slice loop, slice = $slice\n\tras $rRas $aRas $sRas\n\tOutput from RasToXy: sX = $sX, sY = $sY"
+                puts "\tOutput from MainInteractorXY:\n\t\tsliceXS = $sliceXS, sliceYS = $sliceYS\n\t\tsliceX = $sliceX, sliceY = $sliceY "
+            }
             switch -glob [$Interactor(activeSlicer) GetOrientString $slice] {
-                "Axial" { MainSlicesSetOffset $slice $sRas}
-                "Sagittal" { MainSlicesSetOffset $slice $rRas}
-                "Coronal" { MainSlicesSetOffset $slice $aRas}
+                "Axial" { 
+                    MainSlicesSetOffset $slice $sRas
+                    MainInteractorCursor $slice $sliceXS $sliceYS $sliceX $sliceY 0 $shiftMotionFlag
+                }
+                "Sagittal" { 
+                    MainSlicesSetOffset $slice $rRas
+                    MainInteractorCursor $slice $sliceXS $sliceYS $sliceX $sliceY 0 $shiftMotionFlag
+                }
+                "Coronal" { 
+                    MainSlicesSetOffset $slice $aRas
+                    MainInteractorCursor $slice $sliceXS $sliceYS $sliceX $sliceY 0 $shiftMotionFlag
+                }
 
                 # TODO need to get the unscaled pixel coordinates for RAS and
                 # know the offset relative to the I, L, P origin of the volume
@@ -617,6 +688,7 @@ proc MainInteractorShiftMotion {widget x y} {
                             }
                             set off [expr round($dim * ($sRas - [lindex $lpi_point 2]) / [lindex $ras_extent 2])]
                             MainSlicesSetOffset $slice $off
+                            MainInteractorCursor $slice $sliceXS $sliceYS $sliceX $sliceY 0 $shiftMotionFlag
                         }
                         "SagSlice" { 
                             switch [$node GetScanOrder] {
@@ -632,6 +704,7 @@ proc MainInteractorShiftMotion {widget x y} {
                             }
                             set off [expr round($dim * ($rRas - [lindex $lpi_point 0]) / [lindex $ras_extent 0])]
                             MainSlicesSetOffset $slice $off
+                            MainInteractorCursor $slice $sliceXS $sliceYS $sliceX $sliceY 0 $shiftMotionFlag
                         }
                         "CorSlice" {
                             switch [$node GetScanOrder] {
@@ -647,6 +720,7 @@ proc MainInteractorShiftMotion {widget x y} {
                             }
                             set off [expr round($dim * ($aRas - [lindex $lpi_point 1]) / [lindex $ras_extent 1])]
                             MainSlicesSetOffset $slice $off
+                            MainInteractorCursor $slice $sliceXS $sliceYS $sliceX $sliceY 0 $shiftMotionFlag
                         }
                     }
                 }
@@ -970,6 +1044,7 @@ proc MainInteractorB3Motion {widget x y} {
 #-------------------------------------------------------------------------------
 proc MainInteractorPan {s x y xLast yLast} {
      #global View
+
      global View Slicer Interactor
      if { [Slicer GetDisplayMethod] == 1 || [Slicer GetDisplayMethod] == 3} {
        set dx [expr $xLast - $x]
@@ -1249,9 +1324,11 @@ proc MainInteractorExit {widget} {
 
     set s $Interactor(s)
     
-    # Center cursor
-    $Interactor(activeSlicer) SetCursorPosition $s \
-        [expr int($Interactor(xCenter))] [expr int($Interactor(yCenter))]
+    if {$Interactor(crosshairFollowsMouse)} {
+        # Center cursor
+        $Interactor(activeSlicer) SetCursorPosition $s \
+            [expr int($Interactor(xCenter))] [expr int($Interactor(yCenter))]
+    }
 
     # Turn off cursor anno
     foreach name "$Anno(mouseList)" {
@@ -1463,3 +1540,115 @@ proc MainInteractorControlB1Release {widget x y} {
     MainInteractorRender  
 }
 
+#-------------------------------------------------------------------------------
+# .PROC MainInteractorRasToXy
+# returns "x y" (int) for this slice from the ras coord, by scaling in relation to the min 
+# and max x of the slice window. If the vtkMrmlSlicer transform matrices haven't been set
+# will return a center point. Takes into account panning and zooming.
+# .ARGS 
+# int slice the slice number for which to calculate the new xy, valid values are 0,1,2
+# float r the right/left input world coordinate
+# float a the anterior/superior input world coordinate
+# float s the superior/inferior input world coordinate
+# .END
+#-------------------------------------------------------------------------------
+proc MainInteractorRasToXy {slice r a s } {
+    global Interactor
+
+    set x 0
+    set y 0
+    set minX 0
+    set minY 0
+
+    if {[lsearch $::Slice(idList) $slice] == -1} {
+        puts "MainInteractorRasToXy: invalid slice, $slice not in list $::Slice(idList)"
+        return "0 0"
+    }
+
+    # take into account the view options, may be 256 or 512
+    set sliceMaxX [lindex [$::Gui(fSl${slice}Win) configure -width] end]
+    set sliceMaxY [lindex [$::Gui(fSl${slice}Win) configure -height] end]
+
+    if {$::Module(verbose) == 1} {
+        puts "MainInteractorRasToXy: input slice = $slice, r = $r, a = $a, s = $s"
+    }
+
+    # calculate the corner points of this slice window in ras, 
+    # setting the screen point, it takes into account pan/zoom
+
+    # top left 
+    $Interactor(activeSlicer) SetScreenPoint $slice $minX $sliceMaxY
+    # but now we need to set the reformat point explicitly
+    scan [$Interactor(activeSlicer) GetReformatPoint] "%d %d" rx ry
+    if {$::Module(verbose)} {
+        puts "\ttop left: rx = $rx, ry = $ry"
+    }
+    $Interactor(activeSlicer) SetReformatPoint $slice $rx $ry
+    # and now get the recalc'd world point
+    scan [$Interactor(activeSlicer) GetWldPoint] "%g %g %g" rTL aTL sTL
+    
+    # bottom right
+    $Interactor(activeSlicer) SetScreenPoint $slice $sliceMaxX $minY
+    scan [$Interactor(activeSlicer) GetReformatPoint] "%d %d" rx ry
+    if {$::Module(verbose)} {
+        puts "\tbottom right: rx = $rx, ry = $ry"
+    }
+    $Interactor(activeSlicer) SetReformatPoint $slice $rx $ry
+    scan [$Interactor(activeSlicer) GetWldPoint] "%g %g %g" rBR aBR sBR
+
+
+    if {$::Module(verbose) == 1} {
+        puts "\trTL aTL sTL = $rTL $aTL $sTL"
+        puts "\trBR aBR sBR = $rBR $aBR $sBR"
+        puts "\tsliceMaxX = $sliceMaxX, sliceMaxY = $sliceMaxY"
+    }
+
+    # in case of a divide by zero case, set up default x,y in the center
+    set x [expr ($sliceMaxX - $minX)/2 + $minX]
+    set y [expr ($sliceMaxY - $minY)/2 + $minY]
+    
+    if {$::Module(verbose)} {
+        puts "\ts = $slice, x = $x, y = $y"
+    }
+
+    switch $slice {
+        "0" {
+            # use the x, y / r, a
+            if {[expr ($rBR - $rTL)] != 0.0} {
+                set x [expr ((($r - $rTL) * ($sliceMaxX - $minX) / ($rBR - $rTL)) + $minX)]
+            }
+            if {[expr ($aBR - $aTL)] != 0.0} {
+                set y [expr ((($a - $aTL) * ($sliceMaxY - $minY) / ($aBR - $aTL)) + $minY)]
+            }
+        }
+        "1" {
+            # use the y, z / a, s
+            if {[expr ($aBR - $aTL)] != 0.0} {
+                set x [expr ((($a - $aTL) * ($sliceMaxX - $minX) / ($aBR - $aTL)) + $minX)]
+            }
+            if {[expr ($sBR - $sTL)] != 0.0} {
+                set y [expr ((($s - $sTL) * ($sliceMaxY - $minY) / ($sBR - $sTL)) + $minY)]
+            }
+        } 
+        "2" {
+            # use the x, z / r, s
+            if {[expr ($rBR - $rTL)] != 0.0} {
+                set x [expr ((($r - $rTL) * ($sliceMaxX - $minX) / ($rBR - $rTL)) + $minX)]
+            }
+            if {[expr ($sBR - $sTL)] != 0.0} {
+                set y [expr ((($s - $sTL) * ($sliceMaxY - $minY) / ($sBR - $sTL)) + $minY)]
+            }
+        }
+    }
+
+   
+    # assume panning has been dealt with
+    set x [expr int($x)]
+    set y [expr int($y)]
+    
+    if {$::Module(verbose) == 1} {
+        puts "\tMainInteractorRasToXy: returning x = $x, y = $y"
+    }
+    return "$x $y"
+
+}

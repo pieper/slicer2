@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainFile.tcl,v $
-#   Date:      $Date: 2006/07/07 17:25:09 $
-#   Version:   $Revision: 1.67.2.2.2.2 $
+#   Date:      $Date: 2007/10/29 14:59:51 $
+#   Version:   $Revision: 1.67.2.2.2.3 $
 # 
 #===============================================================================
 # FILE:        MainFile.tcl
@@ -65,7 +65,7 @@ proc MainFileInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainFile \
-        {$Revision: 1.67.2.2.2.2 $} {$Date: 2006/07/07 17:25:09 $}]
+        {$Revision: 1.67.2.2.2.3 $} {$Date: 2007/10/29 14:59:51 $}]
 
     set File(filePrefix) data
 }
@@ -343,6 +343,7 @@ proc MainFileSaveAsApply {} {
     set filename [file join $Mrml(dir) $File(filePrefix).xml]
 
     MainMrmlWrite $filename
+    puts "Finished writing $filename"
 }
 
 #-------------------------------------------------------------------------------
@@ -1098,7 +1099,7 @@ proc MainFileParseImageFile {ImageFile {postfixFlag 1}} {
             set ZerolessNum [string trimleft $num "0"]
             if {$ZerolessNum == ""} {set ZerolessNum 0}
         }
-        return "%s_%03d.bfloat $filePrefix $ZerolessNum"
+        return "%s_%03d${fext} $filePrefix $ZerolessNum"
     }
     if {$fext == ".pgi" || $fext == ".PGI" || $fext == ".mr" || $fext == ".MR"} {
         if {$::Module(verbose)} {

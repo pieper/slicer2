@@ -1,13 +1,13 @@
 #=auto==========================================================================
-#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+#   Portions (c) Copyright 2006 Brigham and Women's Hospital (BWH) All Rights Reserved.
 # 
 #   See Doc/copyright/copyright.txt
 #   or http://www.slicer.org/copyright/copyright.txt for details.
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Comment.tcl,v $
-#   Date:      $Date: 2006/07/07 17:21:51 $
-#   Version:   $Revision: 1.21.2.1.2.2 $
+#   Date:      $Date: 2007/10/29 14:59:51 $
+#   Version:   $Revision: 1.21.2.1.2.3 $
 # 
 #===============================================================================
 # FILE:        Comment.tcl
@@ -58,6 +58,15 @@ proc CommentInit { {verbose 0} } {
     } else {
         set Comment(copyright) [read $fid]
         close $fid
+        # now revert the cvs key words to blank
+        regexp {[ ]*[$]RCSfile([^$]*)[$]} $Comment(copyright) matchvar s1
+        regsub $s1 $Comment(copyright) "" Comment(copyright)
+
+        regexp {[ ]*[$]Date([^$]*)[$]} $Comment(copyright) matchvar s1
+        regsub $s1 $Comment(copyright) "" Comment(copyright)
+
+        regexp {[ ]*[$]Revision([^$]*)[$]} $Comment(copyright) matchvar s1
+        regsub $s1 $Comment(copyright) "" Comment(copyright)
     }
     # check to see that the copyright year is current
     set thisYear [clock format [clock seconds] -format %Y]
@@ -251,6 +260,7 @@ proc CommentFile {filename {verbose 0}} {
     }
 
     puts -nonewline $fid $data
+
     if {[catch {close $fid} errorMessage]} {
        tk_messageBox -type ok -message "The following error occurred saving a file: ${errorMessage}" 
        puts "Aborting due to : ${errorMessage}"

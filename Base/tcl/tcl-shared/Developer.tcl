@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Developer.tcl,v $
-#   Date:      $Date: 2006/07/07 17:53:06 $
-#   Version:   $Revision: 1.51.2.3.2.2 $
+#   Date:      $Date: 2007/10/29 15:00:44 $
+#   Version:   $Revision: 1.51.2.3.2.3 $
 # 
 #===============================================================================
 # FILE:        Developer.tcl
@@ -962,6 +962,9 @@ proc DevPrintMrmlDataTree { { tagList "Volume" } { justMatrices 1 } } {
         if {$::Module(verbose)} {
             puts "\t${name}: class = $class"
         }
+        if {$class == "vtkMrmlScenesNode"} {
+            puts "Scene: [$node GetName]"
+        }
         foreach tag $tagList {
             if {$class == "vtkMrml${tag}Node"} {
                 if {$tag == "Volume"} {
@@ -990,6 +993,15 @@ proc DevPrintMrmlDataTree { { tagList "Volume" } { justMatrices 1 } } {
                 if {$tag == "Model"} {
                     puts "Model [$node GetID] [$node GetName]" 
                     DevPrintMatrix4x4 [$node GetRasToWld] "RAS -> WLD"
+                }
+                if {$tag == "Module"} {
+                    puts "Module node $node [$node GetModuleRefID]"
+                    puts "\tName = [$node GetName]"
+                    puts "\tValues = "
+                    set keys [$node GetKeys]
+                    foreach k $keys {
+                        puts "\t\t$k = [$node GetValue $k]"
+                    }
                 }
             }
         }
@@ -1325,4 +1337,41 @@ proc DevLaunchBrowserURL { url } {
     } else {
         DevWarningWindow "Could not detect your default browser.\n\nYou may need to set your BROWSER environment variable.\n\nPlease open $url manually."
     }
+}
+
+
+#-------------------------------------------------------------------------------
+# .PROC DevNewInstance
+# create a uniquely named vtk class instances
+# .ARGS
+# class - the vtk class
+# prefix - optional name 
+# .END
+#-------------------------------------------------------------------------------
+proc DevNewInstance { class {prefix ""} } {
+
+    if { $prefix == "" } {
+        set prefix $class
+    }
+    set serial 1
+    while { [info command ${prefix}_$serial] != "" } {
+        incr serial
+    }
+    return [$class ${prefix}_$serial]
+    
+}
+
+#-------------------------------------------------------------------------------
+# .PROC DevPrintTrace
+# Use when setting a trace on a global variable, to print out the value:<br>
+# trace variable varname wru DevPrintTrace
+# .ARGS
+# str name the array name
+# str el the element in the array
+# str opt w if the variable was written, r if it was read, u if unset
+# .END
+#-------------------------------------------------------------------------------
+proc DevPrintTrace { name el opt} {
+    global $name
+    puts "$opt ${name}(${el}) = [subst $${name}(${el})]"
 }

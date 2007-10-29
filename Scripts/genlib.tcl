@@ -27,7 +27,7 @@
 #
 
 if {[info exists ::env(CVS)]} {
-    set ::CVS $::env(CVS)
+    set ::CVS "{$::env(CVS)}"
 } else {
     set ::CVS cvs
 }
@@ -160,11 +160,6 @@ if { [file exists $localvarsfile] } {
     exit 1
 }
 
-if ($isRelease) {
-    set ::VTK_BUILD_TYPE "Release"
-    puts "Overriding slicer_variables.tcl; VTK_BUILD_TYPE is $::env(VTK_BUILD_TYPE)"
-}
-
 #initialize platform variables
 switch $tcl_platform(os) {
     "SunOS" {
@@ -191,6 +186,17 @@ switch $tcl_platform(os) {
         set isDarwin 0
         set isLinux 0
     }
+}
+
+if ($isRelease) {
+    set ::VTK_BUILD_TYPE "Release"
+    set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
+    if ($isWindows) {
+        set ::VTK_BUILD_SUBDIR "Release"
+    } else {
+        set ::VTK_BUILD_SUBDIR ""
+    }
+    puts "Overriding slicer_variables.tcl; VTK_BUILD_TYPE is $::env(VTK_BUILD_TYPE)"
 }
 
 # tcl file delete is broken on Darwin, so use rm -rf instead
@@ -221,11 +227,20 @@ if { ![file exists $SLICER_LIB] } {
 if {$isWindows} {
     if {![file exists $::CMAKE]} {
         cd $SLICER_HOME
-        runcmd curl -k -O http://www.na-mic.org/Slicer/Download/External/Slicer2.6-Lib-win32.zip
-        runcmd unzip ./Slicer2.6-Lib-win32.zip
+        runcmd curl -k -O http://www.na-mic.org/Slicer/Download/External/Slicer2.7-Lib-win32.zip
+        runcmd unzip ./Slicer2.7-Lib-win32.zip
+        runcmd chmod -R 777 ./Lib/win32/CMake-build/bin
     }
 }
 
+################################################################################
+# If Darwin, don't use cvs compression 
+#
+if {$isDarwin} {
+    set CVS_FLAGS "-d"
+} else {
+    set CVS_FLAGS "-z3 -d"
+}
 
 
 ################################################################################
@@ -239,19 +254,14 @@ if { ![file exists $::CMAKE] } {
 
 
     if {$isWindows} {
-        puts stderr "Slicer2.6-Lib-win32.zip did not download and unzip correctly."
+        puts stderr "Slicer2.7-Lib-win32.zip did not download and unzip correctly."
         exit
     } else {
-        runcmd $::CVS -d :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login
-        runcmd $::CVS -z3 -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $::CMAKE_TAG CMake
+        eval "runcmd $::CVS $CVS_FLAGS :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login"
+        eval "runcmd $::CVS $CVS_FLAGS :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $::CMAKE_TAG CMake"
 
         cd $::CMAKE_PATH
-        if { $isSolaris } {
-            # make sure to pick up curses.h in /local/os/include
-            runcmd $SLICER_LIB/CMake/bootstrap --init=$SLICER_HOME/Scripts/spl.cmake.init
-        } else {
-            runcmd $SLICER_LIB/CMake/bootstrap
-        } 
+        runcmd $SLICER_LIB/CMake/bootstrap
         eval runcmd $::MAKE
     }
 }
@@ -265,15 +275,15 @@ if { ![file exists $::CMAKE] } {
 if { ![file exists $::TCL_TEST_FILE] } {
 
     if {$isWindows} {
-        puts stderr "Slicer2.6-Lib-win32.zip did not download and unzip correctly."
+        puts stderr "Slicer2.7-Lib-win32.zip did not download and unzip correctly."
         exit
     }
 
     file mkdir $SLICER_LIB/tcl
     cd $SLICER_LIB/tcl
 
-    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TCL_TAG tcl
+    eval "runcmd $::CVS $CVS_FLAGS :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login"
+    eval "runcmd $::CVS $CVS_FLAGS :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TCL_TAG tcl"
 
     if {$isWindows} {
         # can't do windows
@@ -289,8 +299,8 @@ if { ![file exists $::TCL_TEST_FILE] } {
 if { ![file exists $::TK_TEST_FILE] } {
     cd $SLICER_LIB/tcl
 
-    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TK_TAG tk
+    eval "runcmd $::CVS $CVS_FLAGS :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login"
+    eval "runcmd $::CVS $CVS_FLAGS :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TK_TAG tk"
 
     if {$isDarwin} {
         if { ![file exists $SLICER_HOME/isPatched] } {
@@ -322,8 +332,8 @@ if { ![file exists $::TK_TEST_FILE] } {
 if { ![file exists $::ITCL_TEST_FILE] } {
     cd $SLICER_LIB/tcl
 
-    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::ITCL_TAG incrTcl
+    eval "runcmd $::CVS $CVS_FLAGS :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login"
+    eval "runcmd $::CVS $CVS_FLAGS :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::ITCL_TAG incrTcl"
 
     cd $SLICER_LIB/tcl/incrTcl
 
@@ -347,8 +357,8 @@ if { ![file exists $::ITCL_TEST_FILE] } {
 if { ![file exists $::IWIDGETS_TEST_FILE] } {
     cd $SLICER_LIB/tcl
 
-    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::IWIDGETS_TAG iwidgets
+    eval "runcmd $::CVS $CVS_FLAGS :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login"
+    eval "runcmd $::CVS $CVS_FLAGS :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::IWIDGETS_TAG iwidgets"
 
 
     if {$isWindows} {
@@ -371,8 +381,8 @@ if { ![file exists $::IWIDGETS_TEST_FILE] } {
 if { ![file exists $::BLT_TEST_FILE] } {
     cd $SLICER_LIB/tcl
     
-    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co -r $::BLT_TAG blt 
+    eval "runcmd $::CVS $CVS_FLAGS :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login"
+    eval "runcmd $::CVS $CVS_FLAGS :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co -r $::BLT_TAG blt"
 
     if { $isWindows } {
         # can't do Windows
@@ -411,8 +421,8 @@ if { ![file exists $::BLT_TEST_FILE] } {
 if { ![file exists $::VTK_TEST_FILE] } {
     cd $SLICER_LIB
 
-    runcmd $::CVS -d :pserver:anonymous:vtk@public.kitware.com:/cvsroot/VTK login
-    runcmd $::CVS -z3 -d :pserver:anonymous@public.kitware.com:/cvsroot/VTK checkout -r $::VTK_TAG VTK
+    eval "runcmd $::CVS $CVS_FLAGS :pserver:anonymous:vtk@public.kitware.com:/cvsroot/VTK login"
+    eval "runcmd $::CVS $CVS_FLAGS :pserver:anonymous@public.kitware.com:/cvsroot/VTK checkout -r $::VTK_TAG VTK"
 
     # Andy's temporary hack to get around wrong permissions in VTK cvs repository
     # catch statement is to make file attributes work with RH 7.3
@@ -462,6 +472,30 @@ if { ![file exists $::VTK_TEST_FILE] } {
             -DCMAKE_MODULE_LINKER_FLAGS:STRING=-L/usr/X11R6/lib64 \
             -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
             ../VTK
+    } elseif { $isDarwin } {
+        set OpenGLString "-framework OpenGL;/usr/X11R6/lib/libGL.dylib"
+        runcmd $::CMAKE \
+            -G$GENERATOR \
+            -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
+            -DBUILD_SHARED_LIBS:BOOL=ON \
+            -DCMAKE_SKIP_RPATH:BOOL=ON \
+            -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
+            -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
+            -DBUILD_TESTING:BOOL=OFF \
+            -DVTK_USE_CARBON:BOOL=OFF \
+            -DVTK_USE_X:BOOL=ON \
+            -DVTK_WRAP_TCL:BOOL=ON \
+            -DVTK_USE_HYBRID:BOOL=ON \
+            -DVTK_USE_PATENTED:BOOL=ON \
+            -DOPENGL_INCLUDE_DIR:PATH=/usr/X11R6/include \
+            -DTCL_INCLUDE_PATH:PATH=$TCL_INCLUDE_DIR \
+            -DTK_INCLUDE_PATH:PATH=$TCL_INCLUDE_DIR \
+            -DTCL_LIBRARY:FILEPATH=$::VTK_TCL_LIB \
+            -DTK_LIBRARY:FILEPATH=$::VTK_TK_LIB \
+            -DTCL_TCLSH:FILEPATH=$::VTK_TCLSH \
+            -DOPENGL_gl_LIBRARY:STRING=$OpenGLString \
+            $USE_VTK_ANSI_STDLIB \
+            ../VTK
     } else {
         runcmd $::CMAKE \
             -G$GENERATOR \
@@ -486,12 +520,12 @@ if { ![file exists $::VTK_TEST_FILE] } {
     }
 
 
-    if { $isDarwin } {
-        # Darwin will fail on the first make, then succeed on the second
-        catch "eval runcmd $::MAKE"
-        set OpenGLString "-framework OpenGL -lgl"
-        runcmd $::CMAKE -G$GENERATOR -DOPENGL_gl_LIBRARY:STRING=$OpenGLString -DVTK_USE_SYSTEM_ZLIB:BOOL=ON ../VTK
-    }
+    #if { $isDarwin } {
+    #    # Darwin will fail on the first make, then succeed on the second
+    #    catch "eval runcmd $::MAKE"
+    #    set OpenGLString "-framework OpenGL;/usr/X11R6/lib/libGL.dylib"
+    #    runcmd $::CMAKE -G$GENERATOR -DOPENGL_gl_LIBRARY:STRING=$OpenGLString -DVTK_USE_SYSTEM_ZLIB:BOOL=ON ../VTK
+    #}
     
     if { $isWindows } {
         if { $MSVC6 } {
@@ -512,8 +546,8 @@ if { ![file exists $::VTK_TEST_FILE] } {
 if { ![file exists $::TEEM_TEST_FILE] } {
     cd $SLICER_LIB
 
-    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login 
-    runcmd $::CVS -z3 -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TEEM_TAG teem
+    eval "runcmd $::CVS $CVS_FLAGS :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login"
+    eval "runcmd $::CVS $CVS_FLAGS :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TEEM_TAG teem"
 
     file mkdir $SLICER_LIB/teem-build
     cd $SLICER_LIB/teem-build
@@ -540,6 +574,8 @@ if { ![file exists $::TEEM_TEST_FILE] } {
         }
     }
 
+    # if VTK 4
+    if { $::VTK_TAG == "Slicer-2-6" } {
     runcmd $::CMAKE \
         -G$GENERATOR \
         -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
@@ -556,6 +592,27 @@ if { ![file exists $::TEEM_TEST_FILE] } {
         -DTEEM_PNG_DLLCONF_IPATH:PATH=$::SLICER_LIB/VTK-build/Utilities/png \
         -DPNG_LIBRARY:FILEPATH=$::SLICER_LIB/VTK-build/bin/$::VTK_BUILD_SUBDIR/$png \
         ../teem
+    } else {
+    # else try building with flags for VTK-5-0 or HEAD
+    runcmd $::CMAKE \
+        -G$GENERATOR \
+        -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
+        -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+        $C_FLAGS \
+        -DBUILD_SHARED_LIBS:BOOL=ON \
+        -DBUILD_TESTING:BOOL=OFF \
+        -DTEEM_ZLIB:BOOL=ON \
+        -DTEEM_PNG:BOOL=ON \
+        -DTEEM_VTK_MANGLE:BOOL=ON \
+        -DTEEM_VTK_TOOLKITS_IPATH:FILEPATH=$::SLICER_LIB/VTK-build \
+        -DZLIB_INCLUDE_DIR:PATH=$::SLICER_LIB/VTK/Utilities/vtkzlib \
+        -DTEEM_ZLIB_DLLCONF_IPATH:PATH=$::SLICER_LIB/VTK-build/Utilities \
+        -DZLIB_LIBRARY:FILEPATH=$::SLICER_LIB/VTK-build/bin/$::VTK_BUILD_SUBDIR/$zlib \
+        -DPNG_PNG_INCLUDE_DIR:PATH=$::SLICER_LIB/VTK/Utilities/vtkpng \
+        -DTEEM_PNG_DLLCONF_IPATH:PATH=$::SLICER_LIB/VTK-build/Utilities \
+        -DPNG_LIBRARY:FILEPATH=$::SLICER_LIB/VTK-build/bin/$::VTK_BUILD_SUBDIR/$png \
+        ../teem
+    }
 
     if {$isWindows} {
         if { $MSVC6 } {
@@ -576,8 +633,8 @@ if { ![file exists $::TEEM_TEST_FILE] } {
 if { ![file exists $::ITK_TEST_FILE] } {
     cd $SLICER_LIB
 
-    runcmd $::CVS -d :pserver:anoncvs:@www.vtk.org:/cvsroot/Insight login
-    runcmd $::CVS -z3 -d :pserver:anoncvs@www.vtk.org:/cvsroot/Insight checkout -r $::ITK_TAG Insight
+    eval "runcmd $::CVS $CVS_FLAGS :pserver:anoncvs:@www.vtk.org:/cvsroot/Insight login"
+    eval "runcmd $::CVS $CVS_FLAGS :pserver:anoncvs@www.vtk.org:/cvsroot/Insight checkout -r $::ITK_TAG Insight"
 
     file mkdir $SLICER_LIB/Insight-build
     cd $SLICER_LIB/Insight-build
@@ -614,7 +671,14 @@ if { ![file exists $::ITK_TEST_FILE] } {
 if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FILE] } {
     cd $SLICER_LIB
 
+    # switching to new url
+    if { [file exists NAMICSandBox] } {
+        cd NAMICSandBox
+        runcmd $::SVN switch --relocate $::OLD_SANDBOX_TAG $::SANDBOX_TAG
+        cd ..
+    }
     runcmd $::SVN checkout $::SANDBOX_TAG NAMICSandBox 
+
 
     file mkdir $SLICER_LIB/NAMICSandBox-build
     cd $SLICER_LIB/NAMICSandBox-build
@@ -673,6 +737,10 @@ if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FI
             # this one in independent
             cd $SLICER_LIB/NAMICSandBox-build/Distributions
             runcmd $::MAKE Distributions.SLN /build  $::VTK_BUILD_TYPE
+
+            # building SlicerIO
+            cd $SLICER_LIB/NAMICSandBox-build/SlicerIO
+            runcmd $::MAKE SlicerIO.SLN /build  $::VTK_BUILD_TYPE
         }
     } else {
 
@@ -687,6 +755,8 @@ if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FI
         cd $SLICER_LIB/NAMICSandBox-build/SlicerTractClusteringImplementation   
         eval runcmd $::MAKE 
         cd $SLICER_LIB/NAMICSandBox-build/Distributions
+        eval runcmd $::MAKE
+        cd $SLICER_LIB/NAMICSandBox-build/SlicerIO
         eval runcmd $::MAKE
         cd $SLICER_LIB/NAMICSandBox-build
     }

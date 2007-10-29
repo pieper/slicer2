@@ -65,16 +65,23 @@ if {![info exists ::env(SLICER_CUSTOM_CONFIG)]} {
 if {$::env(SLICER_CUSTOM_CONFIG) != "true"} {
     set bypass_msg "\n\n(Set environment variable SLICER_CUSTOM_CONFIG to true to bypass this message)"
 }
+
 # The environment variables that we need to have set for slicer 
 # to start up properly
 set envVars {VTK_DIR VTK_BUILD_SUBDIR VTK_SRC_DIR KWWIDGETS_DIR ITK_BINARY_PATH SANDBOX_BIN_DIR TCL_BIN_DIR TCL_LIB_DIR SOV_BINARY_DIR TEEM_BIN_DIR}
 # Make up a list of the environment variables that haven't been set already,
 # that we need to set
 set envVarsToSet {}
-foreach v $envVars {
-    if {![info exists ::env($v)] || $::env($v) == "" } {
-        lappend envVarsToSet $v
+if {$::env(SLICER_CUSTOM_CONFIG)} {
+    # only set the ones that aren't set
+    foreach v $envVars {
+        if {![info exists ::env($v)] || $::env($v) == "" } {
+            lappend envVarsToSet $v
+        }
     }
+} else {
+    # if the user is not running a custom configuration set all vars
+    set envVarsToSet $envVars
 }
 
 # Source the local variables file, if it exists, or set defaults here
@@ -97,7 +104,7 @@ if {[catch {
         puts stderr "LD_LIBRARY_PATH is an empty string."
         set ::env(LD_LIBRARY_PATH) " " 
     }} ex]} {
-    if { $::env(BUILD) != $windows && $::env(BUILD) != $darwin } {
+    if { $::env(BUILD) != $windows && $::env(BUILD) != $darwin && $::env(BUILD) != $darwin_x86 } {
         puts "Setting LD_LIBRARY_PATH to \" \"."  
         puts "Warning: You may need to set your LD_LIBRARY_PATH environment variable to pick up system libraries such as libstdc++.so"
     }
@@ -113,7 +120,7 @@ if {[catch {
 }
 
 # if it is an empty string or doesn't exist, set the DYLD_LIBRARY_PATH 
-if { $::env(BUILD) == $darwin && [catch {
+if { ($::env(BUILD) == $darwin || $::env(BUILD) == $darwin_x86) && [catch {
     if {$::env(DYLD_LIBRARY_PATH) == ""} { 
         set ::env(DYLD_LIBRARY_PATH) " " 
     }} ex]} {
@@ -140,6 +147,8 @@ foreach v $envVars {
         # it's already been set, don't over-ride
         puts stderr "NOT Overriding current $v $::env($v)"
         if {$::env(SLICER_CUSTOM_CONFIG) != "true"} {
+            # this shouldn't print out anymore, because above we put all the envVars in envVarsToSet 
+            # if the custom config env var isn't true
             tk_messageBox -type ok -message "NOT Overriding current $v $::env($v) $bypass_msg"
         }
     }
@@ -151,7 +160,12 @@ foreach v $envVars {
 #
 #
 # set the base library paths for this build 
-# 
+#
+if { ![info exists ::env(PATH)] } {
+    puts "Your PATH variable is not set.  Exiting."
+    exit
+}
+ 
 if {$::env(BUILD) == $solaris ||
     $::env(BUILD) == $linux_64 || 
     $::env(BUILD) == $linux} {
@@ -166,7 +180,8 @@ if {$::env(BUILD) == $solaris ||
         set ::env(LD_LIBRARY_PATH) $::env(TCL_LIB_DIR):$::env(LD_LIBRARY_PATH)
         set ::env(LD_LIBRARY_PATH) $::env(TCL_BIN_DIR):$::env(LD_LIBRARY_PATH)
         set ::env(LD_LIBRARY_PATH) $::env(TEEM_BIN_DIR):$::env(LD_LIBRARY_PATH)
-    } elseif {$::env(BUILD) ==  $darwin} { 
+        set ::env(PATH) $::env(TEEM_BIN_DIR):$::env(PATH)
+    } elseif {$::env(BUILD) ==  $darwin ||$::env(BUILD) == $darwin_x86} { 
         # add vtk, slicer, and tcl bins
         set ::env(DYLD_LIBRARY_PATH) $::env(VTK_DIR)/bin:$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(KWWIDGETS_DIR)/bin:$::env(DYLD_LIBRARY_PATH)
@@ -178,7 +193,7 @@ if {$::env(BUILD) == $solaris ||
         set ::env(DYLD_LIBRARY_PATH) $::env(TCL_LIB_DIR):$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(TCL_BIN_DIR):$::env(DYLD_LIBRARY_PATH)
         set ::env(DYLD_LIBRARY_PATH) $::env(TEEM_BIN_DIR):$::env(DYLD_LIBRARY_PATH)
-#        set ::env(BLT_LIBRARY) $::env(TCL_LIB_DIR)/blt2.4
+        set ::env(PATH) $::env(TEEM_BIN_DIR):$::env(PATH)
     } elseif {$::env(BUILD) == $windows} {
         # add vtk, slicer, and tcl bins
         set ::env(Path) $::env(VTK_DIR)/bin/$::env(VTK_BUILD_SUBDIR)\;$::env(Path)
@@ -208,6 +223,7 @@ set ::env(TK_LIBRARY) $::env(TCL_LIB_DIR)/tk8.4
 if {$::env(BUILD) == $solaris || 
     $::env(BUILD) == $linux ||
     $::env(BUILD) == $linux_64 ||
+    $::env(BUILD) == $darwin_x86 ||
     $::env(BUILD) == $darwin} {
         set ::env(TCLLIBPATH) "$::env(VTK_DIR)/Wrapping/Tcl $::env(TCLLIBPATH)"
         set ::env(TCLLIBPATH) "$::env(KWWIDGETS_DIR)/Wrapping/Tcl $::env(TCLLIBPATH)"
@@ -264,7 +280,7 @@ foreach modulePath $modulePaths {
                 $::env(BUILD) == $linux} {
                 set ::env(LD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$::env(BUILD)/bin:$::env(LD_LIBRARY_PATH)
                 set ::env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $::env(TCLLIBPATH)"
-            } elseif {$::env(BUILD) == $darwin} {
+            } elseif {$::env(BUILD) == $darwin || $::env(BUILD) == $darwin_x86} {
                 set ::env(DYLD_LIBRARY_PATH) ${modulePath}/$moduleName/builds/$::env(BUILD)/bin:$::env(DYLD_LIBRARY_PATH)
                 set ::env(TCLLIBPATH) "${modulePath}/$moduleName/Wrapping/Tcl $::env(TCLLIBPATH)"
             } elseif {$::env(BUILD) == $windows} {
@@ -279,7 +295,7 @@ foreach modulePath $modulePaths {
 }
 
 
-if { $::env(BUILD) == $darwin } {
+if { $::env(BUILD) == $darwin || $::env(BUILD) == $darwin_x86 } {
     # vtk uses the LD_ version to do it's own search for what to load
     # so need to set this even though MAC OSX uses the DYLD_ version
     set ::env(LD_LIBRARY_PATH) $::env(DYLD_LIBRARY_PATH)
@@ -348,11 +364,12 @@ if { [string match *.tcl $argv0] } {
 if { $::BATCH == "true" } {
     if {$::env(BUILD) == $solaris || 
         $::env(BUILD) == $darwin ||
+        $::env(BUILD) == $darwin_x86 ||
         $::env(BUILD) == $linux ||
         $::env(BUILD) == $linux_64} {
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix
         regsub -all "{|}" $argv "\\\"" argv
-        set ret [catch "exec $::env(VTK_DIR)/bin/vtk \"$mainscript\" $argv" res]
+        set ret [catch "exec $::env(VTK_DIR)/bin/vtk \"$mainscript\" $argv |& cat" res]
     } elseif {$::env(BUILD) == $windows} {
         regsub -all "{|}" $argv "" argv
         puts "exec \"$::env(TCL_BIN_DIR)/wish84.exe\" \"$mainscript\" $argv" 
@@ -361,10 +378,22 @@ if { $::BATCH == "true" } {
         puts stderr "Run: Unknown build: $::env(BUILD)"
         exit -1
     }
-    
+
     # get the actual exit code of the child process
-    set code [lindex $::errorCode 2]
+    if { $::errorCode == "NONE" } {
+        set code 0
+    } else {
+        set code [lindex $::errorCode 2]
+    }
     # print the stdout/stderr of the child
+
+    # if the errorCode is not an integer value, set it to 1.
+    if { ![string is integer -strict $code] } {
+        puts "errorCode is: $code"
+        set code 1
+        puts "Non-integer error code returned, setting to 1"
+    }
+    
     puts stdout $res
     # exit with the status
     if { $ret } {
@@ -406,6 +435,7 @@ set argv $newargv
 
 if {$::env(BUILD) == $solaris || 
     $::env(BUILD) == $darwin ||
+    $::env(BUILD) == $darwin_x86 ||
     $::env(BUILD) == $linux_64 ||
     $::env(BUILD) == $linux} {
         # - need to run the specially modified tcl interp in the executable 'vtk' on unix

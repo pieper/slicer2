@@ -6,8 +6,8 @@
 # 
 #  Program:   3D Slicer
 #  Module:    $RCSfile: Go.tcl,v $
-#  Date:      $Date: 2006/07/07 17:18:21 $
-#  Version:   $Revision: 1.107.2.4.2.3 $
+#  Date:      $Date: 2007/10/29 15:01:12 $
+#  Version:   $Revision: 1.107.2.4.2.4 $
 #===============================================================================
 # FILE:        Go.tcl
 # PROCEDURES:  
@@ -75,7 +75,7 @@ set ::SLICER(major_version) 2
 
 # bump minor when features accumulate to a stable state for release
 
-set ::SLICER(minor_version) 6
+set ::SLICER(minor_version) 7
 
 # bump revision for something that has been given out to non-developers
 # (e.g. bump revsion before packaging, then again after packaging
@@ -88,7 +88,11 @@ set ::SLICER(revision) ""
 # when packaging a release for testing, set state to the date as "-YYYY-MM-DD"
 #  otherwise leave it as "-dev"
 
-set ::SLICER(state) "-opt"
+if {$::env(VTK_BUILD_TYPE) == "Release"} {
+    set ::SLICER(state) "-opt"
+} else {
+    set ::SLICER(state) "-dev"
+}
 
 set ::SLICER(version) "$::SLICER(major_version).$::SLICER(minor_version)$::SLICER(revision)$::SLICER(state)"
 
@@ -109,7 +113,7 @@ set ::SLICER(version) "$::SLICER(major_version).$::SLICER(minor_version)$::SLICE
 proc Usage { {msg ""} } {
     global SLICER
     
-    set msg "$msg\nusage: slicer2-<arch> \[options\] \[MRML file name .xml | dir with MRML file\]"
+    set msg "$msg\nusage: slicer2-<arch> \[options\] \[MRML file name .xml | dir with MRML file | tcl script\]"
     set msg "$msg\n  <arch> is one of win32.exe, solaris-sparc, or linux-x86"
     set msg "$msg\n  \[options\] is one of the following:"
     set msg "$msg\n   --help : prints this message and exits"
@@ -121,12 +125,14 @@ proc Usage { {msg ""} } {
     set msg "$msg\n   --load-freesurfer-label-volume <COR-.info> : read freesurfer label files"
     set msg "$msg\n   --load-freesurfer-model <file> : read freesurfer model file"
     set msg "$msg\n   --load-freesurfer-scalar <file> : read a freesurfer scalar file for the active model"
+    set msg "$msg\n   --load-freesurfer-annot <file> : read a freesurfer annotation file for the active model"
     set msg "$msg\n   --load-freesurfer-qa <file> : read freesurfer QA subjects.csh file"
     set msg "$msg\n   --load-bxh <file.bxh> : read bxh file from <file.bxh>"
     set msg "$msg\n   --script <file.tcl> : script to execute after slicer loads"
     set msg "$msg\n   --exec <tcl code> : some code to execute after slicer loads"
     set msg "$msg\n                       (note: cannot specify scene after --exec)"
     set msg "$msg\n                       (note: use ,. instead of ; between tcl statements)"
+    set msg "$msg\n   --eval <tcl code> : like --exec, but doesn't load slicer first"
     set msg "$msg\n   --all-info : print out all of the version info and continue"
     set msg "$msg\n   --enable-stereo : set the flag to allow use of frame sequential stereo"
     set msg "$msg\n   --old-voxel-shift : start slicer with voxel coords in corner not center of image pixel"
@@ -150,10 +156,12 @@ set ::SLICER(load-freesurfer-volume) ""
 set ::SLICER(load-freesurfer-label-volume) ""
 set ::SLICER(load-freesurfer-model) ""
 set ::SLICER(load-freesurfer-scalar) ""
+set ::SLICER(load-freesurfer-annot) ""
 set ::SLICER(load-freesurfer-qa) ""
 set ::SLICER(load-bxh) ""
 set ::SLICER(script) ""
 set ::SLICER(exec) ""
+set ::SLICER(eval) ""
 set ::SLICER(versionInfo) ""
 # these scripts will be evaluated after Slicer is done booting up
 set ::SLICER(utilScripts) ""
@@ -230,6 +238,14 @@ for {set i 0} {$i < $argc} {incr i} {
                 lappend ::SLICER(load-freesurfer-scalar) [lindex $argv $i]
             }
         }
+        "--load-freesurfer-annot" {
+            incr i
+            if { $i == $argc } {
+                Usage "missing argument for $a\n"
+            } else {
+                lappend ::SLICER(load-freesurfer-annot) [lindex $argv $i]
+            }
+        }
         "--load-freesurfer-qa" {
             incr i
             if { $i == $argc } {
@@ -279,8 +295,31 @@ for {set i 0} {$i < $argc} {incr i} {
                 }
                 # allow a ".," to mean ";" in argument to facilitate scripting
                 # (it looks like a semicolon turned on it side
-                regsub -all ".," $::SLICER(exec) ";" ::SLICER(exec)
-                regsub -all ",." $::SLICER(exec) ";" ::SLICER(exec)
+                regsub -all {\.,} $::SLICER(exec) ";" ::SLICER(exec)
+                regsub -all {,\.} $::SLICER(exec) ";" ::SLICER(exec)
+            }
+        }
+        "--eval*" {
+            set embeddedarg ""
+            scan $a "--eval%s" embeddedarg
+            set ::SLICER(eval) "$::SLICER(eval) $embeddedarg"
+            incr i
+            if { $i == $argc && $embeddedarg == ""} {
+                Usage "missing argument for $a\n"
+            } else {
+                while { $i < $argc } {
+                    set term [lindex $argv $i]
+                    if { [string match "--*" $term] } {
+                        break
+                    } else {
+                        set ::SLICER(eval) "$::SLICER(eval) $term"
+                        incr i
+                    } 
+                }
+                # allow a ".," to mean ";" in argument to facilitate scripting
+                # (it looks like a semicolon turned on it side
+                regsub -all {\.,} $::SLICER(eval) ";" ::SLICER(eval)
+                regsub -all {,\.} $::SLICER(eval) ";" ::SLICER(eval)
             }
         }
         "--all-info" {
@@ -370,17 +409,17 @@ proc SplashRaise {} {
     }
     if {[lsearch $winlist ".__tk_*"] != -1} {
         # message is up, don't raise it now, but try later
-        # after 100 "after idle SplashRaise"
+        after 100 "after idle SplashRaise"
     } elseif {[winfo exists .splash]} {
         raise .splash
-
+    
         # and keep the focus on it so that it captures key presses
         focus .splash
 
         if {[grab current .splash] == ""} {
             # do a local grab so that all mouse clicks will go into the 
             # splash screen and not queue up while it's up. 
-            grab set .splash
+            catch {grab set .splash}
             update idletasks
         }
         after 100 "after idle SplashRaise"
@@ -403,15 +442,15 @@ proc SplashKill {} {
     # clear out the event queue
     update
 
+    # because this is called from bgerror, don't cause any errors 
     if {[info command .splash] != ""} {
         # release the grab
         grab release .splash
-        catch "destroy .splash" 
+        destroy .splash
     }
-
-    if {[info exists splashim] } {
-        if { [lsearch [image names] $splashim] != -1} { 
-            catch "image delete $splashim"
+    if { [info exists splasim] } {
+        if { [lsearch [image names] $splashim] != -1 } {
+            image delete $splashim
         }
     }
 }
@@ -455,7 +494,13 @@ proc SplashShow { {delayms 7000} } {
     tk scaling $oscaling
 }
 
-SplashShow
+
+#
+# put up the splash screen, but only if the rest of the interface is going to come up
+#
+if { $::SLICER(eval) == "" && $::SLICER(exec) == "" && $::SLICER(script) == "" } {
+    SplashShow
+}
 
 
 #
@@ -464,14 +509,32 @@ SplashShow
 if { $::SLICER(tkcon) == "true" } { 
     set av $argv; set argv "" ;# keep tkcon from trying to interpret command line args
     source $prog/tkcon.tcl
-    ::tkcon::Init
+    if { ![winfo exists .tkcon] } {
+        ::tkcon::Init -root .tkcon
+    }
     tkcon attach main
     wm geometry .tkcon +10-90
     set argv $av
 }
 
-raise .splash
+SplashRaise
 update
+
+#
+# eval
+# - allows you to invoke entry points into applications that use slicer packages
+#   and the boot process, but don't use the slicer interface
+# - take tcl code from the command line and evaluate it before slicer starts up
+# - if the global eval_finished variable is set before exit is called, the script will continue
+#   and slicer will boot.  
+#   If exit is called, slicer will quit without running the interface
+#
+if { $::SLICER(eval) != "" } {
+    SplashKill
+    eval $::SLICER(eval)
+    set ::eval_finished 0
+    vwait ::eval_finished 
+}
 
 
 #
@@ -932,7 +995,7 @@ if { $::SLICER(versionInfo) != "" } {
         catch "vtkitkver Delete"
     }
     set libVersions "LibName: VTK LibVersion: ${vtkVersion} LibName: TCL LibVersion: ${tcl_patchLevel} LibName: TK LibVersion: ${tk_patchLevel} LibName: ITK LibVersion: ${itkVersion}"
-    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.107.2.4.2.3 2006/07/07 17:18:21 hliu Exp $}] "
+    set SLICER(versionInfo) "$SLICER(versionInfo)  Version: $SLICER(version) CompilerName: ${compilerName} CompilerVersion: $compilerVersion ${libVersions} CVS: [ParseCVSInfo "" {$Id: Go.tcl,v 1.107.2.4.2.4 2007/10/29 15:01:12 hliu Exp $}] "
     puts "$SLICER(versionInfo)"
 }
 
@@ -1006,6 +1069,18 @@ foreach arg $::SLICER(load-freesurfer-scalar) {
         break
     }
     vtkFreeSurferReadersLoadScalarFile $arg
+    Render3D
+}
+
+#
+# read freesurfer annotation command, gets associated with the active (last loaded) model
+#
+foreach arg $::SLICER(load-freesurfer-annot) {
+    if { [catch "package require vtkFreeSurferReaders"] } {
+        DevErrorWindow "vtkFreeSurferReaders Module required for --load-freesufer-annot option."
+        break
+    }
+    vtkFreeSurferReadersLoadAnnotationFile $arg
     Render3D
 }
 

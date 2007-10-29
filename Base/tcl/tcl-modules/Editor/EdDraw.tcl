@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EdDraw.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:41 $
-#   Version:   $Revision: 1.35.2.1 $
+#   Date:      $Date: 2007/10/29 15:02:55 $
+#   Version:   $Revision: 1.35.2.1.2.1 $
 # 
 #===============================================================================
 # FILE:        EdDraw.tcl
@@ -74,10 +74,11 @@ proc EdDrawBuildGUI {} {
     frame $f.fGrid    -bg $Gui(activeWorkspace)
     frame $f.fBtns    -bg $Gui(activeWorkspace)
     frame $f.fApply   -bg $Gui(activeWorkspace)
+    frame $f.fStats   -bg $Gui(activeWorkspace)
     frame $f.fToggle  -bg $Gui(activeWorkspace)
     pack $f.fGrid $f.fBtns $f.fMode $f.fDelete $f.fRender $f.fApply\
         -side top -pady 2 -fill x
-    pack $f.fToggle -side bottom -pady 4 -fill x
+    pack $f.fStats $f.fToggle -side bottom -pady 4 -fill x
     
     EdBuildRenderGUI $Ed(EdDraw,frame).fRender Ed(EdDraw,render)
 
@@ -127,13 +128,21 @@ proc EdDrawBuildGUI {} {
     eval {entry $f.eName -width 14 \
         -textvariable Label(name)} $Gui(WEA) \
         {-bg $Gui(activeWorkspace) -state disabled}
-    grid $f.bOutput $f.eOutput $f.eName -padx 2 -pady $Gui(pad)
-    grid $f.eOutput $f.eName -sticky w
 
     lappend Label(colorWidgetList) $f.eName
 
+    set Editor(toggleAutoSample) 0
+    eval {checkbutton $f.cAuto -width 4 -indicatoron 0 \
+        -variable Editor(toggleAutoSample) \
+        -text "Auto" } $Gui(WCA) 
+    TooltipAdd  $f.cAuto "Automatically set label value depending on location of first click."
+
+    grid $f.bOutput $f.eOutput $f.eName $f.cAuto -padx 0 -pady $Gui(pad)
+    #grid $f.eOutput $f.eName -sticky w
+
+
     # Radius
-    eval {label $f.lRadius -text "Point Radius:"} $Gui(WLA)
+    eval {label $f.lRadius -text "Pt Radius:"} $Gui(WLA)
     eval {entry $f.eRadius -width 6 \
         -textvariable Ed(EdDraw,radius)} $Gui(WEA)
         bind $f.eRadius <Return> "EdDrawUpdate SetRadius; RenderActive"
@@ -158,6 +167,18 @@ proc EdDrawBuildGUI {} {
     grid $f.bDeleteSel $f.bDeleteAll    -padx $Gui(pad) -pady $Gui(pad)
 
     #-------------------------------------------
+    # Draw->Stats frame
+    #-------------------------------------------
+    set f $Ed(EdDraw,frame).fStats
+    
+    eval {button $f.bStats -width 16 \
+        -text "Label Statistics"  \
+        -command EdDrawStatsDialog} $Gui(WBA) 
+    pack $f.bStats -side top -padx $Gui(pad) -pady $Gui(pad)
+
+    TooltipAdd  $f.bStats "Show dialog with statistics for Original data for each label in Working"
+
+    #-------------------------------------------
     # Draw->Toggle frame
     #-------------------------------------------
     set f $Ed(EdDraw,frame).fToggle
@@ -165,7 +186,7 @@ proc EdDrawBuildGUI {} {
     set Editor(toggleWorking) 0
     eval {checkbutton $f.cW -width 21 -indicatoron 0 \
         -variable Editor(toggleWorking) \
-        -text "peek under labelmap"  \
+        -text "Peek under labelmap"  \
         -command EditorToggleWorking} $Gui(WCA) 
     pack $f.cW -side top -padx $Gui(pad) -pady $Gui(pad)
 
@@ -319,6 +340,12 @@ proc EdDrawUpdate {type} {
         "-" {
             $Ed(EdDraw,frame).fGrid.eOutput delete 0 end
         }
+        "CurrentSample" -
+        "\\\\" {
+            $Ed(EdDraw,frame).fGrid.eOutput delete 0 end
+            $Ed(EdDraw,frame).fGrid.eOutput insert end $::Anno(curForePix)
+            EdDrawLabel
+        }
         SelectAll {
             Slicer DrawSelectAll
             set Ed($e,mode) Move
@@ -360,11 +387,11 @@ proc EdDrawApply { {delete_pending true} } {
  
     # Validate input
     if {[ValidateInt $Label(label)] == 0} {
-        tk_messageBox -message "Output label is not an integer."
+        DevErrorWindow "Output label is not an integer."
         return
     }
     if {[ValidateInt $Ed($e,radius)] == 0} {
-        tk_messageBox -message "Point Radius is not an integer."
+        DevErrorWindow "Point Radius is not an integer."
         return
     }
 
@@ -428,3 +455,118 @@ proc EdDrawApply { {delete_pending true} } {
     EdUpdateAfterApplyEffect $v $Ed($e,render)
 }
 
+#-------------------------------------------------------------------------------
+# .PROC EdDrawStatsDialog
+#   Generate a table of image statistics for current grayscale and labelmap
+#
+# .END
+#-------------------------------------------------------------------------------
+proc EdDrawStatsDialog {} {
+    
+    package require Iwidgets
+
+    set d .edstatsdialog
+    catch "destroy $d"
+    iwidgets::dialogshell $d -title "Label Statistics"
+
+    $d add dismiss -text "Dismiss" -command "$d deactivate"
+    $d default dismiss
+     
+    #
+    # Add something to the top of the dialog...
+    #
+    set win [$d childsite]
+    iwidgets::scrolledtext $win.text -labeltext "Statistics: " -wrap none \
+        -vscrollmode dynamic -hscrollmode dynamic \
+        -width 5i -height 2i
+    pack $win.text -expand true -fill both
+
+    $win.text insert end "Calculating..."
+    update
+    $d activate
+    update
+
+    set stats [EdDrawLabelStats]
+    
+    $win.text clear
+    $win.text insert end "Label\tMin\tMax\tCount\tMean\tStdDev\n"
+    foreach l $stats {
+        array set s $l
+        $win.text insert end "$s(label)\t$s(min)\t$s(max)\t$s(voxelcount)\t$s(mean)\t$s(std)\n"
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC EdDrawLabelStats
+#   calculate the contents of the stats dialog
+#
+# .END
+#-------------------------------------------------------------------------------
+proc EdDrawLabelStats {} {
+
+    set labeldata [Volume($::Editor(idWorking),vol) GetOutput] 
+    catch "stataccum Delete"
+    vtkImageAccumulate stataccum
+    stataccum SetInput $labeldata
+    stataccum Update
+    set lo [lindex [stataccum GetMin] 0]
+    set hi [lindex [stataccum GetMax] 0]
+    catch "stataccum Delete"
+
+    set statlist ""
+
+    for {set label $lo} {$label <= $hi} {incr label} {
+        ## logic copied from VolumeMath MaskStat
+        # create the binary volume of the label catch "editorThresh Delete"
+        catch "editorThresh Delete"
+        vtkImageThreshold editorThresh
+        editorThresh SetInput $labeldata
+        editorThresh SetInValue 1
+        editorThresh SetOutValue 0
+        editorThresh ReplaceOutOn
+        editorThresh ThresholdBetween $label $label
+        editorThresh SetOutputScalarType [[Volume($::Editor(idOriginal),vol) GetOutput] GetScalarType]
+        
+        # set up the VolumeMath Mask
+        catch "MultMath Delete"
+        vtkImageMathematics MultMath
+        MultMath SetInput1 [Volume($::Editor(idOriginal),vol) GetOutput]
+        MultMath SetInput2 [editorThresh GetOutput]
+        MultMath SetOperationToMultiply
+
+        # start copying in the ouput data.
+        # taken from MainVolumesCopyData
+        [MultMath GetOutput] Update
+
+        # use vtk's statistics class with the labelmap as a stencil
+        catch "stencil Delete"
+        vtkImageToImageStencil stencil
+        stencil SetInput [editorThresh GetOutput]
+        stencil ThresholdBetween 1 1
+
+        catch "stat1 Delete"
+        vtkImageAccumulate stat1
+        stat1 SetInput [Volume($::Editor(idOriginal),vol) GetOutput]
+        stat1 SetStencil [stencil GetOutput]
+        stat1 Update
+
+        stencil Delete
+
+        if { [stat1 GetVoxelCount] > 0 } {
+            lappend statlist [list \
+                    label $label \
+                    voxelcount [stat1 GetVoxelCount] \
+                    min [lindex [stat1 GetMin] 0] \
+                    max [lindex [stat1 GetMax] 0] \
+                    mean [lindex [stat1 GetMean] 0] \
+                    std [lindex [stat1 GetStandardDeviation] 0] ]
+        }
+
+        MultMath Delete
+        editorThresh Delete
+        
+        stat1 Delete
+    }
+
+    return $statlist
+}

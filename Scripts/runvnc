@@ -82,6 +82,7 @@ for {set i 0} {$i < $argc} {incr i} {
             puts stderr "warning: allowing connections from anywhere"
             set AUTHORIZATION "-rfbauth /home/pieper/.vnc/passwd"
         }
+        "--rfbauth" -
         "-rfbauth" {
             incr i
             if { $i == $argc } {
@@ -144,7 +145,7 @@ if { ![file exists "$LOGDIR"] } {
     file mkdir $LOGDIR
 }
 
-set STARTDATE [exec date -Iseconds]
+set STARTDATE [exec date  +%F-%H-%M-%S]
 
 set LOGFILE $LOGDIR/runvnclog-[pid]-$STARTDATE
 
@@ -153,21 +154,22 @@ set LOGFILE $LOGDIR/runvnclog-[pid]-$STARTDATE
 # a full X distribution
 #
 set fparg ""
-set fpdirs {/usr/X11R6/lib/X11/fonts ~/fonts birn/lib/fonts}
+set fpdirs {/usr/X11R6/lib/X11/fonts /usr/share/X11/fonts ~/fonts birn/lib/fonts}
 foreach fpdir $fpdirs {
     if { [file isdirectory $fpdir] } {
         set fparg "/dev/null" ;# start with a dummy for simplicity
         foreach fdir [glob $fpdir/*] {
             set fparg "$fparg,$fdir"
         }
-        break
     }
 }
 
 if { $AUTHORIZATION == "-localhost" } {
-    set vncpid [exec $XVNC :$DISPLAY -fp $fparg -alwaysshared $AUTHORIZATION -depth 32 -geometry 1280x1024 >& $LOGFILE &]
+    # local only - must be accessed through tunneled ssh using vnc command
+    #set vncpid [exec $XVNC :$DISPLAY -fp $fparg -alwaysshared $AUTHORIZATION -rfbauth $RFBAUTH -depth 32 -geometry 1280x1024 >& $LOGFILE &]
+    set vncpid [exec $XVNC :$DISPLAY -fp $fparg -alwaysshared $AUTHORIZATION -rfbauth $RFBAUTH -geometry 1280x1024 -depth 16  -log *:stderr:100 >& $LOGFILE &]
 } else {
-    # TODO - pass the passwd file in on the command line
+    # not-secure mode - uses vnc passwords and supports java/browser connections
     set vncpid [exec $XVNC :$DISPLAY -fp $fparg -alwaysshared -rfbauth $RFBAUTH -rfbwait 2000 -httpd [file dirname [info script]]/vnc-classes -depth 32 -geometry 1280x1024 >& $LOGFILE &]
 }
 
@@ -193,10 +195,11 @@ if { $WM != "" } {
     set wmpid [exec $WM &]
 }
 
+set RETURN_CODE 0
 proc file_event {fp} {
-    global END
+    global END RETURN_CODE
     if {[eof $fp]} {
-        catch "close $fp"
+        set RETURN_CODE [catch "close $fp"]
         set END 1
     } else {
         gets $fp line
@@ -226,5 +229,5 @@ if { $argc > 0 } {
     exec kill $vncpid
 }
 
-exit 0
+exit $RETURN_CODE
 

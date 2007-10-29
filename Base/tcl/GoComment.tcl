@@ -94,6 +94,7 @@ if {$file != ""} {
         }
     }
     }
+
     if {$::doModsFlag == 1} {
         puts "Processing modules..."
         # process files in modules

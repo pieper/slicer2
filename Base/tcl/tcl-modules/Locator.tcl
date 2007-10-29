@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2007/05/08 18:31:56 $
-#   Version:   $Revision: 1.38.12.2.2.26 $
+#   Date:      $Date: 2007/10/29 15:00:23 $
+#   Version:   $Revision: 1.38.12.2.2.27 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -92,7 +92,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.26 $} {$Date: 2007/05/08 18:31:56 $}]
+        {$Revision: 1.38.12.2.2.27 $} {$Date: 2007/10/29 15:00:23 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"

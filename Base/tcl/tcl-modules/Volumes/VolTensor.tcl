@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: VolTensor.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:43 $
-#   Version:   $Revision: 1.11.2.1 $
+#   Date:      $Date: 2007/10/29 15:02:12 $
+#   Version:   $Revision: 1.11.2.1.2.1 $
 # 
 #===============================================================================
 # FILE:        VolTensor.tcl
@@ -289,8 +289,8 @@ proc VolTensorApply {} {
         set dim     [lindex [Volume($i,node) GetDimensions] 0]
         set spacing [lindex [Volume($i,node) GetSpacing] 0]
         set fov     [expr $dim*$spacing]
-        set View(fov) $fov
-        MainViewSetFov
+#        set View(fov) $fov
+        MainViewSetFov "default" $fov
         
         # display the new volume in the background of all slices
         # don't do this in case there are no scalars

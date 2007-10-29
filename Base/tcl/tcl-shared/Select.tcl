@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Select.tcl,v $
-#   Date:      $Date: 2007/07/02 19:42:23 $
-#   Version:   $Revision: 1.14.2.1.2.1 $
+#   Date:      $Date: 2007/10/29 15:00:44 $
+#   Version:   $Revision: 1.14.2.1.2.2 $
 # 
 #===============================================================================
 # FILE:        Select.tcl
@@ -109,9 +109,6 @@ proc SelectBuildGUI {} {
         $Gui(fSl0Win),<KeyPress-p> {addGlyphPoint2D %W 0 %x %y} \
         $Gui(fSl1Win),<KeyPress-p> {addGlyphPoint2D %W 1 %x %y} \
         $Gui(fSl2Win),<KeyPress-p> {addGlyphPoint2D %W 2 %x %y} \
-        $Gui(fSl0Win),<KeyPress-i> {addGlyphPoint2D %W 0 %x %y} \
-        $Gui(fSl1Win),<KeyPress-i> {addGlyphPoint2D %W 1 %x %y} \
-        $Gui(fSl2Win),<KeyPress-i> {addGlyphPoint2D %W 2 %x %y} \
         $Gui(fViewWin),<Shift-Control-1> {selGlyphPoint %W %x %y} \
         $Gui(fViewWin),<Control-2> {selGlyphPoint %W %x %y} \
         $Gui(fViewWin),<KeyPress-q> {selGlyphPoint %W %x %y} \
@@ -254,6 +251,9 @@ proc SelectPick2D { widget x y } {
         scan [Slicer GetWldPoint] "%g %g %g" xRas yRas zRas
         set Select(xyz) "$xRas $yRas $zRas"
         set Select(xy) "$widget $x $y"
+        if {$::Module(verbose)} {
+            puts "SelectPick2d: widget $widget, x $x, y $y -> ras = $Select(xyz)"
+        }
         return 1
     } else {
         return 0

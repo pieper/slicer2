@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainView.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:30 $
-#   Version:   $Revision: 1.53.2.1 $
+#   Date:      $Date: 2007/10/29 14:59:52 $
+#   Version:   $Revision: 1.53.2.1.2.1 $
 # 
 #===============================================================================
 # FILE:        MainView.tcl
@@ -54,14 +54,14 @@ proc MainViewInit {} {
     set Module(View,presets) "viewUp='0 0 1' position='0 750 0' \
 focalPoint='0 0 0' clippingRange='21 2001' \
 viewMode='Normal' viewBgColor='Blue' \
-textureInterpolation='On' textureResolution='512'"
+textureInterpolation='On' textureResolution='512' fov='240.0'"
 
     # The MainViewBuildGUI proc is called specifically
     lappend Module(procVTK)  MainViewBuildVTK
 
     set m MainView
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.53.2.1 $} {$Date: 2005/12/20 22:54:30 $}]
+    {$Revision: 1.53.2.1.2.1 $} {$Date: 2007/10/29 14:59:52 $}]
 
     set View(viewerHeightNormal) 656
     set View(viewerWidth)  956 
@@ -79,7 +79,7 @@ textureInterpolation='On' textureResolution='512'"
     set View(toolbarPosition) Top
     set View(bgColor) ".7 .7 .9"
     set View(bgName) Blue
-    set View(fov) 220.0
+    set View(fov) 240.0
     set View(spin) 0
     set View(rock) 0
     set View(rockLength) 200
@@ -454,15 +454,27 @@ proc MainViewSetTextureInterpolation { {interpolationFlag "On"}} {
 #-------------------------------------------------------------------------------
 # .PROC MainViewSetFov
 # Set the field of view for Slicer object, Anno and Slices.
+# If a new field of view is passed in, only use it if the fov hasn't been changed
+# yet away from the default, or if it has, use it if the new number is greater than the old
 # .ARGS
 # int sceneNum if default, reset the main view's camera, otherwise leave it alone
+# float fov if not changed from default, use View(fov), otherwise use it
 # .END
 #-------------------------------------------------------------------------------
-proc MainViewSetFov { {sceneNum "default"} } {
+proc MainViewSetFov { {sceneNum "default"} {fov -1.0} } {
     global View Gui Slice
 
+    if {$fov != -1.0} {
+         if {$View(fov) == $::Preset(View,default,fov) ||
+             ($View(fov) != $::Preset(View,default,fov) && $fov > $View(fov))} {
+             set View(fov) $fov
+         } else {
+            puts "MainViewSetFov: Not decreasing fov from $View(fov) to $fov"
+         }
+    }
+
     if {$::Module(verbose)} {
-        puts "MainViewSetFov View(fov) = $View(fov)"
+        puts "MainViewSetFov View(fov) = $View(fov), current fov = [Slicer GetFieldOfView], sceneNum = $sceneNum, viewcam position = [$View(viewCam) GetPosition]"
     }
     Slicer SetFieldOfView $View(fov)
     if {$sceneNum == "default"} {
@@ -473,6 +485,7 @@ proc MainViewSetFov { {sceneNum "default"} } {
     # Update slice offset, registration annotation
     MainAnnoSetFov
     MainSlicesSetFov
+
 }
 
 #-------------------------------------------------------------------------------
@@ -870,6 +883,8 @@ proc MainViewStorePresets {p} {
     set Preset(View,$p,textureResolution) $View(textureResolution)
     set Preset(View,$p,textureInterpolation) $View(textureInterpolation)
 
+    set Preset(View,$p,fov) $View(fov)
+
     if {$::Module(verbose)} { puts "Done MainViewStorePresets" }
 
 }
@@ -884,17 +899,23 @@ proc MainViewStorePresets {p} {
 proc MainViewRecallPresets {p} {
     global Preset View
 
-    if {$::Module(verbose)} { puts "Starting MainViewRecallPresets" }
+    if {$::Module(verbose)} { 
+        puts "Starting MainViewRecallPresets" 
+        puts "\tUsing position $Preset(View,$p,position)\n\tviewUp $Preset(View,$p,viewUp)\n\t(current pos = [$View(viewCam) GetPosition], viewUp = [$View(viewCam) GetViewUp]"
+    
+        puts "Setting the view mode first"
+    }
+    eval MainViewerSetMode $Preset(View,$p,viewMode)
+
     eval $View(viewCam) SetPosition      $Preset(View,$p,position)
     eval $View(viewCam) SetViewUp        $Preset(View,$p,viewUp)
     eval $View(viewCam) SetClippingRange $Preset(View,$p,clippingRange)
 
     eval MainViewSetFocalPoint $Preset(View,$p,focalPoint)
-    eval MainViewerSetMode $Preset(View,$p,viewMode)
     eval MainViewSetBackgroundColor $Preset(View,$p,viewBgColor)
 
     if {$::Module(verbose)} { 
-        puts "MainViewRecallPresets $p about to call texture res"
+        puts "\tMainViewRecallPresets $p, after set focal point, about to call texture res View(viewCam) position = [$View(viewCam) GetPosition]"
     }
 
     eval MainViewSetTextureResolution $Preset(View,$p,textureResolution)
@@ -902,6 +923,10 @@ proc MainViewRecallPresets {p} {
     # this call sets it for the slices
     MainViewSetTexture 
 
-    if {$::Module(verbose)} { puts "Done MainViewRecallPresets"}
-
+    if {$::Module(verbose)} {
+        puts "\tMainViewRecallPresets: getting fov preset for $p and setting fov $Preset(View,$p,fov)"
+    }
+    set View(fov) $Preset(View,$p,fov)
+    # pass in the scene id so that MainViewNavReset doesn't get called
+    MainViewSetFov $p
 }

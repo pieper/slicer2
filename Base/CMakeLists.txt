@@ -68,6 +68,7 @@ SET(SLICER_EXECUTABLE "" CACHE STRING "Path to Slicer executable")
 INCLUDE (Dart)
 
 ENABLE_TESTING()
+SUBDIRS(Testing)
 
 ## Add a test to open each xml file in the TestData directory, then
 ## close it.  Test will fail after timeout specified in
@@ -88,10 +89,10 @@ ENABLE_TESTING()
 #ADD_TEST("slicer${testname}" "${SLICER_EXECUTABLE}" --agree_to_license --no-tkcon "${xmlfile}" --exec exit)
 
 # Try to open each xml file
-#FOREACH(xmlfile ${xmlfiles}) 
-#STRING(REGEX REPLACE "/" "_" testname "${xmlfile}")
-#ADD_TEST("slicer-vnc${testname}" "${CTEST_SLICER_HOME}/Scripts/runvnc" "--Xvnc" "${CTEST_XVNC_EXECUTABLE}" "-d" "44" "--not-secure" "--" "${SLICER_EXECUTABLE}" "--agree_to_license" "${xmlfile}" --exec exit)
-#ENDFOREACH(xmlfile)
+FOREACH(xmlfile ${xmlfiles}) 
+STRING(REGEX REPLACE "/" "_" testname "${xmlfile}")
+ADD_TEST("slicer-vnc${testname}" "${CTEST_SLICER_HOME}/Scripts/runvnc" "--Xvnc" "${CTEST_XVNC_EXECUTABLE}" "-d" "44" "--not-secure" "--" "${SLICER_EXECUTABLE}" "--batch" "${xmlfile}" --exec exit)
+ENDFOREACH(xmlfile)
 
 #FOREACH(tclfile ${tclfiles})
 #STRING(REGEX REPLACE "/" "_" dtmritestname "${tclfile}")

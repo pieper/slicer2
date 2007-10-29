@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Volumes.tcl,v $
-#   Date:      $Date: 2006/09/05 20:51:57 $
-#   Version:   $Revision: 1.127.2.1.2.4 $
+#   Date:      $Date: 2007/10/29 15:00:24 $
+#   Version:   $Revision: 1.127.2.1.2.5 $
 # 
 #===============================================================================
 # FILE:        Volumes.tcl
@@ -101,10 +101,16 @@ proc VolumesInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-             {$Revision: 1.127.2.1.2.4 $} {$Date: 2006/09/05 20:51:57 $}]
+                                  {$Revision: 1.127.2.1.2.5 $} {$Date: 2007/10/29 15:00:24 $}]
 
     # Props
-    set Volume(propertyType) VolBasic
+    if { $::env(SLICER_OPTIONS_DEFAULT_FILE_FORMAT) == "nrrd"} {
+        set Volume(defaultFileFormat) VolNrrd
+    } else {
+        set Volume(defaultFileFormat) VolBasic
+    }
+    set Volume(propertyType) $Volume(defaultFileFormat)
+
     # text for menus displayed on Volumes->Props->Header GUI
     set Volume(scalarTypeMenu) "Char UnsignedChar Short UnsignedShort\ 
     {Int} UnsignedInt Long UnsignedLong Float Double"
@@ -239,7 +245,7 @@ acquisition.
 <BR><LI><B>Reformat:</B> this functionality has been removed from this module. Please use the Realign-Resample module to create a matrix from landmarks, and the Transform Volume module to resample a volume given a matrix and scan order.
 "
 
-set reformathelpstring "
+    set reformathelpstring "
 <BR><LI><B> Reformat: </B>
 <BR> You can reformat any 3 slice in any arbitrary orientation or define a new axial,sagittal or coronal orientation.
 <BR> To do that, create and select 3 fiducials that will define the new
@@ -249,7 +255,7 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
 <BR> 
 <BR> If you would like to save a reformatted volume: just select a volume, select the scan order and a location and click save. What this does is it saves new volume files that were created by 'slicing' the original volume with the plane defined in the scan order menu.
 
- "
+"
     regsub -all "\n" $help { } help
     MainHelpApplyTags Volumes $help
     MainHelpBuildGUI  Volumes
@@ -264,9 +270,10 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
     frame $f.fActive    -bg $Gui(backdrop) -relief sunken -bd 2
     frame $f.fWinLvl    -bg $Gui(activeWorkspace) -relief groove -bd 2
     frame $f.fThresh    -bg $Gui(activeWorkspace) -relief groove -bd 2
+    frame $f.fComponent -bg $Gui(activeWorkspace)
     frame $f.fHistogram -bg $Gui(activeWorkspace)
     frame $f.fInterpolate -bg $Gui(activeWorkspace)
-    pack $f.fActive $f.fWinLvl $f.fThresh $f.fHistogram $f.fInterpolate \
+    pack $f.fActive $f.fWinLvl $f.fThresh $f.fComponent $f.fHistogram $f.fInterpolate \
         -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
 
     #-------------------------------------------
@@ -283,7 +290,6 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
     # Append widgets to list that gets refreshed during UpdateMRML
     lappend Volume(mbActiveList) $f.mbActive
     lappend Volume(mActiveList)  $f.mbActive.m
-
 
     #-------------------------------------------
     # Display->WinLvl frame
@@ -335,7 +341,6 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
     lappend Volume(sWindowList) $f.sWindow
     lappend Volume(sLevelList)  $f.sLevel
 
-    
     #-------------------------------------------
     # Display->Thresh frame
     #-------------------------------------------
@@ -390,6 +395,29 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
     lappend Volume(sLevelList) $f.sLower
     lappend Volume(sLevelList) $f.sUpper
 
+    #-------------------------------------------
+    # Display->Component frame
+    #-------------------------------------------
+    set f $fDisplay.fComponent
+
+    foreach slider "Comp" text "Component" {
+        DevAddLabel $f.l${slider} "$text:"
+        eval {entry $f.e${slider} -width 6 \
+            -textvariable Volume(scalarComponent)} $Gui(WEA)
+            bind $f.e${slider} <Return>   \
+                "MainVolumesSetParam ScalarComponent; MainVolumesRender"
+            bind $f.e${slider} <FocusOut> \
+                "MainVolumesSetParam ScalarComponent; MainVolumesRender"
+        eval {scale $f.s${slider} -from 0 -to 0 -length 100 \
+            -variable Volume(scalarComponent)  -resolution 1 \
+            -command "MainVolumesSetParam ScalarComponent; MainVolumesRender"} \
+            $Gui(WSA) {-sliderlength 14}
+        grid $f.l${slider} $f.e${slider} $f.s${slider} -padx 2 -pady $Gui(pad) \
+            -sticky news
+    }
+    # Append widgets to list that's refreshed in MainVolumesUpdateSliderRange
+    lappend Volume(sCompList) $f.sComp
+    lappend Volume(eCompList) $f.eComp
 
     #-------------------------------------------
     # Display->Histogram frame
@@ -399,7 +427,7 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
     frame $f.fHistBorder -bg $Gui(activeWorkspace) -relief sunken -bd 2
     frame $f.fLut -bg $Gui(activeWorkspace)
     pack $f.fLut $f.fHistBorder -side left -padx $Gui(pad) -pady $Gui(pad)
-    
+
     #-------------------------------------------
     # Display->Histogram->Lut frame
     #-------------------------------------------
@@ -474,7 +502,7 @@ orientation plane of the slice (To see how to create/select Fiducials, press the
         set Volume(f$m) $f.f${m}
     }
     # raise the default one 
-    raise $Volume(fVolBasic)
+    raise $Volume(f$Volume(defaultFileFormat))
 
     #-------------------------------------------
     # Props->Top frame
@@ -566,8 +594,8 @@ if {0} {
     
     foreach s $Slice(idList) text "Red Yellow Green" width "4 7 6" {
         eval {radiobutton $f.r$s -width $width -indicatoron 0\
-            -text "$text" -value "$s" -variable Slice(activeID) \
-            -command "MainSlicesSetActive"} $Gui(WCA) {-selectcolor $Gui(slice$s)}
+                  -text "$text" -value "$s" -variable Slice(activeID) \
+                  -command "MainSlicesSetActive"} $Gui(WCA) {-selectcolor $Gui(slice$s)}
         pack $f.r$s -side left -fill x -anchor e
     }
 
@@ -588,12 +616,12 @@ To see the 3 slices in their Reformat orientation, select 'ReformatAxiSagCor' on
 
 The last orientation (NewOrient) does not have any effect on any other orientation and each slice can have an arbitray NewOrient orientation. 
 To see the active slice in its NewOrient orientation, select 'NewOrient' on the dropdown menu of orientations for that slice.
- 
-    To define a new plane orientation, you need to:
-    1. select the orientation that you want to redefine with the drop down menu
-    2. create and select 3 fiducials and then press the 'reformat plane' button
-    => you have now defined a new orientation for your volume
-    3. to define a new RL line for the axial or coronal, or a new PA line for the sagittal or newOrient orientation, 
+
+To define a new plane orientation, you need to:
+1. select the orientation that you want to redefine with the drop down menu
+2. create and select 3 fiducials and then press the 'reformat plane' button
+=> you have now defined a new orientation for your volume
+3. to define a new RL line for the axial or coronal, or a new PA line for the sagittal or newOrient orientation, 
 you need to create and select 2 fiducials and then press the 'define new axis' button"
     
     pack $f.lintro $f.bintro -side left -padx 0 -pady $Gui(pad)
@@ -751,7 +779,9 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     TooltipAdd $f.bWrite "Save the Volume."
     pack  $f.bWrite -side bottom -padx $Gui(pad)    
 
-    DevAddFileBrowse $f Volumes "prefixGenericSave" "Select Export File:" "" "\$Volumes(extentionGenericSave)" "\$Volume(DefaultDir)" "Save" "Browse for a file location (will save image file and .nhdr file to directory)" "Absolute"
+    set Volumes(extentionGenericSave) nhdr
+
+    DevAddFileBrowse $f Volumes "prefixGenericSave" "Select Export File:" "" "\$Volumes(extentionGenericSave)" "\$Volume(DefaultDir)" "Save" "Browse for a Nrrd file" "Browse for a file location (will save image file and .nhdr file to directory)" "Absolute"
     ## compression option (hint)
 
     set f $fExport.fGenericFile.fCompression
@@ -783,8 +813,10 @@ you need to create and select 2 fiducials and then press the 'define new axis' b
     pack  $f.mbType -side left -padx $Gui(pad) -pady 1
 
    # Add menu items
-    foreach FileType {{hdr} {nrrd} {nhdr} {mhd} {mha} {nii} {img} {img.gz} {vtk}} \
-        name {{"Analyze (.hdr)"} {"NRRD(.nrrd)"} {"NRRD(.nhdr)"} {"Meta (.mhd)"} {"Meta (.mha)"} {"Nifti (.nii)"} {"Nifti (.img)"} {"Nifti (.img.gz)"} {"VTK (.vtk)"}} { 
+   # Saving of nifti extentions .img and .img.gz doesn't work right now. For the extention .img itk defers to analyze.
+   # Saving of nifti extention .img.gz is not supported yet by itk.
+     foreach FileType {{hdr} {nrrd} {nhdr} {mhd} {mha} {nii} {nii.gz} {vtk}} \
+        name {{"Analyze (.hdr)"} {"NRRD(.nrrd)"} {"NRRD(.nhdr)"} {"Meta (.mhd)"} {"Meta (.mha)"} {"Nifti (.nii)"} {"Nifti (.nii.gz)"} {"VTK (.vtk)"}} { 
             set Volumes($FileType) $name 
             $f.mbType.m add command -label $name \
                 -command "VolumesGenericExportSetFileType $FileType"
@@ -946,7 +978,7 @@ proc VolumesManualSetPropertyType {n} {
     # parse out the filename
     set parsing [MainFileParseImageFile $Volume(firstFile) 0]
 
-#    $n SetFilePrefix [file root $Volume(firstFile)]
+    #    $n SetFilePrefix [file root $Volume(firstFile)]
     if {$::Module(verbose)} {
         puts "Volumes.tcl: VolumesManualSetPropertyType: setting file prefix to [lindex $parsing 1]"
         DevInfoWindow "Volumes.tcl: VolumesManualSetPropertyType: setting file prefix to [lindex $parsing 1]"
@@ -963,7 +995,7 @@ proc VolumesManualSetPropertyType {n} {
         }
         $n SetFilePrefix [string trimright $tmpPrefix [string index $tmpPrefix end]]
     }
-#    $n SetFilePattern $Volume(filePattern)
+    #    $n SetFilePattern $Volume(filePattern)
     $n SetFilePattern [lindex $parsing 0]
 
     if {$::Module(verbose)} {
@@ -983,26 +1015,19 @@ proc VolumesManualSetPropertyType {n} {
         set firstNum 1
     }
     # can get this from the parsed out file name
-#    set firstNum [lindex $parsing 2]
+    #    set firstNum [lindex $parsing 2]
     set filePostfix [lindex $parsing 3]
 
     $n SetImageRange $firstNum $Volume(lastNum)
     $n SetDimensions $Volume(width) $Volume(height)
     eval $n SetSpacing $Volume(pixelWidth) $Volume(pixelHeight) \
-            [expr $Volume(sliceSpacing) + $Volume(sliceThickness)]
+        [expr $Volume(sliceSpacing) + $Volume(sliceThickness)]
     $n SetScalarTypeTo$Volume(scalarType)
     $n SetNumScalars $Volume(numScalars)
     $n SetLittleEndian $Volume(littleEndian)
     $n SetTilt $Volume(gantryDetectorTilt)
     $n ComputeRasToIjkFromScanOrder $Volume(scanOrder)
 
-    # added by odonnell for DTI data: will move to submodule
-    if {$Volume(tensors,DTIdata) == 1} {
-        #$n UseFrequencyPhaseSwapOn
-        $n SetFrequencyPhaseSwap $Volume(tensors,pfSwap)
-        # recompute 
-        $n ComputeRasToIjkFromScanOrder $Volume(scanOrder)
-    }
 }
 
 
@@ -1022,7 +1047,7 @@ proc VolumesAutomaticSetPropertyType {n} {
     global Lut Volume Label Module Mrml
 
     set errmsg [GetHeaderInfo [file join $Mrml(dir) $Volume(firstFile)] \
-            $Volume(lastNum) $n 1]
+                    $Volume(lastNum) $n 1]
     if {$errmsg == "-1"} {
         set msg "No header information found. Please enter header info manually."
         puts $msg
@@ -1042,7 +1067,7 @@ proc VolumesAutomaticSetPropertyType {n} {
         MainMrmlUndoAddNode Volume $n
         return 0
     }
-   return 1
+    return 1
 }
 
 #-------------------------------------------------------------------------------
@@ -1087,7 +1112,7 @@ proc VolumesPropsApply {} {
     }
 
     set Volume(isDICOM) [expr [llength $Volume(dICOMFileList)] > 0]
-        
+    
     # Validate name
     if {$Volume(name) == ""} {
         DevErrorWindow "Please enter a name that will allow you to distinguish this volume."
@@ -1184,7 +1209,7 @@ proc VolumesPropsApply {} {
         for  {set j 0} {$j < [llength $Volume(dICOMFileList)]} {incr j} {
             $n AddDICOMFileName [$Volume(dICOMFileListbox) get $j]
         }
-            
+        
         if { $Volume(isDICOM) } {
             #$Volume(dICOMFileListbox) insert 0 [$n GetNumberOfDICOMFiles];
             set firstNum 1
@@ -1257,8 +1282,8 @@ proc VolumesPropsApply {} {
                 set fov $newfov
             }
         }
-        set View(fov) $fov
-        MainViewSetFov
+        # set View(fov) $fov
+        MainViewSetFov "default" $fov
 
         # display the new volume in the background of all slices
         MainSlicesSetVolumeAll Back $newID
@@ -1303,7 +1328,7 @@ proc VolumesPropsApply {} {
     Volume($m,node) SetDescription $Volume(desc)
     Volume($m,node) SetLabelMap $Volume(labelMap)
     eval Volume($m,node) SetSpacing $Volume(pixelWidth) $Volume(pixelHeight) \
-            [expr $Volume(sliceSpacing) + $Volume(sliceThickness)]
+        [expr $Volume(sliceSpacing) + $Volume(sliceThickness)]
     Volume($m,node) SetTilt $Volume(gantryDetectorTilt)
     
     # This line can't be allowed to overwrite a RasToIjk matrix made
@@ -1319,7 +1344,7 @@ proc VolumesPropsApply {} {
         set Module(freezer) ""
         eval $cmd
     }
-        
+    
     # Update pipeline
     MainVolumesUpdate $m
 
@@ -1386,7 +1411,7 @@ proc VolumesSetFirst {} {
     # lastNum is an image number
     if { $::Volume(propertyType) == "VolBasic" } {
         set Volume(lastNum)  [MainFileFindImageNumber Last \
-            [file join $Mrml(dir) $Volume(firstFile)]]
+                                  [file join $Mrml(dir) $Volume(firstFile)]]
     }
 }
 
@@ -1406,8 +1431,8 @@ proc VolumesSetScanOrder {order} {
     #raul (04/08/04): scanOrder is also set up in VolTensor.tcl. VolHeader.tcl 
     # and VolTensor have menubutton that share the same variables.
     foreach mbscanOrder $Volume(mbscanOrder) {
-      $mbscanOrder config -text [lindex $Volume(scanOrderMenu)\
-            [lsearch $Volume(scanOrderList) $order]]
+        $mbscanOrder config -text [lindex $Volume(scanOrderMenu)\
+                                       [lsearch $Volume(scanOrderList) $order]]
     }
 }
 
@@ -1438,7 +1463,7 @@ proc VolumesSetLast {} {
     global Mrml Volume
 
     set Volume(lastNum) [MainFileFindImageNumber Last\
-        [file join $Mrml(dir) $Volume(firstFile)]]
+                             [file join $Mrml(dir) $Volume(firstFile)]]
     set Volume(name) [file root [file tail $Volume(firstFile)]]
 }
 
@@ -1458,8 +1483,8 @@ proc VolumesEnter {} {
     DataExit
     bind Listbox <Control-Button-1> {tkListboxBeginToggle %W [%W index @%x,%y]}
     #tk_messageBox -type ok -message "VolumesEnter" -title "Title" -icon  info
-#    $Volumes(reformat,orMenu) invoke "ReformatSagittal"
-#    $Volumes(reformat,saveMenu) invoke "ReformatCoronal"
+    #    $Volumes(reformat,orMenu) invoke "ReformatSagittal"
+    #    $Volumes(reformat,saveMenu) invoke "ReformatCoronal"
 }
 
 #-------------------------------------------------------------------------------
@@ -1661,7 +1686,7 @@ proc VolumesReformatSlicePlane {orientation} {
         set Slice($s,reformatPlaneCoeff,B) $N(y)
         set Slice($s,reformatPlaneCoeff,C) $N(z)
         set Slice($s,reformatPlaneCoeff,D) $coef
-            
+        
         Normalize N
 
         ######################################################################
@@ -1705,7 +1730,7 @@ proc VolumesReformatSlicePlane {orientation} {
             }
             
             if {[expr $N(x)*$originalN(x) +  $N(y)*$originalN(y) +  $N(z)*$originalN(z)] <0 } {
-            
+                
                 set N(x) [expr -$N(x)]
                 set N(y) [expr -$N(y)]
                 set N(z) [expr -$N(z)]
@@ -1717,7 +1742,7 @@ proc VolumesReformatSlicePlane {orientation} {
             
             # get the distance from 0,0,0 to the plane
             set dist [expr -$Slice($s,reformatPlaneCoeff,D)/ sqrt($Slice($s,reformatPlaneCoeff,A)*$Slice($s,reformatPlaneCoeff,A)+ $Slice($s,reformatPlaneCoeff,B)*$Slice($s,reformatPlaneCoeff,B) + $Slice($s,reformatPlaneCoeff,C)*$Slice($s,reformatPlaneCoeff,C))]
-        
+            
 
             # Step 2, project the original tangent onto the plane
             set proj [VolumesProjectVectorOnPlane $Slice($s,reformatPlaneCoeff,A) $Slice($s,reformatPlaneCoeff,B) $Slice($s,reformatPlaneCoeff,C) $Slice($s,reformatPlaneCoeff,D) $P1(x) $P1(y) P1(z) $P2(x) $P2(y) $P2(z)]
@@ -1737,7 +1762,7 @@ proc VolumesReformatSlicePlane {orientation} {
             # we are less smart about things, just take the 0 -1 0 vector and
             # project it onto the new plane to get a tangent 
             # 
-        
+            
 
             set P1(x) 0
             set P1(y) 1
@@ -1963,7 +1988,7 @@ proc VolumesReformatSave {} {
     set lo [expr -1 * round ($maxfov / 2.)]
     set hi [expr -1 * $lo]
     for {set i $lo} {$i<= $hi} {set i [expr $i + 1]} {
-    
+        
         MainSlicesSetOffset $s $i
         Volumes(reformatter) SetReformatMatrix $ref
         Volumes(reformatter) Modified
@@ -2200,8 +2225,8 @@ proc VolumesNrrdExport {} {
 
     set ext [file extension $Volumes(prefixNrrdSave)] 
     if { [file extension $Volumes(prefixNrrdSave)] == ".nhdr" ||
-            [file extension $Volumes(prefixNrrdSave)] == ".nrrd" ||
-            [file extension $Volumes(prefixNrrdSave)] == ".img" } {
+         [file extension $Volumes(prefixNrrdSave)] == ".nrrd" ||
+         [file extension $Volumes(prefixNrrdSave)] == ".img" } {
         set Volumes(prefixNrrdSave) [file root $Volumes(prefixNrrdSave)] 
     }
 
@@ -2221,15 +2246,15 @@ proc VolumesNrrdExport {} {
     export_matrix Invert
     export_matrix Transpose
     set space_directions [format "(%g, %g, %g) (%g, %g, %g) (%g, %g, %g)" \
-        [export_matrix GetElement 0 0]\
-        [export_matrix GetElement 0 1]\
-        [export_matrix GetElement 0 2]\
-        [expr -1. * [export_matrix GetElement 1 0]]\
-        [expr -1. * [export_matrix GetElement 1 1]]\
-        [expr -1. * [export_matrix GetElement 1 2]]\
-        [export_matrix GetElement 2 0]\
-        [export_matrix GetElement 2 1]\
-        [export_matrix GetElement 2 2] ]
+                              [export_matrix GetElement 0 0]\
+                              [export_matrix GetElement 0 1]\
+                              [export_matrix GetElement 0 2]\
+                              [expr -1. * [export_matrix GetElement 1 0]]\
+                              [expr -1. * [export_matrix GetElement 1 1]]\
+                              [expr -1. * [export_matrix GetElement 1 2]]\
+                              [export_matrix GetElement 2 0]\
+                              [export_matrix GetElement 2 1]\
+                              [export_matrix GetElement 2 2] ]
     export_matrix Delete
 
     set fp [open $Volumes(prefixNrrdSave).nhdr "w"]
@@ -2292,13 +2317,13 @@ proc VolumesGenericExport {} {
         DevInfoWindow "VolumesGenericExport: Please select a filename."
         return
     }
-    if { [file extension $Volumes(prefixGenericSave)] != ".$Volumes(extentionGenericSave)"} {
+      
+    # check if file name has the right extention according to $Volumes(prefixGenericSave)
+    if { [string match *.$Volumes(extentionGenericSave) $Volumes(prefixGenericSave)] == 0} {
         DevInfoWindow "VolumesGenericExport: File name: $Volumes(prefixGenericSave) does not match the type that you selected: $Volumes(extentionGenericSave)"
         return
     }
-
-    # set Volumes(prefixGenericSave) [file root $Volumes(prefixGenericSave)] 
-
+  
     catch "export_matrix Delete"
     vtkMatrix4x4 export_matrix
     eval export_matrix DeepCopy [Volume($v,node) GetRasToIjkMatrix]
@@ -2474,8 +2499,8 @@ proc VolumesComputeNodeMatricesFromIjkToRasMatrix2 {volumeNode ijkToRasMatrix di
     vtkMatrix4x4 Spacing
     vtkMatrix4x4 Position
 
-# puts "ijkToRasMatrix" 
-# puts [$ijkToRasMatrix Print]
+    puts "ijkToRasMatrix" 
+    puts [$ijkToRasMatrix Print]
 
     # RasToIjk is simply the inverse of ijkToRas
     RasToIjk DeepCopy $ijkToRasMatrix
@@ -2493,8 +2518,8 @@ proc VolumesComputeNodeMatricesFromIjkToRasMatrix2 {volumeNode ijkToRasMatrix di
     }
     set yext [expr [lindex $dims 1] - 1]
     set vtkOrigin [$ijkToRasMatrix MultiplyPoint 0 $yext 0 1]
-# puts "vtkOrigin" 
-# puts $vtkOrigin 
+    puts "vtkOrigin" 
+    puts $vtkOrigin 
     for {set row 0} {$row < 3} {incr row} {
         VtkToRas SetElement $row 3 [lindex $vtkOrigin $row]
     }
@@ -2504,11 +2529,11 @@ proc VolumesComputeNodeMatricesFromIjkToRasMatrix2 {volumeNode ijkToRasMatrix di
     set strRasToVtk [Volume($volumeNode,node) GetMatrixToString RasToVtk]
     Volume($volumeNode,node) SetRasToVtkMatrix $strRasToVtk
 
-# puts "VtkToRas" 
-# puts [VtkToRas Print]
+    puts "VtkToRas" 
+    puts [VtkToRas Print]
 
-# puts "RasToVtk" 
-# puts [RasToVtk Print]
+    puts "RasToVtk" 
+    puts [RasToVtk Print]
 
     # calculate the PositionMatrix
     # VtkToRas = Position * Spacing
@@ -2525,11 +2550,11 @@ proc VolumesComputeNodeMatricesFromIjkToRasMatrix2 {volumeNode ijkToRasMatrix di
     set strPosition [Volume($volumeNode,node) GetMatrixToString Position]
     Volume($volumeNode,node) SetPositionMatrix $strPosition
 
-# puts "Spacing" 
-# puts [Spacing Print]
+    puts "Spacing" 
+    puts [Spacing Print]
 
-# puts "Position" 
-# puts [Position Print]
+    puts "Position" 
+    puts [Position Print]
 
     RasToIjk Delete
     VtkToRas Delete
@@ -2598,7 +2623,7 @@ proc VolumesCreateNewLabelOutline { {v ""} } {
 # .END
 #-------------------------------------------------------------------------------
 proc VolumesComputeNodeMatricesFromRasToIjkMatrix {mrmlNode RasToIjkMatrix dims} {
-        
+    
     catch "IjkToRasMatrix Delete"
     vtkMatrix4x4 IjkToRasMatrix
     IjkToRasMatrix DeepCopy $RasToIjkMatrix

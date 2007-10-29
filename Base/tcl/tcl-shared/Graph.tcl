@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Graph.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:44 $
-#   Version:   $Revision: 1.7.14.1 $
+#   Date:      $Date: 2007/10/29 15:00:44 $
+#   Version:   $Revision: 1.7.14.1.2.1 $
 # 
 #===============================================================================
 # FILE:        Graph.tcl
@@ -331,8 +331,12 @@ proc GraphCalculateScnScp {varName path axis} {
     }
     if {$axis} {set Aname Y
     } else { set Aname X }
+    if {$localArray(Graph,$path,${Aname}sca) > 0.0 } {
     # Number of scalling lines
     set localArray(Graph,$path,${Aname}scn) [expr int(double($localArray(Graph,$path,${Aname}max) - $localArray(Graph,$path,${Aname}min) + $localArray(Graph,$path,${Aname}offset)) / double($localArray(Graph,$path,${Aname}sca)))]
+    } else {
+    set localArray(Graph,$path,${Aname}scn) [expr int(double($localArray(Graph,$path,${Aname}max) - $localArray(Graph,$path,${Aname}min) + $localArray(Graph,$path,${Aname}offset)))]
+    }
     # Distance between scalling lines 
     set dist [expr double($localArray(Graph,$path,${Aname}max) - $localArray(Graph,$path,${Aname}min) + $localArray(Graph,$path,${Aname}offset))]
     if {$dist > 0.0} {
@@ -600,7 +604,7 @@ proc GraphRender {varName path} {
 # .ARGS
 # array          varName This is typically the name of the module.
 # widget         path    Frame where canvas should go on 
-# vtkImageSource data    Data to be ploted
+# vtkImageData   data    Data to be ploted
 # array          color   3Dim array from [0,1] defining the color of the curve 
 # int            type    Type of curve (0 = continous data /; 1 = for discrete data _|)
 # bool           ignore  Ignore the GraphMin/GraphMax definition of the Graph (1= Yes; 0 = No) 
@@ -615,7 +619,7 @@ proc GraphAddCurveRegion {varName path data color type ignore} {
    }
    incr localArray(Graph,$path,CurveIndex)
    # Kilian: Should check if it really got assigned a new ID => otherwise not added to the graph 
-   set localArray(Graph,$path,Curve,$localArray(Graph,$path,CurveIndex),ID) [${varName}(Graph,$path,vtkImageGraph) AddCurveRegion [$data GetOutput] [lindex $color 0] [lindex $color 1] [lindex $color 2] $type $ignore]
+   set localArray(Graph,$path,Curve,$localArray(Graph,$path,CurveIndex),ID) [${varName}(Graph,$path,vtkImageGraph) AddCurveRegion $data [lindex $color 0] [lindex $color 1] [lindex $color 2] $type $ignore]
    GraphRender $varName $path
    # puts [$data Print]
    return $localArray(Graph,$path,CurveIndex)
@@ -681,7 +685,6 @@ proc GraphCreateGaussianCurveRegion {varDataName mean covariance probability fct
 # .END
 #-------------------------------------------------------------------------------
 proc GraphCreateHistogramCurve {varDataName Volume Xmin Xmax Xlen} {
-    catch "${varDataName}Res Delete"  
     catch "${varDataName}Accu Delete"
   
     vtkImageAccumulate ${varDataName}Accu
@@ -704,39 +707,45 @@ proc GraphCreateHistogramCurve {varDataName Volume Xmin Xmax Xlen} {
     ${varDataName}Accu UpdateWholeExtent
     ${varDataName}Accu Update
 
-
-     if {0} {
-    vtkImageBimodalAnalysis ${varDataName}Bio
-    ${varDataName}Bio SetInput [${varDataName}Accu GetOutput] 
-    ${varDataName}Bio Update
-    set ext [${varDataName}Bio GetClipExtent]
-    # ${varDataName}Res SetInputClipExtent [lindex $ext 0] [lindex $ext 1] [lindex $ext 2] [lindex $ext 3] [lindex $ext 4] [lindex $ext 5] 
-    # ${varDataName}Res SetInput [${varDataName}Bio GetOutput] 
-    vtkImageResize ${varDataName}Res
-    ${varDataName}Res SetInputClipExtent 0 $extent 0 0 0 0
-    ${varDataName}Res SetInput [${varDataName}Accu GetOutput] 
-    ${varDataName}Res SetOutputWholeExtent 0 [expr $Xlen-1] 0 0 0 0 
-    ${varDataName}Res Update 
-    }
-
     # This is necessary because otherwise you get a wired histograph (you could defined it also in vtkImageAccu... but results are not good
     set XInvUnit [GraphCalcInvUnit $Xmax $Xmin $Xlen 0]
-    vtkImageResample ${varDataName}Res
-    ${varDataName}Res SetDimensionality 1
-    ${varDataName}Res SetAxisOutputSpacing 0 1.0
-    ${varDataName}Res SetAxisMagnificationFactor 0 $XInvUnit
-    ${varDataName}Res InterpolateOff
-    ${varDataName}Res SetInput [${varDataName}Accu GetOutput] 
-    ${varDataName}Res Update 
+    GraphCreateResampledCurve ${varDataName} [${varDataName}Accu GetOutput] $XInvUnit
     # Believe it or not I still have to do the following check otherwise things go bad 
-    set extent [[${varDataName}Res GetOutput] GetExtent]
-    while {[expr [lindex $extent 1] - [lindex $extent 0] + 1] < $Xlen } {
-    set XInvUnit [expr $XInvUnit * 1.001]
-    ${varDataName}Res SetAxisMagnificationFactor 0 $XInvUnit
-    ${varDataName}Res Update 
-    set extent [[${varDataName}Res GetOutput] GetExtent]
-    }
+    GraphAdjustResampledCurve ${varDataName} $XInvUnit $Xlen
 }
+
+proc GraphCreateResampledCurve {varResDataName Input ScaleFactor} {
+    catch "${varResDataName} Delete"  
+    vtkImageResample ${varResDataName}
+    ${varResDataName} SetDimensionality 1
+    ${varResDataName} SetAxisOutputSpacing 0 1.0
+    ${varResDataName} SetAxisMagnificationFactor 0 $ScaleFactor 
+    ${varResDataName} SetInterpolationModeToLinear
+    # ${varResDataName} InterpolateOff
+    ${varResDataName} SetInput $Input
+    ${varResDataName} Update 
+} 
+
+proc GraphAdjustResampledCurve {varResDataName ScaleFactor Xlen} {
+    set output [$varResDataName GetOutput]
+    set extent [$output GetExtent]
+
+    while {[expr [lindex $extent 1] - [lindex $extent 0] + 1] > $Xlen } {
+      set ScaleFactor [expr $ScaleFactor * 0.99]
+      $varResDataName SetAxisMagnificationFactor 0 $ScaleFactor
+      $varResDataName Update 
+      set extent [$output GetExtent]
+    }
+
+    while {[expr [lindex $extent 1] - [lindex $extent 0] + 1] < $Xlen } {
+      set ScaleFactor [expr $ScaleFactor * 1.001]
+      $varResDataName SetAxisMagnificationFactor 0 $ScaleFactor
+      $varResDataName Update 
+      set extent [$output GetExtent]
+    }
+    $output UpdateInformation 
+    return $ScaleFactor
+} 
 
 #-------------------------------------------------------------------------------
 # .PROC GraphRemoveCurve 
@@ -791,9 +800,11 @@ proc GraphCalcUnit {Min Max Length} {
 proc GraphCalcInvUnit {Min Max Length Offset} {
    set Dist [expr double($Max - $Min + $Offset ) ] 
    if {$Dist > 0} {
-    set InvUnit [expr double($Length) / $Dist ]
-    while {[expr $Dist * $InvUnit ] <  $Length} { set InvUnit [expr $InvUnit * 1.001] }
-    return $InvUnit
+      incr  Length -1 
+      set InvUnit [expr double($Length) / $Dist ]
+      while {[expr int($Dist * $InvUnit) ] >  $Length} { set InvUnit [expr $InvUnit * 0.995] }
+      while {[expr int($Dist * $InvUnit) ] <  $Length} { set InvUnit [expr $InvUnit * 1.001] }
+      return $InvUnit
     } 
     return 1.0
 }

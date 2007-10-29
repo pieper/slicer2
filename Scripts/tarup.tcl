@@ -151,6 +151,7 @@ puts "uploadFlag = $uploadFlag"
     switch $::env(BUILD) {
         "solaris8" { set target solaris-sparc }
         "darwin-ppc" { set target darwin-ppc }
+    "darwin-x86" { set target darwin-x86 }
         "redhat7.3" -
         "linux-x86" { set target linux-x86 }
         "linux-x86_64" { set target linux-x86 }
@@ -173,7 +174,7 @@ puts "uploadFlag = $uploadFlag"
         } else {
             switch $::env(BUILD) {
                 "solaris8" { set archivedir /tmp }
-                "Darwin" - "darwin-ppc" - "linux-x86" - "linux-x86_64" - "redhat7.3" { set archivedir /var/tmp }
+                "Darwin" - "darwin-ppc" - "darwin-x86" - "linux-x86" - "linux-x86_64" - "redhat7.3" { set archivedir /var/tmp }
                 "win32" { set archivedir c:/Temp }
             }
         }
@@ -218,6 +219,7 @@ puts "uploadFlag = $uploadFlag"
     #
     file mkdir $archivedir/Doc
     file copy -force Doc/copyright $archivedir/Doc
+    file copy -force Doc/library_copyrights $archivedir/Doc
 
     #
     # grab the tcl libraries and binaries
@@ -234,7 +236,7 @@ puts "uploadFlag = $uploadFlag"
     puts " -- copying teem files"
     if { $::env(BUILD) == "win32" } {
     # special case due to the teem-build dir structure on windows
-    # - env(TEEM_BIN_DIR) ends in bin/$::env(VTK_BUILD_TYPE) on win32 and just bin on unix
+    # - env(TEEM_BIN_DIR) ends in bin/$::env(VTK_BUILD_SUBDIR) on win32 and just bin on unix
         file mkdir $archivedir/Lib/$::env(BUILD)/teem-build/bin
         file copy -force $::env(TEEM_BIN_DIR) $archivedir/Lib/$::env(BUILD)/teem-build/bin
     } else {
@@ -276,8 +278,8 @@ puts "uploadFlag = $uploadFlag"
             file copy -force $::env(VTK_DIR)/Wrapping/Tcl/pkgIndex.tcl $archivedir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl
         }
         default { 
-            file mkdir $archivedir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)
-            file copy -force $::env(VTK_DIR)/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)/pkgIndex.tcl $archivedir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)
+            file mkdir $archivedir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/$::env(VTK_BUILD_SUBDIR)
+            file copy -force $::env(VTK_DIR)/Wrapping/Tcl/$::env(VTK_BUILD_SUBDIR)/pkgIndex.tcl $archivedir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/$::env(VTK_BUILD_SUBDIR)
         }
     }
 
@@ -303,12 +305,12 @@ puts "uploadFlag = $uploadFlag"
             file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $archivedir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/pkgIndex.tcl
         }
         default { 
-            file mkdir $archivedir/Lib/$::env(BUILD)/VTK-build/bin/$::env(VTK_BUILD_TYPE)
-            set libs [glob $::env(VTK_DIR)/bin/$::env(VTK_BUILD_TYPE)/*.dll]
+            file mkdir $archivedir/Lib/$::env(BUILD)/VTK-build/bin/$::env(VTK_BUILD_SUBDIR)
+            set libs [glob $::env(VTK_DIR)/bin/$::env(VTK_BUILD_SUBDIR)/*.dll]
             foreach lib $libs {
-                file copy $lib $archivedir/Lib/$::env(BUILD)/VTK-build/bin/$::env(VTK_BUILD_TYPE)
+                file copy $lib $archivedir/Lib/$::env(BUILD)/VTK-build/bin/$::env(VTK_BUILD_SUBDIR)
             }
-            file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $archivedir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/$::env(VTK_BUILD_TYPE)/pkgIndex.tcl
+            file copy -force $::env(SLICER_HOME)/Scripts/slicer-vtk-pkgIndex.tcl $archivedir/Lib/$::env(BUILD)/VTK-build/Wrapping/Tcl/$::env(VTK_BUILD_SUBDIR)/pkgIndex.tcl
         }
     }
     #
@@ -356,7 +358,7 @@ puts "uploadFlag = $uploadFlag"
         
           }
           set sharedSearchPath [concat [split $::env(PATH) ";"] $::env(LD_LIBRARY_PATH)]
-          set sharedLibDir $archivedir/Lib/$::env(BUILD)/VTK-build/bin/$::env(VTK_BUILD_TYPE)
+          set sharedLibDir $archivedir/Lib/$::env(BUILD)/VTK-build/bin/$::env(VTK_BUILD_SUBDIR)
           set checkForSymlinks 0
       }
     }
@@ -437,10 +439,10 @@ puts "uploadFlag = $uploadFlag"
             }
         }
         default { 
-            file mkdir $archivedir/Lib/$::env(BUILD)/Insight-build/bin/$::env(VTK_BUILD_TYPE)
-            set libs [glob -nocomplain $::env(ITK_BINARY_PATH)/bin/$::env(VTK_BUILD_TYPE)/*.dll]
+            file mkdir $archivedir/Lib/$::env(BUILD)/Insight-build/bin/$::env(VTK_BUILD_SUBDIR)
+            set libs [glob -nocomplain $::env(ITK_BINARY_PATH)/bin/$::env(VTK_BUILD_SUBDIR)/*.dll]
             foreach lib $libs {
-                file copy $lib $archivedir/Lib/$::env(BUILD)/Insight-build/bin/$::env(VTK_BUILD_TYPE)
+                file copy $lib $archivedir/Lib/$::env(BUILD)/Insight-build/bin/$::env(VTK_BUILD_SUBDIR)
             }
         }
     }
@@ -479,10 +481,10 @@ puts "uploadFlag = $uploadFlag"
             }
         }
         default { 
-            file mkdir $archivedir/Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)
-            set libs [glob Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)/*.dll]
+            file mkdir $archivedir/Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_SUBDIR)
+            set libs [glob Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_SUBDIR)/*.dll]
             foreach lib $libs {
-                file copy $lib $archivedir/Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)
+                file copy $lib $archivedir/Base/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_SUBDIR)
             }
         }
     }
@@ -518,6 +520,11 @@ puts "uploadFlag = $uploadFlag"
         file mkdir $moddest
         if { [file exists $moddir/tcl] } {
             file copy -force $moddir/tcl $moddest
+        } else {
+            # for a Modules that use an uppercase tcl directory name
+            if { [file exists $moddir/Tcl] } {
+                file copy -force $moddir/Tcl $moddest
+            }
         }
         if {$includeSource} {
             if { [file exists $moddir/cxx] } {
@@ -546,10 +553,10 @@ puts "uploadFlag = $uploadFlag"
                 }
             }
             default { 
-                file mkdir $moddest/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)
-                set libs [glob -nocomplain $moddir/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)/*.dll]
+                file mkdir $moddest/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_SUBDIR)
+                set libs [glob -nocomplain $moddir/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_SUBDIR)/*.dll]
                 foreach lib $libs {
-                    file copy $lib $moddest/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_TYPE)
+                    file copy $lib $moddest/builds/$::env(BUILD)/bin/$::env(VTK_BUILD_SUBDIR)
                 }
             }
         }
@@ -647,6 +654,8 @@ puts "uploadFlag = $uploadFlag"
             }
         }
         puts "See http://www.na-mic.org/Slicer/Download, in the $uploadFlag directory, for the uploaded file."
+        # puts "curlfile is $curlfile"
+        # puts "curldest is $curldest"
     } else {
         puts "Archive complete: ${curlfile}"
     }

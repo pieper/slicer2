@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainModels.tcl,v $
-#   Date:      $Date: 2005/12/30 22:53:42 $
-#   Version:   $Revision: 1.70.2.4 $
+#   Date:      $Date: 2007/10/29 14:59:52 $
+#   Version:   $Revision: 1.70.2.4.2.1 $
 # 
 #===============================================================================
 # FILE:        MainModels.tcl
@@ -71,7 +71,7 @@ proc MainModelsInit {} {
 
         # Set version info
         lappend Module(versions) [ParseCVSInfo MainModels \
-        {$Revision: 1.70.2.4 $} {$Date: 2005/12/30 22:53:42 $}]
+        {$Revision: 1.70.2.4.2.1 $} {$Date: 2007/10/29 14:59:52 $}]
 
     set Model(idNone) -1
     set Model(activeID) ""
@@ -192,8 +192,10 @@ proc MainModelsUpdateMRML {} {
         $menu delete 0 end
         
         foreach m $Model(idList) {
+            set colbreak [MainVolumesBreakVolumeMenu $menu]
             $menu add command -label [Model($m,node) GetName] \
-                -command "MainModelsSetActive $m"
+                -command "MainModelsSetActive $m" \
+                -columnbreak $colbreak
         }
     }
 
@@ -1233,6 +1235,11 @@ proc MainModelsSetVectorScaleFactor {m {value ""}} {
 proc MainModelsSetTensorVisibility {m {value ""}} {
     global Model Module
         
+    # if no tensor vis information, return
+    if {[info exist Model($m,tensorVisibility)] == 0 } {
+        return
+    }
+
     # if no change, return
     if {$Model($m,tensorVisibility) == $value} {
         return
@@ -1322,14 +1329,20 @@ proc MainModelsSetTensorVisibility {m {value ""}} {
 #-------------------------------------------------------------------------------
 proc MainModelsSetTensorScaleFactor {m {value ""}} {
     global Model Module
-        
+     
+    # if no tensor vis information, return
+    if {[info exist Model($m,tensorScaleFactor)] == 0 ||
+        [info exist Model($m,tensorVisibility)] == 0} {
+        return
+    }
+   
     if {$value != ""} {
         set Model($m,tensorScaleFactor) $value
     }
 
     # if our pipeline is set up set the value in the object
     if {$Model($m,tensorVisibility) == 1} {
-    Model($m,tensorGlyph) SetScaleFactor $Model(tensorScaleFactor)
+        Model($m,tensorGlyph) SetScaleFactor $Model(tensorScaleFactor)
     }
 }
 
@@ -1341,11 +1354,18 @@ proc MainModelsSetTensorScaleFactor {m {value ""}} {
 #-------------------------------------------------------------------------------
 proc MainModelsSetTensorColor {} {
     global Model 
-    
+
+    set m $Model(activeID)
+
+    # if no tensor vis information, return
+    if {[info exist Model($m,tensorVisibility)] == 0 } {
+        return
+    }
+
     # display new color type
     $Model(mbTensorGlyphColor) config -text $Model(tensorGlyphColor)
 
-    set m $Model(activeID)
+
     if {$Model($m,tensorVisibility) == 1} {
 
         if {$Model(tensorGlyphColor) == "SolidColor"} {

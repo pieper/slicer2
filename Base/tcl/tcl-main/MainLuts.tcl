@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: MainLuts.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:28 $
-#   Version:   $Revision: 1.22.2.1 $
+#   Date:      $Date: 2007/10/29 14:59:52 $
+#   Version:   $Revision: 1.22.2.1.2.1 $
 # 
 #===============================================================================
 # FILE:        MainLuts.tcl
@@ -15,6 +15,7 @@
 #   MainLutsInit
 #   MainLutsInit
 #   MainLutsBuildLutForFMRI 
+#   MainLutsBuildLutForFMRIPosActive
 #   MainLutsBuildVTK
 #==========================================================================auto=
 
@@ -33,12 +34,12 @@ proc MainLutsInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo MainLuts \
-    {$Revision: 1.22.2.1 $} {$Date: 2005/12/20 22:54:28 $}]
+    {$Revision: 1.22.2.1.2.1 $} {$Date: 2007/10/29 14:59:52 $}]
 
     # Create an ID for Labels
     set Lut(idLabel) -1
 
-    set Lut(idList) " 0 1 2 3 4 5 6 7 $Lut(idLabel)"
+    set Lut(idList) " 0 1 2 3 4 5 6 7 8 $Lut(idLabel)"
 
     set Lut(0,name) Gray
     set Lut(0,fileName) ""
@@ -101,6 +102,12 @@ proc MainLutsInit {} {
     set Lut(7,fileName) ""
     set Lut(7,numberOfColors) 256 
     set Lut(7,annoColor) "1 1 0"
+
+    set Lut(8,name) FMRIPosActive
+    set Lut(8,fileName) ""
+    set Lut(8,numberOfColors) 256 
+    set Lut(8,annoColor) "1 1 1"
+
 }
 
 
@@ -167,6 +174,40 @@ proc MainLutsBuildLutForFMRI {l} {
     }
 }
 
+
+
+#-------------------------------------------------------------------------------
+# .PROC MainLutsBuildLutForFMRIPosActive
+# Creates a colormap for fMRI t volume showing postive activation. 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc MainLutsBuildLutForFMRIPosActive {l} {
+    global Lut
+
+    # Use different numbers of table values for neg and pos
+    # to make sure -1 is represented by blue
+
+    # From red to yellow for positive values only
+    vtkLookupTable posact
+    posact SetNumberOfTableValues 20 
+    posact SetHueRange  0 0.16667
+    posact SetSaturationRange 1 1
+    posact SetValueRange 1 1
+    posact SetRampToLinear
+    posact Build
+
+    Lut($l,lut) SetNumberOfTableValues 20
+    Lut($l,lut) SetRampToLinear
+    Lut($l,lut) Build
+
+    for {set i 0} {$i < 20} {incr i} {
+        set c2 [posact GetTableValue $i] 
+        Lut($l,lut) SetTableValue [expr $i ] \
+            [lindex $c2 0] [lindex $c2 1] [lindex $c2 2] [lindex $c2 3] 
+    }
+}
+
  
 #-------------------------------------------------------------------------------
 # .PROC MainLutsBuildVTK
@@ -183,7 +224,7 @@ proc MainLutsBuildVTK {} {
             if {$Lut($l,fileName) == ""} {
             
                 vtkLookupTable Lut($l,lut)
-                if {$l != 7} {
+                if { $l < 7 } {
                     foreach param "NumberOfColors HueRange SaturationRange ValueRange" {
                         eval Lut($l,lut) Set${param} $Lut($l,[Uncap ${param}])
                     }
@@ -191,8 +232,12 @@ proc MainLutsBuildVTK {} {
                     # fidelity of image display
                     Lut($l,lut) SetRampToLinear
                     Lut($l,lut) Build
-                } else {
+                }
+                if { $l == 7 } {
                     MainLutsBuildLutForFMRI $l
+                }
+                if { $l == 8 } {
+                    MainLutsBuildLutForFMRIPosActive $l
                 }
             
             # File

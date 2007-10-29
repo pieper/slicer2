@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Data.tcl,v $
-#   Date:      $Date: 2006/07/10 16:18:36 $
-#   Version:   $Revision: 1.55.8.1.2.5 $
+#   Date:      $Date: 2007/10/29 15:00:23 $
+#   Version:   $Revision: 1.55.8.1.2.6 $
 # 
 #===============================================================================
 # FILE:        Data.tcl
@@ -65,7 +65,7 @@ proc DataInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.55.8.1.2.5 $} {$Date: 2006/07/10 16:18:36 $}]
+        {$Revision: 1.55.8.1.2.6 $} {$Date: 2007/10/29 15:00:23 $}]
 
     set Data(index) ""
     set Data(clipboard) ""
@@ -749,7 +749,7 @@ proc DataAddTransformFromSelection {} {
         set lastSel [Mrml(dataTree) GetNthItem [lindex $selection end]]
     }
 
-    DataAddTransform append $firstSel $lastSel 
+    DataAddTransform $append $firstSel $lastSel 
 }
 
 #-------------------------------------------------------------------------------
@@ -877,7 +877,7 @@ proc DataAddVolume {} {
         # reset the file type, since it's set in the generic readers 
         # and the nrrd readers, but not reset for basic volumes
         set Volume(fileType) ""
-        VolumesSetPropertyType VolGeneric
+        VolumesSetPropertyType $Volume(defaultFileFormat)
         MainVolumesSetActive NEW
         set Volume(freeze) 1
         Tab Volumes row1 Props

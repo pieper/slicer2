@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Models.tcl,v $
-#   Date:      $Date: 2006/01/04 22:19:59 $
-#   Version:   $Revision: 1.68.2.3 $
+#   Date:      $Date: 2007/10/29 15:00:23 $
+#   Version:   $Revision: 1.68.2.3.2.1 $
 # 
 #===============================================================================
 # FILE:        Models.tcl
@@ -66,7 +66,7 @@ proc ModelsInit {} {
 
     # Set Version Info
     lappend Module(versions) [ParseCVSInfo $m \
-            {$Revision: 1.68.2.3 $} {$Date: 2006/01/04 22:19:59 $}]
+            {$Revision: 1.68.2.3.2.1 $} {$Date: 2007/10/29 15:00:23 $}]
 
     # Props
     set Model(propertyType) Basic
@@ -811,7 +811,7 @@ proc ModelsBuildGUI {} {
 
     foreach frm "Apply Results" {
         frame $f.f$frm -bg $Gui(activeWorkspace)
-        pack  $f.f$frm -side top -pady $Gui(pad)
+        pack  $f.f$frm -side top -pady $Gui(pad) -expand true -fill both
     }
 
     #-------------------------------------------
@@ -830,15 +830,17 @@ proc ModelsBuildGUI {} {
     set f $fMeter.fResults
 
     frame $f.fTop -bg $Gui(activeWorkspace)
-    frame $f.fBot -bg $Gui(activeWorkspace)
-    pack $f.fTop $f.fBot -side top -pady $Gui(pad)
+    # frame $f.fBot -bg $Gui(activeWorkspace)
+    # pack $f.fTop $f.fBot -side top -pady $Gui(pad)
+    pack $f.fTop -side top -pady $Gui(pad) -fill both -expand true
+    pack [::iwidgets::scrolledframe $f.sfBot -hscrollmode dynamic -vscrollmode dynamic -background $Gui(activeWorkspace)] -fill both -expand true
 
     set f $fMeter.fResults.fTop
     eval {label $f.l -justify left -text ""} $Gui(WLA)
     pack $f.l
     set Model(meter,msgTop) $f.l
 
-    set f $fMeter.fResults.fBot
+    set f [$fMeter.fResults.sfBot childsite]
     eval {label $f.lL -justify left -text ""} $Gui(WLA)
     eval {label $f.lR -justify right -text ""} $Gui(WLA)
     pack $f.lL $f.lR -side left -padx $Gui(pad)
@@ -869,6 +871,10 @@ proc ModelsConfigScrolledGUI {canvasScrolledGUI fScrolledGUI} {
     set f      $fScrolledGUI
     set canvas $canvasScrolledGUI
     set m [lindex $Model(idList) 0]
+
+    if {$::Module(verbose)} {
+        puts "ModelsConfigScrolledGUI: $canvas $f"
+    }
 
     # y spacing important for calculation of frame height for scrolling
     set pady 2

@@ -92,7 +92,7 @@ switch $tcl_platform(os) {
     }
     default {
         # set the default heap size with Zm, vtk value is 1000, max on windows seems to be 2000, other flags are from VTK
-        set VTK_ARG3 "-DCMAKE_CXX_FLAGS:STRING=/Zm1000 /W3 /GX /GR"
+        # set VTK_ARG3 "-DCMAKE_CXX_FLAGS:STRING=/DWIN32 /D_WINDOWS /W3 /Zm1000 /GX /GR"
     }
 }
 
@@ -147,23 +147,29 @@ set VTK_ARG9 "-DVTK_SRC_DIR:PATH=$VTK_SRC_DIR"
 regsub -all {\\} $SLICER_HOME / slicer_home
 set baseModulePath $slicer_home/Modules
 set modulePaths [glob -nocomplain $baseModulePath/vtk*]
-regsub -all {\\} $modulePaths / modulePaths 
 if { [info exists env(SLICER_MODULES)] } {
     foreach dir $env(SLICER_MODULES) {
         eval lappend modulePaths [glob -nocomplain $dir/vtk*]
     }
 }
 
-
 set fd [open "${slicer_home}/DartTestfile.txt" "w"]
 puts $fd "SUBDIRS(Base/builds/$env(BUILD))"
 puts $fd "SUBDIRS(Modules)"
 close $fd
 
-set fd [open "${baseModulePath}/DartTestfile.txt" "w"]
+set fd1 [open "${baseModulePath}/DartTestfile.txt" "w"]
+
 foreach dir $modulePaths {
-  puts $fd "SUBDIRS (\"[file root [file tail $dir]]/builds/$env(BUILD)\")"
+    if { [file exists "${baseModulePath}/[file root [file tail $dir]]/cxx/CMakeLists.txt" ] } {
+        puts $fd1 "SUBDIRS (\"[file root [file tail $dir]]/builds/$env(BUILD)\")"
+    } else {
+        if { [file exists "${baseModulePath}/[file root [file tail $dir]]/Testing/Tcl" ] } {
+            puts $fd1 "SUBDIRS (\"[file root [file tail $dir]]/builds/$env(BUILD)\")"
+        }
+    }
 }
+close $fd1
 
 set TARGETS ""
 foreach dir $modulePaths {
@@ -172,16 +178,11 @@ foreach dir $modulePaths {
     # if it's not the custom one (the example) 
     # but starts with vtk and has some c++ code, 
     # and has a cxx/CMakeLists.txt file append it to the list of targets
-    set cxxDir [file join $dir cxx]
-    set localFile [file join $cxxDir CMakeListsLocal.txt]
-    set cxxFiles [file join $cxxDir *.cxx]
-
     if { [string match "vtk*" $moduleName] 
            && ![string match "*CustomModule*" $moduleName] 
-           && [file exists $cxxDir] 
-           && [file exists $localFile]
-           && [llength [glob -nocomplain $cxxFiles]] > 0 } {
-
+           && [file exists $dir/cxx] 
+           && [file exists $dir/cxx/CMakeListsLocal.txt]
+           && [llength [glob -nocomplain $dir/cxx/*.cxx]] > 0 } {
         #
         # if there's a cmaker_local.tcl file, it means
         # the module depends on other modules, so put it at
@@ -193,7 +194,12 @@ foreach dir $modulePaths {
             set TARGETS "$dir $TARGETS"
         }
     } else {
-        puts "Skipping module $moduleName...no compilation needed."
+        # if there are Tcl testing files, module needs to be added to targets
+        if { ![string match [glob -nocomplain ${dir}/Testing/Tcl] ""] } {
+            lappend TARGETS $dir
+        } else {
+            puts "Skipping module $moduleName...no compilation needed."
+        }
     }
 }
 
@@ -216,6 +222,7 @@ if {$tcl_platform(byteOrder) == "littleEndian"} {
 
 set CLEANFLAG 0
 set NOCMAKEFLAG 0
+set STOP_ON_ERRORS 0
 set VTK_ARG_VERBOSE "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
 set VTK_ARG_DEBUG   "-DCMAKE_BUILD_TYPE:STRING=$::env(VTK_BUILD_TYPE)"
 
@@ -235,6 +242,11 @@ for {set i 0} {$i < $argc} {incr i} {
         "--no-cmake" {  
             puts "Skipping cmake"
             set NOCMAKEFLAG 1
+            set AttributeFlag 1
+        }
+        "--stop-on-errors" {  
+            puts "Stop on build errors"
+            set STOP_ON_ERRORS 1
             set AttributeFlag 1
         }
         "--verbose" { 
@@ -258,7 +270,7 @@ for {set i 0} {$i < $argc} {incr i} {
         default {
             if {[string range $a 0 1 ] == "--"} { 
                 puts stderr "Do not know option $a. Currently the following attributes are defined: "
-                puts stderr " --clean: Removing build directories \n --no-cmake: Skipping cmake \n --verbose: Compiling in verbose mode \n --debug: Compiling in debug mode (-g flag)\n --relwithdebinfo: Compiling in relwithdebinfo mode" 
+                puts stderr " --clean: Removing build directories \n --no-cmake: Skipping cmake \n --stop-on-errors: Stop the buld if there are any build errors \n --verbose: Compiling in verbose mode \n --debug: Compiling in debug mode (-g flag)\n --relwithdebinfo: Compiling in relwithdebinfo mode" 
                 exit 1
             }  
         }
@@ -365,6 +377,9 @@ foreach target $TARGETS {
             if { [catch "close $fp" res] } {
                 lappend failed [file tail $target]
                 puts $res
+                if { $STOP_ON_ERRORS } {
+                  exit 3
+                }
             }
         }
         default {

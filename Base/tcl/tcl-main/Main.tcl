@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Main.tcl,v $
-#   Date:      $Date: 2006/07/07 17:23:48 $
-#   Version:   $Revision: 1.128.2.6.2.3 $
+#   Date:      $Date: 2007/10/29 14:59:52 $
+#   Version:   $Revision: 1.128.2.6.2.4 $
 # 
 #===============================================================================
 # FILE:        Main.tcl
@@ -351,8 +351,10 @@ Unexpected behaviour may occur."
     #-------------------------------------------
     if {$verbose} {
         puts "MainSetup..."; update
+        set sceneOptions [vtkMrmlSceneOptionsNode ListInstances]
+        puts "MainBoot: scene options nodes = $sceneOptions\n\tscene options list = $::SceneOptions(idList)\n\tcurrent scene = $::Scenes(currentScene)\n\tCalling MainSetup now with current scene"
     }
-    MainSetup default
+    MainSetup $::Scenes(currentScene)
     if {$verbose} {
         puts "RenderAll..."; update
     }
@@ -441,7 +443,7 @@ proc MainInit {} {
 
         # Set version info
     lappend Module(versions) [ParseCVSInfo Main \
-        {$Revision: 1.128.2.6.2.3 $} {$Date: 2006/07/07 17:23:48 $}]
+        {$Revision: 1.128.2.6.2.4 $} {$Date: 2007/10/29 14:59:52 $}]
 
     # Call each "Init" routine that's not part of a module
     #-------------------------------------------
@@ -614,7 +616,7 @@ proc MainBuildGUI {} {
     $Gui(mView) add command -label "MRT big SagCor" -command \
         "MainMenu View MRT"
     $Gui(mView) add command -label "MRT small" -command \
-        "MainMenu View MRT640x480"
+       "MainMenu View MRT640x480"
     $Gui(mView) add separator
     $Gui(mView) add command -label "Large Image..." -command \
         "MainMenu View LargeImage"
@@ -1229,14 +1231,16 @@ proc MainSetup { {sceneNum "default"}} {
     set v [lindex $Volume(idList) 0]
     MainVolumesSetActive $v
         
-    # Set FOV
-    set dim     [lindex [Volume($v,node) GetDimensions] 0]
-    set spacing [lindex [Volume($v,node) GetSpacing] 0]
-    set fov     [expr $dim*$spacing]
-    set View(fov) $fov
-    # this call will reset the camera via a call to MainViewNavReset, pass it the sceneNum so it can flag that out
-    if {$::Module(verbose)} { puts "Calling MainViewSetFov with $sceneNum" }
-    MainViewSetFov $sceneNum
+    # Set FOV - is done in MainViewRecallPresets, called from MainOptionsRecallPresets
+    if {0} {
+        set dim     [lindex [Volume($v,node) GetDimensions] 0]
+        set spacing [lindex [Volume($v,node) GetSpacing] 0]
+        set fov     [expr $dim*$spacing]
+        set View(fov) $fov
+        # this call will reset the camera via a call to MainViewNavReset, pass it the sceneNum so it can flag that out
+        if {$::Module(verbose)} { puts "Calling MainViewSetFov with $sceneNum" }
+        MainViewSetFov $sceneNum
+    }
 
     # If no volume set in all slices' background, set the active one
     set doit 1 
@@ -1246,17 +1250,38 @@ proc MainSetup { {sceneNum "default"}} {
         }
     }
     if {$doit == 1} {
-        MainSlicesSetVolumeAll Back $Volume(activeID)
+        if {$::Module(verbose)} {
+            puts "MainSetup: no back volume set, using $Volume(activeID)"
+        }
+
+        if {$sceneNum != "default"} {
+            if {$::Module(verbose)} {
+                puts "MainSetup: calling MainSlicesSetVolumeAll but telling it not to update the slice offsets"
+            }
+            MainSlicesSetVolumeAll Back $Volume(activeID) 0
+        } else {
+            if {$::Module(verbose)} {
+                puts "MainSetup: calling MainSlicesSetVolumeAll but allowing it to update the slice offsets"
+            }
+            MainSlicesSetVolumeAll Back $Volume(activeID) 
+        }
     }
 
-    # Initialize Slice orientations
-    MainSlicesSetOrientAll AxiSagCor
-
-    MainAnnoSetVisibility
+    # Initialize Slice orientations - already done in MainSlicesRecallPresets
+    if {0} {
+        MainSlicesSetOrientAll AxiSagCor
+    }
+    # already done in MainAnnoRecallPresets
+    if {0} {
+        MainAnnoSetVisibility
+    }
 
     # Active model
     set m [lindex $Model(idList) 0]
-    if {$m != ""} {    
+    if {$m != ""} {  
+        if {$::Module(verbose)} {
+            puts "MainSetup: calling MainModelsSetActive "
+        }
         MainModelsSetActive $m
     }
 
@@ -1276,6 +1301,9 @@ proc MainSetup { {sceneNum "default"}} {
     MainColorsSetActive [lindex $Color(idList) 1]
 
     # Active option
+    if {$::Module(verbose)} {
+        puts "MainSetup: calling MainOptionsSetActive"
+    }
     MainOptionsSetActive [lindex $Options(idList) 0]
 }
 
@@ -1852,6 +1880,7 @@ $volumes\n\nDo you wish to exit anyway?\n"
             }
         }
     }
+
     if {$models != ""} {
          set msg "\
 The polygon data for the following surface models are unsaved:\n\

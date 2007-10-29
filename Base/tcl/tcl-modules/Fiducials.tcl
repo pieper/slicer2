@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Fiducials.tcl,v $
-#   Date:      $Date: 2006/07/07 17:42:55 $
-#   Version:   $Revision: 1.65.2.3.2.2 $
+#   Date:      $Date: 2007/10/29 15:00:23 $
+#   Version:   $Revision: 1.65.2.3.2.3 $
 # 
 #===============================================================================
 # FILE:        Fiducials.tcl
@@ -96,8 +96,19 @@ proc FiducialsInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.65.2.3.2.2 $} {$Date: 2006/07/07 17:42:55 $}]
+        {$Revision: 1.65.2.3.2.3 $} {$Date: 2007/10/29 15:00:23 $}]
     
+
+    # Save some presets and handle them properly
+    lappend Module(procStorePresets) FiducialsStorePresets
+    lappend Module(procRecallPresets) FiducialsRecallPresets
+    # default values for the default list... 
+    set Module($m,presets) "name='default' visibility='1' selected=''"
+    set Module($m,procMRMLLoad) FiducialsLoadMRML
+    MainMrmlAppendnodeTypeList "FiducialsState"
+    set Module($m,procRetrievePresets) FiducialsRetrievePresetValues
+    set Module($m,procUnparsePresets) FiducialsUnparsePresets
+
     # Initialize module-level variables
     set Fiducials(renList) "viewRen matRen"
     set Fiducials(renList2D) "sl0Imager sl1Imager sl2Imager"
@@ -1216,7 +1227,8 @@ proc FiducialsSetSymbol2D { {symbol Cross} } {
 #-------------------------------------------------------------------------------
 # .PROC FiducialsUpdateMRML
 #
-# Update the Fiducials actors and scroll textboxes based on the current Mrml Tree
+# Update the Fiducials actors and scroll textboxes based on the current Mrml Tree.
+# Also update presets.
 # .END
 #-------------------------------------------------------------------------------
 proc FiducialsUpdateMRML {} {
@@ -1266,6 +1278,9 @@ proc FiducialsUpdateMRML {} {
 
     set Fiducials(removeDisplayList) $Fiducials(displayList)
     
+    # keep track of which scene we're in 
+    set sceneName ""
+
     while { $item != "" } {
         
         if { [$item GetClassName] == "vtkMrmlFiducialsNode"} {
@@ -1397,6 +1412,25 @@ proc FiducialsUpdateMRML {} {
             set readOldNodesForCompatibility 1
         }
         
+        # deal with the fiducials list information saved in the scene
+        if {[$item GetClassName] == "vtkMrmlScenesNode"} {
+            # get the scene name
+            set sceneName [$item GetName]
+        }
+        # is it a module node for this module?
+        if {[$item GetClassName] == "vtkMrmlModuleNode" &&
+            [$item GetModuleRefID] == "Fiducials"} {
+            # get the list name
+            set name [$item GetName]
+            if {$::Module(verbose)} {
+                puts "Updating Presets for module Fiducials, scene $sceneName, list $name"
+            }
+            set Preset(Fiducials,$sceneName,$name,visibility) [$item GetValue visibility]
+            set Preset(Fiducials,$sceneName,$name,selected) [FiducialsGetPointIdsFromNames [$item GetValue selected]]
+            
+            
+        }
+ 
         set item [Mrml(dataTree) GetNextItem]
         
     }
@@ -2385,8 +2419,11 @@ proc FiducialsSetFiducialsVisibility {name {visibility ""} {rendererName ""}} {
     }
      
     foreach l $name {
-        foreach ren $rendererName {
-            if {[lsearch $Fiducials(listOfNames) $l] != -1} {
+        if {[lsearch $Fiducials(listOfNames) $l] != -1} {
+            foreach ren $rendererName {
+                if {$::Module(verbose)} {
+                    puts "Setting fid list $l visibility: for renderer $ren"
+                }
                 set fid $Fiducials($l,fid)
                 Fiducials($fid,actor,$ren) SetVisibility $visibility
                 Fiducials($fid,node) SetVisibility $visibility
@@ -2396,15 +2433,14 @@ proc FiducialsSetFiducialsVisibility {name {visibility ""} {rendererName ""}} {
                 }
                 
                 
-                Render3D
             }
         }
         # for the 2d glyphs, but use the 2d renderers
         if {[lsearch $Fiducials(listOfNames) $l] != -1} {
             set fid $Fiducials($l,fid)
             if {$::Module(verbose)} {
-                puts "Setting fid visibility: for list $fid"
-                puts "\tPoint list = $Fiducials($fid,pointIdList)"
+                puts "Setting 2D fid visibility: for list $fid"
+                # puts "\tPoint list = $Fiducials($fid,pointIdList)"
             }
             foreach ren $Fiducials(renList2D) {
                 if {$::Module(verbose)} {
@@ -2412,10 +2448,10 @@ proc FiducialsSetFiducialsVisibility {name {visibility ""} {rendererName ""}} {
                 }
                 Fiducials($fid,actor2D,$ren) SetVisibility $visibility
             }
-            RenderSlices
         }
     }
-
+    RenderSlices
+    Render3D
     
 }
 
@@ -2467,12 +2503,6 @@ proc FiducialsSetActiveList {name {menu ""} {cb ""}} {
             set menulist $Fiducials(mbActiveList)
         } else {
             set menulist $menu
-        }
-        if {$menu == ""} {
-            if {$::Module(verbose)} {
-                puts "SetActiveList: empty menu!"
-            }
-#            return
         }
         set menuindex 0
         foreach s $cblist {
@@ -2667,15 +2697,16 @@ proc FiducialsSelectionUpdate {fid pid on} {
 # encapsulate going through all the active checkboxes and updating selections
 # .ARGS
 # int fid fiducials list id
-# int pid point id
-# bool on is the point selected or no?
+# int pid point id - not used
+# bool on is the point selected or no? - not used
 # .END
 #-------------------------------------------------------------------------------
-proc FiducialsUpdateAllCheckBoxes {fid pid on} {
+proc FiducialsUpdateAllCheckBoxes {fid {pid -1} {on 1}} {
     global Fiducials
 
     # update all the scrollboxes if this is the active list
-    if {$fid == $Fiducials($Fiducials(activeList),fid)} {
+    if {$Fiducials(activeList) != "None" &&
+        $fid == $Fiducials($Fiducials(activeList),fid)} {
     
         set counter 0
         foreach menu $Fiducials(mbActiveList) {
@@ -2685,18 +2716,18 @@ proc FiducialsUpdateAllCheckBoxes {fid pid on} {
             if {[$menu cget -text] == $Fiducials($fid,name)} {
                 if {$::Module(verbose)} {
                     if {[string first "FiducialsEdit" $menu] != -1} { 
-                        puts "FiducialsUpdateAllCheckBoxes:\n\tmenu = $menu\n\tcb = $cb\n\tmenu text = [$menu cget -text]\n\tfid = $fid\n\tfid name = $Fiducials($fid,name)"
+                        # puts "FiducialsUpdateAllCheckBoxes:\n\tmenu = $menu\n\tcb = $cb\n\tmenu text = [$menu cget -text]\n\tfid = $fid\n\tfid name = $Fiducials($fid,name)"
                     }
                 }
                 # clear everything
                 # $scroll selection clear 0 end
                 if {[$cb getnumbuttons] == 0} {
                     if {$::Module(verbose)} { 
-                        puts "FiducialsUpdateAllCheckBoxes: no elements, not deselecting"
+                        # puts "FiducialsUpdateAllCheckBoxes: no elements, not deselecting"
                     }
                 } else {
                     if {$::Module(verbose)} {
-                        puts "FiducialsUpdateAllCheckBoxes: selected list = $Fiducials($fid,selectedPointIdList), deselecting everything and then reselected (right now cb sel = [$cb getselind])"
+#                        puts "FiducialsUpdateAllCheckBoxes: selected list = $Fiducials($fid,selectedPointIdList), deselecting everything and then reselected (right now cb sel = [$cb getselind])"
                     }
                     $cb deselect
                     
@@ -2707,17 +2738,13 @@ proc FiducialsUpdateAllCheckBoxes {fid pid on} {
                         $cb select $sid 0
                         if {$::Module(verbose)} {
                             if {[string first "FiducialsEdit" $menu] != -1} {
-                                puts "FiducialsUpdateAllCheckBoxes: pid = $pid, selected sid = $sid for cb $cb"
+                                # puts "FiducialsUpdateAllCheckBoxes: pid = $pid, selected sid = $sid for cb $cb"
                             }
                         }
                     }
                 }
                 incr counter
             }
-        }
-    } else {
-        if {$::Module(verbose)} {
-            puts "$fid is not the active list $Fiducials($Fiducials(activeList),fid), leaving checkboxes alone"
         }
     }
 }
@@ -2842,6 +2869,7 @@ proc FiducialsSelectionFromCheckbox {menu cb focusOnActiveFiducial pid} {
         if {$::Module(verbose)} {
             puts "calling FiducialsUpdateAllCheckBoxes... on = $on"
         }
+        # don't need these in the call $pid $on
         FiducialsUpdateAllCheckBoxes $fid $pid $on
     }
 }
@@ -2944,9 +2972,9 @@ proc FiducialsUpdateSelectionForActor {fid {pid -1}} {
             set Fiducials(activePointID) $pid
         }
 
-        if {$::Module(verbose)} { puts "\tis the pt $pid in $Fiducials($fid,selectedPointIdList)?" }
+        # if {$::Module(verbose)} { puts "\tis the pt $pid in $Fiducials($fid,selectedPointIdList)?" }
         if {[lsearch $Fiducials($fid,selectedPointIdList) $pid] != -1} { 
-            if {$::Module(verbose)} { puts "\t\tyes (scalar id from point id = [FiducialsScalarIdFromPointId $fid $pid] )" }
+            # if {$::Module(verbose)} { puts "\t\tyes (scalar id from point id = [FiducialsScalarIdFromPointId $fid $pid] )" }
             set Fiducials(activeListID)  $fid
             set Fiducials(activePointID) $pid
 
@@ -2967,19 +2995,19 @@ proc FiducialsUpdateSelectionForActor {fid {pid -1}} {
             set s [lindex [Point($pid,node) GetXYSO] 2]
             set r [FiducialsSliceNumberToRendererName $s]
             if {$::Module(verbose)} { 
-                puts "FiducialsUpdateSelectionForActor: Setting selected for slice $s, renderer $r for pid $pid"
+              #  puts "FiducialsUpdateSelectionForActor: Setting selected for slice $s, renderer $r for pid $pid"
             }
             set scalarIndex [FiducialsScalarIdFromPointId2D $fid $pid $r]
             if {$scalarIndex != -1} {
                 Fiducials($fid,scalars2D,$r) SetTuple1 $scalarIndex 1
             } else { 
                 if {$::Module(verbose)} {
-                    puts "FiducialsUpdateSelectionForActor: not setting tuple1 for pid $pid $r, scalar index == -1" 
+               #     puts "FiducialsUpdateSelectionForActor: not setting tuple1 for pid $pid $r, scalar index == -1" 
                 } 
             }
             # if it is not selected
         } else {
-            if {$::Module(verbose)} { puts "\t\tno" } 
+            # if {$::Module(verbose)} { puts "\t\tno" } 
             # color the point the default color
             Fiducials($fid,scalars) SetTuple1 [FiducialsScalarIdFromPointId $fid $pid] 0
             # uncolor the text
@@ -2996,15 +3024,14 @@ proc FiducialsUpdateSelectionForActor {fid {pid -1}} {
                 Fiducials($fid,scalars2D,$r) SetTuple1 $scalarIndex 0
             } else { 
                 if {$::Module(verbose)} { 
-                    puts "FiducialsUpdateSelectionForActor: not setting scalars 2D tuple1 for pid $pid $r, scalar index == -1" 
+                  #  puts "FiducialsUpdateSelectionForActor: not setting scalars 2D tuple1 for pid $pid $r, scalar index == -1" 
                 } 
             }
         }
     }
     
-    
     if {$::Module(verbose)} {
-        puts "FiducialsUpdateSelectionForActor: calling FiducialsDisplayDescriptionActive fid = $fid, pid = $pid"
+        # puts "FiducialsUpdateSelectionForActor: calling FiducialsDisplayDescriptionActive fid = $fid, pid = $pid"
     }
     FiducialsDisplayDescriptionActive
 
@@ -3105,14 +3132,14 @@ proc FiducialsScalarIdFromPointId2D {fid pid r } {
     for {set i 0} { $i < [Fiducials($fid,points2D,$r) GetNumberOfPoints]} { incr i} { 
         set xyo [Fiducials($fid,points2D,$r) GetPoint $i]
         if {$::Module(verbose)} {
-            puts "Testing point $i of the points2D array for renderer $r: $xyo"
+           # puts "Testing point $i of the points2D array for renderer $r: $xyo"
         }
         # test if the x, y, offset are same
         if {[lindex $xyo 0] == [lindex $xyso 0] &&
             [lindex $xyo 1] == [lindex $xyso 1] &&
             [lindex $xyo 2] == [lindex $xyso 3]} {
             if {$::Module(verbose)} {
-                puts "xyo $xyo and xyso $xyso match, returning scalar id $i"
+                # puts "xyo $xyo and xyso $xyso match, returning scalar id $i"
             }
             return $i
         }
@@ -3515,7 +3542,6 @@ proc FiducialsGetActiveSelectedPointIdList {} {
 proc FiducialsToTextCards {modelid} {
 
     if { $modelid != "" && [FiducialsUseTextureText] } {
-
         catch {[Fiducials_sch GetTextCards] RemoveAllItems}
         catch "Fiducials_sch Delete"
         vtkSorter Fiducials_sorter 
@@ -3747,4 +3773,210 @@ proc FiducialsNewPointName { fid } {
     }
 
     return "$Fiducials($fid,name)$highest"
+}
+
+#-------------------------------------------------------------------------------
+# .PROC FiducialsStorePresets
+#  Save current settings to preset global variables.
+# .ARGS
+# int p the scene id
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsStorePresets {p} {
+    global Fiducials Preset
+
+    if {$::Module(verbose)} {
+        puts "FiducialsStorePresets p = $p"
+    }
+    foreach name $Fiducials(listOfNames) {
+        set id $Fiducials($name,fid)
+        if {$::Module(verbose)} { puts "\tname = $name, id = $id" }
+        set Preset(Fiducials,$p,$name,visibility) $Fiducials($id,visibility)
+        set Preset(Fiducials,$p,$name,selected) $Fiducials($id,selectedPointIdList)
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC FiducialsRecallPresets
+# Set current settings from preset global variables
+# .ARGS
+# int p the scene id
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsRecallPresets {p} {
+    global Fiducials Preset
+
+    if {$::Module(verbose)} {
+        puts "FiducialsRecallPresets p = $p"
+    }
+    foreach name $Fiducials(listOfNames) {
+        set id $Fiducials($name,fid)
+        if {$::Module(verbose)} {
+            puts "\tname = $name, id = $id"
+        }
+        if {[info exist Preset(Fiducials,$p,$name,visibility)] == 0} {
+            puts "WARNING: FiducialsRecallPresets no preset for visibility, scene $p, fiducials list $name (id = $id).\n\tUsing default: $Preset(Fiducials,$p,visibility)"
+            set Preset(Fiducials,$p,$name,visibility) $Preset(Fiducials,$p,visibility)
+        }
+        set Fiducials($id,visibility) $Preset(Fiducials,$p,$name,visibility)
+        set nodeName [Fiducials($id,node) GetName]
+        FiducialsSetFiducialsVisibility $nodeName $Fiducials($id,visibility)
+        if {[info exists Preset(Fiducials,$p,$name,selected)] == 0} {
+            # use the default
+            set Preset(Fiducials,$p,$name,selected) $Preset(Fiducials,$p,selected)
+            puts "WARNING: FiducialsRecallPresets no preset for selected, scene $p, fiducials list $name (id = $id).\n\tUsing default: $Preset(Fiducials,$p,$name,selected)"
+        }
+        set Fiducials($id,selectedPointIdList) $Preset(Fiducials,$p,$name,selected)
+        # update the GUI selections for the points on the list
+        FiducialsUpdateAllCheckBoxes $id 
+        FiducialsUpdateSelectionForActor $id 
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC FiducialsLoadMRML
+# Whenever the MRML Tree is loaded this function is called to update all
+# Fiducials scene related information.
+# .ARGS
+# string tag
+# string attr
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsLoadMRML {tag attr} {
+    global Mrml Fiducials
+
+    if {$::Module(verbose)} {
+        puts "FiducialsLoadMRML: tag = $tag, attr = $attr"
+    }
+
+    # get the module ref id element in the attr list to check it's a Fiducials state node
+    set attrIndex 0
+    set moduleRefIDPair [lindex $attr $attrIndex]
+    while {[lindex $moduleRefIDPair 0] != "moduleRefID" && $attrIndex < [llength $attr]} {
+        incr attrIndex
+        set moduleRefIDPair [lindex $attr $attrIndex]
+    }
+    if {$tag == "Module" && ([lindex $moduleRefIDPair 1] == "Fiducials")} {
+        set node [MainMrmlAddNode Module FiducialsState]
+        foreach a $attr {
+            set key [lindex $a 0]
+            set val [lreplace $a 0 0]
+            switch $key {
+                "moduleRefID" {
+                    # puts "\tHave the ref id $val"
+                    $node SetModuleRefID $val
+                }
+                "name" {
+                    # puts "\tHave the name $val"
+                    $node SetName $val
+                }
+                "options" {
+                    # puts "\tNOT USING options"
+                }
+                "default" {
+                    # puts "\tHave one of the string options key = $key, val = $val"
+                    $node SetValue $key $val
+                }
+            }
+        }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC Fiducials RetrievePresetValues
+# Called from MainOptionsRetrievePresetValues to save the values from a mrml node
+# into the Presets array
+# .ARGS
+# vtkMrmlModuleNode node the node to grab values from
+# str p the scene ID
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsRetrievePresetValues {node p} {
+    global Preset Module Fiducials
+
+     # check to see that it's a Fiducials state node
+    set ClassName [$node GetClassName]
+    if {$ClassName == "vtkMrmlModuleNode" &&
+        [$node GetModuleRefID] == "Fiducials"} {
+        if {$::Module(verbose)} {
+            puts "\tGetting presets from node $node"
+        }
+        set name [$node GetName]
+        set id $name
+        set Preset(Fiducials,$p,$id,visibility) [$node GetValue visibility]
+        # use the names of the points, and get their ids
+        set Preset(Fiducials,$p,$id,selected) [FiducialsGetPointIdsFromNames [$node GetValue selected]]
+    } else {
+        if {$::Module(verbose)} {
+            puts "FiducialsRetrievePresetValues: wrong kind of node $node, class = $ClassName, module = [$node GetModuleRefID]"
+        }
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC FiducialsUnparsePresets
+# Makes a mrml node out of the presets.
+# Makes a Module node and adds it to the data tree.
+# .ARGS
+# int presetNum optional, defaults to empty string - currently not used
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsUnparsePresets {{presetNum ""}} {
+    global Preset Fiducials
+
+    if {$presetNum != ""} {
+        set p $presetNum
+    } else {
+        set p "default"
+    }
+    if {$::Module(verbose)} {
+       puts "----> Unparsing Fiducials Presets for scene $p"
+    }
+
+    foreach name $Fiducials(listOfNames) {
+        set node [MainMrmlAddNode "Module" "FiducialsState"]
+        $node SetModuleRefID "Fiducials"
+        $node SetName $name
+        # check to see that the list presets were created
+        if {[info exist Preset(Fiducials,$p,$name,visibility)]} {
+            $node SetValue visibility $Preset(Fiducials,$p,$name,visibility)
+        } else {
+            if {$::Module(verbose)} {
+                puts "WARNING: preset visibility missing for list $name, using default of $Preset(Fiducials,$p,visibility)"
+            }
+            $node SetValue visibility $Preset(Fiducials,$p,visibility)
+        }
+        if {[info exist Preset(Fiducials,$p,$name,selected)]} {
+            # get the point names of the selected points and save those to the nodes
+            set nameList ""
+            foreach pointId $Preset(Fiducials,$p,$name,selected) {
+                lappend nameList [Point($pointId,node) GetName]
+            }
+            $node SetValue selected $nameList
+        } else {
+            $node SetValue selected $Preset(Fiducials,$p,selected)
+        }
+        if {$::Module(verbose)} { puts "\tAdded node for list $name: $node"} 
+    }
+}
+
+#-------------------------------------------------------------------------------
+# .PROC FiducialsGetPointIdsFromNames
+# Goes through the list of point names and returns a list of the point ids
+# that are associated with them. Uses Point(id,node) GetName to find names.
+# This is clunky because we don't save a mapping between point ids and names.
+# .ARGS
+# list pointNames a list of names associated with fiducial points
+# .END
+#-------------------------------------------------------------------------------
+proc FiducialsGetPointIdsFromNames {pointNames} {
+    global Point
+    set pointIds ""
+    foreach pointId $::Point(idList) {
+        if {[lsearch $pointNames [Point($pointId,node) GetName]] != -1} {
+            # this node's name is on the selected list, add it's id to the id list
+            lappend pointIds $pointId
+        }
+    }
+    return $pointIds
 }

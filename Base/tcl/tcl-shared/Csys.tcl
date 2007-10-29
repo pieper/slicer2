@@ -1,13 +1,13 @@
 #=auto==========================================================================
-#   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+#   Portions (c) Copyright 2006 Brigham and Women's Hospital (BWH) All Rights Reserved.
 # 
 #   See Doc/copyright/copyright.txt
 #   or http://www.slicer.org/copyright/copyright.txt for details.
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Csys.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:43 $
-#   Version:   $Revision: 1.13.12.1 $
+#   Date:      $Date: 2007/10/29 15:00:44 $
+#   Version:   $Revision: 1.13.12.1.2.1 $
 # 
 #===============================================================================
 # FILE:        Csys.tcl
@@ -18,7 +18,6 @@
 #   CsysResize
 #   CsysCreate
 #==========================================================================auto=
-
 ############################################################################
 #
 #      YOU SHOULD NOT NEED TO MODIFY THIS FILE IF YOU JUST WANT TO USE
