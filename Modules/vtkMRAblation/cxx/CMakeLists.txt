@@ -22,9 +22,10 @@ INCLUDE (${VTKMRABLATION_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 
 IF (VTK_WRAP_TCL AND VTKMRABLATION_WRAP_TCL)
 
-  VTK_WRAP_TCL (vtkMRAblationTCL MRAblationTCL_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkMRAblationTCL MRAblationTCL_SRCS)
+  VTK_WRAP_TCL (vtkMRAblationTCL MRAblationTCL_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkMRAblationTCL ${MRAblationTCL_SRCS})
   TARGET_LINK_LIBRARIES (vtkMRAblationTCL 
+                         vtkMRAblation
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
@@ -55,12 +56,12 @@ ENDIF (VTK_WRAP_TCL AND VTKMRABLATION_WRAP_TCL)
 
 IF (VTK_WRAP_PYTHON AND VTKMRABLATION_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkMRAblationPython MRAblationPython_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_PYTHON (vtkMRAblationPython MRAblationPython_SRCS ${LOCAL_MODULE_SRCS})
 
   IF (APPLE)
-    ADD_LIBRARY (vtkMRAblationPython MODULE MRAblationPython_SRCS)
+    ADD_LIBRARY (vtkMRAblationPython MODULE ${MRAblationPython_SRCS})
   ELSE (APPLE)
-    ADD_LIBRARY (vtkMRAblationPython SHARED MRAblationPython_SRCS)
+    ADD_LIBRARY (vtkMRAblationPython SHARED ${MRAblationPython_SRCS})
   ENDIF (APPLE)
 
   IF (WIN32)
@@ -106,8 +107,8 @@ ENDIF (VTK_WRAP_PYTHON AND VTKMRABLATION_WRAP_PYTHON)
 
 IF (VTK_WRAP_JAVA AND VTKMRABLATION_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkMRAblationJava MRAblationJava_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkMRAblationJava SHARED MRAblationJava_SRCS)
+  VTK_WRAP_JAVA (vtkMRAblationJava MRAblationJava_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkMRAblationJava SHARED ${MRAblationJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkMRAblationJava 
                          vtkIOJava
                          vtkGraphicsJava

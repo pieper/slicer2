@@ -22,9 +22,10 @@ INCLUDE (${VTKMRPROSTATECARE_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 
 IF (VTK_WRAP_TCL AND VTKMRPROSTATECARE_WRAP_TCL)
 
-  VTK_WRAP_TCL (vtkMRProstateCareTCL MRProstateCareTCL_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkMRProstateCareTCL MRProstateCareTCL_SRCS)
+  VTK_WRAP_TCL (vtkMRProstateCareTCL MRProstateCareTCL_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkMRProstateCareTCL ${MRProstateCareTCL_SRCS})
   TARGET_LINK_LIBRARIES (vtkMRProstateCareTCL 
+                         vtkMRProstateCare
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
@@ -55,12 +56,12 @@ ENDIF (VTK_WRAP_TCL AND VTKMRPROSTATECARE_WRAP_TCL)
 
 IF (VTK_WRAP_PYTHON AND VTKMRPROSTATECARE_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkMRProstateCarePython MRProstateCarePython_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_PYTHON (vtkMRProstateCarePython MRProstateCarePython_SRCS ${LOCAL_MODULE_SRCS})
 
   IF (APPLE)
-    ADD_LIBRARY (vtkMRProstateCarePython MODULE MRProstateCarePython_SRCS)
+    ADD_LIBRARY (vtkMRProstateCarePython MODULE ${MRProstateCarePython_SRCS})
   ELSE (APPLE)
-    ADD_LIBRARY (vtkMRProstateCarePython SHARED MRProstateCarePython_SRCS)
+    ADD_LIBRARY (vtkMRProstateCarePython SHARED ${MRProstateCarePython_SRCS})
   ENDIF (APPLE)
 
   IF (WIN32)
@@ -106,8 +107,8 @@ ENDIF (VTK_WRAP_PYTHON AND VTKMRPROSTATECARE_WRAP_PYTHON)
 
 IF (VTK_WRAP_JAVA AND VTKMRPROSTATECARE_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkMRProstateCareJava MRProstateCareJava_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkMRProstateCareJava SHARED MRProstateCareJava_SRCS)
+  VTK_WRAP_JAVA (vtkMRProstateCareJava MRProstateCareJava_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkMRProstateCareJava SHARED ${MRProstateCareJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkMRProstateCareJava 
                          vtkIOJava
                          vtkGraphicsJava
