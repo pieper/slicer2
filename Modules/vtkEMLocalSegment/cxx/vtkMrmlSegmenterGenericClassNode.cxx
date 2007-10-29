@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterGenericClassNode.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:23 $
-  Version:   $Revision: 1.9.2.1 $
+  Date:      $Date: 2007/10/29 15:39:23 $
+  Version:   $Revision: 1.9.2.1.2.1 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -47,6 +47,9 @@ vtkMrmlSegmenterGenericClassNode::vtkMrmlSegmenterGenericClassNode() {
 
   this->RegistrationClassSpecificRegistrationFlag = 0;
   this->ExcludeFromIncompleteEStepFlag = 0;
+ 
+  this->PCARegistrationFlag = 0;
+
 }
 
 //----------------------------------------------------------------------------
@@ -70,6 +73,7 @@ void vtkMrmlSegmenterGenericClassNode::Write(ofstream& of)
   of << "'"; 
   if (this->RegistrationClassSpecificRegistrationFlag) of << " RegistrationClassSpecificRegistrationFlag='" << this->RegistrationClassSpecificRegistrationFlag << "'";
   if (this->ExcludeFromIncompleteEStepFlag) of << " ExcludeFromIncompleteEStepFlag='" << this->ExcludeFromIncompleteEStepFlag << "'";
+  if (this->PCARegistrationFlag) of << " PCARegistrationFlag='" << this->PCARegistrationFlag << "'";
 }
 
 //----------------------------------------------------------------------------
@@ -84,11 +88,13 @@ void vtkMrmlSegmenterGenericClassNode::Copy(vtkMrmlNode *anode)
   this->PrintRegistrationSimularityMeasure         = node->PrintRegistrationSimularityMeasure;
   this->RegistrationClassSpecificRegistrationFlag = node->RegistrationClassSpecificRegistrationFlag;
   this->ExcludeFromIncompleteEStepFlag = node->ExcludeFromIncompleteEStepFlag;
+  this->PCARegistrationFlag = node->PCARegistrationFlag;
  
   memcpy(this->RegistrationTranslation,node->RegistrationTranslation,3*sizeof(double));
   memcpy(this->RegistrationRotation, node->RegistrationRotation,3*sizeof(double));
   memcpy(this->RegistrationScale,node->RegistrationScale,3*sizeof(double));
   memcpy(this->RegistrationCovariance,node->RegistrationCovariance,9*sizeof(double));
+
 }
 
 //----------------------------------------------------------------------------
@@ -105,6 +111,5 @@ void vtkMrmlSegmenterGenericClassNode::PrintSelf(ostream& os, vtkIndent indent)
   os << "\n" ;
   os << indent << "RegistrationClassSpecificRegistrationFlag: " << this->RegistrationClassSpecificRegistrationFlag << "\n" ;
   os << indent << "ExcludeFromIncompleteEStepFlag:     " << this->ExcludeFromIncompleteEStepFlag << "\n" ;
+  os << indent << "PCARegistrationFlag:                " << this->PCARegistrationFlag << "\n" ; 
 }
-
-

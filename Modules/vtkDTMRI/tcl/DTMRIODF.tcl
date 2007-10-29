@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRIODF.tcl,v $
-#   Date:      $Date: 2006/07/07 18:35:24 $
-#   Version:   $Revision: 1.8.2.1.2.2 $
+#   Date:      $Date: 2007/10/29 15:43:07 $
+#   Version:   $Revision: 1.8.2.1.2.3 $
 # 
 #===============================================================================
 # FILE:        DTMRIODF.tcl
@@ -36,7 +36,7 @@ proc DTMRIODFInit {} {
     #------------------------------------
     set m "ODF"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.8.2.1.2.2 $} {$Date: 2006/07/07 18:35:24 $}]
+                                 {$Revision: 1.8.2.1.2.3 $} {$Date: 2007/10/29 15:43:07 $}]
 
   set DTMRI(InputODF) $Volume(idNone)
   set DTMRI(ODF,scaleFactor) 2
@@ -131,14 +131,15 @@ proc DTMRIODFBuildGUI {} {
     text $DTMRI(mode,reformatTypeList,text) \
     color $colors \
     width $widths {
-        eval {radiobutton $f.rMode$vis \
+        regsub -all " " $vis "_" winname  ;# remove spaces from value
+        eval {radiobutton $f.rMode$winname \
               -text "$text" -value "$vis" \
               -variable DTMRI(mode,reformatType) \
               -command {DTMRIODFUpdateReformatType} \
               -indicatoron 0 } $Gui(WCA) \
         {-bg $color -selectcolor $color -width $width}
-        pack $f.rMode$vis -side left -padx 0 -pady 0
-        TooltipAdd  $f.rMode$vis $tip
+        pack $f.rMode$winname -side left -padx 0 -pady 0
+        TooltipAdd  $f.rMode$winname $tip
     }
     
    set f  $fODF.fScale

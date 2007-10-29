@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: isframes.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:48 $
-#   Version:   $Revision: 1.5.2.1 $
+#   Date:      $Date: 2007/10/29 15:53:30 $
+#   Version:   $Revision: 1.5.2.1.2.1 $
 # 
 #===============================================================================
 # FILE:        isframes.tcl
@@ -38,6 +38,8 @@ option add *isframes.start 0 widgetDefault
 option add *isframes.end 0 widgetDefault
 option add *isframes.skip 1 widgetDefault
 option add *isframes.filepattern "" widgetDefault
+option add *isframes.filetype "" widgetDefault
+option add *isframes.dumpcommand "" widgetDefault
 
 #
 # The class definition - define if needed (not when re-sourcing)
@@ -56,6 +58,8 @@ if { [itcl::find class isframes] == "" } {
       # or become part of the option database
       #
       itk_option define -filepattern filepattern Filepattern ""
+      itk_option define -filetype filetype Filetype ""
+      itk_option define -dumpcommand dumpcommand Dumpcommand ""
       itk_option define -frame frame Frame 0
       itk_option define -start start Start 0
       itk_option define -end end End 0
@@ -75,8 +79,11 @@ if { [itcl::find class isframes] == "" } {
       variable _first
       variable _last
 
+      # a scrolled text for displaying ascii content
+      variable _text
       # vtk objects in the frame render
       variable _name
+      variable _image
       variable _tkrw
       variable _ren
       variable _mapper
@@ -91,6 +98,7 @@ if { [itcl::find class isframes] == "" } {
       method tkrw   {}   {return $_tkrw}
       method rw     {}   {return [$_tkrw GetRenderWindow]}
 
+      method middle     {}   {}
       method next     {}   {}
       method entrycallback {}   {}
       
@@ -142,10 +150,11 @@ itcl::body isframes::constructor {args} {
     #
     # build the vtk image viewer
     #
-    iwidgets::scrolledframe $itk_interior.sframe \
+    set _image $itk_interior.sframe
+    iwidgets::scrolledframe $_image \
         -hscrollmode dynamic -vscrollmode dynamic 
-    pack $itk_interior.sframe -fill both -expand true
-    set cs [$itk_interior.sframe childsite]
+    pack $_image -fill both -expand true
+    set cs [$_image childsite]
     set _tkrw $cs.tkrw
     vtkTkRenderWidget $_tkrw -width 256 -height 256
 
@@ -169,6 +178,13 @@ itcl::body isframes::constructor {args} {
     $_ren AddActor2D $_actor
 
     #
+    # a scrolled text for ascii content for filetype "text"
+    #
+    set _text $itk_interior.text
+    iwidgets::scrolledtext $_text\
+        -hscrollmode dynamic -vscrollmode dynamic 
+
+    #
     # Initialize the widget based on the command line options.
     #
     eval itk_initialize $args
@@ -177,9 +193,15 @@ itcl::body isframes::constructor {args} {
 
 itcl::body isframes::destructor {} {
     destroy $_tkrw 
-    $_ren Delete
-    $_mapper Delete
-    $_actor Delete
+    if { $_ren != "" } {
+        $_ren Delete
+    }
+    if { $_mapper != "" } {
+        $_mapper Delete
+    }
+    if { $_actor != "" } {
+        $_actor Delete
+    }
 }
 
 # ------------------------------------------------------------------
@@ -194,7 +216,7 @@ itcl::body isframes::destructor {} {
 itcl::configbody isframes::filepattern {
     set _patternentry_value $itk_option(-filepattern)
     if { [string first "*" $itk_option(-filepattern)] != -1 } {
-        set files [glob $itk_option(-filepattern)]
+        set files [glob -nocomplain $itk_option(-filepattern)]
         set numfiles [llength $files]
         if { $numfiles > 0 } {
             $this configure -start 0
@@ -239,47 +261,88 @@ itcl::configbody isframes::frame {
         $_slider set $itk_option(-frame)
     }
 
-    set imgr ::imgr_$_name
-    catch "$imgr Delete"
 
     if { [string first "*" $itk_option(-filepattern)] != -1 } {
-        set files [lsort -dictionary [glob $itk_option(-filepattern)]]
+        set files [lsort -dictionary [glob -nocomplain $itk_option(-filepattern)]]
         set filename [lindex $files $itk_option(-frame)]
     } else {
         set filename [format $itk_option(-filepattern) $itk_option(-frame)]
     }
-
-    set ext [string tolower [file extension $filename]]
-    switch $ext {
-        ".pnm" - ".ppm" - ".pgm" {
-            vtkPNMReader $imgr 
-        }
-        ".jpg" - ".jepg" {
-            vtkJPEGReader $imgr 
-        }
-        ".bmp" {
-            vtkBMPReader $imgr 
-        }
-        ".ps"  {
-            vtkPostScriptReader $imgr 
-        }
-        ".tif" - ".tiff" {
-            vtkTIFFReader $imgr 
-        }
-        ".png" {
-            vtkPNGReader $imgr 
-        }
-        default {
-            error "unknown image format $ext; options are .ppm, .jpg, .bmp, .ps, .tif, .png"
-        }
+    if {$filename == ""} {
+        puts "isframes: no file found for frame $itk_option(-frame) with pattern $itk_option(-filepattern)"
+        return
     }
 
-    $imgr SetFileName $filename
-    $imgr Update
-    set dims [[$imgr GetOutput] GetDimensions]
-    $_tkrw configure -width [lindex $dims 0] -height [lindex $dims 1]
-    $_mapper SetInput [$imgr GetOutput]
-    $imgr Delete
+    set filetype $itk_option(-filetype)
+
+    if { $filetype == "text" } {
+        pack forget $_image
+        pack $_text -fill both -expand true
+
+        if { [file isdirectory $filename] } {
+            set contents "$filename is a directory"
+        } else {
+            set ret [ catch {
+                if { $itk_option(-dumpcommand) != "" } {
+                    set fp [open "| $itk_option(-dumpcommand) $filename" "r"]
+                } else {
+                    set fp [open $filename "r"]
+                }
+                set contents [read $fp]
+                close $fp
+            } res ]
+            
+            if { $ret } {
+                set contents "Error opening $filename with $itk_option(-dumpcommand)\n\n$res"
+            }
+        }
+        set oscroll [lindex [$_text yview] 0]
+        $_text clear
+        $_text insert 1.0 $contents
+        $_text yview moveto $oscroll
+    } else {
+        pack forget $_text
+        pack $_image -fill both -expand true
+        set imgr ::imgr_$_name
+        catch "$imgr Delete"
+        if { $filetype != "" } {
+            vtk${filetype}Reader $imgr
+        } else {
+            set ext [string tolower [file extension $filename]]
+            switch $ext {
+                ".pnm" - ".ppm" - ".pgm" {
+                    vtkPNMReader $imgr 
+                }
+                ".jpg" - ".jepg" {
+                    vtkJPEGReader $imgr 
+                }
+                ".bmp" {
+                    vtkBMPReader $imgr 
+                }
+                ".ps"  {
+                    vtkPostScriptReader $imgr 
+                }
+                ".tif" - ".tiff" {
+                    vtkTIFFReader $imgr 
+                }
+                ".png" {
+                    vtkPNGReader $imgr 
+                }
+                default {
+                    error "unknown image format $ext; options are .ppm, .jpg, .bmp, .ps, .tif, .png"
+                }
+            }
+        }
+
+        $imgr SetFileName $filename
+        $imgr Update
+        set dims [[$imgr GetOutput] GetDimensions]
+        if { $_tkrw != "" && $_mapper != "" } {
+            $_tkrw configure -width [lindex $dims 0] -height [lindex $dims 1]
+            $_mapper SetInput [$imgr GetOutput]
+        }
+        $imgr Delete
+    }
     
     $this expose
 }
@@ -290,7 +353,9 @@ itcl::configbody isframes::frame {
 
 
 itcl::body isframes::expose {} {
-    $_tkrw Render
+    if { $_tkrw != ""} {
+        $_tkrw Render
+    }
 }
 
 
@@ -301,6 +366,12 @@ itcl::body isframes::next {} {
         set f $itk_option(-start)
     }
     $this configure -frame $f
+}
+
+itcl::body isframes::middle {} {
+    
+    set middle [expr ($itk_option(-start) + $itk_option(-end)) / 2]
+    $this configure -frame $middle
 }
 
 itcl::body isframes::entrycallback {} {
@@ -320,7 +391,6 @@ itcl::body isframes::entrycallback {} {
 
 itcl::body isframes::pre_destroy {} {
 
-    tk_messageBox -message "pre_destroy"
     [$_tkrw GetRenderWindow] Delete
     after idle "destroy $_tkrw"
     $_ren Delete
@@ -339,17 +409,41 @@ itcl::body isframes::pre_destroy {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc isframes_demo {} {
+proc isframes_demo { {type image} } {
 
     catch "destroy .isframesdemo"
     toplevel .isframesdemo
     wm title .isframesdemo "isframes demo"
     wm geometry .isframesdemo 400x700
 
-    pack [isframes .isframesdemo.isf] -fill both -expand true
-    .isframesdemo.isf configure -filepattern c:/tmp/slicer-%04d.png -start 1 -end 65
-    .isframesdemo.isf configure -frame 1
+    pack [isframes .isframesdemo.isf2] -fill both -expand true
+
+    switch $type {
+        "image" {
+            .isframesdemo.isf2 configure -filepattern /tmp/slicer-%04d.png -start 1 -end 65
+        }
+        "text" {
+            .isframesdemo.isf2 configure -filetype "text" -filepattern "$::env(SLICER_HOME)/Base/tcl/*.tcl"
+        }
+    }
+    .isframesdemo.isf2 configure -frame 1
 }
 
 
+#-------------------------------------------------------------------------------
+# .PROC isframes_showMovie
+# Builds a window and displays a series of image files
+# .ARGS
+# str pattern a file pattern to determine the sequence of image files to read in
+# .END
+#-------------------------------------------------------------------------------
+proc isframes_showMovie { pattern start end } {
 
+    catch "destroy .isframesShowMovie"
+    toplevel .isframesShowMovie
+    wm title .isframesShowMovie "Show Slicer Movie"
+    wm geometry .isframesShowMovie 800x850
+    
+    pack [isframes .isframesShowMovie.isf2] -fill both -expand true
+    .isframesShowMovie.isf2 configure -filepattern $pattern -start $start -end $end
+}

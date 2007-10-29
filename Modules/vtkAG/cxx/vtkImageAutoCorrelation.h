@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageAutoCorrelation.h,v $
-  Date:      $Date: 2005/12/20 22:54:51 $
-  Version:   $Revision: 1.2.8.1 $
+  Date:      $Date: 2007/10/29 15:51:37 $
+  Version:   $Revision: 1.2.8.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageAutoCorrelation - 
@@ -34,8 +34,8 @@ public:
 protected:
   vtkImageAutoCorrelation();
   ~vtkImageAutoCorrelation();
-  vtkImageAutoCorrelation(const vtkImageAutoCorrelation&) {}
-  void operator=(const vtkImageAutoCorrelation&) {}
+  vtkImageAutoCorrelation(const vtkImageAutoCorrelation&);
+  void operator=(const vtkImageAutoCorrelation&);
   void ExecuteInformation(vtkImageData *inData,vtkImageData *outData);
   void ThreadedExecute(vtkImageData *inDatas, vtkImageData *outData,
                int extent[6], int id);

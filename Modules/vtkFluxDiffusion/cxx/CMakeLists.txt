@@ -14,7 +14,7 @@ INCLUDE (${VTKFLUXDIFFUSION_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 # Create the vtkFluxDiffusion C++ library
 #
 # (Doesn't work here because of a CMake bug)
-# ADD_LIBRARY (vtkFluxDiffusion LOCAL_MODULE_SRCS)
+# ADD_LIBRARY (vtkFluxDiffusion ${LOCAL_MODULE_SRCS})
 
 #
 # Create the vtkFluxDiffusion Tcl library
@@ -22,9 +22,10 @@ INCLUDE (${VTKFLUXDIFFUSION_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 
 IF (VTK_WRAP_TCL AND VTKFLUXDIFFUSION_WRAP_TCL)
 
-  VTK_WRAP_TCL (vtkFluxDiffusionTCL FluxDiffusionTCL_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkFluxDiffusionTCL FluxDiffusionTCL_SRCS)
+  VTK_WRAP_TCL (vtkFluxDiffusionTCL FluxDiffusionTCL_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkFluxDiffusionTCL ${FluxDiffusionTCL_SRCS})
   TARGET_LINK_LIBRARIES (vtkFluxDiffusionTCL 
+                         vtkFluxDiffusion
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
@@ -55,16 +56,17 @@ ENDIF (VTK_WRAP_TCL AND VTKFLUXDIFFUSION_WRAP_TCL)
 
 IF (VTK_WRAP_PYTHON AND VTKFLUXDIFFUSION_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkFluxDiffusionPython FluxDiffusionPython_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_PYTHON (vtkFluxDiffusionPython FluxDiffusionPython_SRCS ${LOCAL_MODULE_SRCS})
 
   IF (APPLE)
-    ADD_LIBRARY (vtkFluxDiffusionPython MODULE FluxDiffusionPython_SRCS)
+    ADD_LIBRARY (vtkFluxDiffusionPython MODULE ${FluxDiffusionPython_SRCS})
   ELSE (APPLE)
-    ADD_LIBRARY (vtkFluxDiffusionPython SHARED FluxDiffusionPython_SRCS)
+    ADD_LIBRARY (vtkFluxDiffusionPython SHARED ${FluxDiffusionPython_SRCS})
   ENDIF (APPLE)
 
   IF (WIN32)
     TARGET_LINK_LIBRARIES (vtkFluxDiffusionPython 
+                           vtkFluxDiffusion
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -74,6 +76,7 @@ IF (VTK_WRAP_PYTHON AND VTKFLUXDIFFUSION_WRAP_PYTHON)
                            optimized ${PYTHON_LIBRARY})
   ELSE (WIN32)
     TARGET_LINK_LIBRARIES (vtkFluxDiffusionPython 
+                           vtkFluxDiffusionPython 
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -106,9 +109,10 @@ ENDIF (VTK_WRAP_PYTHON AND VTKFLUXDIFFUSION_WRAP_PYTHON)
 
 IF (VTK_WRAP_JAVA AND VTKFLUXDIFFUSION_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkFluxDiffusionJava FluxDiffusionJava_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkFluxDiffusionJava SHARED FluxDiffusionJava_SRCS)
+  VTK_WRAP_JAVA (vtkFluxDiffusionJava FluxDiffusionJava_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkFluxDiffusionJava SHARED ${FluxDiffusionJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkFluxDiffusionJava 
+                         vtkFluxDiffusion
                          vtkIOJava
                          vtkGraphicsJava
                          vtkImagingJava 
@@ -136,7 +140,7 @@ ENDIF (VTK_WRAP_JAVA AND VTKFLUXDIFFUSION_WRAP_JAVA)
 # Link to VTK and local
 #
 
-LINK_LIBRARIES (
+TARGET_LINK_LIBRARIES (
   vtkFluxDiffusion
   vtkIO
   vtkGraphics
@@ -146,17 +150,17 @@ LINK_LIBRARIES (
 )
 
 IF (VTK_USE_HYBRID)
-  LINK_LIBRARIES (vtkHybrid)
+  TARGET_LINK_LIBRARIES (vtkFluxDiffusion vtkHybrid)
 ENDIF (VTK_USE_HYBRID)
 
 IF (VTK_USE_PARALLEL)
-  LINK_LIBRARIES (vtkParallel)
+  TARGET_LINK_LIBRARIES (vtkFluxDiffusion vtkParallel)
 ENDIF (VTK_USE_PARALLEL)
 
 IF (VTK_USE_PATENTED)
-  LINK_LIBRARIES (vtkPatented)
+  TARGET_LINK_LIBRARIES (vtkFluxDiffusion vtkPatented)
 ENDIF (VTK_USE_PATENTED)
 
 IF (VTK_USE_RENDERING)
-  LINK_LIBRARIES (vtkRendering)
+  TARGET_LINK_LIBRARIES (vtkFluxDiffusion vtkRendering)
 ENDIF (VTK_USE_RENDERING)

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageHistogramNormalization.h,v $
-  Date:      $Date: 2005/12/20 22:54:51 $
-  Version:   $Revision: 1.1.1.1.8.1 $
+  Date:      $Date: 2007/10/29 15:51:37 $
+  Version:   $Revision: 1.1.1.1.8.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageHistogramNormalization - 
@@ -26,7 +26,7 @@ class VTK_AG_EXPORT vtkImageHistogramNormalization : public vtkImageShiftScale
 {
 public:
   static vtkImageHistogramNormalization *New();
-  vtkTypeMacro(vtkImageHistogramNormalization,vtkImageToImageFilter);
+  vtkTypeMacro(vtkImageHistogramNormalization,vtkImageShiftScale);
   void PrintSelf(ostream& os, vtkIndent indent);
 
 protected:

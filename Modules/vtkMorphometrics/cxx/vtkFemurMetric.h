@@ -7,22 +7,17 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFemurMetric.h,v $
-  Date:      $Date: 2005/12/20 22:56:11 $
-  Version:   $Revision: 1.5.8.1 $
+  Date:      $Date: 2007/10/29 15:28:13 $
+  Version:   $Revision: 1.5.8.1.2.1 $
 
 =========================================================================auto=*/
 #ifndef __vtk_femur_metric_h
 #define __vtk_femur_metric_h
+
 #include <vtkMorphometricsConfigure.h>
-#include <vtkObject.h>
-#include <vtkPlaneSource.h>
-#include <vtkSphereSource.h>
-#include <vtkPolyData.h>
-#include <vtkImageEuclideanDistance.h>
-#include "vtkAxisSource.h"
-#include "vtkDataSetTriangleFilter.h"
-#include "vtkDataSetToLabelMap.h"
-#include "vtkImageDijkstra.h"
+
+#include "vtkDataSetToLabelMap.h" // for inline
+#include "vtkStructuredPoints.h" // for inline
 
 //---------------------------------------------------------
 // Author: Axel Krauth
@@ -36,6 +31,12 @@
 // To be able to compute the basic properties, a distance-to-surface
 // map is computed.
 
+class vtkPolyData;
+class vtkSphereSource;
+class vtkAxisSource;
+class vtkDataSetTriangleFilter;
+class vtkImageEuclideanDistance;
+class vtkImageDijkstra;
 class VTK_MORPHOMETRICS_EXPORT vtkFemurMetric : public vtkObject
 {
  public:

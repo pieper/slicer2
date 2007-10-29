@@ -53,7 +53,7 @@ exampleObject SetNumberOfSides 18
 # botttom of the cube.
 exampleObject SetStoppingThreshold 0
 exampleObject SetStoppingModeToLinearMeasure
-exampleObject SetMaxCurvature 10
+exampleObject SetRadiusOfCurvature 10
 # Give the $seedTracts this object to copy new ones from
 $seedTracts SetVtkHyperStreamlinePointsSettings exampleObject
 
@@ -144,7 +144,12 @@ $saveTracts SaveStreamlinesAsPolyData tractsAnalysis tractA
 puts [[[streamControl GetDisplayTracts] GetClippedStreamlines] Print]
 
 # test deletion
-streamControl DeleteStreamline \
-    [[[streamControl GetDisplayTracts] GetActors] GetItemAsObject 2]
+vtkCellPicker cp
+foreach a [[streamControl GetDisplayTracts] GetActors] {
+    if {[cp SafeDownCast $a] == $a} {
+    streamControl DeleteStreamline $a
+    }
+}
+cp Delete
 
 #streamControl DeleteStreamline 2

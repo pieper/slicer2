@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMLocalSegment.tcl,v $
-#   Date:      $Date: 2006/07/07 18:49:54 $
-#   Version:   $Revision: 1.65.2.2.2.3 $
+#   Date:      $Date: 2007/10/29 15:39:36 $
+#   Version:   $Revision: 1.65.2.2.2.4 $
 # 
 #===============================================================================
 # FILE:        EMLocalSegment.tcl
@@ -163,13 +163,16 @@ proc EMSegmentInit {} {
     # Public Version  = 0
     # Private Version = 1
    
-    #if { [catch "package require vtkEMPrivateSegment"] } {
-    #  set EMSegment(SegmentMode) 0
-    #} else {
-    #  puts "Load Private EM-Version"
-    #  set EMSegment(SegmentMode) 1
-    #} 
-    set EMSegment(SegmentMode) 0
+    if { [catch "package require vtkEMPrivateSegment"] } {
+      set EMSegment(SegmentMode) 0
+    } else {
+      puts "Load Private EM-Version"
+      set EMSegment(SegmentMode) 1
+    } 
+    # set EMSegment(SegmentMode) 0
+    # If you segment images with EM method defined by EMAtlasBrainClassifier
+    set EMSegment(EMAtlasBrainClassifierFlag) 0
+
     if {$::Module(verbose)} {
         puts "Debugging - just loading local version"
     }
@@ -266,7 +269,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.65.2.2.2.3 $} {$Date: 2006/07/07 18:49:54 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.65.2.2.2.4 $} {$Date: 2007/10/29 15:39:36 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -583,6 +586,16 @@ proc EMSegmentInit {} {
 #-------------------------------------------------------------------------------
 proc EMSegmentBuildGUI {} {
     global Gui EMSegment Module Volume Model
+    # Kilian : This is for my own debugging purposes
+
+    if {[file exists [file join $::env(SLICER_HOME) Modules/vtkEMPrivateSegment]]} {
+    # Add button to Volume Gui so that I do not have to enter it all the time 
+       
+        
+    catch {DevAddButton $Volume(fVolHeader).bKilian "Tumor Default" "set Volume(pixelWidth)  0.78125;set Volume(pixelHeight) 0.78125;set Volume(sliceThickness) 1.0;set Volume(littleEndian) 1;  VolumesSetScanOrder IS" 16}
+        pack $Volume(fVolHeader).bKilian 
+    }
+
     # This has to be done here otherwise reboot does not work correctly
     set EMSegment(DisplaySampleFlag) 0
     # puts "EMSegmentBuildGUI Start"
@@ -1986,21 +1999,27 @@ proc EMSegmentUpdateMRML {} {
            set EMSegment(Cattrib,$NumClass,$NodeAttribute)     [SegmenterClass($pid,node) Get${NodeAttribute}]
     }
 
-    set VolumeName  [SegmenterClass($pid,node) GetLocalPriorName]
-    set VolumeIndex [lsearch $VolumeNameList $VolumeName]
-    if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMSegment(Cattrib,$NumClass,ProbabilityData) [lindex $Volume(idList) $VolumeIndex]
-    } else { set EMSegment(Cattrib,$NumClass,ProbabilityData) $Volume(idNone) }
+        set VolumeName  [SegmenterClass($pid,node) GetLocalPriorName]
+        set VolumeIndex [lsearch $VolumeNameList $VolumeName]
+        if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMSegment(Cattrib,$NumClass,ProbabilityData) [lindex $Volume(idList) $VolumeIndex]
+        } else { set EMSegment(Cattrib,$NumClass,ProbabilityData) $Volume(idNone) }
+        
+        set VolumeName  [SegmenterClass($pid,node) GetPCAMeanName]
+        set VolumeIndex [lsearch $VolumeNameList $VolumeName]
+        if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMSegment(Cattrib,$NumClass,PCAMeanData) [lindex $Volume(idList) $VolumeIndex]
+        } else { set EMSegment(Cattrib,$NumClass,PCAMeanData) $Volume(idNone) }
+        
+        set VolumeName  [SegmenterClass($pid,node) GetReferenceStandardFileName]
+        set VolumeIndex [lsearch $VolumeNameList $VolumeName]
+        if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMSegment(Cattrib,$NumClass,ReferenceStandardData) [lindex $Volume(idList) $VolumeIndex]
+        } else { set EMSegment(Cattrib,$NumClass,ReferenceStandardData) $Volume(idNone) }
 
-    set VolumeName  [SegmenterClass($pid,node) GetPCAMeanName]
-    set VolumeIndex [lsearch $VolumeNameList $VolumeName]
-    if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMSegment(Cattrib,$NumClass,PCAMeanData) [lindex $Volume(idList) $VolumeIndex]
-    } else { set EMSegment(Cattrib,$NumClass,PCAMeanData) $Volume(idNone) }
+    set VolumeName  [SegmenterClass($pid,node) GetFixedWeightsName]
+        set VolumeIndex [lsearch $VolumeNameList $VolumeName]
+        if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMSegment(Cattrib,$NumClass,FixedWeightsData) [lindex $Volume(idList) $VolumeIndex]
+        } else { set EMSegment(Cattrib,$NumClass,FixedWeightsData) $Volume(idNone) }
 
-    set VolumeName  [SegmenterClass($pid,node) GetReferenceStandardFileName]
-      set VolumeIndex [lsearch $VolumeNameList $VolumeName]
-      if {($VolumeName != "") && ($VolumeIndex > -1) } { set EMSegment(Cattrib,$NumClass,ReferenceStandardData) [lindex $Volume(idList) $VolumeIndex]
-      } else { set EMSegment(Cattrib,$NumClass,ReferenceStandardData) $Volume(idNone) }
-         set index 0
+        set index 0
         set LogCovariance  [SegmenterClass($pid,node) GetLogCovariance]
         set LogMean [SegmenterClass($pid,node) GetLogMean]
         set InputChannelWeights [SegmenterClass($pid,node) GetInputChannelWeights]
@@ -2613,7 +2632,13 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
               set BeginName ""
             }
             foreach Attribute $EMSegment(Gui${Name}AttributeList) {
-        if {$Attribute != "LocalPriorName"} { eval SegmenterSuperClass($pid,node) Set$Attribute $EMSegment(Cattrib,$i,$Attribute) }
+              if {$Attribute != "LocalPriorName" && $Attribute != "LocalPriorSpatialWeightName" } { 
+                if {$Attribute  == "InitialBiasFilePrefix" || $Attribute  == "PredefinedLabelMapPrefix" ||  $Attribute  == "PCARegistrationMean"  ||  $Attribute  == "PCARegistrationEigenMatrix" ||  $Attribute  == "PCARegistrationEigenValues" } {
+                  SegmenterSuperClass($pid,node) Set$Attribute "$EMSegment(Cattrib,$i,$Attribute)"
+                } else {
+                  eval SegmenterSuperClass($pid,node) Set$Attribute $EMSegment(Cattrib,$i,$Attribute) 
+                }
+              }
             }
          }
 
@@ -2637,6 +2662,13 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
           } else {
              SegmenterClass($pid,node) SetLocalPriorName   ""
           }
+
+      if {$EMSegment(Cattrib,$i,FixedWeightsData) != $Volume(idNone) } {
+             SegmenterClass($pid,node) SetFixedWeightsName  [Volume($EMSegment(Cattrib,$i,FixedWeightsData),node) GetName]
+          } else {
+             SegmenterClass($pid,node) SetFixedWeightsName  ""
+          }
+
 
           if {$EMSegment(Cattrib,$i,PCAMeanData) != $Volume(idNone) } {
              SegmenterClass($pid,node) SetPCAMeanName  [Volume($EMSegment(Cattrib,$i,PCAMeanData),node) GetName]
@@ -2683,11 +2715,11 @@ proc EMSegmentSaveSettingSuperClass {SuperClass LastNode} {
           SegmenterClass($pid,node) SetLogCovariance "[lrange $LogCovariance 0 [expr [llength $LogCovariance]-2]]"
 
           # Print Functions 
-      SegmenterClass($pid,node) SetPrintWeights    $EMSegment(Cattrib,$i,PrintWeights)  
-      SegmenterClass($pid,node) SetPrintPCA       $EMSegment(Cattrib,$i,PrintPCA)  
-
-      SegmenterClass($pid,node) SetPrintQuality        $EMSegment(Cattrib,$i,PrintQuality)  
-      set v $EMSegment(Cattrib,$i,ReferenceStandardData)
+          SegmenterClass($pid,node) SetPrintWeights    $EMSegment(Cattrib,$i,PrintWeights)  
+          SegmenterClass($pid,node) SetPrintPCA       $EMSegment(Cattrib,$i,PrintPCA)  
+          
+          SegmenterClass($pid,node) SetPrintQuality        $EMSegment(Cattrib,$i,PrintQuality)  
+          set v $EMSegment(Cattrib,$i,ReferenceStandardData)
           if {$v != $Volume(idNone) } {
              SegmenterClass($pid,node) SetReferenceStandardFileName "[Volume($v,node) GetName]" 
           } else {
@@ -2928,24 +2960,33 @@ proc EMSegmentStartEM { {save_mode "save"} } {
   } else {
      set EMSegment(VolumeNameList) ""
      foreach v $Volume(idList) {lappend EMSegment(VolumeNameList)  [Volume($v,node) GetName]}
-     set NumInputImagesSet [EMSegmentAlgorithmStart]
- 
-     # For debugging
-     # puts [EMSegment(vtkEMSegment) Print]
-     if {$NumInputImagesSet} {EMSegment(vtkEMSegment) Update
+
+     if { $EMSegment(EMAtlasBrainClassifierFlag) } {
+         set NumInputImagesSet [EMAtlasBrainClassifier_AlgorithmStart EMSegment]
+         set vtkEMSegment EMAtlasBrainClassifier(vtkEMAtlasBrainClassifier)
      } else {
-     set ErrorFlag 1
+         set NumInputImagesSet [EMSegmentAlgorithmStart] 
+         set vtkEMSegment EMSegment(vtkEMSegment)
      }
-     if {[EMSegment(vtkEMSegment) GetErrorFlag]} {
+
+     # For debugging
+     # puts [$vtkEMSegment Print]
+     if {$NumInputImagesSet} {
+       $vtkEMSegment Update
+     } else {
+       set ErrorFlag 1
+     }
+
+     if {[$vtkEMSegment GetErrorFlag]} {
          set ErrorFlag 1
-         DevErrorWindow "Error Report: \n[EMSegment(vtkEMSegment) GetErrorMessages]Fix errors before resegmenting !"
+         DevErrorWindow "Error Report: \n[$vtkEMSegment GetErrorMessages]Fix errors before resegmenting !"
          RenderAll
      }
-    if {[EMSegment(vtkEMSegment) GetWarningFlag]} {
+    if {[$vtkEMSegment GetWarningFlag]} {
          set WarningFlag 1
          puts "================================================"
          puts "Warning Report:"
-         puts "[EMSegment(vtkEMSegment) GetWarningMessages]"
+         puts "[$vtkEMSegment GetWarningMessages]"
          puts "================================================"
     }
 
@@ -2984,15 +3025,15 @@ proc EMSegmentStartEM { {save_mode "save"} } {
            } else { Volume($result,node) SetLittleEndian 0}    
            MainVolumesRead $result
        } else {
-           Volume($result,vol) SetImageData [EMSegment(vtkEMSegment) GetOutput]
-           EMSegment(vtkEMSegment) Update
+           Volume($result,vol) SetImageData [$vtkEMSegment GetOutput]
+           $vtkEMSegment Update
            # ----------------------------------------------
            # 5. Recover Values 
            # ----------------------------------------------
            # set index 0
            # foreach v $EMSegment(SelVolList,VolumeList) {
            #     if {$EMSegment(IntensityAvgValue,$v) < 0} {
-           #        set EMSegment(IntensityAvgValue,$v) [EMSegment(vtkEMSegment) GetIntensityAvgValueCurrent $index]
+           #        set EMSegment(IntensityAvgValue,$v) [$vtkEMSegment GetIntensityAvgValueCurrent $index]
            #    }
            #    incr index
            # }
@@ -3027,15 +3068,20 @@ proc EMSegmentStartEM { {save_mode "save"} } {
      # if it does not work also do the same to the input of all the subclasses - should be fine 
      while {$NumInputImagesSet > 0} {
            incr NumInputImagesSet -1
-           EMSegment(vtkEMSegment) SetImageInput $NumInputImagesSet "" 
+           $vtkEMSegment SetImageInput $NumInputImagesSet "" 
      }
 
-     if {([EMSegment(vtkEMSegment) GetErrorFlag] == 0) && ($ErrorFlag == 0)} { 
-         Volume($result,vol) SetImageData [EMSegment(vtkEMSegment) GetOutput]
+     if {([$vtkEMSegment GetErrorFlag] == 0) && ($ErrorFlag == 0)} { 
+         Volume($result,vol) SetImageData [$vtkEMSegment GetOutput]
      }
-     EMSegment(vtkEMSegment) SetOutput ""
+
+     $vtkEMSegment SetOutput ""
      # Delete instance
+     if { $EMSegment(EMAtlasBrainClassifierFlag) } {
+     EMAtlasBrainClassifier_DeleteVtkEMAtlasBrainClassifier EMSegment
+     } else {
      EMSegmentAlgorithmDeletevtkEMSegment
+     }
      MainUpdateMRML
      RenderAll
    }
@@ -3267,6 +3313,8 @@ proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
      set EMSegment(Cattrib,$Sclass,ProbabilityData) $Volume(idNone)
      set EMSegment(Cattrib,$Sclass,ReferenceStandardData) $Volume(idNone)
      set EMSegment(Cattrib,$Sclass,PCAMeanData) $Volume(idNone)
+     set EMSegment(Cattrib,$Sclass,FixedWeightsData) $Volume(idNone)
+
 
      foreach EigenList $EMSegment(Cattrib,$Sclass,PCAEigen) {
      if {[lindex $EigenList 3] != ""} { MainMrmlDeleteNode SegmenterPCAEigen [[lindex $EigenList 3] GetID] }
@@ -3312,6 +3360,7 @@ proc EMSegmentTransfereClassType {ActiveGui DeleteNode} {
      }
      set EMSegment(Cattrib,$Sclass,ProbabilityData) $Volume(idNone)
      set EMSegment(Cattrib,$Sclass,ReferenceStandardData) $Volume(idNone)
+     set EMSegment(Cattrib,$Sclass,FixedWeightsData) $Volume(idNone)
      set EMSegment(Cattrib,$Sclass,PCAMeanData) $Volume(idNone)
 
      # 2.) Remove from SuperClass List and add to Class List
@@ -4016,7 +4065,7 @@ proc EMSegmentPlotCurveRegion {numGraph} {
     if {$NumIndex > -1} {
         EMSegment(Graph,$numGraph,Data,0)Accu SetInput [Volume($EMSegment(Graph,$numGraph,VolumeID,0),vol) GetOutput]
         EMSegment(Graph,$numGraph,Data,0)Accu Update
-        EMSegment(Graph,$numGraph,Data,0)Res Update
+        EMSegment(Graph,$numGraph,Data,0) Update
     }
 
     # Update Classes
@@ -4424,6 +4473,7 @@ proc EMSegmentCreateDeleteClasses {ChangeGui DeleteNode InitClasses {HeadClass 1
 
       set EMSegment(Cattrib,$i,PCAMeanData) $Volume(idNone)
       set EMSegment(Cattrib,$i,ReferenceStandardData) $Volume(idNone)
+      set EMSegment(Cattrib,$i,FixedWeightsData) $Volume(idNone)
     }
     # Define CIM Field as Matrix M(Class1,Class2,Relation of Pixels)
     # where the "Relation of the Pixels" can be set as Pixel with "left", 
@@ -4817,9 +4867,9 @@ proc EMSegmentDrawDeleteCurveRegion {Sclass NumGraph} {
       EMSegmentCalcProb
       set flag [expr ($Sclass > 0 ? 0 : 1)]
       if {$Sclass} {
-      set EMSegment(Graph,$NumGraph,ID,$Sclass) [GraphAddCurveRegion EMSegment $EMSegment(Graph,$NumGraph,path) EMSegment(Graph,$NumGraph,Data,$Sclass) [GraphHexToRGB [string range $EMSegment(Cattrib,$Sclass,ColorCode) 1 6]] $flag $flag]
+      set EMSegment(Graph,$NumGraph,ID,$Sclass) [GraphAddCurveRegion EMSegment $EMSegment(Graph,$NumGraph,path) [EMSegment(Graph,$NumGraph,Data,$Sclass) GetOutput] [GraphHexToRGB [string range $EMSegment(Cattrib,$Sclass,ColorCode) 1 6]] $flag $flag]
       } else {
-      set EMSegment(Graph,$NumGraph,ID,$Sclass) [GraphAddCurveRegion EMSegment $EMSegment(Graph,$NumGraph,path) EMSegment(Graph,$NumGraph,Data,$Sclass)Res [GraphHexToRGB [string range $EMSegment(Cattrib,$Sclass,ColorGraphCode) 1 6]] $flag $flag]
+      set EMSegment(Graph,$NumGraph,ID,$Sclass) [GraphAddCurveRegion EMSegment $EMSegment(Graph,$NumGraph,path) [EMSegment(Graph,$NumGraph,Data,$Sclass) GetOutput] [GraphHexToRGB [string range $EMSegment(Cattrib,$Sclass,ColorGraphCode) 1 6]] $flag $flag]
       }
  
       if {$Sclass > 0} {
@@ -5548,20 +5598,20 @@ proc EMSegmentGraphXAxisUpdate {path Xmin Xmax Xsca} {
       EMSegment(Graph,$NumGraph,Data,0)Accu UpdateWholeExtent
       EMSegment(Graph,$NumGraph,Data,0)Accu Update
     # If only the scalling changed we do not have to go through all the fuss
-    if  {[ expr int($dist * [EMSegment(Graph,$NumGraph,Data,0)Res GetAxisMagnificationFactor 0])]  != $EMSegment(Graph,$path,Xlen)} {
+    if  {[ expr int($dist * [EMSegment(Graph,$NumGraph,Data,0) GetAxisMagnificationFactor 0])]  != $EMSegment(Graph,$path,Xlen)} {
         set XInvUnit $EMSegment(Graph,$path,XInvUnit) 
-        EMSegment(Graph,$NumGraph,Data,0)Res  SetAxisMagnificationFactor 0 $XInvUnit
-        EMSegment(Graph,$NumGraph,Data,0)Res  Update
+        EMSegment(Graph,$NumGraph,Data,0)  SetAxisMagnificationFactor 0 $XInvUnit
+        EMSegment(Graph,$NumGraph,Data,0)  Update
 
-        set extent [[EMSegment(Graph,$NumGraph,Data,0)Res GetOutput] GetExtent]
+        set extent [[EMSegment(Graph,$NumGraph,Data,0) GetOutput] GetExtent]
         while {[expr [lindex $extent 1] - [lindex $extent 0] + 1] <  $EMSegment(Graph,$path,Xlen) } {
         set XInvUnit [expr $XInvUnit * 1.001]
-        EMSegment(Graph,$NumGraph,Data,0)Res SetAxisMagnificationFactor 0 $XInvUnit
-        EMSegment(Graph,$NumGraph,Data,0)Res Update 
-        set extent [[EMSegment(Graph,$NumGraph,Data,0)Res GetOutput] GetExtent]
+        EMSegment(Graph,$NumGraph,Data,0) SetAxisMagnificationFactor 0 $XInvUnit
+        EMSegment(Graph,$NumGraph,Data,0) Update 
+        set extent [[EMSegment(Graph,$NumGraph,Data,0) GetOutput] GetExtent]
         }
     } else {
-        EMSegment(Graph,$NumGraph,Data,0)Res  Update
+        EMSegment(Graph,$NumGraph,Data,0)  Update
     }
     }
     # Update Classes
@@ -5784,7 +5834,7 @@ proc EMSegmentMakeModels { } {
 
    set data [histo GetOutput]
    for {set i 0} {$i <= $bins} {incr i} {
-       set val [$data $::getScalarComponentAs $i 0 0 0]
+       set val [$data $::getScalarComponentAsFloat $i 0 0 0]
        set Label(label)  [expr $i + $min]  
        if {$val >0 &&  $Label(label) != 0} {
           
@@ -5928,4 +5978,70 @@ proc EMSegmentWriteTextBox {} {
        }
    }
    if {$EMSegment(UseSamples) == 0} {$EMSegment(Cl-textBox) configure -state disabled}
+}
+
+#-------------------------------------------------------------------------------
+# .PROC  EMSegmentGenerateJointModelsBatch 
+# Generates joint models and saves them of current active volume
+# slicer2-   <XML-File> --exec "EMSegmentGenerateJointModelsBatch  3 8 /data/projects/ThesisValidation/cases/case2/EMSegmentationCortexOriginalBSplineV5_Opt6/Models "
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc EMSegmentGenerateJointModelsBatch {startLabel endLabel prefix } {
+  global ModelMaker Volume 
+  set ModelMaker(startLabel) $startLabel
+  set ModelMaker(endLabel)   $endLabel
+  set ModelMaker(jointSmooth) 0
+  # Very Smooth Model 
+  # set ModelMaker(smooth) 30
+  set ModelMaker(smooth) 20
+  set ModelMaker(decimate) 1
+  set ModelMaker(UseSinc) 1
+  set ModelMaker(SplitNormals) On
+
+  set ModelMaker(idVolume) [lindex $Volume(idList) 0]
+
+  ModelMakerCreateAll 0
+  Render3D
+  ModelMakerWriteAll $prefix
+  Render3D
+  MainExitProgram
+}
+
+proc EMSegmentModelSnapshot {prefix } {
+  global  Anno Save
+  set Anno(box) 0 
+  set Anno(letters) 0 
+  MainAnnoSetVisibility
+  MainViewSetBackgroundColor "White"
+  Render3D
+
+  if { [DevInfoWindow "Take Screen shoot and save it to $prefix"] == "" } { 
+    SaveRendererToFile [file dirname $prefix] [file tail $prefix] $Save(imageFileType) $Save(imageOutputZoom) viewRen
+    MainExitProgram
+  } 
+}
+
+proc EMSegmentCalcDiceBatch {FileName LabelList } {  
+
+    set TEXT ""
+    set VolID1 [lindex $::Volume(idList) 0]
+    set VolID2 [lindex $::Volume(idList) 1]
+
+    vtkImageEMGeneral EMDice
+    foreach label $LabelList {
+    set TEXT "${TEXT}[format %3s $LABEL]: [format %4.3f [EMDice CalcSimularityMeasure [Volume($VolID1,vol) GetOutput] [Volume($VolID2,vol) GetOutput] $label 0]]  "
+    }
+         
+    EMDice Delete
+   
+    if {[catch {set fid [open $FileName w]} errmsg] == 0} {
+    puts $fid "$TEXT"
+    catch {close $fid} errmsg
+    }
+
+    if {$errmsg != "" } { puts "Could not save file bc $errmsg" 
+    } else { puts "Saved results to $FileName"}
+    
+    MainExitProgram   
 }

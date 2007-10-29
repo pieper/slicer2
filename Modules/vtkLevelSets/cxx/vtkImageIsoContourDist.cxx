@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageIsoContourDist.cxx,v $
-  Date:      $Date: 2005/12/20 22:56:05 $
-  Version:   $Revision: 1.5.12.1 $
+  Date:      $Date: 2007/10/29 15:31:32 $
+  Version:   $Revision: 1.5.12.1.2.1 $
 
 =========================================================================auto=*/
 /*  ==================================================
@@ -132,8 +132,6 @@ void vtkImageIsoContourDist::InitParam( )
 //                   ---------
 {
   int type;
-  int i;
-
 
   inputImage = this->GetInput();
 
@@ -252,7 +250,9 @@ void vtkImageIsoContourDist::IsoSurfDist2D( )
 {
 
   register int          x,y;
-  register int          i,j,k,n;
+  register int          n;
+  //  register int          i;
+  unsigned long         i;
   register int          sign, neigh_sign;
   register float        val,val0,val1,diff;
   register float        val0_new,val1_new;
@@ -361,7 +361,7 @@ void vtkImageIsoContourDist::IsoSurfDist3D( )
 {
 
   register int          x,y,z;
-  register int          i,j,k,n;
+  register int          n;
   register int          sign, neigh_sign;
   register float        val,val0,val1,diff;
   register float        val0_new,val1_new;
@@ -503,12 +503,13 @@ void vtkImageIsoContourDist::IsoSurfDistInit( )
   register float*   inPtr;
   register float*   outPtr;
   register int      i,p;
+  unsigned long     counter;
 
   inPtr  = (float*) inputImage ->GetScalarPointer();
   outPtr = (float*) outputImage->GetScalarPointer();
 
   if (narrowband==NULL) {
-    for (i=0; i<imsize; i++) {
+    for (counter=0; counter<imsize; counter++) {
       if (*inPtr > threshold)      
         *outPtr = +farvalue;
       else
@@ -623,7 +624,7 @@ void vtkImageIsoContourDist::IsoSurfDist3D_band( int first_band, int last_band)
 {
 
   register int          x,y,z,p,p1;
-  register int          i,j,k,n;
+  register int          i,n;
   register int          sign, neigh_sign;
   register float        val,val0,val1,diff;
   register float        val0_new,val1_new;

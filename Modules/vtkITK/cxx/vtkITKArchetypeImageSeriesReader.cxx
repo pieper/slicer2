@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
-  Date:      $Date: 2006/07/07 19:00:39 $
-  Version:   $Revision: 1.8.2.2.2.3 $
+  Date:      $Date: 2007/10/29 15:32:06 $
+  Version:   $Revision: 1.8.2.2.2.4 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.cxx,v $
   Language:  C++
-  Date:      $Date: 2006/07/07 19:00:39 $
-  Version:   $Revision: 1.8.2.2.2.3 $
+  Date:      $Date: 2007/10/29 15:32:06 $
+  Version:   $Revision: 1.8.2.2.2.4 $
 
   Copyright (c) 1993-2002 Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -33,6 +33,7 @@
 #include "vtkImageData.h"
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
+#include "vtkDataArray.h"
 
 #ifndef vtkFloatingPointType
 #define vtkFloatingPointType float
@@ -63,6 +64,7 @@
 
 #include "itkArchetypeSeriesFileNames.h"
 #include "itkImage.h"
+#include "itkVector.h"
 #include "itkOrientImageFilter.h"
 #include "itkImageSeriesReader.h"
 #include "itkImageFileReader.h"
@@ -72,7 +74,7 @@
 #include "itkGDCMImageIO.h"
 #include <itksys/SystemTools.hxx>
 
-vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.8.2.2.2.3 $");
+vtkCxxRevisionMacro(vtkITKArchetypeImageSeriesReader, "$Revision: 1.8.2.2.2.4 $");
 vtkStandardNewMacro(vtkITKArchetypeImageSeriesReader);
 
 //----------------------------------------------------------------------------
@@ -175,6 +177,7 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
   int extent[6];  
   std::string fileNameCollapsed = itksys::SystemTools::CollapseFullPath( this->Archetype);
 
+
   // First see if the archetype exists
   if (!itksys::SystemTools::FileExists (fileNameCollapsed.c_str()))
     {
@@ -273,6 +276,7 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
 
   itk::ImageIOBase::Pointer imageIO = NULL;
 
+
   // If there is only one file in the series, just use an image file reader
   if (this->FileNames.size() == 1)
     {
@@ -340,16 +344,29 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
         imageIO = seriesReader->GetImageIO();
         if (imageIO.GetPointer() == NULL) 
           {
+              // this is the case where there is more than one file, but it's not a dicom
+              // -- in this case, the only imageIO instances were local to the readers inside
+              // the series reader and weren't exposed  So, we make a new one here.
+          itk::ImageFileReader<ImageType>::Pointer imageReader =
+            itk::ImageFileReader<ImageType>::New();
+          imageReader->SetFileName(this->Archetype);
+          imageReader->GenerateOutputInformation();
+          seriesReader->SetImageIO(imageReader->GetImageIO());
+          imageIO = seriesReader->GetImageIO();
+          
+
             //itkGenericExceptionMacro ( "vtkITKArchetypeImageSeriesReader::ExecuteInformation: ImageIO for file " << fileNameCollapsed.c_str() << " does not exist.");
             //return;  TODO - figure out why imageIO is NULL for image series with more than one file
 
           // handle the situation where the file contains a 3D image, but is in a
           // directory that has multiple files that 'look' like a series to the 
           // file name generator
+#if 0
           this->FileNames.resize(0);
           this->FileNames.push_back(this->Archetype);
           seriesReader->SetFileNames(this->FileNames);
           imageIO = seriesReader->GetImageIO();
+        // this isn't needed -- the case of null imageIO is handled below.
           if (imageIO.GetPointer() == NULL) 
             {
             vtkErrorMacro (<< "\nCould not load file \"" << this->Archetype << "\"\n\nIf there is a numerical series of files in this directory, please move the desired file to a directory by itself for reading.");
@@ -357,6 +374,7 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
             return;
             
             }
+#endif
          }
       }
     if (this->UseNativeCoordinateOrientation)
@@ -494,126 +512,24 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
       }
     }
 
+  if (imageIO.GetPointer() == NULL) 
+    {
+    this->SetNumberOfComponents(1);
+    }
+  else
+    {
+    this->SetNumberOfComponents(imageIO->GetNumberOfComponents());
+    }
+
   output->SetScalarType(this->OutputScalarType);
-  output->SetNumberOfScalarComponents(1);
+  output->SetNumberOfScalarComponents(this->GetNumberOfComponents());
 }
 
 //----------------------------------------------------------------------------
 // This function reads a data from a file.  The datas extent/axes
 // are assumed to be the same as the file extent/order.
+// implemented in the Scalar and Vector subclasses
 void vtkITKArchetypeImageSeriesReader::ExecuteData(vtkDataObject *output)
 {
-  if (!this->Archetype)
-    {
-    vtkErrorMacro("An Archetype must be specified.");
-    return;
-    }
-
-  vtkImageData *data = vtkImageData::SafeDownCast(output);
-  data->UpdateInformation();
-  data->SetExtent(0,0,0,0,0,0);
-  data->AllocateScalars();
-  data->SetExtent(data->GetWholeExtent());
-#define vtkITKExecuteDataFromSeries(typeN, type) \
-    case typeN: \
-    {\
-      typedef itk::Image<type,3> image##typeN;\
-      typedef itk::ImageSource<image##typeN> FilterType; \
-      FilterType::Pointer filter; \
-      itk::ImageSeriesReader<image##typeN>::Pointer reader##typeN = \
-            itk::ImageSeriesReader<image##typeN>::New(); \
-      reader##typeN->SetFileNames(this->FileNames); \
-      reader##typeN->ReleaseDataFlagOn(); \
-      if (this->UseNativeCoordinateOrientation) \
-        { \
-        filter = reader##typeN; \
-        } \
-      else \
-        { \
-        itk::OrientImageFilter<image##typeN,image##typeN>::Pointer orient##typeN = \
-            itk::OrientImageFilter<image##typeN,image##typeN>::New(); \
-        if (this->Debug) {orient##typeN->DebugOn();} \
-        orient##typeN->SetInput(reader##typeN->GetOutput()); \
-        orient##typeN->UseImageDirectionOn(); \
-        orient##typeN->SetDesiredCoordinateOrientation(this->DesiredCoordinateOrientation); \
-        filter = orient##typeN; \
-        }\
-      filter->UpdateLargestPossibleRegion(); \
-      itk::ImportImageContainer<unsigned long, type>::Pointer PixelContainer##typeN;\
-      PixelContainer##typeN = filter->GetOutput()->GetPixelContainer();\
-      void *ptr = static_cast<void *> (PixelContainer##typeN->GetBufferPointer());\
-      (dynamic_cast<vtkImageData *>( output))->GetPointData()->GetScalars()->SetVoidArray(ptr, PixelContainer##typeN->Size(), 0);\
-      PixelContainer##typeN->ContainerManageMemoryOff();\
-    }\
-    break
-
-#define vtkITKExecuteDataFromFile(typeN, type) \
-    case typeN: \
-    {\
-      typedef itk::Image<type,3> image2##typeN;\
-      typedef itk::ImageSource<image2##typeN> FilterType; \
-      FilterType::Pointer filter; \
-      itk::ImageFileReader<image2##typeN>::Pointer reader2##typeN = \
-            itk::ImageFileReader<image2##typeN>::New(); \
-      reader2##typeN->SetFileName(this->FileNames[0].c_str()); \
-      if (this->UseNativeCoordinateOrientation) \
-        { \
-        filter = reader2##typeN; \
-        } \
-      else \
-        { \
-        itk::OrientImageFilter<image2##typeN,image2##typeN>::Pointer orient2##typeN = \
-              itk::OrientImageFilter<image2##typeN,image2##typeN>::New(); \
-        if (this->Debug) {orient2##typeN->DebugOn();} \
-        orient2##typeN->SetInput(reader2##typeN->GetOutput()); \
-        orient2##typeN->UseImageDirectionOn(); \
-        orient2##typeN->SetDesiredCoordinateOrientation(this->DesiredCoordinateOrientation); \
-        filter = orient2##typeN; \
-        } \
-       filter->UpdateLargestPossibleRegion();\
-      itk::ImportImageContainer<unsigned long, type>::Pointer PixelContainer2##typeN;\
-      PixelContainer2##typeN = filter->GetOutput()->GetPixelContainer();\
-      void *ptr = static_cast<void *> (PixelContainer2##typeN->GetBufferPointer());\
-      (dynamic_cast<vtkImageData *>( output))->GetPointData()->GetScalars()->SetVoidArray(ptr, PixelContainer2##typeN->Size(), 0);\
-      PixelContainer2##typeN->ContainerManageMemoryOff();\
-    }\
-    break
-
-  // If there is only one file in the series, just use an image file reader
-  if (this->FileNames.size() == 1)
-    {
-    switch (this->OutputScalarType)
-      {
-      vtkITKExecuteDataFromFile(VTK_DOUBLE, double);
-      vtkITKExecuteDataFromFile(VTK_FLOAT, float);
-      vtkITKExecuteDataFromFile(VTK_LONG, long);
-      vtkITKExecuteDataFromFile(VTK_UNSIGNED_LONG, unsigned long);
-      vtkITKExecuteDataFromFile(VTK_INT, int);
-      vtkITKExecuteDataFromFile(VTK_UNSIGNED_INT, unsigned int);
-      vtkITKExecuteDataFromFile(VTK_SHORT, short);
-      vtkITKExecuteDataFromFile(VTK_UNSIGNED_SHORT, unsigned short);
-      vtkITKExecuteDataFromFile(VTK_CHAR, char);
-      vtkITKExecuteDataFromFile(VTK_UNSIGNED_CHAR, unsigned char);
-      default:
-        vtkErrorMacro(<< "UpdateFromFile: Unknown data type");
-      }
-    }
-  else
-    {
-    switch (this->OutputScalarType)
-      {
-      vtkITKExecuteDataFromSeries(VTK_DOUBLE, double);
-      vtkITKExecuteDataFromSeries(VTK_FLOAT, float);
-      vtkITKExecuteDataFromSeries(VTK_LONG, long);
-      vtkITKExecuteDataFromSeries(VTK_UNSIGNED_LONG, unsigned long);
-      vtkITKExecuteDataFromSeries(VTK_INT, int);
-      vtkITKExecuteDataFromSeries(VTK_UNSIGNED_INT, unsigned int);
-      vtkITKExecuteDataFromSeries(VTK_SHORT, short);
-      vtkITKExecuteDataFromSeries(VTK_UNSIGNED_SHORT, unsigned short);
-      vtkITKExecuteDataFromSeries(VTK_CHAR, char);
-      vtkITKExecuteDataFromSeries(VTK_UNSIGNED_CHAR, unsigned char);
-      default:
-        vtkErrorMacro(<< "UpdateFromFile: Unknown data type");
-      }
-    }
+  vtkErrorMacro(<<"The subclass has not defined anything for ExecuteData!\n");
 }

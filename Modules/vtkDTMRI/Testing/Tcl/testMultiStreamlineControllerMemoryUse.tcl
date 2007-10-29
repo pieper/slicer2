@@ -88,8 +88,9 @@ puts "Created $count hyperstreamlines."
 
 
 puts "Now check memory use via top or similar program."
-puts "Press any key to continue"
-gets stdin
+puts "You have 30 s. before execution resume"
+after 30000 set timeout 1
+vwait timeout
 
 catch "vtkCamera camera"
     camera SetFocalPoint 0.113766 -1.13665 -1.01919
@@ -111,8 +112,15 @@ wm withdraw .
 puts [[[streamControl GetDisplayTracts] GetClippedStreamlines] Print]
 
 # test deletion
-streamControl DeleteStreamline \
-    [[[streamControl GetDisplayTracts] GetActors] GetItemAsObject 2]
+vtkCellPicker cp
+foreach a [[streamControl GetDisplayTracts] GetActors] {
+    if {[cp SafeDownCast $a] == $a} {
+    streamControl DeleteStreamline $a
+    }
+}
+cp Delete
+
+ #   [[[streamControl GetDisplayTracts] GetActors] GetItemAsObject 2]
 
 #streamControl DeleteStreamline 2
 

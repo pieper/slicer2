@@ -7,15 +7,23 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFemurMetric.cxx,v $
-  Date:      $Date: 2005/12/20 22:56:11 $
-  Version:   $Revision: 1.7.8.1 $
+  Date:      $Date: 2007/10/29 15:28:13 $
+  Version:   $Revision: 1.7.8.1.2.1 $
 
 =========================================================================auto=*/
 #include "vtkFemurMetric.h"
-#include <vtkPoints.h>
+
 #include <vtkObjectFactory.h>
+#include <vtkPoints.h>
 #include <vtkMath.h>
 #include <vtkEuclideanLineFit.h>
+#include <vtkPolyData.h>
+#include <vtkAxisSource.h>
+#include <vtkSphereSource.h>
+#include <vtkImageEuclideanDistance.h>
+#include <vtkImageDijkstra.h>
+#include <vtkDataSetTriangleFilter.h>
+#include <vtkShortArray.h>
 
 #include <vector>
 #include <algorithm>

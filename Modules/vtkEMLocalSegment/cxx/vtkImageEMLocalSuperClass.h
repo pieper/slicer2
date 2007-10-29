@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMLocalSuperClass.h,v $
-  Date:      $Date: 2005/12/20 22:55:21 $
-  Version:   $Revision: 1.7.2.1 $
+  Date:      $Date: 2007/10/29 15:39:23 $
+  Version:   $Revision: 1.7.2.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageEMLocalSuperClass
@@ -66,7 +66,7 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSuperClass : public vtkImageEMLoc
 
   int           GetTotalNumberOfClasses(bool flag); // if flag is set => includes subclasses of type SUPERCLASS
   int           GetAllLabels(short *LabelList, int result,int Max); // Gets all labels from the Substructures
-  void          LabelAllSuperClasses(short *TakenLabelList, int Max);
+  int          LabelAllSuperClasses(short *TakenLabelList, int Result, int Max);
 
   //BTX
   void**        GetClassList() {return this->ClassList;}
@@ -236,15 +236,13 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSuperClass : public vtkImageEMLoc
   // Do not maximize over the shape setting  - just use the current setting  
   void SetPCAShapeModelTypeToApply() {this->PCAShapeModelType = EMSEGMENT_PCASHAPE_APPLY;} 
  
-  vtkImageEMLocalSuperClass() {this->CreateVariables();}
-  ~vtkImageEMLocalSuperClass() {this->DeleteSuperClassVariables();}
 
 protected:
-  vtkImageEMLocalSuperClass(const vtkImageEMLocalSuperClass&) {};
+  vtkImageEMLocalSuperClass() {this->CreateVariables();}
+  ~vtkImageEMLocalSuperClass() {this->DeleteSuperClassVariables();}
   void DeleteSuperClassVariables();
   void CreateVariables();
 
-  void operator=(const vtkImageEMLocalSuperClass&) {};
   void ExecuteData(vtkDataObject *);   
 
   void AddSubClass(void* ClassData, classType initType, int index);
@@ -294,6 +292,9 @@ protected:
 
   // If all structures are defined by different PCA models that this flag has to be set. 
   int PCAShapeModelType; 
+private:
+  vtkImageEMLocalSuperClass(const vtkImageEMLocalSuperClass&);
+  void operator=(const vtkImageEMLocalSuperClass&);
 };
 #endif
 

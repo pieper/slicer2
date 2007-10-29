@@ -22,8 +22,8 @@ INCLUDE (${VTKCOMPAREMODULE_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 
 IF (VTK_WRAP_TCL AND VTKCOMPAREMODULE_WRAP_TCL)
 
-  VTK_WRAP_TCL (vtkCompareModuleTCL CompareModuleTCL_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkCompareModuleTCL CompareModuleTCL_SRCS)
+  VTK_WRAP_TCL (vtkCompareModuleTCL CompareModuleTCL_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkCompareModuleTCL ${CompareModuleTCL_SRCS})
   TARGET_LINK_LIBRARIES (vtkCompareModuleTCL 
                          vtkIOTCL 
                          vtkGraphicsTCL 
@@ -55,12 +55,12 @@ ENDIF (VTK_WRAP_TCL AND VTKCOMPAREMODULE_WRAP_TCL)
 
 IF (VTK_WRAP_PYTHON AND VTKCOMPAREMODULE_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkCompareModulePython CompareModulePython_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_PYTHON (vtkCompareModulePython CompareModulePython_SRCS ${LOCAL_MODULE_SRCS})
 
   IF (APPLE)
-    ADD_LIBRARY (vtkCompareModulePython MODULE CompareModulePython_SRCS)
+    ADD_LIBRARY (vtkCompareModulePython MODULE ${CompareModulePython_SRCS})
   ELSE (APPLE)
-    ADD_LIBRARY (vtkCompareModulePython SHARED CompareModulePython_SRCS)
+    ADD_LIBRARY (vtkCompareModulePython SHARED ${CompareModulePython_SRCS})
   ENDIF (APPLE)
 
   IF (WIN32)
@@ -106,8 +106,8 @@ ENDIF (VTK_WRAP_PYTHON AND VTKCOMPAREMODULE_WRAP_PYTHON)
 
 IF (VTK_WRAP_JAVA AND VTKCOMPAREMODULE_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkCompareModuleJava CompareModuleJava_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkCompareModuleJava SHARED CompareModuleJava_SRCS)
+  VTK_WRAP_JAVA (vtkCompareModuleJava CompareModuleJava_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkCompareModuleJava SHARED ${CompareModuleJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkCompareModuleJava 
                          vtkIOJava
                          vtkGraphicsJava

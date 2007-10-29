@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKRegistrationFilter.h,v $
-  Date:      $Date: 2005/12/20 22:55:51 $
-  Version:   $Revision: 1.7.2.1 $
+  Date:      $Date: 2007/10/29 15:32:06 $
+  Version:   $Revision: 1.7.2.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkITKImageToImageFilter - Abstract base class for connecting ITK and VTK
@@ -31,6 +31,9 @@
 #include "itkCastImageFilter.h"
 
 #include "itkImageFileWriter.h"
+
+#include "vtkImageData.h"
+
 
 #include <fstream>
 #include <string>
@@ -91,10 +94,18 @@ public:
   virtual vtkImageData* GetInput(int idx)
   {
     if (idx == 0) {
+#if (VTK_MAJOR_VERSION >= 5)
+      return this->vtkCast->GetImageDataInput(0);
+#else
       return this->vtkCast->GetInput();
+#endif
     }
     else if (idx == 1) {
+#if (VTK_MAJOR_VERSION >= 5)
+      return this->vtkCastMoving->GetImageDataInput(0);
+#else
       return this->vtkCastMoving->GetInput();
+#endif
     }
     else {
       // report error
@@ -199,9 +210,6 @@ private:
   vtkITKRegistrationFilter(const vtkITKRegistrationFilter&);  // Not implemented.
   void operator=(const vtkITKRegistrationFilter&);  // Not implemented.
 };
-
-//vtkCxxRevisionMacro(vtkITKRegistrationFilter, "$Revision: 1.7.2.1 $");
-//vtkStandardNewMacro(vtkITKRegistrationFilter);
 
 #endif
 

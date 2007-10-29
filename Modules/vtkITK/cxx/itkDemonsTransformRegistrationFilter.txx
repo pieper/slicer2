@@ -163,6 +163,8 @@ void itk::itkDemonsTransformRegistrationFilter<TImageClass>::GenerateData()
   }
   catch( ProcessAborted & excp )
   {
+    std::cout << "itkDemonsTransformRegistrationFilter:ProcessAborted caught !" << std::endl;
+    std::cout << excp << std::endl;
   }
   //FixedImageType::Pointer fixedImage = this->GetInput();
   m_Warper->SetInput(this->GetInput(1));

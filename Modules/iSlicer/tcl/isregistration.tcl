@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: isregistration.tcl,v $
-#   Date:      $Date: 2005/12/28 19:26:53 $
-#   Version:   $Revision: 1.33.2.2 $
+#   Date:      $Date: 2007/10/29 15:53:30 $
+#   Version:   $Revision: 1.33.2.2.2.1 $
 # 
 #===============================================================================
 # FILE:        isregistration.tcl
@@ -1105,11 +1105,26 @@ itcl::body isregistration::deformation_volume { {name ""} } {
     
     eval ::Volume($i,node) SetSpacing [$id GetSpacing]
     
-    ::Volume($i,node) SetScanOrder LR
+    ::Volume($i,node) SetScanOrder IS
     ::Volume($i,node) SetDimensions [lindex [$id GetDimensions] 0] [lindex [$id GetDimensions] 1]
     ::Volume($i,node) SetImageRange 1 [lindex [$id GetDimensions] 2]
     
-    ::Volume($i,node) ComputeRasToIjkFromScanOrder [::Volume($i,node) GetScanOrder]
+    set extents [$id GetWholeExtent]
+    set dims "[expr [lindex $extents 1] - [lindex $extents 0] + 1] \
+              [expr [lindex $extents 3] - [lindex $extents 2] + 1] \
+              [expr [lindex $extents 5] - [lindex $extents 4] + 1]"
+    set spacing [$id GetSpacing]
+
+    catch "rasToIjkMatrix Delete"
+    vtkMatrix4x4 rasToIjkMatrix
+    rasToIjkMatrix Identity
+    rasToIjkMatrix SetElement 0 0 [expr -1/[lindex $spacing 0]]
+    rasToIjkMatrix SetElement 1 1 [expr -1/[lindex $spacing 1]]
+    rasToIjkMatrix SetElement 2 2 [expr 1/[lindex $spacing 2]]
+
+    puts "[rasToIjkMatrix Print]"
+    VolumesComputeNodeMatricesFromRasToIjkMatrix Volume($i,node) rasToIjkMatrix $dims
+
     ::Volume($i,vol) SetImageData $id
     MainUpdateMRML
 

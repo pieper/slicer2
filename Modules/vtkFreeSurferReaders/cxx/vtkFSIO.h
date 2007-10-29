@@ -7,19 +7,10 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFSIO.h,v $
-  Date:      $Date: 2005/12/20 22:55:36 $
-  Version:   $Revision: 1.5.2.1 $
+  Date:      $Date: 2007/10/29 15:35:08 $
+  Version:   $Revision: 1.5.2.1.2.1 $
 
 =========================================================================auto=*/
-/*=========================================================================
-
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkFSIO.h,v $
-  Language:  C++
-  Date:      $Date: 2005/12/20 22:55:36 $
-  Version:   $Revision: 1.5.2.1 $
-
-=========================================================================*/
 // .NAME vtkFSIO - Some IO functions for irregular FreeSurface files.
 // .SECTION Description
 // Some simple functions for doing silly things like reading three
@@ -28,8 +19,13 @@
 #ifndef __vtkFSIO_h
 #define __vtkFSIO_h
 
+#include "vtkConfigure.h"
+#if ( (VTK_MAJOR_VERSION >= 5) || ( VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 5 ) )
+#include "vtk_zlib.h"
+#else
+#include "zlib.h"
+#endif
 #include <stdio.h>
-#include <zlib.h>
 
 
 class  vtkFSIO {
@@ -51,6 +47,11 @@ class  vtkFSIO {
  static int ReadInt3Z (gzFile iFile, int& oInt);
  static int ReadInt2Z (gzFile iFile, int& oInt);
   static int ReadFloatZ (gzFile iFile, float& oFloat);
+
+    // for testing purposes
+    static int WriteInt (FILE* iFile, int iInt);
+    static int WriteInt3 (FILE* iFile, int iInt);
+    static int WriteInt2 (FILE* iFile, int iInt);
 };
 
 #endif

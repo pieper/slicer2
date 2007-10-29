@@ -7,21 +7,28 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkInteractiveTensorGlyph.cxx,v $
-  Date:      $Date: 2006/07/07 19:31:58 $
-  Version:   $Revision: 1.10.2.1.2.3 $
+  Date:      $Date: 2007/10/29 15:17:25 $
+  Version:   $Revision: 1.10.2.1.2.4 $
 
 =========================================================================auto=*/
 #include "vtkInteractiveTensorGlyph.h"
+
+#include "vtkObjectFactory.h"
 #include "vtkTransform.h"
 #include "vtkMath.h"
-#include "vtkObjectFactory.h"
 #include "vtkTensor.h"
 #include "vtkFloatArray.h"
 #include "vtkPolyData.h"
 #include "vtkPointData.h"
 #include "vtkCellArray.h"
+#include "vtkImageData.h"
 #include "vtkTensorMathematics.h"
+
 #include <time.h>
+
+vtkCxxSetObjectMacro(vtkInteractiveTensorGlyph,ScalarMask,vtkImageData);
+vtkCxxSetObjectMacro(vtkInteractiveTensorGlyph,VolumePositionMatrix,vtkMatrix4x4);
+vtkCxxSetObjectMacro(vtkInteractiveTensorGlyph,TensorRotationMatrix,vtkMatrix4x4);
 
 //------------------------------------------------------------------------------
 vtkInteractiveTensorGlyph* vtkInteractiveTensorGlyph::New()
@@ -48,6 +55,7 @@ vtkInteractiveTensorGlyph::vtkInteractiveTensorGlyph()
   // Instead of coloring glyphs by passing through input
   // scalars, color according to features we are computing.
   //this->ColorGlyphsWithLinearMeasure();
+  this->ScalarMeasure = 0; // Need to initialed var before callling ColorGlyphsWithDirection
   this->ColorGlyphsWithDirection();
 
   this->VolumePositionMatrix = NULL;

@@ -3,11 +3,14 @@
 # /usr/local/bin/vtk
 
 # first we load in the standard vtk packages into tcl
-package require vtk
-package require vtkinteraction
+# package require vtk
+# package require vtkinteraction
 
-# load ../bin/libvtkFreeSurferReadersTCL.so
 package require vtkFreeSurferReaders
+# if trying to run with DUMA, need to load instead of pkg require
+#load  ../builds/linux-x86/bin/libvtkFreeSurferReadersTCL.so
+#load ../../../Lib/linux-x86/VTK-build/bin/libvtkCommonTCL.so
+#puts "done loading"
 
 proc TestAnnot { annotFileName { colorTableFileName "" } } {
 
@@ -15,13 +18,19 @@ proc TestAnnot { annotFileName { colorTableFileName "" } } {
     vtkLookupTable colors
 puts "annotation.tcl: creating ar"
     vtkFSSurfaceAnnotationReader ar
+ar DebugOn
 puts "annotation.tcl: created ar"
 
     # Try to load an annotation file, first by using an embedded color table.
     ar SetFileName $annotFileName
     ar SetOutput labels
     ar SetColorTableOutput colors
+    if {$colorTableFileName == ""} {
     ar UseExternalColorTableFileOff
+    } else {
+    ar SetColorTableFileName $colorTableFileName
+    ar UseExternalColorTableFileOn
+    }
 
     puts "annotation.tcl: About to read file $annotFileName (use ext colour table = [ar GetUseExternalColorTableFile] )"
     set err [ar ReadFSAnnotation] 
@@ -90,20 +99,23 @@ puts "err = $err"
 }
 
 
-puts "annotation.tcl: old style with external table"
+#puts "annotation.tcl: old style with external table"
 # TestAnnot /home/kteich/subjects/anders/label/lh.annot   /home/kteich/freesurfer/surface_labels.txt
-TestAnnot /projects/birn/nicole/slicer2/Modules/vtkFreeSurferReaders/Tests/lh.annot /projects/birn/nicole/slicer2/Modules/vtkFreeSurferReaders/Tests/surface_labels.txt
+#TestAnnot /projects/birn/nicole/slicer2/Modules/vtkFreeSurferReaders/Tests/lh.annot /projects/birn/nicole/slicer2/Modules/vtkFreeSurferReaders/Tests/surface_labels.txt
 # test with HJPark's
 # TestAnnot /d/bigsur/slicerdata/freesurferTract/label/lh_aparc.annot  /projects/birn/nicole/slicer2/Modules/vtkFreeSurferReaders/Tests/surface_labels.txt
 
 
 puts "\n\nannotation.tcl: "
-puts "annotation.tcl: new style with embedded table"
+# puts "annotation.tcl: new style with embedded table"
 # puts "annotation.tcl: none yet"
 # TestAnnot /home/kteich/test_data/surface_annotation/lh.aparc.annot
 
 # TestAnnot /projects/birn/freesurfer/data/BIRN/MGH-Siemens15-JJ/label/rh.cma_aparc.annot
-TestAnnot /projects/birn/nicole/slicer2/Modules/vtkFreeSurferReaders/Tests/lh.aparc.annot
+#TestAnnot /projects/birn/nicole/slicer2/Modules/vtkFreeSurferReaders/Tests/lh.aparc.annot
+
+TestAnnot /home/pieper/data/MGH-Siemens15-SP.1-uw/label/rh.aparc.annot /home/nicole/slicer2/Modules/vtkFreeSurferReaders/tcl/Simple_surface_labels2002.txt
+
 
 # for standalone testing
 # exit

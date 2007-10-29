@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterSuperClassNode.h,v $
-  Date:      $Date: 2005/12/20 22:55:24 $
-  Version:   $Revision: 1.15.2.1 $
+  Date:      $Date: 2007/10/29 15:39:23 $
+  Version:   $Revision: 1.15.2.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSegmenterClassNode - MRML node to represent transformation matrices.
@@ -132,6 +132,36 @@ public:
   void SetStopMFAMaxIter(int init) {AtlasNode->SetStopMFAMaxIter(init);}
 
   // Description:
+  // Kilian: Jan06: InitialBias_FilePrefix allows initializing a bias field with a precomputed one 
+  // - carefull Bias Field has to be in little Endian  - needed it for debugging
+  char* GetInitialBiasFilePrefix() {return AtlasNode->GetInitialBiasFilePrefix();}
+  void  SetInitialBiasFilePrefix(char* init) { AtlasNode->SetInitialBiasFilePrefix(init);}
+
+  // Description:
+  // Kilian April 06: Initialize the segmentation of all subclasses with the same parameter settting (that of this superclass). The following types are available: 
+  // 0 = disable initialization     - be carefull parallel subtrees can influence each other
+  // 1 = save to/load from file     - reading from file can slow down segmentation slightly
+  // 2 = write to/read from memory  - make sure you have enough mem as this can eat up a lot of memory 
+  vtkSetMacro(ParameterInitSubClass,int); 
+  vtkGetMacro(ParameterInitSubClass,int); 
+
+  // Description:
+  // Save all parameters after segmenting the super class to a file (bias and labelmap)  
+  vtkSetMacro(ParameterSaveToFile,int); 
+  vtkGetMacro(ParameterSaveToFile,int); 
+
+  // Description:
+  // Instead of segmenting the superclass we load them from a file (see also ParameterSaveToFile) 
+  vtkSetMacro(ParameterSetFromFile,int); 
+  vtkGetMacro(ParameterSetFromFile,int); 
+
+  // Description:
+  // Kilian: Jan06: This allows you to "jump" over the hirarchical segmentation level by providing an already existing 
+  // labelmap of the region of interes 
+  char* GetPredefinedLabelMapPrefix() {return AtlasNode->GetPredefinedLabelMapPrefix();}
+  void  SetPredefinedLabelMapPrefix(char* init) { AtlasNode->SetPredefinedLabelMapPrefix(init);}
+
+  // Description:
   // You can stop the bias calculation after a certain number of iterations
   // By default it is set to -1 which means it never stops
   vtkGetMacro(StopBiasCalculation,int); 
@@ -166,13 +196,30 @@ public:
   /// our method is not as rebust. For this specific case we would set the flag for FG and do not set it for BG !
   vtkGetMacro(RegistrationIndependentSubClassFlag,int);      
   vtkSetMacro(RegistrationIndependentSubClassFlag,int);      
- 
+
+  // Description:
+  // Kilian: Jan06: Gives superclass the predefined ID , make sure that no other class has that label/ID - this simplifies 
+  // using PredefinedLabelMapPrefix with different structure settings
+  vtkGetMacro(PredefinedLabelID,int); 
+  vtkSetMacro(PredefinedLabelID,int); 
+
+  vtkSetMacro(PCARegistrationNumOfPCAParameters,int);
+  vtkGetMacro(PCARegistrationNumOfPCAParameters,int);
+  vtkSetMacro(PCARegistrationVectorDimension,int);
+  vtkGetMacro(PCARegistrationVectorDimension,int);
+  vtkSetStringMacro(PCARegistrationMean);
+  vtkGetStringMacro(PCARegistrationMean);
+  vtkSetStringMacro(PCARegistrationEigenMatrix);
+  vtkGetStringMacro(PCARegistrationEigenMatrix);
+  vtkSetStringMacro(PCARegistrationEigenValues);
+  vtkGetStringMacro(PCARegistrationEigenValues);
+
+  vtkGetStringMacro(InhomogeneityInitialDataNames);
+  vtkSetStringMacro(InhomogeneityInitialDataNames);
 
 protected:
   vtkMrmlSegmenterSuperClassNode();
-  ~vtkMrmlSegmenterSuperClassNode(){this->AtlasNode->Delete();};
-  vtkMrmlSegmenterSuperClassNode(const vtkMrmlSegmenterSuperClassNode&) {};
-  void operator=(const vtkMrmlSegmenterSuperClassNode&) {};
+  ~vtkMrmlSegmenterSuperClassNode();
 
   vtkMrmlSegmenterAtlasSuperClassNode *AtlasNode;
 
@@ -187,6 +234,24 @@ protected:
   int GenerateBackgroundProbability;
   int PCAShapeModelType;
   int RegistrationIndependentSubClassFlag;
+  int PredefinedLabelID;
+
+  int ParameterInitSubClass;
+  int ParameterSaveToFile; 
+  int ParameterSetFromFile; 
+
+  // MICCAI 2007
+  int   PCARegistrationNumOfPCAParameters;
+  int   PCARegistrationVectorDimension;
+  char *PCARegistrationMean;
+  char *PCARegistrationEigenMatrix; 
+  char *PCARegistrationEigenValues;
+
+  char *InhomogeneityInitialDataNames; 
+
+private:
+  vtkMrmlSegmenterSuperClassNode(const vtkMrmlSegmenterSuperClassNode&);
+  void operator=(const vtkMrmlSegmenterSuperClassNode&);
 };
 
 #endif

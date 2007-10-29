@@ -40,6 +40,7 @@ vtkROISelectTracts.cxx
 vtkColorROIFromTracts.cxx
 vtkEstimateDiffusionTensor.cxx
 vtkColorROIFromPolyLines.cxx
+vtkTubeFilter2.cxx
 )
 
 ## classes that one does not want tcl wrapped
@@ -72,6 +73,7 @@ INCLUDE_DIRECTORIES(
    ${VTKSLICERBASE_BUILD_DIR}
    ${VTKTENSORUTIL_SOURCE_DIR}/cxx
    ${VTKTENSORUTIL_BUILD_DIR}
+   ${SANDBOX_SRC_DIR}/trunk/SlicerTractClusteringImplementation/Code 
    ${SANDBOX_SRC_DIR}/SlicerTractClusteringImplementation/Code 
    ${SANDBOX_SRC_DIR}/SpectralClustering
    ${TEEM_BUILD_DIR}/include/
@@ -99,9 +101,9 @@ ITKDICOMParser
 )
 
 # Add additional directories to look in for libraries
-LINK_DIRECTORIES(
-${VTKMYCLASS_SOURCE_DIR}/lib
-)
+#LINK_DIRECTORIES(
+#${VTKMYCLASS_SOURCE_DIR}/lib
+#)
 
 
 
@@ -115,5 +117,5 @@ ${VTKMYCLASS_SOURCE_DIR}/lib
 # It should happen in the CMakeLists.txt file that includes this one,
 # but because of a CMake bug that doesn't work.
 #
-ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} ${LOCAL_MODULE_SRCS}
-            ${LOCAL_NO_WRAP_SRCS})
+#ADD_LIBRARY (${LOCAL_LIBRARY_BASENAME} ${LOCAL_MODULE_SRCS}
+#            ${LOCAL_NO_WRAP_SRCS})

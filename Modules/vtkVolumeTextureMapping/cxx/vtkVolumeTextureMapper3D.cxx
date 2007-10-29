@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkVolumeTextureMapper3D.cxx,v $
-  Date:      $Date: 2005/12/20 22:56:28 $
-  Version:   $Revision: 1.8.8.1 $
+  Date:      $Date: 2007/10/29 15:14:13 $
+  Version:   $Revision: 1.8.8.1.2.1 $
 
 =========================================================================auto=*/
 #include "vtkVolumeTextureMapper3D.h"
@@ -52,7 +52,11 @@ void vtkVolumeTextureMapper3D_TextureOrganization( T *data_ptr,
   T                *dptr;
   unsigned char    *rgbaArray = me->GetRGBAArray();
   vtkRenderWindow  *renWin = me->GetRenderWindow();
-  float                dataSpacing[3];
+#if (VTK_MAJOR_VERSION >= 5)
+  vtkFloatingPointType            dataSpacing[3];
+#else
+  float dataSpacing[3];
+#endif
   vtkFloatingPointType            spacing[3];
   unsigned char    *texture;
   int              *zAxis=0, *yAxis=0, *xAxis=0;
@@ -126,7 +130,7 @@ void vtkVolumeTextureMapper3D_TextureOrganization( T *data_ptr,
   delete [] texture;
 }
 
-vtkCxxRevisionMacro(vtkVolumeTextureMapper3D, "$Revision: 1.8.8.1 $");
+vtkCxxRevisionMacro(vtkVolumeTextureMapper3D, "$Revision: 1.8.8.1.2.1 $");
 
 //----------------------------------------------------------------------------
 // Needed when we don't use the vtkStandardNewMacro.

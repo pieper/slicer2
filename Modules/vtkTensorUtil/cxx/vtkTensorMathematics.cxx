@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.cxx,v $
-  Date:      $Date: 2006/07/07 19:43:10 $
-  Version:   $Revision: 1.26.2.1.2.3 $
+  Date:      $Date: 2007/10/29 15:17:26 $
+  Version:   $Revision: 1.26.2.1.2.4 $
 
 =========================================================================auto=*/
 
@@ -72,7 +72,18 @@ vtkTensorMathematics::vtkTensorMathematics()
   this->MaskWithScalars = 0;
 }
 
-
+//----------------------------------------------------------------------------     
+ vtkTensorMathematics::~vtkTensorMathematics()     
+ {     
+   if( this->TensorRotationMatrix )     
+     {     
+     this->TensorRotationMatrix->Delete();     
+     }     
+   if( this->ScalarMask )     
+     {     
+     this->ScalarMask->Delete();     
+     }     
+ }
 
 //----------------------------------------------------------------------------
 // 
@@ -395,8 +406,8 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
       }
     }
 
+   //vtkGenericWarningMacro( "Do masking: " << doMasking );
 
-  cout<<"Do masking: "<<doMasking<<endl;
 
   // Loop through output pixels and input points
 
@@ -468,9 +479,10 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
           //  2. Take absolute value
           //  3. Increase eigenvalues by negative part
           // The two first options have been problematic. Try 3 
-          if (vtkTensorMathematics::FixNegativeEigenvalues(w)) {
-            cout<<"Warning: Eigenvalues are not properly sorted"<<endl;
-          }   
+          if (vtkTensorMathematics::FixNegativeEigenvalues(w)) 
+        {
+          vtkGenericWarningMacro( "Warning: Eigenvalues are not properly sorted" );
+        }   
 
           // pixel operation
           switch (op)
@@ -506,6 +518,14 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
             *outPtr = (T)w[2];
             break;
 
+          case VTK_TENS_PARALLEL_DIFFUSIVITY:
+            *outPtr = static_cast<T> (vtkTensorMathematics::ParallelDiffusivity(w));
+            break;
+
+          case VTK_TENS_PERPENDICULAR_DIFFUSIVITY:
+            *outPtr = static_cast<T> (vtkTensorMathematics::PerpendicularDiffusivity(w));
+            break;
+
           case VTK_TENS_MAX_EIGENVALUE_PROJX:
             *outPtr = static_cast<T> (vtkTensorMathematics::MaxEigenvalueProjectionX(v,w));
             break;
@@ -518,8 +538,26 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
             *outPtr = static_cast<T> (vtkTensorMathematics::MaxEigenvalueProjectionZ(v,w));
             break;           
 
-          case VTK_TENS_MODE:
+      case VTK_TENS_RAI_MAX_EIGENVEC_PROJX:
+        *outPtr = static_cast<T> (vtkTensorMathematics::RAIMaxEigenvecX(v,w));
+        break;
+
+      case VTK_TENS_RAI_MAX_EIGENVEC_PROJY:
+            *outPtr = static_cast<T> (vtkTensorMathematics::RAIMaxEigenvecY(v,w));
+            break;
+
+      case VTK_TENS_RAI_MAX_EIGENVEC_PROJZ:
+            *outPtr = static_cast<T> (vtkTensorMathematics::RAIMaxEigenvecZ(v,w));
+            break;
+
+      case VTK_TENS_MODE:
             *outPtr = static_cast<T> (vtkTensorMathematics::Mode(w));
+            break;
+      case VTK_TENS_ISOTROPIC_P:
+            *outPtr = static_cast<T> (vtkTensorMathematics::IsotropicP(w));
+            break;
+      case VTK_TENS_ANISOTROPIC_Q:
+            *outPtr = static_cast<T> (vtkTensorMathematics::AnisotropicQ(w));
             break;
 
           case VTK_TENS_COLOR_MODE:
@@ -587,7 +625,9 @@ static void vtkTensorMathematicsExecute1Eigen(vtkTensorMathematics *self,
     outPtr += outIncZ;
     inPtId += outIncZ;
     }
-
+  // Cleanup     
+  trans->Delete();     
+ 
   //cout << "tensor math time: " << clock() - tStart << endl;
 }
 
@@ -654,9 +694,16 @@ void vtkTensorMathematics::ThreadedExecute(vtkImageData **inData,
     case VTK_TENS_MAX_EIGENVALUE_PROJX:
     case VTK_TENS_MAX_EIGENVALUE_PROJY:
     case VTK_TENS_MAX_EIGENVALUE_PROJZ: 
+    case VTK_TENS_RAI_MAX_EIGENVEC_PROJX:
+    case VTK_TENS_RAI_MAX_EIGENVEC_PROJY:
+    case VTK_TENS_RAI_MAX_EIGENVEC_PROJZ:
     case VTK_TENS_COLOR_ORIENTATION:
     case VTK_TENS_MODE:
     case VTK_TENS_COLOR_MODE:
+    case VTK_TENS_PARALLEL_DIFFUSIVITY:
+    case VTK_TENS_PERPENDICULAR_DIFFUSIVITY:
+    case VTK_TENS_ISOTROPIC_P:
+    case VTK_TENS_ANISOTROPIC_Q:
       switch (outData->GetScalarType())
       {
         vtkTemplateMacro6(vtkTensorMathematicsExecute1Eigen,
@@ -764,19 +811,45 @@ vtkFloatingPointType vtkTensorMathematics::MinEigenvalue(vtkFloatingPointType w[
   return w[2];
 }
 
+vtkFloatingPointType vtkTensorMathematics::ParallelDiffusivity(vtkFloatingPointType w[3])
+{
+  return w[0];
+}
+
+vtkFloatingPointType vtkTensorMathematics::PerpendicularDiffusivity(vtkFloatingPointType w[3])
+{
+  return ( ( w[1] + w[2] ) / 2 );
+}
+
+
+vtkFloatingPointType vtkTensorMathematics::RAIMaxEigenvecX(vtkFloatingPointType **v, vtkFloatingPointType w[3]) 
+{
+  return (fabs(v[0][0])*vtkTensorMathematics::RelativeAnisotropy(w));
+}
+
+vtkFloatingPointType vtkTensorMathematics::RAIMaxEigenvecY(vtkFloatingPointType **v, vtkFloatingPointType w[3])
+{
+  return (fabs(v[1][0])*vtkTensorMathematics::RelativeAnisotropy(w));
+}
+
+vtkFloatingPointType vtkTensorMathematics::RAIMaxEigenvecZ(vtkFloatingPointType **v, vtkFloatingPointType w[3])
+{
+  return (fabs(v[2][0])*vtkTensorMathematics::RelativeAnisotropy(w));
+}
+
 vtkFloatingPointType vtkTensorMathematics::MaxEigenvalueProjectionX(vtkFloatingPointType **v, vtkFloatingPointType w[3]) 
 {
-  return fabs(w[0]*v[0][0]);
+  return (w[0]*fabs(v[0][0]));
 }
 
 vtkFloatingPointType vtkTensorMathematics::MaxEigenvalueProjectionY(vtkFloatingPointType **v, vtkFloatingPointType w[3]) 
 {
-  return fabs(w[0]*v[1][0]);
+  return (w[0]*fabs(v[1][0]));
 }
 
 vtkFloatingPointType vtkTensorMathematics::MaxEigenvalueProjectionZ(vtkFloatingPointType **v, vtkFloatingPointType w[3]) 
 {
-  return fabs(w[0]*v[2][0]);
+  return (w[0]*fabs(v[2][0]));
 }
 
 vtkFloatingPointType vtkTensorMathematics::Mode(vtkFloatingPointType w[3])
@@ -796,6 +869,22 @@ vtkFloatingPointType vtkTensorMathematics::Mode(vtkFloatingPointType w[3])
                          (2*w[0] - w[1] - w[2]) * 
                          (w[0] - 2*w[1] + w[2]))/(27*norm)); 
 }
+
+vtkFloatingPointType vtkTensorMathematics::IsotropicP(vtkFloatingPointType w[3])
+{
+  // square root of sum of eigenvalues. the "isotropic part" 
+  return ( sqrt( w[0] + w[1] + w[2] ) );
+}
+
+vtkFloatingPointType vtkTensorMathematics::AnisotropicQ(vtkFloatingPointType w[3])
+{
+  // the "anisotropic part"
+  vtkFloatingPointType mean = (w[0] + w[1] + w[2])/3;  
+  return( sqrt( (w[0] - mean)*(w[0] - mean) + 
+                (w[1] - mean)*(w[1] - mean) + 
+                (w[2] - mean)*(w[2] - mean) ) );
+}
+
 
 void vtkTensorMathematics::ColorByMode(vtkFloatingPointType w[3], vtkFloatingPointType &R, 
                                                        vtkFloatingPointType &G, vtkFloatingPointType &B)

@@ -175,6 +175,23 @@ template  <class T> inline double EMLocalAlgorithm<T>::NeighberhoodEnergy(float 
     }
   }
 
-  return double(1-this->Alpha+this->Alpha*exp(wxp + wxn + wyp + wyn + wzp + wzn));
+  // Kilian: March 06
+  //  Old Definition: double(1-this->Alpha+this->Alpha*exp(wxp + wxn + wyp + wyn + wzp + wzn));
+  //  Problem:  The  NeighborhoodEnergy and condIntensity  are not properly scalled so that the method is difficult to fine tune 
+  //            Thus changing alpha from 0 to 0.01 has a great effect but the difference between alpha 0.01 and 1.0 is very small 
+  // 
+  //  Solution: Define the influence of the components based in a parameter similar to SpatialTissueDistribution depends on ProbDataSpatialWeight (PDSW)
+  //            where the STD of a class (not subclass) \in [PDSW, 1] * TrainingSamples. 
+  //            TrainingSamples is a scalar ascross structures so it does not have an impact on the segmentation results.
+  // 
+  //            - NeighborhoodEnergy: Maximum is e^(6)  => in order for alpha to have any meanining set it to 1 - alpha  + alpha * (e^w -1) / (e^6 -1)
+  //                                  => NE(alpha) \in [\alpha , 1] 
+  //                                  => alpha = 1.0: NE = (e^w -1) so that the product solely on the neighboorhod energy 
+  //                                                  ((e^6 -1) is a structure independent scalar - ignore it)                         
+  //                                     alpha = 0.5 the NE \in [0.5 , 1] => impact of neighborhood relationship is reduced  
+  //                                     alpha = 0.0 then NE = 1 and is ignored from w_m
+ 
+  float Energy = exp(wxp + wxn + wyp + wyn + wzp + wzn);
+  return double(1-this->Alpha+this->Alpha*( Energy - 1) * EMSEGMENT_INVERSE_NEIGHBORHOOD_ENERGY); 
 }
 

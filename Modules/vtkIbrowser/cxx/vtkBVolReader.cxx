@@ -7,19 +7,10 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkBVolReader.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:56 $
-  Version:   $Revision: 1.2.8.1 $
+  Date:      $Date: 2007/10/29 15:33:53 $
+  Version:   $Revision: 1.2.8.1.2.1 $
 
 =========================================================================auto=*/
-/*=========================================================================
-
-Program:   Visualization Toolkit
-Module:    $RCSfile: vtkBVolReader.cxx,v $
-Language:  C++
-Date:      $Date: 2005/12/20 22:55:56 $
-Version:   $Revision: 1.2.8.1 $
-
-=========================================================================*/
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <ctype.h>

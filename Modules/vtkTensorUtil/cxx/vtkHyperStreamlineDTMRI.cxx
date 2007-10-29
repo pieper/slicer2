@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.cxx,v $
-  Date:      $Date: 2006/07/07 19:18:48 $
-  Version:   $Revision: 1.14.2.1.2.3 $
+  Date:      $Date: 2007/10/29 15:17:25 $
+  Version:   $Revision: 1.14.2.1.2.4 $
 
 =========================================================================auto=*/
 #include "vtkHyperStreamlineDTMRI.h"
@@ -20,13 +20,15 @@
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 #include "vtkPolyData.h"
+#include "vtkTractographyPointAndArray.h"
+
 // the superclass had these classes in the vtkHyperStreamline.cxx
 // file: being compiled via CMakeListsLocal.txt
 #if (VTK_MAJOR_VERSION == 4 && VTK_MINOR_VERSION >= 3)
 //#include "vtkHyperPointandArray.cxx"
 #endif
 
-vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.14.2.1.2.3 $");
+vtkCxxRevisionMacro(vtkHyperStreamlineDTMRI, "$Revision: 1.14.2.1.2.4 $");
 vtkStandardNewMacro(vtkHyperStreamlineDTMRI);
 
 vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()
@@ -41,21 +43,23 @@ vtkHyperStreamlineDTMRI::vtkHyperStreamlineDTMRI()
 
   this->Streamers = NULL;
 
-  this->MaximumPropagationDistance = 100.0;
+  this->MaximumPropagationDistance = 600.0;
 
-  this->RadiusOfCurvature = 2;
+  this->RadiusOfCurvature = 0.87;
 
   // in mm.
   this->IntegrationStepLength = 0.5;
 
-  this->IntegrationDirection = VTK_INTEGRATE_FORWARD;
+  this->IntegrationDirection = VTK_INTEGRATE_BOTH_DIRECTIONS;
   this->TerminalEigenvalue = 0.0;
 
   this->IntegrationEigenvector = VTK_INTEGRATE_MAJOR_EIGENVECTOR;
 
   this->StoppingMode = VTK_TENS_LINEAR_MEASURE;
-  this->StoppingThreshold=0.07;
+  this->StoppingThreshold=0.15;
 
+  this->OutputTensors = 0;
+  this->OneTrajectoryPerSeedPoint = 0;
 }
 
 vtkHyperStreamlineDTMRI::~vtkHyperStreamlineDTMRI()
@@ -133,7 +137,7 @@ void vtkHyperStreamlineDTMRI::Execute()
   vtkDataArray *inScalars;
   vtkDataArray *inTensors;
   vtkFloatingPointType *tensor;
-  vtkHyperPoint *sNext, *sPtr;
+  vtkTractographyPoint *sNext, *sPtr;
   int i, j, k, ptId, subId, iv, ix, iy;
   vtkCell *cell;
   vtkFloatingPointType ev[3];
@@ -148,15 +152,15 @@ void vtkHyperStreamlineDTMRI::Execute()
   vtkDataArray *cellTensors;
   vtkDataArray *cellScalars;
   int pointCount;
-  vtkHyperPoint *sPrev, *sPrevPrev;
+  vtkTractographyPoint *sPrev, *sPrevPrev;
   vtkFloatingPointType kv1[3], kv2[3], ku1[3], ku2[3], kl1, kl2, kn[3], K;
   // set up working matrices
-  v[0] = v0; v[1] = v1; v[2] = v2; 
-  m[0] = m0; m[1] = m1; m[2] = m2; 
-  float meanEV, stop;
-  float sqrt3halves=sqrt((float)3/2);
+  v[0] = v0; v[1] = v1; v[2] = v2;
+  m[0] = m0; m[1] = m1; m[2] = m2;
+  float stop;
+  //static const float sqrt3halves = sqrt((float)3/2);
   int keepIntegrating;
-  
+
   vtkDebugMacro(<<"Generating hyperstreamline(s)");
   this->NumberOfStreamers = 0;
 
@@ -184,8 +188,8 @@ void vtkHyperStreamlineDTMRI::Execute()
     cellScalars->SetNumberOfComponents(numComp);
     cellScalars->SetNumberOfTuples(VTK_CELL_SIZE);
     }
-  
-  
+
+
   tol2 = input->GetLength() / 1000.0;
   tol2 = tol2 * tol2;
   iv = this->IntegrationEigenvector;
@@ -195,17 +199,17 @@ void vtkHyperStreamlineDTMRI::Execute()
   // Create starting points
   //
   this->NumberOfStreamers = 1;
- 
+
   if ( this->IntegrationDirection == VTK_INTEGRATE_BOTH_DIRECTIONS )
     {
     this->NumberOfStreamers *= 2;
     }
 
-  this->Streamers = new vtkHyperArray[this->NumberOfStreamers];
+  this->Streamers = new vtkTractographyArray[this->NumberOfStreamers];
 
   if ( this->StartFrom == VTK_START_FROM_POSITION )
     {
-    sPtr = this->Streamers[0].InsertNextHyperPoint();
+    sPtr = this->Streamers[0].InsertNextTractographyPoint();
     for (i=0; i<3; i++)
       {
       sPtr->X[i] = this->StartPosition[i];
@@ -216,7 +220,7 @@ void vtkHyperStreamlineDTMRI::Execute()
 
   else //VTK_START_FROM_LOCATION
     {
-    sPtr = this->Streamers[0].InsertNextHyperPoint();
+    sPtr = this->Streamers[0].InsertNextTractographyPoint();
     cell =  input->GetCell(sPtr->CellId);
     cell->EvaluateLocation(sPtr->SubId, sPtr->P, sPtr->X, w);
     }
@@ -224,7 +228,7 @@ void vtkHyperStreamlineDTMRI::Execute()
   // Finish initializing each hyperstreamline
   //
   this->Streamers[0].Direction = 1.0;
-  sPtr = this->Streamers[0].GetHyperPoint(0);
+  sPtr = this->Streamers[0].GetTractographyPoint(0);
   sPtr->D = 0.0;
   if ( sPtr->CellId >= 0 ) //starting point in dataset
     {
@@ -249,7 +253,17 @@ void vtkHyperStreamlineDTMRI::Execute()
         for (i=0; i<3; i++) 
           {
           m[i][j] += tensor[i+3*j] * w[k];
+
           }
+        }
+      }
+    
+    // store tensor at start point
+    for (j=0; j<3; j++) 
+      {
+      for (i=0; i<3; i++) 
+        {
+        sPtr->T[i][j] = m[i][j];
         }
       }
 
@@ -257,24 +271,21 @@ void vtkHyperStreamlineDTMRI::Execute()
     vtkTensorMathematics::TeemEigenSolver(m,sPtr->W,sPtr->V);
     FixVectors(NULL, sPtr->V, iv, ix, iy);
 
-    // compute invariants                                                               
-    meanEV=(sPtr->W[0]+sPtr->W[1]+sPtr->W[2])/3;
-
-    if ( inScalars ) 
+    if ( inScalars )
       {
       inScalars->GetTuples(cell->PointIds, cellScalars);
       for (sPtr->S=0, i=0; i < cell->GetNumberOfPoints(); i++)
         {
-          sPtr->S += cellScalars->GetTuple(i)[0] * w[i];
-          // for curvature coloring for debugging purposes:
-          //sPtr->S =0;
+        sPtr->S += cellScalars->GetTuple(i)[0] * w[i];
+        // for curvature coloring for debugging purposes:
+        //sPtr->S =0;
         }
       }
 
     if ( this->IntegrationDirection == VTK_INTEGRATE_BOTH_DIRECTIONS )
       {
       this->Streamers[1].Direction = -1.0;
-      sNext = this->Streamers[1].InsertNextHyperPoint();
+      sNext = this->Streamers[1].InsertNextTractographyPoint();
       *sNext = *sPtr;
       }
     else if ( this->IntegrationDirection == VTK_INTEGRATE_BACKWARD )
@@ -289,7 +300,7 @@ void vtkHyperStreamlineDTMRI::Execute()
   for (ptId=0; ptId < this->NumberOfStreamers; ptId++)
     {
     //get starting step
-    sPtr = this->Streamers[ptId].GetHyperPoint(0);
+    sPtr = this->Streamers[ptId].GetTractographyPoint(0);
     if ( sPtr->CellId < 0 )
       {
       continue;
@@ -306,9 +317,9 @@ void vtkHyperStreamlineDTMRI::Execute()
     // This is the flag for integration to continue if FA, curvature
     // are within limits
     keepIntegrating=1;
-    // init index for curvature calculation 
+    // init index for curvature calculation
     pointCount=0;
-      
+
     //integrate until distance has been exceeded
     while ( sPtr->CellId >= 0 && fabs(sPtr->W[0]) > this->TerminalEigenvalue &&
             sPtr->D < this->MaximumPropagationDistance &&
@@ -317,45 +328,45 @@ void vtkHyperStreamlineDTMRI::Execute()
         // Test curvature
         if ( pointCount > 2 )
           {
- 
+
            // v2=p3-p2;  % vector from point 2 to point 3
             // v1=p2-p1;  % vector from point 1 to point 2
             // u2=v2/norm(v2);  % unit vector in the direction of v2
             // u1=v1/norm(v1);  % unit vector in the direction of v1
-            
+
             // kn is curvature times the unit normal vector
             // it's the change in the unit normal over half the distance 
             // from p1 to p3
             // kn=2*(u2-u1)/(norm(v1)+norm(v2));
             // absk=norm(kn);  % absolute value of the curvature
 
-            sPrev = this->Streamers[ptId].GetHyperPoint(pointCount-1);
-            sPrevPrev = this->Streamers[ptId].GetHyperPoint(pointCount-2);
+            sPrev = this->Streamers[ptId].GetTractographyPoint(pointCount-1);
+            sPrevPrev = this->Streamers[ptId].GetTractographyPoint(pointCount-2);
             kl2=0;
             kl1=0;
             for (i=0; i<3; i++)
               {
-                // vectors
-                kv2[i]=sPrevPrev->X[i] - sPrev->X[i];
-                kv1[i]=sPrev->X[i] - sPtr->X[i];
-                // lengths
-                kl2+=kv2[i]*kv2[i];
-                kl1+=kv1[i]*kv1[i];
-              }           
+              // vectors
+              kv2[i]=sPrevPrev->X[i] - sPrev->X[i];
+              kv1[i]=sPrev->X[i] - sPtr->X[i];
+              // lengths
+              kl2+=kv2[i]*kv2[i];
+              kl1+=kv1[i]*kv1[i];
+              }
             kl2=sqrt(kl2);
             kl1=sqrt(kl1);
             // normalize
             for (i=0; i<3; i++)
               {
-                // unit vectors
-                ku2[i]=kv2[i]/kl2;
-                ku1[i]=kv1[i]/kl1;
+              // unit vectors
+              ku2[i]=kv2[i]/kl2;
+              ku1[i]=kv1[i]/kl1;
               }
             // compute curvature
             for (i=0; i<3; i++)
               {
-                kn[i]=2*(ku2[i]-ku1[i])/(kl1+kl2);
-                K+=kn[i]*kn[i];
+              kn[i]=2*(ku2[i]-ku1[i])/(kl1+kl2);
+              K+=kn[i]*kn[i];
               }
             K=sqrt(K);
             // units are radians per mm.
@@ -371,11 +382,10 @@ void vtkHyperStreamlineDTMRI::Execute()
           }
         else 
           {
-            K=0;
+          K=0;
           }
 
 
-        
       //compute updated position using this step (Euler integration)
       for (i=0; i<3; i++)
         {
@@ -396,9 +406,9 @@ void vtkHyperStreamlineDTMRI::Execute()
       for (k=0; k < cell->GetNumberOfPoints(); k++)
         {
         tensor = cellTensors->GetTuple(k);
-        for (j=0; j<3; j++) 
+        for (j=0; j<3; j++)
           {
-          for (i=0; i<3; i++) 
+          for (i=0; i<3; i++)
             {
             m[i][j] += tensor[i+3*j] * w[k];
             }
@@ -415,7 +425,7 @@ void vtkHyperStreamlineDTMRI::Execute()
         xNext[i] = sPtr->X[i] + 
                    dir * (step/2.0) * (sPtr->V[i][iv] + v[i][iv]);
         }
-      sNext = this->Streamers[ptId].InsertNextHyperPoint();
+      sNext = this->Streamers[ptId].InsertNextTractographyPoint();
 
       if ( cell->EvaluatePosition(xNext, closestPoint, sNext->SubId, 
       sNext->P, dist2, w) )
@@ -472,35 +482,50 @@ void vtkHyperStreamlineDTMRI::Execute()
 
         // compute invariants at final position                                         
         switch (this->GetStoppingMode()) {
-      case VTK_TENS_FRACTIONAL_ANISOTROPY:
-          stop = vtkTensorMathematics::FractionalAnisotropy(sNext->W);
-          break;
-      case VTK_TENS_LINEAR_MEASURE:
-         stop = vtkTensorMathematics::LinearMeasure(sNext->W);
-         break;
-      case VTK_TENS_PLANAR_MEASURE:
-        stop = vtkTensorMathematics::PlanarMeasure(sNext->W);
-        break;
-      case VTK_TENS_SPHERICAL_MEASURE:
-        stop =  vtkTensorMathematics::SphericalMeasure(sNext->W);
+        case VTK_TENS_FRACTIONAL_ANISOTROPY:
+            stop = vtkTensorMathematics::FractionalAnisotropy(sNext->W);
             break;
-    }    
-
-        // test FA cutoff   
-        if (stop < this->StoppingThreshold) {
-          keepIntegrating=0;
+        case VTK_TENS_LINEAR_MEASURE:
+            stop = vtkTensorMathematics::LinearMeasure(sNext->W);
+            break;
+        case VTK_TENS_PLANAR_MEASURE:
+            stop = vtkTensorMathematics::PlanarMeasure(sNext->W);
+            break;
+        case VTK_TENS_SPHERICAL_MEASURE:
+            stop =  vtkTensorMathematics::SphericalMeasure(sNext->W);
+            break;
+        default:
+            vtkErrorMacro( << "Should not happen" );
         }
+
+        // test FA cutoff
+        if (stop < this->StoppingThreshold)
+          {
+          keepIntegrating=0;
+          }
 
         if ( inScalars )
           {
           for (sNext->S=0.0, i=0; i < cell->GetNumberOfPoints(); i++)
             {
+              // output interpolated scalar data
               sNext->S += cellScalars->GetTuple(i)[0] * w[i];
               // for curvature coloring for debugging purposes:
               //sNext->S =K;
 
             }
           }
+
+        // output tensor at final position
+        for (j=0; j<3; j++) 
+            {
+            for (i=0; i<3; i++) 
+              {
+                sNext->T[i][j] = m[i][j];
+              }
+            }
+
+
         d = sqrt((double)vtkMath::Distance2BetweenPoints(sPtr->X,sNext->X));
         sNext->D = sPtr->D + d;
         }
@@ -517,7 +542,7 @@ void vtkHyperStreamlineDTMRI::Execute()
 
   delete [] w;
   cellTensors->Delete();
-  cellScalars->Delete();  
+  cellScalars->Delete();
 
   // note: these two lines fix memory leak in code copied from vtk
   delete [] this->Streamers;
@@ -526,10 +551,20 @@ void vtkHyperStreamlineDTMRI::Execute()
 
 void vtkHyperStreamlineDTMRI::BuildLines()
 {
-  vtkHyperPoint *sPtr;
+
+  if ( this->OneTrajectoryPerSeedPoint == 1  )
+    this->BuildLinesForSingleTrajectory();
+  else
+    this->BuildLinesForTwoTrajectories();
+}
+
+void vtkHyperStreamlineDTMRI::BuildLinesForTwoTrajectories()
+{
+  vtkTractographyPoint *sPtr;
   vtkPoints *newPoints;
   vtkCellArray *newLines;
   vtkFloatArray *newScalars=NULL;
+  vtkFloatArray *newTensors=NULL;
 #if (VTK_MAJOR_VERSION >= 5)
   vtkDataSet *input = this->GetPolyDataInput(0);
 #else
@@ -558,38 +593,40 @@ void vtkHyperStreamlineDTMRI::BuildLines()
       numIntPts+=this->Streamers[ptId].GetNumberOfPoints();
     }
   newPoints ->Allocate(numIntPts);
-  newLines = vtkCellArray::New(); 
+  newLines = vtkCellArray::New();
 
   if ( input->GetPointData()->GetScalars() )
     {
     newScalars = vtkFloatArray::New();
     newScalars->Allocate(numIntPts);
     }
- 
+
+  if ( this->OutputTensors )
+    {
+    newTensors = vtkFloatArray::New();
+    newTensors->SetNumberOfComponents(9);
+    newTensors->Allocate(numIntPts * 9);
+    }
+
   // index into the whole point array
   int strIdx = 0;
 
   for (int ptId=0; ptId < this->NumberOfStreamers; ptId++)
     {
       // if no points give up
-      if ( (numIntPts=this->Streamers[ptId].GetNumberOfPoints()) < 1 )
-        {
-          continue;
-        }
+    if ( (numIntPts=this->Streamers[ptId].GetNumberOfPoints()) < 1 )
+      {
+      continue;
+      }
 
       // cell indicates line connectivity
       newLines->InsertNextCell(numIntPts);
 
       // loop through all points on the path and make a line
       int i=0;
-      sPtr=this->Streamers[ptId].GetHyperPoint(i);
+      sPtr=this->Streamers[ptId].GetTractographyPoint(i);
       while (i < numIntPts && sPtr->CellId >= 0)
         {
-          //for (j=0; j<3; j++) // grab point's coordinates
-          //{
-          //cout << sPtr->X[j] << " ";
-          //}
-          //cout << endl;
           newPoints->InsertPoint(strIdx,sPtr->X);
           newLines->InsertCellPoint(strIdx);
 
@@ -599,8 +636,25 @@ void vtkHyperStreamlineDTMRI::BuildLines()
               newScalars->InsertNextTuple(&s);
             }
 
+          if ( newTensors ) // add tensors at points
+            {
+              double tensor[9];
+              int idx;
+              idx =0;
+              for (int row = 0; row < 3; row++)
+                {
+                  for (int col = 0; col < 3; col++)
+                    {
+                      tensor[idx] = sPtr->T[row][col];
+                      idx++;
+                    }
+                }  
+
+              newTensors->InsertNextTuple(tensor);
+            }
+
           i++;
-          sPtr=this->Streamers[ptId].GetHyperPoint(i);
+          sPtr=this->Streamers[ptId].GetTractographyPoint(i);
           strIdx++;
           
         } //while
@@ -619,27 +673,235 @@ void vtkHyperStreamlineDTMRI::BuildLines()
 
   if ( newScalars )
     {
-      int idx = outPD->AddArray(newScalars);
-      outPD->SetActiveAttribute(idx, vtkDataSetAttributes::SCALARS);
-      newScalars->Delete();
+    int idx = outPD->AddArray(newScalars);
+    outPD->SetActiveAttribute(idx, vtkDataSetAttributes::SCALARS);
+    newScalars->Delete();
+    }
+
+  if ( newTensors )
+    {
+    int idx = outPD->AddArray(newTensors);
+    outPD->SetActiveAttribute(idx, vtkDataSetAttributes::TENSORS);
+    newTensors->Delete();
     }
 
   output->SetLines(newLines);
   newLines->Delete();
-
+    
   output->Squeeze();
 
 }
 
 
+void vtkHyperStreamlineDTMRI::BuildLinesForSingleTrajectory()
+{
+  vtkTractographyPoint *sPtr;
+  vtkPoints *newPoints;
+  vtkCellArray *newLines;
+  vtkFloatArray *newScalars=NULL;
+  vtkFloatArray *newTensors=NULL;
+#if (VTK_MAJOR_VERSION >= 5)
+  vtkDataSet *input = this->GetPolyDataInput(0);
+#else
+  vtkDataSet *input = this->GetInput();
+#endif
+  vtkPolyData *output = this->GetOutput();
+  vtkPointData *outPD = output->GetPointData();
+
+  vtkIdType numIntPts;
+  //
+  // Initialize
+  //
+  vtkDebugMacro(<<"Creating hyperstreamline tube");
+  if ( this->NumberOfStreamers <= 0 )
+    {
+    return;
+    }
+
+  //
+  // Allocate
+  //
+  newPoints  = vtkPoints::New();
+  numIntPts = 0;
+  for (int streamerIdx=0; streamerIdx < this->NumberOfStreamers; streamerIdx++)
+    {
+      numIntPts+=this->Streamers[streamerIdx].GetNumberOfPoints();
+    }
+
+  // don't count the seed point twice
+  numIntPts--;
+
+  newPoints ->Allocate(numIntPts);
+  newLines = vtkCellArray::New();
+
+  if ( input->GetPointData()->GetScalars() )
+    {
+    newScalars = vtkFloatArray::New();
+    newScalars->Allocate(numIntPts);
+    }
+
+  if ( this->OutputTensors )
+    {
+    newTensors = vtkFloatArray::New();
+    newTensors->SetNumberOfComponents(9);
+    newTensors->Allocate(numIntPts * 9);
+    }
+
+  // index into the whole point array
+  int strIdx = 0;
+
+
+  // single cell indicates line connectivity
+  newLines->InsertNextCell(numIntPts);
+
+  vtkDebugMacro("Handling first streamer");
+
+  // go backwards through first streamer and skip seed point
+  // --------------------------------------------------------
+  int streamerId = 0;
+
+  // if no points give up
+  if ( (numIntPts=this->Streamers[streamerId].GetNumberOfPoints()) > 0 )
+    {
+    
+    // loop through all points on the path and make a line
+    int i = numIntPts-1;
+    sPtr=this->Streamers[streamerId].GetTractographyPoint(i);
+    // > 0 skips initial (seed) point
+    while (i > 0 )
+      {
+ 
+      // if this was a good point add it
+      if ( sPtr->CellId >= 0)
+        {
+        newPoints->InsertPoint(strIdx,sPtr->X);
+        newLines->InsertCellPoint(strIdx);
+        
+        if ( newScalars ) // add scalars at points
+          {
+          double s = sPtr->S;
+          newScalars->InsertNextTuple(&s);
+          }
+        
+        if ( newTensors ) // add tensors at points
+          {
+          double tensor[9];
+          int idx;
+          idx =0;
+          for (int row = 0; row < 3; row++)
+            {
+            for (int col = 0; col < 3; col++)
+              {
+              tensor[idx] = sPtr->T[row][col];
+              idx++;
+              }
+            }  
+          
+          newTensors->InsertNextTuple(tensor);
+          }
+
+        // count of number of points added
+        strIdx++;
+        
+        }
+      
+      i--;
+      sPtr=this->Streamers[streamerId].GetTractographyPoint(i);
+        
+      } //while
+    
+
+
+    } //for this hyperstreamline
+  
+  vtkDebugMacro("Handling second streamer");
+
+  // go forwards through second streamer and include seed point
+  // --------------------------------------------------------
+  streamerId = 1;
+
+  // if no points give up
+  if ( (numIntPts=this->Streamers[streamerId].GetNumberOfPoints()) > 0 )
+    {
+    
+    // loop through all points on the path and make a line
+    int i=0;
+    sPtr=this->Streamers[streamerId].GetTractographyPoint(i);
+    while (i < numIntPts && sPtr->CellId >= 0)
+      {
+      newPoints->InsertPoint(strIdx,sPtr->X);
+      newLines->InsertCellPoint(strIdx);
+      
+      if ( newScalars ) // add scalars at points
+        {
+        double s = sPtr->S;
+        newScalars->InsertNextTuple(&s);
+        }
+      
+      if ( newTensors ) // add tensors at points
+        {
+        double tensor[9];
+//        int row, col;
+        int idx;
+        idx =0;
+        for (int row = 0; row < 3; row++)
+          {
+          for (int col = 0; col < 3; col++)
+            {
+            tensor[idx] = sPtr->T[row][col];
+            idx++;
+            }
+          }  
+        
+        newTensors->InsertNextTuple(tensor);
+        }
+      
+      i++;
+      sPtr=this->Streamers[streamerId].GetTractographyPoint(i);
+      strIdx++;
+          
+      }
+    }
+
+  // in case we ended earlier than numIntPts because sPtr->CellID=0
+  // this gets rid of empty cell points at the end
+  newLines->UpdateCellCount(strIdx);
+    
+  vtkDebugMacro("Assigning output values");
+
+  //
+  // Update ourselves
+  //
+  output->SetPoints(newPoints);
+  newPoints->Delete();
+  
+  if ( newScalars )
+    {
+    int idx = outPD->AddArray(newScalars);
+    outPD->SetActiveAttribute(idx, vtkDataSetAttributes::SCALARS);
+    newScalars->Delete();
+    }
+
+  if ( newTensors )
+    {
+    int idx = outPD->AddArray(newTensors);
+    outPD->SetActiveAttribute(idx, vtkDataSetAttributes::TENSORS);
+    newTensors->Delete();
+    }
+
+  output->SetLines(newLines);
+  newLines->Delete();
+    
+  output->Squeeze();
+
+}
+
 void vtkHyperStreamlineDTMRI::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
- 
-  os << indent << "Radius of Curvature "
-     << this->RadiusOfCurvature << "\n";
 
- 
+  os << indent << "Radius of Curvature "
+    << this->RadiusOfCurvature << "\n";
 }
 
 

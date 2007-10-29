@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDataDef.h,v $
-  Date:      $Date: 2005/12/20 22:55:14 $
-  Version:   $Revision: 1.3.2.1 $
+  Date:      $Date: 2007/10/29 15:42:17 $
+  Version:   $Revision: 1.3.2.1.2.1 $
 
 =========================================================================auto=*/
 #ifndef __vtkDataDef_h
@@ -17,6 +17,8 @@
 
 #include <vtkEMAtlasBrainClassifierConfigure.h>
 #include "vtkObject.h"
+#include "assert.h"
+// #include "ostream.h"
 
 // ----------------------------------------------------
 // Stucture and function needed for convolution
@@ -75,11 +77,12 @@ public:
 
   EMVolume & operator = (const EMVolume &trg) {
     if ( this->Data == trg.Data ) return *this;
-    if ((this->MaxX != trg.MaxX) || (this->MaxY != trg.MaxY) ||(this->MaxZ != trg.MaxZ)) {
-    }
-    for (int i = 0; i < this->MaxXYZ; i++ ) this->Data[i] = trg.Data[i];
+    // Has to be of the same dimension
+    assert((this->MaxX == trg.MaxX) && (this->MaxY == trg.MaxY) && (this->MaxZ == trg.MaxZ));  
+    memcpy(this->Data,trg.Data,sizeof(float)*this->MaxXYZ);
     return *this;
   }
+
   // Kilian : Just to be compatible with older version
   void Conv(double *v,int vLen);
   // End -  Multi Thread Function
@@ -97,7 +100,69 @@ public:
     else { memset(this->Data, 0,sizeof(float)*this->MaxXYZ);}
   }
   float* GetData() {return this->Data;}
+
+  void SaveDataToFile(char *FileName) {
+    char VolumeFileName[1024];
+    sprintf(VolumeFileName,"%s.img",FileName); 
+    FILE *File= fopen(VolumeFileName, "wb");
+    // Could not open file
+    assert(File); 
+    fwrite(this->Data, sizeof(float),this->MaxXYZ, File);
+    fflush(File);
+    fclose(File);
+
+#ifndef _WIN32
+    // Compress file 
+    char command[1024];
+    sprintf(command,"gzip --fast -f \"%s\"",VolumeFileName);
+    assert(system(command) == 0); 
+#endif
+  }
  
+
+ void ReadDataFromFile(char *FileName) {
+    char VolumeFileName[1024];
+
+#ifndef _WIN32
+    // First uncompress file
+    char command[1024];
+    sprintf(command,"gunzip --fast -f \"%s.img.gz\"",FileName);
+    // Do not quite here bc could have been unzipped before - if file does not exist next assert will catch it 
+    system(command); 
+#endif
+
+    sprintf(VolumeFileName,"%s.img",FileName);
+    FILE *File= fopen(VolumeFileName, "rb");
+    // Could not open file
+    assert(File);
+    fread (this->Data,sizeof(float),this->MaxXYZ,File);
+    // terminate
+    fclose (File);
+
+#ifndef _WIN32
+    // Compress it back 
+    sprintf(command,"gzip --fast -f \"%s\"",VolumeFileName);
+    assert(system(command) == 0); 
+#endif
+
+ }
+
+ void EraseDataFile(char *FileName) {
+    char VolumeFileName[1024];
+#ifndef _WIN32
+    // Compress it back 
+    sprintf(VolumeFileName,"%s.img.gz",FileName);
+#else 
+    sprintf(VolumeFileName,"%s.img",FileName);
+#endif
+    assert(!remove(VolumeFileName));
+ }
+
+ int GetMaxX() {return this->MaxX;} 
+ int GetMaxY() {return this->MaxY;} 
+ int GetMaxZ() {return this->MaxZ;} 
+
+
 protected :
   float *Data;
   int MaxX, MaxY, MaxZ, MaxXY, MaxXYZ;
@@ -154,6 +219,16 @@ public:
   float& operator () (int t1, int t2, int z,int y, int x) {return this->TriVolume[t1][t2](z,y,x);}
   const float& operator () (int t1, int t2, int z,int y, int x) const {return this->TriVolume[t1][t2](z,y,x);}
 
+  EMTriVolume & operator = (const EMTriVolume &trg) {
+    if ( this->TriVolume == trg.TriVolume) return *this;
+    // Has to be of the same dimension
+    assert(this->Dim == trg.Dim); 
+    for (int y=0; y < this->Dim; y++) {  
+      for (int x = 0; x <= y ; x++) this->TriVolume[y][x] = trg.TriVolume[y][x];
+    }
+    return *this;
+  }
+
   // Kilian : Just to be complient with old version
   void Conv(double *v,int vLen) {
     float *v_f = new float[vLen];
@@ -174,6 +249,36 @@ public:
       for (x = 0; x <= y; x++) this->TriVolume[y][x].SetValue(val);
     }
   }
+
+  void SaveDataToFile(char *FileName) {
+    char VolumeFileName[1024];
+    for (int y=0; y < this->Dim; y++) {  
+      for (int x = 0; x <= y ; x++) {
+    sprintf(VolumeFileName,"%s_%d_%d",FileName,y,x); 
+    this->TriVolume[y][x].SaveDataToFile(VolumeFileName);
+      }
+    }
+  }
+
+  void ReadDataFromFile(char *FileName) {
+    char VolumeFileName[1024];
+    for (int y=0; y < this->Dim; y++) {  
+      for (int x = 0; x <= y ; x++) {
+    sprintf(VolumeFileName,"%s_%d_%d",FileName,y,x); 
+    this->TriVolume[y][x].ReadDataFromFile(VolumeFileName);
+      }
+    }
+  }
+
+void EraseDataFile(char *FileName) {
+    char VolumeFileName[1024];
+    for (int y=0; y < this->Dim; y++) {  
+      for (int x = 0; x <= y ; x++) {
+    sprintf(VolumeFileName,"%s_%d_%d",FileName,y,x); 
+    this->TriVolume[y][x].EraseDataFile(VolumeFileName);
+      }
+    }
+}
 };
 
 

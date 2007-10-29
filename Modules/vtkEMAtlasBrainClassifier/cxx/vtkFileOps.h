@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFileOps.h,v $
-  Date:      $Date: 2005/12/20 22:55:14 $
-  Version:   $Revision: 1.2.2.1 $
+  Date:      $Date: 2007/10/29 15:42:17 $
+  Version:   $Revision: 1.2.2.1.2.1 $
 
 =========================================================================auto=*/
 #ifndef __vtkFileOps_h
@@ -22,10 +22,10 @@ class VTK_EMATLASBRAINCLASSIFIER_EXPORT vtkFileOps { //; prevent man page genera
   static vtkFileOps *New() {return (new vtkFileOps);}
 
   // Note if varname = NULL it will just write the data in the file
-  void WriteVectorMatlabFile (char *filename, char *name,unsigned char *vec, int xMax) const;
-  void WriteVectorMatlabFile (char *filename, char *varname,float *vec, int xMax) const;
-  void WriteVectorMatlabFile (char *filename, char *varname,double *vec, int xMax) const;
-  void WriteMatrixMatlabFile (char *filename,char *varname, double **mat, int imgY, int imgX) const;
+  void WriteVectorMatlabFile (const char *filename, const char *name,unsigned char *vec, int xMax) const;
+  void WriteVectorMatlabFile (const char *filename, const char *varname,float *vec, int xMax) const;
+  void WriteVectorMatlabFile (const char *filename, const char *varname,double *vec, int xMax) const;
+  void WriteMatrixMatlabFile (const char *filename, const char *varname, double **mat, int imgY, int imgX) const;
 
   // ----------------------------------------------
   // Kilian: Old Stuff - I think you can take all of this out  
@@ -33,7 +33,7 @@ class VTK_EMATLASBRAINCLASSIFIER_EXPORT vtkFileOps { //; prevent man page genera
   int  WriteMRIfile(char *fname, unsigned char *header, int headersize, short *data, int npixels);
   // Transforms a double vec (with values between min and max) into an unsigned short file where min is 0 and max is MaxOutput
   // int XSize, int YSize are only important if FlagUpsideDown is set 
-  void WriteDoubleToUShortToGEFile(char* FileName, double* vec, int XSize, int YSize, int XYSize , double min, double max, unsigned short MaxOutput,  bool FlagUpsideDown) const; 
+  void WriteDoubleToUShortToGEFile(const char* FileName, double* vec, int XSize, int YSize, int XYSize , double min, double max, unsigned short MaxOutput,  bool FlagUpsideDown) const; 
   // Does not work correclty
   int  WriteMRIfile(char *fname, double *data, int np);
   //  End of old stuff
@@ -46,14 +46,14 @@ class VTK_EMATLASBRAINCLASSIFIER_EXPORT vtkFileOps { //; prevent man page genera
   static char* pathComponent(char *fname);
 
 protected:
-  void WriteVectorMatlabFile (FILE *f,char *name, double *vec, int xMax) const;
-  void WriteMatrixMatlabFile (FILE *f,char *name,double **mat, int imgY, int imgX) const;
+  void WriteVectorMatlabFile (FILE *f,const char *name, double *vec, int xMax) const;
+  void WriteMatrixMatlabFile (FILE *f,const char *name, double **mat, int imgY, int imgX) const;
 
   void ensureGEByteOrderForShort(short *data, int np);
   int IsMSBFirstForShort(void);
   short convertShortFromGE(short ge);
-  int fileIsCompressed(char *fname, char **newFileName);
-  int uncompressedFileName(char *fname, char **newFileName);
+  int fileIsCompressed(const char *fname, char **newFileName);
+  int uncompressedFileName(const char *fname, char **newFileName);
 };
 
 //BTX
@@ -99,7 +99,7 @@ void FlipXAxis(T *invec, T *outvec, int XSize, int YSize, int XYSize) {
 // res -= XYSize;
 
 template <class T> 
-static void vtkFileOps_WriteToFlippedGEFile(char *filename,T *vec, int XSize, int YSize, int XYSize) {
+static void vtkFileOps_WriteToFlippedGEFile(const char *filename,T *vec, int XSize, int YSize, int XYSize) {
   T* res = new T[XYSize];
   FlipXAxis(vec,res,XSize,YSize,XYSize);
   WriteToGEFile(filename,res,XYSize);
@@ -108,7 +108,7 @@ static void vtkFileOps_WriteToFlippedGEFile(char *filename,T *vec, int XSize, in
 
 // Opens up a new file and writes down result in the file
 template <class T> 
-static int WriteToGEFile(char *filename,T *vec, int size) {
+static int WriteToGEFile(const char *filename,T *vec, int size) {
   int appendFlag = 0;
   // If you enter - as name => prints it on the screen
   FILE *f = (strcmp(filename,"-")) ? fopen(filename,((appendFlag)?"ab":"wb")):stdout;

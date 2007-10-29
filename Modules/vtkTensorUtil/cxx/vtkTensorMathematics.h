@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorMathematics.h,v $
-  Date:      $Date: 2006/07/07 19:43:15 $
-  Version:   $Revision: 1.9.2.1.2.3 $
+  Date:      $Date: 2007/10/29 15:17:26 $
+  Version:   $Revision: 1.9.2.1.2.4 $
 
 =========================================================================auto=*/
 // .NAME vtkTensorMathematics - Trace, determinant, anisotropy measures
@@ -28,25 +28,34 @@
 
 
 // Operation options.
-#define VTK_TENS_TRACE                  0
-#define VTK_TENS_DETERMINANT            1
-#define VTK_TENS_RELATIVE_ANISOTROPY    2  
-#define VTK_TENS_FRACTIONAL_ANISOTROPY  3
-#define VTK_TENS_MAX_EIGENVALUE         4
-#define VTK_TENS_MID_EIGENVALUE         5
-#define VTK_TENS_MIN_EIGENVALUE         6
-#define VTK_TENS_LINEAR_MEASURE         7
-#define VTK_TENS_PLANAR_MEASURE         8
-#define VTK_TENS_SPHERICAL_MEASURE      9
-#define VTK_TENS_COLOR_ORIENTATION     10
-#define VTK_TENS_D11                   11
-#define VTK_TENS_D22                   12
-#define VTK_TENS_D33                   13
-#define VTK_TENS_MODE                  14
-#define VTK_TENS_COLOR_MODE            15
-#define VTK_TENS_MAX_EIGENVALUE_PROJX 16
-#define VTK_TENS_MAX_EIGENVALUE_PROJY 17
-#define VTK_TENS_MAX_EIGENVALUE_PROJZ 18
+#define VTK_TENS_TRACE                   0
+#define VTK_TENS_DETERMINANT             1
+#define VTK_TENS_RELATIVE_ANISOTROPY     2  
+#define VTK_TENS_FRACTIONAL_ANISOTROPY   3
+#define VTK_TENS_MAX_EIGENVALUE          4
+#define VTK_TENS_MID_EIGENVALUE          5
+#define VTK_TENS_MIN_EIGENVALUE          6
+#define VTK_TENS_LINEAR_MEASURE          7
+#define VTK_TENS_PLANAR_MEASURE          8
+#define VTK_TENS_SPHERICAL_MEASURE       9
+#define VTK_TENS_COLOR_ORIENTATION      10
+#define VTK_TENS_D11                    11
+#define VTK_TENS_D22                    12
+#define VTK_TENS_D33                    13
+#define VTK_TENS_MODE                   14
+#define VTK_TENS_COLOR_MODE             15
+#define VTK_TENS_MAX_EIGENVALUE_PROJX   16
+#define VTK_TENS_MAX_EIGENVALUE_PROJY   17
+#define VTK_TENS_MAX_EIGENVALUE_PROJZ   18
+#define VTK_TENS_RAI_MAX_EIGENVEC_PROJX 19
+#define VTK_TENS_RAI_MAX_EIGENVEC_PROJY 20
+#define VTK_TENS_RAI_MAX_EIGENVEC_PROJZ 21
+#define VTK_TENS_PARALLEL_DIFFUSIVITY   22
+#define VTK_TENS_PERPENDICULAR_DIFFUSIVITY   23
+#define VTK_TENS_ISOTROPIC_P            24
+#define VTK_TENS_ANISOTROPIC_Q          25
+
+
 
 #include "vtkTensorUtilConfigure.h"
 #include "vtkImageTwoInputFilter.h"
@@ -63,6 +72,7 @@ public:
   // Description:
   // Get the Operation to perform.
   vtkGetMacro(Operation,int);
+  vtkSetClampMacro(Operation,int, VTK_TENS_TRACE, VTK_TENS_ANISOTROPIC_Q);
 
   // Description:
   // Output the trace (sum of eigenvalues = sum along diagonal)
@@ -90,6 +100,15 @@ public:
   // (thanks to Gordon Lothar (of the Hill People) Kindlmann)
   void SetOperationToMode() 
     {this->SetOperation(VTK_TENS_MODE);};
+  void SetOperationToParallelDiffusivity()
+    {this->SetOperation(VTK_TENS_PARALLEL_DIFFUSIVITY);};
+  void SetOperationToPerpendicularDiffusivity()
+    {this->SetOperation(VTK_TENS_PERPENDICULAR_DIFFUSIVITY);};
+  void SetOperationToIsotropicP()
+    {this->SetOperation(VTK_TENS_ISOTROPIC_P);};
+  void SetOperationToAnisotropicQ()
+    {this->SetOperation(VTK_TENS_ANISOTROPIC_Q);};
+
 
   // Description:
   // Output a selected eigenvalue
@@ -100,14 +119,24 @@ public:
   void SetOperationToMinEigenvalue() 
     {this->SetOperation(VTK_TENS_MIN_EIGENVALUE);};
 
-   void SetOperationToMaxEigenvalueProjectionX()
-   {this->SetOperation(VTK_TENS_MAX_EIGENVALUE_PROJX);};
-   void SetOperationToMaxEigenvalueProjectionY()
-   {this->SetOperation(VTK_TENS_MAX_EIGENVALUE_PROJY);};
-   void SetOperationToMaxEigenvalueProjectionZ()
-   {this->SetOperation(VTK_TENS_MAX_EIGENVALUE_PROJZ);};
-
-
+  // Description:
+  // Output Maxeigenvalue*Maxeigenvec_projection also known as L1Z
+  void SetOperationToMaxEigenvalueProjectionX()
+  {this->SetOperation(VTK_TENS_MAX_EIGENVALUE_PROJX);};
+  void SetOperationToMaxEigenvalueProjectionY()
+  {this->SetOperation(VTK_TENS_MAX_EIGENVALUE_PROJY);};
+  void SetOperationToMaxEigenvalueProjectionZ()
+  {this->SetOperation(VTK_TENS_MAX_EIGENVALUE_PROJZ);};
+  
+  // Description:
+  // Output Relative_anisotropy*Maxeigenvec_projection also known as L1z
+  void SetOperationToRAIMaxEigenvecX()
+  {this->SetOperation(VTK_TENS_RAI_MAX_EIGENVEC_PROJX);}
+  void SetOperationToRAIMaxEigenvecY()
+  {this->SetOperation(VTK_TENS_RAI_MAX_EIGENVEC_PROJY);}
+  void SetOperationToRAIMaxEigenvecZ()
+  {this->SetOperation(VTK_TENS_RAI_MAX_EIGENVEC_PROJZ);}
+  
   // Description: 
   // Output a matrix (tensor) component
   void SetOperationToD11() 
@@ -196,11 +225,18 @@ public:
   static vtkFloatingPointType SphericalMeasure(vtkFloatingPointType w[3]);
   static vtkFloatingPointType MaxEigenvalue(vtkFloatingPointType w[3]);
   static vtkFloatingPointType MiddleEigenvalue(vtkFloatingPointType w[3]);
+  static vtkFloatingPointType ParallelDiffusivity(vtkFloatingPointType w[3]);
+  static vtkFloatingPointType PerpendicularDiffusivity(vtkFloatingPointType w[3]);
   static vtkFloatingPointType MinEigenvalue(vtkFloatingPointType w[3]);
+  static vtkFloatingPointType RAIMaxEigenvecX(vtkFloatingPointType **v, vtkFloatingPointType w[3]);
+  static vtkFloatingPointType RAIMaxEigenvecY(vtkFloatingPointType **v, vtkFloatingPointType w[3]);
+  static vtkFloatingPointType RAIMaxEigenvecZ(vtkFloatingPointType **v, vtkFloatingPointType w[3]);
   static vtkFloatingPointType MaxEigenvalueProjectionX(vtkFloatingPointType **v, vtkFloatingPointType w[3]);
   static vtkFloatingPointType MaxEigenvalueProjectionY(vtkFloatingPointType **v, vtkFloatingPointType w[3]);
   static vtkFloatingPointType MaxEigenvalueProjectionZ(vtkFloatingPointType **v, vtkFloatingPointType w[3]);
   static vtkFloatingPointType Mode(vtkFloatingPointType w[3]);
+  static vtkFloatingPointType IsotropicP(vtkFloatingPointType w[3]);
+  static vtkFloatingPointType AnisotropicQ(vtkFloatingPointType w[3]);
   static void ColorByMode(vtkFloatingPointType w[3], vtkFloatingPointType &R,vtkFloatingPointType &G, vtkFloatingPointType &B);
 
   //Description
@@ -209,10 +245,9 @@ public:
 
 protected:
   vtkTensorMathematics();
-  ~vtkTensorMathematics() {};
+  ~vtkTensorMathematics();
 
   int Operation; // math operation to perform
-  vtkSetMacro(Operation,int);
   vtkFloatingPointType ScaleFactor; // Scale factor for output scalars
   int ExtractEigenvalues; // Boolean controls eigenfunction extraction
 

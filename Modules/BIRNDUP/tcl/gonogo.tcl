@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: gonogo.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:47 $
-#   Version:   $Revision: 1.7.2.1 $
+#   Date:      $Date: 2007/10/29 15:55:19 $
+#   Version:   $Revision: 1.7.2.1.2.1 $
 # 
 #===============================================================================
 # FILE:        gonogo.tcl
@@ -51,6 +51,8 @@
 
 global MP ROOT VIEW_LIST
 set VIEW_LIST "face slices-axial slices-coronal slices-sagittal"
+
+set GONOGO_VERSION "0.9"
 
 # TODO - fix mplayer
 ##set MP $env(MP_PATH)
@@ -110,7 +112,7 @@ proc createImages {} {
 proc getDone {upload_file defer_file} {
     global ROOT
 
-    set msg "UPLOAD FILE=$upload_file\nDEFER FILE=$defer_file\n\nDEFER FILE contains the list of deferred series.\nUPLOAD FILE contains the list of series that were approved for upload, this file should be edited and used as the input file for upload2.pl."
+    set msg "UPLOAD FILE=\n$upload_file\nDEFER FILE=\n$defer_file\n\nDEFER FILE contains the list of deferred series.\nUPLOAD FILE contains the list of series that were approved for upload, used as the basis for file uploads."
 
     catch {destroy $ROOT.done}
     toplevel $ROOT.done -class Dialog
@@ -162,6 +164,7 @@ proc getSeriesApproval {series_path} {
     foreach view $VIEW_LIST {
         #set mp_file($view) "$series_path/Deface/$view.mpg"
         # sp: changed to frame rendering
+        set mp_file(series_path) "$series_path"
         set mp_file($view) "$series_path/Deface/$view-0000.png"
         set mp_file($view,pattern) "$series_path/Deface/$view*"
         set mp_out($view) ""
@@ -182,6 +185,9 @@ proc getSeriesApproval {series_path} {
     pack $ROOT.mp.bot -side bottom -fill both -expand 1
     eval label $ROOT.mp.msg -justify left -text [list "Verifying series: [file tail $series_path]"]
     pack $ROOT.mp.msg -in $ROOT.mp.top -fill both -expand 1 -padx 1m -pady 3m
+
+    button $ROOT.mp.headers -text "View Headers" -command "mpOpenHeaders"
+    pack $ROOT.mp.headers -in $ROOT.mp.top -fill both -expand 1 -padx 1m -pady 3m
 
     createImages
 
@@ -207,6 +213,7 @@ proc getSeriesApproval {series_path} {
         }
     }
 
+
     eval button $ROOT.mp.bot.upload -relief raised -text Upload -command [list "set ser_rvalue 1"]
     pack $ROOT.mp.bot.upload -side left -expand 1 -padx 3m -pady 5m
     eval button $ROOT.mp.bot.defer -relief raised -text Defer -command [list "set ser_rvalue 0"]
@@ -221,6 +228,8 @@ proc getSeriesApproval {series_path} {
     if {$y<0} {set y 0}
     wm geom $ROOT.mp +$x+$y
     wm deiconify $ROOT.mp
+
+    wm protocol $ROOT.mp WM_DELETE_WINDOW "set ser_rvalue -1"
 
     # Wait on click of defer or upload button
     #-------------------------------------------------------------------
@@ -327,7 +336,7 @@ proc getStudyApproval {study_path} {
     destroy $ROOT.gonogo
 
     if { $rvalue == -1 } {
-        exit 0
+        exit -1 
     }
 
     foreach s [array names series_approval] {
@@ -337,6 +346,7 @@ proc getStudyApproval {study_path} {
             lappend defer_series_list $s
         }
     }
+    return 0
 }
 
 #-------------------------------------------------------------------------------
@@ -411,10 +421,11 @@ proc mpForward {view} {
 # .PROC mpOpen
 # 
 # .ARGS
-# int view
+# int view name of the view window
+# str pattern optional file pattern, unix command line style
 # .END
 #-------------------------------------------------------------------------------
-proc mpOpen {view} {
+proc mpOpen {view {pattern ""}} {
     global ROOT MP mp_file mp_out
 
 
@@ -423,31 +434,45 @@ proc mpOpen {view} {
     catch "destroy $w"
     toplevel $w
     wm geometry $w 650x700
-
-    pack [isframes $w.isf -filepattern $mp_file($view,pattern)] -fill both -expand true
-    [$w.isf task] on
     
-    if {0} {
-        set f $mp_file($view)
-        if {![file exists $f]} {
-            tk_dialog .oops Error "Error on \"$f\": file does not exist" error 0 OK
-            return
-        }
-        if {![file readable $f]} {
-            tk_dialog .oops Error "Error on \"$f\": file is not readable" error 0 OK
-            return
-        }
-
-        set comm "| $MP"
-        set comm "$comm -slave -loop 1000"
-        set comm "$comm $f"
-        set comm "$comm >& /dev/null"
-        set mp_out($view) [open $comm "w"]
+    if {$pattern == ""} {
+        set pattern  $mp_file($view,pattern)
     }
 
-    $ROOT.mp.$view.play config -state normal
-    $ROOT.mp.$view.forward config -state normal
-    eval $ROOT.mp.$view.open config -text Close -command [list "mpClose $view"]
+    pack [isframes $w.isf -filepattern $pattern] -fill both -expand true
+    [$w.isf task] on
+    wm protocol $w WM_DELETE_WINDOW "mpClose $view"
+
+    if {[info command $ROOT.mp.$view.play] != ""} {
+        $ROOT.mp.$view.play config -state normal
+    }
+    if {[info command  $ROOT.mp.$view.forward] != ""} {
+        $ROOT.mp.$view.forward config -state normal
+    }
+    if {[info command $ROOT.mp.$view.open] != ""} {
+        eval $ROOT.mp.$view.open config -text Close -command [list "mpClose $view"]
+    }
+
+}
+
+#-------------------------------------------------------------------------------
+# .PROC mpOpenHeaders
+# show the dicom headers for the current series 
+# .ARGS
+# 
+# .END
+#-------------------------------------------------------------------------------
+proc mpOpenHeaders {} {
+    global ROOT MP mp_file mp_out
+
+
+    set w .headers
+    catch "destroy $w"
+    toplevel $w
+    wm geometry $w 850x400
+
+    pack [isframes $w.isf -filetype "text" -dumpcommand "$::env(SLICER_HOME)/../birndup/bin/dcmdump" -filepattern $mp_file(series_path)/*] -fill both -expand true
+    [$w.isf task] on
 }
 
 #-------------------------------------------------------------------------------
@@ -484,7 +509,7 @@ proc mpTogglePause {view} {
 proc viewSlicer {series_path} {
 
     # TODO - this is linux specific
-    set pid_slicer [exec $::env(SLICER_HOME)/slicer2-linux-x86 --load-dicom $series_path &]
+    set pid_slicer [exec $::env(SLICER_HOME)/slicer2-linux-x86 --all-info --load-dicom $series_path &]
 }
 
 #-------------------------------------------------------------------------------
@@ -496,10 +521,16 @@ proc main {} {
     global ROOT MP upload_series_list defer_series_list
 
     if { [catch "package require iSlicer"] } {
-        DevErrorWindow "Need iSlicer Module to run this program.  Please update Slicer"
+        dup_DevErrorWindow "Need iSlicer Module to run this program.  Please update Slicer"
         exit 1
     }
 
+    if { [catch "package require BIRNDUP"] } {
+        dup_DevErrorWindow "Need BIRNDUP Module to run this program. Please update Slicer"
+        exit 1
+    }
+
+    dup_AllInfo $::argv $::GONOGO_VERSION
 
     set ROOT ""
 

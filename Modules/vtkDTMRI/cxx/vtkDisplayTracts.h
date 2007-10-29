@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDisplayTracts.h,v $
-  Date:      $Date: 2006/07/07 18:08:21 $
-  Version:   $Revision: 1.5.2.2.2.2 $
+  Date:      $Date: 2007/10/29 15:42:58 $
+  Version:   $Revision: 1.5.2.2.2.3 $
 
 =========================================================================auto=*/
 // .NAME vtkDisplayTracts - 
@@ -26,10 +26,13 @@
 #include "vtkCollection.h"
 #include "vtkTransform.h"
 #include "vtkActor.h"
+#include "vtkPolyDataMapper.h"
 #include "vtkProperty.h"
 #include "vtkLookupTable.h"
 #include "vtkImplicitFunction.h"
 #include "vtkHyperStreamline.h"
+#include "vtkCellPicker.h"
+#include "vtkAppendPolyData.h"
 // for next vtk version:
 //#include "vtkPolyDataAlgorithm.h"
 #include "vtkPolyDataSource.h"
@@ -84,29 +87,91 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
   // Delete one streamline.  The input is a pointer to the actor you
   // wish to delete.  All associated objects are deleted and removed 
   // from the collections.
-  void DeleteStreamline(vtkActor *pickedActor);
-
-  // Description
-  // Delete one streamline.
-  void DeleteStreamline(int index);
+  void DeleteStreamline(vtkCellPicker *picker);
 
   // Description
   // Delete all streamlines
   void DeleteAllStreamlines();
 
   // Description
-  // Get the internal index of the chosen actor, if it is a streamline
+  // Delete streamlines in group
+  void DeleteAllStreamlinesInGroup(int groupindex);
+
+  // Description
+  // Delete streamline "index" in group "groupindex"
+  void DeleteStreamlineInGroup(int groupindex, int index);
+
+  // Description
+  // Get the internal index of picked streamline for a given group.
+  //
+  int GetStreamlineIndexFromActor(int groupindex,vtkCellPicker *picker);
+
+  // Description
+  // Get the group index of the the chosen actor, if it is a streamline
   // in the collection.
-  int GetStreamlineIndexFromActor(vtkActor *pickedActor);
+  int GetStreamlineGroupIndexFromActor (vtkActor *pickedActor);
+
+  // Description
+  // Get the streamline for a given group index and index in the group
+  vtkHyperStreamline* GetStreamlineInGroup(int groupIndex, int indexInGroup);
+
+  // Description:
+  // Find the group index and index inside the group for a given streamline
+  void FindStreamline(vtkHyperStreamline *currStreamline, int & groupIndex, int & indexInGroup);
+
+  // Description:
+  // Find the index inside the group of a given streamline whose group index is known
+  void FindStreamlineInGroup(vtkHyperStreamline *currStreamline, int groupIndex, int & indexInGroup);
+
+   // Description
+  // Find the group index and index inside the group for a given streamline
+  void FindStreamline(vtkCellPicker *picker, int & groupIndex, int & indexInGroup);
+
+  void FindStreamlineInGroup(vtkCellPicker *picker, int groupIndex, int & indexInGroup);
+
+  // Description
+  // Set/Get the color (RGBA) of a given streamline
+  void SetStreamlineRGBA(vtkHyperStreamline *currStreamline, unsigned char RGBA[4]);
+  void SetStreamlineRGBA(vtkHyperStreamline *currStreamline, unsigned char R, unsigned char G, unsigned char B, unsigned char A);
+  void GetStreamlineRGBA(vtkHyperStreamline *currStreamline, unsigned char RGBA[4]);
+  void GetStreamlineRGBA(vtkHyperStreamline *currStreamline, unsigned char &R, unsigned char &G, unsigned char &B, unsigned char &A);
+
+  void SetStreamlineRGB(vtkHyperStreamline *currStreamline, unsigned char R, unsigned char G, unsigned char B);
+  void SetStreamlineRGB(vtkHyperStreamline *currStreamline, unsigned char RGB[3]);
+  void GetStreamlineRGB(vtkHyperStreamline *currStreamline, unsigned char RGB[3]);
+  void GetStreamlineRGB(vtkHyperStreamline *currStreamline, unsigned char &R, unsigned char &G, unsigned char &B);
+
+  void SetStreamlineOpacity(vtkHyperStreamline *currStreamline, unsigned char opacity);
+  void GetStreamlineOpacity(vtkHyperStreamline *currStreamline, unsigned char &opacity);
+
+  // Description
+  // Set/Get color of a given streamline when the Display group is known
+  void SetStreamlineRGBAInGroup(vtkHyperStreamline *currStreamline,int groupIndex, unsigned char RGBA[4]);
+  void SetStreamlineRGBAInGroup(vtkHyperStreamline *currStreamline,int groupIndex, unsigned char R, unsigned char G, unsigned char B, unsigned char A);
+  void GetStreamlineRGBAInGroup(vtkHyperStreamline *currStreamline,int groupIndex, unsigned char RGBA[4]);
+  void GetStreamlineRGBAInGroup(vtkHyperStreamline *currStreamline,int groupIndex, unsigned char &R, unsigned char &G, unsigned char &B, unsigned char &A);
+
+  void SetStreamlineRGBInGroup(vtkHyperStreamline *currStreamline,int groupIndex, unsigned char R, unsigned char G, unsigned char B);
+  void SetStreamlineRGBInGroup(vtkHyperStreamline *currStreamline,int groupIndex, unsigned char RGB[3]);
+  void GetStreamlineRGBInGroup(vtkHyperStreamline *currStreamline,int groupIndex, unsigned char RGB[3]);
+  void GetStreamlineRGBInGroup(vtkHyperStreamline *currStreamline,int groupIndex, unsigned char &R, unsigned char &G, unsigned char &B);
+
+  void SetStreamlineOpacityInGroup(vtkHyperStreamline *currStreamline, int groupIndex, unsigned char opacity);
+  void GetStreamlineOpacityInGroup(vtkHyperStreamline *currStreamline, int groupIndex, unsigned char &opacity);
 
   // Description
   // List of the output graphics objects
   vtkGetObjectMacro(Actors, vtkCollection);
   vtkGetObjectMacro(Mappers, vtkCollection);
-  vtkGetObjectMacro(TubeFilters, vtkCollection);
-  int GetNumberOfStreamlines() {return this->Streamlines->GetNumberOfItems();}
+  vtkGetObjectMacro(AppendFilters, vtkCollection);
 
   // Description
+  // List of the output group objects
+  vtkGetObjectMacro(TubeFiltersGroup, vtkCollection);
+  vtkGetObjectMacro(StreamlinesGroup, vtkCollection);
+  vtkGetObjectMacro(TransformFiltersGroup, vtkCollection);
+  vtkGetObjectMacro(MergeFiltersGroup, vtkCollection);
+ // Description
   // Get streamlines.
   // These are what we are actually displaying.  They are either
   // clipper objects (when we are clipping the input this->Streamlines)
@@ -114,8 +179,13 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
   // objects.  The purpose of this is to avoid modifying
   // the objects on the input this->Streamlines collection without
   // actually duplicating them and wasting memory.
-  vtkSetObjectMacro(ClippedStreamlines, vtkCollection);
-  vtkGetObjectMacro(ClippedStreamlines, vtkCollection);
+  //vtkSetObjectMacro(ClippedStreamlinesGroup, vtkCollection);
+  vtkGetObjectMacro(ClippedStreamlinesGroup, vtkCollection);
+
+  vtkCollection * GetClippedStreamlines();
+
+  int GetNumberOfStreamlines() {return this->Streamlines->GetNumberOfItems();}
+
 
   // Description
   // Input: list of the renderers whose scenes will have streamlines
@@ -158,29 +228,58 @@ class VTK_DTMRI_EXPORT vtkDisplayTracts : public vtkObject
   ~vtkDisplayTracts();
 
   // functions not accessible to the user
+  void CreateGroupObjects();
   void CreateGraphicsObjects();
   void ApplyUserSettingsToGraphicsObject(int index);
+  void SetMapperVisibility(vtkPolyDataMapper *currMapper);
 //BTX
 #if (VTK_MAJOR_VERSION >= 5)
   vtkPolyDataAlgorithm *
 #else
   vtkPolyDataSource *
 #endif
-  ClipStreamline(vtkHyperStreamline *streamline);
+  ClipStreamline(vtkHyperStreamline *streamline, vtkCollection *activeClippedStreamlinesGroup);
 //ETX
 
+  int IsPropertyEqual(vtkProperty *a, vtkProperty *b);
+  void SetActiveGroup (int groupindex);
+  void AddNewGroup();
 
   vtkTransform *WorldToTensorScaledIJK;
 
   vtkCollection *Renderers;
 
   vtkCollection *Streamlines;
-  vtkCollection *ClippedStreamlines;
   vtkCollection *Mappers;
-  vtkCollection *TransformFilters;
-  vtkCollection *TubeFilters;
   vtkCollection *Actors;
+  vtkCollection *AppendFilters;
+
+  vtkCollection *StreamlinesGroup;
+  vtkCollection *ClippedStreamlinesGroup;
+  vtkCollection *MergeFiltersGroup;
+  vtkCollection *TubeFiltersGroup;
+  vtkCollection *TransformFiltersGroup;
+
+  // Cointer of Clipped Streamlines.
+  // Allow the user to get a flat collection with all
+  // the clipped streamlines
+  // Warning: Make sure to call this function after deleting
+  // a streamline.
+  vtkCollection *ClippedStreamlines;
+
+  // Helper pointer to the active Group
+  vtkCollection *activeStreamlines;
+  vtkCollection *activeClippedStreamlines;
+  vtkCollection *activeMergeFilters;
+  vtkCollection *activeTubeFilters;
+  vtkCollection *activeTransformFilters;
+  vtkAppendPolyData *activeAppendFilter;
+  vtkPolyDataMapper *activeMapper;
+  vtkActor *activeActor;
+
   int NumberOfVisibleActors;
+
+  int NumberOfStreamlinesPerActor;
 
   vtkProperty *StreamlineProperty;
  

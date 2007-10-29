@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSkeleton2Lines.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:01 $
-  Version:   $Revision: 1.8.2.1 $
+  Date:      $Date: 2007/10/29 15:44:49 $
+  Version:   $Revision: 1.8.2.1.2.1 $
 
 =========================================================================auto=*/
 
@@ -123,12 +123,11 @@ void vtkSkeleton2Lines::ExecuteData(vtkDataObject* output)
   int          x0,y0,z0;
   int          x1,y1,z1;
   int          x2,y2,z2;
-  int          i,j,k,l;
+  int          l;
   int          l0,n;
   unsigned int   iPoint; // point index
 
   int          n_lines;
-  int          n_ext; // number of extremities
   TableauDyn<extremity> tab_ext;
   int          found;
   int          e;

@@ -31,6 +31,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "vtkMultiThreader.h"
 #include "vtkImageEMGenericClass.h" 
 #include "EMLocalInterface.h" 
+#include "assert.h"
 
 // Registration Procedures originally defined by Simon but changed by me 
 

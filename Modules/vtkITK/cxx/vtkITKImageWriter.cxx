@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKImageWriter.cxx,v $
-  Date:      $Date: 2006/07/07 19:01:57 $
-  Version:   $Revision: 1.6.2.1.2.3 $
+  Date:      $Date: 2007/10/29 15:32:06 $
+  Version:   $Revision: 1.6.2.1.2.4 $
 
 =========================================================================auto=*/
 #include "vtkITKImageWriter.h"
@@ -218,73 +218,119 @@ void vtkITKImageWriter::Write()
   this->GetInput()->UpdateInformation();
   this->GetInput()->SetUpdateExtent(this->GetInput()->GetWholeExtent());
 
-  // take into consideration the scalar type
-  switch (this->GetInput()->GetScalarType())
-    {
-    case VTK_DOUBLE:
+  if (this->GetInput()->GetNumberOfScalarComponents() == 1) {
+
+    // take into consideration the scalar type
+    switch (this->GetInput()->GetScalarType())
       {
-        double pixelType=0;
-        ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+      case VTK_DOUBLE:
+        {
+          double pixelType=0;
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+        }
+        break;
+      case VTK_FLOAT:
+        {
+          float pixelType=0;
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+        }
+        break;
+      case VTK_LONG:
+        {
+          long pixelType=0;
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+        }
+        break;
+      case VTK_UNSIGNED_LONG:
+        {
+          unsigned long pixelType=0;
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+        }
+        break;
+      case VTK_INT:
+        {
+          int pixelType=0;
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+        }
+        break;
+      case VTK_UNSIGNED_INT:
+        {
+          unsigned int pixelType=0;
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+        }
+        break;
+      case VTK_SHORT:
+        {
+          short pixelType=0;
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType); 
+        }
+        break;
+      case VTK_UNSIGNED_SHORT:
+        {
+          unsigned short pixelType=0;
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+        }
+        break;
+      case VTK_CHAR:
+        {
+          char pixelType=0;
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+        }
+        break;
+      case VTK_UNSIGNED_CHAR:
+        {
+          unsigned char pixelType=0;
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+        }
+        break;
+      default:
+        vtkErrorMacro(<< "Execute: Unknown output ScalarType");
+        return; 
       }
-      break;
-    case VTK_FLOAT:
+  } // scalar
+
+  else if (this->GetInput()->GetNumberOfScalarComponents() == 3) {
+
+    // take into consideration the scalar type
+    switch (this->GetInput()->GetScalarType())
       {
-        float pixelType=0;
-        ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+      case VTK_DOUBLE:
+        {
+          typedef itk::Vector<double, 3>    VectorPixelType;
+          VectorPixelType pixelType;
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+        }
+        break;
+      case VTK_FLOAT:
+        {
+          typedef itk::Vector<float, 3>    VectorPixelType;
+          VectorPixelType pixelType;
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+        }
+        break;
+      case VTK_UNSIGNED_SHORT:
+        {
+          typedef itk::Vector<unsigned short, 3>    VectorPixelType;
+          VectorPixelType pixelType;
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+        }
+        break;
+      case VTK_UNSIGNED_CHAR:
+        {
+          typedef itk::Vector<unsigned char, 3>    VectorPixelType;
+          VectorPixelType pixelType;
+          ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
+        }
+        break;
+      default:
+        vtkErrorMacro(<< "Execute: Unknown output ScalarType");
+        return; 
       }
-      break;
-    case VTK_LONG:
-      {
-        long pixelType=0;
-        ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
-      }
-      break;
-    case VTK_UNSIGNED_LONG:
-      {
-        unsigned long pixelType=0;
-        ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
-      }
-      break;
-    case VTK_INT:
-      {
-        int pixelType=0;
-        ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
-      }
-      break;
-    case VTK_UNSIGNED_INT:
-      {
-        unsigned int pixelType=0;
-        ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
-      }
-      break;
-    case VTK_SHORT:
-      {
-        short pixelType=0;
-        ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType); 
-      }
-      break;
-    case VTK_UNSIGNED_SHORT:
-      {
-        unsigned short pixelType=0;
-        ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
-      }
-      break;
-    case VTK_CHAR:
-      {
-        char pixelType=0;
-        ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
-      }
-      break;
-    case VTK_UNSIGNED_CHAR:
-      {
-        unsigned char pixelType=0;
-        ITKWriteVTKImage(this, this->GetInput(), this->GetFileName(), this->RasToIJKMatrix, pixelType);
-      }
-      break;
-    default:
-      vtkErrorMacro(<< "Execute: Unknown output ScalarType");
-      return; 
-    }
+  } // vector
+  else {
+    vtkErrorMacro(<< "Can only export 1 or 3 component images");
+    return; 
+  }
 }
 
 

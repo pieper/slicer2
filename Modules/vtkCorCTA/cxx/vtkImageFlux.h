@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageFlux.h,v $
-  Date:      $Date: 2005/12/20 22:55:01 $
-  Version:   $Revision: 1.1.2.1 $
+  Date:      $Date: 2007/10/29 15:44:49 $
+  Version:   $Revision: 1.1.2.1.2.1 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -40,7 +40,9 @@
 
 #include "vtkImageToImageFilter.h"
 
-class VTK_IMAGING_EXPORT vtkImageFlux : public vtkImageToImageFilter
+#include "vtkCorCTAConfigure.h"
+
+class VTK_CORCTA_EXPORT vtkImageFlux : public vtkImageToImageFilter
 {
 public:
   static vtkImageFlux *New();

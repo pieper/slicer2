@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSimonParameterReaderWriter.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:24 $
-  Version:   $Revision: 1.2.2.1 $
+  Date:      $Date: 2007/10/29 15:39:23 $
+  Version:   $Revision: 1.2.2.1.2.1 $
 
 =========================================================================auto=*/
 // -------------------------------------------------------------------
@@ -20,7 +20,7 @@
 #include <math.h>
 #include <assert.h>
 #include <ctype.h>
-vtkCxxRevisionMacro(vtkSimonParameterReaderWriter, "$Revision: 1.2.2.1 $");
+vtkCxxRevisionMacro(vtkSimonParameterReaderWriter, "$Revision: 1.2.2.1.2.1 $");
 vtkStandardNewMacro(vtkSimonParameterReaderWriter);
 
 
@@ -112,6 +112,7 @@ int readRegTransformFile(char *fname, double *tran)
 
 
 // *out and inA or inB can be the same pointer
+// out = A * B
 template <class TinA,class TinB,class Tout>  inline void matmult_3x3Template(TinA *inA, TinB *inB, Tout *out)
 {
   Tout tmp[9];
@@ -147,6 +148,22 @@ printf("in[6] %g inout[3] %g in[7] %g inout[4] %g in[8] %g inout[5] %g == %g\n",
 inline void vtkSimonParameterReaderWriter::matmult_3x3(float *inA, float *inB, float *out) {
   matmult_3x3Template(inA,inB,out);
 }
+
+// Needed to calculate not inverted transfromation matrix 
+// This is a matrix vector calculation
+template <class T>  inline void matvect_multTemplate(T *matrix, T *inVect, T *outVect) { 
+  T tmp[3];
+
+  tmp[0] = T(double(matrix[0])*double(inVect[0]) + double(matrix[1])*double(inVect[1]) + double(matrix[2])*double(inVect[2]));
+  tmp[1] = T(double(matrix[3])*double(inVect[0]) + double(matrix[4])*double(inVect[1]) + double(matrix[5])*double(inVect[2]));
+  tmp[2] = T(double(matrix[6])*double(inVect[0]) + double(matrix[7])*double(inVect[1]) + double(matrix[8])*double(inVect[2]));
+
+  outVect[0] = tmp[0];
+  outVect[1] = tmp[1];
+  outVect[2] = tmp[2];
+}
+
+
 
 // Needed for vtkImageEMLocalSegment
 template <class T>  inline void matmult_3x4Template(T *inARotation, T *inATranslation, T *inBRotation,  T *inBTranslation, T *outRotation,  T *outTranslation) {
@@ -482,6 +499,24 @@ int TurnParameteresIntoInverseRotationTranslationTemplate( double Xtranslate, do
   return 0;
 }
 
+// Produces inverse of last function 
+// Last Function invRot =  (R3*R2*R1*SC) ^ -1  and invTran = - Trans so that  y = invRot x + invTran
+// Thus the inverse is RotMat =  R3*R2*R1*SC TransVec = RotMat*Trans as x = RotMat y + TransVec
+
+template  <class T> 
+void TurnParameteresIntoRotationTranslationTemplate( double Xtranslate, double Ytranslate , double Ztranslate,
+                                                           double Xrotate,    double Yrotate,     double Zrotate, 
+                                   double Xscale,     double Yscale,      double Zscale, 
+                               T *RotationMatrix, T *DeformationVector, int paraType) {
+  T transform[12];
+  double theta[9] = {Xtranslate, Ytranslate , Ztranslate, Xrotate, Yrotate, Zrotate, Xscale, Yscale, Zscale};
+  convertParmsToTransformTemplate(theta, transform,9,0,paraType);
+  memcpy(RotationMatrix, transform, sizeof(T)* 9);
+  
+  matvect_multTemplate(RotationMatrix,&transform[9],DeformationVector);
+  cout << "DeformationVector: " << DeformationVector[0] << " " << DeformationVector[1] << " " << DeformationVector[2] << endl;
+}
+
 void vtkSimonParameterReaderWriter::convertParmsToTransform(double *theta, float *transform, int numparms, int compute2Dregistration) {
   convertParmsToTransformTemplate(theta, transform, numparms, compute2Dregistration,0);
 }
@@ -562,6 +597,15 @@ int vtkSimonParameterReaderWriter::TurnParameteresIntoInverseRotationTranslation
                                      Scale[0], Scale[1], Scale[2], invRotation, invTranslation,paraType);
     }
   }
+}
+// This produces the inverse of the last function 
+void vtkSimonParameterReaderWriter::TurnParameteresIntoRotationTranslation(double Xtranslate, double Ytranslate , double Ztranslate,
+                           double Xrotate, double Yrotate, double Zrotate, double Xscale, double Yscale, double Zscale, float *RotationMatrix, 
+                                       float *DisplacementVector, int paraType) {
+
+  TurnParameteresIntoRotationTranslationTemplate(Xtranslate,Ytranslate, Ztranslate, 
+                         Xrotate, Yrotate, Zrotate, Xscale, Yscale, Zscale, 
+                         RotationMatrix, DisplacementVector,paraType);
 }
 
 int readParametersFromFile(char *fname, double *parameters)
@@ -682,63 +726,22 @@ int ReadParameterFile(char *WarfieldFileName, double* parameter) {
   return NumParams;
 }
 
-int InvertParameter(double* parameter) {
-    // Parameter 0-2 : translation => Mulplty by -1
-    // Parameter 3-5 : Rotation => Mulplty by -1
-    for (int i = 0 ; i < 6 ; i++ ) parameter[i] = -parameter[i]; 
-    // Parameter 6-8 : Scale Parameter 1/scalar 
-    for (int i = 6 ; i < 9 ; i++ ) {
-      if (!parameter[i]) {
-    cerr << "InvertParameter: One of scalling parameters (last three) was 0 !" <<  endl;
-    return 1;
-      }
-      parameter[i] = 1.0/parameter[i]; 
-    }
-    return 0;
-}
-
-
-int GenerateParameterFile(char *WarfieldFileName, char *FileName, int inverseFlag, int GuimondFlag) {
+int vtkSimonParameterReaderWriter::transfereWarfieldToGuimondParameterFile(char *WarfieldFileName, char *GuimondFileName) {
   double parameters[10];
-  // could also use int readRegTransformFile(char *fname, float *tran)
   int NumParams =  ReadParameterFile(WarfieldFileName,parameters);
   if (NumParams < 0) return 1;
   double transform[12];
 
-  if (inverseFlag &&  InvertParameter(parameters)) return 1;
- 
   // Write result back 
-  if (GuimondFlag) {
-    buildTransformMatrix(parameters,transform,NumParams,1);
-     if (writeParametersToGuimondFile(FileName,transform)) {
-       cerr << "Could not create file " << FileName <<  endl;
-       return 1;
-     } 
-  } else {
-    if (writeParametersToFile(FileName,parameters,9)) {
-       cerr << "Could not create file " << FileName <<  endl;
-       return 1;
-    } 
-  }  
+  buildTransformMatrix(parameters,transform,NumParams,1);
+  if (writeParametersToGuimondFile(GuimondFileName,transform)) {
+    cerr << "Could not create file " << GuimondFileName <<  endl;
+    return 1;
+  }
   return 0;
 } 
-
-int vtkSimonParameterReaderWriter::transfereWarfieldToGuimondParameterFile(char *WarfieldFileName, char *GuimondFileName) {
-    return GenerateParameterFile(WarfieldFileName,GuimondFileName,0,1);
-}
-int vtkSimonParameterReaderWriter::generateInverseFromWarfieldToGuimondParameterFile(char *WarfieldFileName, char *GuimondFileName) {
-  return GenerateParameterFile(WarfieldFileName,GuimondFileName,1,1);
-}
-
-int vtkSimonParameterReaderWriter::generateInverseFromWarfieldToWarfieldParameterFile(char *WarfieldFileName, char *InverseWarfieldFileName) {
-  return GenerateParameterFile(WarfieldFileName,InverseWarfieldFileName,1,0);
-}
 
 int vtkSimonParameterReaderWriter::ReadFileParameter(char *WarfieldFileName) {
   if (ReadParameterFile(WarfieldFileName,this->FileParameter) < 0) return 1;
   return 0;
-}
-
-int vtkSimonParameterReaderWriter::InvertFileParameter() {
-  return InvertParameter(this->FileParameter);
 }

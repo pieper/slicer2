@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageScalarsToTensors.h,v $
-  Date:      $Date: 2005/12/20 22:54:52 $
-  Version:   $Revision: 1.2.8.1 $
+  Date:      $Date: 2007/10/29 15:51:37 $
+  Version:   $Revision: 1.2.8.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageScalarsToTensors - 
@@ -33,8 +33,8 @@ public:
 protected:
   vtkImageScalarsToTensors() {}
   ~vtkImageScalarsToTensors() {}
-  vtkImageScalarsToTensors(const vtkImageScalarsToTensors&) {}
-  void operator=(const vtkImageScalarsToTensors&) {}
+  vtkImageScalarsToTensors(const vtkImageScalarsToTensors&);
+  void operator=(const vtkImageScalarsToTensors&);
   void ExecuteData(vtkDataObject *out);
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,
                 int extent[6], int id);

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterGraphNode.h,v $
-  Date:      $Date: 2005/12/20 22:55:23 $
-  Version:   $Revision: 1.3.8.1 $
+  Date:      $Date: 2007/10/29 15:39:23 $
+  Version:   $Revision: 1.3.8.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSegmenterGraphNode - MRML node to represent transformation matrices.
@@ -72,12 +72,14 @@ public:
 protected:
   vtkMrmlSegmenterGraphNode();
   ~vtkMrmlSegmenterGraphNode();
-  vtkMrmlSegmenterGraphNode(const vtkMrmlSegmenterGraphNode&) {};
-  void operator=(const vtkMrmlSegmenterGraphNode&) {};
 
   int Xmin;
   int Xmax;
   int Xsca;
+private:
+  vtkMrmlSegmenterGraphNode(const vtkMrmlSegmenterGraphNode&);
+  void operator=(const vtkMrmlSegmenterGraphNode&);
+
 };
 
 #endif

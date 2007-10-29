@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMLocalSegmenter.h,v $
-  Date:      $Date: 2005/12/20 22:55:21 $
-  Version:   $Revision: 1.14.2.1 $
+  Date:      $Date: 2007/10/29 15:39:23 $
+  Version:   $Revision: 1.14.2.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageEMLocalSegmenter
@@ -135,11 +135,11 @@ protected:
   // Protected Functions
   // -----------------------------------------------------
   vtkImageEMLocalSegmenter();
-  vtkImageEMLocalSegmenter(const vtkImageEMLocalSegmenter&) {};
   ~vtkImageEMLocalSegmenter(); 
+  vtkImageEMLocalSegmenter(const vtkImageEMLocalSegmenter&);
+  void operator=(const vtkImageEMLocalSegmenter&);
   void DeleteVariables();
 
-  void operator=(const vtkImageEMLocalSegmenter&) {};
   void ExecuteData(vtkDataObject *);   
 
  // Description:

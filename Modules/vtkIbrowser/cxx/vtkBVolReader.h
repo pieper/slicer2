@@ -7,19 +7,10 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkBVolReader.h,v $
-  Date:      $Date: 2005/12/20 22:55:56 $
-  Version:   $Revision: 1.2.8.1 $
+  Date:      $Date: 2007/10/29 15:33:53 $
+  Version:   $Revision: 1.2.8.1.2.1 $
 
 =========================================================================auto=*/
-/*=========================================================================
-
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkBVolReader.h,v $
-  Language:  C++
-  Date:      $Date: 2005/12/20 22:55:56 $
-  Version:   $Revision: 1.2.8.1 $
-
-=========================================================================*/
 // .NAME vtkBVolReader - read an MGH (.mgh) volume file from Freesurfer tools
 // .SECTION Description
 // .SECTION Caveats

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkNRRDReader.h,v $
-  Date:      $Date: 2006/07/07 19:15:43 $
-  Version:   $Revision: 1.1.2.1.2.2 $
+  Date:      $Date: 2007/10/29 15:18:39 $
+  Version:   $Revision: 1.1.2.1.2.3 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -230,6 +230,7 @@ protected:
                          
   vtkMatrix4x4* RasToIjkMatrix;
   vtkMatrix4x4* MeasurementFrameMatrix;
+  vtkMatrix4x4* NRRDWorldToRasMatrix;
 
   char* HeaderKeys;
   char* CurrentFileName;

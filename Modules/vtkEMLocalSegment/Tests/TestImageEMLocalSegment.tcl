@@ -796,17 +796,19 @@ proc LoadFile {fileName Mode} {
    switch $Mode {
        1    { set  EMSegment(Alpha) 0; set EMSegment(EMiteration) 1}
        "1a" { set  EMSegment(Alpha) 0; set EMSegment(EMiteration) 1; set EMSegment(DisableMultiThreading) 0}
-       2    { set  EMSegment(Alpha) 0.9; set EMSegment(EMiteration) 1; set EMSegment(MFAiteration) 1}
-       "2a" { set  EMSegment(Alpha) 0.9; set EMSegment(EMiteration) 1; set EMSegment(MFAiteration) 1; set EMSegment(DisableMultiThreading) 0}
+       2    { set  EMSegment(Alpha) 0.99725; set EMSegment(EMiteration) 1; set EMSegment(MFAiteration) 1}
+       "2a" { set  EMSegment(Alpha) 0.99725; set EMSegment(EMiteration) 1; set EMSegment(MFAiteration) 1; set EMSegment(DisableMultiThreading) 0}
        3 { set  EMSegment(Alpha) 0.0; set EMSegment(MFAiteration) 0 }
-       5 { set  EMSegment(Alpha) 0.9; set EMSegment(EMiteration) 1; set EMSegment(MFAiteration) 1; set EMSegment(Cattrib,2,LocalPriorWeight) 0.80488 }
-       6 { set  EMSegment(Alpha) 0.9; set EMSegment(EMiteration) 2; set EMSegment(MFAiteration) 1;  EMSegmentSetClassWeightSetting 0 $EMSegment(MaxInputChannelDef)}
+       5 { set  EMSegment(Alpha) 0.99725; set EMSegment(EMiteration) 1; set EMSegment(MFAiteration) 1; set EMSegment(Cattrib,2,LocalPriorWeight) 0.80488 }
+       4 { set  EMSegment(Alpha) 0.99725; set EMSegment(DisableMultiThreading) 1 }
+       6 { set  EMSegment(Alpha) 0.99725; set EMSegment(EMiteration) 2; set EMSegment(MFAiteration) 1;  EMSegmentSetClassWeightSetting 0 $EMSegment(MaxInputChannelDef)}
        7 {  set EMSegment(SegmentationBoundaryMin,0) 80 
-        set EMSegment(SegmentationBoundaryMin,1) 70
-         set EMSegment(SegmentationBoundaryMin,2) 1
+            set EMSegment(SegmentationBoundaryMin,1) 70
+            set EMSegment(SegmentationBoundaryMin,2) 1
             set EMSegment(SegmentationBoundaryMax,0) 200 
             set EMSegment(SegmentationBoundaryMax,1) 180 
-        set EMSegment(SegmentationBoundaryMax,2) 2 } 
+            set EMSegment(SegmentationBoundaryMax,2) 2
+            set  EMSegment(Alpha) 0.99725  } 
 
        9 {  set EMSegment(Alpha) 0
             set EMSegment(RegistrationInterpolationType) 1 

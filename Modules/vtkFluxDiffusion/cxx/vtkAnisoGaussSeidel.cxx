@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkAnisoGaussSeidel.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:35 $
-  Version:   $Revision: 1.15.2.1 $
+  Date:      $Date: 2007/10/29 15:38:21 $
+  Version:   $Revision: 1.15.2.1.2.1 $
 
 =========================================================================auto=*/
 /*  ==================================================
@@ -50,8 +50,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkAnisoGaussSeidel.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/12/20 22:55:35 $
-  Version:   $Revision: 1.15.2.1 $
+  Date:      $Date: 2007/10/29 15:38:21 $
+  Version:   $Revision: 1.15.2.1.2.1 $
 
 =========================================================================*/
 
@@ -541,8 +541,6 @@ float vtkAnisoGaussSeidel::Iterate2D()
     float   alpha1_y, gamma1_y;
     float*  in;
     register float    *Iconv; 
-    float gradient[2];
-    float hessien[2][2];
 
     point3D e0;
     point3D e1;
@@ -1778,9 +1776,7 @@ void vtkAnisoGaussSeidel::ExecuteData(vtkDataObject *out)
 {
   
   Local
-    float error;
     int   i;
-    char resname[100];
     float min,max;
     float* tmp2_ptr;
     char progresstext[100];

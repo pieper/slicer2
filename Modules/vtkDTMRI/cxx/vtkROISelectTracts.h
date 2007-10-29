@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkROISelectTracts.h,v $
-  Date:      $Date: 2006/07/07 18:22:13 $
-  Version:   $Revision: 1.3.2.2.2.2 $
+  Date:      $Date: 2007/10/29 15:42:59 $
+  Version:   $Revision: 1.3.2.2.2.3 $
 
 =========================================================================auto=*/
 // .NAME vtkROISelectTracts - 
@@ -70,7 +70,7 @@ class VTK_DTMRI_EXPORT vtkROISelectTracts : public vtkObject
   void SetStreamlineController(vtkMultipleStreamlineController *controller) {
      StreamlineController = controller;
      Streamlines = controller->GetStreamlines();
-     Actors = controller->GetDisplayTracts()->GetActors();
+     this->Register(controller);
   };
   
   vtkGetObjectMacro(StreamlineController,vtkMultipleStreamlineController);   
@@ -127,7 +127,6 @@ class VTK_DTMRI_EXPORT vtkROISelectTracts : public vtkObject
 
   vtkMultipleStreamlineController *StreamlineController;
   vtkCollection *Streamlines;
-  vtkCollection *Actors;
 
   vtkImageData *InputROI;
   vtkImageData *InputROI2;
@@ -145,9 +144,9 @@ class VTK_DTMRI_EXPORT vtkROISelectTracts : public vtkObject
   
   vtkPolyData *StreamlinesAsPolyLines;
   vtkIntArray *StreamlineIdPassTest;
-  
-  vtkDoubleArray *ColorActors;
-  
+ 
+  vtkDoubleArray *ColorStreamlines;
+
 };
 
 #endif

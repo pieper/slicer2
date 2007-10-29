@@ -6,28 +6,15 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: slicerd.tcl,v $
-#   Date:      $Date: 2005/12/20 22:56:17 $
-#   Version:   $Revision: 1.8.2.2 $
+#   Date:      $Date: 2007/10/29 15:23:16 $
+#   Version:   $Revision: 1.8.2.2.2.1 $
 # 
 #===============================================================================
 # FILE:        slicerd.tcl
 # PROCEDURES:  
 #==========================================================================auto=
-
-#=auto==========================================================================
-# Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
-# 
-#  See Doc/copyright/copyright.txt
-#  or http://www.slicer.org/copyright/copyright.txt for details.
-# 
-#  Program:   3D Slicer
-#  Module:    $RCSfile: slicerd.tcl,v $
-#  Date:      $Date: 2005/12/20 22:56:17 $
-#  Version:   $Revision: 1.8.2.2 $
-#===============================================================================
-
 #
-# experimental slicer daemon - sp 2005-09-23
+# experimental slicer daemon - sp 2005-09-23 
 # - meant to be as simple as possible
 # - only one server socket listening at a time
 # - checks with the user on first connection to see if it's okay to accept connections
@@ -179,7 +166,8 @@ proc slicerd_sock_fileevent {sock} {
             # TODO: should add direction cosines and label_map status
             set im [Volume($volid,vol) GetOutput]
 
-            puts stderr "image $volid" 
+            puts stderr "image $volid"
+            puts stderr "name [Volume($volid,node) GetName]" 
             puts stderr "scalar_type [$im GetScalarType]" 
             puts stderr "dimensions [$im GetDimensions]" 
             puts stderr "space_origin $space_origin"
@@ -187,6 +175,7 @@ proc slicerd_sock_fileevent {sock} {
 
             fconfigure $sock -translation auto
             puts $sock "image $volid" 
+            puts $sock "name [Volume($volid,node) GetName]" 
             puts $sock "scalar_type [$im GetScalarType]" 
             puts $sock "dimensions [$im GetDimensions]" 
             puts $sock "space_origin $space_origin"

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkJacobian.h,v $
-  Date:      $Date: 2005/12/20 22:54:53 $
-  Version:   $Revision: 1.2.8.1 $
+  Date:      $Date: 2007/10/29 15:51:37 $
+  Version:   $Revision: 1.2.8.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkJacobian - 
@@ -34,8 +34,8 @@ public:
 protected:
   vtkJacobian();
   ~vtkJacobian();
-  vtkJacobian(const vtkJacobian&) {}
-  void operator=(const vtkJacobian&) {}
+  vtkJacobian(const vtkJacobian&);
+  void operator=(const vtkJacobian&);
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,
                int extent[6], int id);
 

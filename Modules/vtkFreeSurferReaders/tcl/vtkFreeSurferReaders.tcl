@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: vtkFreeSurferReaders.tcl,v $
-#   Date:      $Date: 2006/07/07 18:54:25 $
-#   Version:   $Revision: 1.48.2.3.2.1 $
+#   Date:      $Date: 2007/10/29 15:35:18 $
+#   Version:   $Revision: 1.48.2.3.2.2 $
 # 
 #===============================================================================
 # FILE:        vtkFreeSurferReaders.tcl
@@ -328,7 +328,7 @@ proc vtkFreeSurferReadersInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.48.2.3.2.1 $} {$Date: 2006/07/07 18:54:25 $}]
+        {$Revision: 1.48.2.3.2.2 $} {$Date: 2007/10/29 15:35:18 $}]
 }
 
 #-------------------------------------------------------------------------------
@@ -1318,11 +1318,11 @@ set useMatrices 0
     Volume($i,vol,rw) AddObserver StartEvent MainStartProgress
     Volume($i,vol,rw) AddObserver ProgressEvent "MainShowProgress Volume($i,vol,rw)"
     Volume($i,vol,rw) AddObserver EndEvent       MainEndProgress
-    set ::Gui(progressText) "Reading [file tail $vtkFreeSurferReaders(VolumeFileName)]"
+    set ::Gui(progressText) "Reading [file tail $vtkFreeSurferReaders(VolumeFileName)] header"
 
 
     Volume($i,vol,rw) ReadVolumeHeader
-    
+
     set updateReturn [Volume($i,vol,rw) Update]
     if {$updateReturn == 0} {
         DevErrorWindow "vtkMGHReader: update on volume $i failed."
@@ -1820,6 +1820,12 @@ proc vtkFreeSurferReadersBApply {} {
     }
     vtkBVolumeReader Volume($i,vol,rw)
 
+    if {$::Module(verbose)} {
+        puts "Turning debug on for vtkBVolumeReader Volume($i,vol,rw)"
+        Volume($i,vol,rw) DebugOn
+    }
+
+
     # set the filename  stem
     set stem [file rootname $vtkFreeSurferReaders(VolumeFileName)]
     if {$::Module(verbose)} {
@@ -1848,7 +1854,7 @@ proc vtkFreeSurferReadersBApply {} {
         }
         set updateReturn [Volume($i,vol,rw) Update]
         if {$updateReturn == 0} {
-            DevErrorWindow "vtkMGHReader: update on volume $i failed."
+            DevErrorWindow "vtkFreeSurferReadersBApply: update on volume $i failed."
         }
 
 
@@ -2276,7 +2282,22 @@ if {1} {
         puts "\tFile pattern = [Volume($i,node) GetFilePattern]"
     }
 
-if {$::Module(verbose)} { puts "Right before MainUpdateMRML: vol $i number of components: [[[[Volume($i,vol,rw) GetOutput] GetPointData] GetScalars] GetNumberOfComponents]" }
+if {$::Module(verbose)} { 
+    set c 0
+    puts "Right before MainUpdateMRML: vol $i number of components: "
+    set o [Volume($i,vol,rw) GetOutput]
+    if {$o != ""} { 
+        set pd [$o GetPointData]
+        if {$pd != ""} {
+            set s [$pd GetScalars]
+            if {$s != ""} {
+                set c [$s GetNumberOfComponents]
+            }
+        }
+    }
+    puts "$c"
+}
+                
 
     # Reads in the volume via the Execute procedure
     MainUpdateMRML
@@ -2646,6 +2667,12 @@ proc vtkFreeSurferReadersMainFileCloseUpdate {} {
         puts "setting coloursLoaded to 0"
     }
     set ::vtkFreeSurferReaders(coloursLoaded) 0
+
+    # delete any scalar label arrays
+    foreach sla [info globals *vtkFreeSurferReadersLabels] {
+        global $sla
+        array unset $sla
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -3012,35 +3039,22 @@ proc vtkFreeSurferReadersReadAnnotation {a {_id -1} {annotFileName ""}} {
         }
         # the look up table should be a label one
         set lut [Model($_id,mapper,viewRen) GetLookupTable]
-        # skip this bit, as the models use vtkFSLookupTables now, which don't support ramps
-        if {[$lut GetClassName] != "vtkFSLookupTable"} {
-            $lut SetRampToLinear
-        } else {
-            if {$::Module(verbose)} {
-                puts "vtkFreeSurferReadersReadAnnotation: look up table for model is $lut, a free surfer type, resetting to label"
-            }
-            set lut Lut(-1,lut)
-        }
+
+        # re-allocate the look up table, so that it will work with internal tables
+        catch "fssarlut_${_id} Delete"
+        set lut [vtkLookupTable fssarlut_${_id}]
                 
         set fssar fssar_$a
         catch "$fssar Delete"
-        vtkFSSurfaceAnnotationReader $fssar                
+        vtkFSSurfaceAnnotationReader $fssar  
+        if {$::Module(verbose)} {
+            $fssar DebugOn
+        }
         $fssar SetFileName $annotFileName
         $fssar SetOutput $scalars
         $fssar SetColorTableOutput $lut
-        # set the optional colour table filename
-        if [file exists $vtkFreeSurferReaders(colorTableFilename)] {
-            if {$::Module(verbose)} {
-                puts "Color table file exists: $vtkFreeSurferReaders(colorTableFilename)"
-            }
-            $fssar SetColorTableFileName $vtkFreeSurferReaders(colorTableFilename)
-            $fssar UseExternalColorTableFileOn
-        } else {
-            if {$::Module(verbose)} {
-                puts "Color table file does not exist: $vtkFreeSurferReaders(colorTableFilename)"
-            }
-            $fssar UseExternalColorTableFileOff
-        }
+        # try reading an internal colour table first
+        $fssar UseExternalColorTableFileOff
         
         # set up a progress observer 
         $fssar AddObserver StartEvent MainStartProgress
@@ -3049,6 +3063,23 @@ proc vtkFreeSurferReadersReadAnnotation {a {_id -1} {annotFileName ""}} {
         set ::Gui(progressText) "Reading $a"
         
         set retval [$fssar ReadFSAnnotation]
+        if {$retval == 6} {
+            # no internal colour table, try external one
+            if [file exists $vtkFreeSurferReaders(colorTableFilename)] {
+                if {$::Module(verbose)} {
+                    puts "No internal colour table, but an external color table file exists: $vtkFreeSurferReaders(colorTableFilename)"
+                }
+                $fssar SetColorTableFileName $vtkFreeSurferReaders(colorTableFilename)
+                $fssar UseExternalColorTableFileOn
+            
+                if {$::Module(verbose)} { puts "Trying to use external colour table file $vtkFreeSurferReaders(colorTableFilename)"}
+                set retval [$fssar ReadFSAnnotation]
+            } else {
+                puts "No internal colour table, and external one does not exist: $vtkFreeSurferReaders(colorTableFilename)"
+            }
+        } else {
+            if {$::Module(verbose)} { puts "Used internal colour table" }
+        }
 
         MainEndProgress
 
@@ -3059,12 +3090,24 @@ proc vtkFreeSurferReadersReadAnnotation {a {_id -1} {annotFileName ""}} {
             [$Model($_id,polyData) GetPointData] RemoveArray "labels"
             return
         }
-        
+
+        # set the lut for the model
+        if {$::Module(verbose)} { 
+            puts "Model mapper for model id $_id, settign lookup table $lut ([$lut GetNumberOfTableValues] values)"
+        }
+        Model($_id,mapper,viewRen) SetLookupTable $lut
+
         set ::Model(scalarVisibilityAuto) 0
         
         array unset _labels
         array set _labels [$fssar GetColorTableNames]
+        # save the array for future browsing
+        array unset ::${_id}vtkFreeSurferReadersLabels
+        array set ::${_id}vtkFreeSurferReadersLabels [array get _labels]
+
         set entries [lsort -integer [array names _labels]]
+        
+
         if {$::Module(verbose)} {
             puts "Label entries:\n$entries"
             puts "0th: [lindex $entries 0], last:  [lindex $entries end]"
@@ -3073,7 +3116,8 @@ proc vtkFreeSurferReadersReadAnnotation {a {_id -1} {annotFileName ""}} {
         MainModelsSetScalarVisibility $_id 1
 
         # might need to call ModelsPickScalarsCallback here to get everything right
-        ModelsPickScalarsCallback $_id [$Model($_id,polyData) GetPointData] "labels"
+# Don't call this, as we're using a different look up table that isn't integrated with the models yet
+        # ModelsPickScalarsCallback $_id [$Model($_id,polyData) GetPointData] "labels"
 
         Render3D
     } else {
@@ -3368,12 +3412,12 @@ proc vtkFreeSurferReadersReadMGH {v} {
 proc vtkFreeSurferReadersReadBfloat {v} {
     global Volume
 
-puts "\n\n\n\nvtkFreeSurferReadersReadBfloat $v - just returns"
+# puts "\n\n\n\nvtkFreeSurferReadersReadBfloat $v - just returns"
 
     if {$::Module(verbose)} {
         puts "vtkFreeSurferReadersReadBfloat: volume id = $v"
-        DevInfoWindow "vtkFreeSurferReadersReadBfloat: volume id = $v - SKIPPING this!"
-        return
+  #      DevInfoWindow "vtkFreeSurferReadersReadBfloat: volume id = $v - SKIPPING this!"
+   #     return
     }
 
     if { [info commands vtkBVolumeReader] == "" } {
@@ -3384,11 +3428,21 @@ puts "\n\n\n\nvtkFreeSurferReadersReadBfloat $v - just returns"
     catch "bfloatreader Delete"
     vtkBVolumeReader bfloatreader
 
+    if {$::Module(verbose)} {
+        puts "ReadBFloat: setting debug on on the reader"
+        bfloatreader DebugOn
+    }
     # not going to work, need to recreate the file name from what's saved in the node: FilePattern, FilePrefix, and ImageRange
     # bfloatreader SetFileName  [Volume($v,node) GetFullPrefix]
     set stem [Volume($v,node) GetFullPrefix]
     bfloatreader SetFilePrefix $stem
     bfloatreader SetStem $stem
+
+    # set up the progress reporting
+    set ::Gui(progressText) "Reading b data volume"
+    bfloatreader AddObserver StartEvent MainStartProgress
+    bfloatreader AddObserver ProgressEvent "MainShowProgress bfloatreader"
+    bfloatreader AddObserver EndEvent MainEndProgress
 
     bfloatreader Update
     bfloatreader SetRegistrationFileName ${stem}.dat
@@ -3400,6 +3454,7 @@ puts "\n\n\n\nvtkFreeSurferReadersReadBfloat $v - just returns"
 
 #    Volume($v,vol) SetImageData [bfloatreader GetOutput]
     bfloatreader Delete
+    MainEndProgress
 }
 
 #-------------------------------------------------------------------------------
@@ -5462,10 +5517,10 @@ proc vtkFreeSurferReadersSetQASubjects {} {
         if { $dir != "" } {
             set retval "yes"
             if {!$vtkFreeSurferReaders(QAAlwaysGlob)} {
-                set retval [tk_messageBox -type yesnocancel -title "Subject directory check" -message "About to search in $dir for FreeSurfer subjects. Continue? \nPress Cancel to not ask again and always search.\n\nOperation may hang if greater than 1000 subject dirs are present, can reset dir in vtkFreeSurferReaders QA tab."]
+                set retval [tk_messageBox -parent .tMain -type yesnocancel -title "Subject directory check" -message "About to search in $dir for FreeSurfer subjects. Continue? \nPress Cancel to not ask again and always search.\n\nOperation may hang if greater than 1000 subject dirs are present, can reset dir in vtkFreeSurferReaders QA tab."]
             }
             if {$retval == "cancel"} {
-                set vtkFreeSurferReaders(QAAlwaysGlob) 1
+                set vtkFreeSurferReaders(QAAlwaysGlob) 0
             }
             if {$retval == "yes" || $retval == "cancel"} {
                 set files [glob -nocomplain $dir/*]
@@ -5902,7 +5957,7 @@ proc vtkFreeSurferReadersRecordSubjectQA { subject vol eval } {
     set timemsg [join [split $timemsg] "-"]
     # make up the message with single quotes between each one for easy parsing later, 
     # leave out ones on the end as will get empty strings there
-    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.48.2.3.2.1 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
+    set msg "$timemsg\"$username\"Slicer-$::SLICER(version)\"[ParseCVSInfo FreeSurferQA {$Revision: 1.48.2.3.2.2 $}]\"$::tcl_platform(machine)\"$::tcl_platform(os)\"$::tcl_platform(osVersion)\"$vol\"$eval\"$vtkFreeSurferReaders($subject,$vol,Notes)"
     
     if {[catch {set fid [open $fname "a"]} errmsg] == 1} {
         puts "Can't write to subject file $fname.\nCopy and paste this if you want to save it:\n$msg"
@@ -6817,8 +6872,23 @@ proc vtkFreeSurferReadersPickScalar {widget x y} {
                     set val [[[$Model($mid,polyData) GetPointData] GetScalars] GetValue $pid]
                     # get the colour that it's mapped to
                     set col [[Model($mid,mapper,viewRen) GetLookupTable] GetColor $val]
-                    if {$::Module(verbose)} { puts "pid $pid val = $val, colour = $col" }
-                    vtkFreeSurferReadersShowScalarValue $mid $pid $val $col
+                    
+                    # get the name of the colour if it's a label map
+                    set colourName ""
+                    set scalarsName  [[[$Model($mid,polyData) GetPointData] GetScalars] GetName]
+                    if {$scalarsName == "labels"} {
+                        if {[array exists ::${mid}vtkFreeSurferReadersLabels]} {
+                            global ::${mid}vtkFreeSurferReadersLabels
+                            set colourName [subst $${mid}vtkFreeSurferReadersLabels($val)]
+                        } else {
+                            if {$::Module(verbose)} {
+                                puts "can't find array ${mid}vtkFreeSurferReadersLabels"
+                            }
+                        }
+                    }
+                    
+                    if {$::Module(verbose)} { puts "pid $pid val = $val, colour = $col, colourName = $colourName (scalars name = $scalarsName)" }
+                    vtkFreeSurferReadersShowScalarValue $mid $pid $val $col $colourName
                 } else {
                     if {$::Module(verbose)} { puts "pid $pid out of range of $numTuples for model $mid" }
                 }
@@ -6845,12 +6915,13 @@ proc vtkFreeSurferReadersPickScalar {widget x y} {
 # int pid point id (vertex number)
 # float val scalar value
 # string col the colour that the scalar value has mapped to
+# string colourName the name of the colour that the scalar has been mapped to
 # .END
 #-------------------------------------------------------------------------------
-proc vtkFreeSurferReadersShowScalarValue {mid pid val col} {
+proc vtkFreeSurferReadersShowScalarValue {mid pid val col {colourName ""}} {
     global vtkFreeSurferReaders Gui
 
-    if {$::Module(verbose)} {  puts "mid = $mid, pid = $pid, val = $val" }
+    if {$::Module(verbose)} {  puts "mid = $mid, pid = $pid, val = $val, colour name = $colourName" }
 
     set w .topScalars${mid}
     if {[info command $w] != ""} {
@@ -6858,6 +6929,7 @@ proc vtkFreeSurferReadersShowScalarValue {mid pid val col} {
         wm deiconify $w
         $w.f.lScalar configure -text "Scalar Value = $val"
         $w.f.lColour configure -text "Display Colour = $col"
+        $w.f.lColourName configure -text "$colourName"
         $w.f.lPoint configure -text "Point id = $pid"
     } else {
         # build it
@@ -6870,9 +6942,10 @@ proc vtkFreeSurferReadersShowScalarValue {mid pid val col} {
 
         eval {label $w.f.lScalar -text "Scalar Value = $val" -width 40} $Gui(WLA)
         eval {label $w.f.lColour -text "Display Colour = $col" -width 40} $Gui(WLA)
+        eval {label $w.f.lColourName -text "$colourName" -width 40} $Gui(WLA)
         eval {label $w.f.lModel -text "Model id = $mid" -width 40} $Gui(WLA)
         eval {label $w.f.lPoint -text "Point id = $pid" -width 40} $Gui(WLA)
-        pack $w.f.lScalar $w.f.lColour $w.f.lModel $w.f.lPoint -side top 
+        pack $w.f.lScalar $w.f.lColour $w.f.lColourName $w.f.lModel $w.f.lPoint -side top 
 
         DevAddButton $w.f.bClose "Close" "wm withdraw $w"
         pack $w.f.bClose -side top -pady $Gui(pad) -expand 1
@@ -7261,6 +7334,18 @@ proc vtkFreeSurferReadersPickScalarsLut { parentButton } {
                 puts "skipping $l, name = $::Lut($l,name)"
             }
         }
+    }
+    # add any annotation luts
+    set fssarLUTs [info commands fssarlut_$m]
+    foreach l $fssarLUTs {
+        if {$l == $currlut} {
+            set labelText "* Model $m Annotation *"
+        } else {
+            set labelText "Model $m Annotation"
+        }
+        .mFSpickscalarslut insert end command -label $labelText \
+                -command "Model($m,mapper,viewRen) SetLookupTable $l \; Render3D"
+        incr numcmds
     }
     set x [expr [winfo rootx $parentButton] + 10]
     set y [expr [winfo rooty $parentButton] + 10]

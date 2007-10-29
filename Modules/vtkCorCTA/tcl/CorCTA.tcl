@@ -1,14 +1,14 @@
 #=auto==========================================================================
 #   Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
-# 
+#
 #   See Doc/copyright/copyright.txt
 #   or http://www.slicer.org/copyright/copyright.txt for details.
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: CorCTA.tcl,v $
-#   Date:      $Date: 2005/12/20 22:55:02 $
-#   Version:   $Revision: 1.8.2.1 $
-# 
+#   Date:      $Date: 2007/10/29 15:44:57 $
+#   Version:   $Revision: 1.8.2.1.2.1 $
+
 #===============================================================================
 # FILE:        CorCTA.tcl
 # PROCEDURES:  
@@ -127,7 +127,7 @@ proc CorCTAInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.8.2.1 $} {$Date: 2005/12/20 22:55:02 $}]
+        {$Revision: 1.8.2.1.2.1 $} {$Date: 2007/10/29 15:44:57 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -137,14 +137,21 @@ proc CorCTAInit {} {
     #   the procedures in this module and others need to access.
     #
     set CorCTA(InputVolume) $Volume(idNone)
+    set CorCTA(DistTransVolume) $Volume(idNone)
+    set CorCTA(DistTransName) "DistTrans"
+    set CorCTA(FluxVolume) $Volume(idNone)
+    set CorCTA(FluxName) "Flux"
     set CorCTA(OutputVolume) $Volume(idNone)
+    set CorCTA(ThinName) "Thin"
     set CorCTA(ModelName) Centerlines
     
+    set CorCTA(FluxThresh) -4
+
     set CorCTA(UseLineEndpoints) 1
     set CorCTA(UseFiducialEndpoints) 0
     set CorCTA(UseSurfaceEndpoints) 0
     
-    set CorCTA(Splines) 1
+    set CorCTA(Splines) 0
     set CorCTA(SplineSegmentLength) 2
     
     set CorCTA(eventManager) {}
@@ -230,103 +237,137 @@ a label map as an input and generates a model.
     set fCenterlines $Module(CorCTA,fCenterlines)
     set f $fCenterlines
     
-    foreach frame "Top Middle Bottom" {
-    frame $f.f$frame -bg $Gui(activeWorkspace)
-    pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-    }
+    frame $f.fActive    -bg $Gui(backdrop) -relief sunken -bd 2
+    pack $f.fActive -side top -padx $Gui(pad) -pady $Gui(pad) -fill x
+
+#     Notebook:create $f.fNotebook \
+#                         -pages {{DistTrans} {Flux} {Thin}} \
+#                         -pad 2 \
+#                         -bg $Gui(activeWorkspace) \
+#                         -height 260 \
+#                         -width 240
+#     pack $f.fNotebook -fill both -expand 1
+
+#     set f $fInput.fNotebook
+
+#     set FrameDT   [Notebook:frame $f {DistTrans}]
+#     set FrameFlux [Notebook:frame $f {Flux}]
+#     set FrameThin [Notebook:frame $f {Thin}]
+
+#     foreach frame "$FrameDT $FrameFlux $FrameThin" {
+#         $frame configure  -relief groove -bd 3 
+#         foreach secframe "OptionNumber Input What How" {
+#         frame $frame.f$secframe -bg $Gui(activeWorkspace)
+#         pack $frame.f$secframe -side top -padx $Gui(pad) -pady $Gui(pad) -fill x -anchor w
+#     }
+#     }
+   foreach frame "DistTrans Flux Thin Middle Bottom" {
+       frame $f.f$frame -bg $Gui(activeWorkspace)
+       pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
+       $f.f$frame config -relief groove -bd 3
+   }
     
     #-------------------------------------------
-    # Main->Top frame
+    # Main->Active frame
     #-------------------------------------------
-    set f $fCenterlines.fTop
+    set f $fCenterlines.fActive
     
     #       grid $f.lMain -padx $Gui(pad) -pady $Gui(pad)
     #       grid $menubutton -sticky w
     
     # Add menus that list models and volumes
-    DevAddSelectButton  CorCTA $f InputVolume "Input volume" Pack
+    DevAddSelectButton  CorCTA $f InputVolume "Input volume" Pack \
+    "Input Volume" 20 BLA
     
-    # Append these menus and buttons to lists 
-    # that get refreshed during UpdateMRML
-    #lappend Volume(mbActiveList) $f.mbVolume1
-    #lappend Volume(mActiveList) $f.mbVolume1.m
-        
     #-------------------------------------------
-    # Main->Middle frame
+    # Main->DistTrans frame
     #-------------------------------------------
-    set f $fCenterlines.fMiddle
+    set f $fCenterlines.fDistTrans
     frame $f.fName -bg $Gui(activeWorkspace)
+
+    DevAddLabel $f.fName.lName "Output:"
+    eval {entry $f.fName.eName -width 20 -textvariable CorCTA(DistTransName)} $Gui(WEA)
+    DevAddButton $f.bCenterlines "Compute DT" CorCTADT
+
+    pack $f.fName -side top -padx 0 -pady $Gui(pad) -fill x
+    pack $f.fName.lName $f.fName.eName -side left -padx $Gui(pad) -pady $Gui(pad) 
+    pack $f.bCenterlines -side top -padx $Gui(pad) -pady $Gui(pad)
+
+    #-------------------------------------------
+    # Main->Flux frame
+    #-------------------------------------------
+    set f $fCenterlines.fFlux
+    frame $f.fName -bg $Gui(activeWorkspace)
+    frame $f.fButton -bg $Gui(activeWorkspace)
+
+    DevAddSelectButton  CorCTA $f.fButton DistTransVolume "DT     " Pack \
+    "Input DT" 20 BLA
+    DevAddLabel $f.fName.lName "Output:"
+    eval {entry $f.fName.eName -width 20 -textvariable CorCTA(FluxName)} $Gui(WEA)
+    DevAddButton $f.bCenterlines "Compute Flux" CorCTAFlux
+
+    pack $f.fButton -side top -padx 0 -pady $Gui(pad) -fill both    
+    pack $f.fName -side top -padx 0 -pady $Gui(pad) -fill both
+    pack $f.fName.lName $f.fName.eName -side left -padx $Gui(pad) -pady $Gui(pad) 
+    pack $f.bCenterlines -side top -padx $Gui(pad) -pady $Gui(pad)
+
+    #-------------------------------------------
+    # Main->Thin frame
+    #-------------------------------------------
+    set f $fCenterlines.fThin
+    frame $f.fName -bg $Gui(activeWorkspace)
+    frame $f.fThresh -bg $Gui(activeWorkspace)
+    frame $f.fButtonDT -bg $Gui(activeWorkspace)
+    frame $f.fButtonFlux -bg $Gui(activeWorkspace)
     frame $f.fEP -bg $Gui(activeWorkspace)
-    DevAddLabel $f.fName.lName "Model name:"
-    eval {entry $f.fName.eName -width 20 -textvariable CorCTA(ModelName)} $Gui(WEA)
-    DevAddLabel $f.lEP "Endpoints"
+    DevAddSelectButton  CorCTA $f.fButtonFlux FluxVolume "Flux   " Pack \
+    "Input Flux" 20 BLA
+    DevAddLabel $f.fName.lName "Output:"
+    eval {entry $f.fName.eName -width 20 -textvariable CorCTA(ThinName)} $Gui(WEA)
+    DevAddLabel $f.fThresh.lName "Threshold:"
+    eval {entry $f.fThresh.eName -width 20 -textvariable CorCTA(FluxThresh)} $Gui(WEA)
+
     eval {checkbutton $f.fEP.cLineEP -text "Lines" -variable CorCTA(UseLineEndpoints)} $Gui(WBA)
     eval {checkbutton $f.fEP.cFiducialEP -text "Fiducials" -variable CorCTA(UseFiducialEndpoints)} $Gui(WBA)
     eval {checkbutton $f.fEP.cSurfaceEP -text "Surfaces" -variable CorCTA(UseSurfaceEndpoints)} $Gui(WBA)
-    pack $f.fName -side top -padx 0 -pady $Gui(pad) -fill x
-    pack $f.fName.lName $f.fName.eName -side left -padx $Gui(pad) -pady $Gui(pad)
-    pack $f.lEP -side top -padx $Gui(pad) -pady $Gui(pad)
+    DevAddButton $f.bThin "Thin" CorCTAThin
+    DevAddButton $f.bLines "Polylines" CorCTAConvert
+    DevAddButton $f.bThinning "Do all" CorCTAThinning
+
+    pack $f.fButtonFlux -side top -padx 0 -pady $Gui(pad) -fill both    
+    pack $f.fName -side top -padx 0 -pady $Gui(pad) -fill both
+    pack $f.fName.lName $f.fName.eName -side left -padx $Gui(pad) -pady $Gui(pad) 
+    pack $f.fThresh -side top -padx 0 -pady $Gui(pad) -fill both
+    pack $f.fThresh.lName $f.fThresh.eName -side left -padx $Gui(pad) -pady $Gui(pad) 
     pack $f.fEP -side top -padx 0 -pady $Gui(pad)
     pack $f.fEP.cLineEP $f.fEP.cFiducialEP $f.fEP.cSurfaceEP -side left -padx $Gui(pad) -pady $Gui(pad)
+    pack $f.bThin -side top -padx $Gui(pad) -pady $Gui(pad)
+    pack $f.bLines -side top -padx $Gui(pad) -pady $Gui(pad)
+    pack $f.bThinning -side top -padx $Gui(pad) -pady $Gui(pad)
 
 
-    #-------------------------------------------
-    # Main->Bottom frame
-    #-------------------------------------------
-    set f $fCenterlines.fBottom
-    frame $f.fLength -bg $Gui(activeWorkspace)
-    eval {checkbutton $f.cSplines -text "Smooth lines" -variable CorCTA(Splines)} $Gui(WBA)
-    DevAddLabel $f.fLength.lLength "Segment length:"
-    eval {entry $f.fLength.eLength -width 5 -textvariable CorCTA(SplineSegmentLength)} $Gui(WEA)
-    DevAddButton $f.bCenterlines "Extract Centerlines" CorCTACenterlines
-    pack $f.cSplines -side top -padx $Gui(pad) -pady $Gui(pad) 
-    pack $f.fLength -side top -padx 0 -pady $Gui(pad) -fill x
-    pack $f.fLength.lLength $f.fLength.eLength -side left -padx $Gui(pad) -pady $Gui(pad)
-    pack $f.bCenterlines -side top -padx $Gui(pad) -pady $Gui(pad)
+#     DevAddLabel $f.fName.lName "Model name:"
+#     eval {entry $f.fName.eName -width 20 -textvariable CorCTA(ModelName)} $Gui(WEA)
+#     DevAddLabel $f.lEP "Endpoints"
+#     eval {checkbutton $f.fEP.cLineEP -text "Lines" -variable CorCTA(UseLineEndpoints)} $Gui(WBA)
+#     eval {checkbutton $f.fEP.cFiducialEP -text "Fiducials" -variable CorCTA(UseFiducialEndpoints)} $Gui(WBA)
+#     eval {checkbutton $f.fEP.cSurfaceEP -text "Surfaces" -variable CorCTA(UseSurfaceEndpoints)} $Gui(WBA)
+#     pack $f.fName -side top -padx 0 -pady $Gui(pad) -fill x
+#     pack $f.fName.lName $f.fName.eName -side left -padx $Gui(pad) -pady $Gui(pad)
+#     pack $f.lEP -side top -padx $Gui(pad) -pady $Gui(pad)
+#     pack $f.fEP -side top -padx 0 -pady $Gui(pad)
+#     pack $f.fEP.cLineEP $f.fEP.cFiducialEP $f.fEP.cSurfaceEP -side left -padx $Gui(pad) -pady $Gui(pad)
+
+
+#     eval {checkbutton $f.cSplines -text "Smooth lines" -variable CorCTA(Splines)} $Gui(WBA)
+#     DevAddLabel $f.fLength.lLength "Segment length:"
+#     eval {entry $f.fLength.eLength -width 5 -textvariable CorCTA(SplineSegmentLength)} $Gui(WEA)
+#     DevAddButton $f.bCenterlines "Extract Centerlines" CorCTACenterlines
+#     pack $f.cSplines -side top -padx $Gui(pad) -pady $Gui(pad) 
+#     pack $f.fLength -side top -padx 0 -pady $Gui(pad) -fill x
+#     pack $f.fLength.lLength $f.fLength.eLength -side left -padx $Gui(pad) -pady $Gui(pad)
+#     pack $f.bCenterlines -side top -padx $Gui(pad) -pady $Gui(pad)
     
-    # make frames inside the Bottom frame for nice layout
-    #foreach frame "CountDemo TextBox" {
-    #frame $f.f$frame -bg $Gui(activeWorkspace) 
-    #pack $f.f$frame -side top -padx 0 -pady $Gui(pad) -fill x
-    #}
-
-    #$f.fTextBox config -relief groove -bd 3 
-
-    #-------------------------------------------
-    # Main->Bottom->CountDemo frame
-    #-------------------------------------------
-    set f $fCenterlines.fBottom.fCountDemo
-
-    #DevAddLabel $f.lMain "You clicked 0 times."
-    #pack $f.lMain -side top -padx $Gui(pad) -fill x
-    #set CorCTA(lMain) $f.lMain
-    
-    # Here's a button with text "Count" that calls "CorCTACount" when
-    # pressed.
-    #DevAddButton $f.bCount Count CorCTACount 
-    
-    # Tooltip example: Add a tooltip for the button
-    #TooltipAdd $f.bCount "Press this button to increment the counter."
-    # entry box
-    #eval {entry $f.eCount -width 5 -textvariable CorCTA(count) } $Gui(WEA)
-    
-    #pack $f.bCount $f.eCount -side left -padx $Gui(pad) -pady $Gui(pad)
-    
-
-    #-------------------------------------------
-    # Main->Bottom->TextBox frame
-    #-------------------------------------------
-    set f $fCenterlines.fBottom.fTextBox
-
-    # this is a convenience proc from tcl-shared/Developer.tcl
-    #DevAddLabel $f.lBind "Bindings Demo"
-    #pack $f.lBind -side top -pady $Gui(pad) -padx $Gui(pad) -fill x
-    
-    # here's the text box widget from tcl-shared/Widgets.tcl
-    #set CorCTA(textBox) [ScrolledText $f.tText]
-    #pack $f.tText -side top -pady $Gui(pad) -padx $Gui(pad) \
-     #   -fill x -expand true
-
 }
 
 
@@ -339,7 +380,10 @@ a label map as an input and generates a model.
 proc CorCTAUpdateGUI {} {
     global CorCTA Volume
 
-    DevUpdateNodeSelectButton Volume CorCTA InputVolume InputVolume DevSelectNode 0 0 1
+    DevUpdateNodeSelectButton Volume CorCTA InputVolume InputVolume DevSelectNode 1 0 1
+    DevUpdateNodeSelectButton Volume CorCTA DistTransVolume DistTransVolume DevSelectNode 1 0 1
+    DevUpdateNodeSelectButton Volume CorCTA DistTransVolume DistTransVolume DevSelectNode 1 0 1
+    DevUpdateNodeSelectButton Volume CorCTA FluxVolume FluxVolume DevSelectNode 1 0 1
     #DevUpdateNodeSelectButton Volume CorCTA OutputVolume OutputVolume DevSelectNode 0 1 1
 }
 
@@ -426,6 +470,142 @@ proc CorCTAExit {} {
 
 
 #-------------------------------------------------------------------------------
+# .PROC CorCTADT
+# Computes the DT of the Object
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc CorCTADT {} {
+    global CorCTA Volume Mrml Gui
+
+    set input $CorCTA(InputVolume)
+ 
+    if { ($input != $Volume(idNone)) } {
+    catch "Thresh Delete"
+    vtkImageThreshold Thresh
+    Thresh SetInput [Volume($input,vol) GetOutput]
+    Thresh ThresholdBetween -1 1
+    Thresh SetInValue 5
+        Thresh SetOutValue 0
+        Thresh ReplaceInOn
+    Thresh ReplaceOutOn
+        Thresh Update
+
+    catch "DistTrans Delete"
+    vtkITKDanielssonDistanceMapImageFilter DistTrans    
+    DistTrans SetInput [Thresh GetOutput]
+    DistTrans SquaredDistanceOff
+    DistTrans UseImageSpacingOn
+    set Gui(progressText) "Computing distance transform"
+    DistTrans AddObserver StartEvent MainStartProgress
+    DistTrans AddObserver ProgressEvent "MainShowProgress DistTrans"
+    DistTrans AddObserver EndEvent MainEndProgress
+    DistTrans Update
+    
+    set output [DevCreateNewCopiedVolume $input "" $CorCTA(DistTransName)]
+    set CorCTA(DistTransVolume) $output
+    Volume($output,node) SetLabelMap 0
+    [Volume($output,vol) GetOutput] DeepCopy [DistTrans GetOutput]
+    Volume($output,node) SetScalarType [[DistTrans GetOutput] GetScalarType]
+    Volume($output,vol) Update
+    MainVolumesRender
+    MainVolumesUpdate $output
+    RenderAll
+    MainUpdateMRML
+    
+    catch "Thresh Delete"
+    catch "DistTrans Delete"
+    }
+}
+#-------------------------------------------------------------------------------
+# .PROC CorCTAFlux
+# Computes the Flux of the Gradient of the DT
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc CorCTAFlux {} {
+    global CorCTA Volume Mrml Gui
+
+    set input $CorCTA(DistTransVolume)
+
+    if { ($input != $Volume(idNone)) } {
+    catch "Gradient Delete"
+    vtkImageGradient Gradient
+    Gradient SetInput [Volume($input,vol) GetOutput]
+    Gradient SetDimensionality 3
+    Gradient Update
+    
+    catch "Flux Delete"
+    vtkImageFlux Flux
+    Flux SetInput [Gradient GetOutput]
+    set Gui(progressText) "Computing Flux"
+    Flux AddObserver StartEvent MainStartProgress
+    Flux AddObserver ProgressEvent "MainShowProgress Flux"
+    Flux AddObserver EndEvent MainEndProgress
+    Flux Update
+    set output [DevCreateNewCopiedVolume $input "" $CorCTA(FluxName)]
+    Volume($output,node) SetLabelMap 0
+    [Volume($output,vol) GetOutput] DeepCopy [Flux GetOutput]
+    Volume($output,node) SetScalarType [[Flux GetOutput] GetScalarType]
+    Volume($output,vol)  Update
+    set CorCTA(FluxVolume) $output
+    MainVolumesRender
+    MainVolumesUpdate $output
+    RenderAll
+    MainUpdateMRML
+
+    catch "Gradient Delete"
+    catch "Flux Delete"
+    
+    }
+}    
+proc CorCTAThin {} {    
+    global CorCTA Volume Mrml Gui
+    
+    set input  $CorCTA(InputVolume)
+    set inputDT $CorCTA(DistTransVolume)
+    set inputFlux $CorCTA(FluxVolume)
+
+    if { ($input != $Volume(idNone)) && \
+     ($inputDT != $Volume(idNone)) && \
+     ($inputFlux != $Volume(idNone))} {
+
+    catch "Thinning Delete"
+    vtkThinning Thinning
+    Thinning SetInput [Volume($input,vol) GetOutput]
+    Thinning SetUseLineEndpoints $CorCTA(UseLineEndpoints)
+    Thinning SetUseFiducialEndpoints $CorCTA(UseFiducialEndpoints)
+    Thinning SetUseSurfaceEndpoints $CorCTA(UseSurfaceEndpoints)
+
+    Thinning SetCriterion [Volume($inputDT,vol) GetOutput]
+    Thinning SetMinCriterionThreshold 0
+    Thinning SetEndpointCriterion [Volume($inputFlux,vol) GetOutput]
+    Thinning SetMaxEndpointThreshold $CorCTA(FluxThresh)
+    
+    set Gui(progressText) "Thinning"
+    Thinning AddObserver StartEvent MainStartProgress
+    Thinning AddObserver ProgressEvent "MainShowProgress Thinning"
+    Thinning AddObserver EndEvent MainEndProgress
+    Thinning Update
+    
+    set output [DevCreateNewCopiedVolume $input "" $CorCTA(ThinName)]
+    set CorCTA(OutputVolume) $output
+    [Volume($output,vol) GetOutput] DeepCopy [Thinning GetOutput]
+    Volume($output,vol) Update
+    
+    set Volume(activeID) $output
+    MainVolumesSetParam Window 10
+    MainVolumesSetParam Level 127
+    MainVolumesRender
+    MainVolumesUpdate $output
+    RenderAll
+    MainUpdateMRML
+
+    catch "Thinning Delete"
+    }
+
+}
+#-------------------------------------------------------------------------------
 # .PROC CorCTAThinning
 # Starts the thinning process
 # .ARGS
@@ -434,53 +614,91 @@ proc CorCTAExit {} {
 proc CorCTAThinning {} {
 
     global CorCTA Volume Mrml Gui
-    
     set input $CorCTA(InputVolume)
-    
-    set output [DevCreateNewCopiedVolume $input "" "ThinningOutput"]
-    set CorCTA(OutputVolume) $output
-    set node [Volume($output,vol) GetMrmlNode]
-    Mrml(dataTree) RemoveItem $node
-    set nodeBefore [Volume($input,vol) GetMrmlNode]
-    Mrml(dataTree) InsertAfterItem $nodeBefore $node
-    MainUpdateMRML
+ 
+    if { ($input != $Volume(idNone)) } {
+    # Threshold
+    catch "Thresh Delete"
+    vtkImageThreshold Thresh
+    Thresh SetInput [Volume($input,vol) GetOutput]
+    Thresh ThresholdBetween -1 1
+    Thresh SetInValue 5
+        Thresh SetOutValue 0
+        Thresh ReplaceInOn
+    Thresh ReplaceOutOn
+        Thresh Update
 
-    catch "vtkImageEuclideanDistance DistTrans"
-    catch "vtkThinning Thinning"
-    
-    Thinning SetUseLineEndpoints $CorCTA(UseLineEndpoints)
-    Thinning SetUseFiducialEndpoints $CorCTA(UseFiducialEndpoints)
-    Thinning SetUseSurfaceEndpoints $CorCTA(UseSurfaceEndpoints)
-    
-    DistTrans SetInput [Volume($input,vol) GetOutput]
-    DistTrans InitializeOn
-    DistTrans ConsiderAnisotropyOn
-    DistTrans SetMaximumDistance 50
-    DistTrans SetAlgorithmToSaitoCached
+    #Do Danielsson DT
+    catch "DistTrans Delete"
+    vtkITKDanielssonDistanceMapImageFilter DistTrans    
+    DistTrans SetInput [Thresh GetOutput]
+    DistTrans SquaredDistanceOff
+    DistTrans UseImageSpacingOn
     set Gui(progressText) "Computing distance transform"
     DistTrans AddObserver StartEvent MainStartProgress
     DistTrans AddObserver ProgressEvent "MainShowProgress DistTrans"
     DistTrans AddObserver EndEvent MainEndProgress
     DistTrans Update
+
+    catch "Thresh Delete"
+    
+    # Compute Gradient
+    catch "Gradient Delete"
+    vtkImageGradient Gradient
+    Gradient SetInput [DistTrans GetOutput]
+    Gradient SetDimensionality 3
+    Gradient Update
+    
+    #Compute Flux
+    catch "Flux Delete"
+    vtkImageFlux Flux
+    Flux SetInput [Gradient GetOutput]
+    set Gui(progressText) "Computing Flux"
+    Flux AddObserver StartEvent MainStartProgress
+    Flux AddObserver ProgressEvent "MainShowProgress Flux"
+    Flux AddObserver EndEvent MainEndProgress
+    Flux Update
+
+    catch "Gradient Delete"
+
+    #Thin
+    catch "Thinning Delete"
+    vtkThinning Thinning
+    Thinning SetInput [Volume($input,vol) GetOutput]
+    Thinning SetUseLineEndpoints $CorCTA(UseLineEndpoints)
+    Thinning SetUseFiducialEndpoints $CorCTA(UseFiducialEndpoints)
+    Thinning SetUseSurfaceEndpoints $CorCTA(UseSurfaceEndpoints)
+
+    Thinning SetCriterion [DistTrans GetOutput]
+    Thinning SetMinCriterionThreshold 0
+    Thinning SetEndpointCriterion [Flux GetOutput]
+    Thinning SetMaxEndpointThreshold $CorCTA(FluxThresh)
+    
     set Gui(progressText) "Thinning"
     Thinning AddObserver StartEvent MainStartProgress
     Thinning AddObserver ProgressEvent "MainShowProgress Thinning"
     Thinning AddObserver EndEvent MainEndProgress
-    Thinning SetInput [Volume($input,vol) GetOutput]
-    Thinning SetMaxThreshold 100000
-    Thinning SetCriterion [DistTrans GetOutput]
     Thinning Update
-    Volume($output,vol) SetImageData [Thinning GetOutput]
+    
+    set output [DevCreateNewCopiedVolume $input "" $CorCTA(ThinName)]
+    set CorCTA(OutputVolume) $output
+    [Volume($output,vol) GetOutput] DeepCopy [Thinning GetOutput]
     Volume($output,vol) Update
-    Thinning UnRegisterAllOutputs
-    Thinning Delete
-    DistTrans Delete
+    
     set Volume(activeID) $output
     MainVolumesSetParam Window 10
     MainVolumesSetParam Level 127
     MainVolumesRender
     MainVolumesUpdate $output
     RenderAll
+    MainUpdateMRML
+    
+    catch "DistTrans Delete"
+    catch "Flux Delete"
+    catch "Thinning Delete"
+
+#    CorCTAConvert
+    }
 }
 
 #-------------------------------------------------------------------------------
@@ -552,8 +770,8 @@ proc CorCTAConvert {} {
     }
     set Model($m,dirty) 1
     
-    MainMrmlDeleteNode Volume $output
-    MainVolumesDelete $output
+#    MainMrmlDeleteNode Volume $output
+#    MainVolumesDelete $output
 
     MainUpdateMRML
 
@@ -575,7 +793,7 @@ proc CorCTAConvert {} {
 #-------------------------------------------------------------------------------
 proc CorCTACenterlines {} {
     CorCTAThinning
-    CorCTAConvert
+#    CorCTAConvert
 }
 
 

@@ -13,6 +13,8 @@
 # note: - SET replaced SOURCE_FILES for cmake 1.6
 SET(LOCAL_MODULE_SRCS
 vtkNRRDReader.cxx
+vtkNRRDWriter.cxx
+vtkTeemEstimateDiffusionTensor.cxx
 )
 
 ## classes that one does not want tcl wrapped
@@ -50,9 +52,7 @@ LINK_DIRECTORIES(
 ${TEEM_BIN_DIR}
 )
 
-
-LINK_LIBRARIES (${LOCAL_LIBRARY_BASENAME} air biff nrrd ten ell)
-
+LINK_LIBRARIES (${LOCAL_LIBRARY_BASENAME} ${TEEM_BUILD_LIB} air biff nrrd ten ell)
 
 # Add additional directories to look in for libraries
 LINK_DIRECTORIES(

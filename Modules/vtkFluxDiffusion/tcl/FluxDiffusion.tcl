@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: FluxDiffusion.tcl,v $
-#   Date:      $Date: 2005/12/20 22:55:35 $
-#   Version:   $Revision: 1.13.8.1 $
+#   Date:      $Date: 2007/10/29 15:38:06 $
+#   Version:   $Revision: 1.13.8.1.2.1 $
 # 
 #===============================================================================
 # FILE:        FluxDiffusion.tcl
@@ -27,23 +27,6 @@
 #   FluxDiffusionPrepareResultVolume
 #   RunFluxDiffusion
 #==========================================================================auto=
-# FILE:        FluxDiffusion.tcl
-# PROCEDURES:  
-#   FluxDiffusionInit
-#   FluxDiffusionUpdateGUI
-#   FluxDiffusionBuildGUI
-#   FluxDiffusionBuildHelpFrame
-#   FluxDiffusionBuildMainFrame
-#   FluxDiffusionBuildExpertFrame
-#   FluxDiffusionEnter
-#   FluxDiffusionExit
-#   FluxDiffusionCount
-#   FluxDiffusionShowFile
-#   FluxDiffusionBindingCallback event W X Y x y t
-#   FluxDiffusionPrepareResult
-#   FluxDiffusionPrepareResultVolume
-#   RunFluxDiffusion
-
 #   ==================================================
 #   Module: vtkFluxDiffusion
 #   Author: Karl Krissian
@@ -187,7 +170,7 @@ proc FluxDiffusionInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.13.8.1 $} {$Date: 2005/12/20 22:55:35 $}]
+        {$Revision: 1.13.8.1.2.1 $} {$Date: 2007/10/29 15:38:06 $}]
 
     # Initialize module-level variables
     #------------------------------------

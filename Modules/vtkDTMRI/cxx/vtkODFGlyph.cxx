@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkODFGlyph.cxx,v $
-  Date:      $Date: 2006/07/07 18:19:38 $
-  Version:   $Revision: 1.3.8.1.2.2 $
+  Date:      $Date: 2007/10/29 15:42:59 $
+  Version:   $Revision: 1.3.8.1.2.3 $
 
 =========================================================================auto=*/
 #include "vtkODFGlyph.h"
@@ -23,7 +23,7 @@
 #include <vtkImageData.h>
 #include <vtkLookupTable.h>
 #include <vtkTransform.h>
-
+        
 vtkStandardNewMacro(vtkODFGlyph);
 
 const double vtkODFGlyph::SPHERE_POINTS[vtkODFGlyph::NUM_SPHERE_POINTS][3] = {

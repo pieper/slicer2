@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRICalculateScalars.tcl,v $
-#   Date:      $Date: 2006/07/07 18:32:09 $
-#   Version:   $Revision: 1.18.2.3.2.3 $
+#   Date:      $Date: 2007/10/29 15:43:07 $
+#   Version:   $Revision: 1.18.2.3.2.4 $
 # 
 #===============================================================================
 # FILE:        DTMRICalculateScalars.tcl
@@ -36,7 +36,8 @@ proc DTMRICalculateScalarsInit {} {
     #------------------------------------
     set m "CalculateScalars"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                         {$Revision: 1.18.2.3.2.3 $} {$Date: 2006/07/07 18:32:09 $}]
+                         {$Revision: 1.18.2.3.2.4 $} {$Date: 2007/10/29 15:43:07 $}]
+
 
     #------------------------------------
     # Variables for producing scalar volumes
@@ -48,7 +49,11 @@ proc DTMRICalculateScalarsInit {} {
                       RelativeAnisotropy FractionalAnisotropy Mode LinearMeasure \
                       PlanarMeasure SphericalMeasure MaxEigenvalue \
                       MiddleEigenvalue MinEigenvalue ColorByOrientation \
-                                     ColorByMode  D11 D22 D33]
+                      ColorByMode  MaxEigenvalueProjectionX \
+                      MaxEigenvalueProjectionY MaxEigenvalueProjectionZ \
+                      IsotropicP AnisotropicQ \
+              RAIMaxEigenvecX RAIMaxEigenvecY RAIMaxEigenvecZ D11 D22 D33 \
+              ParallelDiffusivity PerpendicularDiffusivity]
 
     set DTMRI(scalars,operationList,tooltip) "Produce a scalar volume from DTMRI data.\nTrace, Determinant, Anisotropy, and Eigenvalues produce grayscale volumes,\nwhile Orientation produces a 3-component (Color) volume that is best viewed in the 3D window."
 
@@ -323,13 +328,18 @@ proc DTMRIDoMath {{operation ""}} {
         }
     }
 
-
-    if { 0 } {
+    #Set up proper scale factor
+    #Map result between 1 - 1000
+    
+    puts "Running oper: $operation"
+    
+    # removed this hard-coded reset of the user's selected scale value after reviewing with LMI folks (sp - for slicer 2.6
+    if { 0 } { 
         switch -regexp -- $operation {
         {^(Trace|Determinant|D11|D22|D33|MaxEigenvalue|MiddleEigenvalue|MinEigenvalue)$} {
                 set DTMRI(scalars,scaleFactor) 1000
         }
-        {^(RelativeAnisotropy|FractionalAnisotropy|Mode|LinearMeasure|PlanarMeasure|SphericalMeasure|ColorByOrientation|ColorByMode)$} {
+        {^(RelativeAnisotropy|FractionalAnisotropy|Mode|LinearMeasure|PlanarMeasure|SphericalMeasure|ColorByOrientation|ColorByMode|IsotropicP|AnisotropicQ)$} {
                 set DTMRI(scalars,scaleFactor) 1000
         }
         }

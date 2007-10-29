@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkLabelMapWhitening.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:29 $
-  Version:   $Revision: 1.2.2.1 $
+  Date:      $Date: 2007/10/29 15:37:17 $
+  Version:   $Revision: 1.2.2.1.2.1 $
 
 =========================================================================auto=*/
 
@@ -34,7 +34,13 @@ vtkLabelMapWhitening::~vtkLabelMapWhitening()
 
 void vtkLabelMapWhitening::SimpleExecute(vtkImageData *input, vtkImageData* output)
 {
-    if (this->NumberOfInputs == 0)
+    int numberOfInputs;
+#if (VTK_MAJOR_VERSION >= 5)
+    numberOfInputs = this->GetNumberOfInputConnections(0);
+#else
+    numberOfInputs = this->NumberOfInputs;
+#endif
+    if (numberOfInputs == 0)
     {
         vtkErrorMacro( << "This filter needs one input of image data.");
         return;

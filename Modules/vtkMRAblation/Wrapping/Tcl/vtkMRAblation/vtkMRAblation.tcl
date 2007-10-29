@@ -6,12 +6,14 @@ package require vtk
 #
 
 if {[info commands vtkImageThermalMap] != "" ||
-    [::vtk::load_component vtkMRAblationTCL] == ""} {
+   [::vtk::load_component vtkMRAblationTCL] == ""} {
+
     global PACKAGE_DIR_VTKMRAblation
+    source $PACKAGE_DIR_VTKMRAblation/../../../tcl/MRAblation.tcl
     package provide vtkMRAblation 1.0
 
     # source the Module's tcl file that contains it's init procedure
-    source [file join $PACKAGE_DIR_VTKMRAblation/../../../tcl/MRAblation.tcl]
+    # source [file join $PACKAGE_DIR_VTKMRAblation/../../../tcl/MRAblation.tcl]
     # add this module's name to the list of custom modules in order 
     # to have it's init procedure get called, @ModuleName@Init will be 
     # called by the Slicer Base code

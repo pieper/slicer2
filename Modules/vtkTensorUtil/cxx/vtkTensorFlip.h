@@ -7,25 +7,26 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTensorFlip.h,v $
-  Date:      $Date: 2006/07/07 19:39:36 $
-  Version:   $Revision: 1.2.2.1.2.3 $
+  Date:      $Date: 2007/10/29 15:17:26 $
+  Version:   $Revision: 1.2.2.1.2.4 $
 
 =========================================================================auto=*/
 // .NAME vtkTensorFlip - flip Y axis and negate xy and zy terms
 // .SECTION Description
 // Make tend estim generated vtk files compatible with slicer
-//
+// .SECTION Warning
+// The filter will always output floating point (loose precision)
+// explicit use of vtkFloatArray
 
 
 #ifndef __vtkTensorFlip_h
 #define __vtkTensorFlip_h
 
-
 #include "vtkTensorUtilConfigure.h"
 #include "vtkImageToImageFilter.h"
-#include "vtkFloatArray.h"
-#include "vtkImageData.h"
 
+class vtkFloatArray;
+class vtkImageData;
 class VTK_TENSORUTIL_EXPORT vtkTensorFlip : public vtkImageToImageFilter
 {
 public:
@@ -33,8 +34,7 @@ public:
   vtkTypeMacro(vtkTensorFlip,vtkImageToImageFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-  vtkFloatArray *GetOutTensors() { return (this->OutTensors); }
-  
+  vtkFloatArray *GetOutTensors() { return this->OutTensors; }
 
 protected:
   vtkTensorFlip();
@@ -43,12 +43,12 @@ protected:
   void operator=(const vtkTensorFlip&);
 
   void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
-  void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
+  void ExecuteInformation(){this->Superclass::ExecuteInformation();};
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,
         int extent[6], int id);
 
   // We override this in order to allocate output tensors
-  // before threading happens.  This replaces the superclass 
+  // before threading happens.  This replaces the superclass
   // vtkImageMultipleInputFilter's Execute function.
   void ExecuteData(vtkDataObject *out);
 

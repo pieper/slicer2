@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkVoxelTimeCourseExtractor.h,v $
-  Date:      $Date: 2005/12/20 22:55:58 $
-  Version:   $Revision: 1.1.2.1 $
+  Date:      $Date: 2007/10/29 15:33:53 $
+  Version:   $Revision: 1.1.2.1.2.1 $
 
 =========================================================================auto=*/
 #ifndef __vtkVoxelTimeCourseExtractor_h
@@ -34,7 +34,7 @@ class  VTK_IBROWSER_EXPORT vtkVoxelTimeCourseExtractor : public vtkSimpleImageTo
     float outputMax;
     float outputMin;
     float outputRange;
-    float numInputs;
+    int numInputs;
 
  protected:
     void SimpleExecute (vtkImageData* input, vtkImageData* output);

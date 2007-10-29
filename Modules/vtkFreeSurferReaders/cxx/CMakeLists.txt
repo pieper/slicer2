@@ -14,7 +14,7 @@ INCLUDE (${VTKFREESURFERREADERS_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 # Create the vtkFreeSurferReaders C++ library
 #
 # (Doesn't work here because of a CMake bug)
-# ADD_LIBRARY (vtkFreeSurferReaders LOCAL_MODULE_SRCS)
+# ADD_LIBRARY (vtkFreeSurferReaders ${LOCAL_MODULE_SRCS})
 
 #
 # Create the vtkFreeSurferReaders Tcl library
@@ -22,9 +22,10 @@ INCLUDE (${VTKFREESURFERREADERS_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 
 IF (VTK_WRAP_TCL AND VTKFREESURFERREADERS_WRAP_TCL)
 
-  VTK_WRAP_TCL (vtkFreeSurferReadersTCL FreeSurferReadersTCL_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkFreeSurferReadersTCL FreeSurferReadersTCL_SRCS)
+  VTK_WRAP_TCL (vtkFreeSurferReadersTCL FreeSurferReadersTCL_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkFreeSurferReadersTCL ${FreeSurferReadersTCL_SRCS})
   TARGET_LINK_LIBRARIES (vtkFreeSurferReadersTCL 
+                         vtkFreeSurferReaders
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
@@ -55,16 +56,17 @@ ENDIF (VTK_WRAP_TCL AND VTKFREESURFERREADERS_WRAP_TCL)
 
 IF (VTK_WRAP_PYTHON AND VTKFREESURFERREADERS_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkFreeSurferReadersPython FreeSurferReadersPython_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_PYTHON (vtkFreeSurferReadersPython FreeSurferReadersPython_SRCS ${LOCAL_MODULE_SRCS})
 
   IF (APPLE)
-    ADD_LIBRARY (vtkFreeSurferReadersPython MODULE FreeSurferReadersPython_SRCS)
+    ADD_LIBRARY (vtkFreeSurferReadersPython MODULE ${FreeSurferReadersPython_SRCS})
   ELSE (APPLE)
-    ADD_LIBRARY (vtkFreeSurferReadersPython SHARED FreeSurferReadersPython_SRCS)
+    ADD_LIBRARY (vtkFreeSurferReadersPython SHARED ${FreeSurferReadersPython_SRCS})
   ENDIF (APPLE)
 
   IF (WIN32)
     TARGET_LINK_LIBRARIES (vtkFreeSurferReadersPython 
+                           vtkFreeSurferReaders
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -74,6 +76,7 @@ IF (VTK_WRAP_PYTHON AND VTKFREESURFERREADERS_WRAP_PYTHON)
                            optimized ${PYTHON_LIBRARY})
   ELSE (WIN32)
     TARGET_LINK_LIBRARIES (vtkFreeSurferReadersPython 
+                           vtkFreeSurferReadersPython 
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -106,9 +109,10 @@ ENDIF (VTK_WRAP_PYTHON AND VTKFREESURFERREADERS_WRAP_PYTHON)
 
 IF (VTK_WRAP_JAVA AND VTKFREESURFERREADERS_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkFreeSurferReadersJava FreeSurferReadersJava_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkFreeSurferReadersJava SHARED FreeSurferReadersJava_SRCS)
+  VTK_WRAP_JAVA (vtkFreeSurferReadersJava FreeSurferReadersJava_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkFreeSurferReadersJava SHARED ${FreeSurferReadersJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkFreeSurferReadersJava 
+                         vtkFreeSurferReaders
                          vtkIOJava
                          vtkGraphicsJava
                          vtkImagingJava 
@@ -136,7 +140,7 @@ ENDIF (VTK_WRAP_JAVA AND VTKFREESURFERREADERS_WRAP_JAVA)
 # Link to VTK and local
 #
 
-LINK_LIBRARIES (
+TARGET_LINK_LIBRARIES (
   vtkFreeSurferReaders
   vtkIO
   vtkGraphics
@@ -146,17 +150,17 @@ LINK_LIBRARIES (
 )
 
 IF (VTK_USE_HYBRID)
-  LINK_LIBRARIES (vtkHybrid)
+  TARGET_LINK_LIBRARIES (vtkFreeSurferReaders vtkHybrid)
 ENDIF (VTK_USE_HYBRID)
 
 IF (VTK_USE_PARALLEL)
-  LINK_LIBRARIES (vtkParallel)
+  TARGET_LINK_LIBRARIES (vtkFreeSurferReaders vtkParallel)
 ENDIF (VTK_USE_PARALLEL)
 
 IF (VTK_USE_PATENTED)
-  LINK_LIBRARIES (vtkPatented)
+  TARGET_LINK_LIBRARIES (vtkFreeSurferReaders vtkPatented)
 ENDIF (VTK_USE_PATENTED)
 
 IF (VTK_USE_RENDERING)
-  LINK_LIBRARIES (vtkRendering)
+  TARGET_LINK_LIBRARIES (vtkFreeSurferReaders vtkRendering)
 ENDIF (VTK_USE_RENDERING)

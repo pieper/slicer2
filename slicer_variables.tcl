@@ -14,6 +14,14 @@
 ## variables that are the same for all systems
 set ::SLICER_DATA_ROOT ""
 
+# option to customize slicer: set the default file format. Right now only 
+# used in Volumes.tcl to set the default file type of volumes to load.
+# At the moment only checks if SLICER_OPTIONS_DEFAULT_FILE_FORMAT 
+# is "nrrd", everything else will effect in the "basic" default file format.
+if {[info exists ::env(SLICER_OPTIONS_DEFAULT_FILE_FORMAT)] == 0 } {
+    set ::env(SLICER_OPTIONS_DEFAULT_FILE_FORMAT) "basic"
+}
+
 if {[info exists ::env(SLICER_HOME)]} {
     # already set by the launcher
     set ::SLICER_HOME $::env(SLICER_HOME)
@@ -32,6 +40,7 @@ set solaris "solaris8"
 set linux "linux-x86"
 set linux_64 "linux-x86_64"
 set darwin "darwin-ppc"
+set darwin_x86 "darwin-x86"
 set windows "win32"
 #
 # set the default locations for the main components
@@ -45,7 +54,13 @@ switch $::tcl_platform(os) {
             set ::env(BUILD) $linux
         }
     }       
-    "Darwin" { set ::env(BUILD) $darwin }
+    "Darwin" {
+        if {$::tcl_platform(machine) == "i386"} {
+            set ::env(BUILD) $darwin_x86
+        } else {
+            set ::env(BUILD) $darwin
+        }
+    }
     default { 
         set ::env(BUILD) $windows 
         set ::SLICER_HOME [file attributes $::SLICER_HOME -shortname]
@@ -63,7 +78,7 @@ puts stderr "SLICER_HOME is $::SLICER_HOME"
 # changes in the "Files to test if library has already been built"
 # section below, or genlib will happily build the library again.
 
-set ::CMAKE_TAG "CMake-2-0-6"
+set ::CMAKE_TAG "CMake-2-4-2"
 set ::TEEM_TAG "Teem-1-9-0-patches"
 set ::VTK_TAG "Slicer-2-6"
 set ::ITK_TAG "Slicer-2-6"
@@ -72,6 +87,7 @@ set ::TK_TAG "core-8-4-6"
 set ::ITCL_TAG "itcl-3-2-1"
 set ::IWIDGETS_TAG "iwidgets-4-0-1"
 set ::BLT_TAG "blt24z"
+set ::OLD_SANDBOX_TAG "http://svn.na-mic.org:8000/svn/NAMICSandBox/branches/Slicer-2-6"
 set ::SANDBOX_TAG "http://svn.na-mic.org/svn/NAMICSandBox/branches/Slicer-2-6"
 
 # Set library, binary, etc. paths...
@@ -81,7 +97,7 @@ set ::TEEM_SRC_DIR  $::SLICER_LIB/teem
 set ::TEEM_BUILD_DIR  $::SLICER_LIB/teem-build
 set ::VTK_DIR  $::SLICER_LIB/VTK-build
 set ::VTK_SRC_DIR $::SLICER_LIB/VTK
-set ::VTK_BUILD_TYPE "Release"
+set ::VTK_BUILD_TYPE ""
 set ::VTK_BUILD_SUBDIR ""
 set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
 set ::KWWIDGETS_DIR  $::SLICER_LIB/Widgets-build
@@ -159,9 +175,9 @@ switch $::tcl_platform(os) {
         ### Set your peferred build type: 
         #
         #set ::VTK_BUILD_TYPE RelWithDebInfo ;# good if you have the full (expensive) compiler
-        set ::VTK_BUILD_TYPE Release  ;# faster, but no debugging
-        #set ::VTK_BUILD_TYPE Debug  ;# a good default
 
+        #set ::VTK_BUILD_TYPE Release  ;# faster, but no debugging
+        set ::VTK_BUILD_TYPE Debug  ;# a good default
         set ::VTK_BUILD_SUBDIR $::VTK_BUILD_TYPE ;# note this is different on windows
 
         set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
@@ -218,7 +234,13 @@ switch $::tcl_platform(os) {
         set ::VTKSLICERBASE_BUILD_TCL_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/vtkSlicerBaseTCL.dylib
         set ::GENERATOR "Unix Makefiles" 
         set ::COMPILER_PATH "/usr/bin"
-        set ::COMPILER "g++-3.3"
+        if { $::env(BUILD) == "darwin-x86" } {
+          set ::COMPILER "g++"
+        }  elseif { $::tcl_platform(os) == "Darwin" && $::tcl_platform(osVersion) >= 8 } {
+          set ::COMPILER "g++"
+        } else {
+          set ::COMPILER "g++-3.3"
+        }
         set ::CMAKE $::CMAKE_PATH/bin/cmake
         set ::MAKE make
         set ::SERIAL_MAKE make

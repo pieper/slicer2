@@ -16,6 +16,7 @@ PROJECT (VTKEMATLASBRAINCLASSIFIER)
 #
 
 SET (VTKEMATLASBRAINCLASSIFIER_CAN_BUILD 1)
+ENABLE_TESTING()
 
 #
 # Load CMake commands that you probably should not modify.
@@ -59,6 +60,7 @@ IF (VTKEMATLASBRAINCLASSIFIER_CAN_BUILD)
 
   SUBDIRS (
     cxx
+    Testing 
   )
 
   #

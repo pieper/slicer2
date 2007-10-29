@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKDanielssonDistanceMapImageFilter.h,v $
-  Date:      $Date: 2005/12/20 22:55:45 $
-  Version:   $Revision: 1.3.8.1 $
+  Date:      $Date: 2007/10/29 15:32:06 $
+  Version:   $Revision: 1.3.8.1.2.1 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Visualization Toolkit
   Module:    $RCSfile: vtkITKDanielssonDistanceMapImageFilter.h,v $
   Language:  C++
-  Date:      $Date: 2005/12/20 22:55:45 $
-  Version:   $Revision: 1.3.8.1 $
+  Date:      $Date: 2007/10/29 15:32:06 $
+  Version:   $Revision: 1.3.8.1.2.1 $
 */
 // .NAME vtkITKDanielssonDistanceMapImageFilter - Wrapper class around itk::DanielssonDistanceMapImageFilter
 // .SECTION Description
@@ -38,52 +38,86 @@ class VTK_EXPORT vtkITKDanielssonDistanceMapImageFilter : public vtkITKImageToIm
   static vtkITKDanielssonDistanceMapImageFilter *New();
   vtkTypeRevisionMacro(vtkITKDanielssonDistanceMapImageFilter, vtkITKImageToImageFilterFF);
 
-  void SetSquaredDistance ( int value )
-  {
+  void SetSquaredDistance ( int value ) {
     DelegateITKInputMacro ( SetSquaredDistance, (bool) value );
   }
-
-  void SquaredDistanceOn()
-  {
+  int GetSquaredDistance() { 
+    DelegateITKOutputMacro ( GetSquaredDistance ); 
+  }
+  void SquaredDistanceOn() {
     this->SetSquaredDistance (true);
   }
-  void SquaredDistanceOff()
-  {
+  void SquaredDistanceOff() {
     this->SetSquaredDistance (false);
   }
-  int GetSquaredDistance()
-  { DelegateITKOutputMacro ( GetSquaredDistance ); }
-
-
-  void SetInputIsBinary ( int value )
-  {
+  int GetInputIsBinary() { 
+    DelegateITKOutputMacro ( GetInputIsBinary ); 
+  }
+  void SetInputIsBinary ( int value ) {
     DelegateITKInputMacro ( SetInputIsBinary, (bool) value );
   }
-  void InputIsBinaryOn()
-  {
+  void InputIsBinaryOn() {
     this->SetInputIsBinary (true);
   }
-  void InputIsBinaryOff()
-  {
+  void InputIsBinaryOff() {
     this->SetInputIsBinary (false);
   }
-  int GetInputIsBinary()
-  { DelegateITKOutputMacro ( GetInputIsBinary ); };
-
+  void SetUseImageSpacing ( int value ) {
+    DelegateITKInputMacro ( SetUseImageSpacing, (bool) value );
+  }
+  int GetUseImageSpacing () {
+    DelegateITKOutputMacro ( GetUseImageSpacing );
+  } 
+  void UseImageSpacingOn () {
+    this->SetUseImageSpacing (true);
+  }
+  void UseImageSpacingOff () {
+    this->SetUseImageSpacing (false);
+  }
+  vtkImageData *GetVoronoiMap() {
+    this->vtkVoronoiMapImporter->Update(); 
+    return this->vtkVoronoiMapImporter->GetOutput();
+  } 
+  vtkImageData *GetDistanceMap() {
+    this->vtkDistanceMapImporter->Update();
+    return this->vtkDistanceMapImporter->GetOutput();
+  } 
 protected:
   //BTX
   typedef itk::DanielssonDistanceMapImageFilter<Superclass::InputImageType, Superclass::OutputImageType> ImageFilterType;
-  vtkITKDanielssonDistanceMapImageFilter() : Superclass ( ImageFilterType::New() ){};
+  typedef itk::VTKImageExport<OutputImageType> VoronoiMapExportType;
+  typedef itk::VTKImageExport<OutputImageType> DistanceMapExportType;
+
+  VoronoiMapExportType::Pointer itkVoronoiMapExporter;
+  DistanceMapExportType::Pointer itkDistanceMapExporter;  
+  vtkImageImport *vtkVoronoiMapImporter;  
+  vtkImageImport *vtkDistanceMapImporter; 
+ 
+  vtkITKDanielssonDistanceMapImageFilter() : Superclass ( ImageFilterType::New() ) {
+     //VoronoiMap 
+    this->itkVoronoiMapExporter = VoronoiMapExportType::New();
+    this->vtkVoronoiMapImporter = vtkImageImport::New();
+    ConnectPipelines(this->itkVoronoiMapExporter,this->vtkVoronoiMapImporter);
+    this->itkVoronoiMapExporter->SetInput((dynamic_cast<ImageFilterType*>(m_Filter.GetPointer()))->GetVoronoiMap());
+ 
+    //DistanceMap
+    this->itkDistanceMapExporter = DistanceMapExportType::New();
+    this->vtkDistanceMapImporter = vtkImageImport::New();
+    ConnectPipelines(this->itkDistanceMapExporter,this->vtkDistanceMapImporter);
+    this->itkDistanceMapExporter->SetInput((dynamic_cast<ImageFilterType*>(m_Filter.GetPointer()))->GetDistanceMap());
+  }
   ~vtkITKDanielssonDistanceMapImageFilter() {};
   ImageFilterType* GetImageFilterPointer() { return dynamic_cast<ImageFilterType*> ( m_Filter.GetPointer() ); }
-  //ETX
-  
+
+ //ETX
+
+ 
 private:
   vtkITKDanielssonDistanceMapImageFilter(const vtkITKDanielssonDistanceMapImageFilter&);  // Not implemented.
   void operator=(const vtkITKDanielssonDistanceMapImageFilter&);  // Not implemented.
 };
 
-vtkCxxRevisionMacro(vtkITKDanielssonDistanceMapImageFilter, "$Revision: 1.3.8.1 $");
+vtkCxxRevisionMacro(vtkITKDanielssonDistanceMapImageFilter, "$Revision: 1.3.8.1.2.1 $");
 vtkStandardNewMacro(vtkITKDanielssonDistanceMapImageFilter);
 
 #endif

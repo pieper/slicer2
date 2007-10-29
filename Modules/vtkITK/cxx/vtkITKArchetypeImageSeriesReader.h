@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKArchetypeImageSeriesReader.h,v $
-  Date:      $Date: 2005/12/20 22:55:44 $
-  Version:   $Revision: 1.7.2.1 $
+  Date:      $Date: 2007/10/29 15:32:06 $
+  Version:   $Revision: 1.7.2.1.2.1 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -208,6 +208,11 @@ public:
   vtkGetMacro(OutputScalarType, int);
 
   // Description:
+  // Get number of scalars
+  vtkSetMacro(NumberOfComponents, int);
+  vtkGetMacro(NumberOfComponents, int);
+
+  // Description:
   // Returns an IJK to RAS transformation matrix
   vtkMatrix4x4* GetRasToIjkMatrix();
 
@@ -219,6 +224,7 @@ protected:
   int DataExtent[6];
 
   int OutputScalarType;
+  int NumberOfComponents;
 
   double DefaultDataSpacing[3];
   double DefaultDataOrigin[3];
@@ -238,6 +244,7 @@ protected:
   CoordinateOrientationCode DesiredCoordinateOrientation;
 //ETX
   virtual void ExecuteInformation();
+  // defined in the subclasses
   virtual void ExecuteData(vtkDataObject *data);
 
 private:

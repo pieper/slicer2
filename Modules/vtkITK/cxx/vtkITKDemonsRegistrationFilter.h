@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkITKDemonsRegistrationFilter.h,v $
-  Date:      $Date: 2005/12/20 22:55:46 $
-  Version:   $Revision: 1.4.2.1 $
+  Date:      $Date: 2007/10/29 15:32:06 $
+  Version:   $Revision: 1.4.2.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkITKImageToImageFilter - Abstract base class for connecting ITK and VTK
@@ -78,8 +78,6 @@ private:
   void operator=(const vtkITKDemonsRegistrationFilter&);  // Not implemented.
 };
 
-//vtkCxxRevisionMacro(vtkITKDemonsRegistrationFilter, "$Revision: 1.4.2.1 $");
-//vtkStandardNewMacro(vtkITKDemonsRegistrationFilter);
 vtkRegistrationNewMacro(vtkITKDemonsRegistrationFilter);
 
 

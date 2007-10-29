@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSaveTracts.cxx,v $
-  Date:      $Date: 2006/07/07 18:23:11 $
-  Version:   $Revision: 1.5.2.2.2.2 $
+  Date:      $Date: 2007/10/29 15:42:59 $
+  Version:   $Revision: 1.5.2.2.2.3 $
 
 =========================================================================auto=*/
 #include "vtkSaveTracts.h"
@@ -19,7 +19,7 @@
 #include "vtkMrmlModelNode.h"
 
 #include "vtkPolyData.h"
-#include "vtkTubeFilter.h"
+#include "vtkTubeFilter2.h"
 #include "vtkProbeFilter.h"
 #include "vtkPointData.h"
 #include "vtkMath.h"
@@ -28,8 +28,10 @@
 #include "vtkProperty.h"
 
 #include "vtkFloatArray.h"
+#include "vtkIntArray.h"
 
 #include <sstream>
+#include <map>
 
 #include "vtkHyperStreamline.h"
 
@@ -58,7 +60,9 @@ vtkSaveTracts::vtkSaveTracts()
   // collections
   this->Streamlines = NULL;
   this->TubeFilters = NULL;
-  this->Actors = NULL;
+
+  //Display controller: we need this to access the color
+  this->Display = NULL;
 
   // optional input data
   this->InputTensorField = NULL;
@@ -105,20 +109,22 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
                                               char *name,
                                               vtkMrmlTree *colorTree)
 {
+
+  vtkCollection *currStreamlines;
+  vtkCollection *currTubeFilters;
   vtkHyperStreamline *currStreamline;
-  vtkTubeFilter *currTubeFilter;
-  vtkActor *currActor;
+  vtkTubeFilter2 *currTubeFilter;
   vtkCollection *collectionOfModels;
   vtkAppendPolyData *currAppender;
   vtkPolyDataWriter *writer;
   vtkTransformPolyDataFilter *currTransformer;
   vtkTransform *currTransform;
-  double R[1000], G[1000], B[1000];
+  unsigned char *R, *G, *B;
   int arraySize=1000;
-  int lastColor;
-  int currColor, newColor, idx, found;
+//  int lastColor, newColor;
+  int currColor, idx, found;
   vtkFloatingPointType rgb_vtk_float[3];
-  double rgb[3];
+  unsigned char rgb[3];
   std::stringstream fileNameStr;
   vtkMrmlTree *tree;
   vtkMrmlModelNode *currNode;
@@ -138,11 +144,14 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
       vtkErrorMacro("You need to set the TubeFilters before saving tracts.");
       return;
     }
-  if (this->Actors == 0) 
+
+  if (this->Display == 0) 
     {
-      vtkErrorMacro("You need to set the Actors before saving tracts.");
+      vtkErrorMacro("You need to set the Display controller before saving tracts.");
       return;
     }
+
+
 
   // If saving for analysis need to have tensors to save
   if (this->SaveForAnalysis) 
@@ -154,86 +163,88 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
         }
     }
 
-  // traverse streamline collection, grouping streamlines into models by color
-  this->Streamlines->InitTraversal();
-  this->TubeFilters->InitTraversal();
-  this->Actors->InitTraversal();
-  currStreamline= (vtkHyperStreamline *)this->Streamlines->GetNextItemAsObject();
-  currTubeFilter= (vtkTubeFilter *) this->TubeFilters->GetNextItemAsObject();
-  currActor= (vtkActor *)this->Actors->GetNextItemAsObject();
-
-  // test we have actors and streamlines
-  if (currActor == NULL || currStreamline == NULL || currTubeFilter == NULL)
-    {
-      vtkErrorMacro("No streamlines have been created yet.");
-      return;      
-    }
 
   // init things with the first streamline.
-  currActor->GetProperty()->GetColor(rgb);
-  currAppender = vtkAppendPolyData::New();
   collectionOfModels = vtkCollection::New();
-  collectionOfModels->AddItem((vtkObject *)currAppender);
-  lastColor=0;
-  R[0]=rgb[0];
-  G[0]=rgb[1];
-  B[0]=rgb[2];
+
+  vtkDebugMacro( << "Create colorTable that maps colors to group index and fiber index");
+  std::map<std::vector<unsigned char>,vtkIntArray *> colorTable;
+  std::map<std::vector<unsigned char>,vtkIntArray *>::iterator iter;
+  std::vector<unsigned char> rgbvec(3);
+  vtkIntArray *indexArray;
+
+  for (int k=0; k<this->Streamlines->GetNumberOfItems(); k++)
+    {
+    currStreamlines = (vtkCollection *) this->Streamlines->GetItemAsObject(k);  
+    for (int j=0; j< currStreamlines->GetNumberOfItems(); j++)
+      {  
+       currStreamline =(vtkHyperStreamline *) (currStreamlines->GetItemAsObject(j));
+       this->Display->GetStreamlineRGBInGroup(currStreamline,k,rgb);
+       rgbvec[0]=rgb[0];
+       rgbvec[1]=rgb[1];
+       rgbvec[2]=rgb[2];
+       iter= colorTable.find(rgbvec);
+       if (iter == colorTable.end()) 
+         {
+          //Create new entry in the table
+          indexArray = vtkIntArray::New();
+          indexArray->SetNumberOfComponents(2);
+          colorTable[rgbvec] = indexArray;
+          //Add data to array: group index, indexInGroup
+          indexArray->InsertNextTuple2(k,j);  
+         }
+       else 
+         {
+          indexArray = static_cast<vtkIntArray *> ((*iter).second);
+          indexArray->InsertNextTuple2(k,j);
+         }
+      }
+    }
+
+  // Get number of colors and initialize R,G,B arrays
+  int numColors=0;
+  for (iter = colorTable.begin(); iter != colorTable.end();iter++)
+    numColors++;
+
+  R = new unsigned char [numColors];
+  G = new unsigned char [numColors];
+  B = new unsigned char [numColors];
 
   vtkDebugMacro( << "Traverse STREAMLINES" );
-  while(currStreamline && currActor && currTubeFilter)
+  // loop throug each color in the color table
+  int groupIndex,indexInGroup;
+  currColor = 0;
+  for (iter = colorTable.begin(); iter != colorTable.end();iter++) 
     {
-      vtkDebugMacro( << "stream " << currStreamline);
-      currColor=0;
-      newColor=1;
-      // If we have this color already, store its index in currColor
-      while (currColor<=lastColor && currColor<arraySize)
-        {
-          currActor->GetProperty()->GetColor(rgb);
-          if (rgb[0]==R[currColor] &&
-              rgb[1]==G[currColor] &&
-              rgb[2]==B[currColor])
-            {
-              newColor=0;
-              break;
-            }
-          currColor++;
-        }
-
-      // if this is a new color, we must create a new model to save.
-      if (newColor)
-        {
-          // add an appender to the collection of models.
-          currAppender = vtkAppendPolyData::New();
-          collectionOfModels->AddItem((vtkObject *)currAppender);
-          // increment count of colors
-          lastColor=currColor;
-          // save this color's info in the array
-          R[currColor]=rgb[0];
-          G[currColor]=rgb[1];
-          B[currColor]=rgb[2];
-
-        }
-      else
-        {
-          // use the appender number currColor that we found in the while loop
-          currAppender = (vtkAppendPolyData *) 
-            collectionOfModels->GetItemAsObject(currColor);
-        }
-
-      // Append this streamline to the chosen model using the appender
-      if (this->SaveForAnalysis) {
-        currAppender->AddInput(currStreamline->GetOutput());
-      } 
-      else {
-        currAppender->AddInput(currTubeFilter->GetOutput());        
-      }
-      // get next objects in collections
-      currStreamline= (vtkHyperStreamline *)
-        this->Streamlines->GetNextItemAsObject();
-      currTubeFilter= (vtkTubeFilter *)
-        this->TubeFilters->GetNextItemAsObject();
-      currActor = (vtkActor *) this->Actors->GetNextItemAsObject();
-    }
+     //rgbvec = static_cast<std::vector<unsigned char>> (iter->first);
+     rgbvec = iter->first;
+     indexArray = static_cast<vtkIntArray *> (iter->second);
+     //this is a new color, we must create a new model to save.
+     // add an appender to the collection of models.
+     currAppender = vtkAppendPolyData::New();
+     collectionOfModels->AddItem((vtkObject *)currAppender);
+     // save this color's info in the array
+     R[currColor]=rgbvec[0];
+     G[currColor]=rgbvec[1];
+     B[currColor]=rgbvec[2];
+     currColor++;
+     for (int k = 0; k<indexArray->GetNumberOfTuples(); k++)
+       {
+       groupIndex= (int) indexArray->GetComponent(k,0);
+       indexInGroup= (int) indexArray->GetComponent(k,1);
+       currStreamlines = (vtkCollection *) this->Streamlines->GetItemAsObject(groupIndex);
+       currStreamline = (vtkHyperStreamline *) (currStreamlines->GetItemAsObject(indexInGroup));
+       currTubeFilters = (vtkCollection *) this->TubeFilters->GetItemAsObject(groupIndex);
+       currTubeFilter = (vtkTubeFilter2 *) (currTubeFilters->GetItemAsObject(indexInGroup));
+       // Append this streamline to the chosen model using the appender
+       if (this->SaveForAnalysis) {
+         currAppender->AddInput(currStreamline->GetOutput());
+         } 
+       else {
+         currAppender->AddInput(currTubeFilter->GetOutput());  
+         }      
+       }
+     }
   
   // traverse appender collection (collectionOfModels) and write each to disk
   vtkDebugMacro( << "Traverse APPENDERS");
@@ -469,9 +480,9 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
       if (found == 0) 
         {
           currColorNode = vtkMrmlColorNode::New();
-          rgb_vtk_float[0] = R[idx];
-          rgb_vtk_float[1] = G[idx];
-          rgb_vtk_float[2] = B[idx];
+          rgb_vtk_float[0] = ((float) R[idx])/255.0;
+          rgb_vtk_float[1] = ((float) G[idx])/255.0;
+          rgb_vtk_float[2] = ((float) B[idx])/255.0;
           currColorNode->SetDiffuseColor(rgb_vtk_float);
           colorNameStr.str("");
           colorNameStr << "class_" << idx ;
@@ -514,7 +525,7 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
         colorTreeTwo->GetNextItemAsObject();
     }
   
-  // Write the MRML file
+  // Write the MRML filef_
   fileNameStr.str("");
   fileNameStr << filename << ".xml";
   tree->Write((char *)fileNameStr.str().c_str());
@@ -528,6 +539,17 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
   tree->Delete();
   colorTreeTwo->Delete();
   currTransform->Delete();
+
+  // Delete R,G,B arrays
+  delete [] R;
+  delete [] G;
+  delete [] B;
+
+  // Delete vtkIntArrays in color table
+  for (iter = colorTable.begin(); iter != colorTable.end();iter++) {
+    indexArray = static_cast<vtkIntArray *> (iter->second);
+    indexArray->Delete();
+  }
 
   vtkDebugMacro( << "Done.");
 }

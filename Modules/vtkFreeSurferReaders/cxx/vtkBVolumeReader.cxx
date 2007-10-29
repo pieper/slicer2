@@ -7,19 +7,21 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkBVolumeReader.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:36 $
-  Version:   $Revision: 1.9.2.1 $
+  Date:      $Date: 2007/10/29 15:35:08 $
+  Version:   $Revision: 1.9.2.1.2.1 $
 
 =========================================================================auto=*/
-/*=========================================================================
+#include "vtkBVolumeReader.h"
+#include "vtkObjectFactory.h"
+#include "vtkShortArray.h"
+#include "vtkUnsignedCharArray.h"
+#include "vtkFloatArray.h"
+#include "vtkIntArray.h"
+#include "vtkImageData.h"
+#include "vtkMatrix4x4.h"
+#include "vtkPointData.h"
+#include "vtkFSIO.h"
 
-  Program:   Visualization Toolkit
-  Module:    $RCSfile: vtkBVolumeReader.cxx,v $
-  Language:  C++
-  Date:      $Date: 2005/12/20 22:55:36 $
-  Version:   $Revision: 1.9.2.1 $
-
-=========================================================================*/
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <ctype.h>
@@ -28,13 +30,6 @@
 #else
 #include <unistd.h>
 #endif
-#include "vtkBVolumeReader.h"
-#include "vtkShortArray.h"
-#include "vtkUnsignedCharArray.h"
-#include "vtkFloatArray.h"
-#include "vtkIntArray.h"
-#include "vtkObjectFactory.h"
-#include "vtkFSIO.h"
 
 vtkBVolumeReader* vtkBVolumeReader::New()
 {
@@ -251,10 +246,8 @@ vtkDataArray *vtkBVolumeReader::ReadVolumeData()
   int numReadTotal;
   int numReadSlice;
   int tupleNum;
-  int slice;
   int elementSize;
   short s;
-  int i;
   float f;
 
     vtkDebugMacro(<<"\n\n\n\n\n\n\n\n\n\n***************\nvtkBvolumeReader: ReadVolumeData\n");
@@ -402,7 +395,8 @@ vtkDataArray *vtkBVolumeReader::ReadVolumeData()
                   numReadTotal += numRead;
                   tupleNum++;
               }
-              this->UpdateProgress(1.0*numReadTotal/totalPoints);
+              // too frequent, slows down reading
+              //this->UpdateProgress(1.0*numReadTotal/totalPoints);
           }
           
           
@@ -419,6 +413,7 @@ vtkDataArray *vtkBVolumeReader::ReadVolumeData()
           scalars->Delete();
           return NULL;
       }
+      this->UpdateProgress(1.0*sliceNumber/this->DataDimensions[2]);
   }
 
   this->SetProgressText("");
@@ -441,12 +436,7 @@ vtkDataArray *vtkBVolumeReader::ReadVolumeData()
 int vtkBVolumeReader::ReadVolumeHeader()
 {
   FILE *fp;
-  int numTimePoints;
-  int numFiles;
-  int xDimension;
-  int yDimension;
   char fileName[1024];
-  char extension[1024];
   char headerFileName[1024];
   char input[1024];
   char* line;
@@ -497,7 +487,7 @@ int vtkBVolumeReader::ReadVolumeHeader()
   fp = fopen( headerFileName, "r" );
   if( NULL != fp ) {
 
-      vtkDebugMacro(<<"ReadVolumeHeader: sucess opening " << headerFileName);
+      vtkDebugMacro(<<"ReadVolumeHeader: success opening " << headerFileName);
       
     while( !feof(fp) ){
 
@@ -532,7 +522,10 @@ int vtkBVolumeReader::ReadVolumeHeader()
                     sscanf(line, "%*s %d", &ds2);
                     this->DataSpacing[2] = (float)ds2;
                 } else {
-                    sscanf(line, "%*s %f", &this->DataSpacing[2]);
+                  // To support VTK4.2/VTK4.4
+                  float z;
+                  sscanf(line, "%*s %f", &z);
+                  this->DataSpacing[2] = z;
                 }
                 vtkDebugMacro(<<"vtkBVolumeReader: Read Volume Header: got slice thickness " << this->DataSpacing[2]);
             }
@@ -543,7 +536,7 @@ int vtkBVolumeReader::ReadVolumeHeader()
             else if(strncmp(line, "image_ti: ", 10) == 0)
                 sscanf(line, "%*s %f", &this->TI);
             else if(strncmp(line, "flip_angle: ", 10) == 0)
-                sscanf(line, "%*s %lf", &this->FlipAngle);
+                sscanf(line, "%*s %f", &this->FlipAngle);
             else if(strncmp(line, "top_left_r: ", 12) == 0)
             {
                 sscanf(line, "%*s %g", &tlr);
@@ -681,13 +674,15 @@ int vtkBVolumeReader::ReadVolumeHeader()
           }
       }
       this->DataDimensions[2] = numSlices;
-      vtkDebugMacro(<<"\n*\n*\n*\n*\n*\n*\n*\n*\nReadVolumeHeader: got numSlices = " << numSlices << ", using it as DataDimensions[2]\nSetting Dataspacing to be 1, 1, 1");
+      vtkDebugMacro(<<"\n*\n*\n*\n*\n*\n*\n*\n*\nReadVolumeHeader: got numSlices = " << numSlices << ", using it as DataDimensions[2]\nSetting Dataspacing to be 1, 1, 1\n");
       
       // We don't have any spacing information, so assign defaults.
       this->DataSpacing[0] = 1.0;
       this->DataSpacing[1] = 1.0;
       this->DataSpacing[2] = 1.0;
   }
+  vtkDebugMacro(<<"*\n*\n*\nReadVolumeHeader: done\n\tData dimensions = (" << this->DataDimensions[0] << ", "   << this->DataDimensions[1] << ", " << this->DataDimensions[2] << ")\n\tData Spacing: (" << this->DataSpacing[0] << ", " << this->DataSpacing[1] << ", " << this->DataSpacing[2] << ")\n");
+  
   return 1;
 }
 

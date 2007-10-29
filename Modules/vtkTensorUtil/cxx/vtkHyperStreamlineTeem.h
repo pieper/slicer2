@@ -4,7 +4,6 @@
 #include "vtkTensorUtilConfigure.h"
 #include "vtkHyperStreamline.h"
 #include "vtkHyperStreamlineDTMRI.h"
-#include "vtkHyperPointandArray.h"
 #include "vtkTensorMathematics.h"
 #include "vtkFloatArray.h"
 

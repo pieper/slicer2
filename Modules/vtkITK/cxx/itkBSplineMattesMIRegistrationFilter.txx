@@ -113,6 +113,8 @@ void itk::itkBSplineMattesMIRegistrationFilter<TImageClass>::GenerateData()
     m_Registration->StartRegistration(); 
   } 
   catch( ProcessAborted & excp ) {
+    std::cout << "itkBSplineMattesMIRegistrationFilter:ProcessAborted caught !" << std::endl;
+    std::cout << excp << std::endl;
   }
   catch( itk::ExceptionObject & err ) { 
     std::cout << "itkTransformRegistrationFilter:ExceptionObject caught !" << std::endl; 

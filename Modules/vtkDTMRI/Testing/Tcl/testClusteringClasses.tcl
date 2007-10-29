@@ -36,7 +36,7 @@ exampleObject SetNumberOfSides 18
 # botttom of the cube.
 exampleObject SetStoppingThreshold 0
 exampleObject SetStoppingModeToLinearMeasure
-exampleObject SetMaxCurvature 10
+exampleObject SetRadiusOfCurvature 10
 # Give the streamControl this object to copy new ones from
 [streamControl GetSeedTracts] SetVtkHyperStreamlinePointsSettings exampleObject
 

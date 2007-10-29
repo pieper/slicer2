@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterSuperClassNode.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:24 $
-  Version:   $Revision: 1.15.2.1 $
+  Date:      $Date: 2007/10/29 15:39:23 $
+  Version:   $Revision: 1.15.2.1.2.1 $
 
 =========================================================================auto=*/
 //#include <stdio.h>
@@ -48,6 +48,43 @@ vtkMrmlSegmenterSuperClassNode::vtkMrmlSegmenterSuperClassNode() {
   this->PCAShapeModelType = 0;
   this->RegistrationIndependentSubClassFlag = 0;
   this->AtlasNode = vtkMrmlSegmenterAtlasSuperClassNode::New();
+
+  this->ParameterInitSubClass =  0;
+  this->ParameterSaveToFile   =  0;
+  this->ParameterSetFromFile  =  0;
+
+  this->PredefinedLabelID = -1;
+
+  this->PCARegistrationNumOfPCAParameters = -1;
+  this->PCARegistrationVectorDimension = -1;
+  this->PCARegistrationMean = NULL;
+  this->PCARegistrationEigenMatrix = NULL; 
+  this->PCARegistrationEigenValues = NULL;
+
+  this->InhomogeneityInitialDataNames = NULL;
+
+}
+
+vtkMrmlSegmenterSuperClassNode::~vtkMrmlSegmenterSuperClassNode() {
+  this->AtlasNode->Delete();
+  if (this->PCARegistrationMean) {
+    delete[] this->PCARegistrationMean;
+    this->PCARegistrationMean = NULL;
+  }
+
+  if (this->PCARegistrationEigenMatrix) {
+    delete[] this->PCARegistrationEigenMatrix;
+    this->PCARegistrationEigenMatrix = NULL; 
+  }
+  if (this->PCARegistrationEigenValues) {
+    delete[] this->PCARegistrationEigenValues;
+    this->PCARegistrationEigenValues = NULL;
+  }
+
+  if (this->InhomogeneityInitialDataNames) {
+    delete[] InhomogeneityInitialDataNames;
+    this->InhomogeneityInitialDataNames = NULL;
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -59,19 +96,30 @@ void vtkMrmlSegmenterSuperClassNode::Write(ofstream& of, int nIndent)
   this->vtkMrmlSegmenterGenericClassNode::Write(of);
   this->AtlasNode->Write(of);
 
-  of << " PrintEMLabelMapConvergence='" << this->PrintEMLabelMapConvergence <<  "'";
-  of << " PrintEMWeightsConvergence='" << this->PrintEMWeightsConvergence  <<  "'";
-  of << " PrintMFALabelMapConvergence='" << this->PrintMFALabelMapConvergence <<  "'";
-  of << " PrintMFAWeightsConvergence='" << this->PrintMFAWeightsConvergence  <<  "'";
+  if (this->PrintEMLabelMapConvergence)  of << " PrintEMLabelMapConvergence='" << this->PrintEMLabelMapConvergence <<  "'";
+  if (this->PrintEMWeightsConvergence)   of << " PrintEMWeightsConvergence='" << this->PrintEMWeightsConvergence  <<  "'";
+  if (this->PrintMFALabelMapConvergence) of << " PrintMFALabelMapConvergence='" << this->PrintMFALabelMapConvergence <<  "'";
+  if (this->PrintMFAWeightsConvergence)   of << " PrintMFAWeightsConvergence='" << this->PrintMFAWeightsConvergence  <<  "'";
 
-  of << " RegistrationType='" << this->RegistrationType << "' ";
-  of << " StopStopBiasCalculation='" << this->StopBiasCalculation <<  "'";
-  of << " GenerateBackgroundProbability='" << this->GenerateBackgroundProbability <<  "'";
-  of << " PrintShapeSimularityMeasure='" << this->PrintShapeSimularityMeasure << "'";
-  of << " PCAShapeModelType='" << this->PCAShapeModelType << "'";
-  of << " RegistrationIndependentSubClassFlag='" << this->RegistrationIndependentSubClassFlag << "'";
+  if (this->RegistrationType)                    of << " RegistrationType='" << this->RegistrationType << "' ";
+  if (this->StopBiasCalculation > -1)            of << " StopStopBiasCalculation='" << this->StopBiasCalculation <<  "'";
+  if (this->GenerateBackgroundProbability)       of << " GenerateBackgroundProbability='" << this->GenerateBackgroundProbability <<  "'";
+  if (this->PrintShapeSimularityMeasure)          of << " PrintShapeSimularityMeasure='" << this->PrintShapeSimularityMeasure << "'";
+  if (this->PCAShapeModelType)                   of << " PCAShapeModelType='" << this->PCAShapeModelType << "'";
+  if (this->RegistrationIndependentSubClassFlag) of << " RegistrationIndependentSubClassFlag='" << this->RegistrationIndependentSubClassFlag << "'";
+  if (this->PredefinedLabelID > -1) of << " PredefinedLabelID ='" << this->PredefinedLabelID << "'";
+  if (this->ParameterInitSubClass)  of << " ParameterInitSubClass='"<< this->ParameterInitSubClass << "'";
+  if (this->ParameterSaveToFile)    of << " ParameterSaveToFile='"<< this->ParameterSaveToFile << "'";
+  if (this->ParameterSetFromFile)   of << " ParameterSetFromFile='"<< this->ParameterSetFromFile << "'";
+
+  if (this->PCARegistrationNumOfPCAParameters > 0) of << " PCARegistrationNumOfPCAParameters ='" << this->PCARegistrationNumOfPCAParameters << "'";
+  if (this->PCARegistrationVectorDimension > 0) of << " PCARegistrationVectorDimension ='" << this->PCARegistrationVectorDimension << "'";
+  if (this->PCARegistrationMean        && strcmp(this->PCARegistrationMean, "")) of << " PCARegistrationMean ='" << this->PCARegistrationMean << "'";
+  if (this->PCARegistrationEigenMatrix && strcmp(this->PCARegistrationEigenMatrix, "")) of << " PCARegistrationEigenMatrix ='" << this->PCARegistrationEigenMatrix << "'";
+  if (this->PCARegistrationEigenValues && strcmp(this->PCARegistrationEigenValues, "")) of << " PCARegistrationEigenValues ='" << this->PCARegistrationEigenValues << "'";
+ 
+  if (this->InhomogeneityInitialDataNames &&  strcmp(this->InhomogeneityInitialDataNames, "")) of << " InhomogeneityInitialDataNames ='" << this->InhomogeneityInitialDataNames << "'";
   of << ">\n";
-
 }
 
 //----------------------------------------------------------------------------
@@ -94,6 +142,17 @@ void vtkMrmlSegmenterSuperClassNode::Copy(vtkMrmlNode *anode)
   this->PrintShapeSimularityMeasure   = node->PrintShapeSimularityMeasure;
   this->PCAShapeModelType             = node->PCAShapeModelType;
   this->RegistrationIndependentSubClassFlag = node->RegistrationIndependentSubClassFlag;
+  this->PredefinedLabelID             = node->PredefinedLabelID;
+  this->ParameterInitSubClass         = node->ParameterInitSubClass;
+  this->ParameterSaveToFile           = node->ParameterSaveToFile;
+  this->ParameterSetFromFile          = node->ParameterSetFromFile;
+
+  this->PCARegistrationNumOfPCAParameters = node->PCARegistrationNumOfPCAParameters;
+  this->PCARegistrationVectorDimension    = node->PCARegistrationVectorDimension;
+  this->SetPCARegistrationMean(node->PCARegistrationMean);
+  this->SetPCARegistrationEigenMatrix(node->PCARegistrationEigenMatrix); 
+  this->SetPCARegistrationEigenValues(node->PCARegistrationEigenValues);
+  this->SetInhomogeneityInitialDataNames(node->InhomogeneityInitialDataNames);
 }
 
 //----------------------------------------------------------------------------
@@ -113,4 +172,15 @@ void vtkMrmlSegmenterSuperClassNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "PrintShapeSimularityMeasure:   " << this->PrintShapeSimularityMeasure << "\n";
   os << indent << "PCAShapeModelType:             " << this->PCAShapeModelType << "\n";
   os << indent << "RegistrationIndependentSubClassFlag: " << this->RegistrationIndependentSubClassFlag << "\n";
+  os << indent << "PredefinedLabelID:             " << this->PredefinedLabelID << "\n";
+  os << indent << "ParameterInitSubClass:         " << this->ParameterInitSubClass << "\n";
+  os << indent << "ParameterSaveToFile:           " << this->ParameterSaveToFile << "\n";
+  os << indent << "ParameterSetFromFile:          " << this->ParameterSetFromFile << "\n";
+
+  os << indent << "PCARegistrationNumOfPCAParameters: " << this->PCARegistrationNumOfPCAParameters << "\n";
+  os << indent << "PCARegistrationVectorDimension:    " << this->PCARegistrationVectorDimension << "\n";
+  os << indent << "PCARegistrationMean:               " << (this->PCARegistrationMean ? this->PCARegistrationMean : "(none)" ) << "\n";
+  os << indent << "PCARegistrationEigenMatrix:        " << (this->PCARegistrationEigenMatrix ? this->PCARegistrationEigenMatrix :"(none)" ) << "\n";
+  os << indent << "PCARegistrationEigenValues:        " << (this->PCARegistrationEigenValues ? this->PCARegistrationEigenValues : "(none)" ) << "\n";
+  os << indent << "InhomogeneityInitialDataNames:     " << (this->InhomogeneityInitialDataNames ? this->InhomogeneityInitialDataNames : "(none)") << "\n";
 }

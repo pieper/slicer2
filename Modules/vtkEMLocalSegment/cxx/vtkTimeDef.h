@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTimeDef.h,v $
-  Date:      $Date: 2007/04/18 18:20:57 $
-  Version:   $Revision: 1.1.2.1.2.1 $
+  Date:      $Date: 2007/10/29 15:39:23 $
+  Version:   $Revision: 1.1.2.1.2.2 $
 
 =========================================================================auto=*/
 #ifndef __vtkTimeDef_h
@@ -42,8 +42,8 @@ extern time_t timeCount; /* In seconds */
 extern time_t timer_Start;
 extern time_t timer_Stop;
 
-// extern struct timeval preciseTimeStart;
-// extern struct timeval preciseTimeEnd;
+extern "C" struct timeval preciseTimeStart;
+extern "C" struct timeval preciseTimeEnd;
 extern long milliSecondDifferences;
 
 #define START_PRECISE_TIMING \

@@ -7,10 +7,11 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPruneStreamline.h,v $
-  Date:      $Date: 2006/07/07 18:21:13 $
-  Version:   $Revision: 1.4.2.1.2.2 $
-
+  Date:      $Date: 2007/10/29 15:42:59 $
+  Version:   $Revision: 1.4.2.1.2.3 $
 =========================================================================auto=*/
+
+
 
 // .NAME vtkPruneStreamline - transform points and associated normals and vectors for polygonal dataset
 // .SECTION Description

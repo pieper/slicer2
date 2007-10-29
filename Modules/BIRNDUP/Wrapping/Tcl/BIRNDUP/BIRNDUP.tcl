@@ -1,5 +1,6 @@
 package require vtk
 package require vtkinteraction
+package require iSlicer
 
 #
 # rely on the fact that a class loaded from the shared
@@ -18,6 +19,7 @@ if { [info commands dup] == "" } {
         dup_deidentify.tcl
         dup_review.tcl
         dup_upload.tcl
+        dup_slicer_utils.tcl
         }
         
     foreach f $files {

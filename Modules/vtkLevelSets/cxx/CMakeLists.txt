@@ -14,7 +14,7 @@ INCLUDE (${VTKLEVELSETS_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 # Create the vtkLevelSets C++ library
 #
 # (Doesn't work here because of a CMake bug)
-# ADD_LIBRARY (vtkLevelSets LOCAL_MODULE_SRCS)
+# ADD_LIBRARY (vtkLevelSets ${LOCAL_MODULE_SRCS})
 
 #
 # Create the vtkLevelSets Tcl library
@@ -22,9 +22,10 @@ INCLUDE (${VTKLEVELSETS_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 
 IF (VTK_WRAP_TCL AND VTKLEVELSETS_WRAP_TCL)
 
-  VTK_WRAP_TCL (vtkLevelSetsTCL LevelSetsTCL_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkLevelSetsTCL LevelSetsTCL_SRCS)
+  VTK_WRAP_TCL (vtkLevelSetsTCL LevelSetsTCL_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkLevelSetsTCL ${LevelSetsTCL_SRCS})
   TARGET_LINK_LIBRARIES (vtkLevelSetsTCL 
+                         vtkLevelSets
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
@@ -55,16 +56,17 @@ ENDIF (VTK_WRAP_TCL AND VTKLEVELSETS_WRAP_TCL)
 
 IF (VTK_WRAP_PYTHON AND VTKLEVELSETS_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkLevelSetsPython LevelSetsPython_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_PYTHON (vtkLevelSetsPython LevelSetsPython_SRCS ${LOCAL_MODULE_SRCS})
 
   IF (APPLE)
-    ADD_LIBRARY (vtkLevelSetsPython MODULE LevelSetsPython_SRCS)
+    ADD_LIBRARY (vtkLevelSetsPython MODULE ${LevelSetsPython_SRCS})
   ELSE (APPLE)
-    ADD_LIBRARY (vtkLevelSetsPython SHARED LevelSetsPython_SRCS)
+    ADD_LIBRARY (vtkLevelSetsPython SHARED ${LevelSetsPython_SRCS})
   ENDIF (APPLE)
 
   IF (WIN32)
     TARGET_LINK_LIBRARIES (vtkLevelSetsPython 
+                           vtkLevelSets
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -74,6 +76,7 @@ IF (VTK_WRAP_PYTHON AND VTKLEVELSETS_WRAP_PYTHON)
                            optimized ${PYTHON_LIBRARY})
   ELSE (WIN32)
     TARGET_LINK_LIBRARIES (vtkLevelSetsPython 
+                           vtkLevelSetsPython 
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -106,9 +109,10 @@ ENDIF (VTK_WRAP_PYTHON AND VTKLEVELSETS_WRAP_PYTHON)
 
 IF (VTK_WRAP_JAVA AND VTKLEVELSETS_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkLevelSetsJava LevelSetsJava_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkLevelSetsJava SHARED LevelSetsJava_SRCS)
+  VTK_WRAP_JAVA (vtkLevelSetsJava LevelSetsJava_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkLevelSetsJava SHARED ${LevelSetsJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkLevelSetsJava 
+                         vtkLevelSets
                          vtkIOJava
                          vtkGraphicsJava
                          vtkImagingJava 
@@ -136,7 +140,7 @@ ENDIF (VTK_WRAP_JAVA AND VTKLEVELSETS_WRAP_JAVA)
 # Link to VTK and local
 #
 
-LINK_LIBRARIES (
+TARGET_LINK_LIBRARIES (
   vtkLevelSets
   vtkIO
   vtkGraphics
@@ -146,17 +150,17 @@ LINK_LIBRARIES (
 )
 
 IF (VTK_USE_HYBRID)
-  LINK_LIBRARIES (vtkHybrid)
+  TARGET_LINK_LIBRARIES (vtkLevelSets vtkHybrid)
 ENDIF (VTK_USE_HYBRID)
 
 IF (VTK_USE_PARALLEL)
-  LINK_LIBRARIES (vtkParallel)
+  TARGET_LINK_LIBRARIES (vtkLevelSets vtkParallel)
 ENDIF (VTK_USE_PARALLEL)
 
 IF (VTK_USE_PATENTED)
-  LINK_LIBRARIES (vtkPatented)
+  TARGET_LINK_LIBRARIES (vtkLevelSets vtkPatented)
 ENDIF (VTK_USE_PATENTED)
 
 IF (VTK_USE_RENDERING)
-  LINK_LIBRARIES (vtkRendering)
+  TARGET_LINK_LIBRARIES (vtkLevelSets vtkRendering)
 ENDIF (VTK_USE_RENDERING)

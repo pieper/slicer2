@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMSegmentAutoSample.tcl,v $
-#   Date:      $Date: 2005/12/20 22:55:26 $
-#   Version:   $Revision: 1.6.8.1 $
+#   Date:      $Date: 2007/10/29 15:39:36 $
+#   Version:   $Revision: 1.6.8.1.2.1 $
 # 
 #===============================================================================
 # FILE:        EMSegmentAutoSample.tcl
@@ -101,7 +101,7 @@ proc EMSegmentGaussCurveCalculation {CutOffProbability LogGaussFlag MRIVolumeLis
     
     set data   [MathImg GetOutput]
     set ROIVoxel 0   
-    for {set i 0} {$i <= $index} {incr i} { incr ROIVoxel [expr int([$data $::getScalarComponentAs $i 0 0 0])] }
+    for {set i 0} {$i <= $index} {incr i} { incr ROIVoxel [expr int([$data GetScalarComponentAsFloat $i 0 0 0])] }
     if  {$ROIVoxel == 0} {
         MathImg   Delete
         return
@@ -109,18 +109,18 @@ proc EMSegmentGaussCurveCalculation {CutOffProbability LogGaussFlag MRIVolumeLis
     set CutOffVoxel [expr $ROIVoxel*(1.0 - $CutOffProbability)]
     # Add instructions so if border is to high you can set a flag so that the the highest probability will be stilll sampled  
     for {set i  $index} {$i > -1} {incr i -1} {
-    incr EMSegment(GaussCurveCalc,Sum) [expr int ([$data $::getScalarComponentAs $i 0 0 0])]
+        incr EMSegment(GaussCurveCalc,Sum) [expr int ([$data GetScalarComponentAsFloat $i 0 0 0])]
         # puts "$i [expr int ([$data $::getScalarComponentAs $i 0 0 0])]"
-    if {$EMSegment(GaussCurveCalc,Sum) > $CutOffVoxel} { 
-        if {$i == $index } {
-        puts "Warning: CutOffProbabiliyt ($CutOffProbability) is set to low ! No samples could be taken => Redefine it !"
-        set CutOffVoxel $EMSegment(GaussCurveCalc,Sum)
-        } else {
-        set EMSegment(GaussCurveCalc,CutOffAbsolut) [expr $i+$Min +1] 
-        set EMSegment(GaussCurveCalc,Sum) [expr $EMSegment(GaussCurveCalc,Sum) - int([$data $::getScalarComponentAs $i 0 0 0])]
-        break
+        if {$EMSegment(GaussCurveCalc,Sum) > $CutOffVoxel} { 
+          if {$i == $index } {
+            puts "Warning: CutOffProbabiliyt ($CutOffProbability) is set to low ! No samples could be taken => We redefine to [expr 100 - int(double($EMSegment(GaussCurveCalc,Sum))/double($ROIVoxel)*1000)/10.0] % !"
+            set CutOffVoxel $EMSegment(GaussCurveCalc,Sum)
+          } else {
+            set EMSegment(GaussCurveCalc,CutOffAbsolut) [expr $i+$Min +1] 
+            set EMSegment(GaussCurveCalc,Sum) [expr $EMSegment(GaussCurveCalc,Sum) - int([$data GetScalarComponentAsFloat $i 0 0 0])]
+            break
+          }
         }
-    }
     }
     # If it went through all of it you have to set it to $min !
     if  {$EMSegment(GaussCurveCalc,CutOffAbsolut) == 0 } {set EMSegment(GaussCurveCalc,CutOffAbsolut) $Min}
@@ -189,7 +189,7 @@ proc EMSegmentGaussCurveCalculation {CutOffProbability LogGaussFlag MRIVolumeLis
     set Xindex  $Index($i)
     # If you get an error message here 
     for {set x $max($i)} {$x >= $min($i)} {incr x -1} {
-        set temp [$data $::getScalarComponentAs $Xindex 0 0 0]
+        set temp [$data GetScalarComponentAsFloat $Xindex 0 0 0]
         # if {($x > 103) && ($x < 107)} {
         #        puts "Du $x [$data $::getScalarComponentAs $Xindex 0 0 0]"
         #        }
@@ -213,7 +213,7 @@ proc EMSegmentGaussCurveCalculation {CutOffProbability LogGaussFlag MRIVolumeLis
     for {set x $MinBorder($i)} {$x <= $MaxBorder($i)} {incr x} {
         if {$EMSegment(GaussCurveCalc,LogGaussFlag)} { set  temp [expr log($x) - $EMSegment(GaussCurveCalc,Mean,$i)]
         } else {set  temp [expr $x - 1 - $EMSegment(GaussCurveCalc,Mean,$i)]}
-        set EMSegment(GaussCurveCalc,Covariance,$i,$i) [expr $EMSegment(GaussCurveCalc,Covariance,$i,$i) + $temp*$temp * [$data $::getScalarComponentAs $Xindex 0 0 0]]
+        set EMSegment(GaussCurveCalc,Covariance,$i,$i) [expr $EMSegment(GaussCurveCalc,Covariance,$i,$i) + $temp*$temp * [$data GetScalarComponentAsFloat $Xindex 0 0 0]]
         incr Xindex
     }
     set min($i) $MinBorder($i)
@@ -250,7 +250,7 @@ proc EMSegmentGaussCurveCalculation {CutOffProbability LogGaussFlag MRIVolumeLis
         for {set x $min(2)} {$x <= $max(2)} {incr x} {
         if {$EMSegment(GaussCurveCalc,LogGaussFlag)} { set  Xtemp [expr log($x) - $EMSegment(GaussCurveCalc,Mean,2)]
             } else {set  Xtemp [expr $x - 1 - $EMSegment(GaussCurveCalc,Mean,2)]}
-        set EMSegment(GaussCurveCalc,Covariance,1,2) [expr $EMSegment(GaussCurveCalc,Covariance,1,2) + $Xtemp*$Ytemp * [$data $::getScalarComponentAs $Yindex $Xindex 0 0]]
+        set EMSegment(GaussCurveCalc,Covariance,1,2) [expr $EMSegment(GaussCurveCalc,Covariance,1,2) + $Xtemp*$Ytemp * [$data GetScalarComponentAsFloat $Yindex $Xindex 0 0]]
         # if {[$data $::getScalarComponentAs $Yindex $Xindex 0 0]} {
             # puts " $Yindex $Xindex [$data $::getScalarComponentAs $Yindex $Xindex 0 0]"
             # }

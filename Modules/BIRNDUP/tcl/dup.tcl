@@ -6,13 +6,14 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:46 $
-#   Version:   $Revision: 1.12.2.1 $
+#   Date:      $Date: 2007/10/29 15:55:19 $
+#   Version:   $Revision: 1.12.2.1.2.1 $
 # 
 #===============================================================================
 # FILE:        dup.tcl
 # PROCEDURES:  
 #   dup_demo
+#   dup_main
 #   BIRNDUPInterface
 #==========================================================================auto=
 
@@ -37,6 +38,8 @@ upload pipeline (birndup)
 # Default resources
 # 
 option add *dup.appname "BIRN Deidentification and Upload Pipeline" widgetDefault
+option add *dup.exitonclose "false" widgetDefault
+option add *dup.birndup_dir "." widgetDefault
 
 #
 # The class definition - define if needed (not when re-sourcing)
@@ -47,6 +50,8 @@ if { [itcl::find class dup] == "" } {
         inherit iwidgets::Mainwindow
 
         itk_option define -appname appname Appname {}
+        itk_option define -exitonclose exitonclose Exitonclose {}
+        itk_option define -birndup_dir birndup_dir Birndup_dir {}
 
         constructor {args} {}
         destructor {}
@@ -58,6 +63,8 @@ if { [itcl::find class dup] == "" } {
         variable _deidentify
         variable _review
         variable _upload
+
+        variable _w
 
 
         method menus {} {}
@@ -94,10 +101,10 @@ itcl::body dup::constructor {args} {
 
     foreach p {sort deidentify review upload} {
         $cs.panes add $p
-        set w [$cs.panes childsite $p]
-        set _$p $w.$p
-        label $w.l -text [string totitle $p] -bg white
-        pack $w.l -side top -fill x
+        set _w [$cs.panes childsite $p]
+        set _$p $_w.$p
+        label $_w.l -text [string totitle $p] -bg white
+        pack $_w.l -side top -fill x
         pack [dup_$p [set _$p]] -fill both -expand true
     }
 
@@ -124,6 +131,9 @@ itcl::body dup::constructor {args} {
 
 
 itcl::body dup::destructor {} {
+    if { $itk_option(-exitonclose) } {
+        exit
+    }
 }
 
 
@@ -162,13 +172,13 @@ itcl::body dup::menus {} {
 
 itcl::body dup::about_dialog {} {
     
-    DevInfoWindow "Biomedical Informatics Research Network\nDeidentification and Upload Pipeline.\n\nwww.nbirn.net\n\nFor Evaluation Use Only."
+    dup_DevInfoWindow "Biomedical Informatics Research Network\nDeidentification and Upload Pipeline.\n\nwww.nbirn.net\n\nFor Evaluation Use Only."
 
 }
 
 itcl::body dup::help {} {
 
-    DevInfoWindow "Biomedical Informatics Research Network\nDeidentification and Upload Pipeline.\n\nwww.nbirn.net\n\nFor Evaluation Use Only."
+    dup_DevInfoWindow "For information about this software, see: http://www.na-mic.org/Wiki/index.php/MBIRN:BIRNDUP:Distribution"
 }
 
 itcl::body dup::fill { {dir "choose"} } {
@@ -188,15 +198,24 @@ itcl::body dup::load_example { {dir "choose"} } {
 
     if { $dir == "choose" } {
         set dir [tk_chooseDirectory \
-                    -initialdir $::env(SLICER_HOME)/../data/birndup/Project_a-for-review \
-                    -title "Select Example Review Directory" ]
+                    -initialdir [$this pref DEFACE_DIR]/../example-data/Project_x \
+                    -title "Select Example Project Review Directory" ]
     }
     
     if { $dir != "" } {
+        set target [$this pref DEFACE_DIR]/[file tail $dir]
+        if { [file exists $target] } {
+            set ret [dup_DevOKCancel "Directory $target already exists - delete it?"]
+            if { $ret == "ok" } {
+                file delete -force $target
+            } else {
+                return
+            }
+        }
         file copy -force $dir [$this pref DEFACE_DIR]
     }
 
-    $this refresh review
+    $this refresh
 }
 
 itcl::body dup::refresh { {pane "all"} } {
@@ -250,18 +269,15 @@ itcl::body dup::prefs { } {
     set BIRN [file normalize $::env(SLICER_HOME)/..]
     set _prefs(INSTITUTION) BWH
     set _prefs(INSTITUTION,help) "Prefix for BIRN ID - 3 or 4 character, e.g. BWH"
-    set _prefs(DEFACE_DIR) $BIRN/deface
-    set _prefs(DEFACE_DIR,help) "Staging directory for files to upload"
     set _prefs(LINKTABLE) $BIRN/deface/linktable
     set _prefs(LINKTABLE,help) "Link table for storing the map between clinical ID and BIRN ID"
-    set _prefs(DCANON_DIR) $BIRN/dcanon
-    set _prefs(DCANON_DIR,help) "Location of dcanon programs."
-    set _prefs(UPLOAD2_DIR) $BIRN/upload2
-    set _prefs(UPLOAD2_DIR,help) "Location of upload2 programs."
+    set _prefs(DEFACE_DIR) $BIRN/deface
+    set _prefs(DEFACE_DIR,help) "Staging directory for files to upload"
 
     # create a pref file if needed and let user fill in blanks
+    set preffile $::env(HOME)/.birndup/prefs
     if { ![file exists $::env(HOME)/.birndup/prefs] } {
-        set resp [tk_messageBox -type okcancel -message "A preferences file must be created for you.\n\nClick Ok to continue or Cancel to exit"]
+        set resp [tk_messageBox -type okcancel -message "A preferences file will be created for you in $preffile.\n\nClick OK to continue or Cancel to exit"]
         if { $resp == "cancel" } {
             itcl::delete object $this
             return ""
@@ -273,18 +289,31 @@ itcl::body dup::prefs { } {
         $this prefui
     }
 
-    set fp [open $::env(HOME)/.birndup/prefs r]
+    set fp [open $preffile r]
     array set userprefs [read $fp]
     close $fp
+
 
     foreach n [array names _prefs] {
         if { [string match *,help $n] } { continue }
         if { ![info exists userprefs($n)] } {
-            DevInfoWindow "New preference field in updated software: $n will be set to $_prefs($n).  Use File->Preferences... to customize."
+            dup_DevInfoWindow "New preference field in updated software: $n will be set to $_prefs($n).  Use File->Preferences... to customize."
             set userprefs($n) $_prefs($n)
             set userprefs($n,help) $_prefs($n,help)
         }
     }
+
+    # these pref fields were retired with the new directory layout
+    set old_prefs {DCANON_DIR UPLOAD2_DIR}
+
+    foreach n $old_prefs {
+        if { [info exists userprefs($n)] } {
+            dup_DevInfoWindow "Old preference field \"$n\" not needed in updated software."
+            unset userprefs($n)
+            unset userprefs($n,help)
+        }
+    }
+
     array set _prefs [array get userprefs]
     $this pref_save
 
@@ -293,11 +322,11 @@ itcl::body dup::prefs { } {
 
 itcl::body dup::pref_save { } {
     if { [catch "file mkdir $::env(HOME)/.birndup"] } {
-        DevErrorWindow "Cannot create .birndup directory - preferences not saved"
+        dup_DevErrorWindow "Cannot create .birndup directory - preferences not saved"
         return
     }
     if { ![file writable $::env(HOME)/.birndup] } {
-        DevErrorWindow "$preffile file not writable - preferences not saved"
+        dup_DevErrorWindow "$preffile file not writable - preferences not saved"
         return
     }
     set preffile $::env(HOME)/.birndup/prefs
@@ -322,14 +351,18 @@ itcl::body dup::prefui { } {
         $d configure -title "BIRNDUP Preferencnes"
         set cs [$d childsite]
 
+        set preffile $::env(HOME)/.birndup/prefs
+        label $cs.linfo -text "Stored in $preffile"
+        pack $cs.linfo -fill x -expand true
+
         array set _save_prefs [array get _prefs]
 
         set efields ""
         foreach n [lsort -dictionary [array names _prefs]] {
             if { [string match *,help $n] } { continue }
             lappend efiles $cs.e$n
-            ::iwidgets::entryfield $cs.e$n -labeltext $n -labelpos w -textvariable [::itcl::scope _prefs($n)]
-            TooltipAdd $cs.e$n $_prefs($n,help)
+            ::iwidgets::entryfield $cs.e$n -labeltext $n -labelpos w -width 50 -textvariable [::itcl::scope _prefs($n)]
+            dup_TooltipAdd $cs.e$n $_prefs($n,help)
             pack $cs.e$n -fill x -expand true
         }
         eval ::iwidgets::Labeledwidget::alignlabels $efields
@@ -341,20 +374,8 @@ itcl::body dup::prefui { } {
     $d buttonconfigure OK -command "$this pref_save; $d deactivate 0"
     $d buttonconfigure Cancel -command "$this pref_restore; $d deactivate 1"
 
-    #$d configure -modality application
-
-    $d activate
     $d center
-}
-
-#-------------------------------------------------------------------------------
-# .PROC dup_demo
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc dup_demo {} {
-    BIRNDUPInterface
+    $d activate
 }
 
 #-------------------------------------------------------------------------------
@@ -363,18 +384,51 @@ proc dup_demo {} {
 # .ARGS
 # .END
 #-------------------------------------------------------------------------------
-proc BIRNDUPInterface {} {
+proc BIRNDUPInterface { {exitonclose "false"} } {
 
+    set module_dir $::PACKAGE_DIR_BIRNDUP/../../..
+    set slicer_dir $module_dir/../..
+    set birndup_dir $slicer_dir/../birndup
     foreach c { "" _sort _deidentify _review _upload } {
         catch "itcl::delete class dup$c"
-        source $::PACKAGE_DIR_BIRNDUP/../../../tcl/dup$c.tcl;
+        source $module_dir/tcl/dup$c.tcl;
     }
 
-    dup .t
+    dup .dup -exitonclose $exitonclose \
+        -birndup_dir $birndup_dir
 
-    if { [info command .t] != "" } {
+    if { [info command .dup] != "" } {
         # if the user didn't cancel, keep going...
-        .t activate
-        wm geometry .t 900x700+50+50
+        wm geometry .dup 900x700+50+50
+        .dup activate
     }
 }
+
+#-------------------------------------------------------------------------------
+# .PROC dup_demo
+# 
+# Stub for old entry point (renamed dup_main)
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc dup_demo {} {
+
+    dup_main "false"
+}
+
+#-------------------------------------------------------------------------------
+# .PROC dup_main
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc dup_main { {exitonclose "true"} } {
+    package require vtkSlicerBase
+    package require BIRNDUP
+    if { ![info exists ::Module(versbose)] } {
+        set ::Module(verbose) 0
+    }
+    wm withdraw .
+    BIRNDUPInterface $exitonclose
+}
+

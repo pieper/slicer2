@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMSegmentAlgorithm.tcl,v $
-#   Date:      $Date: 2005/12/20 22:55:26 $
-#   Version:   $Revision: 1.53.2.1 $
+#   Date:      $Date: 2007/10/29 15:39:36 $
+#   Version:   $Revision: 1.53.2.1.2.1 $
 # 
 #===============================================================================
 # FILE:        EMSegmentAlgorithm.tcl
@@ -54,7 +54,12 @@ proc EMSegmentSetVtkGenericClassSetting {vtkGenericClass Sclass} {
   eval $vtkGenericClass SetPrintRegistrationSimularityMeasure         $EMSegment(Cattrib,$Sclass,PrintRegistrationSimularityMeasure) 
   eval $vtkGenericClass SetRegistrationClassSpecificRegistrationFlag  $EMSegment(Cattrib,$Sclass,RegistrationClassSpecificRegistrationFlag) 
   $vtkGenericClass      SetExcludeFromIncompleteEStepFlag             $EMSegment(Cattrib,$Sclass,ExcludeFromIncompleteEStepFlag) 
-  
+
+  if {$EMSegment(SegmentMode)} {
+      if {$EMSegment(Cattrib,$Sclass,PCARegistrationFlag) } {$vtkGenericClass SetPCARegistrationOn
+      } else { $vtkGenericClass SetPCARegistrationOff }
+  }
+    
   if {$EMSegment(Cattrib,$Sclass,ProbabilityData) != $Volume(idNone) } {
     # Pipeline does not automatically update volumes bc of fake first input  
     Volume($EMSegment(Cattrib,$Sclass,ProbabilityData),vol) Update
@@ -79,7 +84,12 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass} {
   # puts "EMSegmentSetVtkPrivateSuperClassSetting $SuperClass $EMSegment(Cattrib,$SuperClass,Name)"
   catch { EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) Delete}
   if {$EMSegment(SegmentMode)} {
-    vtkImageEMPrivateSuperClass EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass)      
+
+    vtkImageEMPrivateSuperClass EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass)     
+    EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetParameterInitSubClass $EMSegment(Cattrib,$SuperClass,ParameterInitSubClass)
+    EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetParameterSaveToFile $EMSegment(Cattrib,$SuperClass,ParameterSaveToFile)
+    EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetParameterSetFromFile $EMSegment(Cattrib,$SuperClass,ParameterSetFromFile)
+    EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPredefinedLabelID $EMSegment(Cattrib,$SuperClass,PredefinedLabelID)
   } else {
     vtkImageEMLocalSuperClass EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass)      
   }
@@ -182,6 +192,14 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass} {
            EMSegment(Cattrib,$i,vtkImageEMClass) SetPCALogisticBoundary   $EMSegment(Cattrib,$i,PCALogisticBoundary)
       } 
 
+      if {$EMSegment(Cattrib,$i,FixedWeightsData) !=  $Volume(idNone) } {
+      Volume($EMSegment(Cattrib,$i,FixedWeightsData),vol) Update
+          set OUTPUT [Volume($EMSegment(Cattrib,$i,FixedWeightsData),vol) GetOutput]
+          # puts "gggg [$OUTPUT GetExtent]" 
+          # puts "gfff [$OUTPUT GetWholeExtent]" 
+      EMSegment(Cattrib,$i,vtkImageEMClass) SetFixedWeights $OUTPUT 
+      }
+
       EMSegment(Cattrib,$i,vtkImageEMClass) SetPrintQuality $EMSegment(Cattrib,$i,PrintQuality)
       EMSegment(Cattrib,$i,vtkImageEMClass) SetPrintPCA $EMSegment(Cattrib,$i,PrintPCA)
       # After everything is defined add CLASS to its SUPERCLASS
@@ -205,6 +223,42 @@ proc EMSegmentSetVtkSuperClassSetting {SuperClass} {
       }
       incr x
   }
+
+  # PCA  Registration parameters 
+  if {$EMSegment(Cattrib,$SuperClass,PCARegistrationFlag)} {
+      EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCARegistrationVectorDimension $EMSegment(Cattrib,$SuperClass,PCARegistrationVectorDimension) 
+      EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCARegistrationNumOfPCAParameters $EMSegment(Cattrib,$SuperClass,PCARegistrationNumOfPCAParameters)
+
+      foreach TYPE "Mean EigenMatrix EigenValues" {
+      set LIST    "$EMSegment(Cattrib,$SuperClass,PCARegistration$TYPE)"
+      set LENGTH  [llength $LIST ]
+
+      vtkFloatArray ENTRY_VECTOR
+      ENTRY_VECTOR SetNumberOfValues $LENGTH
+      set index 0 
+      foreach ENTRY $LIST {
+          ENTRY_VECTOR  SetValue $index $ENTRY
+          incr index 
+      }
+      EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetPCARegistration$TYPE ENTRY_VECTOR 
+      ENTRY_VECTOR Delete
+      }
+  }
+
+  set Flag 1
+  set y 0
+  while {$Flag && ($y < $EMSegment(NumInputChannel)) }  {
+      if { ([info exists EMSegment(Cattrib,$SuperClass,InhomogeneityInitialData,$y)] == 0) || ($EMSegment(Cattrib,$SuperClass,InhomogeneityInitialData,$y) == $Volume(idNone)) } { set Flag 0 }
+      incr y 
+  } 
+  if ($Flag) {
+    puts "Load in image inhomogneity " 
+    for {set y 0} {$y < $EMSegment(NumInputChannel)} {incr y} {
+    set pid $EMSegment(Cattrib,$SuperClass,InhomogeneityInitialData,$y)
+    EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) SetInhomogeneityInitialData [Volume($pid,vol) GetOutput] $y
+    }
+  } 
+
   # Automatically all the subclass are updated too and checked if values are set correctly 
   # puts  "======== Start Updated here  $SuperClass";
   EMSegment(Cattrib,$SuperClass,vtkImageEMSuperClass) Update

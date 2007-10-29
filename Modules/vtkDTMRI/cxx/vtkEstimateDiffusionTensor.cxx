@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkEstimateDiffusionTensor.cxx,v $
-  Date:      $Date: 2006/07/07 18:09:33 $
-  Version:   $Revision: 1.2.2.1.2.2 $
+  Date:      $Date: 2007/10/29 15:42:58 $
+  Version:   $Revision: 1.2.2.1.2.3 $
 
 =========================================================================auto=*/
 #include "vtkEstimateDiffusionTensor.h"
@@ -52,11 +52,11 @@ vtkEstimateDiffusionTensor::vtkEstimateDiffusionTensor()
   
   // this is LeBihan's b factor for physical MR gradient parameters 
   // (same number as C-F uses)
-  this->B = vtkDoubleArray::New();
-  this->B->SetNumberOfComponents(1);
-  this->B->SetNumberOfTuples(this->NumberOfGradients);
+  this->BValues = vtkDoubleArray::New();
+  this->BValues->SetNumberOfComponents(1);
+  this->BValues->SetNumberOfTuples(this->NumberOfGradients);
   for (int i=0; i<this->NumberOfGradients;i++)
-    this->B->SetValue(i,1000);
+    this->BValues->SetValue(i,1000);
 
   // Internal variable to scale the B values, so we get a
   // much better conditioned matrix so solve the Tensor model
@@ -65,13 +65,18 @@ vtkEstimateDiffusionTensor::vtkEstimateDiffusionTensor()
   this->ScaleFactor = 10000;
   
   this->WeightedFitting = 0;
- 
+
+  // Output images beside the estimated tensor
+  this->Baseline = vtkImageData::New();
+  this->AverageDWI = vtkImageData::New();
+
+
   // defaults are from DT-MRI 
   // (from Processing and Visualization for 
   // Diffusion Tensor MRI, C-F Westin, pg 8)
-  this->DiffusionGradient = vtkDoubleArray::New();
-  this->DiffusionGradient->SetNumberOfComponents(3);
-  this->DiffusionGradient->SetNumberOfTuples(this->NumberOfGradients);
+  this->DiffusionGradients = vtkDoubleArray::New();
+  this->DiffusionGradients->SetNumberOfComponents(3);
+  this->DiffusionGradients->SetNumberOfTuples(this->NumberOfGradients);
   this->SetDiffusionGradient(0,0,0,0);
   this->SetDiffusionGradient(1,1,1,0);
   this->SetDiffusionGradient(2,0,1,1);
@@ -83,14 +88,20 @@ vtkEstimateDiffusionTensor::vtkEstimateDiffusionTensor()
 }
 vtkEstimateDiffusionTensor::~vtkEstimateDiffusionTensor()
 {
-  this->B->Delete();
-  this->DiffusionGradient->Delete();
+  this->BValues->Delete();
+  this->DiffusionGradients->Delete(); 
+  this->Baseline->Delete();
+  this->AverageDWI->Delete();
+  if (this->Transform) 
+    {
+    this->Transform->Delete();
+    }    
 }
 
 //----------------------------------------------------------------------------
 void vtkEstimateDiffusionTensor::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageMultipleInputFilter::PrintSelf(os,indent);
+  vtkImageToImageFilter::PrintSelf(os,indent);
 
   os << indent << "NumberOfGradients: " << this->NumberOfGradients << "\n";
   double g[3];
@@ -101,9 +112,25 @@ void vtkEstimateDiffusionTensor::PrintSelf(ostream& os, vtkIndent indent)
       os << indent << "Gradient " << i << ": (" 
          << g[0] << ", "
          << g[1] << ", "
-         << g[2] << ")" << "\n";
-      
-    }  
+         << g[2] << ")"
+         <<  "B value: "
+         << this->BValues->GetValue(i) << "\n";
+    }
+}
+
+//----------------------------------------------------------------------------
+void vtkEstimateDiffusionTensor::SetDiffusionGradients(vtkDoubleArray *grad)
+{
+  this->DiffusionGradients->DeepCopy(grad);
+  this->NumberOfGradients = this->DiffusionGradients->GetNumberOfTuples();
+  this->Modified();
+}
+
+//----------------------------------------------------------------------------
+void vtkEstimateDiffusionTensor::SetBValues(vtkDoubleArray *bValues)
+{
+  this->BValues->DeepCopy(bValues);
+  this->Modified();
 }
 
 //----------------------------------------------------------------------------
@@ -111,6 +138,7 @@ void vtkEstimateDiffusionTensor::TransformDiffusionGradients()
 {
   vtkFloatingPointType gradient[3];
   double g[3];
+  double norm;
   // if matrix has not been set by user don't use it
   if (this->Transform == NULL) 
     {
@@ -126,9 +154,14 @@ void vtkEstimateDiffusionTensor::TransformDiffusionGradients()
     {
       this->GetDiffusionGradient(i,g);
       this->Transform->TransformPoint(g,gradient);
-
+      norm = sqrt(gradient[0]*gradient[0]+gradient[1]*gradient[1]+gradient[2]*gradient[2]);
+      if (norm > VTKEPS)
+        {
+        gradient[0] /=norm;
+        gradient[1] /=norm;
+        gradient[2] /=norm;
+        }
       // set the gradient to the transformed one 
-      // (note this set function normalizes too)
       this->SetDiffusionGradient(i,gradient);
     }
 }
@@ -143,24 +176,31 @@ void vtkEstimateDiffusionTensor::SetNumberOfGradients(int num)
     {
       vtkDebugMacro ("setting num gradients to " << num);
       // internal array for storage of gradient vectors
-      this->DiffusionGradient->SetNumberOfTuples(num);
-      this->B->SetNumberOfTuples(num);
+      this->DiffusionGradients->SetNumberOfTuples(num);
+      this->BValues->SetNumberOfTuples(num);
       // this class's info
       this->NumberOfGradients = num;
       //this->NumberOfRequiredInputs = num;
       this->Modified();
     }
-  this->DiffusionGradient->Reset();
 }
 
 //----------------------------------------------------------------------------
 //
-void vtkEstimateDiffusionTensor::ExecuteInformation(vtkImageData **inDatas, 
+void vtkEstimateDiffusionTensor::ExecuteInformation(vtkImageData *inData, 
                                              vtkImageData *outData)
 {
   // We always want to output input[0] scalars Type
-  outData->SetScalarType(inDatas[0]->GetScalarType());
+  outData->SetScalarType(inData->GetScalarType());
+  // We output one scalar components: baseline (for legacy issues)
   outData->SetNumberOfScalarComponents(1);
+
+  this->Baseline->CopyTypeSpecificInformation( this->GetInput() );
+  this->AverageDWI->CopyTypeSpecificInformation( this->GetInput() );
+  this->Baseline->SetScalarType(inData->GetScalarType());
+  this->AverageDWI->SetScalarType(inData->GetScalarType());
+  this->Baseline->SetNumberOfScalarComponents(1);
+  this->AverageDWI->SetNumberOfScalarComponents(1);
 
 }
 
@@ -171,46 +211,21 @@ void vtkEstimateDiffusionTensor::ExecuteInformation(vtkImageData **inDatas,
 // Note we return to the regular pipeline at the end of this function.
 void vtkEstimateDiffusionTensor::ExecuteData(vtkDataObject *out)
 {
-  vtkImageData *output = vtkImageData::SafeDownCast(out);
-  vtkImageData **inDatas = (vtkImageData **) this->GetInputs();
+ vtkImageData *output = vtkImageData::SafeDownCast(out);
+ vtkImageData *inData = (vtkImageData *) this->GetInput();
 
-  //Check inputs number
-  
-  if (this->GetNumberOfInputs() == 1) {
-    //Check if this input is multicomponent and match the number of  gradients
-    int ncomp = this->GetInput()->GetPointData()->GetScalars()->GetNumberOfComponents();
-    if (ncomp != this->NumberOfGradients) {
+  //Check inputs numbertenEstimateMethodLLS
+  if (inData == NULL) {
+    vtkErrorMacro("Input with DWIs has not been assigned");
+    return;
+  }  
+
+  //Check if this input is multicomponent and match the number of  gradients
+  int ncomp = this->GetInput()->GetPointData()->GetScalars()->GetNumberOfComponents();
+  if (ncomp != this->NumberOfGradients) {
       vtkErrorMacro("The input has to have a number of components equal to the number of gradients");
       return;
     }  
-  } else if (this->GetNumberOfInputs() != this->GetNumberOfGradients()) {
-      vtkErrorMacro("Number of inputs has to be equal to the number of gradients");
-      return;   
-  }
-  
-  // Loop through checking all inputs 
-  for (int idx = 0; idx < this->NumberOfInputs; ++idx)
-    {
-      if (inDatas[idx] != NULL)
-        {
-          // this filter expects all inputs to have the same extent
-          // Lauren check the above.
-
-          // this filter expects 1 scalar component if several inputs
-          if (inDatas[idx]->GetNumberOfScalarComponents() != 1 &&
-           this->NumberOfInputs>1)
-            {
-              vtkErrorMacro(<< "Execute: input" << idx << " has " << 
-              inDatas[idx]->GetNumberOfScalarComponents() << 
-              " instead of 1 scalar component");
-              return;
-            }
-          
-        }
-      else {
-        vtkErrorMacro(<< "Execute: input" << idx << " is NULL");
-      }
-    }
   
   // set extent so we know how many tensors to allocate
   output->SetExtent(output->GetUpdateExtent());
@@ -224,6 +239,13 @@ void vtkEstimateDiffusionTensor::ExecuteData(vtkDataObject *out)
   output->GetPointData()->SetTensors(data);
   data->Delete();
 
+  // Allocate baseline and averageDWI images
+  this->Baseline->SetExtent(output->GetUpdateExtent());
+  this->AverageDWI->SetExtent(output->GetUpdateExtent());
+  this->Baseline->AllocateScalars();
+  this->AverageDWI->AllocateScalars();
+  this->Baseline->GetPointData()->GetScalars()->SetName("Baseline");
+  this->AverageDWI->GetPointData()->GetScalars()->SetName("AverageDWI");
 
   // make sure our gradient matrix is up to date
   //This update is not thread safe and it has to be performed outside
@@ -231,9 +253,7 @@ void vtkEstimateDiffusionTensor::ExecuteData(vtkDataObject *out)
   // if the user has transformed the coordinate system
   this->TransformDiffusionGradients();
   
-  
   //Allocate Internals
-
   int N = this->GetNumberOfGradients();
  
   this->PinvA=this->AllocateMatrix(7,N);
@@ -244,10 +264,9 @@ void vtkEstimateDiffusionTensor::ExecuteData(vtkDataObject *out)
   else 
      this->CalculateA();   
   
-  
   // jump back into normal pipeline: call standard superclass method here
   //Do not jump to do the proper allocation of output data
-  this->vtkImageMultipleInputFilter::ExecuteData(out);
+  this->vtkImageToImageFilter::ExecuteData(out);
   
   //Deallocate Internals
   this->DeallocateMatrix(PinvA,7,N);
@@ -261,8 +280,8 @@ void vtkEstimateDiffusionTensor::ExecuteData(vtkDataObject *out)
 // This templated function executes the filter for any type of data.
 template <class T>
 static void vtkEstimateDiffusionTensorExecute(vtkEstimateDiffusionTensor *self,
-                                           vtkImageData **inDatas, 
-                                           T ** inPtrs,
+                                           vtkImageData *inData, 
+                                           T *inPtr,
                                            vtkImageData *outData, 
                                            T * outPtr,
                                            int outExt[6], int id)
@@ -278,20 +297,32 @@ static void vtkEstimateDiffusionTensorExecute(vtkEstimateDiffusionTensor *self,
   double **PinvA;
   double **A;
   double B0;
+  double averageDWI;    
   vtkDataArray *outTensors;
   double D[3][3];
   float outT[3][3];
   int ptId;
+  double **ATW2, **invATW2A, **ATW2A, **localPinvA;
 
+  T * baselinePtr;
+  T * averageDWIPtr;
   // Get information to march through output tensor data
   outTensors = self->GetOutput()->GetPointData()->GetTensors();
   
   // Get pointer to already calculated G matrix
   PinvA =  self->GetPinvA();
   A = self->GetA();
-  
+
+  // Preallocate WLS helper matrices
+   int N = self->GetNumberOfGradients();
+  if (self->GetWeightedFitting())
+    {
+    ATW2=self->AllocateMatrix(7,N);
+    invATW2A=self->AllocateMatrix(7,7);
+    ATW2A=self->AllocateMatrix(7,7);
+    localPinvA = self->AllocateMatrix(7,N);
+    }
   // changed from arrays to pointers
-  
   int *outInc,*outFullUpdateExt;
   outInc = self->GetOutput()->GetIncrements();
   outFullUpdateExt = self->GetOutput()->GetUpdateExtent(); //We are only working over the update extent
@@ -299,6 +330,9 @@ static void vtkEstimateDiffusionTensorExecute(vtkEstimateDiffusionTensor *self,
          + (outExt[2] - outFullUpdateExt[2]) * outInc[1]
          + (outExt[4] - outFullUpdateExt[4]) * outInc[2]);
 
+  // Get pointer to Baseline and AverageDWI Images
+  baselinePtr = (T *) self->GetBaseline()->GetScalarPointerForExtent(outExt);
+  averageDWIPtr = (T *) self->GetAverageDWI()->GetScalarPointerForExtent(outExt);
 
   // find the region to loop over
   maxX = outExt[1] - outExt[0];
@@ -309,14 +343,11 @@ static void vtkEstimateDiffusionTensorExecute(vtkEstimateDiffusionTensor *self,
   target++;
 
   // Get increments to march through image data 
-  inDatas[0]->GetContinuousIncrements(outExt, inIncX, inIncY, inIncZ);
+  inData->GetContinuousIncrements(outExt, inIncX, inIncY, inIncZ);
   outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
 
-  numInputs = self->GetNumberOfInputs();
-
-  if (numInputs > 1) {
-     dwi = new double[numInputs];
-  }  
+  numInputs = inData->GetNumberOfScalarComponents();
+  dwi = new double[numInputs];
 
   for (idxZ = 0; idxZ <= maxZ; idxZ++)
     {
@@ -326,35 +357,26 @@ static void vtkEstimateDiffusionTensorExecute(vtkEstimateDiffusionTensor *self,
             {
               if (!(count%target)) 
                 {
-                  self->UpdateProgress(count/(50.0*target) 
-                                       + (maxZ+1)*(maxY+1));
+                  self->UpdateProgress(count/(50.0*target));
                 }
               count++;
             }
           for (idxX = 0; idxX <= maxX; idxX++)
             {
-
-
-              // create tensor from combination of gradient inputs
-              
-          if (numInputs == 1) {
-             dwi = (double*) inPtrs[0];
-         inPtrs[0] += inIncX;
-          } else {     
-            for (k = 0; k < numInputs; k++)
+              // create tensor from combination of gradient inputs 
+          averageDWI = 0.0;
+              for (k = 0; k < numInputs; k++)
                   {
                   // diffusion from kth gradient
-                  dwi[k] = (double)*inPtrs[k];
-                  inPtrs[k]++;
+                  dwi[k] = (double) inPtr[k];
+          averageDWI += dwi[k];
                   }
-           }      
 
               if (self->GetWeightedFitting() == 0) {
                  self->EstimateLSTensorModel(dwi,PinvA,D,B0);
               } else {
-                 self->EstimateWLSTensorModel(dwi, A, D,B0);
-          }
-            
+                 self->EstimateWLSTensorModel(dwi, A, ATW2, invATW2A, ATW2A, localPinvA, D,B0);
+              }
                 //NOTE: Scale back Diffusion tensor.
                 //When computing LS matrix (CreateLSMatrix method), we reduce B by a scale fact
                 //to get a better numeric accuracy. This means that the diffusion is scale by this
@@ -366,41 +388,43 @@ static void vtkEstimateDiffusionTensorExecute(vtkEstimateDiffusionTensor *self,
                       outT[i][j] = (float) (D[i][j]/self->GetScaleFactor());
                     }
                 }
-
-
               // Pixel operation              
               outTensors->SetTuple(ptId,(float *)outT);
-
               // copy no diffusion data through for scalars
               *outPtr = (T) B0;
-              
-          //Pending: Compute the average tensor upon request.
-       
+
+              // Copy B0 and DWI
+             *baselinePtr = (T) B0;
+             *averageDWIPtr = (T) (averageDWI - B0)/(numInputs-1);
+
+              inPtr += numInputs;
               ptId ++;
               outPtr++;
+              baselinePtr++;
+              averageDWIPtr++;
             }
           outPtr += outIncY;
           ptId += outIncY;
-          for (k = 0; k < numInputs; k++)
-            {
-              inPtrs[k] += inIncY;
-            }
+          baselinePtr += outIncY;
+          averageDWIPtr += outIncY;
+      inPtr += inIncY;
         }
       outPtr += outIncZ;
       ptId += outIncZ;
-
-      for (k = 0; k < numInputs; k++)
-        {
-          inPtrs[k] += inIncZ;
-        }
+      baselinePtr += outIncZ;
+      averageDWIPtr += outIncZ;
+      inPtr += inIncZ;
     }
-    
-     if (numInputs > 1) {
-     delete [] dwi;
-  }  
- 
-    
-    
+
+  // Deallocate helper matrices
+  if (self->GetWeightedFitting())
+    {
+    self->DeallocateMatrix(invATW2A,7,7);
+    self->DeallocateMatrix(ATW2A,7,7);
+    self->DeallocateMatrix(ATW2,7,N);
+    self->DeallocateMatrix(localPinvA,7,N);
+    }
+  delete [] dwi;
 }
 
 //----------------------------------------------------------------------------
@@ -408,32 +432,23 @@ static void vtkEstimateDiffusionTensorExecute(vtkEstimateDiffusionTensor *self,
 // algorithm to fill the output from the inputs.
 // It just executes a switch statement to call the correct function for
 // the regions data types.
-void vtkEstimateDiffusionTensor::ThreadedExecute(vtkImageData **inDatas, 
+void vtkEstimateDiffusionTensor::ThreadedExecute(vtkImageData *inData, 
                                               vtkImageData *outData,
                                               int outExt[6], int id)
 {
   int idx;
-  void **inPtrs;
+  void *inPtr;
   void *outPtr = outData->GetScalarPointerForExtent(outExt);
 
   vtkDebugMacro("in threaded execute, " << this->GetNumberOfInputs() << " inputs ");
-
-
-  inPtrs = new void*[this->NumberOfInputs];
-
-  // Loop through to fill input pointer array
-  for (idx = 0; idx < this->NumberOfInputs; ++idx)
-    {
-      // Lauren should we use out ext here?
-      inPtrs[idx] = inDatas[idx]->GetScalarPointerForExtent(outExt);
-    }
-
+  
+   inPtr= inData->GetScalarPointerForExtent(outExt);
 
   // call Execute method to handle all data at the same time
-  switch (inDatas[0]->GetScalarType())
+  switch (inData->GetScalarType())
     {
       vtkTemplateMacro7(vtkEstimateDiffusionTensorExecute, this, 
-                        inDatas, (VTK_TT **)(inPtrs),
+                        inData, (VTK_TT *)(inPtr),
                         outData, (VTK_TT *)(outPtr), 
                         outExt, id);
     default:
@@ -443,46 +458,56 @@ void vtkEstimateDiffusionTensor::ThreadedExecute(vtkImageData **inDatas,
   
 }
 
-//The input are the dwi images and the transpose matrix with the gradient info
-void vtkEstimateDiffusionTensor::EstimateWLSTensorModel(double *dwi,double
-**A,double D[3][3], double &B0)
+//The input are the dwi images, the B matrix with gradient infor, and preallocate double pointers
+// for computation.
+// ATW2 is a 7xN matrix
+// invATW2A is a 7x7 matrix
+// ATW2A is a 7x7 matrix
+// localPinvA is a 7xN matrix
+void vtkEstimateDiffusionTensor::EstimateWLSTensorModel(double *dwi,double **A,double **ATW2, double **invATW2A, double **ATW2A, double **localPinvA,  double D[3][3],
+  double &B0)
 {
 
   // If weighted fitting,
   // 1. Build weights
   // 2. Compute pseudoinverse
-  int N = this->GetNumberOfGradients();    
-  
-  
-   double **AT=this->AllocateMatrix(7,N); 
-  
-   for (int i=0; i< 7; i++)
-     {      
+  int N = this->GetNumberOfGradients(); 
+  //double **ATW2=this->AllocateMatrix(7,N); 
+  for (int i=0; i< 7; i++)
+    {
      for (int j=0 ; j <N ; j++)
-       {
-       AT[i][j] = A[j][i];
+      {
+       ATW2[i][j] = A[j][i];
+      }
+    }
+
+  for (int i=0; i<7;i++)
+    {
+    for (int j=0; j<N;j++)
+      {
+      //squareweigts = dwi * dwi
+      //ATW2[i][j] = diffparams->squareWeights[j]*AT[i][j];
+      if (dwi[j]<1)
+        dwi[j]=1;
+      ATW2[i][j] = dwi[j]*dwi[j]*ATW2[i][j];
        }
-     }
+    }
 
-  
-  double **ATW2=this->AllocateMatrix(7,N);  
-   for (int i=0; i<7;i++)
-     {  
-      for (int j=0; j<N;j++)
-        //squareweigts = dwi * dwi
-        //ATW2[i][j] = diffparams->squareWeights[j]*AT[i][j];
-    ATW2[i][j] = dwi[j]*dwi[j]*AT[i][j];     
-     }
+    //double **invATW2A;
+    //double **ATW2A;
+    //double **localPinvA;
+    //invATW2A=this->AllocateMatrix(7,7);
+    //ATW2A=this->AllocateMatrix(7,7);
+    //localPinvA = this->AllocateMatrix(7,N);
 
-    double **invATW2A;
-    double **ATW2A;
-    invATW2A=this->AllocateMatrix(7,7);
-    ATW2A=this->AllocateMatrix(7,7);
-    vtkMathUtils::MatrixMultiply(ATW2,this->GetA(),ATW2A,7,N,N,7);
-    vtkMath::InvertMatrix(ATW2A,invATW2A,7);   
-    vtkMathUtils::MatrixMultiply(invATW2A,ATW2,PinvA,7,7,7,N);
-    this->DeallocateMatrix(invATW2A,7,7);
-    this->DeallocateMatrix(ATW2A,7,7);
+    vtkMathUtils::MatrixMultiply(ATW2,A,ATW2A,7,N,N,7);
+    vtkMath::InvertMatrix(ATW2A,invATW2A,7);
+    vtkMathUtils::MatrixMultiply(invATW2A,ATW2,localPinvA,7,7,7,N);
+    
+//     this->DeallocateMatrix(invATW2A,7,7);
+//     this->DeallocateMatrix(ATW2A,7,7);
+//     this->DeallocateMatrix(ATW2,7,N);
+//     this->DeallocateMatrix(localPinvA,7,N);
 
    // Solve the system
    double tmp[7];
@@ -491,7 +516,7 @@ void vtkEstimateDiffusionTensor::EstimateWLSTensorModel(double *dwi,double
      {
       tmp[i]=0.0;
       for (int j=0 ; j< N ; j++){
-         tmp[i] += PinvA[i][j] * log(dwi[j]+VTKEPS);
+         tmp[i] += localPinvA[i][j] * log(dwi[j]+VTKEPS);
       }
     }
 
@@ -545,7 +570,6 @@ void vtkEstimateDiffusionTensor::EstimateLSTensorModel(double
   D[2][2] = tmp[6];
  
   B0 = exp(tmp[0]);
-  
 }
 
 double **vtkEstimateDiffusionTensor::AllocateMatrix(int rows, int columns)
@@ -562,12 +586,18 @@ double **vtkEstimateDiffusionTensor::AllocateMatrix(int rows, int columns)
 void vtkEstimateDiffusionTensor::DeallocateMatrix(double **M,int rows, int columns)
 {
 
-  for (int i=0; i< rows; i++)
+  if (M != NULL) 
+    {
+    for (int i=0; i< rows; i++)
      {
+        if (M[i] != NULL) 
+    {
           delete [] M[i];
+    }
      }
   
   delete M;
+  }     
 }
 
 void vtkEstimateDiffusionTensor::CalculatePseudoInverse()
@@ -577,7 +607,6 @@ void vtkEstimateDiffusionTensor::CalculatePseudoInverse()
  
   this->CalculateA();
    
-  cout<<"Creating vnl matrices"<<endl;
    vnl_matrix<double> G;
    vnl_matrix<double> Ginv;
   
@@ -588,15 +617,12 @@ void vtkEstimateDiffusionTensor::CalculatePseudoInverse()
         G.put(i,j,this->A[i][j]);
 
     vnl_matrix_inverse<double>  Pinv(G);
-    cout<<"Computing pinverse"<<endl;
     Ginv = Pinv.pinverse(7);
-    cout<<"Getting values"<<endl;
     for (int i = 0; i < 7; i++)
     {
      for (int j = 0; j< N; j++)
        {
        this->PinvA[i][j] = Ginv.get(i,j);
-   
        }
     }
 
@@ -616,7 +642,7 @@ void vtkEstimateDiffusionTensor::CalculateA() {
     // more stable.
     // Be aware that the resulting diffusion tensor will be 
     // scale by this factor. We take care later on.
-     b = this->B->GetValue(i)/this->ScaleFactor;
+     b = this->BValues->GetValue(i)/this->ScaleFactor;
      this->GetDiffusionGradient(i,g);
      this->A[i][0]=1;
      this->A[i][1]=-b*g[0]*g[0];
@@ -626,5 +652,4 @@ void vtkEstimateDiffusionTensor::CalculateA() {
      this->A[i][5]=-2*b *g[1]*g[2];
      this->A[i][6]=-b*g[2]*g[2];
     }
-   
 }

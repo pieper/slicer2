@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterAtlasSuperClassNode.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:18 $
-  Version:   $Revision: 1.4.2.1 $
+  Date:      $Date: 2007/10/29 15:42:17 $
+  Version:   $Revision: 1.4.2.1.2.1 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -47,6 +47,9 @@ vtkMrmlSegmenterAtlasSuperClassNode::vtkMrmlSegmenterAtlasSuperClassNode() {
   this->StopMFAType         = 0;
   this->StopMFAValue        = 0.0; 
   this->StopMFAMaxIter      = 0; 
+
+  this->InitialBiasFilePrefix = NULL;  
+  this->PredefinedLabelMapPrefix     = NULL; 
 }
 
 //----------------------------------------------------------------------------
@@ -58,9 +61,9 @@ void vtkMrmlSegmenterAtlasSuperClassNode::Write(ofstream& of)
 {
   // Write all attributes not equal to their defaults
   of << " NumClasses ='" << this->NumClasses << "'";
-  of << " PrintBias='" << this->PrintBias << "'";
-  of << " PrintLabelMap='" << this->PrintLabelMap << "'";
-  of << " PrintFrequency='" << this->PrintFrequency << "'";
+  if (this->PrintBias)      of << " PrintBias='" << this->PrintBias << "'";
+  if (this->PrintLabelMap)  of << " PrintLabelMap='" << this->PrintLabelMap << "'";
+  if (this->PrintFrequency) of << " PrintFrequency='" << this->PrintFrequency << "'";
 
   of << " StopEMType='" << this->StopEMType  <<  "'";
   of << " StopEMValue='" << this->StopEMValue <<  "'";
@@ -70,6 +73,8 @@ void vtkMrmlSegmenterAtlasSuperClassNode::Write(ofstream& of)
   of << " StopMFAValue='" << this->StopMFAValue <<  "'";
   of << " StopMFAMaxIter='" << this->StopMFAMaxIter <<  "'";
 
+  if (this->InitialBiasFilePrefix && strcmp(this->InitialBiasFilePrefix , "")) of << " InitialBiasFilePrefix='" << this->InitialBiasFilePrefix <<  "'";
+  if (this->PredefinedLabelMapPrefix && strcmp(PredefinedLabelMapPrefix, "")) of << " PredefinedLabelMapPrefix='" << this-> PredefinedLabelMapPrefix <<  "'" ;
 }
 
 //----------------------------------------------------------------------------
@@ -91,6 +96,10 @@ void vtkMrmlSegmenterAtlasSuperClassNode::Copy(vtkMrmlNode *anode)
   this->StopMFAType    = node->StopMFAType;
   this->StopMFAValue   = node->StopMFAValue; 
   this->StopMFAMaxIter = node->StopMFAMaxIter; 
+
+  this->InitialBiasFilePrefix =  node->InitialBiasFilePrefix;
+  this->PredefinedLabelMapPrefix     =  node->PredefinedLabelMapPrefix;
+
 }
 
 //----------------------------------------------------------------------------
@@ -108,6 +117,11 @@ void vtkMrmlSegmenterAtlasSuperClassNode::PrintSelf(ostream& os, vtkIndent inden
   os << indent << "StopMFAType:                   " << this->StopMFAType  << "\n";
   os << indent << "StopMFAValue:                  " << this->StopMFAValue << "\n";
   os << indent << "StopMFAMaxIter:                " << this->StopMFAMaxIter << "\n";
+
+  os << indent << "InitialBiasFilePrefix:        " << (this->InitialBiasFilePrefix ? this->InitialBiasFilePrefix : "(none)" ) << "\n";
+  os << indent << "PredefinedLabelMapPrefix:            " << (this->PredefinedLabelMapPrefix ? this->PredefinedLabelMapPrefix : "(none)" ) << "\n";
+
+
 }
 
 /*

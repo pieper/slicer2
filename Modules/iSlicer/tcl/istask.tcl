@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: istask.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:49 $
-#   Version:   $Revision: 1.4.8.1 $
+#   Date:      $Date: 2007/10/29 15:53:30 $
+#   Version:   $Revision: 1.4.8.1.2.1 $
 # 
 #===============================================================================
 # FILE:        istask.tcl
@@ -68,6 +68,7 @@ if { [itcl::find class istask] == "" } {
         variable _taskafter ""
 
         method w {} {return $_w}
+        method onoffbutton {} {return $_onoffbutton}
         method on {} {}
         method off {} {}
         method toggle {} {}
@@ -119,11 +120,14 @@ itcl::body istask::on {} {
 
 itcl::body istask::off {} {
     $_onoffbutton configure -text "Start" -command "$this on" -relief raised
-    if { $_mode == "on" } {
-        eval $itk_option(-offcommand)
-    }
+
+    set oldmode $_mode
     set _mode "off"
     $this istask_taskcb
+
+    if { $oldmode == "on" } {
+        eval $itk_option(-offcommand)
+    }
 }
 
 itcl::body istask::toggle {} {

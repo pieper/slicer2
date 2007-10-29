@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageBrainSegment.h,v $
-  Date:      $Date: 2005/12/20 22:54:51 $
-  Version:   $Revision: 1.1.1.1.8.1 $
+  Date:      $Date: 2007/10/29 15:51:37 $
+  Version:   $Revision: 1.1.1.1.8.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageBrainSegment - 
@@ -40,8 +40,8 @@ public:
 protected:
   vtkImageBrainSegment();
   ~vtkImageBrainSegment();
-  vtkImageBrainSegment(const vtkImageBrainSegment&) {}
-  void operator=(const vtkImageBrainSegment&) {}
+  vtkImageBrainSegment(const vtkImageBrainSegment&);
+  void operator=(const vtkImageBrainSegment&);
   void ExecuteData(vtkDataObject *output);
   void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
 

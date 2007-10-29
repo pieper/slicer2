@@ -14,7 +14,7 @@ INCLUDE (${VTKAG_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 # Create the vtkAG C++ library
 #
 # (Doesn't work here because of a CMake bug)
-# ADD_LIBRARY (vtkAG LOCAL_MODULE_SRCS)
+# ADD_LIBRARY (vtkAG ${LOCAL_MODULE_SRCS})
 
 #
 # Create the vtkAG Tcl library
@@ -22,9 +22,10 @@ INCLUDE (${VTKAG_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 
 IF (VTK_WRAP_TCL AND VTKAG_WRAP_TCL)
 
-  VTK_WRAP_TCL (vtkAGTCL AGTCL_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkAGTCL AGTCL_SRCS)
+  VTK_WRAP_TCL (vtkAGTCL AGTCL_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkAGTCL ${AGTCL_SRCS})
   TARGET_LINK_LIBRARIES (vtkAGTCL 
+                         vtkAG
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
@@ -55,16 +56,17 @@ ENDIF (VTK_WRAP_TCL AND VTKAG_WRAP_TCL)
 
 IF (VTK_WRAP_PYTHON AND VTKAG_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkAGPython AGPython_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_PYTHON (vtkAGPython AGPython_SRCS ${LOCAL_MODULE_SRCS})
 
   IF (APPLE)
-    ADD_LIBRARY (vtkAGPython MODULE AGPython_SRCS)
+    ADD_LIBRARY (vtkAGPython MODULE ${AGPython_SRCS})
   ELSE (APPLE)
-    ADD_LIBRARY (vtkAGPython SHARED AGPython_SRCS)
+    ADD_LIBRARY (vtkAGPython SHARED ${AGPython_SRCS})
   ENDIF (APPLE)
 
   IF (WIN32)
     TARGET_LINK_LIBRARIES (vtkAGPython 
+                           vtkAG
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -74,6 +76,7 @@ IF (VTK_WRAP_PYTHON AND VTKAG_WRAP_PYTHON)
                            optimized ${PYTHON_LIBRARY})
   ELSE (WIN32)
     TARGET_LINK_LIBRARIES (vtkAGPython 
+                           vtkAGPython 
                            vtkIOPython
                            vtkGraphicsPython
                            vtkImagingPython
@@ -106,9 +109,10 @@ ENDIF (VTK_WRAP_PYTHON AND VTKAG_WRAP_PYTHON)
 
 IF (VTK_WRAP_JAVA AND VTKAG_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkAGJava AGJava_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkAGJava SHARED AGJava_SRCS)
+  VTK_WRAP_JAVA (vtkAGJava AGJava_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkAGJava SHARED ${AGJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkAGJava 
+                         vtkAG
                          vtkIOJava
                          vtkGraphicsJava
                          vtkImagingJava 
@@ -136,7 +140,7 @@ ENDIF (VTK_WRAP_JAVA AND VTKAG_WRAP_JAVA)
 # Link to VTK and local
 #
 
-LINK_LIBRARIES (
+TARGET_LINK_LIBRARIES (
   vtkAG
   vtkIO
   vtkGraphics
@@ -146,17 +150,17 @@ LINK_LIBRARIES (
 )
 
 IF (VTK_USE_HYBRID)
-  LINK_LIBRARIES (vtkHybrid)
+  TARGET_LINK_LIBRARIES (vtkAG vtkHybrid)
 ENDIF (VTK_USE_HYBRID)
 
 IF (VTK_USE_PARALLEL)
-  LINK_LIBRARIES (vtkParallel)
+  TARGET_LINK_LIBRARIES (vtkAG vtkParallel)
 ENDIF (VTK_USE_PARALLEL)
 
 IF (VTK_USE_PATENTED)
-  LINK_LIBRARIES (vtkPatented)
+  TARGET_LINK_LIBRARIES (vtkAG vtkPatented)
 ENDIF (VTK_USE_PATENTED)
 
 IF (VTK_USE_RENDERING)
-  LINK_LIBRARIES (vtkRendering)
+  TARGET_LINK_LIBRARIES (vtkAG vtkRendering)
 ENDIF (VTK_USE_RENDERING)

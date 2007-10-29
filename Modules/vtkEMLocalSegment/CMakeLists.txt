@@ -5,6 +5,7 @@
 # MY -> EMLOCALSEGMENT
 # my -> EMLocalSegment
 
+SET(MODULE_NAME VTKEMLOCALSEGMENT)
 
 PROJECT (VTKEMLOCALSEGMENT)
 
@@ -16,6 +17,7 @@ PROJECT (VTKEMLOCALSEGMENT)
 #
 
 SET (VTKEMLOCALSEGMENT_CAN_BUILD 1)
+ENABLE_TESTING()
 
 #
 # Load CMake commands that you probably should not modify.
@@ -59,6 +61,7 @@ IF (VTKEMLOCALSEGMENT_CAN_BUILD)
 
   SUBDIRS (
     cxx
+    Testing
   )
 
   #

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFileOps.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:14 $
-  Version:   $Revision: 1.2.2.1 $
+  Date:      $Date: 2007/10/29 15:42:17 $
+  Version:   $Revision: 1.2.2.1.2.1 $
 
 =========================================================================auto=*/
 #include "vtkFileOps.h"
@@ -20,7 +20,7 @@
 #include <sys/stat.h>
 
 // Opens up a new file and writes down result in the file
-void vtkFileOps::WriteVectorMatlabFile (char *filename, char *name,unsigned char *vec, int xMax) const {
+void vtkFileOps::WriteVectorMatlabFile (const char *filename, const char *name, unsigned char *vec, int xMax) const {
   int appendFlag = 0;
   FILE *f = (strcmp(filename,"-"))?fopen(filename,((appendFlag)?"a":"w")):stdout;
   if ( f == NULL ) {
@@ -37,7 +37,7 @@ void vtkFileOps::WriteVectorMatlabFile (char *filename, char *name,unsigned char
   fclose(f);
 }
 
-void vtkFileOps::WriteVectorMatlabFile (char *filename, char *name,float *vec, int xMax) const {
+void vtkFileOps::WriteVectorMatlabFile (const char *filename, const char *name,float *vec, int xMax) const {
   int appendFlag = 0;
   FILE *f = (strcmp(filename,"-"))?fopen(filename,((appendFlag)?"a":"w")):stdout;
   if ( f == NULL ) {
@@ -54,7 +54,7 @@ void vtkFileOps::WriteVectorMatlabFile (char *filename, char *name,float *vec, i
 }
 
 // Opens up a new file and writes down result in the file
-void vtkFileOps::WriteVectorMatlabFile (char *filename, char *varname,double *vec, int xMax) const {
+void vtkFileOps::WriteVectorMatlabFile (const char *filename, const char *varname,double *vec, int xMax) const {
   int appendFlag = 0;
   FILE *f = (strcmp(filename,"-"))?fopen(filename,((appendFlag)?"a":"w")):stdout;
   if ( f == NULL ) {
@@ -68,7 +68,7 @@ void vtkFileOps::WriteVectorMatlabFile (char *filename, char *varname,double *ve
 
 // Writes Vector to file in Matlab format if name is specified otherwise just 
 // writes the values in the file
-void vtkFileOps::WriteVectorMatlabFile (FILE *f,char *name, double *vec, int xMax) const {
+void vtkFileOps::WriteVectorMatlabFile (FILE *f, const char *name, double *vec, int xMax) const {
   if (name != NULL) fprintf(f,"%s = [", name);
   xMax --;
   for (int x = 0; x < xMax; x++ )
@@ -78,7 +78,7 @@ void vtkFileOps::WriteVectorMatlabFile (FILE *f,char *name, double *vec, int xMa
 }
 
 // Opens up a new file and writes down result in the file
-void vtkFileOps::WriteMatrixMatlabFile (char *filename,char *varname, double **mat, int imgY, int imgX) const {
+void vtkFileOps::WriteMatrixMatlabFile (const char *filename, const char *varname, double **mat, int imgY, int imgX) const {
   int appendFlag = 0;
   FILE *f = (strcmp(filename,"-"))?fopen(filename,((appendFlag)?"a":"w")):stdout;
   if ( f == NULL ) {
@@ -92,7 +92,7 @@ void vtkFileOps::WriteMatrixMatlabFile (char *filename,char *varname, double **m
 
 // Writes Matrix to file in Matlab format if name is specified otherwise just 
 // writes the values in the file
-void vtkFileOps::WriteMatrixMatlabFile (FILE *f,char *name,double **mat, int imgY, int imgX) const
+void vtkFileOps::WriteMatrixMatlabFile (FILE *f, const char *name, double **mat, int imgY, int imgX) const
 {
   if (name != NULL) fprintf(f,"%s = [", name);
   for (int y = 0; y < imgY; y++ ) {
@@ -103,7 +103,7 @@ void vtkFileOps::WriteMatrixMatlabFile (FILE *f,char *name,double **mat, int img
   fprintf(f,"\n");
 }
 // int XSize, int YSize are only important if FlagUpsideDown is set 
-void  vtkFileOps::WriteDoubleToUShortToGEFile(char* FileName, double* vec,int XSize, int YSize, int XYSize, double min, double max, unsigned short MaxOutput, bool FlagUpsideDown) const {
+void  vtkFileOps::WriteDoubleToUShortToGEFile(const char* FileName, double* vec,int XSize, int YSize, int XYSize, double min, double max, unsigned short MaxOutput, bool FlagUpsideDown) const {
   unsigned short *result = new unsigned short[XYSize];
   if (min < 0 ) min = 0; 
   double calc =  double(MaxOutput)/ (max - min);
@@ -123,8 +123,8 @@ void  vtkFileOps::WriteDoubleToUShortToGEFile(char* FileName, double* vec,int XS
 // Functions to write Short Data to an MRI File
 // ---------------------------------------------------------
 /* Copyright (c) Simon Warfield simonw@bwh.harvard.edu */
-/* $Id: vtkFileOps.cxx,v 1.2.2.1 2005/12/20 22:55:14 nicole Exp $ */
-int vtkFileOps::uncompressedFileName(char *fname, char **newFileName)
+/* $Id: vtkFileOps.cxx,v 1.2.2.1.2.1 2007/10/29 15:42:17 hliu Exp $ */
+int vtkFileOps::uncompressedFileName(const char *fname, char **newFileName)
 {
 #ifndef _WIN32
   char *p = (char *)NULL;
@@ -150,7 +150,7 @@ int vtkFileOps::uncompressedFileName(char *fname, char **newFileName)
 /* Return -1 on error, return 1 if file is compressed, 
         return 0 if it is not compressed
  */
-int vtkFileOps::fileIsCompressed(char *fname, char **newFileName)
+int vtkFileOps::fileIsCompressed(const char *fname, char **newFileName)
 {
 #ifndef _WIN32
   struct stat statBuf;

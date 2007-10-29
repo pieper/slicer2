@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkHyperStreamlineDTMRI.h,v $
-  Date:      $Date: 2006/07/07 19:18:53 $
-  Version:   $Revision: 1.6.2.1.2.3 $
+  Date:      $Date: 2007/10/29 15:17:25 $
+  Version:   $Revision: 1.6.2.1.2.4 $
 
 =========================================================================auto=*/
 // .NAME vtkHyperStreamlineDTMRI - generate hyperstreamline in arbitrary dataset
@@ -38,12 +38,10 @@
 
 #include "vtkTensorUtilConfigure.h"
 #include "vtkHyperStreamline.h"
-#include "vtkHyperPointandArray.h"
-#include "vtkTensorMathematics.h"
-#include "vtkFloatArray.h"
+#include "vtkTensorMathematics.h" // for VTK_TENS_FRACTIONAL_ANISOTROPY
+#include "vtkTractographyPointAndArray.h"
 
-//class VTK_DTMRI_EXPORT vtkHyperStreamlineDTMRI : public vtkHyperStreamline 
-class VTK_TENSORUTIL_EXPORT vtkHyperStreamlineDTMRI : public vtkHyperStreamline 
+class VTK_TENSORUTIL_EXPORT vtkHyperStreamlineDTMRI : public vtkHyperStreamline
 {
 public:
   vtkTypeRevisionMacro(vtkHyperStreamlineDTMRI,vtkHyperStreamline);
@@ -71,20 +69,35 @@ public:
   // Type of anisotropy used to stop tractography.
   vtkGetMacro(StoppingMode,int);
   vtkSetMacro(StoppingMode,int);
-  void SetStoppingModeToFractionalAnisotropy() 
+  void SetStoppingModeToFractionalAnisotropy()
     {this->SetStoppingMode(VTK_TENS_FRACTIONAL_ANISOTROPY);};
-  void SetStoppingModeToLinearMeasure() 
+  void SetStoppingModeToLinearMeasure()
     {this->SetStoppingMode(VTK_TENS_LINEAR_MEASURE);};
-  void SetStoppingModeToPlanarMeasure() 
+  void SetStoppingModeToPlanarMeasure()
     {this->SetStoppingMode(VTK_TENS_PLANAR_MEASURE);};
-  void SetStoppingModeToSphericalMeasure() 
+  void SetStoppingModeToSphericalMeasure()
     {this->SetStoppingMode(VTK_TENS_SPHERICAL_MEASURE);};
 
 
-  // If StoppingMode criterion becomes smaller than this number, 
-  // tracking stops.       
+  // If StoppingMode criterion becomes smaller than this number,
+  // tracking stops.
   vtkGetMacro(StoppingThreshold,vtkFloatingPointType);
   vtkSetMacro(StoppingThreshold,vtkFloatingPointType);
+
+  // Description:
+  // Whether to output the interpolated tensor at each point
+  // of the output streamline
+  vtkGetMacro(OutputTensors, int);
+  vtkSetMacro(OutputTensors, int);
+  vtkBooleanMacro(OutputTensors, int);
+
+  // Description:
+  // Whether to produce one polyline per integration direction
+  // (so two per seed point), or one polyline per seed point.
+  // Superclass behavior would be two per seed point.
+  vtkGetMacro(OneTrajectoryPerSeedPoint, int);
+  vtkSetMacro(OneTrajectoryPerSeedPoint, int);
+  vtkBooleanMacro(OneTrajectoryPerSeedPoint, int);
 
 protected:
   vtkHyperStreamlineDTMRI();
@@ -93,10 +106,18 @@ protected:
   // Integrate data
   void Execute();
   void BuildLines();
+  void BuildLinesForSingleTrajectory();
+  void BuildLinesForTwoTrajectories();
 
   vtkFloatingPointType RadiusOfCurvature;
   int StoppingMode;
   vtkFloatingPointType StoppingThreshold;
+
+  int OutputTensors;
+
+  int OneTrajectoryPerSeedPoint;
+
+  vtkTractographyArray *Streamers;
 
 private:
   vtkHyperStreamlineDTMRI(const vtkHyperStreamlineDTMRI&);  // Not implemented.

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPreciseHyperStreamlinePoints.cxx,v $
-  Date:      $Date: 2006/07/07 19:35:58 $
-  Version:   $Revision: 1.4.8.1.2.3 $
+  Date:      $Date: 2007/10/29 15:17:25 $
+  Version:   $Revision: 1.4.8.1.2.4 $
 
 =========================================================================auto=*/
 #include "vtkPreciseHyperStreamlinePoints.h"
@@ -88,7 +88,9 @@ vtkPreciseHyperStreamlinePoints::vtkPreciseHyperStreamlinePoints()
 //------------------------------------------------------------------------------
 vtkPreciseHyperStreamlinePoints::~vtkPreciseHyperStreamlinePoints()
 {
-
+  this->PreciseHyperStreamline0->Delete();
+  this->PreciseHyperStreamline1->Delete();
+  this->PreciseHyperStreamlines[0] = this->PreciseHyperStreamlines[1] = NULL;
 }
 
 //------------------------------------------------------------------------------

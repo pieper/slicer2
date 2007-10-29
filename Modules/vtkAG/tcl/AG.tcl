@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: AG.tcl,v $
-#   Date:      $Date: 2006/07/07 17:57:01 $
-#   Version:   $Revision: 1.16.2.2.2.2 $
+#   Date:      $Date: 2007/10/29 15:51:44 $
+#   Version:   $Revision: 1.16.2.2.2.3 $
 # 
 #===============================================================================
 # FILE:        AG.tcl
@@ -60,49 +60,8 @@
 #   AGCreateLinMat
 #   AGSaveGridTransform
 #   AGColorComparison
+#   AGCommandLine
 #==========================================================================auto=
-#===============================================================================
-# FILE:        AG.tcl   
-# PROCEDURES:  
-#   AGInit
-#   AGUpdateMRML
-#   AGBuildGUI
-#   AGStartCNIWebPage 
-#   AGBuildHelpFrame
-#   AGBuildMainFrame
-#   AGBuildTransformFrame
-#   AGBuildExpertFrame
-#   Test
-#   ModifyOptions
-#   AGEnter
-#   AGExit
-#   AGPrepareResult
-#   AGPrepareResultVolume
-#   AGWritevtkImageData image filename
-#   AGIntensityTransform Source
-#   AGTransformScale Source Target
-#   AGWriteHomogeneous
-#   AGWriteGrid
-#   WritePWConstant it fid
-#   WritePolynomial it fileid
-#   WriteIntensityTransform it fileid
-#   AGWriteTransform gt flag it FileName
-#   RunAG
-#   AGBatchProcessResampling
-#   AGCoregister
-#   AGTransformOneVolume SouceVolume TargetVolume
-#   AGPreprocess Source Target SourceVol TargetVol
-#   AGResample Source Target
-#   AGNormalize SourceImage TargetImage NormalizeSource SourceScanOrder TargetScanOrder
-#   AGTestWriting
-#   AGReadvtkImageData
-#   AGTestReadvtkImageData
-#   AGUpdateInitial
-#   AGTurnInitialOff
-#   AGCreateLinMat
-#   AGSaveGridTransform
-#   AGColorComparison
-
 #   ==================================================
 #   Module: vtkAG
 #   Author: Lifeng Liu
@@ -235,7 +194,7 @@ proc AGInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.16.2.2.2.2 $} {$Date: 2006/07/07 17:57:01 $}]
+        {$Revision: 1.16.2.2.2.3 $} {$Date: 2007/10/29 15:51:44 $}]
 
     # Initialize module-level variables
     #------------------------------------
@@ -259,7 +218,7 @@ proc AGInit {} {
     #General options
 
 # set AG(DEBUG) to 1 to display more information.
-    set AG(Debug) 1
+    set AG(Debug) 0
    
     set AG(Linear)    "1"
     set AG(Warp)      "1"
@@ -840,8 +799,8 @@ proc AGBuildExpertFrame {} {
         -text  "Use SSD" -variable AG(SSD) \
         -width 15  -indicatoron 0 } $Gui(WCA)
     grid $f.lUseSSD $f.cUseSSDLabel  -pady 2 -padx $Gui(pad) -sticky w
-    TooltipAdd $f.cUseSSDLabel "Press to set/unset using SSD to stop iterations."
- 
+    TooltipAdd $f.cUseSSDLabel "If set the algorithm halts when it converges. The method convergence when the difference between the Sum Squared Difference (SSD) score of two consecutive iterations is smaller then Epsilon* (SSD of last iteration)"    
+
     eval {label $f.lEstimateBias -text "Bias:"} $Gui(WLA)
     eval {checkbutton $f.cEstimateBias \
         -text  "Estimate Bias" -variable AG(Use_bias) \
@@ -855,7 +814,7 @@ proc AGBuildExpertFrame {} {
         -text  "Interpolate" -variable AG(Interpolation) \
         -width 15  -indicatoron 0 } $Gui(WCA)
     grid $f.lInterpolation $f.cInterpolation  -pady 2 -padx $Gui(pad) -sticky w
-    TooltipAdd $f.cInterpolation "Press to set/unset to cubic interpolation" 
+    TooltipAdd $f.cInterpolation "Press to set for cubic interpolation or unset (for nearest neighbor)" 
 
 
     eval {checkbutton $f.c2DRegistration \
@@ -1042,22 +1001,22 @@ IntensityTFM {
 
     set AG(IntensityTFMName)  $value
     $AG(mbIntensityTFM) config -text $AG(IntensityTFMName)
-      switch $value {
-"no intensity transform" {
-    set  AG(Intensity_tfm) "none"
-}
-"mono functional" {
-    set AG(Intensity_tfm)  "mono-functional"
-
-}
-"piecewise median" {
-    set AG(Intensity_tfm)  "piecewise-median"
-
-}
-default {
-    set AG(Intensity_tfm)  "mono-functional"
-  
-}
+    switch $value {
+      "no intensity transform" {
+          set  AG(Intensity_tfm) "none"
+      }
+      "mono functional" {
+          set AG(Intensity_tfm)  "mono-functional"
+      
+      }
+      "piecewise median" {
+          set AG(Intensity_tfm)  "piecewise-median"
+      
+      }
+      default {
+          set AG(Intensity_tfm)  "mono-functional"
+        
+      }
     }
 }
 
@@ -1787,7 +1746,7 @@ proc AGReadLinearNonLinearTransform {} {
        AGReadHomogeneousOriginal gt $fname
    }
    set fname2 [tk_getOpenFile -defaultextension ".vtk" -title "File for non-linear transform"]
-   if { $fname != "" } {
+   if { $fname2 != "" } {
       AGReadGrid gt $fname2        
    }
    set AG(Transform) gt
@@ -1889,17 +1848,16 @@ proc AGWriteTransform {gt flag it FileName} {
 }
 
 #-------------------------------------------------------------------------------
-# .PROC AGThresholdedResampledData
+# .PROC AGThresholdedOutput
 # Compares the max and min values of the Original and resampled Data and defines Output in such a way that it is like ResampledData 
 # but in the same scalar range as OriginalData
 #
 # .ARGS
-# vtkImageData Source
-# vtkImageData Target
+# vtkImageData OriginalData
+# vtkImageData ResampledData
 # vtkImageData Output
 # .END
-#-------------------------------------------------------------------------------
-    
+#-------------------------------------------------------------------------------  
 proc AGThresholdedOutput { OriginalData ResampledData Output } {
 
     vtkImageAccumulate ia
@@ -2854,6 +2812,8 @@ proc AGPreprocess {Source Target SourceVol TargetVol} {
   }
 }
 
+
+
 #-------------------------------------------------------------------------------
 # .PROC AGThresholdedResampledData
 # Compares the max and min values of the Original and resampled Data and defines Output in such a way that it is like ResampledData 
@@ -2970,8 +2930,14 @@ proc AGResample {Source Target Resampled} {
   } else {
       Reslicer SetInput [Cast GetOutput]      
   }
-
-  Reslicer SetInterpolationMode $ResampleOptions(interp)
+  # Kilian - April 06: This is not consistent with AGNormalize and GUI   
+  # Reslicer SetInterpolationMode $ResampleOptions(interp)
+  # if ResampleOptions(interp) == 0 => Nearest Neighbor
+  # if ResampleOptions(interp) == 1 => Linear 
+  # Now changed it so that ResampleOptions(interp) == 1 => Cubic 
+  if {$ResampleOptions(interp) } {
+      Reslicer SetInterpolationModeToCubic
+  }
 
 # Should it be this way, or inverse in the other way?     
   if {$ResampleOptions(inverse) == 1} {
@@ -3042,15 +3008,23 @@ proc AGResample {Source Target Resampled} {
   }
   
           
-  Cast Delete
+  # Kilian April 06:
+  # used to be $Resampled DeepCopy [Reslicer GetOutput]
 
-  $Resampled DeepCopy [Reslicer GetOutput]
+  # vtkImageReslice with Cubic Interpolation can produce volumes with negative values even though 
+  # input does not have any. The following insures that this does not happen 
+  # If intensity transformation is activated make sure that intensity profile does not exceed target intensity profile
+  if {($ResampleOptions(intens) == 1) && $AG(Warp)} {
+      AGThresholdedOutput $Target [Reslicer GetOutput] $Resampled
+  } else {
+      AGThresholdedOutput [Cast GetOutput] [Reslicer GetOutput] $Resampled
+  }
 
   $Resampled SetUpdateExtentToWholeExtent
-
   #if { ($AG(InputVolSource2) == $Volume(idNone)) || ($AG(InputVolTarget2) == $Volume(idNone)) }  {     
   #   Reslicer UnRegisterAllOutputs
   #}
+  catch {Cast Delete}
   catch {ITrans Delete}
   Reslicer Delete
 
@@ -3084,8 +3058,9 @@ proc AGNormalize { SourceImage TargetImage NormalizedSource SourceScanOrder Targ
     vtkImageReslice reslice
    
     if {$AG(Interpolation)} {
-      reslice SetInterpolationModeToCubic
+       reslice SetInterpolationModeToCubic
     }
+
     catch "xform Delete"
     catch "changeinfo Delete"
     vtkTransform xform
@@ -3862,4 +3837,73 @@ proc AGColorComparison {} {
     MainSlicesSetVolumeAll Back $v2
     MainSlicesSetVolumeAll Fore $Volume(idNone)
     RenderAll
+}
+
+#-------------------------------------------------------------------------------
+# .PROC AGCommandLine
+# Command-line registration using AG. Currently, the input is analyze,
+# output is vtk. A parameter-file is needed, you can use
+# AGInitCommandLineParameters.tcl in the Modules/vtkAG/tcl directory.
+# Coregistration file is mandatory at the moment. 
+# Example usage:
+#   1) Set up a virtual display:
+#        Xvfb :2 -screen 0 800x600x16
+#   2) Run Slicer and execute AG:
+#        slicer2-linux-x86 -y --no-tkcon --exec AGCommandLine target.hdr 
+#        source.hdr coreg.hdr AGInitCommandLineParameters.tcl , exit
+#        -display :2 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc AGCommandLine { {targetname} {sourcename} {coregname} {paramfile} } {
+  # have args as extra arg
+  global AG Volume
+  puts "Targetname: $targetname"
+  puts "Sourcename: $sourcename"
+  puts "Coregname: $coregname"
+  puts "Paramfile: $paramfile"
+  
+  set resultname [string trimright $sourcename ".hdr"]
+  append resultname "_warp.vtk"
+
+  # source parameterfile, containing one proc
+  source $paramfile
+  # and run it
+  AGInitCommandLineParameters
+  puts "targetname"
+  # They are vol 1 and 2
+  set ::Volume(VolAnalyze,FileName) $targetname
+  VolAnalyzeApply; RenderAll
+  set ::Volume(VolAnalyze,FileName) $sourcename
+  VolAnalyzeApply; RenderAll
+  
+  # set target and source for registration
+  set ::AG(InputVolTarget) 1
+  set ::AG(InputVolSource) 2
+  # create new result volume = -5
+  set ::AG(ResultVol) -5
+
+  # and run
+  RunAG
+
+  # save output
+  AGWritevtkImageData [Volume($AG(ResultVol),vol) GetOutput] $resultname
+  
+  # ResultVol is 3, CoregVol 4, ResultCoregVol 5
+  # Do coregistration
+  set ::Volume(VolAnalyze,FileName) $coregname
+  VolAnalyzeApply; RenderAll
+  set ::AG(CoregVol) 4
+
+  AGCoregister
+  set coregname [string trimright $coregname ".hdr"]
+  append coregname "_coreg.vtk"
+  AGWritevtkImageData [Volume(5,vol) GetOutput] $coregname
+
+  # Write transforms to disk
+  set lintransname [string trimright $sourcename ".hdr"]
+  set gridtransname $lintransname
+  append lintransname "_lintrans"
+  append gridtransname "_gridtrans.vtk"
+  AGWriteLinearNonLinearTransform $lintransname $gridtransname
 }

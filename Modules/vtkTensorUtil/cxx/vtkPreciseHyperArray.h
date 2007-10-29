@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPreciseHyperArray.h,v $
-  Date:      $Date: 2006/07/07 19:33:01 $
-  Version:   $Revision: 1.3.8.1.2.3 $
+  Date:      $Date: 2007/10/29 15:17:25 $
+  Version:   $Revision: 1.3.8.1.2.4 $
 
 =========================================================================auto=*/
 #ifndef __vtkPreciseHyperArray_h
@@ -16,7 +16,7 @@
 
 //BTX
 #include "vtkPreciseHyperPoint.h"
-class vtkPreciseHyperArray { //;prevent man page generation
+class VTK_TENSORUTIL_EXPORT vtkPreciseHyperArray { //;prevent man page generation
 public:
   vtkPreciseHyperArray();
   ~vtkPreciseHyperArray()

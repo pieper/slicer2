@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageTransformIntensity.h,v $
-  Date:      $Date: 2005/12/20 22:54:52 $
-  Version:   $Revision: 1.2.8.1 $
+  Date:      $Date: 2007/10/29 15:51:37 $
+  Version:   $Revision: 1.2.8.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageTransformIntensity - 
@@ -38,8 +38,8 @@ public:
 protected:
   vtkImageTransformIntensity();
   ~vtkImageTransformIntensity();
-  vtkImageTransformIntensity(const vtkImageTransformIntensity&) {}
-  void operator=(const vtkImageTransformIntensity&) {}
+  vtkImageTransformIntensity(const vtkImageTransformIntensity&);
+  void operator=(const vtkImageTransformIntensity&);
   void ThreadedExecute(vtkImageData *inDatas, vtkImageData *outData,
                int extent[6], int id);
       

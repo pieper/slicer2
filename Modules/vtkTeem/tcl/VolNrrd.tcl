@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: VolNrrd.tcl,v $
-#   Date:      $Date: 2006/07/07 19:16:31 $
-#   Version:   $Revision: 1.1.2.2.2.3 $
+#   Date:      $Date: 2007/10/29 15:18:18 $
+#   Version:   $Revision: 1.1.2.2.2.4 $
 # 
 #===============================================================================
 # FILE:        VolNrrd.tcl
@@ -78,7 +78,7 @@ proc VolNrrdBuildGUI {parentFrame} {
 
     set f $parentFrame.fVolume
 
-    DevAddFileBrowse $f Volume "VolNrrd,FileName" "Nrrd File:" "VolNrrdSetFileName" "nhdr nrrd" "\$Volume(DefaultDir)" "Open" "Browse for a Nrrd file" "Browse for a Nrrd file (.nhdr that has matching .img)" "Absolute"
+    DevAddFileBrowse $f Volume "VolNrrd,FileName" "Nrrd File:" "VolNrrdSetFileName" "nhdr nrrd" "\$Volume(DefaultDir)" "Open" "Browse for a Nrrd File" "Browse for a Nrrd file (.nhdr that has matching .img)" "Absolute"
 
     frame $f.fLabelMap -bg $Gui(activeWorkspace)
 
@@ -359,7 +359,7 @@ proc VolNrrdApply {} {
     #
     # Filling headerKeys in the volume array. This key might eventually belong to the MrmlNode
     #
-    puts "Header Keys = [nrrdReader GetHeaderKeys]"
+    #puts "Header Keys = [nrrdReader GetHeaderKeys]"
     foreach key [nrrdReader GetHeaderKeys] {
         set Volume($i,headerKeys,$key) [nrrdReader GetHeaderValue $key]
     }
@@ -367,14 +367,14 @@ proc VolNrrdApply {} {
     #
     # Setting measurement frame as a key value. This might eventually be part of the MrmlNode
     set mframe ""
-    foreach r "0 1 2" {
+    foreach c "0 1 2" {
       set axis ""
-      foreach c "0 1 2" {
+      foreach r "0 1 2" {
         lappend axis [[nrrdReader GetMeasurementFrameMatrix] GetElement $r $c]
       }
       lappend mframe $axis
     }
-    puts "Measurement frame: $mframe"
+    #puts "VolNrrdApply: Measurement frame: $mframe"
     
     set Volume($i,headerKeys,measurementframe) $mframe    
     
@@ -418,9 +418,9 @@ proc VolNrrdApply {} {
     set dim     [lindex [Volume($i,node) GetDimensions] 0]
     set spacing [lindex [Volume($i,node) GetSpacing] 0]
     set fov     [expr $dim*$spacing]
-    set View(fov) $fov
-
-    MainViewSetFov
+#    set View(fov) $fov
+    # let MainView set it so that it doesn't improperly override
+    MainViewSetFov "default" $fov
 
 
     # display the new volume in the background of all slices if not a label map
@@ -469,7 +469,28 @@ proc VolNrrdReaderProc {v} {
     if { $::Module(verbose) } {
         puts "[[readerProc_nrrdReader1 GetOutput] Print]"
     }
+
+
+    # Filling headerKeys in the volume array. This key might eventually belong to the MrmlNode
+    #
+    foreach key [readerProc_nrrdReader1 GetHeaderKeys] {
+        set Volume($v,headerKeys,$key) [readerProc_nrrdReader1 GetHeaderValue $key]
+    }
     
+    #
+    # Setting measurement frame as a key value. This might eventually be part of the MrmlNode
+    set mframe ""
+    foreach c "0 1 2" {
+      set axis ""
+      foreach r "0 1 2" {
+        lappend axis [[readerProc_nrrdReader1 GetMeasurementFrameMatrix] GetElement $r $c]
+      }
+      lappend mframe $axis
+    }
+    
+    set Volume($v,headerKeys,measurementframe) $mframe    
+    # Done filling header keys
+
     #Check if we need to create Volume node or Tensor node
     
     if {[[[readerProc_nrrdReader1 GetOutput] GetPointData] GetScalars] != ""} {
@@ -497,8 +518,9 @@ proc VolNrrdFillVolumeMrmlNode {v in} {
     vtkImageAppend ap
     ap SetAppendAxis 2
     set ncomp [$in GetNumberOfScalarComponents]
-    puts "Num comp: $ncomp"
-    if { $ncomp > 3 } {
+
+#    if { $ncomp > 3 }
+     if { 0 } {
        for {set i 0} {$i < $ncomp} {incr i} {
          catch "e$i Delete"
          vtkImageExtractComponents e$i
@@ -506,21 +528,19 @@ proc VolNrrdFillVolumeMrmlNode {v in} {
          e$i SetComponents $i
          e$i Update
          ap AddInput [e$i GetOutput]
-      }
-      ap Update  
-        for {set i 0} {$i <$ncomp} {incr i} {
+       }
+       ap Update  
+       for {set i 0} {$i <$ncomp} {incr i} {
           e$i Delete
        }
-      Volume($v,vol) SetImageData [ap GetOutput]
-    } else {       
-      Volume($v,vol) SetImageData $in
-   }
-   
-    set n [[[$in GetPointData] GetScalars] GetNumberOfComponents]
-    Volume($v,node) SetNumScalars $n
-    
-    catch "ap Delete"
- 
+       Volume($v,vol) SetImageData [ap GetOutput]
+     } else {
+       Volume($v,vol) SetImageData $in
+     }
+     set n [[[$in GetPointData] GetScalars] GetNumberOfComponents]
+     Volume($v,node) SetNumScalars $n
+
+     catch "ap Delete"
 
     set Volume(fileType) ""
 }

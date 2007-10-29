@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkInteractiveTensorGlyph.h,v $
-  Date:      $Date: 2006/07/07 19:32:04 $
-  Version:   $Revision: 1.5.2.1.2.3 $
+  Date:      $Date: 2007/10/29 15:17:25 $
+  Version:   $Revision: 1.5.2.1.2.4 $
 
 =========================================================================auto=*/
 // .NAME vtkInteractiveTensorGlyph - scale and orient glyph according to tensor eigenvalues and eigenvectors
@@ -48,17 +48,19 @@
 // coordinate system.
 
 // .SECTION See Also
-// vtkTensorGlyph vtkGlyph3D vtkPointLoad vtkHyperStreamline
+// vtkTensorGlyph vtkGlyph3D vtkPointLoad vtkHyperStreamline vtkSuperquadricTensorGlyph
 
 #ifndef __vtkInteractiveTensorGlyph_h
 #define __vtkInteractiveTensorGlyph_h
 
 #include "vtkTensorUtilConfigure.h"
 #include "vtkTensorGlyph.h"
-#include "vtkTransform.h"
-#include "vtkMatrix4x4.h"
-#include "vtkImageData.h"
+//#include "vtkTransform.h"
+//#include "vtkMatrix4x4.h"
+//#include "vtkImageData.h"
 
+class vtkImageData;
+class vtkMatrix4x4;
 class VTK_TENSORUTIL_EXPORT vtkInteractiveTensorGlyph : public vtkTensorGlyph
 {
 public:
@@ -80,7 +82,7 @@ public:
   vtkGetMacro(MaskGlyphsWithScalars, int);
 
 
-  vtkSetObjectMacro(ScalarMask, vtkImageData);
+  virtual void SetScalarMask(vtkImageData*);
 
 #define VTK_LINEAR_MEASURE 1
 #define VTK_SPHERICAL_MEASURE 2
@@ -117,7 +119,7 @@ public:
   //    incorrectly rotating the tensors, as would be the 
   //    case if positioning the scene's actor with this matrix.
   // 
-  vtkSetObjectMacro(VolumePositionMatrix, vtkMatrix4x4);
+  virtual void SetVolumePositionMatrix(vtkMatrix4x4*);
   vtkGetObjectMacro(VolumePositionMatrix, vtkMatrix4x4);
 
 
@@ -136,26 +138,19 @@ public:
   //    just need to rotate each tensor.
   // 3) Set TensorRotationMatrix to this rotation matrix.
   //
-  vtkSetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
+  virtual void SetTensorRotationMatrix(vtkMatrix4x4*);
   vtkGetObjectMacro(TensorRotationMatrix, vtkMatrix4x4);
 
   // Description:
   // Resolution of the output glyphs. This parameter is a integer value
   // that set the number of points that are skipped before render one glyphs.
   // 1 is the finer level meaning that every input point a glyph is rendered.
-  void SetResolution(int value){
-    if(value<=0) {
-      vtkWarningMacro("Resolution cannot be lower than 1.");
-      value = 1;
-    }
-    this->Resolution=value;  
-    this->Modified();
-  };  
+  vtkSetClampMacro(Resolution,int,1,VTK_LARGE_INTEGER);
   vtkGetMacro(Resolution,int);
 
 
    static void RGBToIndex(double R, double G, 
-                  double B, double &index);
+                          double B, double &index);
 
   // Description:
   // When determining the modified time of the filter, 
@@ -166,8 +161,6 @@ public:
 protected:
   vtkInteractiveTensorGlyph();
   ~vtkInteractiveTensorGlyph();
-  vtkInteractiveTensorGlyph(const vtkInteractiveTensorGlyph&);
-  void operator=(const vtkInteractiveTensorGlyph&);
 
   void Execute();
 
@@ -182,6 +175,9 @@ protected:
 
   vtkImageData *ScalarMask;
 
+private:
+  vtkInteractiveTensorGlyph(const vtkInteractiveTensorGlyph&);
+  void operator=(const vtkInteractiveTensorGlyph&);
 };
 
 #endif

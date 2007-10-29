@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: PrincipalCurvatures.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:35 $
-  Version:   $Revision: 1.5.8.1 $
+  Date:      $Date: 2007/10/29 15:38:21 $
+  Version:   $Revision: 1.5.8.1.2.1 $
 
 =========================================================================auto=*/
 /*  ==================================================
@@ -104,8 +104,8 @@ int CurvaturasPrincipales(float H[3][3],
      //float *lmax,*lmin;  /* CURVATURAS PRINCIPALES */
      //float umbral;       /* UMBRAL MINIMO DE LA NORMA CUADRADO DEL GRADIENTE PARA HACER EL CALCULO */
 {
-  float P[3][3],PASO[3][3],A[3][3],p1[3],p2[3],p3[3],paso[3];
-  double a,b,c,d,e,p2norm,ap,cp;
+  float P[3][3],A[3][3],p1[3],p2[3],p3[3],paso[3];
+  double a,b,c,d,e,p2norm;
   int i,j,k,k1,k2;
   double pnorm=p[0]*p[0]+p[1]*p[1]+p[2]*p[2];
 
@@ -258,8 +258,8 @@ int CurvaturasPrincipales(float H[3][3],
      //float *lmax,*lmin;  /* CURVATURAS PRINCIPALES */
      //float umbral;       /* UMBRAL MINIMO DE LA NORMA CUADRADO DEL GRADIENTE PARA HACER EL CALCULO */
 {
-  float P[3][3],PASO[3][3],A[3][3],p1[3],p2[3],p3[3],paso[3];
-  double a,b,c,d,e,p2norm,ap,cp;
+  float P[3][3],A[3][3],p1[3],p2[3],p3[3],paso[3];
+  double a,b,c,d,e,p2norm;
   int i,j,k,k1,k2;
   double pnorm=p[0]*p[0]+p[1]*p[1]+p[2]*p[2];
 

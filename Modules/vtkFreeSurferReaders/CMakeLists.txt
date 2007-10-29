@@ -5,6 +5,7 @@
 # MY -> FREESURFERREADERS
 # my -> FreeSurferReaders
 
+SET(MODULE_NAME VTKFREESURFERREADERS)
 
 PROJECT (VTKFREESURFERREADERS)
 
@@ -16,6 +17,7 @@ PROJECT (VTKFREESURFERREADERS)
 #
 
 SET (VTKFREESURFERREADERS_CAN_BUILD 1)
+ENABLE_TESTING()
 
 #
 # Load CMake commands that you probably should not modify.
@@ -38,6 +40,7 @@ IF (VTKFREESURFERREADERS_CAN_BUILD)
 
   SUBDIRS (
     cxx
+    Testing
   )
 
   #

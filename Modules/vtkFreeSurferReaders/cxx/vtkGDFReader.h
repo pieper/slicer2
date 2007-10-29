@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkGDFReader.h,v $
-  Date:      $Date: 2005/12/20 22:55:38 $
-  Version:   $Revision: 1.11.2.1 $
+  Date:      $Date: 2007/10/29 15:35:08 $
+  Version:   $Revision: 1.11.2.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkGDF.h - GDF functions for FreeSurfer statistical files.
@@ -20,28 +20,18 @@
 #define __vtkGDFReader_h
 
 #include <vtkFreeSurferReadersConfigure.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <string>
-#include "vtkImageData.h"
 #include "vtkVolumeReader.h"
 
-#ifdef _WIN32
-#include <vector>
-#define strncasecmp strnicmp
-#else
-#include <vector.h>
-#endif
-using namespace std;
+// should really do PIMP:
+#include <vtkstd/string>
+#include <vtkstd/vector>
 
-class VTK_FREESURFERREADERS_EXPORT vtkGDFReader : public vtkVolumeReader {
+class vtkImageData;
+class VTK_FREESURFERREADERS_EXPORT vtkGDFReader : public vtkVolumeReader
+{
 public:
-
     vtkTypeMacro(vtkGDFReader,vtkVolumeReader);
-    
     static vtkGDFReader *New ();
-    
     void PrintSelf(ostream& os, vtkIndent indent);
     
     // Description: 
@@ -139,14 +129,14 @@ public:
     // descriptor file to design matrix conversion method
     vtkGetStringMacro(gd2mtx);
    
-    char *GetNthClassLabel(int n);
-    char *GetNthClassMarker(int n);
-    char *GetNthClassColor(int n);
-    char *GetNthVariableLabel(int n);
-    char *GetNthSubjectID(int n);
-    char *GetNthSubjectClass(int n);
-    char *GetNthSubjectNthValue(int n1, int n2);
-    vtkFloatingPointType GetNthSubjectMeasurement(int n, char *subject, int x, int y, int z);
+    const char *GetNthClassLabel(int n);
+    const char *GetNthClassMarker(int n);
+    const char *GetNthClassColor(int n);
+    const char *GetNthVariableLabel(int n);
+    const char *GetNthSubjectID(int n);
+    const char *GetNthSubjectClass(int n);
+    const char *GetNthSubjectNthValue(int n1, int n2);
+    vtkFloatingPointType GetNthSubjectMeasurement(int n, const char *subject, int x, int y, int z);
     
     // Description:
     //
@@ -164,7 +154,6 @@ protected:
 
     void Execute();
     void ExecuteInformation();
-
 
     // title of the graph
     char *Title;
@@ -202,11 +191,13 @@ protected:
     int SynthSeed;
 
     // for testing
+    vtkSetStringMacro(ErrVal);
     char * ErrVal;
 
     // the method by which the group descriptor file is converted to a design
     // matrix (different offset same slope ; different offset different slope
     // legal values: doss dods 
+    vtkSetStringMacro(gd2mtx);
     char * gd2mtx;
     
 private:
@@ -214,19 +205,19 @@ private:
     int lastID;
     
 //BTX
-    string defaultMarker;
-    string defaultColour;
+    vtkstd::string defaultMarker;
+    vtkstd::string defaultColour;
     // in case have two cases of no set markers
-    string defaultMarker2;
-    string defaultColour2;
+    vtkstd::string defaultMarker2;
+    vtkstd::string defaultColour2;
 
     // use a vector to hold the class name, marker, colour (last two optional)
-    std::vector<std::vector<std::string> >ClassesVec;
+    vtkstd::vector<vtkstd::vector<vtkstd::string> >ClassesVec;
     //std::vector<char *>VariablesVec;
-    std::vector<std::string>VariablesVec;
+    vtkstd::vector<vtkstd::string>VariablesVec;
     // use a vector to hold the subject id, class, and values of a number that
     // matches NumVariables
-    std::vector<std::vector<std::string> >SubjectsVec;
+    vtkstd::vector<vtkstd::vector<vtkstd::string> >SubjectsVec;
 //ETX
 };
 

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPreciseHyperPoint.h,v $
-  Date:      $Date: 2006/07/07 19:33:42 $
-  Version:   $Revision: 1.4.8.1.2.3 $
+  Date:      $Date: 2007/10/29 15:17:25 $
+  Version:   $Revision: 1.4.8.1.2.4 $
 
 =========================================================================auto=*/
 #ifndef __vtkPreciseHyperPoint_h
@@ -16,7 +16,7 @@
 
 //BTX
 
-class vtkPreciseHyperPoint { //;prevent man page generation
+class VTK_TENSORUTIL_EXPORT vtkPreciseHyperPoint { //;prevent man page generation
 public:
     vtkPreciseHyperPoint(); // method sets up storage
     vtkPreciseHyperPoint &operator=(const vtkPreciseHyperPoint& hp); //for resizing

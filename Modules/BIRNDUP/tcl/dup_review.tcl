@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup_review.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:46 $
-#   Version:   $Revision: 1.9.8.1 $
+#   Date:      $Date: 2007/10/29 15:55:19 $
+#   Version:   $Revision: 1.9.8.1.2.1 $
 # 
 #===============================================================================
 # FILE:        dup_review.tcl
@@ -92,7 +92,7 @@ itcl::body dup_review::refresh {} {
         set birnid [lindex [file split $s] end-3] 
         set bb $_frame.b$b 
         pack [button $bb -text "Review $birnid" -command "$this run $s"]
-        TooltipAdd $bb "$s"
+        dup_TooltipAdd $bb "$s"
         incr b
     }
 
@@ -109,23 +109,26 @@ itcl::body dup_review::run {studydir} {
     # TODO - this avoids warning messages when slicer starts
     set ::env(SLICER_CUSTOM_CONFIG) "true"
     # TODO - this is linux only
-    exec $::env(SLICER_HOME)/slicer2-linux-x86 --agree_to_license $::PACKAGE_DIR_BIRNDUP/../../../tcl/gonogo.tcl $studydir
+    set ret [catch "exec $::env(SLICER_HOME)/slicer2-$::env(BUILD) --agree_to_license $::PACKAGE_DIR_BIRNDUP/../../../tcl/gonogo.tcl $studydir" res]
+
+    if { $ret && $::errorCode != "NONE" } {
+        dup_DevErrorWindow "Could not launch the review process.  Please file a bug report with the following information.\n\n$res"
+    }
 
     if { ![file exists $studydir/upload_list.txt] } {
         # user cancelled
         return
     }
 
-    package require fileutil
-    set to_upload [::fileutil::cat $studydir/upload_list.txt]
-    set to_defer [::fileutil::cat $studydir/defer_list.txt]
+    set to_upload [::dup_review::cat $studydir/upload_list.txt]
+    set to_defer [::dup_review::cat $studydir/defer_list.txt]
     
     set defercount [llength $to_defer]
     if { $defercount > 0 } {
-        set resp [DevOKCancel "The Study contains $defercount series that did not pass review.\n\nClick Ok to upload only the approved series or cancel to defer the entire study."]
+        set resp [dup_DevOKCancel "The Study contains $defercount series that did not pass review.\n\nClick Ok to upload only the approved series or cancel to defer the entire study."]
         if { $resp != "ok" } {
-            set sourcedir [::fileutil::cat $studydir/source_directory] 
-            DevErrorWindow "The study in $sourcedir did not pass review.  Manual defacing must be used."
+            set sourcedir [::dup_review::cat $studydir/source_directory] 
+            dup_DevErrorWindow "The study in $sourcedir did not pass review.  Manual defacing must be used."
             file delete -force $studydir
             $parent log "manual defacing needed for $studydir"
             $parent refresh 
@@ -139,3 +142,9 @@ itcl::body dup_review::run {studydir} {
     $parent refresh 
 }
 
+proc dup_review::cat {filename} {
+    set fp [open $filename r]
+    set data [read $fp]
+    close $fp
+    return $data
+}

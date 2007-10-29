@@ -7,23 +7,30 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricTensorGlyph.cxx,v $
-  Date:      $Date: 2006/07/07 19:38:23 $
-  Version:   $Revision: 1.5.2.1.2.3 $
+  Date:      $Date: 2007/10/29 15:17:25 $
+  Version:   $Revision: 1.5.2.1.2.4 $
 
 =========================================================================auto=*/
 #include "vtkSuperquadricTensorGlyph.h"
+
+#include "vtkObjectFactory.h"
 #include "vtkTransform.h"
 #include "vtkMath.h"
-#include "vtkObjectFactory.h"
 #include "vtkTensor.h"
 #include "vtkFloatArray.h"
 #include "vtkPolyData.h"
 #include "vtkPointData.h"
 #include "vtkCellArray.h"
+#include "vtkImageData.h"
 #include "vtkSuperquadricSource2.h"
-#include <time.h>
 #include "vtkTensorMathematics.h"
 #include "vtkInteractiveTensorGlyph.h"
+
+#include <time.h>
+
+vtkCxxSetObjectMacro(vtkSuperquadricTensorGlyph,ScalarMask,vtkImageData);
+vtkCxxSetObjectMacro(vtkSuperquadricTensorGlyph,VolumePositionMatrix,vtkMatrix4x4);
+vtkCxxSetObjectMacro(vtkSuperquadricTensorGlyph,TensorRotationMatrix,vtkMatrix4x4);
 
 //------------------------------------------------------------------------------
 vtkSuperquadricTensorGlyph* vtkSuperquadricTensorGlyph::New()
@@ -41,6 +48,7 @@ vtkSuperquadricTensorGlyph* vtkSuperquadricTensorGlyph::New()
 
 
 
+//------------------------------------------------------------------------------
 // Construct object with defaults from superclass: these are
 // scaling on and scale factor 1.0. Eigenvalues are 
 // extracted, glyphs are colored with input scalar data, and logarithmic
@@ -49,6 +57,7 @@ vtkSuperquadricTensorGlyph::vtkSuperquadricTensorGlyph()
 {
   // Instead of coloring glyphs by passing through input
   // scalars, color according to features we are computing.
+  this->ScalarMeasure = 0; // Need to initialed var before callling ColorGlyphsWithLinearMeasure
   this->ColorGlyphsWithLinearMeasure();
 
   this->VolumePositionMatrix = NULL;
@@ -161,7 +170,7 @@ void vtkSuperquadricTensorGlyph::Execute()
   vtkDataArray *inMask;
   int doMasking;
   // time
-  clock_t tStart=0;
+  clock_t tStart = 0;
   tStart = clock();
 
 
@@ -179,13 +188,13 @@ void vtkSuperquadricTensorGlyph::Execute()
   inMask = NULL;
   if (this->ScalarMask)
     {
-      inMask = this->ScalarMask->GetPointData()->GetScalars();
+    inMask = this->ScalarMask->GetPointData()->GetScalars();
     }
 
   if ( !inTensors || numPts < 1 )
     {
-      vtkErrorMacro(<<"No data to glyph!");
-      return;
+    vtkErrorMacro(<<"No data to glyph!");
+    return;
     }
   //
   // Allocate storage for output PolyData
@@ -298,68 +307,69 @@ void vtkSuperquadricTensorGlyph::Execute()
   
   for (inPtId=0; inPtId < numPts; inPtId=inPtId+this->Resolution)
     {
-      
-      if ( ! (inPtId % 10000) ) 
-    {
+
+    if ( ! (inPtId % 10000) ) 
+      {
       this->UpdateProgress ((vtkFloatingPointType)inPtId/numPts);
       if (this->GetAbortExecute())
         {
-          break;
+        break;
         }
-    }
+      }
 
-      //ptIncr = inPtId * numSourcePts;
+    //ptIncr = inPtId * numSourcePts;
 
-      //tensor = inTensors->GetTuple(inPtId);
-      inTensors->GetTuple(inPtId,(vtkFloatingPointType *)tensor);
+    //tensor = inTensors->GetTuple(inPtId);
+    inTensors->GetTuple(inPtId,(vtkFloatingPointType *)tensor);
 
-      trans->Identity();
+    trans->Identity();
 
-      // threshold: if trace is <= 0, don't do expensive computations
-      // This used to be: tensor ->GetComponent(0,0) + 
-      // tensor->GetComponent(1,1) + tensor->GetComponent(2,2);
-      vtkFloatingPointType trace = tensor[0][0] + tensor[1][1] + tensor[2][2];
+    // threshold: if trace is <= 0, don't do expensive computations
+    // This used to be: tensor ->GetComponent(0,0) + 
+    // tensor->GetComponent(1,1) + tensor->GetComponent(2,2);
+    vtkFloatingPointType trace = tensor[0][0] + tensor[1][1] + tensor[2][2];
 
-      
-      // only display this glyph if either:
-      // a) we are masking and the mask is 1 at this location.
-      // b) the trace is positive and we are not masking (default).
-      // (If the trace is 0 we don't need to go through the code just to
-      // display nothing at the end, since we expect that our data has
-      // non-negative eigenvalues.)
-      if ((doMasking && inMask->GetTuple1(inPtId)) || (!this->MaskGlyphsWithScalars && trace > 0)) 
-    {
+
+    // only display this glyph if either:
+    // a) we are masking and the mask is 1 at this location.
+    // b) the trace is positive and we are not masking (default).
+    // (If the trace is 0 we don't need to go through the code just to
+    // display nothing at the end, since we expect that our data has
+    // non-negative eigenvalues.)
+    if ((doMasking && inMask->GetTuple1(inPtId)) || (!this->MaskGlyphsWithScalars && trace > 0)) 
+      {
       //Compute eigendecomposition
-      
+
       if ( this->ExtractEigenvalues ) // extract appropriate eigenfunctions
         {
-          for (j=0; j<3; j++)
-        {
+        for (j=0; j<3; j++)
+          {
           for (i=0; i<3; i++)
             {
-              // transpose
-              //m[i][j] = tensor[i+3*j];
-              m[i][j] = tensor[j][i];
+            // transpose
+            //m[i][j] = tensor[i+3*j];
+            m[i][j] = tensor[j][i];
             }
-        }
-          //vtkMath::Jacobi(m, w, v);
+          }
+        //vtkMath::Jacobi(m, w, v);
         vtkTensorMathematics::TeemEigenSolver(m,w,v);
-          //copy eigenvectors
-          xv[0] = v[0][0]; xv[1] = v[1][0]; xv[2] = v[2][0];
-          yv[0] = v[0][1]; yv[1] = v[1][1]; yv[2] = v[2][1];
-          zv[0] = v[0][2]; zv[1] = v[1][2]; zv[2] = v[2][2];
+        //copy eigenvectors
+        xv[0] = v[0][0]; xv[1] = v[1][0]; xv[2] = v[2][0];
+        yv[0] = v[0][1]; yv[1] = v[1][1]; yv[2] = v[2][1];
+        zv[0] = v[0][2]; zv[1] = v[1][2]; zv[2] = v[2][2];
         }
       else //use tensor columns as eigenvectors
         {
-          for (i=0; i<3; i++)
-        {
+        for (i=0; i<3; i++)
+          {
           //xv[i] = tensor[i];
           //yv[i] = tensor[i+3];
           //zv[i] = tensor[i+6];
           xv[i] = tensor[0][i];
           yv[i] = tensor[1][i];
           zv[i] = tensor[2][i];
-        }
+          }
+
           w[0] = vtkMath::Normalize(xv);
           w[1] = vtkMath::Normalize(yv);
           w[2] = vtkMath::Normalize(zv);
@@ -376,47 +386,47 @@ void vtkSuperquadricTensorGlyph::Execute()
         alpha = pow((1-cp),this->Gamma);
         beta = pow((1-cl),this->Gamma);
         sq->SetAxisOfSymmetry(0);
-       } else {
+      } else {
         alpha = pow((1-cl),this->Gamma);     
         beta= pow((1-cp),this->Gamma);
         sq->SetAxisOfSymmetry(2);
-       }      
+      }      
       //cout<<"Alpha: "<<alpha<<"  Beta: "<<beta<<endl;
       sq->SetPhiRoundness(beta);
       sq->SetThetaRoundness(alpha);
-      
+
       //cout<<"Updating sq for point :"<<inPtId<<endl;
       sq->Update();
       //cout<<"Update done"<<endl;
-      
+
       sourcePts = sq->GetOutput()->GetPoints();
-             
+
       // copy topology
       //cout<<"Copy cell topology"<<endl;
       for (cellId=0; cellId < numSourceCells; cellId++)
         {
-          cell = sq->GetOutput()->GetCell(cellId);
-          cellPts = cell->GetPointIds();
-          npts = cellPts->GetNumberOfIds();
-          for (i=0; i < npts; i++)
-        {
+        cell = sq->GetOutput()->GetCell(cellId);
+        cellPts = cell->GetPointIds();
+        npts = cellPts->GetNumberOfIds();
+        for (i=0; i < npts; i++)
+          {
           //pts[i] = cellPts->GetId(i) + ptIncr;
           pts[i] = cellPts->GetId(i) + ptOffset;
-        }
-          output->InsertNextCell(cell->GetCellType(),npts,pts);
+          }
+        output->InsertNextCell(cell->GetCellType(),npts,pts);
         }
 
       //cout<<"Cell topology done"<<endl;
-      
+
       // translate Source to Input point
       x = input->GetPoint(inPtId);
       // If we have a user-specified matrix determining the points
-      
+
       if (this->VolumePositionMatrix)
         {
-          userVolumeTransform->TransformPoint(x,x2);
-          // point x to x2 now
-          x = x2;
+        userVolumeTransform->TransformPoint(x,x2);
+        // point x to x2 now
+        x = x2;
         }  
       trans->Translate(x[0], x[1], x[2]);
 
@@ -425,15 +435,15 @@ void vtkSuperquadricTensorGlyph::Execute()
       // the eigenvalues (scaling, etc)
       if ( inScalars && this->ColorGlyphs ) 
         {
-          // Copy point data from source
-          s = inScalars->GetTuple1(inPtId);
+        // Copy point data from source
+        s = inScalars->GetTuple1(inPtId);
         }
       else 
         {
         vtkTensorMathematics::FixNegativeEigenvalues(w);
-        
+
         switch (this->ScalarMeasure) 
-        {
+          {
         case VTK_LINEAR_MEASURE:
           s = vtkTensorMathematics::LinearMeasure(w);
           break;
@@ -469,9 +479,9 @@ void vtkSuperquadricTensorGlyph::Execute()
               rotate->SetMatrix(this->TensorRotationMatrix);
               rotate->TransformPoint(v_maj,v_maj);
             }
-          
+
           vtkInteractiveTensorGlyph::RGBToIndex(fabs(v_maj[0]),fabs(v_maj[1]),fabs(v_maj[2]),s);
-          
+
           break;
         case VTK_RELATIVE_ANISOTROPY_MEASURE:
           s = vtkTensorMathematics::RelativeAnisotropy(w);
@@ -482,44 +492,44 @@ void vtkSuperquadricTensorGlyph::Execute()
         default:
           s = 0;
           break;
-        } 
+          } 
         }          
 
       for (i=0; i < numSourcePts; i++) 
         {
-          //newScalars->InsertScalar(ptIncr+i, s);
-          newScalars->InsertNextTuple1(s);
+        //newScalars->InsertScalar(ptIncr+i, s);
+        newScalars->InsertNextTuple1(s);
         }        
 
       // compute scale factors
       w[0] *= this->ScaleFactor;
       w[1] *= this->ScaleFactor;
       w[2] *= this->ScaleFactor;
-    
+
       if ( this->ClampScaling )
         {
-          for (maxScale=0.0, i=0; i<3; i++)
-        {
+        for (maxScale=0.0, i=0; i<3; i++)
+          {
           if ( maxScale < fabs(w[i]) )
             {
-              maxScale = fabs(w[i]);
+            maxScale = fabs(w[i]);
             }
-        }
-          if ( maxScale > this->MaxScaleFactor )
-        {
+          }
+        if ( maxScale > this->MaxScaleFactor )
+          {
           maxScale = this->MaxScaleFactor / maxScale;
           for (i=0; i<3; i++)
             {
-              w[i] *= maxScale; //preserve overall shape of glyph
+            w[i] *= maxScale; //preserve overall shape of glyph
             }
-        }
+          }
         }
 
       // If we have a user-specified matrix rotating the tensor
-       if (this->TensorRotationMatrix)
-         {
-           trans->Concatenate(this->TensorRotationMatrix);
-         }
+      if (this->TensorRotationMatrix)
+        {
+        trans->Concatenate(this->TensorRotationMatrix);
+        }
 
 
       // normalized eigenvectors rotate object
@@ -539,21 +549,21 @@ void vtkSuperquadricTensorGlyph::Execute()
       // make sure scale is okay (non-zero) and scale data
       for (maxScale=0.0, i=0; i<3; i++)
         {
-          if ( w[i] > maxScale )
-        {
+        if ( w[i] > maxScale )
+          {
           maxScale = w[i];
-        }
+          }
         }
       if ( maxScale == 0.0 )
         {
-          maxScale = 1.0;
+        maxScale = 1.0;
         }
       for (i=0; i<3; i++)
         {
-          if ( w[i] == 0.0 )
-        {
+        if ( w[i] == 0.0 )
+          {
           w[i] = maxScale * 1.0e-06;
-        }
+          }
         }
       trans->Scale(w[0], w[1], w[2]);
 
@@ -570,12 +580,12 @@ void vtkSuperquadricTensorGlyph::Execute()
 
       ptOffset += numSourcePts;
 
-    }  // end if mask is 1 OR trace is ok
-    
+      }  // end if mask is 1 OR trace is ok
+
     } // end for loop.
-    
-    
-    
+
+
+
 
   vtkDebugMacro(<<"Generated " << numPts <<" tensor glyphs");
   //
@@ -611,9 +621,10 @@ void vtkSuperquadricTensorGlyph::Execute()
   cout << "glyph time: " << clock() - tStart << endl;
 }
 
+//----------------------------------------------------------------------------
 void vtkSuperquadricTensorGlyph::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkTensorGlyph::PrintSelf(os,indent);
+  this->Superclass::PrintSelf(os,indent);
 
   //  os << indent << "ColorGlyphsWithAnisotropy: " << this->ColorGlyphsWithAnisotropy << "\n";
 }
@@ -623,25 +634,25 @@ void vtkSuperquadricTensorGlyph::PrintSelf(ostream& os, vtkIndent indent)
 //
 unsigned long int vtkSuperquadricTensorGlyph::GetMTime()
 {
-  unsigned long mTime=this->vtkObject::GetMTime();
+  unsigned long mTime = this->vtkObject::GetMTime();
   unsigned long time;
 
   if ( this->ScalarMask != NULL )
     {
-      time = this->ScalarMask->GetMTime();
-      mTime = ( time > mTime ? time : mTime );
+    time = this->ScalarMask->GetMTime();
+    mTime = ( time > mTime ? time : mTime );
     }
 
   if ( this->VolumePositionMatrix != NULL )
     {
-      time = this->VolumePositionMatrix->GetMTime();
-      mTime = ( time > mTime ? time : mTime );
+    time = this->VolumePositionMatrix->GetMTime();
+    mTime = ( time > mTime ? time : mTime );
     }
 
   if ( this->TensorRotationMatrix != NULL )
     {
-      time = this->TensorRotationMatrix->GetMTime();
-      mTime = ( time > mTime ? time : mTime );
+    time = this->TensorRotationMatrix->GetMTime();
+    mTime = ( time > mTime ? time : mTime );
     }
 
   return mTime;

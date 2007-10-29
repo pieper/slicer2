@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: isvolumeoption.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:49 $
-#   Version:   $Revision: 1.2.8.1 $
+#   Date:      $Date: 2007/10/29 15:53:30 $
+#   Version:   $Revision: 1.2.8.1.2.1 $
 # 
 #===============================================================================
 # FILE:        isvolumeoption.tcl
@@ -49,6 +49,7 @@ if { [itcl::find class isvolumeoption] == "" } {
         method numScalars {{num ""}} {}
         method allowNone {{allow "1"}} {}
         method selectedID {} {}
+        method selectByID {id} {}
     }
 }
 
@@ -74,6 +75,8 @@ itcl::body isvolumeoption::constructor {args} {
 
 itcl::body isvolumeoption::initSelection {} {
     global Volume
+    
+    set selected [$this selectedID]
 
     $this delete 0 end
     set volumeNames ""
@@ -92,6 +95,9 @@ itcl::body isvolumeoption::initSelection {} {
         foreach n $volumeNames {
             $this insert end $n
         }
+    }
+    foreach v $selected {
+        $this selectByID $v
     }
 }
 
@@ -120,3 +126,20 @@ itcl::body isvolumeoption::selectedID {} {
     return $selIdList
 }
 
+itcl::body isvolumeoption::selectByID {id} {
+    global Volume
+
+    set selected ""
+
+    set volNames [$this get 0 end]
+    set i 0
+    foreach vol $volNames {
+    if { $id == [MainVolumesGetVolumeByName $vol] } {
+        $this select $i
+        return $i
+    }
+    incr i
+    }
+
+    return -1
+}

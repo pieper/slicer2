@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkStochasticTracking.cxx,v $
-  Date:      $Date: 2006/07/07 18:25:34 $
-  Version:   $Revision: 1.1.2.1.2.2 $
+  Date:      $Date: 2007/10/29 15:42:59 $
+  Version:   $Revision: 1.1.2.1.2.3 $
 
 =========================================================================auto=*/
 #include "vtkStochasticTracking.h"
@@ -299,8 +299,9 @@ void vtkStochasticTracking::CalculateLikelihood(vtkStochasticTracking *self, con
      // Opposite directions will always have the same likelihood.
      // The corresponding list is stored in SDMatchList.
      // This list is precomputed before we start the tracking (see ExecuteData)
-      entry1 = (int) matchlist[j*3];
-      entry2 = (int) matchlist[j*3+1];
+      entry1 = (int) matchlist[j*2];
+      entry2 = (int) matchlist[j*2+1];
+      //cout<<"Access point: "<<j*2<<" "<<j*2+1<<"  Match twins: "<<entry1<<" "<<entry2<<endl;
       likelihood[entry1] = exp(tmp);
       likelihood[entry2] = likelihood[entry1];
       }
@@ -1042,6 +1043,7 @@ linearray->Reset();
    this->GetSeedPoint(xyz);
 
    // Get Pointer to array of points
+   cout <<"Get path object"<<endl;
    path = (vtkPolyData *)(this->GetPaths()->GetItemAsObject(r));
    pathPoints = path->GetPoints();
    pathLine = path->GetLines();
@@ -1067,6 +1069,8 @@ linearray->Reset();
     t3 = 0;
     t4 = 0;
     t5 = 0; 
+    
+   cout<<"Lauching tracking: loop"<<endl;
    while(1)
     {
      
@@ -1092,14 +1096,14 @@ linearray->Reset();
      
     cacheentry = NULL;
     if (this->GetActiveCache()==1) {
-    for (int i=0; i< this->CacheId->GetNumberOfTuples();i++)
-       {
-       if (this->CacheId->GetValue(i) == index_ijk)
+        for (int i=0; i< this->CacheId->GetNumberOfTuples();i++)
+        {
+        if (this->CacheId->GetValue(i) == index_ijk)
          {
           cacheentry = (vtkDoubleArray *) this->LikelihoodCache->GetItemAsObject(i);
           break;
          }
-       }
+        }
     }
 
   
@@ -1121,22 +1125,25 @@ linearray->Reset();
        params->squareWeights[i] = params->dwi[i]*params->dwi[i];
        } 
       
-
+     //cout<<"Computing model"<<endl;
+     //cout<<"Step 1"<<endl;
      this->EstimateTensorModel(this, params,PinvA,ATW2);
-     
+     //cout<<"Step 2"<<endl;
      this->EstimateConstrainedModel(this,params);
     
      anisotropy = params->beta/(params->alpha+params->beta +VTKEPS);
  
      timer->StartTimer(); 
+     //cout<<"Step 3"<<endl;
      this->CalculateLikelihood(this,params,Nsamples,flatSD,likelihood);
+     //cout<<"Done Step 3"<<endl;
      numberofcalls++;
      timer->StopTimer();
      t3 += timer->GetElapsedTime();
 
      if (this->GetActiveCache()==1) {
        // Update cache
-     timer->StartTimer();
+       timer->StartTimer();
        vtkDoubleArray *newcache = vtkDoubleArray::New();
        newcache->SetNumberOfValues(this->SDMatchList->GetNumberOfTuples()+2);
        newcache->InsertValue(0,1);
@@ -1147,8 +1154,8 @@ linearray->Reset();
         }
        this->LikelihoodCache->AddItem(newcache);
        this->CacheId->InsertNextValue(index_ijk);
-     timer->StopTimer();
-     t2 += timer->GetElapsedTime();
+       timer->StopTimer();
+       t2 += timer->GetElapsedTime();
      }
 
      }
@@ -1166,7 +1173,7 @@ linearray->Reset();
            likelihood[(int)this->SDMatchList->GetComponent(i,1)] = cacheentry->GetValue(i);
         }
       
-     cachehit++;
+      cachehit++;
 
      }
 
@@ -1185,7 +1192,7 @@ linearray->Reset();
    t2 += timer->GetElapsedTime();
 
 
-    
+     //cout<<"Step 4"<<endl;
      vindex = this->DrawRandomDirection(this,posterior);
      this->GetSphereDirections()->GetTuple(vindex,sd); 
  

@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITractCluster.tcl,v $
-#   Date:      $Date: 2006/07/07 18:37:58 $
-#   Version:   $Revision: 1.16.2.1.2.2 $
+#   Date:      $Date: 2007/10/29 15:43:08 $
+#   Version:   $Revision: 1.16.2.1.2.3 $
 # 
 #===============================================================================
 # FILE:        DTMRITractCluster.tcl
@@ -38,7 +38,7 @@ proc DTMRITractClusterInit {} {
     #------------------------------------
     set m "TractCluster"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.16.2.1.2.2 $} {$Date: 2006/07/07 18:37:58 $}]
+                                 {$Revision: 1.16.2.1.2.3 $} {$Date: 2007/10/29 15:43:08 $}]
 
     set DTMRI(TractCluster,NumberOfClusters) 5
     set DTMRI(TractCluster,Sigma) 20
@@ -53,10 +53,13 @@ proc DTMRITractClusterInit {} {
     set DTMRI(TractCluster,EmbeddingNormalization,menu) {RowSum LengthOne None}
     set DTMRI(TractCluster,NumberOfEigenvectors) 2
 
-    set DTMRI(TractCluster,SettingsList,Names) {{Number of Clusters} Sigma N ShapeFeature SymmetrizeMethod EmbedNormalization NumberOfEigenvectors}
+    set DTMRI(TractCluster,SettingsList,Names) {{Number of Clusters} Sigma N {Fiber Similarity} SymmetrizeMethod EmbedNormalization NumberOfEigenvectors}
     set DTMRI(TractCluster,SettingsList,Variables) {NumberOfClusters Sigma HausdorffN ShapeFeature SymmetrizeMethod EmbeddingNormalization NumberOfEigenvectors}
     set DTMRI(TractCluster,SettingsList,VariableTypes) {entry entry entry menu menu menu entry}
-    set DTMRI(TractCluster,SettingsList,Tooltips) {{Number of clusters (colors) when grouping tracts} {Similarity/distance tradeoff} {For Hausdorff shape feature, use every Nth point on the tract in computation.} {How to measure tract similarity} {How to make distances symmetric from paths A to B and B to A} {How to normalize the vectors used in clustering} {Advanced: related to number of clusters inherent in the data}}
+    set DTMRI(TractCluster,SettingsList,Tooltips) {{Number of clusters (colors) when grouping tracts} {Similarity/distance tradeoff} \
+            {For Hausdorff fiber similarity, use every Nth point on the tract in computation.}\
+            {How to measure tract similarity} {How to make distances symmetric from paths A to B and B to A} {How to normalize the vectors used in clustering}\
+            {Advanced: related to number of clusters inherent in the data}}
 
     # for viewing matrices
     vtkImageMagnify DTMRI(TractCluster,vtk,imageMagnify)

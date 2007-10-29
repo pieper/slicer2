@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkNRRDReader.cxx,v $
-  Date:      $Date: 2006/07/07 19:15:37 $
-  Version:   $Revision: 1.1.2.4.2.2 $
+  Date:      $Date: 2007/10/29 15:18:39 $
+  Version:   $Revision: 1.1.2.4.2.3 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -50,12 +50,13 @@
 
 #include "teem/ten.h"
 
-vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.1.2.4.2.2 $");
+vtkCxxRevisionMacro(vtkNRRDReader, "$Revision: 1.1.2.4.2.3 $");
 vtkStandardNewMacro(vtkNRRDReader);
 
 vtkNRRDReader::vtkNRRDReader() 
 {
   RasToIjkMatrix = NULL;
+  NRRDWorldToRasMatrix = NULL;
   MeasurementFrameMatrix = NULL;
   HeaderKeys = NULL;
   CurrentFileName = NULL;
@@ -74,8 +75,12 @@ vtkNRRDReader::~vtkNRRDReader()
   if (MeasurementFrameMatrix) {
     MeasurementFrameMatrix->Delete();
     MeasurementFrameMatrix = NULL;
-  }  
-  
+  }
+
+  if (NRRDWorldToRasMatrix) {
+    NRRDWorldToRasMatrix->Delete();
+    NRRDWorldToRasMatrix = NULL;
+  }
   
   if (HeaderKeys) {
     delete [] HeaderKeys;
@@ -280,7 +285,13 @@ void vtkNRRDReader::ExecuteInformation()
       MeasurementFrameMatrix->Delete();
    }
    MeasurementFrameMatrix = vtkMatrix4x4::New();
-   MeasurementFrameMatrix->Identity();   
+   MeasurementFrameMatrix->Identity();
+
+   if (NRRDWorldToRasMatrix) {
+      NRRDWorldToRasMatrix->Delete();
+   }
+   NRRDWorldToRasMatrix = vtkMatrix4x4::New();
+   NRRDWorldToRasMatrix->Identity();
 
    if (nrrdTypeBlock == this->nrrd->type)
     {
@@ -469,13 +480,17 @@ void vtkNRRDReader::ExecuteInformation()
               // on read, convert non-RAS coords into RAS coords, when we can
             case nrrdSpaceRightAnteriorSuperior:
               // no change needed
+              NRRDWorldToRasMatrix->Identity();
               break;
             case nrrdSpaceLeftAnteriorSuperior:
               spaceDir[0] *= -1;   // L -> R
+          NRRDWorldToRasMatrix->SetElement(0,0,-1);
               break;
             case nrrdSpaceLeftPosteriorSuperior:
               spaceDir[0] *= -1;   // L -> R
               spaceDir[1] *= -1;   // P -> A
+              NRRDWorldToRasMatrix->SetElement(0,0,-1);
+              NRRDWorldToRasMatrix->SetElement(1,1,-1);
               break;
             default:
               // we're not coming from a space for which the conversion
@@ -486,8 +501,7 @@ void vtkNRRDReader::ExecuteInformation()
           for (int j=0; (unsigned int)j<this->nrrd->spaceDim; j++) 
             {
              IjkToRasMatrix->SetElement(j,axii , spaceDir[j]*spacing);
-            }  
-          
+            }
           }
         break;
           default:
@@ -589,53 +603,53 @@ void vtkNRRDReader::ExecuteInformation()
      free(val);
      key = val = NULL;
    }
-   
+
    if (this->nrrd->space) 
      {
       HeaderKeyValue[std::string("space")] = std::string( airEnumStr(nrrdSpace, nrrd->space) );
      }
-     
+
 
    if (AIR_EXISTS(this->nrrd->measurementFrame[0][0])) 
    {
     for (int i=0;i<3;i++)
       {
-       
+
      switch (this->nrrd->space)
       {
-            // on read, convert non-RAS coords into RAS coords, when we can
+          //WARNING: nrrd->measurementFrame[i][0:2] are the rows fo the measurementFrame matrix
+          // on read, convert non-RAS coords into RAS coords, when we can
           case nrrdSpaceRightAnteriorSuperior:
             // no change needed
-            MeasurementFrameMatrix->SetElement(i,0,this->nrrd->measurementFrame[i][0]);
-            MeasurementFrameMatrix->SetElement(i,1,this->nrrd->measurementFrame[i][1]);
-            MeasurementFrameMatrix->SetElement(i,2,this->nrrd->measurementFrame[i][2]);
+            MeasurementFrameMatrix->SetElement(0,i,this->nrrd->measurementFrame[i][0]);
+            MeasurementFrameMatrix->SetElement(1,i,this->nrrd->measurementFrame[i][1]);
+            MeasurementFrameMatrix->SetElement(2,i,this->nrrd->measurementFrame[i][2]);
           break;
           case nrrdSpaceLeftAnteriorSuperior:
            // L -> R
-            MeasurementFrameMatrix->SetElement(i,0,-this->nrrd->measurementFrame[i][0]);
-            MeasurementFrameMatrix->SetElement(i,1,this->nrrd->measurementFrame[i][1]);
-            MeasurementFrameMatrix->SetElement(i,2,this->nrrd->measurementFrame[i][2]); 
+            MeasurementFrameMatrix->SetElement(0,i,-this->nrrd->measurementFrame[i][0]);
+            MeasurementFrameMatrix->SetElement(1,i,this->nrrd->measurementFrame[i][1]);
+            MeasurementFrameMatrix->SetElement(2,i,this->nrrd->measurementFrame[i][2]); 
             break;
           case nrrdSpaceLeftPosteriorSuperior:
            // L -> R
            // P -> A
-            MeasurementFrameMatrix->SetElement(i,0,-this->nrrd->measurementFrame[i][0]);
-            MeasurementFrameMatrix->SetElement(i,1,-this->nrrd->measurementFrame[i][1]);
-            MeasurementFrameMatrix->SetElement(i,2,this->nrrd->measurementFrame[i][2]);            
+            MeasurementFrameMatrix->SetElement(0,i,-this->nrrd->measurementFrame[i][0]);
+            MeasurementFrameMatrix->SetElement(1,i,-this->nrrd->measurementFrame[i][1]);
+            MeasurementFrameMatrix->SetElement(2,i,this->nrrd->measurementFrame[i][2]);
             break;
           default:
             // we're not coming from a space for which the conversion
             // to LPS is well-defined
-            MeasurementFrameMatrix->SetElement(i,0,this->nrrd->measurementFrame[i][0]);
-            MeasurementFrameMatrix->SetElement(i,1,this->nrrd->measurementFrame[i][1]);
-            MeasurementFrameMatrix->SetElement(i,2,this->nrrd->measurementFrame[i][2]); 
+            MeasurementFrameMatrix->SetElement(0,i,this->nrrd->measurementFrame[i][0]);
+            MeasurementFrameMatrix->SetElement(1,i,this->nrrd->measurementFrame[i][1]);
+            MeasurementFrameMatrix->SetElement(2,i,this->nrrd->measurementFrame[i][2]); 
             break;
       }
       }
    }
-   
+
    this->vtkImageReader2::ExecuteInformation();
-   
    nio = nrrdIoStateNix(nio);
 }
 
@@ -716,31 +730,31 @@ void vtkNRRDReader::AllocatePointData(vtkImageData *out) {
     case VTK_UNSIGNED_CHAR:
       pd = vtkUnsignedCharArray::New();
       break;
-    case VTK_CHAR:           
+    case VTK_CHAR:
       pd = vtkCharArray::New();
       break;
     case VTK_UNSIGNED_SHORT: 
       pd = vtkUnsignedShortArray::New();
       break;
-    case VTK_SHORT:          
+    case VTK_SHORT:
       pd = vtkShortArray::New();
       break;
-    case VTK_UNSIGNED_INT:   
+    case VTK_UNSIGNED_INT:
       pd = vtkUnsignedIntArray::New();
       break;
-    case VTK_INT:            
+    case VTK_INT:
       pd = vtkIntArray::New();
       break;
-    case VTK_UNSIGNED_LONG:  
+    case VTK_UNSIGNED_LONG:
       pd = vtkUnsignedLongArray::New();
       break;
-    case VTK_LONG:           
+    case VTK_LONG:
       pd = vtkLongArray::New();
       break;
-    case VTK_DOUBLE:          
+    case VTK_DOUBLE:
       pd = vtkDoubleArray::New();
       break;
-    case VTK_FLOAT:         
+    case VTK_FLOAT:
       pd = vtkFloatArray::New();
       break;
     default:
@@ -772,7 +786,7 @@ void vtkNRRDReader::AllocatePointData(vtkImageData *out) {
     default:
        vtkErrorMacro("Unknown PointData Type.");
        return;
-     }             
+     }
   pd->Delete();
 }
 
@@ -782,8 +796,8 @@ tenSpaceDirectionReduce(Nrrd *nout, const Nrrd *nin, double SD[9]) {
   double SDT[9], tenMeasr[9], tenSlice[9];
   float *tdata;
   size_t ii, nn;
-  unsigned int si, sj;
-  double det;
+  //unsigned int si, sj;
+  //double det;
   
   if (!(nout && nin)) {
     sprintf(err, "%s: got NULL pointer", me);
@@ -848,7 +862,7 @@ void vtkNRRDReader::ExecuteData(vtkDataObject *output)
     char *err =  biffGetDone(NRRD); // would be nice to free(err)
     vtkErrorMacro("Read: Error reading " 
                       << this->GetFileName() << ":\n" << err);
-     return;                 
+     return;
     }
 
 
@@ -876,8 +890,8 @@ void vtkNRRDReader::ExecuteData(vtkDataObject *output)
     case TENSORS:
       data->GetPointData()->GetTensors()->SetName("NRRDImage");
       ptr = data->GetPointData()->GetTensors()->GetVoidPointer(0); 
-      break;    
-   }     
+      break;
+   }
   this->ComputeDataIncrements();
 
   int dims[3];
@@ -966,21 +980,46 @@ void vtkNRRDReader::ExecuteData(vtkDataObject *output)
        if (!E && AIR_EXISTS(ntmp->measurementFrame[0][0])) {
          // scan order-specific logic to tweak measurement frame goes here
          
-         double RasToVTK[9];
+         double NRRDWorldToVtk[9];
+         vtkMatrix4x4 *NRRDWorldToVtkMatrix = vtkMatrix4x4::New();
+         vtkMatrix4x4 *IjkToVtkMatrix = vtkMatrix4x4::New();
+     vtkMatrix4x4 *RasToIjkRotationMatrix = vtkMatrix4x4::New();
+
+         IjkToVtkMatrix->Identity();
+         // famous Y flip -- to get IjkToVtk
+         IjkToVtkMatrix->SetElement(1,1,-1);
+
+         // Build a rotation matrix that brings us from RasToIjkMatrix
          int iii, jjj;
+         double row[3];
+         RasToIjkRotationMatrix->Identity();
+         for (jjj = 0; jjj < 3; jjj++) {
+            for (iii = 0; iii < 3; iii++)
+              row[iii]=this->RasToIjkMatrix->GetElement(iii,jjj);
+            vtkMath::Normalize(row);
+            for (iii = 0; iii < 3; iii++)
+              RasToIjkRotationMatrix->SetElement(iii,jjj,row[iii]);
+         }
+
+         NRRDWorldToVtkMatrix->Multiply4x4(RasToIjkRotationMatrix,this->NRRDWorldToRasMatrix,NRRDWorldToVtkMatrix);
+         NRRDWorldToVtkMatrix->Multiply4x4(IjkToVtkMatrix,NRRDWorldToVtkMatrix,NRRDWorldToVtkMatrix);
+
          for (iii = 0; iii < 3; iii++) {
             for (jjj = 0; jjj < 3; jjj++) {
-                RasToVTK[iii*3+jjj] = this->RasToIjkMatrix->GetElement(iii,jjj);
+                NRRDWorldToVtk[iii*3+jjj] = NRRDWorldToVtkMatrix->GetElement(iii,jjj);
             }
-            vtkMath::Normalize(RasToVTK+iii*3);
-         }
-         for (iii = 0; iii < 3; iii++) {
-            // famous Y flip -- to get RasToVtk
-            RasToVTK[3+iii] *= -1.;
          }
 
          E |= tenMeasurementFrameReduce(ntmp, ntmp);
-         E |= tenSpaceDirectionReduce(ntmp, ntmp, RasToVTK);
+         E |= tenSpaceDirectionReduce(ntmp, ntmp, NRRDWorldToVtk);
+    // Tensor has been reduced-> Tensor components are described in VTK Space. The measurement frame has to
+        // be updated to reflect this change: 
+        RasToIjkRotationMatrix->Invert();
+        IjkToVtkMatrix->Invert();
+        this->MeasurementFrameMatrix->Multiply4x4(RasToIjkRotationMatrix,IjkToVtkMatrix,this->MeasurementFrameMatrix);
+        NRRDWorldToVtkMatrix->Delete();
+        IjkToVtkMatrix->Delete();
+        RasToIjkRotationMatrix->Delete();
        }
        if (!E) E |= tenExpand(this->nrrd, ntmp, 1, -1);
        if (E) {
@@ -1000,7 +1039,7 @@ void vtkNRRDReader::ExecuteData(vtkDataObject *output)
         nrrdElementSize(nrrd)*nrrdElementNumber(nrrd));
 
      // release the memory while keeping the struct
-     nrrdEmpty(nrrd);     
+     nrrdEmpty(nrrd);
 }
 
 

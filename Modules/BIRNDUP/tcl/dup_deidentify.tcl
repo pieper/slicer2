@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup_deidentify.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:46 $
-#   Version:   $Revision: 1.11.2.1 $
+#   Date:      $Date: 2007/10/29 15:55:19 $
+#   Version:   $Revision: 1.11.2.1.2.1 $
 # 
 #===============================================================================
 # FILE:        dup_deidentify.tcl
@@ -41,12 +41,17 @@ if { [itcl::find class dup_deidentify] == "" } {
 
         public variable parent ""
 
+        variable _name
         variable _frame ""
+        variable _return_code ""
+        variable _result ""
 
         constructor {args} {}
         destructor {}
 
         method refresh {} {}
+        method execute {cmd} {}
+        method finish_execute {ret res} {}
         method runall {} {}
         method run {dir} {}
     }
@@ -58,6 +63,12 @@ if { [itcl::find class dup_deidentify] == "" } {
 # ------------------------------------------------------------------
 itcl::body dup_deidentify::constructor {args} {
     global env
+
+    # make a unique name associated with this object
+    set _name [namespace tail $this]
+    # remove dots from name so it can be used in widget names
+    regsub -all {\.} $_name "_" _name
+
 
     set cs [$this childsite]
 
@@ -90,7 +101,7 @@ itcl::body dup_deidentify::refresh {} {
         set birnid [lindex [file split $s] end-3] 
         set bb $_frame.b$b 
         pack [button $bb -text "Deidentify $birnid" -command "$this run $s"]
-        TooltipAdd $bb "$s"
+        dup_TooltipAdd $bb "$s"
         incr b
     }
 
@@ -112,29 +123,39 @@ itcl::body dup_deidentify::runall {} {
 
 itcl::body dup_deidentify::run {dir} {
 
+    if { [catch "package require iSlicer"] } {
+        error "iSlicer package required to run"
+    }
+
     set fp [open $dir/deidentify_operations "r"]
     set ops [read $fp]
     close $fp
 
-    ## fake
-
-    set resp [DevOKCancel "Click Ok to run deidentification"]
+    set resp [dup_DevOKCancel "Click Ok to run deidentification"]
 
     if { $resp == "ok" } {
 
         $parent log "starting deidentify of $dir"
-        set dcanon_dir [$parent pref DCANON_DIR]
+        set dcanon_dir [$parent cget -birndup_dir]/dcanon
+        set mri_dir [$parent cget -birndup_dir]/bin
+        set birnd_up_dir [$parent cget -birndup_dir]
+        set atlas_dir [$parent cget -birndup_dir]/atlas
         set ::env(DCANON_DIR) $dcanon_dir
-        set ::env(MRI_DIR) $dcanon_dir
+        set ::env(MRI_DIR) $mri_dir
+        set ::env(BIN_DIR) $mri_dir
+        set ::env(BIRND_UP_DIR) $birnd_up_dir
+        set ::env(ATLAS_DIR) $atlas_dir
         foreach op $ops {
             puts "executing $op"
             $parent log "executing $op"
-            if { [catch "exec $dcanon_dir/$op" res] } {
-                puts "$op failed: $res"
-                $parent log "$op failed: $res"
+
+            set res [eval $this execute $birnd_up_dir/$op]
+            if { $_return_code } {
+                puts stderr "$op failed with error:\n$_result\nresult: \n$res"
+                $parent log "$op failed with error:\n$_result\nresult: \n$res"
             } else {
-                puts "$op succeeded: $res"
-                $parent log "$op succeeded: $res"
+                puts "$op succeeded: \n$res"
+                $parent log "$op succeeded: \n$res"
             }
         }
         $parent log "finished deidentify of $dir"
@@ -149,12 +170,13 @@ itcl::body dup_deidentify::run {dir} {
 
             set steps 15 ;# face 24 degrees per frame
             set skip 3 ;# slices show every 3 mm
-            if { [catch "exec $::env(SLICER_HOME)/slicer2-linux-x86 --agree_to_license --load-dicom $ser --script $::env(SLICER_HOME)/Modules/iSlicer/tcl/evaluation-movies.tcl --exec eval_movies $ser/Deface $steps $skip ., exit" res] } {
-                puts "$op failed: $res"
-                $parent log "$op failed: $res"
+            set res [$this execute $::env(SLICER_HOME)/slicer2-linux-x86 --agree_to_license --all-info --no-tkcon --load-dicom $ser --script $::env(SLICER_HOME)/Modules/iSlicer/tcl/evaluation-movies.tcl --exec eval_movies $ser/Deface $steps $skip ., exit]
+            if { $_return_code } {
+                puts stderr "rendering failed with error:\n$_result\nresult: \n$res"
+                $parent log "rendering failed with error:\n$_result\nresult: \n$res"
             } else {
-                puts "$op succeeded: $res"
-                $parent log "$op succeeded: $res"
+                puts "$op succeeded: \n$res"
+                $parent log "$op succeeded: \n$res"
             }
 
         }
@@ -170,3 +192,43 @@ itcl::body dup_deidentify::run {dir} {
 
 }
 
+itcl::body dup_deidentify::execute {args} {
+
+    set ::_dup_execute_wait_var_$_name 0
+
+    if { [catch "package require iSlicer"] } {
+        error "iSlicer package required but not available"
+    }
+
+    set isp $_frame.isp
+
+    if { [winfo exists $isp] } {
+        destroy $isp
+    }
+
+    isprocess $isp -commandline $args \
+        -finishcommand "$this finish_execute"
+
+    pack $isp -side bottom -fill both -expand true
+
+    [$isp task] on
+    [[$isp task] onoffbutton] configure -state disabled 
+
+
+    if { [set ::_dup_execute_wait_var_${_name}] == 0 } {
+        # no error from the open command, so wait for eof or error
+        grab [[$isp task] onoffbutton]
+        vwait ::_dup_execute_wait_var_$_name
+    }
+
+    set result [$isp get]
+    destroy $isp
+    return $result
+
+}
+
+itcl::body dup_deidentify::finish_execute {ret res} {
+    set _return_code $ret 
+    set _result $res 
+    set ::_dup_execute_wait_var_$_name 1
+}

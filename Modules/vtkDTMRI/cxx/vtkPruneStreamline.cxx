@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPruneStreamline.cxx,v $
-  Date:      $Date: 2006/07/07 18:21:05 $
-  Version:   $Revision: 1.3.2.2.2.2 $
+  Date:      $Date: 2007/10/29 15:42:59 $
+  Version:   $Revision: 1.3.2.2.2.3 $
 
 =========================================================================auto=*/
 
@@ -29,7 +29,7 @@
 
 #define VTK_MARGIN 0.1
 
-vtkCxxRevisionMacro(vtkPruneStreamline, "$Revision: 1.3.2.2.2.2 $");
+vtkCxxRevisionMacro(vtkPruneStreamline, "$Revision: 1.3.2.2.2.3 $");
 
 vtkStandardNewMacro(vtkPruneStreamline);
 
@@ -234,6 +234,7 @@ void vtkPruneStreamline::Execute()
          val=inScalars->GetComponent(ptId[j],0);
          //cout<<"Value: "<<val<<endl;
          for(int rId=0;rId<numANDROIs;rId++) {
+      
            rval0 = ANDROIValues->GetValue(rId);
            if(val>(rval0-VTK_MARGIN) && val<(rval0+VTK_MARGIN)) {
            //We got response for this ROI
@@ -305,7 +306,7 @@ int vtkPruneStreamline::TestForStreamline(int* streamlineANDTest, int nptsAND, i
   test =0;
     
   test = 1;
-  
+
   for(i=0;i<nptsAND;i++) {
     th = (int) ceil(this->Threshold*this->MaxResponse[i]);
     test = test && (streamlineANDTest[i]>th);    

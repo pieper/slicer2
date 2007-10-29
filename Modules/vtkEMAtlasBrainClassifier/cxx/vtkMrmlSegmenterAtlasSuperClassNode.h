@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSegmenterAtlasSuperClassNode.h,v $
-  Date:      $Date: 2005/12/20 22:55:18 $
-  Version:   $Revision: 1.3.2.1 $
+  Date:      $Date: 2007/10/29 15:42:17 $
+  Version:   $Revision: 1.3.2.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSegmenterAtlasClassNode - MRML node to represent transformation matrices.
@@ -95,6 +95,20 @@ public:
   vtkGetMacro(StopMFAMaxIter,int); 
   vtkSetMacro(StopMFAMaxIter,int); 
 
+
+  // Description:
+  // Kilian: Jan06: InitialBias_FilePrefix allows initializing a bias field with a precomputed one 
+  // - carefull Bias Field has to be in little Endian  - needed it for debugging
+  vtkSetStringMacro(InitialBiasFilePrefix);
+  vtkGetStringMacro(InitialBiasFilePrefix);
+
+  // Description:
+  // Kilian: Jan06: This allows you to "jump" over the hirarchical segmentation level by providing an already existing 
+  // labelmap of the region of interes 
+  vtkSetStringMacro(PredefinedLabelMapPrefix); 
+  vtkGetStringMacro(PredefinedLabelMapPrefix); 
+
+  // When adding new variables do not forget to add them also to vtkMrmlSegmenterSuperClass in the appropriate way  
 protected:
   vtkMrmlSegmenterAtlasSuperClassNode();
   ~vtkMrmlSegmenterAtlasSuperClassNode();
@@ -120,6 +134,10 @@ protected:
   int StopMFAType;       
   float StopMFAValue;    
   int StopMFAMaxIter;
+
+  char* InitialBiasFilePrefix;  
+  char* PredefinedLabelMapPrefix; 
+
 };
 
 #endif

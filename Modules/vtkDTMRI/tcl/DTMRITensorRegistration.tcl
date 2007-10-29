@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITensorRegistration.tcl,v $
-#   Date:      $Date: 2006/07/07 18:37:03 $
-#   Version:   $Revision: 1.22.2.3.2.3 $
+#   Date:      $Date: 2007/10/29 15:43:08 $
+#   Version:   $Revision: 1.22.2.3.2.4 $
 # 
 #===============================================================================
 # FILE:        DTMRITensorRegistration.tcl
@@ -68,7 +68,7 @@ proc DTMRITensorRegistrationInit {} {
     #------------------------------------
     set m "TensorRegistration"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.22.2.3.2.3 $} {$Date: 2006/07/07 18:37:03 $}]
+                                 {$Revision: 1.22.2.3.2.4 $} {$Date: 2007/10/29 15:43:08 $}]
 
     # Does the AG module exist? If not the registration tab will not be displayed
     if {[catch "package require vtkAG"]} {
@@ -111,12 +111,12 @@ proc DTMRITensorRegistrationInit {} {
     set DTMRI(reg,Channels) "1"
     set DTMRI(reg,Tensors)  "1"
     set DTMRI(reg,Interpolation) "1"
-    set DTMRI(reg,Iteration_min) "15"
+    set DTMRI(reg,Iteration_min) "10"
     set DTMRI(reg,Iteration_max)  "50"
     set DTMRI(reg,Level_min)  "-1"
     set DTMRI(reg,Level_max)  "-1"
-    set DTMRI(reg,Epsilon)    "1e-4"
-    set DTMRI(reg,Stddev_min) "0.85"
+    set DTMRI(reg,Epsilon)    "5e-4"
+    set DTMRI(reg,Stddev_min) "1"
     # [expr sqrt(-1./(2.*log(.5)))] = 0.85
     set DTMRI(reg,Stddev_max) "1"
     set DTMRI(reg,SSD)    "1" 
@@ -1592,8 +1592,8 @@ proc DTMRIRegRun {} {
       
       # Initial transform is handled in preprocessing, so commented here
       
-      #GCR SetInput  __dummy_transform  
-      #[GCR GetGeneralTransform] SetInput TransformDTMRI
+      GCR SetInput  __dummy_transform  
+      [GCR GetGeneralTransform] SetInput TransformDTMRI
       
       GCR SetCriterion $DTMRI(reg,Gcr_criterion)
       GCR SetTransformDomain $DTMRI(reg,Linear_group)
@@ -1774,7 +1774,7 @@ proc DTMRIRegRun {} {
       
       # Set the options for the warp
       warp SetVerbose $DTMRI(reg,Verbose)
-      #[warp GetGeneralTransform] SetInput TransformDTMRI
+      [warp GetGeneralTransform] SetInput TransformDTMRI
       warp SetForceType $DTMRI(reg,Force)   
       warp SetMinimumIterations  $DTMRI(reg,Iteration_min) 
       warp SetMaximumIterations $DTMRI(reg,Iteration_max)  
@@ -2122,7 +2122,7 @@ proc DTMRIRegPreprocess {Source Target SourceVol TargetVol} {
   
   $Source  SetOrigin  $origin_0 $origin_1 $origin_2
   
-  set ext [Source GetExtent]
+  set ext [$Source GetExtent]
   for {set i 0} {$i<6} {incr i} {
     set ext$i [lindex $ext $i]
   }
@@ -2301,7 +2301,8 @@ proc DTMRIRegResample {Source Target Resampled} {
   }
   
   $Resampled DeepCopy [Reslicer GetOutput]
-
+  $Resampled SetOrigin 0 0 0
+  
   Reslicer Delete
   ITrans Delete
   Cast Delete
@@ -2546,9 +2547,9 @@ proc DTMRIRegNormalize { SourceImage TargetImage NormalizedSource SourceScanOrde
     gentrans Concatenate xform
     
     # Also apply initial transform, if requested.
-    if {$DTMRI(reg,Initial_tfm)} {
-      gentrans Concatenate [TransformDTMRI GetInverse]
-    }
+    #if {$DTMRI(reg,Initial_tfm)} {
+    #  gentrans Concatenate [TransformDTMRI GetInverse]
+    #}
 
     reslice SetResliceTransform gentrans
     
@@ -3106,7 +3107,7 @@ proc DTMRIRegHelpUpdate {initial} {
 #-------------------------------------------------------------------------------
 proc DTMRIRegCommandLine { {targetname} {sourcename} {resultname} } {
   # have args as extra arg
-  global DTMRI
+  global DTMRI Tensor Volume
   
   # read target and source
   set ::Volume(activeID) "NEW"

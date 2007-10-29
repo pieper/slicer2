@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup_sort.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:46 $
-#   Version:   $Revision: 1.13.8.1 $
+#   Date:      $Date: 2007/10/29 15:55:19 $
+#   Version:   $Revision: 1.13.8.1.2.1 $
 # 
 #===============================================================================
 # FILE:        dup_sort.tcl
@@ -42,6 +42,8 @@ if { [itcl::find class dup_sort] == "" } {
         public variable parent ""
         public variable sourcedir ""
 
+        variable _name
+
         variable _defacedir ""
         variable _study
         variable _series
@@ -51,10 +53,14 @@ if { [itcl::find class dup_sort] == "" } {
         destructor {}
 
         method refresh {} {}
+        method series_temp_dir {id} {}
         method view {id} {}
+        method headers {id} {}
         method setdeident {id method} {}
         method fill {dir} {}
         method sort {} {}
+        method make_broken_link {linkname targetdir} {}
+        method version {} {}
     }
 }
 
@@ -64,6 +70,12 @@ if { [itcl::find class dup_sort] == "" } {
 # ------------------------------------------------------------------
 itcl::body dup_sort::constructor {args} {
     global env
+
+    # make a unique name associated with this object
+    set _name [namespace tail $this]
+    # remove dots from name so it can be used in widget names
+    regsub -all {\.} $_name "_" _name
+
 
     set _study(project) ""
     set _study(visit) ""
@@ -144,7 +156,7 @@ itcl::body dup_sort::fill {dir} {
     pack $cs.buttons -fill x  -pady 5
 
     set ::DICOMrecurse "true"
-    set aborted [DefaceFindDICOM $dir *]
+    set aborted [dup_DefaceFindDICOM $dir *]
 
     if { $aborted == "true" } {
         $parent fill choose
@@ -152,7 +164,7 @@ itcl::body dup_sort::fill {dir} {
     }
 
     if {$::FindDICOMCounter <= 0} {
-        DevErrorWindow "No DICOM files found"
+        dup_DevErrorWindow "No DICOM files found"
         $parent fill choose
         return
     }
@@ -168,7 +180,7 @@ itcl::body dup_sort::fill {dir} {
     for  {set i 0} {$i < $::FindDICOMCounter} {incr i} {
         if { $study != $_DICOMFiles($i,StudyInstanceUID) ||
                 $patient != $_DICOMFiles(0,PatientID) } {
-            DevErrorWindow "Multiple patients and/or studies in source directory\n\n$_DICOMFiles(0,FileName)\nand\n$_DICOMFiles($i,FileName)\nThis must be corrected before you can run the files through this pipeline."
+            dup_DevErrorWindow "Multiple patients and/or studies in source directory\n\n$_DICOMFiles(0,FileName)\nand\n$_DICOMFiles($i,FileName)\nThis must be corrected before you can run the files through this pipeline."
             return
         }
         set id $_DICOMFiles($i,SeriesInstanceUID)
@@ -187,24 +199,34 @@ itcl::body dup_sort::fill {dir} {
     # - first be sure that the entry exists for this birn id
     # - then pull the value from the table
     #
-
-    set birnid_manager [$parent pref UPLOAD2_DIR]/external/birnid_man.jar
+    set birnid_manager [file normalize [$parent cget -birndup_dir]/birnid_gen/bin/birnid_gen.sh]
+    puts $birnid_manager
     set linktable [$parent pref LINKTABLE]
     set inst [$parent pref INSTITUTION]
 
-    if { [catch "exec java -jar $birnid_manager -create -p $inst -l $linktable -c $patient" resp] } {
-        DevErrorWindow "Cannot execute BIRN ID manager.  Ensure that UPLOAD2_DIR preference is correct and that Java is installed on your machine.\n\n$resp"
-    } else {
+    if { ![file exists [file dirname $linktable]] } {
+        set ret [dup_DevOKCancel "Linktable directory [file dirname $linktable] does not exist.  Okay to create?"]
+        if { $ret == "ok" } {
+            file mkdir [file dirname $linktable]
+        } else {
+            return
+        }
+    }
 
-        if { [catch "exec java -jar $birnid_manager -find -l $linktable -c $patient" resp] } {
-            DevErrorWindow "Cannot execute BIRN ID manager to access BIRN ID.  Ensure that LINKTABLE preference is correct.\n\n$resp"
+    if { [catch "exec $birnid_manager --all-info -create -p $inst -l $linktable -c $patient" resp] } {
+        dup_DevErrorWindow "Cannot execute BIRN ID manager.  Ensure that Java is installed on your machine.\n\n$resp"
+    } else {
+        puts $resp
+        if { [catch "exec $birnid_manager --all-info -find -l $linktable -c $patient" resp] } {
+            dup_DevErrorWindow "Cannot execute BIRN ID manager to access BIRN ID.  Ensure that LINKTABLE preference is correct.\n\n$resp"
             set birnid ""
         } else {
+            puts $resp
             set birnid ""
-            scan $resp {Birn ID=%[^,]s} birnid
-
-            if { $birnid == "" } {
-                DevErrorWindow "Cannot parse BIRN ID.  Response is: \n$resp"
+            #scan $resp {Birn ID=%[^,]s} birnid
+            set retval [regexp {Birn ID=([a-zA-Z]+[0-9]+)} $resp matchVar birnid]
+            if { $retval == 0 || $birnid == "" } {
+                dup_DevErrorWindow "Cannot parse BIRN ID.  Response is: \n$resp"
                 puts stderr "Cannot parse BIRN ID.  Response is: \n$resp"
             }
 
@@ -232,7 +254,8 @@ itcl::body dup_sort::fill {dir} {
         $sf.om$id insert end "Mask" "Deface" "Header Only" "As Is" "Do Not Upload"
         $this setdeident $id "Mask"
         button $sf.b$id -text "View" -command "$this view $id"
-        grid $sf.l$id $sf.cb$id $sf.om$id $sf.b$id -row $row -sticky ew
+        button $sf.h$id -text "Headers" -command "$this headers $id"
+        grid $sf.l$id $sf.cb$id $sf.om$id $sf.b$id $sf.h$id -row $row -sticky ew
         incr row
     }
 }
@@ -241,23 +264,23 @@ itcl::body dup_sort::sort {} {
     # create the needed entries for each series
 
     if { $_study(project) == "" } {
-        DevErrorWindow "Please set Project #"
+        dup_DevErrorWindow "Please set Project #"
         return
     }
     if { $_study(visit) == "" } {
-        DevErrorWindow "Please set Visit #"
+        dup_DevErrorWindow "Please set Visit #"
         return
     }
     if { $_study(study) == "" } {
-        DevErrorWindow "Please set Study #"
+        dup_DevErrorWindow "Please set Study #"
         return
     }
     if { $_study(birnid) == "" } {
-        DevErrorWindow "Please set BIRN ID"
+        dup_DevErrorWindow "Please set BIRN ID"
         return
     }
     if { $_defacedir == "" } {
-        DevErrorWindow "Please set Destination Directory (temp area for deface processing)"
+        dup_DevErrorWindow "Please set Destination Directory (temp area for deface processing) using the preferences dialog."
         return
     }
 
@@ -269,15 +292,15 @@ itcl::body dup_sort::sort {} {
     }
 
     if { $has_mask == "yes" && $_series(master) == "" } {
-        DevErrorWindow "Please select master series for masking"
+        dup_DevErrorWindow "Please select master series for masking"
         return
     }
     if { $has_mask == "no" && $_series(master) != "" } {
-        DevWarningWindow "No series selected for masking - Mask Master ignored."
+        dup_DevWarningWindow "No series selected for masking - Mask Master ignored."
     }
 
     if { $_series(master) != "" && ($_series($_series(master),deident_method) != "Deface") } {
-        DevErrorWindow "Master series must be set to deface to be used as a mask.  Leave Mask Master blank if no masking is needed."
+        dup_DevErrorWindow "Master series must be set to deface to be used as a mask.  Leave Mask Master blank if no masking is needed."
         set _series(master) ""
         return
     }
@@ -285,7 +308,7 @@ itcl::body dup_sort::sort {} {
     set studypath $_defacedir/Project_$_study(project)/$_study(birnid)/Visit_$_study(visit)/Study_$_study(study)/Raw_Data
 
     if { [glob -nocomplain $studypath] != "" } {
-        if { [DevOKCancel "$studypath is not empty - okay to delete?"] != "ok" } {
+        if { [dup_DevOKCancel "$studypath is not empty - okay to delete?"] != "ok" } {
             return
         } 
         file delete -force $studypath
@@ -305,26 +328,24 @@ itcl::body dup_sort::sort {} {
     }
 
     set deident_operations ""
-    if { $_series(master) != "" } {
-        # must run the master deface first if it exists
-        lappend deident_operations "dcanon -deface $_series($_series(master),destdir)"
-    }
+    set mask_series ""
     foreach id $_series(ids) {
         if { $id == $_series(master) } {
             continue
         }
         switch $_series($id,deident_method) {
             "Deface" {
-                lappend deident_operations "dcanon -deface $_series($id,destdir)"
+                # deface this on independently - not part of the MaskGroup
+                lappend deident_operations "dcanon/dcanon --all-info -radius $_series($id,radius) -deface $_series($id,destdir)"
             }
             "Mask" {
-                lappend deident_operations "dcanon -mask $_series($_series(master),destdir)-anon $_series($id,destdir)"
+                lappend mask_series "$_series($id,destdir)"
             }
             "Header Only" {
-                lappend deident_operations "dcanon -convert $_series($id,destdir)"
+                lappend deident_operations "dcanon/dcanon --all-info -convert $_series($id,destdir)"
             }
             "As Is" {
-                lappend deident_operations "dcanon -noanon -convert $_series($id,destdir)"
+                lappend deident_operations "dcanon/dcanon --all-info -noanon -convert $_series($id,destdir)"
             }
             "Do Not Upload" {
                 # nothing
@@ -335,7 +356,25 @@ itcl::body dup_sort::sort {} {
         }
     }
     $this fill ""
-    
+
+    if { [llength $mask_series] > 0 &&  $_series(master) == "" } {
+        error "cannot mask any series without a deface master series"
+    }
+
+    if { $_series(master) != "" } {
+        set scan 1
+        set cmd "scripts/birnd_up --all-info -radius $_series($_series(master),radius) -i $_series($_series(master),destdir)"
+        $this make_broken_link $_series($_series(master),destdir)-anon MaskGroup/scan_$scan
+        incr scan
+        foreach m $mask_series {
+            set cmd "$cmd $m"
+            $this make_broken_link $m-anon MaskGroup/scan_$scan
+            incr scan
+        }
+        set cmd "$cmd -o $studypath -subjid MaskGroup"
+        lappend deident_operations $cmd
+    }
+
     set fp [open "$studypath/source_directory" w]
     puts $fp $sourcedir
     close $fp
@@ -351,21 +390,50 @@ itcl::body dup_sort::sort {} {
 }
 
 itcl::body dup_sort::setdeident {id method} {
+
     set _series($id,deident_method) $method
+
+    if { $method == "Deface" } {
+        if { ![info exists _series($id,radius)] } {
+            set _series($id,radius) 7 ;# TODO: this is the default for all defacing
+        }
+        set d .radiusd_$_name
+        catch "destroy $d"
+        iwidgets::dialogshell $d
+        set cs [$d childsite]
+        pack [iwidgets::spinint $cs.radius -labeltext "Radius: " -range {1 20}  -width 5] -fill both -expand true 
+        $cs.radius delete 0 end
+        $cs.radius insert end $_series($id,radius) 
+        $cs.radius configure -textvariable [itcl::scope _series($id,radius)] 
+        $d add ok -text "OK" -command "set _series($id,radius) \[$cs.radius get\]; destroy $d"
+        $d add cancel -text "Cancel" -command "set _series($id,radius) $_series($id,radius); destroy $d"
+        $d default ok
+        $d activate
+        update
+        grab $d
+        tkwait window $d
+        grab release $d
+
+        puts $_series($id,radius)
+    }
 }
 
-itcl::body dup_sort::view {id} {
 
+itcl::body dup_sort::series_temp_dir {id} {
     if { ![info exists _series(ids)] } {
         error "no series loaded"
     }
     if { [lsearch $_series(ids) $id] == -1 } {
         error "series $id not loaded"
     }
-    if { [info command VolAnalyzetempdir] == "" } {
+    if { [info command dup_tempdir] == "" } {
         error "no temp dir command available"
     }
-    set viewdir [VolAnalyzetempdir]/$id.[pid]
+    if { [catch "package require iSlicer"] } {
+        error "the iSlicer package is not available"
+    }
+
+    set viewdir [dup_tempdir]/$id.[pid]
     file delete -force $viewdir
     file mkdir $viewdir
 
@@ -373,7 +441,59 @@ itcl::body dup_sort::view {id} {
         file copy $_DICOMFiles($i,FileName) $viewdir/
     }
 
-    set volid [DICOMLoadStudy $viewdir]
-    Volume($volid,node) SetName "Ser $id, Flip $_series($id,FlipAngle)"
-    MainUpdateMRML
+    return $viewdir
+} 
+
+
+itcl::body dup_sort::view {id} {
+
+    set viewdir [$this series_temp_dir $id]
+
+    catch "destroy .dup_sort_view"
+    toplevel .dup_sort_view
+    wm geometry .dup_sort_view 400x600
+    pack [isframes .dup_sort_view.isf] -fill both -expand true
+    .dup_sort_view.isf configure -filepattern $viewdir/* -filetype DICOMImage
+    .dup_sort_view.isf middle
+
+}
+
+itcl::body dup_sort::headers {id} {
+
+    set viewdir [$this series_temp_dir $id]
+
+    catch "destroy .dup_sort_headers"
+    toplevel .dup_sort_headers
+    wm geometry .dup_sort_headers 400x600
+    pack [isframes .dup_sort_headers.isf] -fill both -expand true
+    .dup_sort_headers.isf configure -filepattern $viewdir/* -filetype text -dumpcommand "$::env(SLICER_HOME)/../birndup/bin/dcmdump" 
+}
+
+itcl::body dup_sort::make_broken_link {linkname targetdir} {
+    # need to make a relative symbolic link to target that will be made later, but
+    # need to make the target directory exists 
+    # or link will fail
+    # - this is in a new directory, so destdir shouldn't exist yet
+    # - NB: this is not cross-platform
+    # - remove the directory so that birnd_up can create it later
+    # TODO: I don't think this can be done using the tcl file link command
+    # since it creates an absolute path for the target
+
+    set cwd [pwd]
+    cd [file dirname $linkname]
+puts "making link in [pwd]"
+puts "exec ln -s $targetdir [file tail $linkname]"
+    if { ![file exists $targetdir] } {
+        file mkdir $targetdir
+        exec ln -s $targetdir [file tail $linkname]
+        file delete $targetdir
+    } else {
+        exec ln -s $targetdir [file tail $linkname]
+    }
+    cd $cwd
+}
+
+itcl::body dup_sort::version {} {
+    # print out version information
+    
 }

@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: dup_upload.tcl,v $
-#   Date:      $Date: 2005/12/20 22:54:46 $
-#   Version:   $Revision: 1.7.8.1 $
+#   Date:      $Date: 2007/10/29 15:55:19 $
+#   Version:   $Revision: 1.7.8.1.2.1 $
 # 
 #===============================================================================
 # FILE:        dup_upload.tcl
@@ -92,7 +92,7 @@ itcl::body dup_upload::refresh {} {
         set birnid [lindex [file split $s] end-3] 
         set bb $_frame.b$b 
         pack [button $bb -text "Upload $birnid" -command "$this run $s"]
-        TooltipAdd $bb "$s"
+        dup_TooltipAdd $bb "$s"
         incr b
     }
 
@@ -106,14 +106,13 @@ itcl::body dup_upload::run {dir} {
 
     $parent log "starting upload of $dir"
 
-
-    if { [DevOKCancel "Upload of $dir complete.  Temp copy will now be deleted." ] == "ok" } {
+    if { [dup_DevOKCancel "Upload of $dir cannot be done automatically.\n\nIf you have manually uploaded, click OK and this copy will be deleted.\n\nIf you click Cancel, the data will not be deleted, but will be marked as finished and removed from the interface." ] == "ok" } {
         file delete -force $dir
+        $parent log "local copy of $dir deleted"
     } else {
-        close [open $studydir/uploaded "w"]
+        close [open $dir/uploaded "w"]
+        $parent log "local copy of $dir not deleted, but marked as uploaded"
     }
-
-    tk_messageBox -message "Note: upload not yet integrated.  See the information in the upload2 directory for manual upload instructions"
 
     $parent log "finished upload of $dir"
     $parent refresh upload

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageFlux.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:01 $
-  Version:   $Revision: 1.1.2.1 $
+  Date:      $Date: 2007/10/29 15:44:49 $
+  Version:   $Revision: 1.1.2.1.2.1 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -32,7 +32,7 @@
 
 #include <math.h>
 
-vtkCxxRevisionMacro(vtkImageFlux, "$Revision: 1.1.2.1 $");
+vtkCxxRevisionMacro(vtkImageFlux, "$Revision: 1.1.2.1.2.1 $");
 vtkStandardNewMacro(vtkImageFlux);
 
 //----------------------------------------------------------------------------
@@ -103,7 +103,7 @@ void vtkImageFluxExecute(vtkImageFlux *self,
   unsigned long count = 0;
   unsigned long target;
   int *wholeExtent, *inIncs;
-  double r[3], d, sum, norm;
+  double r[3], sum, norm;
   int useMin[3], useMax[3];
 
   // 26 neighbors + central node
@@ -138,7 +138,7 @@ void vtkImageFluxExecute(vtkImageFlux *self,
         for (int i = 0 ; i<=2 ; i++)
           {
            n = i+j*3+k*9;
-           norm = sqrt((i-1)*(i-1)+(j-1)*(j-1)+(k-1)*(k-1));
+           norm = sqrt( (double) ((i-1)*(i-1)+(j-1)*(j-1)+(k-1)*(k-1)) );
            neigh_pos[n] = (i-1)*inIncs[0]+(j-1)*inIncs[1]+(k-1)*inIncs[2];
            if (norm !=0) {
            neigh_normal[n][0] = (i-1)/norm;

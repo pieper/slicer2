@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageWarp.cxx,v $
-  Date:      $Date: 2005/12/20 22:54:52 $
-  Version:   $Revision: 1.9.2.1 $
+  Date:      $Date: 2007/10/29 15:51:37 $
+  Version:   $Revision: 1.9.2.1.2.1 $
 
 =========================================================================auto=*/
 #include "vtkImageCast.h"
@@ -574,8 +574,8 @@ void vtkImageWarp::InternalUpdate()
             vtkImageGaussianSmooth* smooth = vtkImageGaussianSmooth::New();
             vtkImageExtractComponents* extracts = vtkImageExtractComponents::New();
             vtkImageExtractComponents* extractt = vtkImageExtractComponents::New();
-        vtkImageAppendComponents* append = vtkImageAppendComponents::New();
-        vtkImageData* tmp=0;
+    vtkImageAppendComponents* append= vtkImageAppendComponents::New();
+        vtkImageData* tmp=vtkImageData::New();
         // reslice source
             reslice->SetInput(this->Sources[l]);
             reslice->SetResliceTransform(this->GeneralTransform);
@@ -605,24 +605,27 @@ reslice->Update();
             this->IntensityTransform->SetMask(mask);
             }
               // correct source intensities
-              transint->SetInput(extracts->GetOutput());
+          transint->SetInput(extracts->GetOutput());
               transint->SetIntensityTransform(this->IntensityTransform);
               transint->Update();
-              tmp=vtkImageData::New();
-              tmp->DeepCopy(transint->GetOutput());
-              append->SetInput(comp,tmp);
+              if (!comp) {
+            tmp->DeepCopy(transint->GetOutput());
+          } else {
+        append->SetInput(0,tmp);
+        append->SetInput(1,transint->GetOutput());
+        append->Update();
+        tmp->DeepCopy(append->GetOutput());
+          }
         }
-              append->Update();
-              tmp->Delete();
-
 
        // smooth target     
         tsmooth->SetInput(this->Targets[l]);     
         tsmooth->SetStandardDeviations(StdDev,StdDev,StdDev);     
 tsmooth->Update();
         // smooth source     
-        ssmooth->SetInput(append->GetOutput());     
-        ssmooth->SetStandardDeviations(StdDev,StdDev,StdDev);     
+        //ssmooth->SetInput(append->GetOutput());     
+        ssmooth->SetInput(tmp);
+    ssmooth->SetStandardDeviations(StdDev,StdDev,StdDev);     
 
     ssmooth->Update();
             // compute force    
@@ -672,6 +675,7 @@ smooth->Update();
             // This triggers the warping.
             smooth->Update();
             this->Displacements[l]->DeepCopy(smooth->GetOutput());
+    tmp->Delete();     
             extractt->Delete();
             extracts->Delete();
             append->Delete();

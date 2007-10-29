@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: RealignResample.tcl,v $
-#   Date:      $Date: 2005/12/20 22:56:19 $
-#   Version:   $Revision: 1.7.2.1 $
+#   Date:      $Date: 2007/10/29 15:21:52 $
+#   Version:   $Revision: 1.7.2.1.2.1 $
 # 
 #===============================================================================
 # FILE:        RealignResample.tcl
@@ -47,11 +47,12 @@ proc RealignResampleInit {} {
     set Module($m,overview) "This module realigns and resamples using vtkImageReslice"
     set Module($m,author) "Jacob Albertson, SPL, jacob@bwh.harvard.edu"
     set Module($m,category) "Alpha"
-
+    
     set Module($m,row1List) "Realign Resample Help"
-    set Module($m,row1Name) "{Realign} {Resample} {Help}"
+    #    set Module($m,row1Name) "{Realign} {Resample} {Help}"
+    set Module($m,row1Name) "{Realign} {Help}"
     set Module($m,row1,tab) Realign
-
+    
     set Module($m,procGUI) RealignResampleBuildGUI
     set Module($m,procMRML) RealignResampleUpdateMRML
   
@@ -59,7 +60,7 @@ proc RealignResampleInit {} {
 #    set Module($m,depend) "Morphometrics"
 
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.7.2.1 $} {$Date: 2005/12/20 22:56:19 $}]
+        {$Revision: 1.7.2.1.2.1 $} {$Date: 2007/10/29 15:21:52 $}]
 
     set Matrix(volume) $Volume(idNone)
     set Matrix(RealignResampleVolumeName2) None
@@ -206,142 +207,143 @@ proc RealignResampleBuildGUI {} {
     DevAddButton $f.bCalculate "Calculate Transform"  RealignCalculate 
     pack $f.bCalculate  -side top -padx $Gui(pad) -pady $Gui(pad)
     
+    #kquintus: commented Resample Tag: In future module "Transform Volume" should be used for resampling
     #-------------------------------------------
     # Resample
     #-------------------------------------------
-    
-    set fResample $Module(RealignResample,fResample)
-    set f $fResample
 
-    foreach frame "Volume Matrix NewVolume OutputSpacing AutoSpacing ImageSize SetExtent AutoExtent InterpolationMode BeginResample SaveAs BeginSave" {
-    frame $f.f$frame -bg $Gui(activeWorkspace)
-    pack $f.f$frame -side top -padx 0 -pady 0 -fill x
-    }
+         set fResample $Module(RealignResample,fResample)
+         set f $fResample
+
+         foreach frame "Volume Matrix NewVolume OutputSpacing AutoSpacing ImageSize SetExtent AutoExtent InterpolationMode BeginResample SaveAs BeginSave" {
+         frame $f.f$frame -bg $Gui(activeWorkspace)
+    #    pack $f.f$frame -side top -padx 0 -pady 0 -fill x
+        }
 
     #-------------------------------------------
     # Resample->Volume
     #-------------------------------------------
-    set f $fResample.fVolume
+      set f $fResample.fVolume
     
-    DevAddLabel $f.lVolume "Volume: "
-    eval {menubutton $f.mbVolume -text "None" -relief raised -bd 2 -width 20 -menu $f.mbVolume.m} $Gui(WMBA)
-    eval {menu $f.mbVolume.m} $Gui(WMA)
+         DevAddLabel $f.lVolume "Volume: "
+         eval {menubutton $f.mbVolume -text "None" -relief raised -bd 2 -width 20 -menu $f.mbVolume.m} $Gui(WMBA)
+         eval {menu $f.mbVolume.m} $Gui(WMA)
     
-    pack $f.lVolume $f.mbVolume -side left -padx $Gui(pad) -pady $Gui(pad)
-    set Matrix(mbVolume2) $f.mbVolume 
+     #    pack $f.lVolume $f.mbVolume -side left -padx $Gui(pad) -pady $Gui(pad)
+         set Matrix(mbVolume2) $f.mbVolume 
 
     #-------------------------------------------
     # Resample->Matrix
     #-------------------------------------------
-    set f $fResample.fMatrix
-    DevAddLabel $f.lActive "Matrix: " 
-    eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20  -menu $f.mbActive.m} $Gui(WMBA)
-    eval {menu $f.mbActive.m} $Gui(WMA)
-    pack $f.lActive $f.mbActive -side left -padx $Gui(pad) -pady $Gui(pad)
-    lappend Matrix(mbActiveList) $f.mbActive
-    lappend Matrix(mActiveList)  $f.mbActive.m
+     set f $fResample.fMatrix
+         DevAddLabel $f.lActive "Matrix: " 
+        eval {menubutton $f.mbActive -text "None" -relief raised -bd 2 -width 20  -menu $f.mbActive.m} $Gui(WMBA)
+         eval {menu $f.mbActive.m} $Gui(WMA)
+      #   pack $f.lActive $f.mbActive -side left -padx $Gui(pad) -pady $Gui(pad)
+        lappend Matrix(mbActiveList) $f.mbActive
+         lappend Matrix(mActiveList)  $f.mbActive.m
     
 
     #-------------------------------------------
     # Resample->NewVolume
     #-------------------------------------------
-    set f $fResample.fNewVolume
-    
-    DevAddLabel $f.lNewVolume "New Volume: "
-    eval {entry $f.eNewVolume -width 30 -textvariable RealignResample(NewVolume) } $Gui(WEA)
-    #set the new name to the oldname + _realign
-    set RealignResample(NewVolume) "[Volume($Matrix(volume),node) GetName]_realign"
-    pack $f.lNewVolume $f.eNewVolume -side left -padx $Gui(pad) -pady $Gui(pad)
+     set f $fResample.fNewVolume
    
+         DevAddLabel $f.lNewVolume "New Volume: "
+         eval {entry $f.eNewVolume -width 30 -textvariable RealignResample(NewVolume) } $Gui(WEA)
+         #set the new name to the oldname + _realign
+        set RealignResample(NewVolume) "[Volume($Matrix(volume),node) GetName]_realign"
+       #  pack $f.lNewVolume $f.eNewVolume -side left -padx $Gui(pad) -pady $Gui(pad)
+    
 
     #-------------------------------------------
     # Resample->Pixel Size
     #-------------------------------------------   
-    set f $fResample.fOutputSpacing
-    eval {label $f.lOutputSpacing -text "New Spacing"} $Gui(WLA)
-    pack $f.lOutputSpacing -side top -padx $Gui(pad) -pady $Gui(pad)
-    eval {label $f.lOutputSpacingLR -text "LR:"} $Gui(WLA)
-    eval {entry $f.eOutputSpacingLR -width 6 -textvariable RealignResample(OutputSpacingLR) } $Gui(WEA)
-    eval {label $f.lOutputSpacingPA -text "PA:"} $Gui(WLA)
-    eval {entry $f.eOutputSpacingPA -width 6 -textvariable RealignResample(OutputSpacingPA) } $Gui(WEA)
-    eval {label $f.lOutputSpacingIS -text "IS:"} $Gui(WLA)
-    eval {entry $f.eOutputSpacingIS -width 6 -textvariable RealignResample(OutputSpacingIS) } $Gui(WEA)
-    pack $f.lOutputSpacingLR $f.eOutputSpacingLR $f.lOutputSpacingPA $f.eOutputSpacingPA $f.lOutputSpacingIS $f.eOutputSpacingIS -side left -padx $Gui(pad) -pady $Gui(pad)
+       set f $fResample.fOutputSpacing
+         eval {label $f.lOutputSpacing -text "New Spacing"} $Gui(WLA)
+        # pack $f.lOutputSpacing -side top -padx $Gui(pad) -pady $Gui(pad)
+         eval {label $f.lOutputSpacingLR -text "LR:"} $Gui(WLA)
+         eval {entry $f.eOutputSpacingLR -width 6 -textvariable RealignResample(OutputSpacingLR) } $Gui(WEA)
+         eval {label $f.lOutputSpacingPA -text "PA:"} $Gui(WLA)
+        eval {entry $f.eOutputSpacingPA -width 6 -textvariable RealignResample(OutputSpacingPA) } $Gui(WEA)
+         eval {label $f.lOutputSpacingIS -text "IS:"} $Gui(WLA)
+         eval {entry $f.eOutputSpacingIS -width 6 -textvariable RealignResample(OutputSpacingIS) } $Gui(WEA)
+        # pack $f.lOutputSpacingLR $f.eOutputSpacingLR $f.lOutputSpacingPA $f.eOutputSpacingPA $f.lOutputSpacingIS $f.eOutputSpacingIS -side left -padx $Gui(pad) -pady $Gui(pad)
 
 
     #-------------------------------------------
     # Resample->Auto Spacing
     #-------------------------------------------   
-    set f $fResample.fAutoSpacing
-    DevAddButton $f.bAutoSpacing "Original Spacing"  AutoSpacing
-    pack $f.bAutoSpacing -side left -padx $Gui(pad) -pady $Gui(pad)
+       set f $fResample.fAutoSpacing
+         DevAddButton $f.bAutoSpacing "Original Spacing"  AutoSpacing
+         #pack $f.bAutoSpacing -side left -padx $Gui(pad) -pady $Gui(pad)
 
     #-------------------------------------------
     # Resample->Output Extent
     #-------------------------------------------   
-    set f $fResample.fImageSize 
+     set f $fResample.fImageSize 
 
-    eval {label $f.lOutputExtent -text "New Dimensions"} $Gui(WLA)
-    pack $f.lOutputExtent -side top -padx $Gui(pad) -pady $Gui(pad)
-    eval {label $f.lOutputExtentLR -text "LR:"} $Gui(WLA)
-    eval {entry $f.eOutputExtentLR -width 6 -textvariable RealignResample(OutputExtentLR) } $Gui(WEA)
-    eval {label $f.lOutputExtentPA -text "PA:"} $Gui(WLA)
-    eval {entry $f.eOutputExtentPA -width 6 -textvariable RealignResample(OutputExtentPA) } $Gui(WEA)
-    eval {label $f.lOutputExtentIS -text "IS:"} $Gui(WLA)
-    eval {entry $f.eOutputExtentIS -width 6 -textvariable RealignResample(OutputExtentIS) } $Gui(WEA)
-    pack $f.lOutputExtentLR $f.eOutputExtentLR $f.lOutputExtentPA $f.eOutputExtentPA $f.lOutputExtentIS $f.eOutputExtentIS -side left -padx $Gui(pad) -pady $Gui(pad)
-   
+         eval {label $f.lOutputExtent -text "New Dimensions"} $Gui(WLA)
+        # pack $f.lOutputExtent -side top -padx $Gui(pad) -pady $Gui(pad)
+         eval {label $f.lOutputExtentLR -text "LR:"} $Gui(WLA)
+         eval {entry $f.eOutputExtentLR -width 6 -textvariable RealignResample(OutputExtentLR) } $Gui(WEA)
+         eval {label $f.lOutputExtentPA -text "PA:"} $Gui(WLA)
+         eval {entry $f.eOutputExtentPA -width 6 -textvariable RealignResample(OutputExtentPA) } $Gui(WEA)
+        eval {label $f.lOutputExtentIS -text "IS:"} $Gui(WLA)
+        eval {entry $f.eOutputExtentIS -width 6 -textvariable RealignResample(OutputExtentIS) } $Gui(WEA)
+         #pack $f.lOutputExtentLR $f.eOutputExtentLR $f.lOutputExtentPA $f.eOutputExtentPA $f.lOutputExtentIS $f.eOutputExtentIS -side left -padx $Gui(pad) -pady $Gui(pad)
+    
     #------------------------------------------
     # Resample->Set Extent
     #-------------------------------------------   
-    set f $fResample.fSetExtent
-    DevAddButton $f.bIsoExtentLR " Auto LR "  AutoExtentLR
-    DevAddButton $f.bIsoExtentPA " Auto PA "  AutoExtentPA
-    DevAddButton $f.bIsoExtentIS " Auto IS "  AutoExtentIS
-    pack $f.bIsoExtentLR  $f.bIsoExtentPA $f.bIsoExtentIS -side left -padx $Gui(pad)
+         set f $fResample.fSetExtent
+         DevAddButton $f.bIsoExtentLR " Auto LR "  AutoExtentLR
+         DevAddButton $f.bIsoExtentPA " Auto PA "  AutoExtentPA
+         DevAddButton $f.bIsoExtentIS " Auto IS "  AutoExtentIS
+         #pack $f.bIsoExtentLR  $f.bIsoExtentPA $f.bIsoExtentIS -side left -padx $Gui(pad)
     
     #-------------------------------------------
     # Resample->Auto Extent
     #-------------------------------------------   
-    set f $fResample.fAutoExtent
-    DevAddButton $f.bAutoExtent "Auto Dimension"  AutoExtent
-    pack $f.bAutoExtent -side left -padx $Gui(pad) -pady $Gui(pad)
+         set f $fResample.fAutoExtent
+         DevAddButton $f.bAutoExtent "Auto Dimension"  AutoExtent
+        #pack $f.bAutoExtent -side left -padx $Gui(pad) -pady $Gui(pad)
 
     #-------------------------------------------
     # Resample->Interpolation Mode
     #-------------------------------------------
-    set f $fResample.fInterpolationMode
-    eval {label $f.lInterpolationMode -text "Interpolation Mode:"} $Gui(WLA)
-  
-    #Create label foreach type of interpolation
-    foreach label {"NearestNeighbor" "Linear" "Cubic"} text {"Nearest Neighbor" "Linear" "Cubic"} {
-        eval {radiobutton $f.rb$label -text $text -variable RealignResample(InterpolationMode) -value $label} $Gui(WLA)
-    }
-    set RealignResample(InterpolationMode) Cubic
-    pack $f.lInterpolationMode -side top -padx $Gui(pad) -pady $Gui(pad)
-    pack $f.rbNearestNeighbor $f.rbLinear $f.rbCubic -side left -anchor w -padx 1 -pady $Gui(pad)
+         set f $fResample.fInterpolationMode
+         eval {label $f.lInterpolationMode -text "Interpolation Mode:"} $Gui(WLA)
+    
+         #Create label foreach type of interpolation
+         foreach label {"NearestNeighbor" "Linear" "Cubic"} text {"Nearest Neighbor" "Linear" "Cubic"} {
+            eval {radiobutton $f.rb$label -text $text -variable RealignResample(InterpolationMode) -value $label} $Gui(WLA)
+         }
+         set RealignResample(InterpolationMode) Cubic
+         #pack $f.lInterpolationMode -side top -padx $Gui(pad) -pady $Gui(pad)
+         #pack $f.rbNearestNeighbor $f.rbLinear $f.rbCubic -side left -anchor w -padx 1 -pady $Gui(pad)
 
     #-------------------------------------------
     # Resample->Begin Resample
     #-------------------------------------------
-    set f $fResample.fBeginResample
+       set f $fResample.fBeginResample
     
-    DevAddButton $f.bBeginResample "Resample"  Resample
+         DevAddButton $f.bBeginResample "Resample"  Resample
 
-    pack $f.bBeginResample -side top -padx $Gui(pad) -pady $Gui(pad)
+         #pack $f.bBeginResample -side top -padx $Gui(pad) -pady $Gui(pad)
     
-    RealignResampleUpdateMRML
+         RealignResampleUpdateMRML
 
     #-------------------------------------------
     # Resample->BeginSave
     #-------------------------------------------
-    set f $fResample.fBeginSave
+        set f $fResample.fBeginSave
     
-    DevAddButton $f.bBeginSave "Save"  Write
+         DevAddButton $f.bBeginSave "Save"  Write
 
-    pack $f.bBeginSave -side top -padx $Gui(pad) -pady $Gui(pad)
+   #      pack $f.bBeginSave -side top -padx $Gui(pad) -pady $Gui(pad)
     
-    RealignResampleUpdateMRML
+         RealignResampleUpdateMRML
 }
 
 #-------------------------------------------------------------------------------

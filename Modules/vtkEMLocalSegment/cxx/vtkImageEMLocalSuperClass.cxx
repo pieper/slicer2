@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMLocalSuperClass.cxx,v $
-  Date:      $Date: 2005/12/20 22:55:21 $
-  Version:   $Revision: 1.8.2.1 $
+  Date:      $Date: 2007/10/29 15:39:23 $
+  Version:   $Revision: 1.8.2.1.2.1 $
 
 =========================================================================auto=*/
 #include "vtkImageEMLocalSuperClass.h"
@@ -202,31 +202,39 @@ int vtkImageEMLocalSuperClass::GetAllLabels(short *LabelList, int result, int Ma
 }
 
 //------------------------------------------------------------------------------
-void vtkImageEMLocalSuperClass::LabelAllSuperClasses(short *TakenLabelList, int Max) {
+int vtkImageEMLocalSuperClass::LabelAllSuperClasses(short *TakenLabelList, int Result, int Max) {
   int i,j,k;
-  short label=1;
+  short label=0;
+  // You have to have atleast one label defined
+  assert(Result && Result <= Max);
+
   for (i=0;  i < this->NumClasses; i++) {
     if (this->ClassListType[i] == SUPERCLASS) {
-      ((vtkImageEMLocalSuperClass*) this->ClassList[i])->LabelAllSuperClasses(TakenLabelList,Max);
-    
-      for (j = 0; j <Max; j++){
-    while ((label > TakenLabelList[j]) && ( j < Max)) j++;
-    // Write here the section this does not work right now 
-    if (label == TakenLabelList[j]) label++;
-        else { 
-      if (label < TakenLabelList[j]) {
-        k = Max -1;
-        while (k>j) {TakenLabelList[k] =  TakenLabelList[k-1];k--;}
+      Result = ((vtkImageEMLocalSuperClass*) this->ClassList[i])->LabelAllSuperClasses(TakenLabelList,Result,Max);
+      // Kilian Jan06: There used to be a bug in this code - for example if TakenLabelList label list consists of (e.g. 0 1 2 3 0 0) => Max = 5
+      //               then the old code woud it assign the label 4 at position 5 => it is not part of taken label anymore and the TakenLabelList 
+      //               is not in order.
+      // Just add to end of list 
+      int PreLabelID = TakenLabelList[Result -1] + 1;
+      j = Result;
+      
+      // Othierwise Max to small
+      assert(j < Max);
+
+      // Need to make an empty space !
+      if ( PreLabelID < TakenLabelList[j]) {
+         k = Max -1;
+         while (k>j) {TakenLabelList[k] =  TakenLabelList[k-1];k--;}
       } 
-      // Otherwise it has to be a zero becuase the list is ordered numerical
-      TakenLabelList[j] = label;
-      ((vtkImageEMLocalSuperClass*) this->ClassList[i])->Label = label; 
-      j= Max; 
-    }
-      }
+
+      TakenLabelList[j] =  PreLabelID;
+      ((vtkImageEMLocalSuperClass*) this->ClassList[i])->Label =  PreLabelID;
+      Result ++;
     }
   }
+  return Result;
 }
+
 
 //------------------------------------------------------------------------------
 int vtkImageEMLocalSuperClass::GetTotalNumberOfProbDataPtr() {
@@ -501,8 +509,15 @@ void vtkImageEMLocalSuperClass::PrintSelf(ostream& os,vtkIndent indent) {
   os << indent << "RegistrationIndependentSubClassFlag " << this->RegistrationIndependentSubClassFlag << endl; 
   os << indent << "PCAShapeModelType:             " << this->PCAShapeModelType  << endl;
 
-  char** Directions= new char*[6];
-  Directions[0] = "West "; Directions[1] = "North"; Directions[2] = "Up   "; Directions[3] = "East "; Directions[4] = "South"; Directions[5] = "Down ";
+  // No need of expensive call to new for a simple array
+  static const char * const Directions[] = {
+    "West ",
+    "North",
+    "Up   ",
+    "East ",
+    "South",
+    "Down "
+  };
   os << indent << "MrfParams:                    " << endl;
   for (int z=0; z < 6; z++) { 
     os << indent << "   " << Directions[z] << ":    ";   
@@ -512,9 +527,6 @@ void vtkImageEMLocalSuperClass::PrintSelf(ostream& os,vtkIndent indent) {
     }
     os << endl;
   }
-  // If you uncomment the following it gives you a seg fault 
-  // for (int z=0; z < 6; z++) delete[] Directions[z];
-  delete[] Directions; 
   for (int i =0; i < this->NumClasses; i++) {
     if (this->ClassListType[i] == CLASS) ((vtkImageEMLocalClass*)this->ClassList[i])->PrintSelf(os,indent.GetNextIndent());
     else ((vtkImageEMLocalSuperClass*)this->ClassList[i])->PrintSelf(os,indent.GetNextIndent());

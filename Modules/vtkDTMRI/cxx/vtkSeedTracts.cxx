@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.cxx,v $
-  Date:      $Date: 2006/07/07 18:24:15 $
-  Version:   $Revision: 1.9.2.1.2.2 $
+  Date:      $Date: 2007/10/29 15:42:59 $
+  Version:   $Revision: 1.9.2.1.2.3 $
 
 =========================================================================auto=*/
 
@@ -21,6 +21,10 @@
 #include "vtkTransformPolyDataFilter.h"
 #include "vtkPolyDataWriter.h"
 #include "vtkTimerLog.h"
+
+#include "vtkMath.h"
+
+#include "vtkPointData.h"
 
 #include <sstream>
 #include <string>
@@ -46,6 +50,7 @@ vtkSeedTracts::vtkSeedTracts()
   this->ROIToWorld = vtkTransform::New();
   this->ROI2ToWorld = vtkTransform::New();
   this->WorldToTensorScaledIJK = vtkTransform::New();
+  this->TensorRotationMatrix = vtkMatrix4x4::New();
 
   // The user must set these for the class to function.
   this->InputTensorField = NULL;
@@ -55,6 +60,9 @@ vtkSeedTracts::vtkSeedTracts()
   this->InputROIValue = -1;
   this->InputMultipleROIValues = NULL;
   this->InputROI2 = NULL;
+  this->IsotropicSeeding = 0;
+  this->IsotropicSeedingResolution = 2;
+  this->RandomGrid = 0;
 
   // if the user doesn't set these they will be ignored
   this->VtkHyperStreamlineSettings=NULL;
@@ -72,6 +80,7 @@ vtkSeedTracts::vtkSeedTracts()
   // Streamline parameters for all streamlines
   this->IntegrationDirection = VTK_INTEGRATE_BOTH_DIRECTIONS;
 
+  this->MinimumPathLength = 15;
 }
 
 //----------------------------------------------------------------------------
@@ -85,7 +94,7 @@ vtkSeedTracts::~vtkSeedTracts()
   // volumes
   if (this->InputTensorField) this->InputTensorField->Delete();
   if (this->InputROI) this->InputROI->Delete();
-  if (this->InputROI2) this->InputROI->Delete();
+  if (this->InputROI2) this->InputROI2->Delete();
 
   // settings
   if (this->VtkHyperStreamlineSettings) 
@@ -755,7 +764,7 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
                           short *tmp = (short *) this->InputROI2->GetScalarPointer(pt);
                           if (tmp != NULL)
                             {
-                              if (*tmp > 0) {
+                              if (*tmp == this->InputROI2Value) {
                                 intersects = 1;
                               }
                             }
@@ -797,19 +806,15 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
 // Seed each streamline, cause it to Update, save its info to disk
 // and then Delete it.  This is a way to seed in the whole brain
 // without running out of memory. Nothing is displayed in the renderers.
-// Some defaults for deciding when to save (min length) are hard-coded
-// here for now.
 //----------------------------------------------------------------------------
 void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *modelFilename)
 {
-  int idxX, idxY, idxZ;
-  int maxX, maxY, maxZ;
-  int inIncX, inIncY, inIncZ;
+  float idxX, idxY, idxZ;
+  float maxX, maxY, maxZ;
+  float gridIncX, gridIncY, gridIncZ;
   int inExt[6];
   double point[3], point2[3];
-  unsigned long count = 0;
-  unsigned long target;
-  int count2 = 0;
+
   short *inPtr;
   vtkHyperStreamlineDTMRI *newStreamline;
   vtkTransform *transform;
@@ -865,8 +870,10 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   // leaving them in scaled IJK. This way the output
   // can be transformed into Lilla Zollei's coordinate
   // system so we can use her registration.
+  // Also we save the world to scaled IJK transform,
+  // now that paths are stored in world coords.
+
   // Open file
-  // Save all points to the same text file.
   fileNameStr << pointsFilename << ".coords";
   fileCoordinateSystemInfo.open(fileNameStr.str().c_str());
   if (fileCoordinateSystemInfo.fail())
@@ -885,13 +892,21 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   fileCoordinateSystemInfo << "voxel dimensions of tensor volume" << endl; 
   this->InputTensorField->GetSpacing(spacing);
   fileCoordinateSystemInfo << spacing[0] << " " << spacing[1] << " " << spacing[2] << endl;
-  
+  fileCoordinateSystemInfo << "world to scaled IJK transform" << endl; 
+  for (int idxI = 0; idxI < 4; idxI++)
+    {
+      for (int idxJ = 0; idxJ < 4; idxJ++)
+        {
+          fileCoordinateSystemInfo << this->WorldToTensorScaledIJK->GetMatrix()->GetElement(idxI,idxJ) << " ";
+        }
+    }
+  fileCoordinateSystemInfo << endl;
+
   writer = vtkPolyDataWriter::New();
 
   // currently this filter is not multithreaded, though in the future 
   // it could be (especially if it inherits from an image filter class)
   this->InputROI->GetWholeExtent(inExt);
-  this->InputROI->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
 
   // find the region to loop over
   maxX = inExt[1] - inExt[0];
@@ -901,7 +916,25 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   //cout << "Dims: " << maxX << " " << maxY << " " << maxZ << endl;
   //cout << "Incr: " << inIncX << " " << inIncY << " " << inIncZ << endl;
 
-
+  // If we are iterating over a non-voxel (isotropic) grid, change the increments
+  // to reflect this.  So we want to iterate in voxel (IJK) space still, but with
+  // increments corresponding to the desired seed resolution.  The points are
+  // then converted to world space and to tensor IJK for seeding.  So for example if
+  // we want to seed at 2mm resolution, and in the x direction the voxel size is 0.85
+  // mm, then we want the increment of 2/0.85 = 2.35 voxel units in the x direction.
+  if (this->IsotropicSeeding) 
+    {
+      gridIncX = this->IsotropicSeedingResolution/spacing[0];
+      gridIncY = this->IsotropicSeedingResolution/spacing[1];
+      gridIncZ = this->IsotropicSeedingResolution/spacing[2];
+    } 
+  else 
+    {
+      gridIncX = 1;
+      gridIncY = 1;
+      gridIncZ = 1;
+    }
+  
   // Save all points to the same text file.
   fileNameStr.str("");
   fileNameStr << pointsFilename << ".3dpts";
@@ -916,34 +949,28 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
       return;
     }                   
 
-  // for progress notification
-  target = (unsigned long)((maxZ+1)*(maxY+1)/50.0);
-  target++;
-
-  // start point in input integer field
-  inPtr = (short *) this->InputROI->GetScalarPointerForExtent(inExt);
-
   // filename index
   idx=0;
 
-  for (idxZ = 0; idxZ <= maxZ; idxZ++)
+  for (idxZ = 0; idxZ <= maxZ; idxZ+=gridIncZ)
     {
+      // just output (fractional or integer) current slice number
+      std::cout << idxZ << " / " << maxZ << endl;
+
       //for (idxY = 0; !this->AbortExecute && idxY <= maxY; idxY++)
-      for (idxY = 0; idxY <= maxY; idxY++)
+      for (idxY = 0; idxY <= maxY; idxY+=gridIncY)
         {
-          if (!(count%target)) 
-            {
-              //this->UpdateProgress(count/(50.0*target) + (maxZ+1)*(maxY+1));
-              //cout << (count/(50.0*target) + (maxZ+1)*(maxY+1)) << endl;
-              //cout << "progress: " << count << endl;
-              // just output numbers from 1 to 50.
-              std::cout << count2 << endl;
-              count2++;
-            }
-          count++;
           
-          for (idxX = 0; idxX <= maxX; idxX++)
+          for (idxX = 0; idxX <= maxX; idxX+=gridIncX)
             {
+
+              // get the pointer to the nearest voxel at this location
+              int pt[3];
+              pt[0]= (int) floor(idxX + 0.5);
+              pt[1]= (int) floor(idxY + 0.5);
+              pt[2]= (int) floor(idxZ + 0.5);
+              inPtr = (short *) this->InputROI->GetScalarPointer(pt);
+      
               // If the point is equal to the ROI value then seed here.
               if (*inPtr == this->InputROIValue)
                 {
@@ -955,6 +982,33 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
                   point[1]=idxY;
                   point[2]=idxZ;
                   this->ROIToWorld->TransformPoint(point,point2);
+
+                  // jitter about seed point if requested
+                  // (now we are in a mm space, not voxels)
+                  if (this->RandomGrid)
+                    {
+                      //Call random twice to avoid init problems
+                      double rand=vtkMath::Random();
+
+                      int ridx;
+                      for (ridx = 0; ridx < 3; ridx++)
+                        {
+                          if (this->IsotropicSeeding) 
+                            {
+                              // rand was from [0 .. 1], now from +/- half grid spacing
+                              rand = vtkMath::Random( - this->IsotropicSeedingResolution / 2.0, this->IsotropicSeedingResolution / 2.0 );
+                            }
+                          else
+                            {
+                              // use half of the x voxel dimension
+                              rand = vtkMath::Random( - spacing[0] / 2.0 , spacing[0] / 2.0 );
+                            }
+
+                          // add the random offset
+                          point2[ridx] = point2[ridx] + rand;
+                        }
+                    }
+
                   // Now transform to scaled ijk of the input tensors
                   this->WorldToTensorScaledIJK->TransformPoint(point2,point);
 
@@ -969,20 +1023,105 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
                       newStreamline->SetInput(this->InputTensorField);
                       newStreamline->SetStartPosition(point[0],point[1],point[2]);
                       //newStreamline->DebugOn();
-                      
+
+                      // Ask it to output tensors and to only do one trajectory per start point
+                      newStreamline->OutputTensorsOn();
+                      newStreamline->OneTrajectoryPerSeedPointOn();
+
                       // Force it to execute
                       newStreamline->Update();
 
                       // See if we like it enough to write
-                      if (newStreamline->GetOutput()->GetNumberOfPoints() > 30)
+                      // This relies on the fact that the step length is in units of
+                      // length (unlike fractions of a cell in vtkHyperStreamline).
+                      double length = 
+                        (newStreamline->GetOutput()->GetNumberOfPoints() - 1) * 
+                        newStreamline->GetIntegrationStepLength();
+ 
+                      if (length > this->MinimumPathLength)
                         {
                           
                           // transform model
                           transformer->SetInput(newStreamline->GetOutput());
+
+                          // force update to get correct number of points
+                          transformer->Update();
+
+                          // transform any tensors as well (rotate them)
+                          // this should be a vtk class but leave that for slicer3/vtk5
+                          // Here we rotate the tensors into the same (world) coordinate system.
+                          // -------------------------------------------------
+                          vtkDebugMacro("Rotating tensors");
+                          int numPts = transformer->GetOutput()->GetNumberOfPoints();
+                          vtkFloatArray *newTensors = vtkFloatArray::New();
+                          newTensors->SetNumberOfComponents(9);
+                          newTensors->Allocate(9*numPts);
                           
+                          vtkDebugMacro("Rotating tensors: init");
+                          double (*matrix)[4] = this->TensorRotationMatrix->Element;
+                          double tensor[9];
+                          double tensor3x3[3][3];
+                          double temp3x3[3][3];
+                          double matrix3x3[3][3];
+                          double matrixTranspose3x3[3][3];
+                          for (int row = 0; row < 3; row++)
+                            {
+                              for (int col = 0; col < 3; col++)
+                                {
+                                  matrix3x3[row][col] = matrix[row][col];
+                                  matrixTranspose3x3[row][col] = matrix[col][row];
+                                }
+                            }
+                          
+                          vtkDebugMacro("Rotating tensors: get tensors from probe");        
+                          vtkDataArray *oldTensors = transformer->GetOutput()->GetPointData()->GetTensors();
+                          
+                          vtkDebugMacro("Rotating tensors: rotate");
+                          for (vtkIdType i = 0; i < numPts; i++)
+                            {
+                              oldTensors->GetTuple(i,tensor);
+                              int idx = 0;
+                              for (int row = 0; row < 3; row++)
+                                {
+                                  for (int col = 0; col < 3; col++)
+                                    {
+                                      tensor3x3[row][col] = tensor[idx];
+                                      idx++;
+                                    }
+                                }          
+                              // rotate by our matrix
+                              // R T R'
+                              vtkMath::Multiply3x3(matrix3x3,tensor3x3,temp3x3);
+                              vtkMath::Multiply3x3(temp3x3,matrixTranspose3x3,tensor3x3);
+                              
+                              idx =0;
+                              for (int row = 0; row < 3; row++)
+                                {
+                                  for (int col = 0; col < 3; col++)
+                                    {
+                                      tensor[idx] = tensor3x3[row][col];
+                                      idx++;
+                                    }
+                                }  
+                              newTensors->InsertNextTuple(tensor);
+                            }
+                          
+                          vtkDebugMacro("Rotating tensors: add to new pd");
+                          vtkPolyData *data = vtkPolyData::New();
+                          data->SetLines(transformer->GetOutput()->GetLines());
+                          data->SetPoints(transformer->GetOutput()->GetPoints());
+                          data->GetPointData()->SetTensors(newTensors);
+                          vtkDebugMacro("Done rotating tensors");
+                          // End of tensor rotation code.
+                          // -------------------------------------------------
+
+                          // Remove the scalars if any, we don't need
+                          // to save anything but the tensors
+                          data->GetPointData()->SetScalars(NULL);
+        
                           // Save the model to disk
-                          writer->SetInput(transformer->GetOutput());
-                          writer->SetFileType(2);
+                          writer->SetInput(data);
+                          //writer->SetFileType(2);
                           
                           // clear the buffer (set to empty string)
                           fileNameStr.str("");
@@ -1001,12 +1140,11 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
 
                     }
                 }
-              inPtr++;
-              inPtr += inIncX;
+
             }
-          inPtr += inIncY;
+
         }
-      inPtr += inIncZ;
+
     }
 
   transform->Delete();
@@ -1034,38 +1172,32 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
 void vtkSeedTracts::SaveStreamlineAsTextFile(ofstream &filePoints,
                                              vtkPolyData *currStreamline)
 {
-  vtkPoints *hs0, *hs1;
+  vtkPoints *hs;
   int ptidx, numPts;
   double point[3];
 
-  
-  //GetHyperStreamline0/1 and write their points.
-  hs0=currStreamline->GetCell(0)->GetPoints();
-
-  // Write the first one in reverse order since both lines
-  // travel outward from the initial point.
-  // Also, skip the first point in the second line since it
-  // is a duplicate of the initial point.
-  numPts=hs0->GetNumberOfPoints();
-  ptidx=numPts-1;
-  while (ptidx >= 0)
+  if ( currStreamline == NULL )
     {
-      hs0->GetPoint(ptidx,point);
-      filePoints << point[0] << "," << point[1] << "," << point[2] << " ";
-      ptidx--;
+      vtkErrorMacro("NULL streamline as input");
+      return;
     }
 
-  hs1=currStreamline->GetCell(1)->GetPoints();
-  numPts=hs1->GetNumberOfPoints();
-  ptidx=1;
-  while (ptidx < numPts)
-    {
-      hs1->GetPoint(ptidx,point);
-      filePoints << point[0] << "," << point[1] << "," << point[2] << " ";
-      ptidx++;
-    }
-  filePoints << endl;
+  // Assume we have a streamline that contains a single line
 
+  if ( currStreamline->GetCell(0) )
+    {
+
+      hs=currStreamline->GetCell(0)->GetPoints();
+      numPts=hs->GetNumberOfPoints();
+      ptidx=0;
+      while (ptidx < numPts)
+        {
+          hs->GetPoint(ptidx,point);
+          filePoints << point[0] << "," << point[1] << "," << point[2] << " ";
+          ptidx++;
+        }
+      filePoints << endl;
+    }
 }
 
 

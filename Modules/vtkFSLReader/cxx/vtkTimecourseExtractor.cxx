@@ -59,34 +59,54 @@ vtkTimecourseExtractor::~vtkTimecourseExtractor()
 
 void vtkTimecourseExtractor::AddInput(vtkImageData *input)
 {
+#if (VTK_MAJOR_VERSION >= 5)
+    this->vtkImageAlgorithm::AddInput(input);
+#else
     this->vtkProcessObject::AddInput(input);
+#endif
 }
 
 
 vtkImageData *vtkTimecourseExtractor::GetInput(int idx)
 {
-    if (this->NumberOfInputs <= idx)
+    int numberOfInputs;
+#if (VTK_MAJOR_VERSION >= 5)
+    numberOfInputs = this->GetNumberOfInputConnections(0);
+#else
+    numberOfInputs = this->NumberOfInputs;
+#endif
+    if (numberOfInputs <= idx)
     {
         return NULL;
     }
 
+#if (VTK_MAJOR_VERSION >= 5)
+    return (vtkImageData*)(this->Superclass::GetInput(idx));
+#else
     return (vtkImageData*)(this->Inputs[idx]);
+#endif
 }
 
 
 vtkFloatArray *vtkTimecourseExtractor::GetTimeCourse(int i, int j, int k)
 {
+    int numberOfInputs;
+#if (VTK_MAJOR_VERSION >= 5)
+    numberOfInputs = this->GetNumberOfInputConnections(0);
+#else
+    numberOfInputs = this->NumberOfInputs;
+#endif
     // Checks the input list
-    if (this->NumberOfInputs == 0 || this->GetInput(0) == NULL)
+    if (numberOfInputs == 0 || this->GetInput(0) == NULL)
     {
         vtkErrorMacro( <<"No input image data in this filter.");
         return NULL;
     }
 
     vtkFloatArray *timeCourse = vtkFloatArray::New();
-    timeCourse->SetNumberOfTuples(this->NumberOfInputs);
+    timeCourse->SetNumberOfTuples(numberOfInputs);
     timeCourse->SetNumberOfComponents(1);
-    for (int ii = 0; ii < this->NumberOfInputs; ii++)
+    for (int ii = 0; ii < numberOfInputs; ii++)
     {
         short *val = (short *)this->GetInput(ii)->GetScalarPointer(i, j, k); 
         timeCourse->SetComponent(ii, 0, *val); 
