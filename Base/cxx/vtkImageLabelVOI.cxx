@@ -7,12 +7,13 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageLabelVOI.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:16 $
-  Version:   $Revision: 1.5.16.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.5.16.1.2.1 $
 
 =========================================================================auto=*/
 #include "vtkImageLabelVOI.h"
 #include "vtkObjectFactory.h"
+#include "vtkImageData.h"
 
 //------------------------------------------------------------------------------
 vtkImageLabelVOI* vtkImageLabelVOI::New()
@@ -197,7 +198,7 @@ void vtkImageLabelVOI::ThreadedExecute(vtkImageData *inData,
 
 void vtkImageLabelVOI::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageToImageFilter::PrintSelf(os,indent);
+  Superclass::PrintSelf(os,indent);
   
   os << indent << "Corner1: " << this->c1x << " " << this->c1y << " " << this->c1z << "\n";
   os << indent << "Corner2: " << this->c2x << " " << this->c2y << " " << this->c2z << "\n";

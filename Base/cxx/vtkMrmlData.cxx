@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlData.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:21 $
-  Version:   $Revision: 1.11.12.1 $
+  Date:      $Date: 2007/10/29 14:58:18 $
+  Version:   $Revision: 1.11.12.1.2.1 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -182,7 +182,12 @@ void vtkMrmlData::ProgressCallbackFunction(vtkObject* caller,
                                               void* clientdata, void*)
 {
   vtkMrmlData *self = (vtkMrmlData *)(clientdata);
+#if (VTK_MAJOR_VERSION >= 5)
+  vtkAlgorithm *obj = self->GetProcessObject();
+#else
   vtkProcessObject *obj = self->GetProcessObject();
+#endif
+
   if (obj)
   {
     self->UpdateProgress(obj->GetProgress());

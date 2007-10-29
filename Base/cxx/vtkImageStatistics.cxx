@@ -7,14 +7,15 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageStatistics.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:20 $
-  Version:   $Revision: 1.10.12.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.10.12.1.2.1 $
 
 =========================================================================auto=*/
 #include "vtkImageStatistics.h"
+#include "vtkObjectFactory.h"
+#include "vtkImageData.h"
 #include <math.h>
 #include <stdlib.h>
-#include "vtkObjectFactory.h"
 
 //------------------------------------------------------------------------------
 vtkImageStatistics* vtkImageStatistics::New()
@@ -275,7 +276,6 @@ static void vtkImageStatisticsExecute(vtkImageStatistics *self,
 // It just executes a switch statement to call the correct function for
 // the Datas data types.
 void vtkImageStatistics::ExecuteData(vtkDataObject *)
-
 {
   void *inPtr;
   int *outPtr;
@@ -283,16 +283,16 @@ void vtkImageStatistics::ExecuteData(vtkDataObject *)
 
   vtkImageData *inData = this->GetInput(); 
   vtkImageData *outData = this->GetOutput();
-    outData->GetWholeExtent(outExt);
-    outData->SetExtent(outExt);
-    outData->AllocateScalars();
+  outData->GetWholeExtent(outExt);
+  outData->SetExtent(outExt);
+  outData->AllocateScalars();
 
   inPtr  = inData->GetScalarPointer();
   outPtr = (int *)outData->GetScalarPointer();
-  
+
   // this filter expects that output is type int.
   if (outData->GetScalarType() != inData->GetScalarType())
-  {
+    {
     vtkErrorMacro(<< "Execute: out ScalarType " << outData->GetScalarType()
           << "must be the same as in ScalarType" 
                   << inData->GetScalarType() 
@@ -319,9 +319,10 @@ void vtkImageStatistics::ExecuteData(vtkDataObject *)
     }
 }
 
+//------------------------------------------------------------------------------
 void vtkImageStatistics::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageToImageFilter::PrintSelf(os,indent);
+  Superclass::PrintSelf(os,indent);
 
   os << indent << "Igore Zero? "<<this->IgnoreZero     << "\n";
   os << indent << "NumExaminedElements: " <<this->GetNumExaminedElements()<< "\n";

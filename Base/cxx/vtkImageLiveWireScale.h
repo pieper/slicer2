@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageLiveWireScale.h,v $
-  Date:      $Date: 2005/12/20 22:44:17 $
-  Version:   $Revision: 1.11.2.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.11.2.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageLiveWireScale - General scaling of images for input to LiveWire
@@ -28,15 +28,8 @@
 #ifndef __vtkImageLiveWireScale_h
 #define __vtkImageLiveWireScale_h
 
-
 #include "vtkImageToImageFilter.h"
-#include "vtkFloatArray.h"
-#include "vtkPoints.h"
 #include "vtkSlicer.h"
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 class VTK_SLICER_BASE_EXPORT vtkImageLiveWireScale : public vtkImageToImageFilter
 {
@@ -81,11 +74,9 @@ class VTK_SLICER_BASE_EXPORT vtkImageLiveWireScale : public vtkImageToImageFilte
   // just here for access from Execute.
   vtkFloatingPointType TransformationFunction(vtkFloatingPointType intensity, vtkFloatingPointType max, vtkFloatingPointType min);
 
-  protected:
+protected:
   vtkImageLiveWireScale();
   ~vtkImageLiveWireScale();
-  vtkImageLiveWireScale(const vtkImageLiveWireScale&) {};
-  void operator=(const vtkImageLiveWireScale&) {};
   
   int ScaleFactor;
   vtkFloatingPointType UpperCutoff;
@@ -98,9 +89,12 @@ class VTK_SLICER_BASE_EXPORT vtkImageLiveWireScale : public vtkImageToImageFilte
 
   void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
   void UpdateData(vtkDataObject *data);
-  void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
+  void ExecuteInformation(){this->Superclass::ExecuteInformation();};
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
                        int ext[6], int id);
+private:
+  vtkImageLiveWireScale(const vtkImageLiveWireScale&);
+  void operator=(const vtkImageLiveWireScale&);
 };
 
 #endif

@@ -4,11 +4,10 @@
 
   See Doc/copyright/copyright.txt
   or http://www.slicer.org/copyright/copyright.txt for details.
-
   Program:   3D Slicer
   Module:    $RCSfile: vtkFastCellPicker.h,v $
-  Date:      $Date: 2005/12/20 22:44:10 $
-  Version:   $Revision: 1.14.2.1 $
+  Date:      $Date: 2007/10/29 14:58:16 $
+  Version:   $Revision: 1.14.2.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkFastCellPicker - select a cell by shooting a ray into graphics window
@@ -33,10 +32,6 @@
 #include "vtkPicker.h"
 #include "vtkOBBTree.h"
 #include "vtkSlicer.h"
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 class VTK_SLICER_BASE_EXPORT vtkFastCellPicker : public vtkPicker
 {
@@ -66,7 +61,7 @@ protected:
   int SubId; // picked cell subId
   vtkFloatingPointType PCoords[3]; // picked cell parametric coordinates
 
-#if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2) || (VTK_MAJOR_VERSION == 4)
+#if (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2) || (VTK_MAJOR_VERSION >= 4)
   virtual vtkFloatingPointType IntersectWithLine(vtkFloatingPointType p1[3], vtkFloatingPointType p2[3], vtkFloatingPointType tol, 
                   vtkAssemblyPath *assem, vtkActor *a, vtkMapper *m);
 #else

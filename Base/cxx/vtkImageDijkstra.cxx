@@ -7,21 +7,24 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageDijkstra.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:12 $
-  Version:   $Revision: 1.9.12.1 $
+  Date:      $Date: 2007/10/29 14:58:16 $
+  Version:   $Revision: 1.9.12.1.2.1 $
 
 =========================================================================auto=*/
-#include "vtkPointData.h"
 #include "vtkImageDijkstra.h"
-#include <math.h>
-#include <stdlib.h>
-#include "vtkIntArray.h"
+
 #include "vtkObjectFactory.h"
+#include "vtkIntArray.h"
 #include "vtkPointData.h"
 #include "vtkPriorityQueue.h"
-#include "vtkVersion.h"
+#include "vtkIdList.h"
+#include "vtkImageData.h"
+#include "vtkFloatArray.h"
 
+#include <math.h>
+#include <stdlib.h>
 
+vtkCxxSetObjectMacro(vtkImageDijkstra,BoundaryScalars,vtkDataArray);
 
 //----------------------------------------------------------------------------
 vtkImageDijkstra* vtkImageDijkstra::New()
@@ -70,6 +73,7 @@ vtkImageDijkstra::vtkImageDijkstra()
 }
 
 
+//------------------------------------------------------------------------------
 vtkImageDijkstra::~vtkImageDijkstra()
 {
 
@@ -96,6 +100,7 @@ vtkImageDijkstra::~vtkImageDijkstra()
   
 }
 
+//------------------------------------------------------------------------------
 unsigned long vtkImageDijkstra::GetMTime()
 {
   unsigned long mTime=this->MTime.GetMTime();
@@ -104,6 +109,7 @@ unsigned long vtkImageDijkstra::GetMTime()
 }
 
 
+//------------------------------------------------------------------------------
 void vtkImageDijkstra::init(vtkImageData *inData)
 {
 
@@ -175,6 +181,8 @@ void vtkImageDijkstra::DeleteGraph()
     this->Neighbors = NULL;
   */
 }
+
+//------------------------------------------------------------------------------
 void vtkImageDijkstra::CreateGraph(vtkImageData *inData) {
 
   
@@ -227,6 +235,7 @@ void vtkImageDijkstra::CreateGraph(vtkImageData *inData) {
 }
 
 
+//------------------------------------------------------------------------------
 void vtkImageDijkstra::RunDijkstra(vtkDataArray *scalars,int startv, int endv)
 {
   
@@ -307,6 +316,7 @@ void vtkImageDijkstra::RunDijkstra(vtkDataArray *scalars,int startv, int endv)
   this->Visited->Delete();
 }
 
+//----------------------------------------------------------------------------
 void vtkImageDijkstra::InitSingleSource(int startv)
 {
   for (int v = 0; v < this->GetNumberOfInputPoints(); v++)
@@ -324,10 +334,13 @@ void vtkImageDijkstra::InitSingleSource(int startv)
 }
 
 
+//----------------------------------------------------------------------------
 void vtkImageDijkstra::FindNeighbors(vtkIdList *list,int id, vtkDataArray *scalars) {
   
   // find i, j, k for that node
-  int *dim = GetInput()->GetDimensions();
+  vtkImageData *input = this->GetInput();
+
+  int *dim = input->GetDimensions();
   int numPts = dim[0] * dim[1] * dim[2];
   
   
@@ -350,6 +363,7 @@ void vtkImageDijkstra::FindNeighbors(vtkIdList *list,int id, vtkDataArray *scala
 }
 
 
+//----------------------------------------------------------------------------
 // The edge cost function should be implemented as a callback function to
 // allow more advanced weighting
 float vtkImageDijkstra::EdgeCost(vtkDataArray *scalars, int u, int v)
@@ -375,6 +389,7 @@ float vtkImageDijkstra::EdgeCost(vtkDataArray *scalars, int u, int v)
   return w;
 }
 
+//----------------------------------------------------------------------------
 void vtkImageDijkstra::BuildShortestPath(int start,int end)
 {
   
@@ -388,16 +403,19 @@ void vtkImageDijkstra::BuildShortestPath(int start,int end)
   
 }
 
+//----------------------------------------------------------------------------
 // ITERATOR PART 
 
 void vtkImageDijkstra::InitTraversePath(){
   this->PathPointer = -1;
 }
 
+//----------------------------------------------------------------------------
 int vtkImageDijkstra::GetNumberOfPathNodes(){
   return this->ShortestPathIdList->GetNumberOfIds();
 }
 
+//----------------------------------------------------------------------------
 int vtkImageDijkstra::GetNextPathNode(){
   this->PathPointer = this->PathPointer + 1;
   
@@ -409,6 +427,7 @@ int vtkImageDijkstra::GetNextPathNode(){
   }
 }
 
+//----------------------------------------------------------------------------
 // find closest scalar to id that is non-zero
 int vtkImageDijkstra::findClosestPointInGraph(vtkDataArray *scalars,int id,int dim0,int dim1, int dim2) {
 
@@ -560,7 +579,7 @@ void vtkImageDijkstra::ExecuteData(vtkDataObject *)
   
 
   // Components turned into x, y and z
-  if (this->GetInput()->GetNumberOfScalarComponents() > 3)
+  if (inData->GetNumberOfScalarComponents() > 3)
     {
     vtkErrorMacro("This filter can handle upto 3 components");
     return;
@@ -579,9 +598,10 @@ void vtkImageDijkstra::ExecuteData(vtkDataObject *)
 }
 
 
+//----------------------------------------------------------------------------
 void vtkImageDijkstra::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageToImageFilter::PrintSelf(os,indent);
+  Superclass::PrintSelf(os,indent);
 
   os << indent << "Source ID: ( "
      << this->GetSourceID() << " )\n";

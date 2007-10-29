@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlPointNode.h,v $
-  Date:      $Date: 2005/12/20 22:44:29 $
-  Version:   $Revision: 1.14.2.1 $
+  Date:      $Date: 2007/10/29 14:58:18 $
+  Version:   $Revision: 1.14.2.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlPointNode - MRML node to represent points.
@@ -70,8 +70,8 @@ public:
 protected:
   vtkMrmlPointNode();
   ~vtkMrmlPointNode();
-  vtkMrmlPointNode(const vtkMrmlPointNode&) {};
-  void operator=(const vtkMrmlPointNode&) {};
+  vtkMrmlPointNode(const vtkMrmlPointNode&);
+  void operator=(const vtkMrmlPointNode&);
 
   int Index;
   float XYZ[3];

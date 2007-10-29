@@ -7,15 +7,15 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageCurveRegion.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:12 $
-  Version:   $Revision: 1.10.8.1 $
+  Date:      $Date: 2007/10/29 14:58:16 $
+  Version:   $Revision: 1.10.8.1.2.1 $
 
 =========================================================================auto=*/
-#include <stdlib.h>
-#include "vtkMath.h"
-
 #include "vtkImageCurveRegion.h"
+
 #include "vtkObjectFactory.h"
+#include "vtkImageData.h"
+
 
 // ---------------------------------------------------------------------------------------------
 //  -*- Mode: C++;  -*-
@@ -57,7 +57,8 @@ inline float qnexp2(float x)
     unsigned result_bits;
     unsigned bits = COERCE(x, unsigned int);
     int exponent = ((EMSEGMENT_EXPMASK & bits) >> EMSEGMENT_MANTSIZE) - (EMSEGMENT_EXPBIAS);
-    int neg_mant =   - ((EMSEGMENT_MENTMASK & bits) | EMSEGMENT_PHANTOM_BIT);
+    int neg_mant =  ((EMSEGMENT_MENTMASK & bits) | EMSEGMENT_PHANTOM_BIT);
+    neg_mant = -neg_mant;
 
     unsigned r1 = (neg_mant << exponent);
     unsigned r2 = (neg_mant >> (- exponent));

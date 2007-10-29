@@ -7,14 +7,10 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlModelNode.cxx,v $
-  Date:      $Date: 2006/01/04 22:18:12 $
-  Version:   $Revision: 1.20.2.2 $
+  Date:      $Date: 2007/10/29 14:58:18 $
+  Version:   $Revision: 1.20.2.2.2.1 $
 
 =========================================================================auto=*/
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
-#include <math.h>
 #include "vtkMrmlModelNode.h"
 #include "vtkObjectFactory.h"
 
@@ -67,25 +63,25 @@ vtkMrmlModelNode::~vtkMrmlModelNode()
   this->RasToWld->Delete();
 
   if (this->ModelID)
-  {
+    {
     delete [] this->ModelID;
     this->ModelID = NULL;
-  }
+    }
   if (this->FileName)
-  {
+    {
     delete [] this->FileName;
     this->FileName = NULL;
-  }
+    }
   if (this->FullFileName)
-  {
+    {
     delete [] this->FullFileName;
     this->FullFileName = NULL;
-  }
+    }
   if (this->Color)
-  {
+    {
     delete [] this->Color;
     this->Color = NULL;
-  }
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -233,26 +229,27 @@ void vtkMrmlModelNode::PrintSelf(ostream& os, vtkIndent indent)
 
   os << "ScalarRange:\n";
   for (idx = 0; idx < 2; ++idx)
-  {
+    {
     os << indent << ", " << this->ScalarRange[idx];
-  }
+    }
   os << ")\n";
 
   // Matrices
   os << indent << "RasToWld:\n";
 
-    this->RasToWld->PrintSelf(os, indent.GetNextIndent());
+  this->RasToWld->PrintSelf(os, indent.GetNextIndent());
 
-    os << indent << "Look up table ID: " << this->LUTName << endl;
+  os << indent << "Look up table ID: " << this->LUTName << endl;
 
-    // Scalars
-    os << indent << "Number of scalar file names: " << this->ScalarFileNamesVec.size() << endl;
-    if (this->ScalarFileNamesVec.size() > 0)
+  // Scalars
+  os << indent << "Number of scalar file names: " << this->ScalarFileNamesVec.size() << endl;
+  if (this->ScalarFileNamesVec.size() > 0)
     {
-        for (unsigned int i = 0; i < this->ScalarFileNamesVec.size(); i++)
-        {
-            os << indent << indent << "Scalar File " << i << ": " << this->ScalarFileNamesVec[i].c_str() << endl;
-        }
+    for (unsigned int i = 0; i < this->ScalarFileNamesVec.size(); i++)
+      {
+      os << indent << indent << "Scalar File " << i << ": " 
+        << this->ScalarFileNamesVec[i].c_str() << endl;
+      }
     }
 }
 
@@ -263,41 +260,42 @@ int vtkMrmlModelNode::GetNumberOfScalarFileNames ()
 }
 
 //----------------------------------------------------------------------------
-void vtkMrmlModelNode::AddScalarFileName(char *newFileName)
+void vtkMrmlModelNode::AddScalarFileName(const char *newFileName)
 {
-    char tmpStr[1024];
-    unsigned int i;
-    int found = 0;
-    sscanf(newFileName, "%s", tmpStr);
-    std::string val = tmpStr;
-    // check that it's not there already
-    for (i=0; i<this->ScalarFileNamesVec.size(); i++)
+  unsigned int i;
+  int found = 0;
+  vtkstd::string val = newFileName;
+  // check that it's not there already
+  for (i=0; i<this->ScalarFileNamesVec.size(); i++)
     {
-        if (this->ScalarFileNamesVec[i].c_str() == tmpStr)
-        {
-            found++;
-        }
+    // Do string comparison and not cstring
+    if (this->ScalarFileNamesVec[i] == val)
+      {
+      found++;
+      break; // do not need to go any further
+      }
     }
-    if (found == 0)
+  if (found == 0)
     {
-        this->ScalarFileNamesVec.push_back(val);
-        vtkDebugMacro(<<"Added scalar file " << newFileName);
+    this->ScalarFileNamesVec.push_back(val);
+    vtkDebugMacro(<<"Added scalar file " << newFileName);
     }
-    else
+  else
     {
-        vtkDebugMacro(<<"Didn't add scalar file name, found in list already: " << newFileName);
+    vtkDebugMacro(<<"Didn't add scalar file name, found in list already: " << newFileName);
     }
-                    
+
 }
 
 //----------------------------------------------------------------------------
 const char *vtkMrmlModelNode::GetScalarFileName(int idx)
 {
-    return this->ScalarFileNamesVec[idx].c_str();
+  return this->ScalarFileNamesVec[idx].c_str();
 }
 
 //----------------------------------------------------------------------------
 void vtkMrmlModelNode::DeleteScalarFileNames()
 {
-    this->ScalarFileNamesVec.clear();
+  this->ScalarFileNamesVec.clear();
 }
+

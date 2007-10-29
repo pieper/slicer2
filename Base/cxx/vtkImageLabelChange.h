@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageLabelChange.h,v $
-  Date:      $Date: 2005/12/20 22:44:16 $
-  Version:   $Revision: 1.13.16.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.13.16.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageLabelChange -  Change one label value to another
@@ -22,10 +22,10 @@
 #ifndef __vtkImageLabelChange_h
 #define __vtkImageLabelChange_h
 
-#include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
+class vtkImageData;
 class VTK_SLICER_BASE_EXPORT vtkImageLabelChange : public vtkImageToImageFilter
 {
 public:
@@ -42,8 +42,8 @@ public:
 protected:
     vtkImageLabelChange();
     ~vtkImageLabelChange() {};
-    vtkImageLabelChange(const vtkImageLabelChange&) {};
-    void operator=(const vtkImageLabelChange&) {};
+    vtkImageLabelChange(const vtkImageLabelChange&);
+    void operator=(const vtkImageLabelChange&);
 
     float InputLabel;
     float OutputLabel;

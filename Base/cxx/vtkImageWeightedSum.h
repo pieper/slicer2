@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageWeightedSum.h,v $
-  Date:      $Date: 2005/12/20 22:44:20 $
-  Version:   $Revision: 1.10.16.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.10.16.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageWeightedSum -  adds any number of images, weighting
@@ -17,7 +17,7 @@
 // .SECTION Description
 // All weights are normalized so they will sum to 1.
 // Images must have the same extents. Output is always type float.
-//  
+//
 //
 #ifndef __vtkImageWeightedSum_h
 #define __vtkImageWeightedSum_h
@@ -29,11 +29,11 @@
 
 class VTK_SLICER_BASE_EXPORT vtkImageWeightedSum : public vtkImageMultipleInputFilter
 {
-  public:
+public:
   static vtkImageWeightedSum *New();
   vtkTypeMacro(vtkImageWeightedSum,vtkImageMultipleInputFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
-  
+
   // Description:
   // The weights control the contribution of each input to the sum.
   // They will be normalized to sum to 1 before filter execution.
@@ -47,18 +47,18 @@ class VTK_SLICER_BASE_EXPORT vtkImageWeightedSum : public vtkImageMultipleInputF
   // and normalizes the weights.
   void CheckWeights();
 
-  protected:
+protected:
 
   vtkImageWeightedSum();
   ~vtkImageWeightedSum();
-  
+
   vtkFloatArray * Weights;
 
   void NormalizeWeights();
 
-  void ExecuteInformation(vtkImageData **inputs, vtkImageData *output); 
+  void ExecuteInformation(vtkImageData **inputs, vtkImageData *output);
   void ExecuteInformation(){this->vtkImageMultipleInputFilter::ExecuteInformation();};
-  void ThreadedExecute(vtkImageData **inDatas, vtkImageData *outData, 
+  void ThreadedExecute(vtkImageData **inDatas, vtkImageData *outData,
                int extent[6], int id);
 };
 

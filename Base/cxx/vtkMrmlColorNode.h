@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlColorNode.h,v $
-  Date:      $Date: 2005/12/20 22:44:21 $
-  Version:   $Revision: 1.18.8.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.18.8.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlColorNode - MRML node for representing colors.
@@ -25,10 +25,7 @@
 #ifndef __vtkMrmlColorNode_h
 #define __vtkMrmlColorNode_h
 
-//#include <iostream.h>
-//#include <fstream.h>
 #include "vtkMrmlNode.h"
-#include "vtkSlicer.h"
 
 class VTK_SLICER_BASE_EXPORT vtkMrmlColorNode : public vtkMrmlNode
 {
@@ -86,8 +83,8 @@ public:
 protected:
   vtkMrmlColorNode();
   ~vtkMrmlColorNode();
-  vtkMrmlColorNode(const vtkMrmlColorNode&) {};
-  void operator=(const vtkMrmlColorNode&) {};
+  vtkMrmlColorNode(const vtkMrmlColorNode&);
+  void operator=(const vtkMrmlColorNode&);
 
   // Strings
   char *Labels;

@@ -7,43 +7,38 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkIndirectLookupTable.h,v $
-  Date:      $Date: 2005/12/20 22:44:21 $
-  Version:   $Revision: 1.18.2.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.18.2.1.2.1 $
 
 =========================================================================auto=*/
-/// .NAME vtkIndirectLookupTable - indirectly map scalar values into colors.
-/// .SECTION Description
-/// vtkIndirectLookupTable is an object that is used by mapper objects.
-/// Normally, a mapper maps scalar values to colors by using a 
-/// VtkLookupTable object.  This object offers an alternative that can
-/// execute 2.4 times faster.  Mapping is performed indirectly by first
-/// constructing an internal, intermediate lookup table that maps each
-/// possible scalar value to an index into the externally specified
-/// LookupTable.
+// .NAME vtkIndirectLookupTable - indirectly map scalar values into colors.
+// .SECTION Description
+// vtkIndirectLookupTable is an object that is used by mapper objects.
+// Normally, a mapper maps scalar values to colors by using a
+// vtkLookupTable object.  This object offers an alternative that can
+// execute 2.4 times faster.  Mapping is performed indirectly by first
+// constructing an internal, intermediate lookup table that maps each
+// possible scalar value to an index into the externally specified
+// LookupTable.
 //
-/// This object uses the first color in the LookupTable as the color to use for
-/// data that fails to satisfy the thresholds.  Therefore, it overwrites this
-/// first color with transparent black during the Build procedure.
+// This object uses the first color in the LookupTable as the color to use for
+// data that fails to satisfy the thresholds.  Therefore, it overwrites this
+// first color with transparent black during the Build procedure.
 //
-/// DAVE: This only maps to RGBA, but it should have all the options of a
-/// vtkScalarsToColors class.
+// DAVE: This only maps to RGBA, but it should have all the options of a
+// vtkScalarsToColors class.
 //
-/// .SECTION See Also
-/// vtkLookupTable
+// .SECTION See Also
+// vtkLookupTable
 
 #ifndef __vtkIndirectLookupTable_h
 #define __vtkIndirectLookupTable_h
 
-#include "vtkObject.h"
-#include "vtkLookupTable.h"
 #include "vtkScalarsToColors.h"
-#include "vtkUnsignedShortArray.h"
 #include "vtkSlicer.h"
 
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
-
+class vtkLookupTable;
+class vtkUnsignedShortArray;
 class VTK_SLICER_BASE_EXPORT vtkIndirectLookupTable : public vtkScalarsToColors
 {
 public:
@@ -90,7 +85,7 @@ public:
   /// Description:
   /// Lookup table containing the RGBA colors that the input scalars will
   /// be indirectly mapped to
-  vtkSetObjectMacro(LookupTable,vtkLookupTable);
+  virtual void SetLookupTable(vtkLookupTable*);
   vtkGetObjectMacro(LookupTable,vtkLookupTable);
 
   /// Description:
@@ -108,11 +103,11 @@ public:
   /// can be either specified directly or by Window/Level.
   /// These functions set/get which method to use.
   vtkGetMacro(Direct, int);
-  vtkSetMacro(Direct, int);    
+  vtkSetMacro(Direct, int);
   vtkBooleanMacro(Direct, int);
 
   /// Description:
-  /// Initialize the map to translate all input scalar values to 
+  /// Initialize the map to translate all input scalar values to
   /// the DirectDefaultIndex into the LookupTable
   void InitDirect();
 
@@ -120,7 +115,7 @@ public:
   /// Description:
   /// Map one value through the lookup table and return the color as
   /// an RGB array of vtkFloatingPointTypes between 0 and 1.
-  vtkFloatingPointType *GetColor(vtkFloatingPointType x) { 
+  vtkFloatingPointType *GetColor(vtkFloatingPointType x) {
     return vtkScalarsToColors::GetColor(x); }
 #endif
 
@@ -147,15 +142,13 @@ public:
   vtkGetObjectMacro(Map,vtkUnsignedShortArray);
 
   // Description:
-  // Get or set FMRIMapping (branched mapping through the LookupTable) 
+  // Get or set FMRIMapping (branched mapping through the LookupTable)
   vtkGetMacro(FMRIMapping, int);
-  vtkSetMacro(FMRIMapping, int);    
+  vtkSetMacro(FMRIMapping, int);
 
 protected:
   vtkIndirectLookupTable();
   ~vtkIndirectLookupTable();
-  vtkIndirectLookupTable(const vtkIndirectLookupTable&) {};
-  void operator=(const vtkIndirectLookupTable&) {};
 
   vtkFloatingPointType Range[2];
   long MapRange[2];
@@ -185,6 +178,10 @@ protected:
   vtkUnsignedShortArray *Map;
 
   vtkTimeStamp BuildTime;
+
+private:
+  vtkIndirectLookupTable(const vtkIndirectLookupTable&);
+  void operator=(const vtkIndirectLookupTable&);
 };
 
 #endif

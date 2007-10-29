@@ -7,33 +7,35 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSurfaceProps.h,v $
-  Date:      $Date: 2005/12/20 22:44:36 $
-  Version:   $Revision: 1.10.12.1 $
+  Date:      $Date: 2007/10/29 14:58:19 $
+  Version:   $Revision: 1.10.12.1.2.1 $
 
 =========================================================================auto=*/
+// .NAME vtkSurfaceProps - no desc
+// .SECTION Description
+// vtkSurfaceProps is used for measure
+// .SECTION Feature
+// If you do not EXPLICITELY update the pipeline before this filter
+// expect the unexpected...
+
 #ifndef __vtkSurfaceProps_h
 #define __vtkSurfaceProps_h
 
 #include "vtkProcessObject.h"
-#include "vtkPolyData.h"
-#include "vtkCellTriMacro.h"
 #include "vtkSlicer.h"
 
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
-
+class vtkPolyData;
 class VTK_SLICER_BASE_EXPORT vtkSurfaceProps : public vtkProcessObject
 {
-  public:
-  vtkSurfaceProps();
-  static vtkSurfaceProps *New() {return new vtkSurfaceProps;};
-  const char *GetClassName() {return "vtkSurfaceProps";};
-  
+public:
+  static vtkSurfaceProps *New();
+  vtkTypeMacro(vtkSurfaceProps,vtkProcessObject);
+  void PrintSelf(ostream& os, vtkIndent indent);
+
   void Update();
   void SetInput(vtkPolyData *input);
   vtkPolyData *GetInput();
-  
+
   vtkGetMacro(SurfaceArea,vtkFloatingPointType);
   vtkGetMacro(MinCellArea,vtkFloatingPointType);
   vtkGetMacro(MaxCellArea,vtkFloatingPointType);
@@ -42,6 +44,9 @@ class VTK_SLICER_BASE_EXPORT vtkSurfaceProps : public vtkProcessObject
   vtkGetMacro(Test,vtkFloatingPointType);
 
 protected:
+  vtkSurfaceProps();
+  ~vtkSurfaceProps();
+
   void Execute();
   vtkFloatingPointType SurfaceArea;
   vtkFloatingPointType MinCellArea;
@@ -49,6 +54,10 @@ protected:
   vtkFloatingPointType Volume;
   vtkFloatingPointType VolumeError;
   vtkFloatingPointType Test;
+
+private:
+  vtkSurfaceProps(const vtkSurfaceProps&);
+  void operator=(const vtkSurfaceProps&);
 };
 
 #endif

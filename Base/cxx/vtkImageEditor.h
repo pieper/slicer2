@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditor.h,v $
-  Date:      $Date: 2005/12/20 22:44:13 $
-  Version:   $Revision: 1.14.12.1 $
+  Date:      $Date: 2007/10/29 14:58:16 $
+  Version:   $Revision: 1.14.12.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageEditor - Applies editing effects to volumes.
@@ -28,15 +28,7 @@
 #ifndef __vtkImageEditor_h
 #define __vtkImageEditor_h
 
-//#include <iostream.h>
-//#include <fstream.h>
 #include "vtkProcessObject.h"
-#include "vtkImageData.h"
-#include "vtkImageToImageFilter.h"
-#include "vtkImageReplaceRegion.h"
-#include "vtkImageReformatIJK.h"
-#include "vtkImageCopy.h"
-#include "vtkIntArray.h"
 #include "vtkSlicer.h"
 
 //  Dimension
@@ -45,6 +37,12 @@
 #define EDITOR_DIM_3D     3
 
 class vtkCallbackCommand;
+class vtkImageData;
+class vtkSlicerImageAlgorithm;
+class vtkImageReplaceRegion;
+class vtkImageReformatIJK;
+class vtkImageCopy;
+class vtkIntArray;
 
 class VTK_SLICER_BASE_EXPORT vtkImageEditor : public vtkProcessObject
 {
@@ -52,7 +50,7 @@ public:
   static vtkImageEditor *New();
   vtkTypeMacro(vtkImageEditor,vtkProcessObject);
   void PrintSelf(ostream& os, vtkIndent indent);
-  
+
   // Description:
   // Set/Get the input data set for the image pipeline.
   // Use the UseInput() function to specify whether to use this input.
@@ -75,13 +73,13 @@ public:
   void SetDimensionToSingle() {this->SetDimension(EDITOR_DIM_SINGLE);};
   void SetDimensionToMulti()  {this->SetDimension(EDITOR_DIM_MULTI);};
   void SetDimensionTo3D()     {this->SetDimension(EDITOR_DIM_3D);};
-  char* GetDimensionString();
+  const char* GetDimensionString();
 
   // Description:
   // Specify which slice to edit when the Dimension is set to Single.
   vtkGetMacro(Slice, int);
   vtkSetMacro(Slice, int);
-  
+
   // Description:
   // Set/Get the orientation and scan order of the slices in the input.
   // Possible strings are SI or IS (for axial slices), LR or RL
@@ -118,12 +116,11 @@ public:
   // The Last and First can be the same for an effect that can
   // be achieved with one filter.
   void Apply();
-  void Apply(vtkImageToImageFilter *firstFilter,
-    vtkImageToImageFilter *lastFilter);
-  vtkSetObjectMacro(FirstFilter, vtkImageToImageFilter);
-  vtkGetObjectMacro(FirstFilter, vtkImageToImageFilter);
-  vtkSetObjectMacro(LastFilter, vtkImageToImageFilter);
-  vtkGetObjectMacro(LastFilter, vtkImageToImageFilter);
+  void Apply(vtkSlicerImageAlgorithm *firstFilter, vtkSlicerImageAlgorithm *lastFilter);
+  virtual void SetFirstFilter(vtkSlicerImageAlgorithm*);
+  vtkGetObjectMacro(FirstFilter, vtkSlicerImageAlgorithm);
+  virtual void SetLastFilter(vtkSlicerImageAlgorithm*);
+  vtkGetObjectMacro(LastFilter, vtkSlicerImageAlgorithm);
 
   // Description:
   // Apply the effect to a clipped portion of the input.
@@ -142,8 +139,8 @@ public:
   // The UndoOutput data set exists for internal use of undoing 3D and
   // multi-slice effects.
   vtkGetObjectMacro(Output, vtkImageData);
-  vtkSetObjectMacro(Output, vtkImageData);
-  vtkSetObjectMacro(UndoOutput, vtkImageData);
+  virtual void SetOutput(vtkImageData*);
+  virtual void SetUndoOutput(vtkImageData*);
   vtkGetObjectMacro(UndoOutput, vtkImageData);
 
   // Description:
@@ -152,23 +149,21 @@ public:
   // overhead.
   vtkGetMacro(RunTime, float);
   vtkGetMacro(TotalTime, float);
-    
+
 protected:
   vtkImageEditor();
   ~vtkImageEditor();
-  vtkImageEditor(const vtkImageEditor&) {};
-  void operator=(const vtkImageEditor&) {};
 
   // When "Dimension" is "Single", then the input slice is copied
   // to "Region" before the effect is applied.  Then it can be restored
   // from Region to perform an Undo.
   vtkGetObjectMacro(Region, vtkImageData);
-  vtkSetObjectMacro(Region, vtkImageData);
+  virtual void SetRegion(vtkImageData*);
 
   // "Indices" stores the voxel index into the input volume for each
   // pixel in "Region"
   vtkGetObjectMacro(Indices, vtkIntArray);
-  vtkSetObjectMacro(Indices, vtkIntArray);
+  virtual void SetIndices(vtkIntArray*);
 
   // Swap the Output and UndoOutput pointers.
   // For example, this is how Undo is achieved after a 3D effect.
@@ -176,8 +171,8 @@ protected:
 
   // Pointers to the first and last filters in the pipeline for
   // performing the effect.
-  vtkImageToImageFilter *FirstFilter;
-  vtkImageToImageFilter *LastFilter;
+  vtkSlicerImageAlgorithm *FirstFilter;
+  vtkSlicerImageAlgorithm *LastFilter;
 
   int Slice;                // slice number for Dimension=Single
   int Dimension;            // 3D, Single, or Multi
@@ -196,13 +191,16 @@ protected:
   vtkImageData *UndoOutput; // the output if we undo a 3D or Multi slice effect
 
   vtkImageData *Region;     // the output if we undo a Single slice effect
-  vtkIntArray *Indices;     // the indices for how Region was extracted 
+  vtkIntArray *Indices;     // the indices for how Region was extracted
 
   // Callback registered with the ProgressObserver.
   static void ProgressCallbackFunction(vtkObject*, unsigned long, void*,
                                        void*);
   // The observer to report progress from the internal writer.
-  vtkCallbackCommand* ProgressObserver;  
+  vtkCallbackCommand* ProgressObserver;
+private:
+  vtkImageEditor(const vtkImageEditor&);
+  void operator=(const vtkImageEditor&);
 };
 
 #endif

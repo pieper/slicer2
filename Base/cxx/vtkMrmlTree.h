@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlTree.h,v $
-  Date:      $Date: 2005/12/20 22:44:32 $
-  Version:   $Revision: 1.17.12.1 $
+  Date:      $Date: 2007/10/29 14:58:18 $
+  Version:   $Revision: 1.17.12.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlTree - a list of actors
@@ -153,13 +153,13 @@ public:
 protected:
   vtkMrmlTree() {};
   ~vtkMrmlTree() {};
-  vtkMrmlTree(const vtkMrmlTree&) {};
-  void operator=(const vtkMrmlTree&) {};
+  vtkMrmlTree(const vtkMrmlTree&);
+  void operator=(const vtkMrmlTree&);
 
-  vtkMrmlNode *InitTraversalByClass(char *className);
-  int GetNumberOfItemsByClass(char *className);
-  vtkMrmlNode* GetNthItemByClass(int n, char *className);
-  vtkMrmlNode *GetNextItemByClass(char *className);
+  vtkMrmlNode *InitTraversalByClass(const char *className);
+  int GetNumberOfItemsByClass(const char *className);
+  vtkMrmlNode* GetNthItemByClass(int n, const char *className);
+  vtkMrmlNode *GetNextItemByClass(const char *className);
 
      // Description:
     // The reader should set this code at the end of the update.

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditorEffects.h,v $
-  Date:      $Date: 2005/12/20 22:44:14 $
-  Version:   $Revision: 1.14.16.1 $
+  Date:      $Date: 2007/10/29 14:58:16 $
+  Version:   $Revision: 1.14.16.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageEditorEffects - Implementation of effects that 
@@ -22,14 +22,10 @@
 #ifndef __vtkImageEditorEffects_h
 #define __vtkImageEditorEffects_h
 
-//#include <fstream.h>
-#include <stdlib.h>
-//#include <iostream.h>
-
 #include "vtkImageEditor.h"
-#include "vtkPoints.h"
 #include "vtkSlicer.h"
 
+class vtkPoints;
 class VTK_SLICER_BASE_EXPORT vtkImageEditorEffects : public vtkImageEditor
 {
 public:
@@ -61,8 +57,8 @@ protected:
 
   vtkImageEditorEffects();
   ~vtkImageEditorEffects();
-  vtkImageEditorEffects(const vtkImageEditorEffects&) {};
-  void operator=(const vtkImageEditorEffects&) {};
+  vtkImageEditorEffects(const vtkImageEditorEffects&);
+  void operator=(const vtkImageEditorEffects&);
 
   int IslandSize;
   int LargestIslandSize;

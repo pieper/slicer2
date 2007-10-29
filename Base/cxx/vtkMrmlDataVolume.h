@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlDataVolume.h,v $
-  Date:      $Date: 2005/12/20 22:44:22 $
-  Version:   $Revision: 1.14.2.1 $
+  Date:      $Date: 2007/10/29 14:58:18 $
+  Version:   $Revision: 1.14.2.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlDataVolume - Object used in the slicer to perform
@@ -40,10 +40,6 @@
 #include "vtkMrmlDataVolumeReadWrite.h"
 #include "vtkPTSWriter.h"
 
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
-
 class vtkImageDICOMReader;
 class vtkImageReader;
 
@@ -67,7 +63,7 @@ public:
   // Use GetOutput to get the image data.
   vtkSetObjectMacro(ImageData, vtkImageData);
   vtkImageData* GetOutput();
-  char* GetOutputPointer(int zslice);
+  const char* GetOutputPointer(int zslice);
 
   // Description:
   // Read/Write image 
@@ -102,7 +98,7 @@ public:
   vtkImageData *GetHistogramPlot();
 
   int GetBimodalThreshold() {return this->Bimodal->GetThreshold();};
-
+  
   // Description:
   // Assumes GetHistogramPlot has already been called
   int MapBinToScalar(int b) {return this->HistPlot->MapBinToScalar(b);};
@@ -118,6 +114,9 @@ public:
   vtkSetMacro(RangeAuto, int);
   vtkBooleanMacro(RangeAuto, int);
 
+    vtkImageAccumulateDiscrete *GetAccumulate() { return this->Accumulate;};
+    vtkImageBimodalAnalysis *GetBimodal() { return this->Bimodal;};
+    
   void StackSetPolygon(int window, vtkPoints *poly, int s, int p, int d,
                        int closed, int preshape, int label)
   {
@@ -179,8 +178,8 @@ public:
 protected:
   vtkMrmlDataVolume();
   ~vtkMrmlDataVolume();
-  vtkMrmlDataVolume(const vtkMrmlDataVolume&) {};
-  void operator=(const vtkMrmlDataVolume&) {};
+  vtkMrmlDataVolume(const vtkMrmlDataVolume&);
+  void operator=(const vtkMrmlDataVolume&);
 
   // Description: 
   // If Data has not be created, create it.

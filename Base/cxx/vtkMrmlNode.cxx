@@ -7,13 +7,10 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlNode.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:28 $
-  Version:   $Revision: 1.19.14.1 $
+  Date:      $Date: 2007/10/29 14:58:18 $
+  Version:   $Revision: 1.19.14.1.2.1 $
 
 =========================================================================auto=*/
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
 #include "vtkMrmlNode.h"
 #include "vtkObjectFactory.h"
 
@@ -113,7 +110,7 @@ char *vtkMrmlNode::GetTitle()
 };
 
 //----------------------------------------------------------------------------
-void vtkMrmlNode::Copy(vtkMrmlNode *node)
+void vtkMrmlNode::Copy(vtkMrmlNode *)
 {
   // Copy everything except: ID
   cerr << "The programmer forgot to define a Copy function in some " 
@@ -122,7 +119,7 @@ void vtkMrmlNode::Copy(vtkMrmlNode *node)
 }
 
 //----------------------------------------------------------------------------
-void vtkMrmlNode::Write(ofstream& of, int indent)
+void vtkMrmlNode::Write(ofstream& , int )
 {
   // Copy everything except: ID
   cerr << "The programmer forgot to define a Write function in some " 

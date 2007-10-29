@@ -7,19 +7,20 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkBoolTess.h,v $
-  Date:      $Date: 2006/07/07 17:10:19 $
-  Version:   $Revision: 1.11.12.1.2.2 $
+  Date:      $Date: 2007/10/29 14:58:16 $
+  Version:   $Revision: 1.11.12.1.2.3 $
 
 =========================================================================auto=*/
 #ifndef __vtkBoolTess_h
 #define __vtkBoolTess_h
+// .NAME vtkBoolTess -
+// .SECTION Description
+// vtkBoolTess
+// .SECTION Bugs vtkBoolTess uses  a qsort and a global instance of the this pointer
+// this is a problem since you cannot know when this will be deallocated
 
 #include "vtkObject.h"
 #include "vtkSlicer.h"
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 //
 //BTX - begin tcl exclude
@@ -59,6 +60,7 @@ public:
   ~vtkBoolTess();
 
   /*  inline */ static vtkBoolTess *New() {return (new vtkBoolTess);}
+
   void SetPoints( vtkFloatingPointType *points );
   int AddContour( vtkIdType nPts, vtkIdType *ptIds );
   void Reset();
@@ -73,7 +75,7 @@ protected:
   int NumContours;
   vtkIdType NLoopPts[VTK_BOOL_MAX_CONTOURS];
   vtkIdType *Contours[VTK_BOOL_MAX_CONTOURS];
-  
+
   //BTX - begin tcl exclude
   vtkFloatingPointType (*Points)[3];
   //ETX - end tcl exclude
@@ -83,7 +85,7 @@ protected:
   int SortAxis;
   int YAxis;
   int Orient;
-  
+
   int NumInputEdges;
   int NumNewEdges;
   vtkBoolTessVtx *Vertices;
@@ -100,5 +102,5 @@ protected:
   void AddNewEdges( vtkBoolTessEdge *prevEdge, vtkBoolTessEdge *nextEdge );
   void TriangulateMonotone( vtkBoolTessEdge *firstEdge );
   int PrevNumInputEdges;
-  };
+};
 #endif

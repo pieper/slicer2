@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageDouble2D.h,v $
-  Date:      $Date: 2005/12/20 22:44:13 $
-  Version:   $Revision: 1.16.12.1 $
+  Date:      $Date: 2007/10/29 14:58:16 $
+  Version:   $Revision: 1.16.12.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageDouble2D -  Doubles size of input image
@@ -19,11 +19,10 @@
 #ifndef __vtkImageDouble2D_h
 #define __vtkImageDouble2D_h
 
-#include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"
-
 #include "vtkSlicer.h"
 
+class vtkImageData;
 class VTK_SLICER_BASE_EXPORT vtkImageDouble2D : public vtkImageToImageFilter
 {
 public:    
@@ -34,17 +33,18 @@ public:
 protected:
   vtkImageDouble2D();
   ~vtkImageDouble2D(){};
-  vtkImageDouble2D(const vtkImageDouble2D&) {};
-  void operator=(const vtkImageDouble2D&) {};
 
   // Override this function since inExt != outExt
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
   
   void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
-  void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
+  void ExecuteInformation(){this->Superclass::ExecuteInformation();};
 
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
                        int extent[6], int id);
+private:
+  vtkImageDouble2D(const vtkImageDouble2D&);
+  void operator=(const vtkImageDouble2D&);
 };
 
 #endif

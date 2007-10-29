@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageDijkstra.h,v $
-  Date:      $Date: 2005/12/20 22:44:12 $
-  Version:   $Revision: 1.4.16.1 $
+  Date:      $Date: 2007/10/29 14:58:16 $
+  Version:   $Revision: 1.4.16.1.2.1 $
 
 =========================================================================auto=*/
 
@@ -21,15 +21,13 @@
 #ifndef __vtkImageDijkstra_h
 #define __vtkImageDijkstra_h
 
-#include "vtkIntArray.h"
-#include "vtkFloatArray.h"
-#include "vtkIdList.h"
-#include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"
-#include "vtkPriorityQueue.h"
 #include "vtkSlicer.h"
 
-
+class vtkIntArray;
+class vtkDataArray;
+class vtkPriorityQueue;
+class vtkIdList;
 class VTK_SLICER_BASE_EXPORT vtkImageDijkstra : public vtkImageToImageFilter
 {
   public:
@@ -52,7 +50,7 @@ class VTK_SLICER_BASE_EXPORT vtkImageDijkstra : public vtkImageToImageFilter
   
   // Description
   // the boundary scalars
-  vtkSetObjectMacro(BoundaryScalars,vtkDataArray);
+  virtual void SetBoundaryScalars(vtkDataArray*);
   vtkGetObjectMacro(BoundaryScalars,vtkDataArray);
 
   // Description
@@ -188,17 +186,17 @@ class VTK_SLICER_BASE_EXPORT vtkImageDijkstra : public vtkImageToImageFilter
   int StopWhenEndReached;
 
 protected:
- vtkImageDijkstra();
- ~vtkImageDijkstra();
- vtkImageDijkstra(const vtkImageDijkstra&) {};
- void operator=(const vtkImageDijkstra&) {};
- 
- //void Execute(vtkImageData *inData, vtkImageData *outData);
- void ExecuteData(vtkDataObject *);
- void Execute() { this->vtkImageToImageFilter::Execute(); };
- void Execute(vtkImageData *outData) { this->vtkImageToImageFilter::Execute(outData); };
-  
-  
+  vtkImageDijkstra();
+  ~vtkImageDijkstra();
+
+  //void Execute(vtkImageData *inData, vtkImageData *outData);
+  void ExecuteData(vtkDataObject *);
+  void Execute() { this->Superclass::Execute(); };
+  void Execute(vtkImageData *outData) { this->Superclass::Execute(outData); };
+
+private:
+  vtkImageDijkstra(const vtkImageDijkstra&);
+  void operator=(const vtkImageDijkstra&);
 };
 
 #endif

@@ -7,23 +7,33 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditor.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:13 $
-  Version:   $Revision: 1.17.12.1 $
+  Date:      $Date: 2007/10/29 14:58:16 $
+  Version:   $Revision: 1.17.12.1.2.1 $
 
 =========================================================================auto=*/
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
-#include <time.h>
-#include "vtkVersion.h"
+#include "vtkImageEditor.h"
+
+#include "vtkObjectFactory.h"
 #include "vtkCommand.h"
 #include "vtkCallbackCommand.h"
-#include "vtkImageEditor.h"
-#include "vtkObjectFactory.h"
 #include "vtkImageCanvasSource2D.h"
 #include "vtkImageCopy.h"
 #include "vtkImageClip.h"
 #include "vtkImageConstantPad.h"
+#include "vtkImageData.h"
+#include "vtkImageReplaceRegion.h"
+#include "vtkImageReformatIJK.h"
+#include "vtkIntArray.h"
+#include "vtkImageToImageFilter.h"
+#include <time.h>
+
+vtkCxxSetObjectMacro(vtkImageEditor, FirstFilter, vtkSlicerImageAlgorithm);
+vtkCxxSetObjectMacro(vtkImageEditor, LastFilter, vtkSlicerImageAlgorithm);
+
+vtkCxxSetObjectMacro(vtkImageEditor, Output, vtkImageData);
+vtkCxxSetObjectMacro(vtkImageEditor, UndoOutput, vtkImageData);
+vtkCxxSetObjectMacro(vtkImageEditor, Region, vtkImageData);
+vtkCxxSetObjectMacro(vtkImageEditor, Indices, vtkIntArray);
 
 //------------------------------------------------------------------------------
 vtkImageEditor* vtkImageEditor::New()
@@ -37,21 +47,18 @@ vtkImageEditor* vtkImageEditor::New()
   // If the factory was unable to create the object, then create it here.
   return new vtkImageEditor;
 }
-
 //----------------------------------------------------------------------------
 vtkImageEditor::vtkImageEditor()
 {
-  int i;
-
   // SliceOrder can never be NULL
-  this->InputSliceOrder = new char[3];
-  strcpy(this->InputSliceOrder, "SI");
-  this->OutputSliceOrder = new char[3];
-  strcpy(this->OutputSliceOrder, "SI");
+  this->InputSliceOrder = 0;
+  this->SetInputSliceOrder( "SI" );
+  this->OutputSliceOrder = 0;
+  this->SetOutputSliceOrder( "SI" );
 
   this->UseInput = 1;
   this->Slice = 0;
-  this->Clip = 0;  
+  this->Clip = 0;
   this->UndoDimension = this->Dimension = EDITOR_DIM_3D;
   this->Undoable = 0;
   this->RunTime = 0.0;
@@ -60,7 +67,7 @@ vtkImageEditor::vtkImageEditor()
   // By setting to the largest possible extent, an error will be generated
   // to warn the user if they attempt to clip without specifying the extent.
   // So do change this to avoid an error message!
-  for (i=0; i<3; i++)
+  for (int i=0; i<3; i++)
   {
     this->ClipExtent[i*2]   = -VTK_LARGE_INTEGER;
     this->ClipExtent[i*2+1] =  VTK_LARGE_INTEGER;
@@ -83,42 +90,34 @@ vtkImageEditor::~vtkImageEditor()
 {
   this->ProgressObserver->Delete();
   // We must delete any objects we created
-  if (this->InputSliceOrder)
-  {
-    delete [] this->InputSliceOrder;
-    this->InputSliceOrder = NULL;
-  }
-  if (this->OutputSliceOrder)
-  {
-    delete [] this->OutputSliceOrder;
-    this->OutputSliceOrder = NULL;
-  }
+  this->SetInputSliceOrder( NULL );
+  this->SetOutputSliceOrder( NULL );
 
   // We must UnRegister any object that has a vtkSetObjectMacro
   if (this->FirstFilter != NULL) 
-  {
+    {
     this->FirstFilter->UnRegister(this);
-  }
+    }
   if (this->LastFilter != NULL) 
-  {
+    {
     this->LastFilter->UnRegister(this);
-  }
+    }
   if (this->Output != NULL) 
-  {
+    {
     this->Output->UnRegister(this);
-  }
+    }
   if (this->UndoOutput != NULL) 
-  {
+    {
     this->UndoOutput->UnRegister(this);
-  }
+    }
   if (this->Region != NULL) 
-  {
+    {
     this->Region->UnRegister(this);
-  }
+    }
   if (this->Indices != NULL) 
-  {
+    {
     this->Indices->UnRegister(this);
-  }
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -128,8 +127,8 @@ void vtkImageEditor::PrintSelf(ostream& os, vtkIndent indent)
   
   vtkProcessObject::PrintSelf(os,indent);
 
-    os << indent << "RunTime:       " << this->RunTime << "\n";
-    os << indent << "TotalTime:     " << this->TotalTime << "\n";
+  os << indent << "RunTime:       " << this->RunTime << "\n";
+  os << indent << "TotalTime:     " << this->TotalTime << "\n";
   os << indent << "Clip:          " << this->Clip << "\n";
   os << indent << "UseInput:      " << this->UseInput << "\n";
   os << indent << "Slice:         " << this->Slice << "\n";
@@ -189,13 +188,13 @@ void vtkImageEditor::SetClipExtent(int extent[6])
 {
   int idx;
   for (idx = 0; idx < 6; ++idx)
-  {
-    if (this->ClipExtent[idx] != extent[idx])
     {
+    if (this->ClipExtent[idx] != extent[idx])
+      {
       this->ClipExtent[idx] = extent[idx];
       this->Modified();
-    }
-  }  
+      }
+    }  
 }
 
 //----------------------------------------------------------------------------
@@ -215,13 +214,13 @@ void vtkImageEditor::GetClipExtent(int extent[6])
 {
   int idx;
   for (idx = 0; idx < 6; ++idx)
-  {
+    {
     extent[idx] = this->ClipExtent[idx];
-  }
+    }
 }
 
 //----------------------------------------------------------------------------
-char* vtkImageEditor::GetDimensionString()
+const char* vtkImageEditor::GetDimensionString()
 {
   switch (this->Dimension) 
   {
@@ -238,7 +237,7 @@ void vtkImageEditor::ProgressCallbackFunction(vtkObject* caller,
                                               void* clientdata, void*)
 {
   vtkImageEditor *self = (vtkImageEditor *)(clientdata);
-  vtkImageToImageFilter *filter = self->GetFirstFilter();
+  vtkSlicerImageAlgorithm *filter = self->GetFirstFilter();
   if (filter)
   {
     self->UpdateProgress(filter->GetProgress());
@@ -270,8 +269,8 @@ void vtkImageEditor::SwapOutputs()
 }
 
 //----------------------------------------------------------------------------
-void vtkImageEditor::Apply(vtkImageToImageFilter *firstFilter,
-                           vtkImageToImageFilter *lastFilter)
+void vtkImageEditor::Apply(vtkSlicerImageAlgorithm *firstFilter,
+                           vtkSlicerImageAlgorithm *lastFilter)
 {
   this->SetFirstFilter(firstFilter);
   this->SetLastFilter(lastFilter);
@@ -588,7 +587,7 @@ void vtkImageEditor::Apply()
     }
 
     // Connect the reformatted slice to the filters, and execute.
-    this->FirstFilter->SetInput(reformat->GetOutput());
+    SetImageInput(this->FirstFilter,reformat->GetOutput());
     tStart = clock();
     this->LastFilter->Update();
     this->RunTime = (float)(clock() - tStart) / CLOCKS_PER_SEC;
@@ -601,7 +600,7 @@ void vtkImageEditor::Apply()
     replace = vtkImageReplaceRegion::New();
     replace->SetInput(this->Output);
     replace->SetIndices(reformat->GetIndices());
-    replace->SetRegion(this->LastFilter->GetOutput());
+    replace->SetRegion(GetImageOutput(this->LastFilter));
     replace->Update();
 
     // Reset Output pointer
@@ -651,7 +650,7 @@ void vtkImageEditor::Apply()
 
       // Filter the slice
       tStart = clock();
-      this->FirstFilter->SetInput(reformat->GetOutput());
+      SetImageInput(this->FirstFilter,reformat->GetOutput());
       this->LastFilter->Update();
       this->RunTime += (float)(clock() - tStart);
 
@@ -660,7 +659,7 @@ void vtkImageEditor::Apply()
       // not in place unless UndoOutput's ReleaseDataFlag is on.
       replace = vtkImageReplaceRegion::New();
       replace->SetInput(this->UndoOutput);
-      replace->SetRegion(this->LastFilter->GetOutput());
+      replace->SetRegion(GetImageOutput(this->LastFilter));
       replace->SetIndices(reformat->GetIndices());
       this->UndoOutput->ReleaseDataFlagOn();
       replace->Update();
@@ -694,10 +693,10 @@ void vtkImageEditor::Apply()
       clip->ClipDataOff();
       clip->SetOutputWholeExtent(this->ClipExtent);
    
-      this->FirstFilter->SetInput(clip->GetOutput());
+      SetImageInput(this->FirstFilter,clip->GetOutput());
 
       vtkImageConstantPad *pad = vtkImageConstantPad::New();
-      pad->SetInput(this->LastFilter->GetOutput());
+      pad->SetInput(GetImageOutput(this->LastFilter));
       pad->SetOutputWholeExtent(wholeExtent);
       
       // Execute
@@ -716,7 +715,7 @@ void vtkImageEditor::Apply()
     }
     else
     {
-      this->FirstFilter->SetInput(input);
+      SetImageInput(this->FirstFilter,input);
       
       // Execute
       input->Update();
@@ -724,7 +723,7 @@ void vtkImageEditor::Apply()
       this->LastFilter->Update();
       this->RunTime = (float)(clock() - tStart) / CLOCKS_PER_SEC;
 
-      this->SetUndoOutput(this->LastFilter->GetOutput());
+      this->SetUndoOutput(GetImageOutput(this->LastFilter));
     } 
     break;
   }

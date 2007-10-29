@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageCopy.h,v $
-  Date:      $Date: 2005/12/20 22:44:11 $
-  Version:   $Revision: 1.12.16.1 $
+  Date:      $Date: 2007/10/29 14:58:16 $
+  Version:   $Revision: 1.12.16.1.2.1 $
 
 =========================================================================auto=*/
 //.NAME vtkImageCopy copies an image
@@ -20,10 +20,10 @@
 #ifndef __vtkImageCopy_h
 #define __vtkImageCopy_h
 
-#include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
+class vtkImageData;
 class VTK_SLICER_BASE_EXPORT vtkImageCopy : public vtkImageToImageFilter
 {
 public:
@@ -41,8 +41,8 @@ public:
 protected:
   vtkImageCopy();
   ~vtkImageCopy() {};
-  vtkImageCopy(const vtkImageCopy&) {};
-  void operator=(const vtkImageCopy&) {};
+  vtkImageCopy(const vtkImageCopy&);
+  void operator=(const vtkImageCopy&);
 
   int Clear;
   

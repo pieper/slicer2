@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlLandmarkNode.h,v $
-  Date:      $Date: 2005/12/20 22:44:25 $
-  Version:   $Revision: 1.11.12.1 $
+  Date:      $Date: 2007/10/29 14:58:18 $
+  Version:   $Revision: 1.11.12.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlLandmarkNode - MRML node to represent transformation matrices.
@@ -64,8 +64,8 @@ public:
 protected:
   vtkMrmlLandmarkNode();
   ~vtkMrmlLandmarkNode();
-  vtkMrmlLandmarkNode(const vtkMrmlLandmarkNode&) {};
-  void operator=(const vtkMrmlLandmarkNode&) {};
+  vtkMrmlLandmarkNode(const vtkMrmlLandmarkNode&);
+  void operator=(const vtkMrmlLandmarkNode&);
 
   float XYZ[3];
   float FXYZ[3];

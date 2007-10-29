@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSceneOptionsNode.h,v $
-  Date:      $Date: 2005/12/20 22:44:29 $
-  Version:   $Revision: 1.6.8.1 $
+  Date:      $Date: 2007/10/29 14:58:18 $
+  Version:   $Revision: 1.6.8.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSceneOptionsNode - MRML node to represent the scene options
@@ -42,6 +42,12 @@ public:
   // Description:
   // Copy the node's attributes to this object
   void Copy(vtkMrmlNode *node);
+
+    // Description:
+    // the name of this scene these options are assoc with, should be set from
+    // the Scenes node
+  vtkSetStringMacro(Name);
+  vtkGetStringMacro(Name);
 
   // Description:
   // ViewUp (vtk camera option)
@@ -160,14 +166,20 @@ public:
   // Highest value in DICOM preview
   vtkSetMacro(DICOMPreviewHighestValue,int);
   vtkGetMacro(DICOMPreviewHighestValue,int);
- 
+
+    // Description:
+    // Field of view
+    vtkSetMacro(FOV,float);
+    vtkGetMacro(FOV,float);
+    
 protected:
   vtkMrmlSceneOptionsNode();
   ~vtkMrmlSceneOptionsNode();
-  vtkMrmlSceneOptionsNode(const vtkMrmlSceneOptionsNode&) {};
-  void operator=(const vtkMrmlSceneOptionsNode&) {};
+  vtkMrmlSceneOptionsNode(const vtkMrmlSceneOptionsNode&);
+  void operator=(const vtkMrmlSceneOptionsNode&);
 
   // Strings
+    char *Name;
   char *ViewUp;
   char *Position;
   char *FocalPoint;
@@ -192,6 +204,8 @@ protected:
   int DICOMPreviewWidth;
   int DICOMPreviewHeight;
   int DICOMPreviewHighestValue;
+
+    float FOV;
 
 };
 

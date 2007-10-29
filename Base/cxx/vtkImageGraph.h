@@ -7,21 +7,16 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageGraph.h,v $
-  Date:      $Date: 2005/12/20 22:44:15 $
-  Version:   $Revision: 1.6.12.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.6.12.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageGraph - Abstract Filter used in slicer to plot graphs
 #ifndef __vtkImageGraph_h
 #define __vtkImageGraph_h
-#include "vtkImageSource.h"
-#include "vtkImageData.h"
-#include "vtkIndirectLookupTable.h"
-#include "vtkSlicer.h"
 
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
+#include "vtkImageSource.h"
+#include "vtkSlicer.h"
 
 // From vtkImagePlot
 #define SET_PIXEL(x,y,color){ ptr  =&outPtr[y*NumXScalar+x*3]; memcpy(ptr,color,3);}
@@ -76,10 +71,14 @@ protected:
    vtkImageData* GraphEntry;
    bool IgnoreGraphMinGraphMax;
    GraphEntryList* Next; 
-}; 
-
+};
 //ETX
-class VTK_SLICER_BASE_EXPORT vtkImageGraph : public vtkImageSource  {
+
+class vtkScalarsToColors;
+class vtkIndirectLookupTable;
+class vtkLookupTable;
+class VTK_SLICER_BASE_EXPORT vtkImageGraph : public vtkImageSource
+{
 public:
   static vtkImageGraph *New();
   vtkTypeMacro(vtkImageGraph,vtkImageSource);
@@ -109,7 +108,7 @@ public:
   vtkGetVector2Macro(DataBackRange, int);
 
   // Defines Background of Graph
-  vtkSetObjectMacro(LookupTable,vtkScalarsToColors);
+  virtual void SetLookupTable(vtkScalarsToColors*);
   vtkGetObjectMacro(LookupTable,vtkScalarsToColors);
    
   // Description:
@@ -178,6 +177,7 @@ protected:
  
   vtkScalarsToColors *LookupTable;
   int DataBackRange[2];
+
 private:
   vtkImageGraph(const vtkImageGraph&);  // Not implemented.
   void operator=(const vtkImageGraph&);  // Not implemented.

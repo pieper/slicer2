@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMathUtils.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:21 $
-  Version:   $Revision: 1.14.8.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.14.8.1.2.1 $
 
 =========================================================================auto=*/
 #include <math.h>
@@ -118,9 +118,9 @@ int vtkMathUtils::AlignPoints( vtkPoints *Data, vtkPoints *Ref,
   vtkFloatingPointType *p, *p1;
   vtkFloatingPointType cmData[3] = { 0.0, 0.0, 0.0 },
          cmRef[3] = { 0.0, 0.0, 0.0 },
-         H[3][3] = { 0.0, 0.0, 0.0,
-                     0.0, 0.0, 0.0,
-                     0.0, 0.0, 0.0 };
+         H[3][3] = { { 0.0, 0.0, 0.0 },
+                     { 0.0, 0.0, 0.0 },
+                     { 0.0, 0.0, 0.0 } };
   vtkFloatingPointType (*q1)[3], (*q)[3];
   vtkFloatingPointType sing[3], U[3][3], V[3][3], translate[3];
   vtkTransform *tmpXform = vtkTransform::New();

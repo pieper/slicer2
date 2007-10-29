@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlEndHierarchyNode.h,v $
-  Date:      $Date: 2005/12/20 22:44:23 $
-  Version:   $Revision: 1.5.16.1 $
+  Date:      $Date: 2007/10/29 14:58:18 $
+  Version:   $Revision: 1.5.16.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlEndHierarchyNode - represents the end of a vtkMrmlHierarchyNode.
@@ -45,8 +45,8 @@ public:
 protected:
   vtkMrmlEndHierarchyNode();
   ~vtkMrmlEndHierarchyNode();
-  vtkMrmlEndHierarchyNode(const vtkMrmlEndHierarchyNode&) {};
-  void operator=(const vtkMrmlEndHierarchyNode&) {};
+  vtkMrmlEndHierarchyNode(const vtkMrmlEndHierarchyNode&);
+  void operator=(const vtkMrmlEndHierarchyNode&);
 
 };
 

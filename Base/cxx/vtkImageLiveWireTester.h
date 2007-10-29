@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageLiveWireTester.h,v $
-  Date:      $Date: 2005/12/20 22:44:17 $
-  Version:   $Revision: 1.14.16.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.14.16.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageLiveWireTester - Wrapper around vtkImageLiveWire
@@ -22,8 +22,6 @@
 #define __vtkImageLiveWireTester_h
 
 #include "vtkImageToImageFilter.h"
-#include "vtkImageLiveWire.h"
-#include "vtkImageLiveWireEdgeWeights.h"
 #include "vtkSlicer.h"
 
 class VTK_SLICER_BASE_EXPORT vtkImageLiveWireTester : public vtkImageToImageFilter
@@ -69,8 +67,6 @@ class VTK_SLICER_BASE_EXPORT vtkImageLiveWireTester : public vtkImageToImageFilt
 protected:
   vtkImageLiveWireTester();
   ~vtkImageLiveWireTester();
-  vtkImageLiveWireTester(const vtkImageLiveWireTester&) {};
-  void operator=(const vtkImageLiveWireTester&) {};
 
   char *SettingsFileName;
 
@@ -85,6 +81,10 @@ protected:
   int NumberOfEdgeFilters;
 
   void Execute(vtkImageData *inData, vtkImageData *outData);
+
+private:
+  vtkImageLiveWireTester(const vtkImageLiveWireTester&);
+  void operator=(const vtkImageLiveWireTester&);
 };
 
 #endif

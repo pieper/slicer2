@@ -7,21 +7,20 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditorEffects.cxx,v $
-  Date:      $Date: 2006/07/07 17:11:48 $
-  Version:   $Revision: 1.13.2.1.2.2 $
+  Date:      $Date: 2007/10/29 14:58:16 $
+  Version:   $Revision: 1.13.2.1.2.3 $
 
 =========================================================================auto=*/
-#include <stdio.h>
 #include "vtkImageEditorEffects.h"
+
+#include "vtkObjectFactory.h"
 #include "vtkImageErode.h"
 #include "vtkImageConnectivity.h"
 #include "vtkImageLabelChange.h"
 #include "vtkImageFillROI.h"
 #include "vtkImageThreshold.h"
 #include "vtkImageCopy.h"
-#include "vtkObjectFactory.h"
 #include "vtkImageLabelVOI.h"
-#include <time.h>
 
 //------------------------------------------------------------------------------
 vtkImageEditorEffects* vtkImageEditorEffects::New()
@@ -35,7 +34,6 @@ vtkImageEditorEffects* vtkImageEditorEffects::New()
   // If the factory was unable to create the object, then create it here.
   return new vtkImageEditorEffects;
 }
-
 //----------------------------------------------------------------------------
 vtkImageEditorEffects::vtkImageEditorEffects()
 {
@@ -60,12 +58,7 @@ void vtkImageEditorEffects::Threshold(float min, float max,
   thresh->SetOutValue(out);
   thresh->SetOutputScalarTypeToShort(); // needed for later drawing
 
-  // TODO - fix this
-#ifdef SLICER_VTK5
-  vtkWarningMacro ("cannot Threshold in vtk5");
-#else
   this->Apply(thresh, thresh);
-#endif
 
   thresh->SetInput(NULL);
   thresh->SetOutput(NULL);
@@ -83,12 +76,7 @@ void vtkImageEditorEffects::Draw(int value, vtkPoints *points, int radius,
   fill->SetShapeString(shape);
   fill->SetPoints(points);
 
-  // TODO - fix this
-#ifdef SLICER_VTK5
-  vtkWarningMacro ("cannot draw in vtk5");
-#else
   this->Apply(fill, fill);
-#endif
 
   fill->SetInput(NULL);
   fill->SetOutput(NULL);
@@ -104,19 +92,19 @@ void vtkImageEditorEffects::Erode(float fg, float bg, int neighbors,
   erode->SetForeground(fg);
   erode->SetBackground(bg);
 
-    if (neighbors == 8) 
-  {
+  if (neighbors == 8) 
+    {
     erode->SetNeighborTo8();
-  }
+    }
   else
-  {
+    {
     erode->SetNeighborTo4();
-  }
+    }
 
   for (int i=0; i<iterations; i++)
-  {
+    {
     this->Apply(erode, erode);
-  }
+    }
 
   erode->SetInput(NULL);
   erode->SetOutput(NULL);
@@ -133,19 +121,19 @@ void vtkImageEditorEffects::Dilate(float fg, float bg, int neighbors,
   erode->SetForeground(bg);
   erode->SetBackground(fg);
 
-    if (neighbors == 8) 
-  {
-        erode->SetNeighborTo8();
-  }
-    else
-  {
-        erode->SetNeighborTo4();
-  }
+  if (neighbors == 8) 
+    {
+    erode->SetNeighborTo8();
+    }
+  else
+    {
+    erode->SetNeighborTo4();
+    }
 
   for (int i=0; i<iterations; i++)
-  {
+    {
     this->Apply(erode, erode);
-  }
+    }
 
   erode->SetInput(NULL);
   erode->SetOutput(NULL);
@@ -344,10 +332,9 @@ void vtkImageEditorEffects::ChangeIsland(int outputLabel,
 //----------------------------------------------------------------------------
 void vtkImageEditorEffects::MeasureIsland(int xSeed, int ySeed, int zSeed)
 {
-  vtkImageConnectivity *con  = vtkImageConnectivity::New();
-
-    con->SetFunctionToMeasureIsland();
-    con->SetSeed(xSeed, ySeed, zSeed);
+  vtkImageConnectivity *con = vtkImageConnectivity::New();
+  con->SetFunctionToMeasureIsland();
+  con->SetSeed(xSeed, ySeed, zSeed);
   con->SetBackground(0);
 
   this->Apply(con, con);
@@ -411,7 +398,9 @@ void vtkImageEditorEffects::PrintSelf(ostream& os, vtkIndent indent)
   vtkImageEditor::PrintSelf(os, indent);
 }
 
-void vtkImageEditorEffects::LabelVOI(int c1x, int c1y, int c1z, int c2x, int c2y, int c2z, int method)
+//----------------------------------------------------------------------------
+void vtkImageEditorEffects::LabelVOI(int c1x, int c1y, int c1z, 
+                                     int c2x, int c2y, int c2z, int method)
 {
   vtkImageLabelVOI *change  = vtkImageLabelVOI::New();
 

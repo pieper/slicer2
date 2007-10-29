@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMathUtils.h,v $
-  Date:      $Date: 2005/12/20 22:44:21 $
-  Version:   $Revision: 1.13.12.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.13.12.1.2.1 $
 
 =========================================================================auto=*/
 #ifndef __vtkMathUtils_h
@@ -19,16 +19,11 @@
 #include "vtkMatrix4x4.h"
 #include "vtkSlicer.h"
 
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
-
 class VTK_SLICER_BASE_EXPORT vtkMathUtils : public vtkObject
 {
   public:
   static vtkMathUtils *New() {return new vtkMathUtils;};
-  const char *GetClassName() {return "vtkMathUtils";};
-  
+
   static int PrincipalMomentsAndAxes( vtkPoints *Points, vtkDataArray *Weights,
                                       vtkDataArray *Values, vtkDataArray *Vectors );
   static int AlignPoints( vtkPoints *Data, vtkPoints *Ref,
@@ -37,15 +32,18 @@ class VTK_SLICER_BASE_EXPORT vtkMathUtils : public vtkObject
   
   // Description:
   // Outer product of two 3-vectors.
+  // VTK has a vtkMath::Outer
   static void Outer3(vtkFloatingPointType x[3], vtkFloatingPointType y[3], vtkFloatingPointType A[3][3]);
 
   // Description:
   // Outer product of two 2-vectors.
+  // VTK has a vtkMath::Outer2D
   static void Outer2(vtkFloatingPointType x[2], vtkFloatingPointType y[2], vtkFloatingPointType A[2][2]);
 
   // Description:
   // General matrix multiplication.  You must allocate
   // output storage.
+  // See also: vtkMath::MatrixMultiply
   static void MatrixMultiply(double **A, double **B, double **C, int rowA, 
                  int colA, int rowB, int colB);
   // Description:

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlVolumeNode.h,v $
-  Date:      $Date: 2005/12/20 22:44:32 $
-  Version:   $Revision: 1.40.2.1 $
+  Date:      $Date: 2007/10/29 14:58:19 $
+  Version:   $Revision: 1.40.2.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlVolumeNode - MRML node for representing a volume (image stack).
@@ -31,10 +31,6 @@
 #include "vtkTransform.h"
 #include "vtkSlicer.h"
 #include "vtkMrmlVolumeReadWriteNode.h"
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 // found this the hard way: this had been a 'magic number' that allowed
 // the user to run off the end of the array with no error checking -- tsk tsk.
@@ -152,7 +148,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
     this->SetScalarType(VTK_FLOAT);};
   void SetScalarTypeToDouble() {
     this->SetScalarType(VTK_DOUBLE);};
-  char* GetScalarTypeAsString();
+  const char* GetScalarTypeAsString();
   
   // Description:
   // The number of scalar components for each voxel. 
@@ -233,6 +229,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
   vtkGetMacro(LowerThreshold, vtkFloatingPointType);
   vtkSetMacro(LowerThreshold, vtkFloatingPointType);
 
+  vtkGetMacro(ScalarComponent, int);
+  vtkSetMacro(ScalarComponent, int);
+
   // Description:
   // MR Diffusion Tensor Images may be saved on disk with 
   // the frequency encode direction non-standard.  For supine
@@ -260,12 +259,12 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlVolumeNode : public vtkMrmlNode
   // RL, AP, PA, IS, SI. This information is encoded in the rasToIjkMatrix.
   // This matrix can be computed either from corner points, or just he
   // scanOrder.
-  void ComputeRasToIjkFromScanOrder(char *order);
-  static char* ComputeScanOrderFromRasToIjk(vtkMatrix4x4 *RasToIjk);
+  void ComputeRasToIjkFromScanOrder(const char *order);
+  static const char* ComputeScanOrderFromRasToIjk(vtkMatrix4x4 *RasToIjk);
 
   void ComputePositionMatrixFromRasToVtk(vtkMatrix4x4* RasToVtkMatrix);
 
-  void SetScanOrder(char *s);
+  void SetScanOrder(const char *s);
   vtkGetStringMacro(ScanOrder);
 
   // Description:
@@ -375,9 +374,9 @@ int ComputeRasToIjkFromCorners(
 
   // DICOMFileList
   int GetNumberOfDICOMFiles() { return DICOMFiles; }
-  void AddDICOMFileName(char *);
-  char *GetDICOMFileName(int idx);
-  void SetDICOMFileName(int idx, char *str);
+  void AddDICOMFileName(const char *);
+  const char *GetDICOMFileName(int idx);
+  void SetDICOMFileName(int idx, const char *str);
   void DeleteDICOMFileNames();
   char **GetDICOMFileNamesPointer() { return DICOMFileList;}
 
@@ -391,8 +390,8 @@ int ComputeRasToIjkFromCorners(
 protected:
   vtkMrmlVolumeNode();
   ~vtkMrmlVolumeNode();
-  vtkMrmlVolumeNode(const vtkMrmlVolumeNode&) {};
-  void operator=(const vtkMrmlVolumeNode&) {};
+  vtkMrmlVolumeNode(const vtkMrmlVolumeNode&);
+  void operator=(const vtkMrmlVolumeNode&);
 
   // Strings
   char *VolumeID;
@@ -414,6 +413,7 @@ protected:
   vtkFloatingPointType Level;
   vtkFloatingPointType UpperThreshold;
   vtkFloatingPointType LowerThreshold;
+  int ScalarComponent;
 
   // odonnell.  Fixes for diffusion tensor image data
   int FrequencyPhaseSwap;

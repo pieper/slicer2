@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlEndTransformNode.h,v $
-  Date:      $Date: 2005/12/20 22:44:24 $
-  Version:   $Revision: 1.15.16.1 $
+  Date:      $Date: 2007/10/29 14:58:18 $
+  Version:   $Revision: 1.15.16.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlEndTransformNode - represents the end of a vtkMrmlTransformNode.
@@ -47,8 +47,8 @@ public:
 protected:
   vtkMrmlEndTransformNode();
   ~vtkMrmlEndTransformNode();
-  vtkMrmlEndTransformNode(const vtkMrmlEndTransformNode&) {};
-  void operator=(const vtkMrmlEndTransformNode&) {};
+  vtkMrmlEndTransformNode(const vtkMrmlEndTransformNode&);
+  void operator=(const vtkMrmlEndTransformNode&);
 
 };
 

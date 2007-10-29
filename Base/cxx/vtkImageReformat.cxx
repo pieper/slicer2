@@ -7,18 +7,23 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageReformat.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:19 $
-  Version:   $Revision: 1.33.2.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.33.2.1.2.1 $
 
 =========================================================================auto=*/
-#include "vtkPointData.h"
 #include "vtkImageReformat.h"
+
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 #include "vtkTransform.h"
+#include "vtkImageData.h"
+#include "vtkFloatArray.h"
+
 #include <time.h>
 #include <math.h>
 
+vtkCxxSetObjectMacro(vtkImageReformat, WldToIjkMatrix, vtkMatrix4x4);
+vtkCxxSetObjectMacro(vtkImageReformat, ReformatMatrix, vtkMatrix4x4);
 
 //------------------------------------------------------------------------------
 vtkImageReformat* vtkImageReformat::New()
@@ -82,9 +87,10 @@ vtkImageReformat::~vtkImageReformat()
     // << AT 11/07/01
 }
 
+//----------------------------------------------------------------------------
 void vtkImageReformat::PrintSelf(ostream& os, vtkIndent indent)
 {
-    vtkImageToImageFilter::PrintSelf(os,indent);
+    Superclass::PrintSelf(os,indent);
 
     os << indent << "YStep[0]:    " << this->YStep[0] << "\n";
     os << indent << "YStep[1]:    " << this->YStep[1] << "\n";
@@ -1581,16 +1587,16 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
 void vtkImageReformat::ExecuteData(vtkDataObject *out)
 {
     int i,ext[6];
-    //vtkImageData *output = this->GetOutput();
+    vtkImageData *input = this->GetInput();
     vtkImageData *output = vtkImageData::SafeDownCast(out);
 
     output->SetExtent(output->GetUpdateExtent());
     //output->AllocateScalars();  (done by superclass)
 
     // If we have tensors in the input
-    if (this->GetInput()->GetPointData()->GetTensors() != NULL) {
+    if (input->GetPointData()->GetTensors() != NULL) {
 
-        if (this->GetInput()->GetPointData()->GetTensors()->GetNumberOfTuples() > 0)
+        if (input->GetPointData()->GetTensors()->GetNumberOfTuples() > 0)
         {
             // allocate output tensors
             vtkFloatArray *data = vtkFloatArray::New(); 
@@ -1644,7 +1650,7 @@ void vtkImageReformat::ExecuteData(vtkDataObject *out)
     // jump back into normal pipeline: call standard superclass method here
     //this->vtkImageToImageFilter::Execute(this->GetInput(), output);
     //this->vtkImageToImageFilter::Execute();
-    this->vtkImageToImageFilter::ExecuteData(output);
+    this->Superclass::ExecuteData(output);
 }
 
 //----------------------------------------------------------------------------

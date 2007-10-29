@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageOverlay.h,v $
-  Date:      $Date: 2005/12/20 22:44:18 $
-  Version:   $Revision: 1.14.2.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.14.2.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageOverlay - Overlay Images
@@ -43,8 +43,8 @@ public:
 protected:
   vtkImageOverlay();
   ~vtkImageOverlay();
-  vtkImageOverlay(const vtkImageOverlay&) {};
-  void operator=(const vtkImageOverlay&) {};
+  vtkImageOverlay(const vtkImageOverlay&);
+  void operator=(const vtkImageOverlay&);
   double *Opacity;
   int nOpacity;
   int *Fade;

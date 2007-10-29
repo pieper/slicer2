@@ -7,12 +7,14 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageZoom2D.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:20 $
-  Version:   $Revision: 1.10.12.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.10.12.1.2.1 $
 
 =========================================================================auto=*/
 #include "vtkImageZoom2D.h"
+
 #include "vtkObjectFactory.h"
+#include "vtkImageData.h"
 
 //------------------------------------------------------------------------------
 vtkImageZoom2D* vtkImageZoom2D::New()
@@ -309,7 +311,7 @@ void vtkImageZoom2D::ThreadedExecute(vtkImageData *inData,
 //----------------------------------------------------------------------------
 void vtkImageZoom2D::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageToImageFilter::PrintSelf(os,indent);
+  Superclass::PrintSelf(os,indent);
   
   os << indent << "Zoom Point X:   " << this->ZoomPoint[0] << "\n";
   os << indent << "Zoom Point Y:   " << this->ZoomPoint[1] << "\n";

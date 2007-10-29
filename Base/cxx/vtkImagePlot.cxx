@@ -7,14 +7,19 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImagePlot.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:18 $
-  Version:   $Revision: 1.16.12.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.16.12.1.2.1 $
 
 =========================================================================auto=*/
 #include "vtkImagePlot.h"
+
 #include "vtkObjectFactory.h"
+#include "vtkScalarsToColors.h"
+#include "vtkImageData.h"
 
 #define SET_PIXEL(x,y,color){ptr=&outPtr[(y)*nxnc+(x)*nc];memcpy(ptr,color,3);}
+
+vtkCxxSetObjectMacro(vtkImagePlot,LookupTable,vtkScalarsToColors);
 
 //------------------------------------------------------------------------------
 vtkImagePlot* vtkImagePlot::New()
@@ -86,7 +91,7 @@ vtkImagePlot::~vtkImagePlot()
 //----------------------------------------------------------------------------
 void vtkImagePlot::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageToImageFilter::PrintSelf(os,indent);
+  Superclass::PrintSelf(os,indent);
 
   os << indent << "Thickness:     " << this->Thickness;
   os << indent << "Height:        " << this->Height;
@@ -111,7 +116,7 @@ unsigned long vtkImagePlot::GetMTime()
 {
   unsigned long t1, t2;
 
-  t1 = this->vtkImageToImageFilter::GetMTime();
+  t1 = this->Superclass::GetMTime();
   if (this->LookupTable)
   {
     t2 = this->LookupTable->GetMTime();

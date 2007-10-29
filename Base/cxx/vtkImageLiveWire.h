@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageLiveWire.h,v $
-  Date:      $Date: 2005/12/20 22:44:16 $
-  Version:   $Revision: 1.30.8.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.30.8.1.2.1 $
 
 =========================================================================auto=*/
 
@@ -32,10 +32,6 @@
 #include "vtkImageMultipleInputFilter.h"
 #include "vtkSlicer.h"
 #include "vtkPoints.h"
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 //----------------------------------------------------------------------------
 // helper classes used in computation
@@ -311,8 +307,8 @@ public:
 protected:
   vtkImageLiveWire();
   ~vtkImageLiveWire();
-  vtkImageLiveWire(const vtkImageLiveWire&) {};
-  void operator=(const vtkImageLiveWire&) {};
+  vtkImageLiveWire(const vtkImageLiveWire&);
+  void operator=(const vtkImageLiveWire&);
 
   int StartPoint[2];
   int EndPoint[2];

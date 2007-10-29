@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlScenesNode.h,v $
-  Date:      $Date: 2005/12/20 22:44:30 $
-  Version:   $Revision: 1.5.16.1 $
+  Date:      $Date: 2007/10/29 14:58:18 $
+  Version:   $Revision: 1.5.16.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlScenesNode - MRML node to represent a saved scene
@@ -53,8 +53,8 @@ public:
 protected:
   vtkMrmlScenesNode();
   ~vtkMrmlScenesNode();
-  vtkMrmlScenesNode(const vtkMrmlScenesNode&) {};
-  void operator=(const vtkMrmlScenesNode&) {};
+  vtkMrmlScenesNode(const vtkMrmlScenesNode&);
+  void operator=(const vtkMrmlScenesNode&);
 
   // Strings
   char *Lang;

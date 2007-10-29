@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkStackOfPolygons.h,v $
-  Date:      $Date: 2005/12/20 22:44:35 $
-  Version:   $Revision: 1.3.2.1 $
+  Date:      $Date: 2007/10/29 14:58:19 $
+  Version:   $Revision: 1.3.2.1.2.1 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -134,8 +134,8 @@ public:
 protected:
     vtkStackOfPolygons();
     ~vtkStackOfPolygons();
-    vtkStackOfPolygons(const vtkStackOfPolygons&) {};
-    void operator=(const vtkStackOfPolygons&) {};
+    vtkStackOfPolygons(const vtkStackOfPolygons&);
+    void operator=(const vtkStackOfPolygons&);
 
 //BTX
     // Store polygon data for arbitrary number of slices

@@ -7,12 +7,13 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageLabelChange.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:15 $
-  Version:   $Revision: 1.10.16.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.10.16.1.2.1 $
 
 =========================================================================auto=*/
 #include "vtkImageLabelChange.h"
 #include "vtkObjectFactory.h"
+#include "vtkImageData.h"
 
 //------------------------------------------------------------------------------
 vtkImageLabelChange* vtkImageLabelChange::New()
@@ -148,9 +149,10 @@ void vtkImageLabelChange::ThreadedExecute(vtkImageData *inData,
     }
 }
 
+//----------------------------------------------------------------------------
 void vtkImageLabelChange::PrintSelf(ostream& os, vtkIndent indent)
 {
-    vtkImageToImageFilter::PrintSelf(os,indent);
+    Superclass::PrintSelf(os,indent);
         
     os << indent << "InputLabel: " << this->InputLabel << "\n";
     os << indent << "OutputLabel: " << this->OutputLabel << "\n";

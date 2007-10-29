@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageDrawROI.h,v $
-  Date:      $Date: 2005/12/20 22:44:13 $
-  Version:   $Revision: 1.18.2.1 $
+  Date:      $Date: 2007/10/29 14:58:16 $
+  Version:   $Revision: 1.18.2.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageDrawROI -  Draw contour on an image
@@ -114,7 +114,7 @@ public:
         case ROI_SHAPE_LINES: return "Lines";
         case ROI_SHAPE_POINTS: return "Points";
         default: return "None";};};*/
-    char *GetShapeString()
+    const char *GetShapeString()
       {
         switch (this->Shape) {
         case ROI_SHAPE_POLYGON: return "Polygon";
@@ -136,8 +136,8 @@ public:
 protected:
         vtkImageDrawROI();
     ~vtkImageDrawROI();
-        vtkImageDrawROI(const vtkImageDrawROI&) {};
-    void operator=(const vtkImageDrawROI&) {};
+    vtkImageDrawROI(const vtkImageDrawROI&);
+    void operator=(const vtkImageDrawROI&);
 
     vtkPoints *Points;
     vtkImageReformat* image_reformat;

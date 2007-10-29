@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageRealtimeScan.h,v $
-  Date:      $Date: 2006/10/26 16:16:22 $
-  Version:   $Revision: 1.15.12.3.2.7 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.15.12.3.2.8 $
 =========================================================================auto=*/
 // .NAME vtkImageRealtimeScan - Get a realtime image from the scanner.
 // .SECTION

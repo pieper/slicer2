@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageLiveWireEdgeWeights.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:17 $
-  Version:   $Revision: 1.35.12.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.35.12.1.2.1 $
 
 =========================================================================auto=*/
 #include "vtkImageLiveWireEdgeWeights.h"
@@ -579,7 +579,7 @@ static void vtkImageLiveWireEdgeWeightsExecute(vtkImageLiveWireEdgeWeights *self
           // normalize sum to 1 and multiply by max edge cost.
           *outPtr0 = (T) (sum*edgeFactor);
 
-          if (*outPtr0 > maxEdge) 
+          if ((int)(*outPtr0) > maxEdge) 
             {
               cout << "ERROR in vtkImageLWEdgeWeights: edge cost too high " << *outPtr0 << '\n';
             }

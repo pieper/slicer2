@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkResliceImage.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:35 $
-  Version:   $Revision: 1.11.12.1 $
+  Date:      $Date: 2007/10/29 14:58:19 $
+  Version:   $Revision: 1.11.12.1.2.1 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Samson Timoner TetraMesh Library
   Module:    $RCSfile: vtkResliceImage.cxx,v $
   Language:  C++
-  Date:      $Date: 2005/12/20 22:44:35 $
-  Version:   $Revision: 1.11.12.1 $
+  Date:      $Date: 2007/10/29 14:58:19 $
+  Version:   $Revision: 1.11.12.1.2.1 $
   
 Copyright (c) 2001 Samson Timoner
 
@@ -27,9 +27,10 @@ without express permission of the author.
 ========================================================================= */
 
 #include "vtkResliceImage.h"
-#include "vtkImageToImageFilter.h"
+
 #include "vtkObjectFactory.h"
 #include "vtkMatrix4x4.h"
+#include "vtkImageData.h"
 
 #define vtkTrilinFuncMacro(v,x,y,z,a,b,c,d,e,f,g,h)         \
         t00 =   a + (x)*(b-a);      \
@@ -39,6 +40,8 @@ without express permission of the author.
         t0  = t00 + (y)*(t01-t00);  \
         t1  = t10 + (y)*(t11-t10);  \
         v   = (T)( t0 + (z)*(t1-t0));
+
+vtkCxxSetObjectMacro(vtkResliceImage,TransformOutputToInput,vtkMatrix4x4);
 
 //------------------------------------------------------------------------------
 vtkResliceImage* vtkResliceImage::New()
@@ -158,9 +161,10 @@ void vtkResliceImage::ComputeInputUpdateExtent(int InExt[6],
                                                int OutExt[6])
 {
 
-  vtkFloatingPointType InSpace[3];   this->GetInput() ->GetSpacing(InSpace);
+  vtkImageData *input = this->GetInput();
+  vtkFloatingPointType InSpace[3];   input ->GetSpacing(InSpace);
   vtkFloatingPointType OutSpace[3];  this->GetOutput()->GetSpacing(OutSpace);
-  vtkFloatingPointType InOrigin[3];  this->GetInput() ->GetOrigin(InOrigin);
+  vtkFloatingPointType InOrigin[3];  input ->GetOrigin(InOrigin);
   vtkFloatingPointType OutOrigin_[3]; this->GetOutput()->GetOrigin(OutOrigin_);
 
   vtkMatrix4x4 *IJKtoIJK_ = 
@@ -408,7 +412,7 @@ void vtkResliceImage::ThreadedExecute(vtkImageData *inData,
 
 void vtkResliceImage::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageToImageFilter::PrintSelf(os,indent);
+  Superclass::PrintSelf(os,indent);
 
   os << indent << "Matrix is Null: " << 
     (this->TransformOutputToInput == NULL) << '\n';

@@ -7,18 +7,19 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageConnectivity.h,v $
-  Date:      $Date: 2005/12/20 22:44:11 $
-  Version:   $Revision: 1.12.8.1 $
+  Date:      $Date: 2007/10/29 14:58:16 $
+  Version:   $Revision: 1.12.8.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageConnectivity - Identify and process islands of similar pixels
 // .SECTION Description
 //  The input data type must be shorts.
+// .SECTION Warning
+// You need to explicitely call Update
 
 #ifndef __vtkImageConnectivity_h
 #define __vtkImageConnectivity_h
 
-#include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
@@ -31,69 +32,71 @@
 class VTK_SLICER_BASE_EXPORT vtkImageConnectivity : public vtkImageToImageFilter
 {
 public:
-    static vtkImageConnectivity *New();
+  static vtkImageConnectivity *New();
   vtkTypeMacro(vtkImageConnectivity,vtkImageToImageFilter);
-    void PrintSelf(ostream& os, vtkIndent indent);
+  void PrintSelf(ostream& os, vtkIndent indent);
 
   // Function
   void SetFunction(int func) {
-      this->function = func;};
+    this->Function = func;};
   void SetFunctionToIdentifyIslands() {
-      this->SetFunction(CONNECTIVITY_IDENTIFY);};
+    this->SetFunction(CONNECTIVITY_IDENTIFY);};
   void SetFunctionToRemoveIslands() {
-      this->SetFunction(CONNECTIVITY_REMOVE);};
+    this->SetFunction(CONNECTIVITY_REMOVE);};
   void SetFunctionToChangeIsland() {
-      this->SetFunction(CONNECTIVITY_CHANGE);};
+    this->SetFunction(CONNECTIVITY_CHANGE);};
   void SetFunctionToMeasureIsland() {
-      this->SetFunction(CONNECTIVITY_MEASURE);};
+    this->SetFunction(CONNECTIVITY_MEASURE);};
   void SetFunctionToSaveIsland() {
-      this->SetFunction(CONNECTIVITY_SAVE);};
-  int GetFunction() {return this->function;}
-  char* GetFunctionString();
+    this->SetFunction(CONNECTIVITY_SAVE);};
+  int GetFunction() {return this->Function;}
+  const char* GetFunctionString();
 
-    // outputs of MeasureIsland
-    vtkGetMacro(IslandSize, int);
-    vtkSetMacro(IslandSize, int);
-    vtkGetMacro(LargestIslandSize, int);
-    vtkSetMacro(LargestIslandSize, int);
+  // outputs of MeasureIsland
+  vtkGetMacro(IslandSize, int);
+  vtkSetMacro(IslandSize, int);
+  vtkGetMacro(LargestIslandSize, int);
+  vtkSetMacro(LargestIslandSize, int);
 
   // Description:
-    vtkGetMacro(SliceBySlice, int);
-    vtkSetMacro(SliceBySlice, int);
-    vtkBooleanMacro(SliceBySlice, int);
+  vtkGetMacro(SliceBySlice, int);
+  vtkSetMacro(SliceBySlice, int);
+  vtkBooleanMacro(SliceBySlice, int);
 
   vtkSetVector3Macro(Seed, int);
-    vtkGetVector3Macro(Seed, int);
+  vtkGetVector3Macro(Seed, int);
 
-    vtkSetMacro(OutputLabel, int);
-    vtkGetMacro(OutputLabel, int);
-    vtkSetMacro(MinSize, int);
-    vtkGetMacro(MinSize, int);
-    vtkSetMacro(Background, short);
-    vtkGetMacro(Background, short);
-    vtkSetMacro(MinForeground, short);
-    vtkGetMacro(MinForeground, short);
-    vtkSetMacro(MaxForeground, short);
-    vtkGetMacro(MaxForeground, short);
+  vtkSetMacro(OutputLabel, int);
+  vtkGetMacro(OutputLabel, int);
+  vtkSetMacro(MinSize, int);
+  vtkGetMacro(MinSize, int);
+  vtkSetMacro(Background, short);
+  vtkGetMacro(Background, short);
+  vtkSetMacro(MinForeground, short);
+  vtkGetMacro(MinForeground, short);
+  vtkSetMacro(MaxForeground, short);
+  vtkGetMacro(MaxForeground, short);
 
 protected:
-    vtkImageConnectivity();
-    ~vtkImageConnectivity(){};
-    vtkImageConnectivity(const vtkImageConnectivity&) {};
-    void operator=(const vtkImageConnectivity&) {};
+  vtkImageConnectivity();
+  ~vtkImageConnectivity(){};
 
-    short Background;
-    short MinForeground;
-    short MaxForeground;
-    int LargestIslandSize;
-    int IslandSize;
-    int MinSize;
-    int OutputLabel;
-    int Seed[3];
-    int function;
+  short Background;
+  short MinForeground;
+  short MaxForeground;
+  int LargestIslandSize;
+  int IslandSize;
+  int MinSize;
+  int OutputLabel;
+  int Seed[3];
+  int Function;
   int SliceBySlice;
-    
-    void ExecuteData(vtkDataObject *);
+
+  void ExecuteData(vtkDataObject *);
+
+private:
+  vtkImageConnectivity(const vtkImageConnectivity&);
+  void operator=(const vtkImageConnectivity&);
 };
 
 #endif

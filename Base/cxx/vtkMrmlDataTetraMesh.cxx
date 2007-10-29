@@ -7,19 +7,18 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlDataTetraMesh.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:22 $
-  Version:   $Revision: 1.8.2.1 $
+  Date:      $Date: 2007/10/29 14:58:18 $
+  Version:   $Revision: 1.8.2.1.2.1 $
 
 =========================================================================auto=*/
-#include <stdio.h>
-#include "vtkCommand.h"
-#include "vtkCallbackCommand.h"
 #include "vtkMrmlDataTetraMesh.h"
-#include "vtkMrmlTetraMeshNode.h"
+
 #include "vtkObjectFactory.h"
+#include "vtkCallbackCommand.h"
+#include "vtkMrmlTetraMeshNode.h"
 #include "vtkUnstructuredGridReader.h"
 #include "vtkUnstructuredGridWriter.h"
-#include <time.h>
+#include "vtkCommand.h"
 
 //------------------------------------------------------------------------------
   vtkMrmlDataTetraMesh* vtkMrmlDataTetraMesh::New()
@@ -164,14 +163,14 @@ int vtkMrmlDataTetraMesh::Write()
   writer->SetFileName(node->GetFileName());
   writer->SetInput(this->TheMesh);
   
-#ifndef SLICER_VTK5
+//#ifndef SLICER_VTK5
     // TODO -- need fix for vtk 5
   // Progress callback
   writer->AddObserver (vtkCommand::ProgressEvent,
                        this->ProgressObserver);
   // The progress callback function needs a handle to the writer 
   this->ProcessObject = writer;
-#endif
+//#endif
  
   // Write it
   writer->Write();

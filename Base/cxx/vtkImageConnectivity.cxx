@@ -7,21 +7,17 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageConnectivity.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:11 $
-  Version:   $Revision: 1.9.16.1 $
+  Date:      $Date: 2007/10/29 14:58:16 $
+  Version:   $Revision: 1.9.16.1.2.1 $
 
 =========================================================================auto=*/
 #include "vtkImageConnectivity.h"
-#include "vtkObjectFactory.h"
-#include <time.h>
-#include <string.h>
-#include <math.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <limits.h>
-#include <stddef.h>
-#include <stdlib.h>
 
+#include "vtkObjectFactory.h"
+#include "vtkImageData.h"
+
+#include <string.h>
+#include <assert.h>
 
 //------------------------------------------------------------------------------
 vtkImageConnectivity* vtkImageConnectivity::New()
@@ -45,17 +41,18 @@ vtkImageConnectivity::vtkImageConnectivity()
   this->MinForeground = VTK_SHORT_MIN;
   this->MaxForeground = VTK_SHORT_MAX;
   this->MinSize = 10000;
-  this->function = CONNECTIVITY_MEASURE;
+  this->Function = CONNECTIVITY_MEASURE;
   this->OutputLabel = 1;
   this->SliceBySlice = 0;
   this->LargestIslandSize = this->IslandSize = 0;
   this->Seed[0] = this->Seed[1] = this->Seed[2] = 0;
 }
 
-char* vtkImageConnectivity::GetFunctionString()
+//----------------------------------------------------------------------------
+const char* vtkImageConnectivity::GetFunctionString()
 {
-  switch (this->function) 
-  {
+  switch (this->Function) 
+    {
     case CONNECTIVITY_IDENTIFY:
       return "IdentifyIslands";
     case CONNECTIVITY_REMOVE:
@@ -66,9 +63,9 @@ char* vtkImageConnectivity::GetFunctionString()
       return "MeasureIsland";
     case CONNECTIVITY_SAVE:
       return "SaveIsland";
-   default:
+    default:
       return "ERROR: Unknown";
-  }
+    }
 }
 
 //************************************************************************
@@ -137,7 +134,7 @@ int connect(
     axisv = 0;
     label++;
     while (1) {
-      while (stridev = stride[axisv]) {
+      while ( (stridev = stride[axisv]) ) {
         if ((*imagep & boundary_mask_start<<axisv) && (*(new_imagep = imagep + stridev) & component_mask)) {
           imagep = new_imagep;
           *imagep ^= component_mask;
@@ -216,12 +213,12 @@ static void vtkImageConnectivityExecute(vtkImageConnectivity *self,
   int seed[3];
   int minSize = self->GetMinSize();
   short pix;
-  int IdentifyIslands = self->GetFunction() == CONNECTIVITY_IDENTIFY;
-  int RemoveIslands   = self->GetFunction() == CONNECTIVITY_REMOVE;
-  int ChangeIsland    = self->GetFunction() == CONNECTIVITY_CHANGE;
-  int SaveIsland      = self->GetFunction() == CONNECTIVITY_SAVE;
-  int MeasureIsland   = self->GetFunction() == CONNECTIVITY_MEASURE;
-  int SliceBySlice    = self->GetSliceBySlice();
+  int identifyIslands = self->GetFunction() == CONNECTIVITY_IDENTIFY;
+  int removeIslands   = self->GetFunction() == CONNECTIVITY_REMOVE;
+  int changeIsland    = self->GetFunction() == CONNECTIVITY_CHANGE;
+  int saveIsland      = self->GetFunction() == CONNECTIVITY_SAVE;
+  int measureIsland   = self->GetFunction() == CONNECTIVITY_MEASURE;
+  int sliceBySlice    = self->GetSliceBySlice();
 
   // connect
   size_t conSeedLabel, i, idx, dz;
@@ -271,45 +268,47 @@ static void vtkImageConnectivityExecute(vtkImageConnectivity *self,
   //
   ///////////////////////////////////////////////////////////////
 
-  if (ChangeIsland || MeasureIsland || SaveIsland)
-  {
+  if (changeIsland || measureIsland || saveIsland)
+    {
     self->GetSeed(seed);
-  
+
     if (seed[0] < outMin0 || seed[0] > outMax0 ||
         seed[1] < outMin1 || seed[1] > outMax1 ||
         seed[2] < outMin2 || seed[2] > outMax2)
-    {
+      {
       //
       // Out of bounds -- abort!
       //
       inPtr0 = inPtr;
       outPtr0 = outPtr;
-      for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++) {
-      for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++) {
-      for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
-      {
-        *outPtr0 = *inPtr0;
-        outPtr0++;
-        inPtr0++;
-      }//for0
-      outPtr0 += outInc1;
-      inPtr0 += inInc1;
-      }//for1
-      outPtr0 += outInc2;
-      inPtr0 += inInc2;
-      }//for2
+      for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
+        {
+        for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++)
+          {
+          for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+            {
+            *outPtr0 = *inPtr0;
+            outPtr0++;
+            inPtr0++;
+            }//for0
+          outPtr0 += outInc1;
+          inPtr0 += inInc1;
+          }//for1
+        outPtr0 += outInc2;
+        inPtr0 += inInc2;
+        }//for2
 
       fprintf(stderr, "Seed %d,%d,%d out of bounds in CCA.\n",
-          seed[0], seed[1], seed[2]);
+        seed[0], seed[1], seed[2]);
       return;
-    }
-  
+      }
+
     //
-      // In bounds!
-      //
-      outPtr1 = (short*)inData->GetScalarPointer(seed[0], seed[1], seed[2]);
+    // In bounds!
+    //
+    outPtr1 = (short*)inData->GetScalarPointer(seed[0], seed[1], seed[2]);
     seedLabel = *outPtr1;
-  }
+    }
 
   ///////////////////////////////////////////////////////////////
   // Remove, Identify:
@@ -325,53 +324,57 @@ static void vtkImageConnectivityExecute(vtkImageConnectivity *self,
   //
   ///////////////////////////////////////////////////////////////
 
-  if (RemoveIslands || IdentifyIslands)
-  {
-      inPtr0 = inPtr;
-      i = 0;
-    for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++) {
-    for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++) {
-    for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+  if (removeIslands || identifyIslands)
+    {
+    inPtr0 = inPtr;
+    i = 0;
+    for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
       {
-      if (*inPtr0 != bg)
-      {
-        conInput[i] = fgMask;
-      }
+      for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++)
+        {
+        for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+          {
+          if (*inPtr0 != bg)
+            {
+            conInput[i] = fgMask;
+            }
           else
-      {
+            {
             conInput[i] = bgMask;
-      }
-      inPtr0++;
+            }
+          inPtr0++;
           i++;
-      }//for0
-    inPtr0 += inInc1;
-      }//for1
-    inPtr0 += inInc2;
+          }//for0
+        inPtr0 += inInc1;
+        }//for1
+      inPtr0 += inInc2;
       }//for2
 
     // Optionally threshold [min,max]
     if(minForegnd > VTK_SHORT_MIN || maxForegnd < VTK_SHORT_MAX)
       {
       inPtr0 = inPtr;
-        i=0;
-      for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++) {
-      for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++) {
-      for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+      i=0;
+      for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
         {
-        pix = *inPtr0;
-        if (pix < minForegnd || pix > maxForegnd)
-        {
-          conInput[i] = bgMask;
-        }
-        i++;
-        inPtr0++;
-        }//for0
-      inPtr0 += inInc1;
-        }//for1
-      inPtr0 += inInc2;
+        for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++)
+          {
+          for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+            {
+            pix = *inPtr0;
+            if (pix < minForegnd || pix > maxForegnd)
+              {
+              conInput[i] = bgMask;
+              }
+            i++;
+            inPtr0++;
+            }//for0
+          inPtr0 += inInc1;
+          }//for1
+        inPtr0 += inInc2;
         }//for2
       }
-  }
+    }
 
 
   ///////////////////////////////////////////////////////////////
@@ -386,30 +389,32 @@ static void vtkImageConnectivityExecute(vtkImageConnectivity *self,
   //
   ///////////////////////////////////////////////////////////////
 
-  if (SaveIsland || ChangeIsland || MeasureIsland)
-  {
-      inPtr0 = inPtr;
-      i = 0;
-    for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++) {
-    for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++) {
-    for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+  if (saveIsland || changeIsland || measureIsland)
+    {
+    inPtr0 = inPtr;
+    i = 0;
+    for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
       {
-      if (*inPtr0 == seedLabel)
-      {
-        conInput[i] = fgMask;
-      }
+      for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++)
+        {
+        for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+          {
+          if (*inPtr0 == seedLabel)
+            {
+            conInput[i] = fgMask;
+            }
           else
-      {
+            {
             conInput[i] = bgMask;
-      }
-      inPtr0++;
+            }
+          inPtr0++;
           i++;
-      }//for0
-    inPtr0 += inInc1;
-      }//for1
-    inPtr0 += inInc2;
+          }//for0
+        inPtr0 += inInc1;
+        }//for1
+      inPtr0 += inInc2;
       }//for2
-  }
+    }
 
 
   ///////////////////////////////////////////////////////////////
@@ -419,11 +424,11 @@ static void vtkImageConnectivityExecute(vtkImageConnectivity *self,
   // 
   ///////////////////////////////////////////////////////////////
 
-  if (SaveIsland || ChangeIsland || MeasureIsland || RemoveIslands || IdentifyIslands)
-  {
-    nz = 1;
-    if (SliceBySlice && RemoveIslands)
+  if (saveIsland || changeIsland || measureIsland || removeIslands || identifyIslands)
     {
+    nz = 1;
+    if (sliceBySlice && removeIslands)
+      {
       // If SliceBySlice, then call connect() for each slice
       nxy = axis_len[0] * axis_len[1];
       nz = axis_len[2];
@@ -432,17 +437,17 @@ static void vtkImageConnectivityExecute(vtkImageConnectivity *self,
       axis_len[2] = 1;
 
       for (z=0; z < nz; z++)
-      {
+        {
         connect(rank, axis_len, &conInput[nxy*z], inbackground, 
           &conOutput[nxy*z], &numIslands[z]);
-      }
+        }
       axis_len[2] = axis_len2;
-    }
+      }
     else
-    {
+      {
       connect(rank, axis_len, conInput, inbackground, conOutput, &numIslands[0]);
+      }
     }
-  }
 
 
   ///////////////////////////////////////////////////////////////
@@ -454,11 +459,11 @@ static void vtkImageConnectivityExecute(vtkImageConnectivity *self,
   //
   ///////////////////////////////////////////////////////////////
 
-  if (SaveIsland || ChangeIsland || MeasureIsland)
-  {
-      i = seed[2]*axis_len[1]*axis_len[0] + seed[1]*axis_len[0] + seed[0];
+  if (saveIsland || changeIsland || measureIsland)
+    {
+    i = seed[2]*axis_len[1]*axis_len[0] + seed[1]*axis_len[0] + seed[0];
     conSeedLabel = conOutput[i];
-  }
+    }
 
 
   ///////////////////////////////////////////////////////////////
@@ -470,57 +475,60 @@ static void vtkImageConnectivityExecute(vtkImageConnectivity *self,
   //
   ///////////////////////////////////////////////////////////////
 
-  if (RemoveIslands || MeasureIsland)
-  {
+  if (removeIslands || measureIsland)
+    {
     // For each label value, count the number of pixels with that label
     // If SliceBySlice, then work on each slice one at a time
     len = 0;
     for (z=0; z<nz; z++)
-    {
+      {
       len += numIslands[z] + 1;
-    }
+      }
     census = new int[len];
     memset(census, 0, len*sizeof(int));
 
     if (nz == 1)
-    {
-        i = 0;
-      for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++) {
-      for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++) {
-      for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
       {
-        idx = conOutput[i];
-        if (idx >= 0 && idx <= numIslands[0])
+      i = 0;
+      for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
         {
-          census[idx] = census[idx] + 1;
-        }
-        i++;
-      }//for0
-      }//for1
-      }//for2
-    } 
-    else 
-    {
-      dz = 0;
-        i = 0;
-      for (z=0; z < nz; z++)
-      {
-        for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++) {
-        for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
-        {
-          idx = conOutput[i];
-          if (idx >= 0 && idx <= numIslands[z])
+        for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++)
           {
-            census[dz+idx] = census[dz+idx] + 1;
-          }
-          i++;
-        }//for0
-        }//for1
+          for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+            {
+            idx = conOutput[i];
+            if (idx >= 0 && idx <= numIslands[0])
+              {
+              census[idx] = census[idx] + 1;
+              }
+            i++;
+            }//for0
+          }//for1
+        }//for2
+      } 
+    else 
+      {
+      dz = 0;
+      i = 0;
+      for (z=0; z < nz; z++)
+        {
+        for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++)
+          {
+          for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+            {
+            idx = conOutput[i];
+            if (idx >= 0 && idx <= numIslands[z])
+              {
+              census[dz+idx] = census[dz+idx] + 1;
+              }
+            i++;
+            }//for0
+          }//for1
 
         dz += numIslands[z]+1;
-      }//forz
+        }//forz
+      }
     }
-  }
 
 
   ///////////////////////////////////////////////////////////////
@@ -533,69 +541,72 @@ static void vtkImageConnectivityExecute(vtkImageConnectivity *self,
   //
   ///////////////////////////////////////////////////////////////
 
-  if (RemoveIslands)
-  {
-    if (nz == 1)
+  if (removeIslands)
     {
+    if (nz == 1)
+      {
       inPtr0 = inPtr;
       outPtr0 = outPtr;
-        i = 0;
-      for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++) {
-      for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++) {
-      for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
-      {
-        if (census[conOutput[i]] >= minSize)
+      i = 0;
+      for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
         {
-          *outPtr0 = *inPtr0;
-        }
-        else
-        {
-          *outPtr0 = bg;
-        }
-          i++;
-        outPtr0++;
-        inPtr0++;
-      }//for0
-      outPtr0 += outInc1;
-      inPtr0 += inInc1;
-      }//for1
-      outPtr0 += outInc2;
-      inPtr0 += inInc2;
-      }//for2
-    }
+        for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++)
+          {
+          for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+            {
+            if (census[conOutput[i]] >= minSize)
+              {
+              *outPtr0 = *inPtr0;
+              }
+            else
+              {
+              *outPtr0 = bg;
+              }
+            i++;
+            outPtr0++;
+            inPtr0++;
+            }//for0
+          outPtr0 += outInc1;
+          inPtr0 += inInc1;
+          }//for1
+        outPtr0 += outInc2;
+        inPtr0 += inInc2;
+        }//for2
+      }
     else 
-    {
+      {
       dz = 0;
-        i = 0;
+      i = 0;
       inPtr0 = inPtr;
       outPtr0 = outPtr;
       for (z=0; z < nz; z++)
-      {
-        for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++) {
-        for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
         {
-          if (census[dz+conOutput[i]] >= minSize)
+        for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++)
           {
-           *outPtr0 = *inPtr0;
-          }
-          else
-          {
-            *outPtr0 = bg;
-          }
+          for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+            {
+            if (census[dz+conOutput[i]] >= minSize)
+              {
+              *outPtr0 = *inPtr0;
+              }
+            else
+              {
+              *outPtr0 = bg;
+              }
             i++;
-          outPtr0++;
-          inPtr0++;
-        }//for0
-        outPtr0 += outInc1;
-        inPtr0 += inInc1;
-        }//for1
+            outPtr0++;
+            inPtr0++;
+            }//for0
+          outPtr0 += outInc1;
+          inPtr0 += inInc1;
+          }//for1
         outPtr0 += outInc2;
         inPtr0 += inInc2;
 
         dz += numIslands[z] + 1;
-      }//z
-    }//else
-  }
+        }//z
+      }//else
+    }
 
 
   ///////////////////////////////////////////////////////////////
@@ -609,21 +620,21 @@ static void vtkImageConnectivityExecute(vtkImageConnectivity *self,
   //
   ///////////////////////////////////////////////////////////////
 
-  if (MeasureIsland)
-  {
+  if (measureIsland)
+    {
     // Find largest island
     largest = 0;
     for (i=0; i<=numIslands[0]; i++)
-    {
-      if (i != bg)
       {
-        if (census[i] > largest)
+      if (i != bg)
         {
+        if (census[i] > largest)
+          {
           largest = census[i];
+          }
         }
       }
-    }
-      self->SetLargestIslandSize(largest);
+    self->SetLargestIslandSize(largest);
 
     // Measure island at seed
     self->SetIslandSize(census[conSeedLabel]);
@@ -631,23 +642,25 @@ static void vtkImageConnectivityExecute(vtkImageConnectivity *self,
     // Return output values to be the inputs
     inPtr0 = inPtr;
     outPtr0 = outPtr;
-    for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++) {
-    for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++) {
-    for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
-    {
-      *outPtr0 = *inPtr0;
-      outPtr0++;
-      inPtr0++;
-    }//for0
-    outPtr0 += outInc1;
-    inPtr0 += inInc1;
-    }//for1
-    outPtr0 += outInc2;
-    inPtr0 += inInc2;
-    }//for2
-  }
+    for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
+      {
+      for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++)
+        {
+        for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+          {
+          *outPtr0 = *inPtr0;
+          outPtr0++;
+          inPtr0++;
+          }//for0
+        outPtr0 += outInc1;
+        inPtr0 += inInc1;
+        }//for1
+      outPtr0 += outInc2;
+      inPtr0 += inInc2;
+      }//for2
+    }
 
-  
+
   ///////////////////////////////////////////////////////////////
   // Identify
   // -----------------------------
@@ -657,23 +670,25 @@ static void vtkImageConnectivityExecute(vtkImageConnectivity *self,
   //
   ///////////////////////////////////////////////////////////////
 
-  if (IdentifyIslands)
-  {
-    outPtr0 = outPtr;
-      i = 0;
-    for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++) {
-    for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++) {
-    for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+  if (identifyIslands)
     {
-      *outPtr0 = (short)conOutput[i];
-        i++;
-      outPtr0++;
-    }//for0
-    outPtr0 += outInc1;
-    }//for1
-    outPtr0 += outInc2;
-    }//for2
-  }
+    outPtr0 = outPtr;
+    i = 0;
+    for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
+      {
+      for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++)
+        {
+        for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+          {
+          *outPtr0 = (short)conOutput[i];
+          i++;
+          outPtr0++;
+          }//for0
+        outPtr0 += outInc1;
+        }//for1
+      outPtr0 += outInc2;
+      }//for2
+    }
 
   ///////////////////////////////////////////////////////////////
   // Remove, Identify
@@ -685,37 +700,39 @@ static void vtkImageConnectivityExecute(vtkImageConnectivity *self,
   //
   ///////////////////////////////////////////////////////////////
 
-  if (RemoveIslands || IdentifyIslands)
-  {
-      if(minForegnd > VTK_SHORT_MIN || maxForegnd < VTK_SHORT_MAX)
+  if (removeIslands || identifyIslands)
+    {
+    if(minForegnd > VTK_SHORT_MIN || maxForegnd < VTK_SHORT_MAX)
       {
       inPtr0 = inPtr;
       outPtr0 = outPtr;
-      for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++) {
-      for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++) {
-      for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+      for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
         {
-          pix = *inPtr0;
-      if (pix < minForegnd || pix > maxForegnd)
-      {
-          *outPtr0 = pix;
-      }
-      inPtr0++;
-      outPtr0++;
-        }//for0
-      inPtr0 += inInc1;
-      outPtr0 += outInc1;
-        }//for1
-      inPtr0 += inInc2;
-      outPtr0 += outInc2;
+        for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++)
+          {
+          for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+            {
+            pix = *inPtr0;
+            if (pix < minForegnd || pix > maxForegnd)
+              {
+              *outPtr0 = pix;
+              }
+            inPtr0++;
+            outPtr0++;
+            }//for0
+          inPtr0 += inInc1;
+          outPtr0 += outInc1;
+          }//for1
+        inPtr0 += inInc2;
+        outPtr0 += outInc2;
         }//for2
+      }
     }
-  }
 
-  if (RemoveIslands || MeasureIsland)
-  {
-      delete [] census;
-  }
+  if (removeIslands || measureIsland)
+    {
+    delete [] census;
+    }
 
 
   ///////////////////////////////////////////////////////////////
@@ -728,34 +745,36 @@ static void vtkImageConnectivityExecute(vtkImageConnectivity *self,
   //
   ///////////////////////////////////////////////////////////////
 
-  if (SaveIsland)
-  {
+  if (saveIsland)
+    {
     inPtr0 = inPtr;
     outPtr0 = outPtr;
-      i = 0;
-    for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++) {
-    for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++) {
-    for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
-    {
-      if (conOutput[i] == conSeedLabel) 
+    i = 0;
+    for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
       {
-        *outPtr0 = *inPtr0;
-        }        
-      else 
-      {
-        *outPtr0 = bg;
-         }
-        i++;
-      outPtr0++;
-      inPtr0++;
-    }//for0
-    outPtr0 += outInc1;
-    inPtr0 += inInc1;
-    }//for1
-    outPtr0 += outInc2;
-    inPtr0 += inInc2;
-    }//for2
-  }
+      for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++)
+        {
+        for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+          {
+          if (conOutput[i] == conSeedLabel) 
+            {
+            *outPtr0 = *inPtr0;
+            }        
+          else 
+            {
+            *outPtr0 = bg;
+            }
+          i++;
+          outPtr0++;
+          inPtr0++;
+          }//for0
+        outPtr0 += outInc1;
+        inPtr0 += inInc1;
+        }//for1
+      outPtr0 += outInc2;
+      inPtr0 += inInc2;
+      }//for2
+    }
 
 
   ///////////////////////////////////////////////////////////////
@@ -768,34 +787,36 @@ static void vtkImageConnectivityExecute(vtkImageConnectivity *self,
   //
   ///////////////////////////////////////////////////////////////
 
-  if (ChangeIsland)
-  {
+  if (changeIsland)
+    {
     inPtr0 = inPtr;
     outPtr0 = outPtr;
-      i = 0;
-    for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++) {
-    for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++) {
-    for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
-    {
-      if (conOutput[i] == conSeedLabel)
+    i = 0;
+    for (outIdx2 = outMin2; outIdx2 <= outMax2; outIdx2++)
       {
-        *outPtr0 = newLabel;
-      }
-      else
-      {
-        *outPtr0 = *inPtr0;
-      }
-        i++;
-      outPtr0++;
-      inPtr0++;
-    }//for0
-    outPtr0 += outInc1;
-    inPtr0 += inInc1;
-    }//for1
-    outPtr0 += outInc2;
-    inPtr0 += inInc2;
-    }//for2
-  }
+      for (outIdx1 = outMin1; outIdx1 <= outMax1; outIdx1++) 
+        {
+        for (outIdx0 = outMin0; outIdx0 <= outMax0; outIdx0++)
+          {
+          if (conOutput[i] == conSeedLabel)
+            {
+            *outPtr0 = newLabel;
+            }
+          else
+            {
+            *outPtr0 = *inPtr0;
+            }
+          i++;
+          outPtr0++;
+          inPtr0++;
+          }//for0
+        outPtr0 += outInc1;
+        inPtr0 += inInc1;
+        }//for1
+      outPtr0 += outInc2;
+      inPtr0 += inInc2;
+      }//for2
+    }
 
   ///////////////////////////////////////////////////////////////
   // Cleanup
@@ -821,36 +842,37 @@ void vtkImageConnectivity::ExecuteData(vtkDataObject *)
   outData->SetExtent(outData->GetWholeExtent());
   outData->AllocateScalars();
 
-  int outExt[6], id=0, s;
+  int outExt[6], s;
   outData->GetWholeExtent(outExt);
   void *inPtr = inData->GetScalarPointerForExtent(outExt);
   void *outPtr = outData->GetScalarPointerForExtent(outExt);
 
   int x1;
 
-  x1 = GetInput()->GetNumberOfScalarComponents();
+  x1 = inData->GetNumberOfScalarComponents();
   if (x1 != 1) 
-  {
+    {
     vtkErrorMacro(<<"Input has "<<x1<<" instead of 1 scalar component.");
     return;
-  }
+    }
 
   /* Need short data */
   s = inData->GetScalarType();
   if (s != VTK_SHORT) 
-  {
+    {
     vtkErrorMacro("Input scalars are type "<<s 
       << " instead of "<<VTK_SHORT);
     return;
-  }
+    }
 
   vtkImageConnectivityExecute(this, inData, (short *)inPtr, 
-          outData, (short *)(outPtr), outExt);
+    outData, (short *)(outPtr), outExt);
 }
 
+//----------------------------------------------------------------------------
 void vtkImageConnectivity::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageToImageFilter::PrintSelf(os,indent);
+  this->Superclass::PrintSelf(os,indent);
   
   os << indent << "Background:        " << this->Background << "\n";
   os << indent << "MinForeground:     " << this->MinForeground << "\n";
@@ -862,5 +884,5 @@ void vtkImageConnectivity::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "Seed[0]:           " << this->Seed[0] << "\n";
   os << indent << "Seed[1]:           " << this->Seed[1] << "\n";
   os << indent << "Seed[2]:           " << this->Seed[2] << "\n";
-  os << indent << "function:          " << this->function << "\n";
+  os << indent << "Function:          " << this->Function << "\n";
 }

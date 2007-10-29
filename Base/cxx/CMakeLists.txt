@@ -4,10 +4,6 @@
 # Here is where you can add the name of your local core classes.
 #
 
-
-# not compatible with VTK 5:
-        #vtkFog.cxx 
-
 SET (Base_SRCS
 	vtkBoolTess.cxx vtkDCMLister.cxx vtkDCMParser.cxx 
 	vtkFastCellPicker.cxx 
@@ -30,7 +26,7 @@ SET (Base_SRCS
 	vtkImageNeighborhoodFilter.cxx vtkImageOverlay.cxx vtkImagePlot.cxx
 	vtkImageRealtimeScan.cxx vtkImageReformat.cxx vtkImageReformatIJK.cxx
 	vtkImageReplaceRegion.cxx vtkImageResize.cxx vtkImageStatistics.cxx
-	 vtkImageWeightedSum.cxx vtkImageZoom2D.cxx
+	  vtkImageZoom2D.cxx
 	vtkIndirectLookupTable.cxx vtkMathUtils.cxx vtkMrmlColorNode.cxx
 	vtkMrmlCrossSectionNode.cxx vtkMrmlData.cxx vtkMrmlDataTetraMesh.cxx
 	vtkMrmlDataVolume.cxx vtkMrmlEndFiducialsNode.cxx vtkMrmlEndHierarchyNode.cxx
@@ -59,9 +55,21 @@ SET (Base_SRCS
 	vtkImageDijkstra.cxx vtkDataSetToLabelMap.cxx
         # for the Twin module
         vtkXDisplayWindow.cxx
+        vtkMrmlModuleNode.cxx
         vtkOpenTracker.cxx
 )
 
+# vtkImageWeightedSum was added to VTK at 5.1, don't compile our copy unless it's not in VTK
+IF("${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}" LESS 5.1)
+  SET (Base_SRCS ${Base_SRCS} vtkImageWeightedSum.cxx)
+  MESSAGE(STATUS "Adding vtkImageWeightedSum.cxx to source list")
+ENDIF("${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}" LESS 5.1)
+
+# vtkFog is not compatible with VTK 5+
+IF("${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}" LESS 5.0)
+  SET (Base_SRCS ${Base_SRCS} vtkFog.cxx)
+  MESSAGE(STATUS "Adding vtkFog to source list")
+ENDIF("${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}" LESS 5.0)
 
 # --------------------------------------------------------------------------
 # You probably do not need to modify anything below this line
@@ -101,7 +109,8 @@ IF (VTK_WRAP_TCL AND VTKSLICER_WRAP_TCL)
   ELSE (APPLE)
     ADD_LIBRARY (vtkSlicerBaseTCL SHARED ${BaseTCL_SRCS})
   ENDIF(APPLE)
-  TARGET_LINK_LIBRARIES (vtkSlicerBaseTCL 
+  TARGET_LINK_LIBRARIES (vtkSlicerBaseTCL
+                         vtkSlicerBase
                          vtkCommonTCL
                          vtkIOTCL 
                          vtkGraphicsTCL 
@@ -147,6 +156,7 @@ IF (VTK_WRAP_PYTHON AND VTKSLICER_WRAP_PYTHON)
 
   IF (WIN32)
     TARGET_LINK_LIBRARIES (vtkSlicerBasePython 
+                           vtkSlicerBase
                            vtkCommonPython
                            vtkIOPython
                            vtkGraphicsPython
@@ -156,6 +166,7 @@ IF (VTK_WRAP_PYTHON AND VTKSLICER_WRAP_PYTHON)
                            optimized ${PYTHON_LIBRARY})
   ELSE (WIN32)
     TARGET_LINK_LIBRARIES (vtkSlicerBasePython 
+                           vtkSlicerBase
                            vtkCommonPython
                            vtkIOPython
                            vtkGraphicsPython
@@ -191,6 +202,7 @@ IF (VTK_WRAP_JAVA AND VTKSLICER_WRAP_JAVA)
   VTK_WRAP_JAVA (vtkSlicerBaseJava BaseJava_SRCS ${Base_SRCS})
   ADD_LIBRARY (vtkSlicerBaseJava SHARED ${BaseJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkSlicerBaseJava
+                         vtkSlicerBase
                          vtkCommonJava 
                          vtkIOJava
                          vtkGraphicsJava
@@ -219,7 +231,7 @@ ENDIF (VTK_WRAP_JAVA AND VTKSLICER_WRAP_JAVA)
 # Link to VTK and local
 #
 
-LINK_LIBRARIES (
+TARGET_LINK_LIBRARIES (
   vtkSlicerBase
   vtkIO
   vtkGraphics
@@ -233,17 +245,17 @@ LINK_LIBRARIES (
   ENDIF(APPLE)
 
 IF (VTK_USE_HYBRID)
-  LINK_LIBRARIES (vtkHybrid)
+  TARGET_LINK_LIBRARIES (vtkSlicerBase vtkHybrid)
 ENDIF (VTK_USE_HYBRID)
 
 IF (VTK_USE_PARALLEL)
-  LINK_LIBRARIES (vtkParallel)
+  TARGET_LINK_LIBRARIES (vtkSlicerBase vtkParallel)
 ENDIF (VTK_USE_PARALLEL)
 
 IF (VTK_USE_PATENTED)
-  LINK_LIBRARIES (vtkPatented)
+  TARGET_LINK_LIBRARIES (vtkSlicerBase vtkPatented)
 ENDIF (VTK_USE_PATENTED)
 
 IF (VTK_USE_RENDERING)
-  LINK_LIBRARIES (vtkRendering)
+  TARGET_LINK_LIBRARIES (vtkSlicerBase vtkRendering)
 ENDIF (VTK_USE_RENDERING)

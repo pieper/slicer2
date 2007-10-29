@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageFrameSource.h,v $
-  Date:      $Date: 2005/12/20 22:44:15 $
-  Version:   $Revision: 1.14.16.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.14.16.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageFrameSource - Pulls data from a RenderWindow and outputs it.
@@ -18,38 +18,38 @@
 #ifndef __vtkImageFrameSource_h
 #define __vtkImageFrameSource_h
 
-#include "vtkImageData.h"
 #include "vtkImageSource.h"
-#include "vtkRenderWindow.h"
 #include "vtkSlicer.h"
 
-class VTK_SLICER_BASE_EXPORT vtkImageFrameSource : public vtkImageSource 
+class vtkRenderWindow;
+class VTK_SLICER_BASE_EXPORT vtkImageFrameSource : public vtkImageSource
 {
 public:
-    static vtkImageFrameSource *New();
+  static vtkImageFrameSource *New();
   vtkTypeMacro(vtkImageFrameSource,vtkImageSource);
-     void PrintSelf(ostream& os, vtkIndent indent);
+  void PrintSelf(ostream& os, vtkIndent indent);
 
-    void SetExtent(int xMin, int xMax, int yMin, int yMax);
+  void SetExtent(int xMin, int xMax, int yMin, int yMax);
 
-    void ExecuteInformation();
+  void ExecuteInformation();
 
-    vtkSetObjectMacro(RenderWindow, vtkRenderWindow);
-    vtkGetObjectMacro(RenderWindow, vtkRenderWindow);
+  virtual void SetRenderWindow(vtkRenderWindow*);
+  vtkGetObjectMacro(RenderWindow, vtkRenderWindow);
 
 protected:
-    vtkImageFrameSource();
-    ~vtkImageFrameSource();
-  vtkImageFrameSource(const vtkImageFrameSource&) {};
-  void operator=(const vtkImageFrameSource&) {};
+  vtkImageFrameSource();
+  ~vtkImageFrameSource();
 
-    int WholeExtent[6];
-    vtkRenderWindow *RenderWindow;
+  int WholeExtent[6];
+  vtkRenderWindow *RenderWindow;
 
-    void Execute(vtkImageData *data);
+  void Execute(vtkImageData *data);
+
+private:
+  vtkImageFrameSource(const vtkImageFrameSource&);
+  void operator=(const vtkImageFrameSource&);
 };
 
 
 #endif
 
-  

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkFastCellPicker.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:10 $
-  Version:   $Revision: 1.14.2.1 $
+  Date:      $Date: 2007/10/29 14:58:16 $
+  Version:   $Revision: 1.14.2.1.2.1 $
 
 =========================================================================auto=*/
 #include "vtkFastCellPicker.h"
@@ -27,7 +27,7 @@ vtkFastCellPicker::vtkFastCellPicker()
   this->OBBTrees = vtkCollection::New();
 }
 
-#if ( (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2) || VTK_MAJOR_VERSION == 4 )
+#if ( (VTK_MAJOR_VERSION == 3 && VTK_MINOR_VERSION == 2) || VTK_MAJOR_VERSION >= 4 )
 vtkFloatingPointType vtkFastCellPicker::IntersectWithLine(vtkFloatingPointType p1[3], vtkFloatingPointType p2[3], vtkFloatingPointType tol, 
                       vtkAssemblyPath *assem, vtkActor *a, 
                       vtkMapper *m)

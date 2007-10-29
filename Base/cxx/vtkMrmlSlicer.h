@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.h,v $
-  Date:      $Date: 2005/12/20 22:44:31 $
-  Version:   $Revision: 1.42.2.1 $
+  Date:      $Date: 2007/10/29 14:58:18 $
+  Version:   $Revision: 1.42.2.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlSlicer - main core of the 3D Slicer
@@ -25,37 +25,17 @@
 #ifndef __vtkMrmlSlicer_h
 #define __vtkMrmlSlicer_h
 
-//#include <fstream.h>
-#include <stdlib.h>
-//#include <iostream.h>
-
-#include "vtkCamera.h"
-#include "vtkImageReformatIJK.h"
-#include "vtkImageReformat.h"
-#include "vtkImageOverlay.h"
-#include "vtkImageMapToColors.h"
-#include "vtkMatrix4x4.h"
-#include "vtkTransform.h"
-#include "vtkPoints.h"
-#include "vtkLookupTable.h"
-#include "vtkMrmlDataVolume.h"
-#include "vtkMrmlVolumeNode.h"
-#include "vtkImageLabelOutline.h"
-#include "vtkImageCrossHair2D.h"
-#include "vtkImageZoom2D.h"
-#include "vtkImageDouble2D.h"
-#include "vtkIndirectLookupTable.h"
-#include "vtkImageDrawROI.h"
-#include "vtkStackOfPolygons.h"
-#include "vtkCollection.h"
-#include "vtkVoidArray.h"
-
+#include "vtkObject.h"
+#include "vtkImageOverlay.h" // For inline
+#include "vtkImageZoom2D.h" // For inline
+#include "vtkImageCrossHair2D.h" // For inline
+#include "vtkImageDrawROI.h" // For inline
+#include "vtkStackOfPolygons.h" // For inline
 #include "vtkSlicer.h"
+
 #define NUM_SLICES 3
 
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
+#include <stdlib.h>
 
 // Orient
 
@@ -79,6 +59,24 @@
 #define MRML_SLICER_ORIENT_SLICES      17
 #define MRML_SLICER_ORIENT_REFORMAT_AXISAGCOR   18
 #define MRML_SLICER_NUM_ORIENT         19
+
+class vtkCamera;
+class vtkImageReformatIJK;
+class vtkImageExtractComponents;
+class vtkImageReformat;
+class vtkImageMapToColors;
+class vtkMatrix4x4;
+class vtkTransform;
+class vtkPoints;
+class vtkLookupTable;
+class vtkMrmlDataVolume;
+class vtkMrmlVolumeNode;
+class vtkImageLabelOutline;
+class vtkImageDouble2D;
+class vtkIndirectLookupTable;
+class vtkCollection;
+class vtkVoidArray;
+class vtkImageSource;
 
 class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject 
 {
@@ -180,17 +178,26 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   // The cursor is the crosshair that moves with the mouse over the slices
   void SetShowCursor(int vis);
   void SetNumHashes(int hashes);
+    int GetNumHashes();
   void SetCursorColor(vtkFloatingPointType red, vtkFloatingPointType green, vtkFloatingPointType blue);
   void SetCursorPosition(int s, int x, int y) {
-  this->Cursor[s]->SetCursor(x, y);};
-  
+    this->Cursor[s]->SetCursor(x, y);};
   // turn on or off the cross hair intersection - if off there's a gap
-    void SetCursorIntersect(int flag);
-    void SetCursorIntersect(int s, int flag) {
-        this->Cursor[s]->SetIntersectCross(flag); } ;
-    int GetCursorIntersect(int s) {
-        return this->Cursor[s]->GetIntersectCross(); };
+  void SetCursorIntersect(int flag);
+  void SetCursorIntersect(int s, int flag) {
+     this->Cursor[s]->SetIntersectCross(flag); } ;
+  int GetCursorIntersect(int s) {
+     return this->Cursor[s]->GetIntersectCross(); };
+    vtkFloatingPointType GetCursorHashGap() { return this->Cursor[0]->GetHashGap(); };
+    void SetCursorHashGap(vtkFloatingPointType gap);
+    void SetCursorHashGap(int s, vtkFloatingPointType gap) {
+        this->Cursor[s]->SetHashGap(gap); };
 
+    vtkFloatingPointType GetCursorHashLength() { return this->Cursor[0]->GetHashLength(); };
+    void SetCursorHashLength(int s, vtkFloatingPointType len) {
+        this->Cursor[s]->SetHashLength(len); };
+    void SetCursorHashLength(vtkFloatingPointType len);
+    
   // Description:
   // Field of view for slices.  Also used for reformatting...
   vtkGetMacro(FieldOfView, vtkFloatingPointType);
@@ -219,7 +226,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   //--------- Volumes layered in the 3 slice windows -----------//
 
   // Description:
-  // The None volume is a single slice, all 0's, used as input to 
+  // The None volume is a single slice, all 0's, used as input to
   // the pipeline when no volume is selected.
   void SetNoneVolume(vtkMrmlDataVolume *vol);
   vtkGetObjectMacro(NoneVolume, vtkMrmlDataVolume);
@@ -242,18 +249,17 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   vtkMrmlDataVolume* GetForeVolume( int s) {return this->ForeVolume[s];};
   vtkMrmlDataVolume* GetLabelVolume(int s) {return this->LabelVolume[s];};
 
-
   //--------- Slice reformatting, orientation, point conversion  -----------//
 
   // Description:
   // Slice Orientation
   void SetOrient(int orient);
   void SetOrient(int s, int orient);
-  void SetOrientString(char *str);
-  void SetOrientString(int s, char *str);
+  void SetOrientString(const char *str);
+  void SetOrientString(int s, const char *str);
   int GetOrient(int s) {return this->Orient[s];};
-  char *GetOrientString(int s);
-  char *GetOrientList() {return
+  const char *GetOrientString(int s);
+  const char *GetOrientList() {return
 "Axial Sagittal Coronal InPlane InPlane90 InPlaneNeg90 Perp OrigSlice AxiSlice SagSlice CorSlice ReformatAxial ReformatSagittal ReformatCoronal NewOrient";};
 
   // Description:
@@ -263,9 +269,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   vtkFloatingPointType GetOffsetRangeHigh(int s) {
     return this->OffsetRange[s][this->Orient[s]][1];};
   void SetOffset(int s, vtkFloatingPointType offset);
-  void InitOffset(int s, char *str, vtkFloatingPointType offset);
+  void InitOffset(int s, const char *str, vtkFloatingPointType offset);
   vtkFloatingPointType GetOffset(int s) {return this->Offset[s][this->Orient[s]];};
-  vtkFloatingPointType GetOffset(int s, char *str) {return 
+  vtkFloatingPointType GetOffset(int s, char *str) {return
       this->Offset[s][ConvertStringToOrient(str)];};
 
   // Description:
@@ -309,11 +315,12 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   // This is for display only!  It can't be used to actually change
   // the volumes in the slicer.  Use the editor (vtkImageEditorEffects)
   // for that.
-  void SetFirstFilter(int s, vtkImageToImageFilter *filter);
-  // LastFilter is of type vtkImageSource, a superclass of 
+    void SetFirstFilter(int s, vtkObject *filter);
+    
+  // LastFilter is of type vtkImageSource, a superclass of
   // both vtkImageToImage and vtkMultipleInput filters.
   void SetLastFilter(int s, vtkImageSource *filter);
-  vtkImageToImageFilter* GetFirstFilter(int s) {return this->FirstFilter[s];};
+  vtkObject * GetFirstFilter(int s) {return this->FirstFilter[s];};
   vtkImageSource* GetLastFilter(int s) {return this->LastFilter[s];};
 
   // Description:
@@ -338,14 +345,14 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   vtkBooleanMacro(FilterActive, int);
 
   // Description:
-  // Whether to overlay filter output on all layers 
+  // Whether to overlay filter output on all layers
   // or use it to replace the fore layer.
   vtkGetMacro(FilterOverlay, int);
   vtkSetMacro(FilterOverlay, int);
   vtkBooleanMacro(FilterOverlay, int);
 
   //-------------------- Additional Reformatting ---------------------------//
-  // For developers: convenience functions that reformat volumes 
+  // For developers: convenience functions that reformat volumes
   // in the slicer.
 
   // Description:
@@ -363,7 +370,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   vtkImageData *GetReformatOutputFromVolume(vtkMrmlDataVolume *v) {
     return this->GetVolumeReformatter(v)->GetOutput();
   };
-  
+
   // Description:
   // Set reformat matrix same as that of this slice
   void ReformatVolumeLikeSlice(vtkMrmlDataVolume * v, int s);
@@ -427,7 +434,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   void DrawSetShapeToPolygon() {this->PolyDraw->SetShapeToPolygon();};
   void DrawSetShapeToLines() {this->PolyDraw->SetShapeToLines();};
   void DrawSetShapeToPoints() {this->PolyDraw->SetShapeToPoints();};
-  char* GetShapeString() {return this->PolyDraw->GetShapeString();};
+  const char* GetShapeString() {return this->PolyDraw->GetShapeString();};
   //>> AT 01/17/01 01/19/01 02/19/01
   void DrawSetSelectedPointColor(vtkFloatingPointType r, vtkFloatingPointType g, vtkFloatingPointType b)
     {
@@ -447,13 +454,13 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
 
   void DrawSetStartMethod(void (*f)(void *), void *arg)
     {
-#if !(VTK_MAJOR_VERSION ==4 && VTK_MINOR_VERSION > 2)
+#if !( (VTK_MAJOR_VERSION ==4 && VTK_MINOR_VERSION > 2) || (VTK_MAJOR_VERSION >= 5) )
       this->PolyDraw->SetStartMethod(f, arg);
 #endif
     }
   void DrawSetStartMethodArgDelete(void (*f)(void *))
     {
-#if !(VTK_MAJOR_VERSION ==4 && VTK_MINOR_VERSION > 2)
+#if !( (VTK_MAJOR_VERSION ==4 && VTK_MINOR_VERSION > 2) || (VTK_MAJOR_VERSION >= 5) )
       this->PolyDraw->SetStartMethodArgDelete(f);
 #endif
     }
@@ -487,7 +494,7 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
       case 1: SagPolyStack->SetPolygon(this->PolyDraw->GetPoints(), s, d);
               break;
       case 2: CorPolyStack->SetPolygon(this->PolyDraw->GetPoints(), s, d);
-              break;
+              break; 
     }
   };
 
@@ -501,6 +508,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
               break;
       case 2: return this->CorPolyStack->GetPoints(s);
               break;
+    default: fprintf(stderr,"StackGetPoints: window %d  out of valid range 0-2, returning null pointer", window);
+        return NULL;
+        break;
     }
   };
 
@@ -513,7 +523,11 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
       case 1: return this->SagPolyStack->GetPoints(s, p);
               break;
       case 2: return this->CorPolyStack->GetPoints(s, p);
-              break;
+              break;                 
+    default: fprintf(stderr,"StackGetPoints: window %d out of valid range 0-2, returning null pointer",window);
+        return NULL;
+        break;
+    
     }
   };
 
@@ -596,6 +610,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
                   break;
           case 2: return this->CorPolyStack->GetNumberOfPoints(s);
                   break;
+      default: fprintf(stderr,"StackGetNumberOfPoints: window %d out of valid range 0-2, returning -1",window);
+          return -1;
+          break;
       }
   };
 
@@ -609,6 +626,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
                   break;
           case 2: return this->CorPolyStack->ListGetInsertPosition(s);
                   break;
+      default: fprintf(stderr,"StackGetInsertPosition: window %d out of valid range 0-2, returning -1",window);
+          return -1;
+          break;
       }
   };
 
@@ -622,6 +642,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
                   break;
           case 2: return this->CorPolyStack->ListGetNextInsertPosition(s, p);
                   break;
+      default: fprintf(stderr,"StackGetNextInsertPosition: window %d out of valid range 0-2, returning -1",window);
+          return -1;
+          break;
       }
   };
 
@@ -635,6 +658,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
                   break;
           case 2: return this->CorPolyStack->ListGetRetrievePosition(s);
                   break;
+      default: fprintf(stderr,"StackGetRetrievePosition: window %d out of valid range 0-2, returning -1",window);
+          return -1;
+          break;
       }
   };
 
@@ -648,6 +674,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
                   break;
           case 2: return this->CorPolyStack->ListGetNextRetrievePosition(s, p);
                   break;
+      default: fprintf(stderr,"StackGetNextRetrievePosition: window %d out of valid range 0-2, returning -1",window);
+          return -1;
+          break;
       }
   };
 
@@ -661,6 +690,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
                   break;
           case 2: return this->CorPolyStack->GetPreshape(s, p);
                   break;
+      default: fprintf(stderr,"StackGetPreshape: window %d out of valid range 0-2, returning -1",window);
+          return -1;
+          break;
       }
   };
 
@@ -674,6 +706,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
                   break;
           case 2: return this->CorPolyStack->GetLabel(s, p);
                   break;
+      default: fprintf(stderr,"StackGetLabel: window %d out of valid range 0-2, returning -1",window);
+          return -1;
+          break;
       }
   };
 
@@ -687,6 +722,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
                   break;
           case 2: return this->CorPolyStack->GetNumApplyable(s);
                   break;
+      default: fprintf(stderr,"StackGetNumApplyable: window %d out of valid range 0-2, returning -1",window);
+          return -1;
+          break;
       }
   };
 
@@ -700,6 +738,9 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
                   break;
           case 2: return this->CorPolyStack->GetApplyable(s, q);
                   break;
+      default: fprintf(stderr,"StackGetApplyable: window %d out of valid range 0-2, returning -1",window);
+          return -1;
+          break;
       }
   };
 
@@ -742,22 +783,20 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlSlicer : public vtkObject
   // 
   void ReformatModified() {this->BuildUpperTime.Modified();};
 
-    // Description:
-    // return the version number of the compiler
-   int GetCompilerVersion();
-    // Description:
-    // return the name of the compiler
-    char *GetCompilerName();
+  // Description:
+  // return the version number of the compiler
+  int GetCompilerVersion();
+  // Description:
+  // return the name of the compiler
+  const char *GetCompilerName();
 
-    // Description:
-    // return the vtk version
-    char *GetVTKVersion();
-    
+  // Description:
+  // return the vtk version
+  const char *GetVTKVersion();
+
 protected:
   vtkMrmlSlicer();
   ~vtkMrmlSlicer();
-  vtkMrmlSlicer(const vtkMrmlSlicer&) {};
-  void operator=(const vtkMrmlSlicer&) {};
 
   void ComputeOffsetRange();
   void ComputeOffsetRangeIJK(int s);
@@ -766,8 +805,8 @@ protected:
   int IsOrientIJK(int s);
   void BuildLower(int s);
   void BuildUpper(int s);
-  int ConvertStringToOrient(char *str);
-  char* ConvertOrientToString(int orient);
+  int ConvertStringToOrient(const char *str);
+  const char* ConvertOrientToString(int orient);
   void ComputeReformatMatrix(int s);
   void ComputeReformatMatrixIJK(int s, vtkFloatingPointType offset, vtkMatrix4x4 *ref);
   vtkFloatingPointType GetOffsetForComputation(int s);
@@ -794,12 +833,14 @@ protected:
   double ReformatSagittalT[3];
   double ReformatCoronalN[3];
   double ReformatCoronalT[3];
-  
+
   int Driver[NUM_SLICES];
   vtkFloatingPointType OffsetRange[NUM_SLICES][MRML_SLICER_NUM_ORIENT][2];
   int Orient[NUM_SLICES];
   vtkFloatingPointType Offset[NUM_SLICES][MRML_SLICER_NUM_ORIENT];
 
+  vtkImageExtractComponents *BackExtract[NUM_SLICES];
+  vtkImageExtractComponents *ForeExtract[NUM_SLICES];
   vtkImageReformat     *BackReformat[NUM_SLICES];
   vtkImageReformat     *ForeReformat[NUM_SLICES];
   vtkImageReformat     *LabelReformat[NUM_SLICES];
@@ -843,7 +884,7 @@ protected:
   // Colors
   vtkIndirectLookupTable *LabelIndirectLUT;
 
-  vtkImageToImageFilter *FirstFilter[NUM_SLICES];
+  vtkObject *FirstFilter[NUM_SLICES];
   vtkImageSource *LastFilter[NUM_SLICES];
   int BackFilter;
   int ForeFilter;
@@ -886,7 +927,9 @@ protected:
   // set field of view in al reformatters when slicer's FOV updates
   void VolumeReformattersSetFieldOfView(vtkFloatingPointType fov);
 
-    
+private:
+  vtkMrmlSlicer(const vtkMrmlSlicer&);
+  void operator=(const vtkMrmlSlicer&);
 };
 
 #endif

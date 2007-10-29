@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPolyBoolean.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:34 $
-  Version:   $Revision: 1.19.8.1 $
+  Date:      $Date: 2007/10/29 14:58:19 $
+  Version:   $Revision: 1.19.8.1.2.1 $
 
 =========================================================================auto=*/
 
@@ -36,7 +36,7 @@ vtkPolyBoolean::vtkPolyBoolean()
   this->XformA = NULL;
   this->XformB = NULL;
   this->IntersectionCount = 0;
-  this->TestCount=69;
+  this->TestCount = 69;
   this->TriangleCount = 0;
   this->NodeCount = 0;
   this->TriDirectory[0] = this->TriDirectory[1] = NULL;

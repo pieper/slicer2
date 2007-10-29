@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageLabelVOI.h,v $
-  Date:      $Date: 2005/12/20 22:44:16 $
-  Version:   $Revision: 1.8.16.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.8.16.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageLabelVOI -  Select label volume of interest
@@ -22,16 +22,16 @@
 #ifndef __vtkImageLabelVOI_h
 #define __vtkImageLabelVOI_h
 
-#include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
+class vtkImageData;
 class VTK_SLICER_BASE_EXPORT vtkImageLabelVOI : public vtkImageToImageFilter
 {
 public:
-    static vtkImageLabelVOI *New();
+  static vtkImageLabelVOI *New();
   vtkTypeMacro(vtkImageLabelVOI,vtkImageToImageFilter);
-    void PrintSelf(ostream& os, vtkIndent indent);
+  void PrintSelf(ostream& os, vtkIndent indent);
 
   vtkGetMacro(Method, int);
   vtkSetMacro(Method, int);
@@ -61,10 +61,10 @@ public:
   }
 
 protected:
-    vtkImageLabelVOI();
-    ~vtkImageLabelVOI() {};
-    vtkImageLabelVOI(const vtkImageLabelVOI&) {};
-    void operator=(const vtkImageLabelVOI&) {};
+  vtkImageLabelVOI();
+  ~vtkImageLabelVOI() {};
+  vtkImageLabelVOI(const vtkImageLabelVOI&);
+  void operator=(const vtkImageLabelVOI&);
 
   int c1x;
   int c1y;
@@ -75,8 +75,7 @@ protected:
 
   int Method;
 
-    void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
-        int extent[6], int id);
+  void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, int extent[6], int id);
 };
 
 #endif

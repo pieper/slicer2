@@ -7,18 +7,59 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSurfaceProps.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:36 $
-  Version:   $Revision: 1.11.8.1 $
+  Date:      $Date: 2007/10/29 14:58:19 $
+  Version:   $Revision: 1.11.8.1.2.1 $
 
 =========================================================================auto=*/
-#include <math.h>
-#include "vtkMath.h"
 #include "vtkSurfaceProps.h"
+
+#include "vtkObjectFactory.h"
+#include "vtkPolyData.h"
+#include "vtkCellTriMacro.h"
+
+#include "vtkMath.h"
+#include <math.h>
+
+//------------------------------------------------------------------------------
+vtkSurfaceProps* vtkSurfaceProps::New()
+{
+  // First try to create the object from the vtkObjectFactory
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkSurfaceProps");
+  if(ret)
+    {
+    return (vtkSurfaceProps*)ret;
+    }
+  // If the factory was unable to create the object, then create it here.
+  return new vtkSurfaceProps;
+}
+
 
 // Description:
 vtkSurfaceProps::vtkSurfaceProps()
-  {
-  }
+{
+  this->SurfaceArea = 0;
+  this->MinCellArea = 0;
+  this->MaxCellArea = 0;
+  this->Volume = 0;
+  this->VolumeError = 0;
+  this->Test = 0;
+}
+
+vtkSurfaceProps::~vtkSurfaceProps()
+{
+}
+
+void vtkSurfaceProps::PrintSelf(ostream& os, vtkIndent indent)
+{
+  this->Superclass::PrintSelf(os,indent);
+
+  os << indent << "SurfaceArea: " << this->SurfaceArea << endl;
+  os << indent << "MinCellArea: " << this->MinCellArea << endl;
+  os << indent << "MaxCellArea: " << this->MaxCellArea << endl;
+  os << indent << "Volume:      " << this->Volume << endl;
+  os << indent << "VolumeError: " << this->VolumeError << endl;
+  os << indent << "Test:        " << this->Test << endl;
+}
 
 
 void vtkSurfaceProps::Update()
@@ -46,7 +87,7 @@ vtkPolyData *vtkSurfaceProps::GetInput()
     {
     return NULL;
     }
-  
+
   return (vtkPolyData *)(this->Inputs[0]);
 }
 
@@ -54,7 +95,7 @@ vtkPolyData *vtkSurfaceProps::GetInput()
 // Compute Surface Properties for Input vtkPolyData
 //
 void vtkSurfaceProps::Execute()
-  {
+{
   vtkPolyData *input = (vtkPolyData *)this->Inputs[0];
   vtkIdType *ptIds;
   int numCells, jj, kk, type;
@@ -134,5 +175,5 @@ void vtkSurfaceProps::Execute()
     this->VolumeError = tot_vol - tot_vol2;
   else
     this->VolumeError = tot_vol2 - tot_vol;
-  }
+}
 

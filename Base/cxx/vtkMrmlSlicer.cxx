@@ -7,18 +7,35 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlSlicer.cxx,v $
-  Date:      $Date: 2006/05/04 19:12:42 $
-  Version:   $Revision: 1.56.2.1.2.1 $
+  Date:      $Date: 2007/10/29 14:58:18 $
+  Version:   $Revision: 1.56.2.1.2.2 $
 
 =========================================================================auto=*/
-#include <stdio.h>
-#include <string.h>
-#include "vtkPointData.h"
 #include "vtkMrmlSlicer.h"
+
 #include "vtkObjectFactory.h"
-#include "vtkImageCanvasSource2D.h"
+#include "vtkCamera.h"
+#include "vtkImageReformatIJK.h"
+#include "vtkImageReformat.h"
+#include "vtkImageExtractComponents.h"
+#include "vtkImageOverlay.h"
+#include "vtkImageMapToColors.h"
+#include "vtkMatrix4x4.h"
+#include "vtkTransform.h"
+#include "vtkPoints.h"
+#include "vtkLookupTable.h"
+#include "vtkMrmlDataVolume.h"
+#include "vtkMrmlVolumeNode.h"
+#include "vtkImageLabelOutline.h"
+#include "vtkImageCrossHair2D.h"
+#include "vtkImageZoom2D.h"
+#include "vtkImageDouble2D.h"
+#include "vtkIndirectLookupTable.h"
+#include "vtkImageDrawROI.h"
+#include "vtkStackOfPolygons.h"
+#include "vtkCollection.h"
+#include "vtkVoidArray.h"
 #include "vtkPointData.h"
-#include "vtkVersion.h"
 
 //-----  This hack needed to compile using gcc3 on OSX until new stdc++.dylib
 #ifdef __APPLE_CC__
@@ -26,8 +43,10 @@ extern "C"
 {
   void oft_initSlicerBase() 
   {
+#if __GNUC__ < 4
   extern void _ZNSt8ios_base4InitC4Ev();
   _ZNSt8ios_base4InitC4Ev();
+#endif
   }
 }
 #endif
@@ -116,6 +135,10 @@ vtkMrmlSlicer::vtkMrmlSlicer()
     this->SetForeVolume(s, this->NoneVolume);
     this->LabelVolume[s] = NULL;
     this->SetLabelVolume(s, this->NoneVolume);
+
+    //Extract filters
+    this->BackExtract[s] = vtkImageExtractComponents::New();
+    this->ForeExtract[s] = vtkImageExtractComponents::New();
 
     // Reformatters
     this->BackReformat[s]  = vtkImageReformat::New();
@@ -349,9 +372,11 @@ vtkMrmlSlicer::~vtkMrmlSlicer()
 {
   for (int s=0; s<NUM_SLICES; s++)
   {
-      this->BackReformat[s]->Delete();
-      this->ForeReformat[s]->Delete();
-      this->LabelReformat[s]->Delete();
+    this->BackExtract[s]->Delete();
+    this->ForeExtract[s]->Delete();
+    this->BackReformat[s]->Delete();
+    this->ForeReformat[s]->Delete();
+    this->LabelReformat[s]->Delete();
     this->Overlay[s]->Delete();
     this->BackMapper[s]->Delete();
     this->ForeMapper[s]->Delete();
@@ -485,7 +510,7 @@ void vtkMrmlSlicer::PrintSelf(ostream& os, vtkIndent indent)
     {
       this->LastFilter[s]->PrintSelf(os,indent.GetNextIndent());
     }
-    os << indent << "DoubleSliceSize: " <<this->DoubleSliceSize[s] << "\n";
+    os << indent << "DoubleSliceSize: " << s << " " << this->DoubleSliceSize[s] << "\n";
   }
 }
 
@@ -524,6 +549,10 @@ void vtkMrmlSlicer::DeepCopy(vtkMrmlSlicer *src)
           this->SetBackVolume(s, src->GetBackVolume(s));
           this->SetForeVolume(s, src->GetForeVolume(s));
           this->SetLabelVolume(s, src->GetLabelVolume(s));
+          
+          //Extractors: set scalar component
+          this->BackExtract[s]->SetComponents(0);
+          this->ForeExtract[s]->SetComponents(0);
 
           // Reformatters: set matrices to new ones
           this->BackReformat[s]->SetReformatMatrix(this->ReformatMatrix[s]);
@@ -604,39 +633,32 @@ void  vtkMrmlSlicer::SetDouble(int s, int yes) {
         vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) this->BackVolume[s]->GetMrmlNode();
         int *dimension =node->GetDimensions();
         int resolution;
-        if (dimension[0]>dimension[1])
-        {
+        if (dimension[0]>dimension[1]){
             resolution = dimension[0];
         }
-        else 
-        {
+        else {
             resolution= dimension[1];
         }
-
         if(yes == 1)
         {
-            if (resolution>512)
-            {
+            
+            if (resolution>512){
                 this->BackReformat[s]->SetResolution( 1024);
                 this->ForeReformat[s]->SetResolution( 1024);
                 this->LabelReformat[s]->SetResolution(1024);
             }
             else
-            {
-                if (resolution>256)
-                {
+                if (resolution>256){
                     this->BackReformat[s]->SetResolution( 512);
                     this->ForeReformat[s]->SetResolution( 512);
                     this->LabelReformat[s]->SetResolution(512);
                 }
-                else
-                {
+                else{
                     this->DoubleSliceSize[s] = yes;
                     this->BackReformat[s]->SetResolution(256);
                     this->ForeReformat[s]->SetResolution(256);
                     this->LabelReformat[s]->SetResolution(256);
                 }
-            }
         }
         else if (yes == 0)
         {
@@ -652,10 +674,11 @@ void  vtkMrmlSlicer::SetDouble(int s, int yes) {
             this->LabelReformat[s]->SetResolution(160);
         }
     }
+    
     this->BuildLowerTime.Modified();
 }
-
 //----------------------------------------------------------------------------
+
 void vtkMrmlSlicer::SetNoneVolume(vtkMrmlDataVolume *vol)
 {
   int s;
@@ -911,23 +934,74 @@ void vtkMrmlSlicer::SetLabelVolume(int s, vtkMrmlDataVolume *vol)
 //----------------------------------------------------------------------------
 // Filter 
 //----------------------------------------------------------------------------
-void vtkMrmlSlicer::SetFirstFilter(int s, vtkImageToImageFilter *filter)
+void vtkMrmlSlicer::SetFirstFilter(int s, vtkObject *filter)
 {
-  if (this->FirstFilter[s] != filter) 
-  {
-    if (this->FirstFilter[s] != NULL) 
-    { 
-      this->FirstFilter[s]->UnRegister(this); 
+    // for vtk 4.x and 5.x compatibility, see notes in vtkSlicer.h
+#ifdef SLICER_VTK5
+    vtkImageAlgorithm *ia = vtkImageAlgorithm::SafeDownCast(filter);
+    if (ia)
+    {
+        if (this->FirstFilter[s] != ia) 
+        {
+            if (this->FirstFilter[s] != NULL) 
+            { 
+                this->FirstFilter[s]->UnRegister(this); 
+            }
+            this->FirstFilter[s] = ia;
+        }
+    } else {
+        vtkImageToImageFilter *itoi = vtkImageToImageFilter::SafeDownCast(filter);
+        if (itoi)
+        {
+            if (this->FirstFilter[s] != itoi) 
+            {
+                if (this->FirstFilter[s] != NULL) 
+                { 
+                    this->FirstFilter[s]->UnRegister(this); 
+                }
+                this->FirstFilter[s] = itoi;
+                if (this->FirstFilter[s] != NULL) 
+                { 
+                    this->FirstFilter[s]->Register(this); 
+                }
+                this->Modified(); 
+                this->BuildUpperTime.Modified();
+            }
+        }
+        else
+        {
+            vtkGenericWarningMacro( "Problem executing SetFirstFilter: filter isn't one of vtkImageAlgorithm or vtkImageToImageFilter");
+            return;
+        }
     }
-    this->FirstFilter[s] = filter;
-    if (this->FirstFilter[s] != NULL) 
-    { 
-      this->FirstFilter[s]->Register(this); 
+#else
+    vtkImageToImageFilter *itoi = vtkImageToImageFilter::SafeDownCast(filter);
+    if (itoi)
+    {
+        if (this->FirstFilter[s] != itoi) 
+        {
+            if (this->FirstFilter[s] != NULL) 
+            { 
+                this->FirstFilter[s]->UnRegister(this); 
+            }
+            this->FirstFilter[s] = itoi;
+            if (this->FirstFilter[s] != NULL) 
+            { 
+                this->FirstFilter[s]->Register(this); 
+            }
+            this->Modified(); 
+            this->BuildUpperTime.Modified();
+        }
     }
-    this->Modified(); 
-    this->BuildUpperTime.Modified();
-  } 
+    else
+    {
+        vtkGenericWarningMacro( "Problem executing SetFirstFilter: filter isn't vtkImageToImageFilter");
+        return;
+    }
+#endif
+
 }
+//----------------------------------------------------------------------------
 void vtkMrmlSlicer::SetLastFilter(int s, vtkImageSource *filter)
 {
   if (this->LastFilter[s] != filter) 
@@ -952,6 +1026,7 @@ void vtkMrmlSlicer::SetLastFilter(int s, vtkImageSource *filter)
 void vtkMrmlSlicer::BuildUpper(int s)
 {
   vtkMrmlDataVolume *v;
+  vtkImageData *ev;
   int filter = 0;
 
   // Error checking
@@ -986,19 +1061,32 @@ void vtkMrmlSlicer::BuildUpper(int s)
   v = this->BackVolume[s];
   vtkMrmlVolumeNode *node = (vtkMrmlVolumeNode*) v->GetMrmlNode();
 
+  // Extract component if this volume has more than 4 components, i.e. is not
+  // a RGBA volume
+  if (v->GetOutput()->GetNumberOfScalarComponents()>4) {
+    this->BackExtract[s]->SetInput(v->GetOutput());
+    this->BackExtract[s]->ReleaseDataFlagOff();
+    this->BackExtract[s]->SetComponents(node->GetScalarComponent());
+    ev = this->BackExtract[s]->GetOutput();
+  } else {
+    ev = v->GetOutput();
+    this->BackExtract[s]->SetInput(NULL);
+    this->BackExtract[s]->ReleaseDataFlagOn();
+  }  
+    
   // Reformatter
-  this->BackReformat[s]->SetInput(v->GetOutput());
+  this->BackReformat[s]->SetInput(ev);
   this->BackReformat[s]->SetInterpolate(node->GetInterpolate());
   this->BackReformat[s]->SetWldToIjkMatrix(node->GetWldToIjk());
 
   // >> AT 11/09/01
-  this->BackReformat3DView[s]->SetInput(v->GetOutput());
+  this->BackReformat3DView[s]->SetInput(ev);
   this->BackReformat3DView[s]->SetInterpolate(node->GetInterpolate());
   this->BackReformat3DView[s]->SetWldToIjkMatrix(node->GetWldToIjk());
   // << AT 11/09/01
 
   // If data has more than one scalar component, then don't use the mapper,
-  if (v->GetOutput()->GetNumberOfScalarComponents() > 1)
+  if (ev->GetNumberOfScalarComponents() > 1)
   {
     // Overlay
     this->Overlay[s]->SetInput(0, this->BackReformat[s]->GetOutput());
@@ -1045,19 +1133,35 @@ void vtkMrmlSlicer::BuildUpper(int s)
   } 
   else 
   {
+   
+    // Extract component if this volume has more than 4 components, i.e. is not
+    // a RGBA volume
+    if (v->GetOutput()->GetNumberOfScalarComponents()>4) 
+    {
+      this->ForeExtract[s]->SetInput(v->GetOutput());
+      this->ForeExtract[s]->ReleaseDataFlagOff();
+      this->ForeExtract[s]->SetComponents(node->GetScalarComponent());
+      ev = this->ForeExtract[s]->GetOutput();
+    } 
+    else 
+    {
+      ev = v->GetOutput();
+      this->ForeExtract[s]->SetInput(NULL);
+      this->ForeExtract[s]->ReleaseDataFlagOff();
+    }  
     // Reformatter
-    this->ForeReformat[s]->SetInput(v->GetOutput());
+    this->ForeReformat[s]->SetInput(ev);
     this->ForeReformat[s]->SetInterpolate(node->GetInterpolate());
     this->ForeReformat[s]->SetWldToIjkMatrix(node->GetWldToIjk());
 
     // >> AT 11/09/01
-    this->ForeReformat3DView[s]->SetInput(v->GetOutput());
+    this->ForeReformat3DView[s]->SetInput(ev);
     this->ForeReformat3DView[s]->SetInterpolate(node->GetInterpolate());
     this->ForeReformat3DView[s]->SetWldToIjkMatrix(node->GetWldToIjk());
     // << AT 11/09/01
 
     // If data has more than one scalar component, then don't use the mapper,
-    if (v->GetOutput()->GetNumberOfScalarComponents() > 1)
+    if (ev->GetNumberOfScalarComponents() > 1)
     {
       // jc - 4.21.05 
       // Overlay
@@ -1082,11 +1186,11 @@ void vtkMrmlSlicer::BuildUpper(int s)
     // Filter
         if (this->ForeFilter)
         {
-          this->FirstFilter[s]->SetInput(this->ForeReformat[s]->GetOutput());
+          SetImageInput(this->FirstFilter[s],this->ForeReformat[s]->GetOutput());
         }
         else
         {
-          this->FirstFilter[s]->SetInput(this->BackReformat[s]->GetOutput());
+          SetImageInput(this->FirstFilter[s],this->BackReformat[s]->GetOutput());
         }
     // Mapper
     if (this->FilterOverlay)
@@ -1417,7 +1521,7 @@ void vtkMrmlSlicer::ComputeOffsetRangeIJK(int s)
   }
 }
 
-void vtkMrmlSlicer::InitOffset(int s, char *str, vtkFloatingPointType offset)
+void vtkMrmlSlicer::InitOffset(int s, const char *str, vtkFloatingPointType offset)
 {
   int orient = (int) ConvertStringToOrient(str);
   this->Offset[s][orient] = offset;
@@ -1461,7 +1565,7 @@ void vtkMrmlSlicer::SetOrient(int s, int orient)
   this->ComputeReformatMatrix(s);
 }
 
-void vtkMrmlSlicer::SetOrientString(char *str)
+void vtkMrmlSlicer::SetOrientString(const char *str)
 {
   if (strcmp(str, "AxiSagCor") == 0)
        this->SetOrient(MRML_SLICER_ORIENT_AXISAGCOR);
@@ -1475,18 +1579,18 @@ void vtkMrmlSlicer::SetOrientString(char *str)
        this->SetOrient(MRML_SLICER_ORIENT_AXISAGCOR);
 }
 
-char* vtkMrmlSlicer::GetOrientString(int s)
+const char* vtkMrmlSlicer::GetOrientString(int s)
 {
   return ConvertOrientToString(this->Orient[s]);
 }
 
-void vtkMrmlSlicer::SetOrientString(int s, char *str)
+void vtkMrmlSlicer::SetOrientString(int s, const char *str)
 {
   int orient = ConvertStringToOrient(str);
   this->SetOrient(s, orient);
 }
 
-int vtkMrmlSlicer::ConvertStringToOrient(char *str)
+int vtkMrmlSlicer::ConvertStringToOrient(const char *str)
 {
   if      (strcmp(str, "Axial") == 0)
        return MRML_SLICER_ORIENT_AXIAL;
@@ -1523,7 +1627,7 @@ int vtkMrmlSlicer::ConvertStringToOrient(char *str)
        return MRML_SLICER_ORIENT_AXIAL;
 }
 
-char* vtkMrmlSlicer::ConvertOrientToString(int orient)
+const char* vtkMrmlSlicer::ConvertOrientToString(int orient)
 {
   switch (orient) 
     {
@@ -1967,7 +2071,7 @@ void vtkMrmlSlicer::SetReformatPoint(vtkMrmlDataVolume *vol,
   ref->SetPoint(x, y);
   ref->GetWldPoint(this->WldPoint);
   ref->GetIjkPoint(this->IjkPoint);
-
+  
   int ext[6];
   vol->GetOutput()->GetWholeExtent(ext);
 
@@ -2181,6 +2285,28 @@ void vtkMrmlSlicer::SetCursorIntersect(int flag)
     }
 }
 
+// sets the gap between hash marks on the cursor, which adjusts the opening
+void vtkMrmlSlicer::SetCursorHashGap(vtkFloatingPointType gap)
+{
+    if (gap < this->Cursor[0]->GetHashLength() / 2.0) {
+        vtkWarningMacro(<<"Cursor hash gap should be greater than half of the hash length to avoid overlap in the center: " << this->Cursor[0]->GetHashLength() / 2.0);
+        //return;
+    }
+   for (int s=0; s<NUM_SLICES; s++)
+   {
+       this->SetCursorHashGap(s,gap);
+   }
+}
+
+// sets the length of the cursor hash marks
+void vtkMrmlSlicer::SetCursorHashLength(vtkFloatingPointType len)
+{
+    for (int s=0; s<NUM_SLICES; s++)
+    {
+        this->SetCursorHashLength(s,len);
+    }
+}
+
 // DAVE need to call with SetAnnoColor
 void vtkMrmlSlicer::SetCursorColor(vtkFloatingPointType red, vtkFloatingPointType green, vtkFloatingPointType blue) 
 {
@@ -2196,6 +2322,11 @@ void vtkMrmlSlicer::SetNumHashes(int hashes)
   {
       this->Cursor[s]->SetNumHashes(hashes);
   }
+}
+
+int vtkMrmlSlicer::GetNumHashes()
+{
+    return this->Cursor[0]->GetNumHashes();
 }
 
 //----------------------------------------------------------------------------
@@ -2246,7 +2377,8 @@ void vtkMrmlSlicer::ComputeNTPFromCamera(vtkCamera *camera)
 }
 
 // this function is used to set the reformat matrix directly for ALL the slices
-// It is called from Locator.tcl to set the reformat matrix to be the same than// the locator matrix
+// It is called from Locator.tcl to set the reformat matrix to be the same
+// as the locator matrix
  
 void vtkMrmlSlicer::SetDirectNTP(vtkFloatingPointType nx, vtkFloatingPointType ny, vtkFloatingPointType nz,
   vtkFloatingPointType tx, vtkFloatingPointType ty, vtkFloatingPointType tz, vtkFloatingPointType px, vtkFloatingPointType py, vtkFloatingPointType pz)
@@ -2817,7 +2949,7 @@ int vtkMrmlSlicer::GetCompilerVersion()
 // For Microsoft compiler, MSC
 // Else returns UNKNOWN
 
-char * vtkMrmlSlicer::GetCompilerName()
+const char * vtkMrmlSlicer::GetCompilerName()
 {
 
 #if defined(__GNUC__)
@@ -2833,7 +2965,7 @@ char * vtkMrmlSlicer::GetCompilerName()
 //----------------------------------------------------------------------------
 // Description:
 // Returns the version number of the vtk library this has been compiled with
-char * vtkMrmlSlicer::GetVTKVersion()
+const char * vtkMrmlSlicer::GetVTKVersion()
 {
     return VTK_VERSION;
 }

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageReformatIJK.h,v $
-  Date:      $Date: 2005/12/20 22:44:19 $
-  Version:   $Revision: 1.17.12.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.17.12.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageReformatIJK -  
@@ -48,13 +48,12 @@
 #ifndef __vtkImageReformatIJK_h
 #define __vtkImageReformatIJK_h
 
-#include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"
-#include "vtkMatrix4x4.h"
-#include "vtkTransform.h"
-#include "vtkIntArray.h"
 #include "vtkSlicer.h"
 
+class vtkMatrix4x4;
+class vtkTransform;
+class vtkIntArray;
 class VTK_SLICER_BASE_EXPORT vtkImageReformatIJK : public vtkImageToImageFilter
 {
 public:
@@ -85,8 +84,8 @@ public:
 
   // Description:
   // Set Input order and output order to: SI IS LR RL AP PA 
-  void SetInputOrderString(char *str);
-  void SetOutputOrderString(char *str);
+  void SetInputOrderString(const char *str);
+  void SetOutputOrderString(const char *str);
 
 
   // Description:
@@ -101,14 +100,14 @@ public:
   vtkGetObjectMacro(Indices, vtkIntArray);
 
   vtkGetObjectMacro(WldToIjkMatrix, vtkMatrix4x4);
-  vtkSetObjectMacro(WldToIjkMatrix, vtkMatrix4x4);
+  virtual void SetWldToIjkMatrix(vtkMatrix4x4*);
 
   void ComputeReformatMatrix(vtkMatrix4x4 *ref);
 
   void SetIJKPoint(int i, int j, int k);
   vtkGetVectorMacro(XYPoint, int, 2);
 
-    vtkMatrix4x4* WldToIjkMatrix;
+  vtkMatrix4x4* WldToIjkMatrix;
   int NumSlices;
   vtkGetMacro(NumSlices, int);
   float XStep[4];
@@ -130,8 +129,6 @@ public:
 protected:
   vtkImageReformatIJK();
   ~vtkImageReformatIJK();
-    vtkImageReformatIJK(const vtkImageReformatIJK&) {};
-    void operator=(const vtkImageReformatIJK&) {};
 
   vtkTimeStamp TransformTime;
   int OutputExtent[6];
@@ -141,6 +138,10 @@ protected:
     void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
 
     void ExecuteData(vtkDataObject *);
+
+private:
+    vtkImageReformatIJK(const vtkImageReformatIJK&);
+    void operator=(const vtkImageReformatIJK&);
 };
 
 #endif

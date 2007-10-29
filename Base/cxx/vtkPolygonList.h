@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPolygonList.h,v $
-  Date:      $Date: 2005/12/20 22:44:35 $
-  Version:   $Revision: 1.2.2.1 $
+  Date:      $Date: 2007/10/29 14:58:19 $
+  Version:   $Revision: 1.2.2.1.2.1 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -138,8 +138,8 @@ public:
 protected:
   vtkPolygonList();
   ~vtkPolygonList();
-  vtkPolygonList(const vtkPolygonList&) {};  // Not implemented.
-  void operator=(const vtkPolygonList&) {};  // Not implemented.
+  vtkPolygonList(const vtkPolygonList&);  // Not implemented.
+  void operator=(const vtkPolygonList&);  // Not implemented.
 
   vtkPoints *Polygons[NUM_POLYGONS];
   int densities[NUM_POLYGONS]; // Sampling densities

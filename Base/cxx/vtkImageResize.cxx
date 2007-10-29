@@ -7,12 +7,14 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageResize.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:20 $
-  Version:   $Revision: 1.16.12.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.16.12.1.2.1 $
 
 =========================================================================auto=*/
 #include "vtkImageResize.h"
+
 #include "vtkObjectFactory.h"
+#include "vtkImageData.h"
 
 //------------------------------------------------------------------------------
 vtkImageResize* vtkImageResize::New()
@@ -563,7 +565,7 @@ void vtkImageResize::ThreadedExecute(vtkImageData *inData,
 void vtkImageResize::PrintSelf(ostream& os, vtkIndent indent)
 {
   int idx;
-  vtkImageToImageFilter::PrintSelf(os,indent);
+  Superclass::PrintSelf(os,indent);
 
   os << "Output Whole Extent:\n";
   for (idx = 0; idx < 3; ++idx)

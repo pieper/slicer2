@@ -7,28 +7,26 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageBimodalAnalysis.h,v $
-  Date:      $Date: 2005/12/20 22:44:11 $
-  Version:   $Revision: 1.15.12.1 $
+  Date:      $Date: 2007/10/29 14:58:16 $
+  Version:   $Revision: 1.15.12.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageBimodalAnalysis - Analysis bimodal histograms
 // .SECTION Description
 // vtkImageBimodalAnalysis - This filter assumes the input comes
 // from vtkImageAccumulateDiscrete, so there.
+// .SECTION Warning
+// FIXME: only works on output floating point
+// FIXME: should use vtkTemplateMacro
 
 #ifndef __vtkImageBimodalAnalysis_h
 #define __vtkImageBimodalAnalysis_h
 
-#define VTK_BIMODAL_MODALITY_CT 0
-#define VTK_BIMODAL_MODALITY_MR 1
-
-#include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"
 #include "vtkSlicer.h"
 
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
+#define VTK_BIMODAL_MODALITY_CT 0
+#define VTK_BIMODAL_MODALITY_MR 1
 
 class VTK_SLICER_BASE_EXPORT vtkImageBimodalAnalysis : public vtkImageToImageFilter
 {
@@ -46,28 +44,30 @@ public:
  
   // Description:
   // Get stats
-  vtkSetMacro(Threshold, int);
   vtkGetMacro(Threshold, int);
-  vtkSetMacro(Window, int);
   vtkGetMacro(Window, int);
-  vtkSetMacro(Level, int);
   vtkGetMacro(Level, int);
-  vtkSetMacro(Min, int);
   vtkGetMacro(Min, int);
-  vtkSetMacro(Max, int);
   vtkGetMacro(Max, int);
-
   vtkGetVectorMacro(SignalRange, int, 2);
-  vtkSetVector2Macro(SignalRange, int);
-
   vtkGetVectorMacro(ClipExtent, int, 6);
+
+    vtkGetMacro(Offset, int);
+    vtkSetMacro(Offset, int);
+    
+  // Description:
+  // Ideally this should not be public API
+  vtkSetMacro(Threshold, int);
+  vtkSetMacro(Window, int);
+  vtkSetMacro(Level, int);
+  vtkSetMacro(Min, int);
+  vtkSetMacro(Max, int);
+  vtkSetVector2Macro(SignalRange, int);
   vtkSetVectorMacro(ClipExtent, int, 6);
 
 protected:
   vtkImageBimodalAnalysis();
   ~vtkImageBimodalAnalysis() {};
-  vtkImageBimodalAnalysis(const vtkImageBimodalAnalysis&) {};
-  void operator=(const vtkImageBimodalAnalysis&) {};
 
   int Modality;
 
@@ -79,11 +79,15 @@ protected:
   int ClipExtent[6];
   int SignalRange[2];
 
+    int Offset;
+
   void ExecuteInformation(vtkImageData *input, vtkImageData *output);
-  void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
-  void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
+  void ExecuteInformation(){this->Superclass::ExecuteInformation();};
   void ExecuteData(vtkDataObject *);
 
+private:
+  vtkImageBimodalAnalysis(const vtkImageBimodalAnalysis&);
+  void operator=(const vtkImageBimodalAnalysis&);
 };
 
 #endif

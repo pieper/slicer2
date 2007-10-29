@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlTransformNode.h,v $
-  Date:      $Date: 2005/12/20 22:44:31 $
-  Version:   $Revision: 1.16.16.1 $
+  Date:      $Date: 2007/10/29 14:58:18 $
+  Version:   $Revision: 1.16.16.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlTransformNode - MRML node for representing a transform.
@@ -49,8 +49,8 @@ public:
 protected:
   vtkMrmlTransformNode();
   ~vtkMrmlTransformNode();
-  vtkMrmlTransformNode(const vtkMrmlTransformNode&) {};
-  void operator=(const vtkMrmlTransformNode&) {};
+  vtkMrmlTransformNode(const vtkMrmlTransformNode&);
+  void operator=(const vtkMrmlTransformNode&);
 
 };
 

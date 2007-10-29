@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlTree.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:31 $
-  Version:   $Revision: 1.21.12.1 $
+  Date:      $Date: 2007/10/29 14:58:18 $
+  Version:   $Revision: 1.21.12.1.2.1 $
 
 =========================================================================auto=*/
 #include "vtkMrmlTree.h"
@@ -65,8 +65,16 @@ void vtkMrmlTree::Write(char *filename)
     {
       indent -=2;
     }
-
-    node->Write(file, indent);
+   
+    if (node)
+        {
+            if (node->GetName() != NULL)
+            {
+                vtkDebugMacro("vtkMrmlTree::Write: writing node named " << node->GetName());
+            } else { vtkDebugMacro("vtkMrmlTree::Write: writing node w/no name"); }
+        
+            node->Write(file, indent);
+        } else { vtkErrorMacro("NODE IS NULL"); }
 
     if ( deltaIndent > 0 )
     {
@@ -88,7 +96,7 @@ void vtkMrmlTree::Write(char *filename)
 }
 
 //------------------------------------------------------------------------------
-int vtkMrmlTree::GetNumberOfItemsByClass(char *className)
+int vtkMrmlTree::GetNumberOfItemsByClass(const char *className)
 {
   vtkCollectionElement *elem=this->Top;
   int num=0;
@@ -105,7 +113,7 @@ int vtkMrmlTree::GetNumberOfItemsByClass(char *className)
 }
 
 //------------------------------------------------------------------------------
-vtkMrmlNode *vtkMrmlTree::GetNextItemByClass(char *className)
+vtkMrmlNode *vtkMrmlTree::GetNextItemByClass(const char *className)
 {
   vtkCollectionElement *elem=this->Current;
 
@@ -131,7 +139,7 @@ vtkMrmlNode *vtkMrmlTree::GetNextItemByClass(char *className)
 }
 
 //------------------------------------------------------------------------------
-vtkMrmlNode* vtkMrmlTree::InitTraversalByClass(char *className)
+vtkMrmlNode* vtkMrmlTree::InitTraversalByClass(const char *className)
 {
   vtkCollectionElement *elem=this->Top;
 
@@ -169,7 +177,7 @@ vtkMrmlNode* vtkMrmlTree::GetNthItem(int n)
 }
 
 //------------------------------------------------------------------------------
-vtkMrmlNode* vtkMrmlTree::GetNthItemByClass(int n, char *className)
+vtkMrmlNode* vtkMrmlTree::GetNthItemByClass(int n, const char *className)
 {
   vtkCollectionElement *elem;
   int j=0;

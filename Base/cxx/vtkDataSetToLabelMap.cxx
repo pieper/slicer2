@@ -7,23 +7,19 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDataSetToLabelMap.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:09 $
-  Version:   $Revision: 1.7.8.1 $
+  Date:      $Date: 2007/10/29 14:58:16 $
+  Version:   $Revision: 1.7.8.1.2.1 $
 
 =========================================================================auto=*/
-//#include <math.h>
-//#include <stdio.h>
-#include "vtkPointData.h"
-#include "vtkPoints.h"
-#include "vtkCell.h"
 #include "vtkDataSetToLabelMap.h"
-#include "vtkIntArray.h"
+
 #include "vtkObjectFactory.h"
-#include "vtkCell.h"
 #include "vtkPointData.h"
 #include "vtkPoints.h"
-
-
+#include "vtkIntArray.h"
+#include "vtkCell.h"
+#include "vtkShortArray.h"
+#include "vtkStructuredPoints.h"
 
 //------------------------------------------------------------------------------
 vtkDataSetToLabelMap* vtkDataSetToLabelMap::New()
@@ -94,7 +90,7 @@ void vtkDataSetToLabelMap::Execute()
   vtkCell *cell;
   //vtkNormals *normals; 
   vtkDataSet *input=this->GetInput();
-  vtkStructuredPoints *output=this->GetOutput();
+  vtkStructuredPoints *output = this->GetOutput();
   int cellNum;
   int numPts, numCells;
   vtkFloatingPointType insidePoint[3];
@@ -122,12 +118,14 @@ void vtkDataSetToLabelMap::Execute()
 
   // the inside voxels are 2
   if(this->BoundaryScalars)
+    {
     this->BoundaryScalars->Delete();
+    }
   this->BoundaryScalars = vtkShortArray::New();
   this->BoundaryScalars->SetNumberOfTuples(numPts);
   for (i=0; i<numPts; i++)
     {
-      this->BoundaryScalars->SetTuple1(i,2);
+    this->BoundaryScalars->SetTuple1(i,2);
     }
   
 
@@ -222,9 +220,9 @@ void vtkDataSetToLabelMap::Execute()
  *                                                                          *  
  ****************************************************************************/
 
-void vtkDataSetToLabelMap::BoundaryFill(int i, int j, int k, vtkShortArray *scalars) {
+void vtkDataSetToLabelMap::BoundaryFill(int /*i*/, int /*j*/, int /*k*/, vtkShortArray *scalars) {
 
-  int idx = k *(this->OutputDimensions[0]*this->OutputDimensions[1]) + j*(this->OutputDimensions[0]) + i;
+  //int idx = k *(this->OutputDimensions[0]*this->OutputDimensions[1]) + j*(this->OutputDimensions[0]) + i;
   int kFactor = this->OutputDimensions[0] * this->OutputDimensions[1];
   int jFactor = this->OutputDimensions[0];
   

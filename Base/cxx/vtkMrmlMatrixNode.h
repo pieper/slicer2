@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlMatrixNode.h,v $
-  Date:      $Date: 2005/12/20 22:44:26 $
-  Version:   $Revision: 1.16.14.1 $
+  Date:      $Date: 2007/10/29 14:58:18 $
+  Version:   $Revision: 1.16.14.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlMatrixNode - MRML node to represent transformation matrices.
@@ -80,8 +80,8 @@ public:
 protected:
   vtkMrmlMatrixNode();
   ~vtkMrmlMatrixNode();
-  vtkMrmlMatrixNode(const vtkMrmlMatrixNode&) {};
-  void operator=(const vtkMrmlMatrixNode&) {};
+  vtkMrmlMatrixNode(const vtkMrmlMatrixNode&);
+  void operator=(const vtkMrmlMatrixNode&);
 
   vtkTransform *Transform;
 };

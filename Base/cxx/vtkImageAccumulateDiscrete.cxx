@@ -7,14 +7,16 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageAccumulateDiscrete.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:10 $
-  Version:   $Revision: 1.17.2.1 $
+  Date:      $Date: 2007/10/29 14:58:16 $
+  Version:   $Revision: 1.17.2.1.2.1 $
 
 =========================================================================auto=*/
 #include "vtkImageAccumulateDiscrete.h"
+#include "vtkObjectFactory.h"
+#include "vtkImageData.h"
+
 #include <math.h>
 #include <stdlib.h>
-#include "vtkObjectFactory.h"
 
 //------------------------------------------------------------------------------
 vtkImageAccumulateDiscrete* vtkImageAccumulateDiscrete::New()
@@ -38,7 +40,7 @@ vtkImageAccumulateDiscrete::vtkImageAccumulateDiscrete()
 #define  MAX_ACCUMULATION_BIN 65535
 //----------------------------------------------------------------------------
 void vtkImageAccumulateDiscrete::ExecuteInformation(vtkImageData *vtkNotUsed(input), 
-                        vtkImageData *output)
+                                                    vtkImageData *output)
 {
   int ext[6];
   memset(ext, 0, 6*sizeof(int));
@@ -59,8 +61,8 @@ void vtkImageAccumulateDiscrete::ExecuteInformation(vtkImageData *vtkNotUsed(inp
 
 //----------------------------------------------------------------------------
 // Get ALL of the input.
-void vtkImageAccumulateDiscrete::ComputeInputUpdateExtent(int inExt[6], 
-                              int outExt[6])
+void vtkImageAccumulateDiscrete::ComputeInputUpdateExtent(int inExt[6],
+                                                          int outExt[6])
 {
   int *wholeExtent;
 
@@ -88,10 +90,10 @@ static void vtkImageAccumulateDiscreteExecute(vtkImageAccumulateDiscrete *self,
 
   // Zero count in every bin
   outData->GetExtent(min0, max0, min1, max1, min2, max2);
-  memset((void *)outPtr, 0, 
+  memset((void *)outPtr, 0,
      (max0-min0+1)*(max1-min1+1)*(max2-min2+1)*sizeof(int));
-    
-  // Get information to march through data 
+
+  // Get information to march through data
   numC = inData->GetNumberOfScalarComponents();
   inData->GetExtent(min0, max0, min1, max1, min2, max2);
   inData->GetIncrements(inInc0, inInc1, inInc2);
@@ -108,30 +110,31 @@ static void vtkImageAccumulateDiscreteExecute(vtkImageAccumulateDiscrete *self,
 
   inPtr2 = inPtr;
   for (idx2 = min2; idx2 <= max2; ++idx2)
-  {
+    {
     inPtr1 = inPtr2;
     for (idx1 = min1; !self->AbortExecute && idx1 <= max1; ++idx1)
-    {
-      if (!(count%target))
       {
+      if (!(count%target))
+        {
         self->UpdateProgress(count/(50.0*target));
-      }
+        }
       count++;
       inPtr0  = inPtr1;
       for (idx0 = min0; idx0 <= max0; ++idx0)
-      {
+        {
         int a = (int)(*inPtr0) + offset;
-        if ((a<MAX_ACCUMULATION_BIN)&&(a>0))
+        if ( a < MAX_ACCUMULATION_BIN && a > 0 )
+          {
           outPtr[a]++;
-          inPtr0 += inInc0;
-      }
+          }
+        inPtr0 += inInc0;
+        }
       inPtr1 += inInc1;
-    }
+      }
     inPtr2 += inInc2;
-  }
+    }
 }
 
-    
 
 //----------------------------------------------------------------------------
 // This method is passed a input and output Data, and executes the filter
@@ -161,14 +164,6 @@ void vtkImageAccumulateDiscrete::ExecuteData(vtkDataObject *)
   
   int type = inData->GetScalarType();
 
-#ifdef SLICER_VTK5
-  //TODO type access is broken on vtk5?
-  if ( type != VTK_SHORT )
-  {
-      vtkErrorMacro( "setting input data type to VTK_SHORT (4), was " << type);
-      type = VTK_SHORT;
-  }
-#endif
   switch (type)
   {
     case VTK_CHAR:
@@ -218,9 +213,9 @@ void vtkImageAccumulateDiscrete::ExecuteData(vtkDataObject *)
 }
 
 
+//----------------------------------------------------------------------------
 void vtkImageAccumulateDiscrete::PrintSelf(ostream& os, vtkIndent indent)
 {
-  vtkImageToImageFilter::PrintSelf(os,indent);
-
+  Superclass::PrintSelf(os,indent);
 }
 

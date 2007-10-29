@@ -7,24 +7,21 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlDataVolume.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:22 $
-  Version:   $Revision: 1.25.2.1 $
+  Date:      $Date: 2007/10/29 14:58:18 $
+  Version:   $Revision: 1.25.2.1.2.1 $
 
 =========================================================================auto=*/
-#include <stdio.h>
+#include "vtkMrmlDataVolume.h"
+
+#include "vtkObjectFactory.h"
+#include "vtkMrmlVolumeNode.h"
 #include "vtkCommand.h"
 #include "vtkCallbackCommand.h"
-#include "vtkMrmlDataVolume.h"
-#include "vtkMrmlVolumeNode.h"
-#include "vtkObjectFactory.h"
 #include "vtkImageReader.h"
 #include "vtkImageWriter.h"
 #include "vtkImageCanvasSource2D.h"
 #include "vtkImageCopy.h"
-#include <time.h>
 #include "vtkImageDICOMReader.h"
-
-
 #include "vtkPointData.h"
 
 //------------------------------------------------------------------------------
@@ -147,20 +144,21 @@ unsigned long int vtkMrmlDataVolume::GetMTime()
   return result;
 }
 
-char* 
-vtkMrmlDataVolume::GetOutputPointer(int zslice)
+const char* vtkMrmlDataVolume::GetOutputPointer(int zslice)
 {
     static char p[1024];
     void *ptr;
 
     if ( this->ImageData == NULL )
-    {   sprintf (p, "%p", 0);
-    } else
-    {
-        ptr = this->ImageData->GetScalarPointer(0, 0, zslice);
-        sprintf (p, "%p", ptr);
-    }
-    return (p);
+      {
+      sprintf (p, "%d", 0);
+      }
+    else
+      {
+      ptr = this->ImageData->GetScalarPointer(0, 0, zslice);
+      sprintf (p, "%p", ptr);
+      }
+    return p;
 }
 
 
@@ -201,9 +199,9 @@ void vtkMrmlDataVolume::CheckImageData()
 
     // Make this an empty RGBA image
     vtkImageData *id = vtkImageData::New();
-    id->SetNumberOfScalarComponents(4);
+    id->SetNumberOfScalarComponents(node->GetNumScalars());
     //id->SetScalarType(VTK_UNSIGNED_CHAR);
-    id->SetScalarType(VTK_SHORT);
+    id->SetScalarType(node->GetScalarType());
     id->SetExtent(0, dim[0]-1, 0, dim[1]-1, 0, 0);
     id->SetSpacing(node->GetSpacing());
     id->AllocateScalars();

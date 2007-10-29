@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageDICOMReader.cxx,v $
-  Date:      $Date: 2005/12/20 22:44:12 $
-  Version:   $Revision: 1.21.8.1 $
+  Date:      $Date: 2007/10/29 14:58:16 $
+  Version:   $Revision: 1.21.8.1.2.1 $
 
 =========================================================================auto=*/
 #include <stdio.h>
@@ -349,7 +349,7 @@ int vtkImageDICOMReader::GetDataByteOrder()
 #endif
 }
 
-char *vtkImageDICOMReader::GetDataByteOrderAsString()
+const char *vtkImageDICOMReader::GetDataByteOrderAsString()
 {
 #ifdef VTK_WORDS_BIGENDIAN
   if ( this->SwapBytes )

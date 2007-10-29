@@ -1,14 +1,14 @@
 /*=auto=========================================================================
 
-  Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+  Portions (c) Copyright 2006 Brigham and Women's Hospital (BWH) All Rights Reserved.
 
   See Doc/copyright/copyright.txt
   or http://www.slicer.org/copyright/copyright.txt for details.
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkResliceImage.h,v $
-  Date:      $Date: 2005/12/20 22:44:35 $
-  Version:   $Revision: 1.13.12.1 $
+  Date:      $Date: 2007/10/29 14:58:19 $
+  Version:   $Revision: 1.13.12.1.2.1 $
 
 =========================================================================auto=*/
 /*=========================================================================
@@ -16,8 +16,8 @@
   Program:   Samson Timoner TetraMesh Library
   Module:    $RCSfile: vtkResliceImage.h,v $
   Language:  C++
-  Date:      $Date: 2005/12/20 22:44:35 $
-  Version:   $Revision: 1.13.12.1 $
+  Date:      $Date: 2007/10/29 14:58:19 $
+  Version:   $Revision: 1.13.12.1.2.1 $
   
 Copyright (c) 2001 Samson Timoner
 
@@ -36,21 +36,14 @@ without express permission of the author.
 // personal CVS tree. If you make changes, please let him know.
 //
 
-#ifndef __vtkDeformImage_h
-#define __vtkDeformImage_h
+#ifndef __vtkResliceImage_h
+#define __vtkResliceImage_h
+
+#include "vtkImageToImageFilter.h"
+#include "vtkSlicer.h"
 
 class vtkMatrix4x4;
 class vtkUnstructuredGrid;
-
-#include "vtkImageData.h"
-#include "vtkImageToImageFilter.h"
-#include "vtkUnstructuredGrid.h"
-#include "vtkMatrix4x4.h"
-#include "vtkSlicer.h"
-
-#ifndef vtkFloatingPointType
-#define vtkFloatingPointType float
-#endif
 
 class VTK_SLICER_BASE_EXPORT vtkResliceImage : public vtkImageToImageFilter
 {
@@ -74,7 +67,7 @@ public:
   // This transform takes points in the output volume's continuous coordinates
   // (mm) and maps them to the input volume's continuous coordinates (mm).
   // If set to NULL, the transform is the identity.
-  vtkSetObjectMacro(TransformOutputToInput,vtkMatrix4x4);
+  virtual void SetTransformOutputToInput(vtkMatrix4x4*);
   vtkGetObjectMacro(TransformOutputToInput,vtkMatrix4x4);
  
 
@@ -98,11 +91,8 @@ public:
                                          vtkFloatingPointType Spacing1[3],
                                          vtkFloatingPointType Origin1[3]);
 protected:
-
   vtkResliceImage();
   ~vtkResliceImage() {};
-  vtkResliceImage(const vtkResliceImage&) {};
-  void operator=(const vtkResliceImage&) {};
 
   vtkMatrix4x4     *TransformOutputToInput;
   vtkMatrix4x4     *IJKtoIJK;
@@ -113,9 +103,12 @@ protected:
 
   void ExecuteInformation(vtkImageData *inData, vtkImageData *outData);
   void ComputeInputUpdateExtent(int inExt[6], int outExt[6]);
-  void ExecuteInformation(){this->vtkImageToImageFilter::ExecuteInformation();};
+  void ExecuteInformation(){this->Superclass::ExecuteInformation();};
   void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,
                int outExt[6], int id);
   //ETX
+private:
+  vtkResliceImage(const vtkResliceImage&);
+  void operator=(const vtkResliceImage&);
 };
-#endif /* DeformImage_h */
+#endif /* __vtkResliceImage_h */

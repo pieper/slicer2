@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlDataVolumeReadWrite.h,v $
-  Date:      $Date: 2005/12/20 22:44:22 $
-  Version:   $Revision: 1.3.16.1 $
+  Date:      $Date: 2007/10/29 14:58:18 $
+  Version:   $Revision: 1.3.16.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlDataVolumeReadWrite - 
@@ -50,8 +50,8 @@ class VTK_SLICER_BASE_EXPORT vtkMrmlDataVolumeReadWrite : public vtkObject
 protected:
   vtkMrmlDataVolumeReadWrite();
   ~vtkMrmlDataVolumeReadWrite();
-  vtkMrmlDataVolumeReadWrite(const vtkMrmlDataVolumeReadWrite&) {};
-  void operator=(const vtkMrmlDataVolumeReadWrite&) {};
+  vtkMrmlDataVolumeReadWrite(const vtkMrmlDataVolumeReadWrite&);
+  void operator=(const vtkMrmlDataVolumeReadWrite&);
 };
 
 #endif

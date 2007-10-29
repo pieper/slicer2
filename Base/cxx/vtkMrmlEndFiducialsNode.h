@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlEndFiducialsNode.h,v $
-  Date:      $Date: 2005/12/20 22:44:23 $
-  Version:   $Revision: 1.10.16.1 $
+  Date:      $Date: 2007/10/29 14:58:18 $
+  Version:   $Revision: 1.10.16.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlEndFiducialsNode - represents the end of a vtkMrmlFiducialsNode.
@@ -47,8 +47,8 @@ public:
 protected:
   vtkMrmlEndFiducialsNode();
   ~vtkMrmlEndFiducialsNode();
-  vtkMrmlEndFiducialsNode(const vtkMrmlEndFiducialsNode&) {};
-  void operator=(const vtkMrmlEndFiducialsNode&) {};
+  vtkMrmlEndFiducialsNode(const vtkMrmlEndFiducialsNode&);
+  void operator=(const vtkMrmlEndFiducialsNode&);
 
 };
 

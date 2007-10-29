@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageRealtimeScan.cxx,v $
-  Date:      $Date: 2007/02/09 16:36:15 $
-  Version:   $Revision: 1.15.8.3.2.12 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.15.8.3.2.13 $
 
 =========================================================================auto=*/
 #include <stdio.h>

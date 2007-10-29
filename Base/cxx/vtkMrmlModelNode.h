@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMrmlModelNode.h,v $
-  Date:      $Date: 2006/01/04 22:18:12 $
-  Version:   $Revision: 1.24.2.2 $
+  Date:      $Date: 2007/10/29 14:58:18 $
+  Version:   $Revision: 1.24.2.2.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkMrmlModelNode - MRML node to represent a 3D surface model.
@@ -21,22 +21,13 @@
 #ifndef __vtkMrmlModelNode_h
 #define __vtkMrmlModelNode_h
 
-//#include <iostream.h>
-//#include <fstream.h>
 #include "vtkMrmlNode.h"
 #include "vtkMatrix4x4.h"
 #include "vtkTransform.h"
 #include "vtkSlicer.h"
 
-#include <string>
-
-#ifdef _WIN32
-#include <vector>
-#define strncasecmp strnicmp
-#else
-#include <vector.h>
-#endif
-using namespace std;
+#include <vtkstd/string>
+#include <vtkstd/vector>
 
 class VTK_SLICER_BASE_EXPORT vtkMrmlModelNode : public vtkMrmlNode
 {
@@ -141,15 +132,15 @@ public:
     // Description:
     // number of scalar file names
     int GetNumberOfScalarFileNames();
-    void AddScalarFileName(char *);
+    void AddScalarFileName(const char *);
     const char *GetScalarFileName(int idx);
     void DeleteScalarFileNames();
     
 protected:
   vtkMrmlModelNode();
   ~vtkMrmlModelNode();
-  vtkMrmlModelNode(const vtkMrmlModelNode&) {};
-  void operator=(const vtkMrmlModelNode&) {};
+  vtkMrmlModelNode(const vtkMrmlModelNode&);
+  void operator=(const vtkMrmlModelNode&);
 
   // Strings
   char *ModelID;
@@ -177,7 +168,7 @@ protected:
     // Scalar overlay
 //BTX
     // use a vector to hold the scalar file names
-    std::vector<std::string>ScalarFileNamesVec;
+    vtkstd::vector<vtkstd::string>ScalarFileNamesVec;
 //ETX
 };
 

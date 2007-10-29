@@ -7,14 +7,18 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageCurveRegion.h,v $
-  Date:      $Date: 2005/12/20 22:44:12 $
-  Version:   $Revision: 1.6.16.1 $
+  Date:      $Date: 2007/10/29 14:58:16 $
+  Version:   $Revision: 1.6.16.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageCurveRegion - Abstract Filter used in slicer to plot graphs
+// .SECTION Description
+// vtkImageCurveRegion
+//
+
 #ifndef __vtkImageCurveRegion_h
 #define __vtkImageCurveRegion_h
-#include "vtkImageData.h"
+
 #include "vtkImageSource.h"
 #include "vtkSlicer.h"
 
@@ -36,7 +40,8 @@
 #define EMSEGMENT_ONE_OVER_ROOT_2_PI sqrt(EMSEGMENT_ONE_OVER_2_PI)
 #define EMSEGMENT_MINUS_ONE_OVER_2_LOG_2 ((float) -.72134752)
 
-class VTK_SLICER_BASE_EXPORT vtkImageCurveRegion : public vtkImageSource  {
+class VTK_SLICER_BASE_EXPORT vtkImageCurveRegion : public vtkImageSource
+{
 public:
   static vtkImageCurveRegion *New();
   vtkTypeMacro(vtkImageCurveRegion,vtkImageSource);

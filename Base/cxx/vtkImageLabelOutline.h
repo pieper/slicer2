@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageLabelOutline.h,v $
-  Date:      $Date: 2005/12/20 22:44:16 $
-  Version:   $Revision: 1.14.16.1 $
+  Date:      $Date: 2007/10/29 14:58:17 $
+  Version:   $Revision: 1.14.16.1.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkImageLabelOutline -  Display labelmap outlines
@@ -19,13 +19,13 @@
 #ifndef __vtkImageLabelOutline_h
 #define __vtkImageLabelOutline_h
 
-#include "vtkImageData.h"
 #include "vtkImageNeighborhoodFilter.h"
 #include "vtkSlicer.h"
 
+class vtkImageData;
 class VTK_SLICER_BASE_EXPORT vtkImageLabelOutline : public vtkImageNeighborhoodFilter
 {
- public:
+public:
   static vtkImageLabelOutline *New();
   vtkTypeMacro(vtkImageLabelOutline,vtkImageNeighborhoodFilter);
   void PrintSelf(ostream& os, vtkIndent indent);
@@ -40,15 +40,15 @@ class VTK_SLICER_BASE_EXPORT vtkImageLabelOutline : public vtkImageNeighborhoodF
   vtkSetMacro(Outline, int);
   vtkGetMacro(Outline, int);
 
- protected:
+protected:
   vtkImageLabelOutline();
   ~vtkImageLabelOutline();
 
   float Background;
   int Outline;
 
-  void ThreadedExecute(vtkImageData *inData, vtkImageData *outData, 
-               int extent[6], int id);
+  void ThreadedExecute(vtkImageData *inData, vtkImageData *outData,
+    int extent[6], int id);
 };
 
 #endif
