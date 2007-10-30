@@ -22,9 +22,10 @@ INCLUDE (${VTKNEUROENDOSCOPY_SOURCE_DIR}/cxx/CMakeListsLocal.txt)
 
 IF (VTK_WRAP_TCL AND VTKNEUROENDOSCOPY_WRAP_TCL)
 
-  VTK_WRAP_TCL (vtkNeuroendoscopyTCL NeuroendoscopyTCL_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkNeuroendoscopyTCL NeuroendoscopyTCL_SRCS)
+  VTK_WRAP_TCL (vtkNeuroendoscopyTCL NeuroendoscopyTCL_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkNeuroendoscopyTCL ${NeuroendoscopyTCL_SRCS})
   TARGET_LINK_LIBRARIES (vtkNeuroendoscopyTCL 
+                         vtkNeuroendoscopy 
                          vtkIOTCL 
                          vtkGraphicsTCL 
                          vtkImagingTCL 
@@ -55,12 +56,12 @@ ENDIF (VTK_WRAP_TCL AND VTKNEUROENDOSCOPY_WRAP_TCL)
 
 IF (VTK_WRAP_PYTHON AND VTKNEUROENDOSCOPY_WRAP_PYTHON)
 
-  VTK_WRAP_PYTHON (vtkNeuroendoscopyPython NeuroendoscopyPython_SRCS LOCAL_MODULE_SRCS)
+  VTK_WRAP_PYTHON (vtkNeuroendoscopyPython NeuroendoscopyPython_SRCS ${LOCAL_MODULE_SRCS})
 
   IF (APPLE)
-    ADD_LIBRARY (vtkNeuroendoscopyPython MODULE NeuroendoscopyPython_SRCS)
+    ADD_LIBRARY (vtkNeuroendoscopyPython MODULE ${NeuroendoscopyPython_SRCS})
   ELSE (APPLE)
-    ADD_LIBRARY (vtkNeuroendoscopyPython SHARED NeuroendoscopyPython_SRCS)
+    ADD_LIBRARY (vtkNeuroendoscopyPython SHARED ${NeuroendoscopyPython_SRCS})
   ENDIF (APPLE)
 
   IF (WIN32)
@@ -106,8 +107,8 @@ ENDIF (VTK_WRAP_PYTHON AND VTKNEUROENDOSCOPY_WRAP_PYTHON)
 
 IF (VTK_WRAP_JAVA AND VTKNEUROENDOSCOPY_WRAP_JAVA)
 
-  VTK_WRAP_JAVA (vtkNeuroendoscopyJava NeuroendoscopyJava_SRCS LOCAL_MODULE_SRCS)
-  ADD_LIBRARY (vtkNeuroendoscopyJava SHARED NeuroendoscopyJava_SRCS)
+  VTK_WRAP_JAVA (vtkNeuroendoscopyJava NeuroendoscopyJava_SRCS ${LOCAL_MODULE_SRCS})
+  ADD_LIBRARY (vtkNeuroendoscopyJava SHARED ${NeuroendoscopyJava_SRCS})
   TARGET_LINK_LIBRARIES (vtkNeuroendoscopyJava 
                          vtkIOJava
                          vtkGraphicsJava
