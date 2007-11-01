@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.cxx,v $
-  Date:      $Date: 2007/10/26 19:14:36 $
-  Version:   $Revision: 1.26 $
+  Date:      $Date: 2007/11/01 19:42:42 $
+  Version:   $Revision: 1.27 $
 
 =========================================================================auto=*/
 
@@ -818,8 +818,6 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   short *inPtr;
   vtkHyperStreamlineDTMRI *newStreamline;
   vtkTransform *transform;
-  vtkTransformPolyDataFilter *transformer;
-  vtkPolyDataWriter *writer;
   std::stringstream fileNameStr;
   int idx;
   ofstream fileCoordinateSystemInfo;
@@ -863,9 +861,6 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
   transform=vtkTransform::New();
   transform->SetMatrix(this->WorldToTensorScaledIJK->GetMatrix());
   transform->Inverse();
-  transformer=vtkTransformPolyDataFilter::New();
-  transformer->SetTransform(transform);
-
 
   // Store information to put points into 
   // centered scaled IJK space, instead of just
@@ -903,9 +898,6 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
         }
     }
   fileCoordinateSystemInfo << endl;
-
-  writer = vtkPolyDataWriter::New();
-  writer->SetFileTypeToBinary();
 
   // currently this filter is not multithreaded, though in the future 
   // it could be (especially if it inherits from an image filter class)
@@ -1031,6 +1023,9 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
                         {
                           
                           // transform model
+                          vtkTransformPolyDataFilter *transformer;
+                          transformer=vtkTransformPolyDataFilter::New();
+                          transformer->SetTransform(transform);
                           transformer->SetInput(newStreamline->GetOutput());
 
                           // force update to get correct number of points
@@ -1109,8 +1104,10 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
                           data->GetPointData()->SetScalars(NULL);
         
                           // Save the model to disk
+                          vtkPolyDataWriter *writer;
+                          writer = vtkPolyDataWriter::New();
+                          writer->SetFileTypeToBinary();
                           writer->SetInput(data);
-                          //writer->SetFileType(2);
                           
                           // clear the buffer (set to empty string)
                           fileNameStr.str("");
@@ -1119,6 +1116,12 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
                           writer->Write();
                           
                           idx++;
+
+                          // Delete objects created if we saved to disk
+                          transformer->Delete();
+                          writer->Delete();
+                          newTensors->Delete();
+                          data->Delete();
                         }
 
                       // Delete objects
@@ -1133,10 +1136,8 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
 
     }
 
+  // Delete matrix object
   transform->Delete();
-  transformer->Delete();
-  writer->Delete();
-
   
   // Tell user how many we wrote
   std::cout << "Wrote " << idx << "model files." << endl;
@@ -1147,6 +1148,7 @@ void vtkSeedTracts::SeedAndSaveStreamlinesInROI(char *pointsFilename, char *mode
 
   timer->StopTimer();
   std::cout << "Tractography in ROI time: " << timer->GetElapsedTime() << endl;
+  timer->Delete();
 }
 
 
