@@ -57,7 +57,9 @@ IF (VTKNEUROENDOSCOPY_CAN_BUILD)
   # numerous dependencies problems.
   #
 
-  SUBDIRS (
+  SUBDIRS(
+    lib/gandalf
+    lib/cminpack
     cxx
   )
 
