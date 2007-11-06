@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRI.tcl,v $
-#   Date:      $Date: 2007/02/21 18:38:19 $
-#   Version:   $Revision: 1.133 $
+#   Date:      $Date: 2007/11/06 23:43:10 $
+#   Version:   $Revision: 1.133.2.1 $
 # 
 #===============================================================================
 # FILE:        DTMRI.tcl
@@ -481,7 +481,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.133 $} {$Date: 2007/02/21 18:38:19 $}]
+                  {$Revision: 1.133.2.1 $} {$Date: 2007/11/06 23:43:10 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -1524,6 +1524,9 @@ proc DTMRISetActive {t} {
     } else {
        set DTMRI(mode,mask) None
     }   
+
+    #Update the transformation matrix for this tensor.
+    DTMRICalculateIJKtoRASRotationMatrix DTMRI(vtk,glyphs,trans) $t
 
     # Make sure this tensor is the input to the glyph pipeline
     DTMRIUpdate

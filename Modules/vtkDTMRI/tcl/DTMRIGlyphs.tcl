@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRIGlyphs.tcl,v $
-#   Date:      $Date: 2006/04/01 13:35:50 $
-#   Version:   $Revision: 1.22 $
+#   Date:      $Date: 2007/11/06 23:42:57 $
+#   Version:   $Revision: 1.22.2.1 $
 # 
 #===============================================================================
 # FILE:        DTMRIGlyphs.tcl
@@ -39,7 +39,7 @@ proc DTMRIGlyphsInit {} {
     #------------------------------------
     set m "Glyphs"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.22 $} {$Date: 2006/04/01 13:35:50 $}]
+                                 {$Revision: 1.22.2.1 $} {$Date: 2007/11/06 23:42:57 $}]
 
     # type of reformatting
     set DTMRI(mode,reformatType) 0
@@ -730,7 +730,7 @@ proc DTMRIUpdate {} {
         #puts [[t2 GetMatrix] Print]
         #DTMRI(vtk,glyphs) SetTensorRotationMatrix [t2 GetMatrix]
         #t2 Delete
-        DTMRICalculateIJKtoRASRotationMatrix DTMRI(vtk,glyphs,trans) $t
+        #DTMRICalculateIJKtoRASRotationMatrix DTMRI(vtk,glyphs,trans) $t
         foreach plane {0 1 2} {
           $DTMRI(mode,glyphsObject$plane) SetTensorRotationMatrix [DTMRI(vtk,glyphs,trans) GetMatrix]
         }
@@ -798,13 +798,15 @@ proc DTMRIUpdate {} {
 
             # Append glyphs
             #------------------------------------
-        #Disconnect previous glyphs
+        #Disconnect previous glyphs if there are less values
         set prevnumInputs [DTMRI(vtk,glyphs,append) GetNumberOfInputs]
+        set numInputs [llength $slice]
+        if {$numInputs < $prevnumInputs} {
           for {set i 0} {$i < $prevnumInputs} {incr i} {
             DTMRI(vtk,glyphs,append) SetInputByNumber $i ""
-          }     
-            if {$slice != "None"} {
-          set numInputs [llength $slice]
+          }
+        }
+        if {$slice != "None"} {
           DTMRI(vtk,glyphs,append) SetNumberOfInputs $numInputs
               foreach plane $slice {
             DTMRI(vtk,glyphs,append) SetInputByNumber [expr $plane%$numInputs] [$DTMRI(mode,glyphsObject$plane) GetOutput]
@@ -814,7 +816,7 @@ proc DTMRIUpdate {} {
           DTMRI(vtk,glyphs,append) SetNumberOfInputs $numInputs
           DTMRI(vtk,glyphs,append) SetInputByNumber 0 [$DTMRI(mode,glyphsObject0) GetOutput]
         }    
-              
+ 
             # for lines don't use normals filter before mapper
         
          DTMRI(vtk,glyphs,mapper) SetInput \
@@ -822,7 +824,7 @@ proc DTMRIUpdate {} {
 
             # Use axes or ellipsoids
             #------------------------------------
-      set type stripper            
+      set type stripper
       foreach plane "0 1 2" {  
             switch $DTMRI(mode,glyphType) {
                 "Axes" {
@@ -846,7 +848,7 @@ proc DTMRIUpdate {} {
                     DTMRI(vtk,glyphs,$type) SetInput \
             [DTMRI(vtk,glyphs,tube) GetOutput]
                 }
-                "Ellipsoids" {            
+                "Ellipsoids" {
                     DTMRI(vtk,glyphs,$type) SetInput \
             [DTMRI(vtk,glyphs,sphere) GetOutput]
                     #$DTMRI(mode,glyphsObject$plane) SetSource \
@@ -855,7 +857,6 @@ proc DTMRIUpdate {} {
                     # this normal filter improves display but is slow.
                     #DTMRI(vtk,glyphs,mapper) SetInput \
                     #    [DTMRI(vtk,glyphs,normals) GetOutput]
-                    
                 }
                 "Boxes" {
                     DTMRI(vtk,glyphs,$type) SetInput \
@@ -867,13 +868,12 @@ proc DTMRIUpdate {} {
                     #DTMRI(vtk,glyphs,mapper) SetInput \
                     #    [DTMRI(vtk,glyphs,normals) GetOutput]
                 }
-        
            "Superquadric" {
                 $DTMRI(mode,glyphsObject$plane) SetSource \
                  [DTMRI(vtk,glyphs,line) GetOutput]
                 #DTMRI(vtk,glyphs,mapper) SetInput \
                 #        [DTMRI(vtk,glyphs,normals) GetOutput] 
-            }    
+            }
          }
          $DTMRI(mode,glyphsObject$plane) SetSource \
          [DTMRI(vtk,glyphs,stripper) GetOutput]
