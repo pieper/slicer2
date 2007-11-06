@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRICalculateTensors.tcl,v $
-#   Date:      $Date: 2007/04/09 08:28:47 $
-#   Version:   $Revision: 1.43.2.1 $
+#   Date:      $Date: 2007/11/06 23:43:42 $
+#   Version:   $Revision: 1.43.2.2 $
 # 
 #===============================================================================
 # FILE:        DTMRICalculateTensors.tcl
@@ -45,7 +45,7 @@ proc DTMRICalculateTensorsInit {} {
     #------------------------------------
     set m "CalculateTensors"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.43.2.1 $} {$Date: 2007/04/09 08:28:47 $}]
+                                 {$Revision: 1.43.2.2 $} {$Date: 2007/11/06 23:43:42 $}]
 
     # Initial path to search when loading files
     #------------------------------------
@@ -128,7 +128,7 @@ proc DTMRICalculateTensorsInit {} {
     # DWMRI key-value pair version supported by the slicer
     set DTMRI(convert,nrrd,version) 2
     
-    set DTMRI(convert,mask,removeIslands) 0
+    set DTMRI(convert,mask,removeIslands) 1
     set DTMRI(conver,mask,omega) 0.5
     
     set DTMRI(convert,mask,omega,tooltips) [list \
@@ -1339,7 +1339,7 @@ proc DTMRIConvertDWIToTensorLegacy {} {
           _MF SetElement $c $axis [lindex $axdir $c]
         }
       }
-            
+      
       trans PostMultiply
       trans SetMatrix _MF
       trans Concatenate _RasToVtk
@@ -1939,7 +1939,6 @@ proc DTMRIComputeGradientTransformation { v trans } {
        $_MF SetElement $c $axis [lindex $axdir $c]
      }
    }
-         
    $trans PostMultiply
    $trans SetMatrix $_MF
    $trans Concatenate $_RasToVtk
@@ -2008,13 +2007,13 @@ proc DTMRIComputeTensorMask {node} {
      _con Update
 
      _cast Delete
-   
+
      catch "_cast Delete"
      vtkImageCast _cast
      _cast SetInput [_con GetOutput]
      _cast SetOutputScalarTypeToShort
      _cast Update
-       
+
      _con Delete
 
    if { $DTMRI(convert,mask,removeIslands) } {
@@ -2028,18 +2027,17 @@ proc DTMRIComputeTensorMask {node} {
       _conn SetMinSize 10000
       _conn SliceBySliceOn
       _conn SetInput [_cast GetOutput]
-   
+
       _conn Update 
 
     }
-    
+
      #Free space
- 
-     #Grab Output           
+     #Grab Output
     set source_name [$node GetName]
     set name "Tensor_mask-$source_name "
-    set description "Mask for volume $name"            
-    
+    set description "Mask for volume $name"
+
     if {$DTMRI(convert,mask,removeIslands) == 1} {
         set mid [DTMRICreateNewNode $node [_conn GetOutput] $name $description]
         _conn Delete
