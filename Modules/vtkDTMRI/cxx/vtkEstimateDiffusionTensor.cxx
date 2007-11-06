@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkEstimateDiffusionTensor.cxx,v $
-  Date:      $Date: 2007/04/09 08:03:38 $
-  Version:   $Revision: 1.4.2.1 $
+  Date:      $Date: 2007/11/06 23:41:33 $
+  Version:   $Revision: 1.4.2.2 $
 
 =========================================================================auto=*/
 #include "vtkEstimateDiffusionTensor.h"
@@ -297,7 +297,8 @@ static void vtkEstimateDiffusionTensorExecute(vtkEstimateDiffusionTensor *self,
   double **PinvA;
   double **A;
   double B0;
-  double averageDWI;    
+  double averageDWI;
+  int numDWI;
   vtkDataArray *outTensors;
   double D[3][3];
   float outT[3][3];
@@ -364,13 +365,21 @@ static void vtkEstimateDiffusionTensorExecute(vtkEstimateDiffusionTensor *self,
           for (idxX = 0; idxX <= maxX; idxX++)
             {
               // create tensor from combination of gradient inputs 
-          averageDWI = 0.0;
+              averageDWI = 0.0;
+              numDWI = 0;
               for (k = 0; k < numInputs; k++)
-                  {
+                {
                   // diffusion from kth gradient
                   dwi[k] = (double) inPtr[k];
-          averageDWI += dwi[k];
-                  }
+                  // Ensure the samples are non-zero for numerical stability,
+                  if (dwi[k]<1)
+                    dwi[k]=1;
+                  if (self->GetBValues()->GetValue(k) > 1)
+                    {
+                    averageDWI += dwi[k];
+                    numDWI++;
+                    }
+                }
 
               if (self->GetWeightedFitting() == 0) {
                  self->EstimateLSTensorModel(dwi,PinvA,D,B0);
@@ -388,20 +397,23 @@ static void vtkEstimateDiffusionTensorExecute(vtkEstimateDiffusionTensor *self,
                       outT[i][j] = (float) (D[i][j]/self->GetScaleFactor());
                     }
                 }
-              // Pixel operation              
+              // Pixel operation
               outTensors->SetTuple(ptId,(float *)outT);
               // copy no diffusion data through for scalars
               *outPtr = (T) B0;
 
               // Copy B0 and DWI
-             *baselinePtr = (T) B0;
-             *averageDWIPtr = (T) (averageDWI - B0)/(numInputs-1);
+              *baselinePtr = (T) B0;
+              if (numDWI > 0)
+                *averageDWIPtr = (T) (averageDWI/numDWI);
+              else
+                *averageDWIPtr = (T) 0;
 
-              inPtr += numInputs;
-              ptId ++;
-              outPtr++;
-              baselinePtr++;
-              averageDWIPtr++;
+               inPtr += numInputs;
+               ptId ++;
+               outPtr++;
+               baselinePtr++;
+               averageDWIPtr++;
             }
           outPtr += outIncY;
           ptId += outIncY;
