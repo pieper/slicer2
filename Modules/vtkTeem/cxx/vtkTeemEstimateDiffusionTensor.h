@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTeemEstimateDiffusionTensor.h,v $
-  Date:      $Date: 2007/04/09 08:10:16 $
-  Version:   $Revision: 1.3.2.1 $
+  Date:      $Date: 2007/11/06 23:44:44 $
+  Version:   $Revision: 1.3.2.2 $
 
 =========================================================================auto=*/
 // .NAME vtkTeemEstimateDiffusionTensor - 
@@ -110,9 +110,8 @@ class VTK_TEEM_EXPORT vtkTeemEstimateDiffusionTensor : public vtkImageToImageFil
   // Description:
   // Internal class use only
   //BTX
-  void TransformDiffusionGradients();
-  int SetGradientsToContext ( tenEstimateContext *tec);
-  int SetTenContext(  tenEstimateContext *tec);
+  int SetGradientsToContext ( tenEstimateContext *tec,Nrrd *ngrad, Nrrd *nbmat);
+  int SetTenContext(  tenEstimateContext *tec,Nrrd *ngrad, Nrrd *nbmat);
   //ETX
 
  protected:
@@ -128,6 +127,7 @@ class VTK_TEEM_EXPORT vtkTeemEstimateDiffusionTensor : public vtkImageToImageFil
 
   vtkDoubleArray *BValues;
   vtkDoubleArray *DiffusionGradients;
+  vtkDoubleArray *TransformedDiffusionGradients;
 
   vtkImageData *Baseline;
   vtkImageData *AverageDWI;
@@ -160,7 +160,7 @@ class VTK_TEEM_EXPORT vtkTeemEstimateDiffusionTensor : public vtkImageToImageFil
   // vtkImageMultipleInputFilter's Execute function.
   void ExecuteData(vtkDataObject *out);
 
-
+  void TransformDiffusionGradients();
 
 };
 
