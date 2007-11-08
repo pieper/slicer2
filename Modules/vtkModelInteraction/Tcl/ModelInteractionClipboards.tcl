@@ -199,9 +199,16 @@ proc ModelInteractionUpdateClipboardGui {} {
 
     # Either put numbers or model names, depending on
     # the mode
+    set guiList ""
     switch $ModelInteraction(gui,textBox,mode) {
         "ModelIDs" {
-            $ModelInteraction(gui,textBox) insert end $ModelInteraction(clipboard,$id)
+            #$ModelInteraction(gui,textBox) insert end $ModelInteraction(clipboard,$id)
+            # fix off by one error with regards to slicer internal IDs vs. model numbers
+            # and model IDs in MRML file
+            foreach m $ModelInteraction(clipboard,$id) {
+                lappend guiList [Model($m,node) GetModelID]
+            }
+            $ModelInteraction(gui,textBox) insert end $guiList
         }
         "ModelNames" {
             foreach m $ModelInteraction(clipboard,$id) {
