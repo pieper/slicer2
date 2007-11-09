@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkTeemEstimateDiffusionTensor.cxx,v $
-  Date:      $Date: 2007/11/06 23:44:44 $
-  Version:   $Revision: 1.3.2.2 $
+  Date:      $Date: 2007/11/09 23:56:41 $
+  Version:   $Revision: 1.3.2.3 $
 
 =========================================================================auto=*/
 #include "vtkTeemEstimateDiffusionTensor.h"
@@ -361,6 +361,7 @@ static void vtkTeemEstimateDiffusionTensorExecute(vtkTeemEstimateDiffusionTensor
             {
              // create tensor from combination of gradient inputs
              averageDWI = 0.0;
+             numDWI = 0;
              for (int k=0; k< numInputs; k++) 
              {
                dwi[k] = (double) inPtr[k];
