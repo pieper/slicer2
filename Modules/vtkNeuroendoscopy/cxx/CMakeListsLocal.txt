@@ -97,22 +97,12 @@ INCLUDE_DIRECTORIES(
    ${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib
    ${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/gandalf 
    ${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/cminpack 
-#${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/
-/usr/local/include/
-/usr/include/
-#   /projects/igtdev/ruetz/IGSTK-build/bin/
-)
-#LINK_LIBRARIES (${VTKSLICERBASE_BUILD_LIB})
-LINK_LIBRARIES (${NEUROENDOSCOPY_LOCAL_LIBS} 
-  glut
-  gandalf
-  cminpack
 )
 
-# Add additional directories to look in for libraries
-LINK_DIRECTORIES(
-  ${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/gandalf 
-  /usr/lib
+
+LINK_LIBRARIES (${NEUROENDOSCOPY_LOCAL_LIBS} 
+  gandalf
+  cminpack
 )
 
 
