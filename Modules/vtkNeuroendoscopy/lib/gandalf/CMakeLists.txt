@@ -356,6 +356,17 @@ INCLUDE_DIRECTORIES(
    ${VTKSLICERBASE_SOURCE_DIR}/cxx 
    ${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib
    ${VTKNEUROENDOSCOPY_SOURCE_DIR}/lib/gandalf 
+   /usr/local/include/
+   /usr/include/
+)
+
+LINK_LIBRARIES (${NEUROENDOSCOPY_LOCAL_LIBS} 
+  glut
+)
+
+# Add additional directories to look in for libraries
+LINK_DIRECTORIES(
+  /usr/lib
 )
 
 
