@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkInteractiveTensorGlyph.cxx,v $
-  Date:      $Date: 2006/04/18 17:32:59 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2007/11/09 23:45:30 $
+  Version:   $Revision: 1.16.2.1 $
 
 =========================================================================auto=*/
 #include "vtkInteractiveTensorGlyph.h"
@@ -64,6 +64,7 @@ vtkInteractiveTensorGlyph::vtkInteractiveTensorGlyph()
   this->MaskGlyphsWithScalars = 0;
   this->ScalarMask = NULL;
   this->Resolution = 1;
+  this->RandomSampling = 1;
 }
 
 vtkInteractiveTensorGlyph::~vtkInteractiveTensorGlyph()
@@ -122,7 +123,7 @@ void vtkInteractiveTensorGlyph::Execute()
   vtkFloatingPointType tensor[3][3];
   vtkDataArray *inScalars;
   int numPts, numSourcePts, numSourceCells;
-  int inPtId, i, j;
+  int inPtId, randPtId, i, j;
   vtkPoints *sourcePts;
   vtkDataArray *sourceNormals;
   vtkCellArray *sourceCells, *cells;  
@@ -139,6 +140,8 @@ void vtkInteractiveTensorGlyph::Execute()
   vtkIdType *pts;
   int cellId;
   int ptOffset=0;
+  double testValue;
+  vtkFloatingPointType trace;
   vtkFloatingPointType *m[3], w[3], *v[3];
   vtkFloatingPointType m0[3], m1[3], m2[3];
   vtkFloatingPointType v0[3], v1[3], v2[3];
@@ -289,27 +292,57 @@ void vtkInteractiveTensorGlyph::Execute()
         }
     }
 
-      //ptIncr = inPtId * numSourcePts;
+    // Do random sampling
+    randPtId=inPtId;
+    do {
+      //randPtId = (int) floor(vtkMath::Random(0,numPts-1));
+      //If we don't find a good tensor after two times our current resolution, force the tensor already selected
+      if ((randPtId - inPtId) >= 2*this->Resolution)
+         break;
 
-      //tensor = inTensors->GetTuple(inPtId);
-      inTensors->GetTuple(inPtId,(vtkFloatingPointType *)tensor);
-
-      trans->Identity();
-
+      inTensors->GetTuple(randPtId,(vtkFloatingPointType *)tensor);
       // threshold: if trace is <= 0, don't do expensive computations
       // This used to be: tensor ->GetComponent(0,0) + 
       // tensor->GetComponent(1,1) + tensor->GetComponent(2,2);
-      vtkFloatingPointType trace = tensor[0][0] + tensor[1][1] + tensor[2][2];
+      trace = tensor[0][0] + tensor[1][1] + tensor[2][2];
 
-      
-      // only display this glyph if either:
-      // a) we are masking and the mask is 1 at this location.
-      // b) the trace is positive and we are not masking (default).
-      // (If the trace is 0 we don't need to go through the code just to
-      // display nothing at the end, since we expect that our data has
-      // non-negative eigenvalues.)
-      if ((doMasking && inMask->GetTuple1(inPtId)) || (!this->MaskGlyphsWithScalars && trace > 0)) 
-    {
+      if(trace <=0)
+        break;
+
+      //Compute fa
+      for (j=0; j<3; j++)
+        {
+        for (i=0; i<3; i++)
+          {
+          // transpose
+          //m[i][j] = tensor[i+3*j];
+          m[i][j] = tensor[j][i];
+           }
+       }
+       vtkTensorMathematics::TeemEigenSolver(m,w,v);
+       randPtId++;
+       if (this->RandomSampling)
+         {
+          testValue = vtkTensorMathematics::FractionalAnisotropy(w);
+         }
+       else
+         {
+          testValue = 1;
+         }
+       //Place tensor if FA> uniform random variable
+     } while(testValue < pow(vtkMath::Random(0,1),0.8) && randPtId < numPts);
+     //Set inPtId to the random position selected.
+     //inPtId = randPtId-1;
+     trans->Identity();
+
+     // only display this glyph if either:
+     // a) we are masking and the mask is 1 at this location.
+     // b) the trace is positive and we are not masking (default).
+     // (If the trace is 0 we don't need to go through the code just to
+     // display nothing at the end, since we expect that our data has
+     // non-negative eigenvalues.)
+     if ((doMasking && inMask->GetTuple1(randPtId)) || (!this->MaskGlyphsWithScalars && trace > 0)) 
+      {
       // copy topology
       for (cellId=0; cellId < numSourceCells; cellId++)
         {
@@ -325,7 +358,7 @@ void vtkInteractiveTensorGlyph::Execute()
         }
 
       // translate Source to Input point
-      x = input->GetPoint(inPtId);
+      x = input->GetPoint(randPtId);
       // If we have a user-specified matrix determining the points
       vtkFloatingPointType x2[3];
       if (this->VolumePositionMatrix)
@@ -349,7 +382,7 @@ void vtkInteractiveTensorGlyph::Execute()
             }
         }
          //vtkMath::Jacobi(m, w, v);
-         vtkTensorMathematics::TeemEigenSolver(m,w,v);
+         //vtkTensorMathematics::TeemEigenSolver(m,w,v);
           //copy eigenvectors
           xv[0] = v[0][0]; xv[1] = v[1][0]; xv[2] = v[2][0];
           yv[0] = v[0][1]; yv[1] = v[1][1]; yv[2] = v[2][1];
@@ -376,7 +409,7 @@ void vtkInteractiveTensorGlyph::Execute()
       if ( inScalars && this->ColorGlyphs ) 
         {
           // Copy point data from source
-          s = inScalars->GetTuple1(inPtId);
+          s = inScalars->GetTuple1(randPtId);
         }
       else 
         {
