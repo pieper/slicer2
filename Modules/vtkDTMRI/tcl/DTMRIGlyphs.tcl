@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRIGlyphs.tcl,v $
-#   Date:      $Date: 2007/11/06 23:42:57 $
-#   Version:   $Revision: 1.22.2.1 $
+#   Date:      $Date: 2007/11/09 23:57:31 $
+#   Version:   $Revision: 1.22.2.2 $
 # 
 #===============================================================================
 # FILE:        DTMRIGlyphs.tcl
@@ -39,7 +39,7 @@ proc DTMRIGlyphsInit {} {
     #------------------------------------
     set m "Glyphs"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.22.2.1 $} {$Date: 2007/11/06 23:42:57 $}]
+                                 {$Revision: 1.22.2.2 $} {$Date: 2007/11/09 23:57:31 $}]
 
     # type of reformatting
     set DTMRI(mode,reformatType) 0
@@ -92,7 +92,18 @@ proc DTMRIGlyphsInit {} {
     set DTMRI(mode,glyphResolution) 3
     set DTMRI(mode,glyphResolution,min) 1
     set DTMRI(mode,glyphResolution,max) 5
+    set DTMRI(mode,glyphResolution,tooltips) "Resolution of the glyph grid. \nH means a high resolution grid (one glyph per voxel)."
 
+    # random sampling of glyphs based on FA
+    set DTMRI(mode,randomSampling) On
+    set DTMRI(mode,randomSamplingList) {On Off}
+    set DTMRI(mode,randomSamplingList,tooltips) [list \
+                        "Sample glyphs randomly based on FA."\
+                         "High FA glyphs are more likely to be displayed."]
+
+    # general value to scale glyphs
+    set DTMRI(mode,glyphScale) 1000
+    set DTMRI(mode,glyphScale,tooltips) "Scale factor for the glyphs"
 
     # How to handle display of colors: like W/L but scalar range
     set DTMRI(mode,glyphScalarRange) Auto
@@ -222,7 +233,7 @@ proc DTMRIGlyphsBuildGUI {} {
 
     set f $fGlyph.fVisMethods.fGlyphs
 
-    foreach frame "Resolution GlyphType Lines Colors ScalarBar GlyphScalarRange Slider" {
+    foreach frame "Resolution RandomSampling GlyphType GlyphScale Lines Colors ScalarBar GlyphScalarRange Slider" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx $Gui(pad) -pady $Gui(pad) -fill both
     }
@@ -242,9 +253,26 @@ proc DTMRIGlyphsBuildGUI {} {
           -orient vertical     \
           -resolution 1      \
           } $Gui(WSA)
+    TooltipAdd  $f.s $DTMRI(mode,glyphResolution,tooltips)
+    pack $f.l $f.s -side left -padx $Gui(pad) -pady 0
 
-      pack $f.l $f.s -side left -padx $Gui(pad) -pady 0
+    #-------------------------------------------
+    # Display-> Notebook ->Glyph frame->VisMethods->VisParams->Glyphs->Random Sampling frame
+    #-------------------------------------------
+   set f $fGlyph.fVisMethods.fGlyphs.fRandomSampling
 
+   DevAddLabel $f.l "Random Sampling:"
+    pack $f.l -side left -padx $Gui(pad) -pady 1
+
+    foreach vis $DTMRI(mode,randomSamplingList) tip $DTMRI(mode,randomSamplingList,tooltips) {
+        eval {radiobutton $f.rMode$vis \
+          -text "$vis" -value "$vis" \
+          -variable DTMRI(mode,randomSampling) \
+          -command {DTMRIUpdateRandomSampling} \
+          -indicatoron 0} $Gui(WCA)
+        pack $f.rMode$vis -side left -padx 0 -pady 1
+        TooltipAdd  $f.rMode$vis $tip
+    }
 
     #-------------------------------------------
     # Display-> Notebook ->Glyph frame->VisMethods->VisParams->Glyphs->GlyphType frame
@@ -269,6 +297,19 @@ proc DTMRIGlyphsBuildGUI {} {
     # Add a tooltip
     #TooltipAdd $f.mbVis $DTMRI(mode,glyphColorList,tooltip)
 
+    #-------------------------------------------
+    # Display-> Notebook ->Glyph frame->VisMethods->VisParams->Glyphs->GlyphScale frame
+    #-------------------------------------------
+    set f $fGlyph.fVisMethods.fGlyphs.fGlyphScale
+
+    DevAddLabel $f.l "Glyph Scale:"
+    pack $f.l -side left -padx $Gui(pad) -pady 1
+    eval {entry $f.e -width 10 \
+          -textvariable DTMRI(mode,glyphScale) } \
+        $Gui(WEA)
+    TooltipAdd  $f.e $DTMRI(mode,glyphScale,tooltips)
+    pack $f.e -side left  -padx 0 -pady 1
+    bind $f.e <Return> DTMRIGlyphUpdateScale
     #-------------------------------------------
     # Display-> Notebook ->Glyph frame->VisMethods->VisParams->Glyphs->Lines frame
     #-------------------------------------------
@@ -402,6 +443,37 @@ proc DTMRIUpdateReformatType {} {
     if {$result == "ok"} {
         DTMRIUpdate
     }
+}
+
+proc DTMRIGlyphUpdateScale {} {
+  global DTMRI
+
+  foreach plane "0 1 2" {
+    DTMRI(vtk,glyphs$plane) SetScaleFactor $DTMRI(mode,glyphScale)
+    set DTMRI(vtk,glyphs$plane,scaleFactor) $DTMRI(mode,glyphScale)
+    DTMRI(vtk,glyphsSQ$plane) SetScaleFactor $DTMRI(mode,glyphScale)
+    set DTMRI(tk,glyphsSQ$plane,scaleFactor) $DTMRI(mode,glyphScale)
+  }
+
+  Render3D
+}
+
+proc DTMRIUpdateRandomSampling {} {
+  global DTMRI
+
+  set mode $DTMRI(mode,randomSampling)
+  switch $mode {
+    "On" {
+      set value 1
+    }
+    "Off" {
+      set value 0
+    }
+  }
+  foreach plane "0 1 2" {
+    DTMRI(vtk,glyphs$plane) SetRandomSampling $value
+  }
+  Render3D
 }
 
 #-------------------------------------------------------------------------------
