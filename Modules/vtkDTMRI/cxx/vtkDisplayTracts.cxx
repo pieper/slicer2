@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkDisplayTracts.cxx,v $
-  Date:      $Date: 2007/03/16 18:27:45 $
-  Version:   $Revision: 1.21.2.1 $
+  Date:      $Date: 2007/11/13 23:39:53 $
+  Version:   $Revision: 1.21.2.2 $
 
 =========================================================================auto=*/
 #include "vtkDisplayTracts.h"
@@ -21,7 +21,7 @@
 #include "vtkPolyData.h"
 #include "vtkUnsignedCharArray.h"
 #include "vtkCellData.h"
-#include "vtkMergeDataObjectFilter.h"
+#include "vtkMergeDataObjectFilter2.h"
 #include "vtkFieldData.h"
 
 //------------------------------------------------------------------------------
@@ -157,11 +157,13 @@ void vtkDisplayTracts::SetMapperVisibility(vtkPolyDataMapper *currMapper)
     currMapper->ScalarVisibilityOn();
     currMapper->SetScalarModeToUseCellFieldData();
     currMapper->SetColorModeToDefault();
+    currMapper->UseLookupTableScalarRangeOff();
     currMapper->SelectColorArray("Color");
    } else {
     currMapper->ScalarVisibilityOn();
     currMapper->SetScalarModeToUsePointData();
     currMapper->SetColorModeToMapScalars();
+    currMapper->UseLookupTableScalarRangeOn();
    }
 }
 
@@ -485,14 +487,14 @@ void vtkDisplayTracts::FindStreamlineInGroup(vtkCellPicker *picker,int groupInde
 void vtkDisplayTracts::GetStreamlineRGBA(vtkHyperStreamline *currStreamline, unsigned char &R, unsigned char &G, unsigned char &B, unsigned char &A)
 {
   int groupIndex, indexInGroup;
-  vtkMergeDataObjectFilter *currMergeFilter;
+  vtkMergeDataObjectFilter2 *currMergeFilter;
 
   this->FindStreamline(currStreamline,groupIndex,indexInGroup);
   if (groupIndex == -1 || indexInGroup == -1) {
     return;
   }
   vtkCollection *currMergeFilters = (vtkCollection *) this->MergeFiltersGroup->GetItemAsObject(groupIndex);
-  currMergeFilter = (vtkMergeDataObjectFilter *) currMergeFilters->GetItemAsObject(indexInGroup);
+  currMergeFilter = (vtkMergeDataObjectFilter2 *) currMergeFilters->GetItemAsObject(indexInGroup);
 
   vtkUnsignedCharArray *colorarray = (vtkUnsignedCharArray *) ((vtkPolyData *) currMergeFilter->GetDataObject())->GetFieldData()->GetArray("Color");
 
@@ -530,13 +532,13 @@ void vtkDisplayTracts::GetStreamlineRGB(vtkHyperStreamline *currStreamline, unsi
 void vtkDisplayTracts::SetStreamlineRGBA(vtkHyperStreamline *currStreamline, unsigned char R, unsigned char G, unsigned char B, unsigned char A)
 {
   int groupIndex, indexInGroup;
-  vtkMergeDataObjectFilter *currMergeFilter;
+  vtkMergeDataObjectFilter2 *currMergeFilter;
   this->FindStreamline(currStreamline,groupIndex,indexInGroup);
   if (groupIndex == -1 || indexInGroup == -1) {
     return;
   }
   vtkCollection *currMergeFilters = (vtkCollection *) this->MergeFiltersGroup->GetItemAsObject(groupIndex);
-  currMergeFilter = (vtkMergeDataObjectFilter *) currMergeFilters->GetItemAsObject(indexInGroup);
+  currMergeFilter = (vtkMergeDataObjectFilter2 *) currMergeFilters->GetItemAsObject(indexInGroup);
   vtkUnsignedCharArray *colorarray = (vtkUnsignedCharArray *) ((vtkPolyData *) currMergeFilter->GetDataObject())->GetFieldData()->GetArray("Color");
   if (colorarray == NULL) {
       return;
@@ -567,13 +569,13 @@ void vtkDisplayTracts::SetStreamlineRGB(vtkHyperStreamline *currStreamline, unsi
 {
 
  int groupIndex, indexInGroup;
-  vtkMergeDataObjectFilter *currMergeFilter;
+  vtkMergeDataObjectFilter2 *currMergeFilter;
   this->FindStreamline(currStreamline,groupIndex,indexInGroup);
   if (groupIndex == -1 || indexInGroup == -1) {
     return;
   }
   vtkCollection *currMergeFilters = (vtkCollection *) this->MergeFiltersGroup->GetItemAsObject(groupIndex);
-  currMergeFilter = (vtkMergeDataObjectFilter *) currMergeFilters->GetItemAsObject(indexInGroup);
+  currMergeFilter = (vtkMergeDataObjectFilter2 *) currMergeFilters->GetItemAsObject(indexInGroup);
   vtkUnsignedCharArray *colorarray = (vtkUnsignedCharArray *) ((vtkPolyData *) currMergeFilter->GetDataObject())->GetFieldData()->GetArray("Color");
   if (colorarray == NULL) {
       return;
@@ -600,14 +602,14 @@ void vtkDisplayTracts::SetStreamlineOpacity(vtkHyperStreamline *currStreamline, 
 {
 
   int groupIndex, indexInGroup;
-  vtkMergeDataObjectFilter *currMergeFilter;
+  vtkMergeDataObjectFilter2 *currMergeFilter;
 
   this->FindStreamline(currStreamline,groupIndex,indexInGroup);
   if (groupIndex == -1 || indexInGroup == -1) {
     return;
   }
   vtkCollection *currMergeFilters = (vtkCollection *) this->MergeFiltersGroup->GetItemAsObject(groupIndex);
-  currMergeFilter = (vtkMergeDataObjectFilter *) currMergeFilters->GetItemAsObject(indexInGroup);
+  currMergeFilter = (vtkMergeDataObjectFilter2 *) currMergeFilters->GetItemAsObject(indexInGroup);
   vtkUnsignedCharArray *colorarray = (vtkUnsignedCharArray *) ((vtkPolyData *) currMergeFilter->GetDataObject())->GetFieldData()->GetArray("Color");
   colorarray->SetComponent(0,3,opacity);
   colorarray->SetComponent(1,3,opacity);
@@ -618,14 +620,14 @@ void vtkDisplayTracts::SetStreamlineOpacity(vtkHyperStreamline *currStreamline, 
 void vtkDisplayTracts::GetStreamlineOpacity(vtkHyperStreamline *currStreamline, unsigned char &opacity)
 {
   int groupIndex, indexInGroup;
-  vtkMergeDataObjectFilter *currMergeFilter;
+  vtkMergeDataObjectFilter2 *currMergeFilter;
 
   this->FindStreamline(currStreamline,groupIndex,indexInGroup);
   if (groupIndex == -1 || indexInGroup == -1) {
     return;
   }
   vtkCollection *currMergeFilters = (vtkCollection *) this->MergeFiltersGroup->GetItemAsObject(groupIndex);
-  currMergeFilter = (vtkMergeDataObjectFilter *) currMergeFilters->GetItemAsObject(indexInGroup);
+  currMergeFilter = (vtkMergeDataObjectFilter2 *) currMergeFilters->GetItemAsObject(indexInGroup);
   vtkUnsignedCharArray *colorarray = (vtkUnsignedCharArray *) ((vtkPolyData *)currMergeFilter->GetDataObject())->GetFieldData()->GetArray("Color");
   opacity= (unsigned char) colorarray->GetComponent(0,3);
 }
@@ -635,13 +637,13 @@ void vtkDisplayTracts::GetStreamlineOpacity(vtkHyperStreamline *currStreamline, 
 void vtkDisplayTracts::SetStreamlineRGBAInGroup(vtkHyperStreamline *currStreamline, int groupIndex, unsigned char R, unsigned char G, unsigned char B, unsigned char A)
 {
   int indexInGroup;
-  vtkMergeDataObjectFilter *currMergeFilter;
+  vtkMergeDataObjectFilter2 *currMergeFilter;
   this->FindStreamlineInGroup(currStreamline,groupIndex,indexInGroup);
   if (indexInGroup == -1) {
     return;
   }
   vtkCollection *currMergeFilters = (vtkCollection *) this->MergeFiltersGroup->GetItemAsObject(groupIndex);
-  currMergeFilter = (vtkMergeDataObjectFilter *) currMergeFilters->GetItemAsObject(indexInGroup);
+  currMergeFilter = (vtkMergeDataObjectFilter2 *) currMergeFilters->GetItemAsObject(indexInGroup);
   vtkUnsignedCharArray *colorarray = (vtkUnsignedCharArray *) ((vtkPolyData *) currMergeFilter->GetDataObject())->GetFieldData()->GetArray("Color");
   if (colorarray == NULL) {
       return;
@@ -682,14 +684,14 @@ void vtkDisplayTracts::SetStreamlineRGBInGroup(vtkHyperStreamline *currStreamlin
 void vtkDisplayTracts::GetStreamlineRGBAInGroup(vtkHyperStreamline *currStreamline, int groupIndex, unsigned char &R, unsigned char &G, unsigned char &B, unsigned char &A)
 {
   int indexInGroup;
-  vtkMergeDataObjectFilter *currMergeFilter;
+  vtkMergeDataObjectFilter2 *currMergeFilter;
 
   this->FindStreamlineInGroup(currStreamline,groupIndex,indexInGroup);
   if (indexInGroup == -1) {
     return;
   }
   vtkCollection *currMergeFilters = (vtkCollection *) this->MergeFiltersGroup->GetItemAsObject(groupIndex);
-  currMergeFilter = (vtkMergeDataObjectFilter *) currMergeFilters->GetItemAsObject(indexInGroup);
+  currMergeFilter = (vtkMergeDataObjectFilter2 *) currMergeFilters->GetItemAsObject(indexInGroup);
 
   vtkUnsignedCharArray *colorarray = (vtkUnsignedCharArray *) ((vtkPolyData *) currMergeFilter->GetDataObject())->GetFieldData()->GetArray("Color");
 
@@ -726,14 +728,14 @@ void vtkDisplayTracts::SetStreamlineOpacityInGroup(vtkHyperStreamline *currStrea
 {
 
   int indexInGroup;
-  vtkMergeDataObjectFilter *currMergeFilter;
+  vtkMergeDataObjectFilter2 *currMergeFilter;
 
   this->FindStreamlineInGroup(currStreamline,groupIndex,indexInGroup);
   if (indexInGroup == -1) {
     return;
   }
   vtkCollection *currMergeFilters = (vtkCollection *) this->MergeFiltersGroup->GetItemAsObject(groupIndex);
-  currMergeFilter = (vtkMergeDataObjectFilter *) currMergeFilters->GetItemAsObject(indexInGroup);
+  currMergeFilter = (vtkMergeDataObjectFilter2 *) currMergeFilters->GetItemAsObject(indexInGroup);
   vtkUnsignedCharArray *colorarray = (vtkUnsignedCharArray *) ((vtkPolyData *) currMergeFilter->GetDataObject())->GetFieldData()->GetArray("Color");
   colorarray->SetComponent(0,3,opacity);
   colorarray->SetComponent(1,3,opacity);
@@ -744,14 +746,14 @@ void vtkDisplayTracts::SetStreamlineOpacityInGroup(vtkHyperStreamline *currStrea
 void vtkDisplayTracts::GetStreamlineOpacityInGroup(vtkHyperStreamline *currStreamline, int groupIndex, unsigned char &opacity)
 {
   int indexInGroup;
-  vtkMergeDataObjectFilter *currMergeFilter;
+  vtkMergeDataObjectFilter2 *currMergeFilter;
 
   this->FindStreamlineInGroup(currStreamline,groupIndex,indexInGroup);
   if (groupIndex == -1 || indexInGroup == -1) {
     return;
   }
   vtkCollection *currMergeFilters = (vtkCollection *) this->MergeFiltersGroup->GetItemAsObject(groupIndex);
-  currMergeFilter = (vtkMergeDataObjectFilter *) currMergeFilters->GetItemAsObject(indexInGroup);
+  currMergeFilter = (vtkMergeDataObjectFilter2 *) currMergeFilters->GetItemAsObject(indexInGroup);
   vtkUnsignedCharArray *colorarray = (vtkUnsignedCharArray *) ((vtkPolyData *)currMergeFilter->GetDataObject())->GetFieldData()->GetArray("Color");
   opacity= (unsigned char) colorarray->GetComponent(0,3);
 }
@@ -771,7 +773,7 @@ void vtkDisplayTracts::CreateGroupObjects()
   vtkHyperStreamline *currStreamline;
   vtkTubeFilter2 *currTubeFilter;
   vtkTransformPolyDataFilter *currTransFilter;
-  vtkMergeDataObjectFilter *currMergeFilter;
+  vtkMergeDataObjectFilter2 *currMergeFilter;
   double color[3];
   double opacity;
 
@@ -870,7 +872,7 @@ void vtkDisplayTracts::CreateGroupObjects()
     fd->AddArray(colorarray);
     dataset->SetFieldData(fd);
 
-    currMergeFilter = vtkMergeDataObjectFilter::New();
+    currMergeFilter = vtkMergeDataObjectFilter2::New();
     currMergeFilter->SetInput(currClippedStreamline->GetOutput());
     currMergeFilter->SetDataObject(dataset);
     currMergeFilter->SetOutputFieldToCellDataField();
@@ -1109,7 +1111,7 @@ void vtkDisplayTracts::DeleteStreamlineInGroup(int groupindex, int index)
   #endif
   vtkTransformPolyDataFilter *currTransFilter;
   vtkTubeFilter2 *currTubeFilter;
-  vtkMergeDataObjectFilter *currMergeFilter;
+  vtkMergeDataObjectFilter2 *currMergeFilter;
   vtkAppendPolyData *currAppendFilter;
   vtkRenderer *currRenderer;
   //vtkLookupTable *currLookupTable;
@@ -1162,7 +1164,7 @@ void vtkDisplayTracts::DeleteStreamlineInGroup(int groupindex, int index)
     }
 
   vtkDebugMacro( << "Delete MergeFilter" );
-  currMergeFilter = (vtkMergeDataObjectFilter *) currMergeFilters->GetItemAsObject(index);
+  currMergeFilter = (vtkMergeDataObjectFilter2 *) currMergeFilters->GetItemAsObject(index);
   if (currMergeFilter != NULL)
     {
       currMergeFilters->RemoveItem(index);
