@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkPruneStreamline.cxx,v $
-  Date:      $Date: 2006/03/06 21:07:29 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2007/11/13 23:42:21 $
+  Version:   $Revision: 1.7.2.1 $
 
 =========================================================================auto=*/
 
@@ -29,7 +29,7 @@
 
 #define VTK_MARGIN 0.1
 
-vtkCxxRevisionMacro(vtkPruneStreamline, "$Revision: 1.7 $");
+vtkCxxRevisionMacro(vtkPruneStreamline, "$Revision: 1.7.2.1 $");
 
 vtkStandardNewMacro(vtkPruneStreamline);
 
@@ -114,37 +114,6 @@ void vtkPruneStreamline::Execute()
   double vm1;
   
   this->UpdateProgress (.2);
-  //For each streamline, compute Gradient
-  inLines->InitTraversal();
-  for(int i=0; i<numStreamlines; i++) {
-  
-    for(int cellId=0; cellId<2; cellId++) {
-     //inLines->GetCell(i*2+cellId,npts,ptId);
-     inLines->GetNextCell(npts,ptId);
-     //cout<<"Num points in cell: "<<npts<<endl;
-     
-     //Compute Central Finite Difference
-     for(int j=1;j<npts-1;j++) {
-       vp1=inScalars->GetComponent(ptId[j+1],0);
-       vm1=inScalars->GetComponent(ptId[j-1],0);
-
-       inPts->GetPoint(ptId[j+1],pp1);
-       inPts->GetPoint(ptId[j-1],pm1);
-  
-       dt =vtkMath::Distance2BetweenPoints(pp1,pm1);
-       
-       DinScalars->SetValue(ptId[j],(vp1-vm1)/dt);
-       //cout<<"Ds: "<<(vp1-vm1)/dt<<endl;
-     }
-     // Last point equals to last value
-     DinScalars->SetValue(ptId[npts-1],(vp1-vm1)/dt);
-     // First point equals to first value
-     DinScalars->SetValue(ptId[0],DinScalars->GetValue(ptId[1]));
-    
-    }
-  }
- 
- this->UpdateProgress (.4);  
 
   StreamlineIdPassTest->Initialize();
   StreamlineIdPassTest->Allocate(numStreamlines);
@@ -289,13 +258,10 @@ void vtkPruneStreamline::Execute()
   newPts->Delete();
   output->SetLines(newLines);
   newLines->Delete();
-  output->Squeeze();        
+  output->Squeeze();
 
-  DinScalars->Delete();
+}
 
-}       
-       
-  
 int vtkPruneStreamline::TestForStreamline(int* streamlineANDTest, int nptsAND, int *streamlineNOTTest, int nptsNOT)
 {
 
