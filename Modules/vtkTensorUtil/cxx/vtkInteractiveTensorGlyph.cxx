@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkInteractiveTensorGlyph.cxx,v $
-  Date:      $Date: 2007/11/09 23:45:30 $
-  Version:   $Revision: 1.16.2.1 $
+  Date:      $Date: 2007/11/13 23:50:35 $
+  Version:   $Revision: 1.16.2.2 $
 
 =========================================================================auto=*/
 #include "vtkInteractiveTensorGlyph.h"
@@ -293,7 +293,9 @@ void vtkInteractiveTensorGlyph::Execute()
     }
 
     // Do random sampling
+    double randValue;
     randPtId=inPtId;
+    randValue = pow(vtkMath::Random(0,1),0.8);
     do {
       //randPtId = (int) floor(vtkMath::Random(0,numPts-1));
       //If we don't find a good tensor after two times our current resolution, force the tensor already selected
@@ -330,7 +332,7 @@ void vtkInteractiveTensorGlyph::Execute()
           testValue = 1;
          }
        //Place tensor if FA> uniform random variable
-     } while(testValue < pow(vtkMath::Random(0,1),0.8) && randPtId < numPts);
+     } while(testValue < randValue && randPtId < numPts);
      //Set inPtId to the random position selected.
      //inPtId = randPtId-1;
      trans->Identity();
@@ -583,7 +585,7 @@ void vtkInteractiveTensorGlyph::Execute()
   trans->Delete();
   matrix->Delete();
 
-  cout << "glyph time: " << clock() - tStart << endl;
+  //cout << "glyph time: " << clock() - tStart << endl;
 }
 
 void vtkInteractiveTensorGlyph::PrintSelf(ostream& os, vtkIndent indent)
