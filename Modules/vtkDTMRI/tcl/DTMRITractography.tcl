@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRITractography.tcl,v $
-#   Date:      $Date: 2007/04/03 15:57:55 $
-#   Version:   $Revision: 1.53.2.5 $
+#   Date:      $Date: 2007/11/13 23:49:45 $
+#   Version:   $Revision: 1.53.2.6 $
 # 
 #===============================================================================
 # FILE:        DTMRITractography.tcl
@@ -57,7 +57,7 @@ proc DTMRITractographyInit {} {
     #------------------------------------
     set m "Tractography"
     lappend DTMRI(versions) [ParseCVSInfo $m \
-                                 {$Revision: 1.53.2.5 $} {$Date: 2007/04/03 15:57:55 $}]
+                                 {$Revision: 1.53.2.6 $} {$Date: 2007/11/13 23:49:45 $}]
 
     #------------------------------------
     # Tab 1: Settings (Per-streamline settings)
@@ -230,6 +230,13 @@ proc DTMRITractographyInit {} {
     set DTMRI(ROI2LabelColorID) ""
     # Threshold for seeding
     set DTMRI(ROISeedThreshold) 0.3
+    # Isotropic Seeding
+    set DTMRI(ROIIsotropicSeeding) 0
+    # Jitter seed locations
+    set DTMRI(ROISeedJitter) 0
+    # Resolution for seeding if isotropic seeding is active
+    set DTMRI(ROISeedResolution) 1
+
     # Type of threshold
     set DTMRI(ROISeedAnisotropyForThreshold) LinearMeasure
     set DTMRI(ROISeedAnisotropyForThreshold,label) cL
@@ -625,7 +632,7 @@ proc DTMRITractographyBuildGUI {} {
     # Tract->Notebook->Seeding->ROIMethod frame
     #-------------------------------------------
     set f $fSeeding.fROIMethod
-    foreach frame "ROI ChooseLabel SeedThreshold ROI2 ChooseLabel2 Apply" {
+    foreach frame "ROI ChooseLabel SeedThreshold SeedIsotropic SeedResolution ROI2 ChooseLabel2 Apply" {
         frame $f.f$frame -bg $Gui(activeWorkspace)
         pack $f.f$frame -side top -padx $Gui(pad) -pady 2 -fill both
     }
@@ -707,6 +714,36 @@ proc DTMRITractographyBuildGUI {} {
     set tip "Anisotropy threshold for seeding tractography."
     TooltipAdd  $f.eSeedThresh $tip
     TooltipAdd  $f.lSeedThresh $tip
+
+    #-------------------------------------------
+    # Tract->Notebook->Seeding->ROIMethod->SeedIsotropic frame
+    #-------------------------------------------
+   set f $fSeeding.fROIMethod.fSeedIsotropic
+    eval {checkbutton $f.cIsoSeeding -text " Isotropic Seeding " -variable DTMRI(ROIIsotropicSeeding) -indicatoron 0 } $Gui(WCA)
+    eval {checkbutton $f.cJitter -text " Jitter " -variable DTMRI(ROISeedJitter) -indicatoron 0 } $Gui(WCA)
+
+    pack $f.cIsoSeeding $f.cJitter -side left -padx $Gui(pad) -pady $Gui(pad)
+
+    set tip "Seed isotropically every given mm"
+    TooltipAdd $f.cIsoSeeding $tip
+    set tip "No grid bias: Randomly jitter seed locations up to Seeding Resolution"
+    TooltipAdd  $f.cJitter $tip
+
+    #-------------------------------------------
+    # Tract->Notebook->Seeding->ROIMethod->SeedResolution frame
+    #-------------------------------------------
+   set f $fSeeding.fROIMethod.fSeedResolution
+    DevAddLabel $f.lSeedRes "Seed every (mm)"
+    eval {entry $f.eSeedRes -width 3 \
+              -textvariable DTMRI(ROISeedResolution)} $Gui(WEA)
+    eval {scale $f.sSeedRes -from 0.5 -to 5  \
+          -variable DTMRI(seedResolution) -resolution 0.1} $Gui(WSA)
+    pack $f.lSeedRes $f.eSeedRes $f.sSeedRes -side left \
+        -padx $Gui(pad) -pady $Gui(pad)
+
+    set tip "Place a seed every given number of mm if <br> Seed Isotropically</br> is active."
+    TooltipAdd $f.eSeedRes $tip
+    TooltipAdd $f.sSeedRes $tip
 
     #-------------------------------------------
     # Tract->Notebook->Seeding->ROIMethod->ROI2 frame
@@ -1475,6 +1512,16 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
         return
     }
 
+   if {$DTMRI(ROISeedResolution) < 0.5  || $DTMRI(ROISeedResolution) > 5} {
+        puts "Seed resolution must be a floating point number between 0.5 and 5"
+        return
+    }
+
+  if { !( $DTMRI(ROISeedJitter) == 1  || $DTMRI(ROISeedJitter) == 0 ) } {
+        puts "Seed random jitter must be 0 or 1"
+        return
+    }
+
     # ask for user confirmation first
     if {$verbose == "1"} {
         set name [Volume($v,node) GetName]
@@ -1490,6 +1537,23 @@ proc DTMRISeedStreamlinesFromSegmentation {{verbose 1}} {
 
     # set up the input segmented volume
     set seedTracts [DTMRI(vtk,streamlineControl) GetSeedTracts]
+
+
+    #Set seeding state
+    if { $DTMRI(ROISeedJitter) == 1 } {
+      $seedTracts RandomGridOn
+    } else {
+      $seedTracts RandomGridOff
+    }
+
+    if { $DTMRI(ROIIsotropicSeeding) == 1 } {
+      $seedTracts IsotropicSeedingOn
+    } else {
+      $seedTracts IsotropicSeedingOff
+    }
+
+    $seedTracts SetIsotropicSeedingResolution $DTMRI(ROISeedResolution)
+
 
     # cast to short (as these are labelmaps the values are really integers
     # so this prevents errors with float labelmaps which come from editing
@@ -1647,6 +1711,24 @@ proc DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI {{verbose 1}} {
     # set mode to On (the Display Tracts button will go On)
     set DTMRI(mode,visualizationType,tractsOn) On
 
+   set seedTracts [DTMRI(vtk,streamlineControl) GetSeedTracts]
+
+   #Set seeding state
+    if { $DTMRI(ROISeedJitter) == 1 } {
+      $seedTracts RandomGridOn
+    } else {
+      $seedTracts RandomGridOff
+    }
+
+    if { $DTMRI(ROIIsotropicSeeding) == 1 } {
+      $seedTracts IsotropicSeedingOn
+    } else {
+      $seedTracts IsotropicSeedingOff
+    }
+
+    $seedTracts SetIsotropicSeedingResolution $DTMRI(ROISeedResolution)
+
+
     # make sure the settings are current
     DTMRIUpdateTractColor
     DTMRIUpdateStreamlineSettings
@@ -1665,7 +1747,6 @@ proc DTMRISeedStreamlinesFromSegmentationAndIntersectWithROI {{verbose 1}} {
     castVSaveROI Update
 
     # set up the input segmented volumes
-    set seedTracts [DTMRI(vtk,streamlineControl) GetSeedTracts]
     $seedTracts SetInputROI [castVSeedROI GetOutput]
     $seedTracts SetInputROIValue $DTMRI(ROILabel)
 
