@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSeedTracts.cxx,v $
-  Date:      $Date: 2007/02/23 22:13:46 $
-  Version:   $Revision: 1.25 $
+  Date:      $Date: 2007/11/13 23:44:48 $
+  Version:   $Revision: 1.25.2.1 $
 
 =========================================================================auto=*/
 
@@ -471,12 +471,14 @@ void vtkSeedTracts::SeedStreamlinesInROIWithMultipleValues()
 //----------------------------------------------------------------------------
 void vtkSeedTracts::SeedStreamlinesInROI()
 {
-  int idxX, idxY, idxZ;
-  int maxX, maxY, maxZ;
+  float idxX, idxY, idxZ;
+  float maxX, maxY, maxZ;
+  float gridIncX, gridIncY, gridIncZ;
   int inIncX, inIncY, inIncZ;
   int inExt[6];
   double point[3], point2[3];
   unsigned long count = 0;
+  double spacing[3];
   //unsigned long target;
   short *inPtr;
   vtkHyperStreamline *newStreamline;
@@ -531,11 +533,25 @@ void vtkSeedTracts::SeedStreamlinesInROI()
 
   // start point in input integer field
   inPtr = (short *) this->InputROI->GetScalarPointerForExtent(inExt);
+  this->InputTensorField->GetSpacing(spacing);
+  if (this->IsotropicSeeding) 
+    {
+      gridIncX = this->IsotropicSeedingResolution/spacing[0];
+      gridIncY = this->IsotropicSeedingResolution/spacing[1];
+      gridIncZ = this->IsotropicSeedingResolution/spacing[2];
+    } 
+  else 
+    {
+      gridIncX = 1;
+      gridIncY = 1;
+      gridIncZ = 1;
+    }
+  
 
-  for (idxZ = 0; idxZ <= maxZ; idxZ++)
+  for (idxZ = 0; idxZ <= maxZ; idxZ+=gridIncZ)
     {
       //for (idxY = 0; !this->AbortExecute && idxY <= maxY; idxY++)
-      for (idxY = 0; idxY <= maxY; idxY++)
+      for (idxY = 0; idxY <= maxY; idxY+=gridIncY)
         {
           //if (!(count%target)) 
           //{
@@ -545,9 +561,16 @@ void vtkSeedTracts::SeedStreamlinesInROI()
           //}
           //count++;
           
-          for (idxX = 0; idxX <= maxX; idxX++)
+          for (idxX = 0; idxX <= maxX; idxX+=gridIncX)
             {
               // If the point is equal to the ROI value then seed here.
+              // get the pointer to the nearest voxel at this location
+              int pt[3];
+              pt[0]= (int) floor(idxX + 0.5);
+              pt[1]= (int) floor(idxY + 0.5);
+              pt[2]= (int) floor(idxZ + 0.5);
+              inPtr = (short *) this->InputROI->GetScalarPointer(pt);
+
               if (*inPtr == this->InputROIValue)
                 {
                   vtkDebugMacro( << "start streamline at: " << idxX << " " <<
@@ -558,6 +581,32 @@ void vtkSeedTracts::SeedStreamlinesInROI()
                   point[1]=idxY;
                   point[2]=idxZ;
                   this->ROIToWorld->TransformPoint(point,point2);
+                  // jitter about seed point if requested
+                  // (now we are in a mm space, not voxels)
+                  if (this->RandomGrid)
+                    {
+                      //Call random twice to avoid init problems
+                      double rand=vtkMath::Random();
+
+                      int ridx;
+                      for (ridx = 0; ridx < 3; ridx++)
+                        {
+                          if (this->IsotropicSeeding) 
+                            {
+                              // rand was from [0 .. 1], now from +/- half grid spacing
+                              rand = vtkMath::Random( - this->IsotropicSeedingResolution / 2.0, this->IsotropicSeedingResolution / 2.0 );
+                            }
+                          else
+                            {
+                              // use half of the x voxel dimension
+                              rand = vtkMath::Random( - spacing[0] / 2.0 , spacing[0] / 2.0 );
+                            }
+
+                          // add the random offset
+                          point2[ridx] = point2[ridx] + rand;
+                        }
+                    }
+
                   // Now transform to scaled ijk of the input tensors
                   this->WorldToTensorScaledIJK->TransformPoint(point2,point);
 
@@ -573,12 +622,12 @@ void vtkSeedTracts::SeedStreamlinesInROI()
                       newStreamline->SetStartPosition(point[0],point[1],point[2]);
                     }
                 }
-              inPtr++;
-              inPtr += inIncX;
+              //inPtr++;
+              //inPtr += inIncX;
             }
-          inPtr += inIncY;
+          //inPtr += inIncY;
         }
-      inPtr += inIncZ;
+      //inPtr += inIncZ;
     }
 
   timer->StopTimer();
@@ -592,8 +641,9 @@ void vtkSeedTracts::SeedStreamlinesInROI()
 void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
 {
 
-  int idxX, idxY, idxZ;
-  int maxX, maxY, maxZ;
+  float idxX, idxY, idxZ;
+  float maxX, maxY, maxZ;
+  float gridIncX, gridIncY, gridIncZ;
   int inIncX, inIncY, inIncZ;
   int inExt[6];
   double point[3], point2[3];
@@ -647,9 +697,10 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
 
   // currently this filter is not multithreaded, though in the future 
   // it could be (especially if it inherits from an image filter class)
-  this->InputROI->GetWholeExtent(inExt);
+  double spacing[3];
+  this->InputTensorField->GetWholeExtent(inExt);
   this->InputROI->GetContinuousIncrements(inExt, inIncX, inIncY, inIncZ);
-
+  this->InputTensorField->GetSpacing(spacing);
   // find the region to loop over
   maxX = inExt[1] - inExt[0];
   maxY = inExt[3] - inExt[2]; 
@@ -662,17 +713,26 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
   //target = (unsigned long)((maxZ+1)*(maxY+1)/50.0);
   //target++;
 
+  if (this->IsotropicSeeding) 
+    {
+      gridIncX = this->IsotropicSeedingResolution/spacing[0];
+      gridIncY = this->IsotropicSeedingResolution/spacing[1];
+      gridIncZ = this->IsotropicSeedingResolution/spacing[2];
+    } 
+  else 
+    {
+      gridIncX = 1;
+      gridIncY = 1;
+      gridIncZ = 1;
+    }
   // start point in input integer field
   inPtr = (short *) this->InputROI->GetScalarPointerForExtent(inExt);
 
-  // testing for seeding at a certain resolution.
-  int increment = 1;
-
-  for (idxZ = 0; idxZ <= maxZ; idxZ++)
+  for (idxZ = 0; idxZ <= maxZ; idxZ+=gridIncZ)
     {
       //for (idxY = 0; !this->AbortExecute && idxY <= maxY; idxY++)
       //for (idxY = 0; idxY <= maxY; idxY++)
-      for (idxY = 0; idxY <= maxY; idxY += increment)
+      for (idxY = 0; idxY <= maxY; idxY += gridIncY)
         {
           //if (!(count%target)) 
           //{
@@ -683,8 +743,14 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
           //count++;
           
           //for (idxX = 0; idxX <= maxX; idxX++)
-          for (idxX = 0; idxX <= maxX; idxX += increment)
+          for (idxX = 0; idxX <= maxX; idxX += gridIncX)
             {
+             // get the pointer to the nearest voxel at this location
+              int pt[3];
+              pt[0]= (int) floor(idxX + 0.5);
+              pt[1]= (int) floor(idxY + 0.5);
+              pt[2]= (int) floor(idxZ + 0.5);
+              inPtr = (short *) this->InputROI->GetScalarPointer(pt);
               // if it is in the ROI/mask
               if (*inPtr == this->InputROIValue)
                 {
@@ -698,6 +764,31 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
                   point[1]=idxY;
                   point[2]=idxZ;
                   this->ROIToWorld->TransformPoint(point,point2);
+                  // jitter about seed point if requested
+                  // (now we are in a mm space, not voxels)
+                  if (this->RandomGrid)
+                    {
+                      //Call random twice to avoid init problems
+                      double rand=vtkMath::Random();
+
+                      int ridx;
+                      for (ridx = 0; ridx < 3; ridx++)
+                        {
+                          if (this->IsotropicSeeding) 
+                            {
+                              // rand was from [0 .. 1], now from +/- half grid spacing
+                              rand = vtkMath::Random( - this->IsotropicSeedingResolution / 2.0, this->IsotropicSeedingResolution / 2.0 );
+                            }
+                          else
+                            {
+                              // use half of the x voxel dimension
+                              rand = vtkMath::Random( - spacing[0] / 2.0 , spacing[0] / 2.0 );
+                            }
+
+                          // add the random offset
+                          point2[ridx] = point2[ridx] + rand;
+                        }
+                    }
                   // Now transform to scaled ijk of the input tensors
                   this->WorldToTensorScaledIJK->TransformPoint(point2,point);
 
@@ -710,10 +801,10 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
                       // Set its input information.
                       newStreamline->SetInput(this->InputTensorField);
                       newStreamline->SetStartPosition(point[0],point[1],point[2]);
-                      
+
                       // Force it to update to access the path points
                       newStreamline->Update();
-                      
+
                       // for each point on the path, test
                       // the nearest voxel for path/ROI intersection.
                       vtkPoints * hs0
@@ -744,6 +835,7 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
                           ptidx++;
                         }
 
+/*
                       vtkPoints * hs1
                         = newStreamline->GetOutput()->GetCell(1)->GetPoints();
                       numPts=hs1->GetNumberOfPoints();
@@ -769,7 +861,8 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
                               }
                             }
                           ptidx++;
-                        }                          
+                        }
+*/
 
                       // if it intersects with some ROI, then 
                       // display it, otherwise delete it.
@@ -787,15 +880,11 @@ void vtkSeedTracts::SeedStreamlinesFromROIIntersectWithROI2()
 
                 } // end if in ROI
 
-              //inPtr++;
-              inPtr += increment;
 
-              inPtr += inIncX;
             }
-          //inPtr += inIncY;
-          inPtr += inIncY*increment;
+
         }
-      inPtr += inIncZ;
+
     }
 
   timer->StopTimer();
