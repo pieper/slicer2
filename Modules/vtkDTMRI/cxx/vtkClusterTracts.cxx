@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkClusterTracts.cxx,v $
-  Date:      $Date: 2006/03/06 21:07:29 $
-  Version:   $Revision: 1.10 $
+  Date:      $Date: 2007/11/13 23:40:30 $
+  Version:   $Revision: 1.10.2.1 $
 
 =========================================================================auto=*/
 #include "vtkClusterTracts.h"
@@ -24,7 +24,7 @@
 #include "itkExceptionObject.h"
 
 
-vtkCxxRevisionMacro(vtkClusterTracts, "$Revision: 1.10 $");
+vtkCxxRevisionMacro(vtkClusterTracts, "$Revision: 1.10.2.1 $");
 vtkStandardNewMacro(vtkClusterTracts);
 
 vtkCxxSetObjectMacro(vtkClusterTracts, InputStreamlines, vtkCollection);
@@ -84,9 +84,9 @@ void vtkClusterTracts::ComputeClusters()
       vtkErrorMacro("At least " << 
                     2*this->ClusteringAlgorithm->GetNumberOfEigenvectors()  
                     << " tract paths are needed for clustering");
-      return;      
+      return;
 
-    }    
+    }
 
   // Make sure the clustering algorithm thinks it has been modified.
   // We want it to execute every time since the k-means initialization
