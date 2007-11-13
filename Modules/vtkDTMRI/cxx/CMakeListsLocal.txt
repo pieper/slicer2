@@ -41,6 +41,7 @@ vtkColorROIFromTracts.cxx
 vtkEstimateDiffusionTensor.cxx
 vtkColorROIFromPolyLines.cxx
 vtkTubeFilter2.cxx
+vtkMergeDataObjectFilter2.cxx
 )
 
 ## classes that one does not want tcl wrapped
