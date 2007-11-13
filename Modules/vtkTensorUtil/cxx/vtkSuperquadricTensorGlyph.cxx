@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricTensorGlyph.cxx,v $
-  Date:      $Date: 2006/05/26 20:04:17 $
-  Version:   $Revision: 1.14 $
+  Date:      $Date: 2007/11/13 23:52:31 $
+  Version:   $Revision: 1.14.2.1 $
 
 =========================================================================auto=*/
 #include "vtkSuperquadricTensorGlyph.h"
@@ -66,7 +66,8 @@ vtkSuperquadricTensorGlyph::vtkSuperquadricTensorGlyph()
   this->MaskGlyphsWithScalars = 0;
   this->ScalarMask = NULL;
   this->Resolution = 1;
-  
+  this->RandomSampling = 1;
+
   this->Gamma =1;
   this->ThetaResolution=5;
   this->PhiResolution=5;
@@ -129,7 +130,7 @@ void vtkSuperquadricTensorGlyph::Execute()
   vtkFloatingPointType tensor[3][3];
   vtkDataArray *inScalars;
   int numPts, numSourcePts, numSourceCells;
-  int inPtId, i, j;
+  int inPtId, randPtId, i, j;
   vtkPoints *sourcePts;
   vtkDataArray *sourceNormals;
   vtkCellArray *sourceCells, *cells;  
@@ -147,6 +148,8 @@ void vtkSuperquadricTensorGlyph::Execute()
   vtkIdType *pts;
   int cellId;
   int ptOffset=0;
+  double testValue;
+  vtkFloatingPointType trace;
   vtkFloatingPointType *m[3], w[3], *v[3];
   vtkFloatingPointType m0[3], m1[3], m2[3];
   vtkFloatingPointType v0[3], v1[3], v2[3];
@@ -302,9 +305,7 @@ void vtkSuperquadricTensorGlyph::Execute()
   //
   trans->PreMultiply();
 
-  cout << "glyph time before pt traversal: " << clock() - tStart << endl;
-  cout <<"Starting iterations: "<<endl;
-  
+
   for (inPtId=0; inPtId < numPts; inPtId=inPtId+this->Resolution)
     {
 
@@ -316,19 +317,50 @@ void vtkSuperquadricTensorGlyph::Execute()
         break;
         }
       }
+    // Do random sampling
+    double randValue;
+    randPtId=inPtId;
+    randValue = pow(vtkMath::Random(0,1),0.8);
+    do {
+      //randPtId = (int) floor(vtkMath::Random(0,numPts-1));
+      //If we don't find a good tensor after two times our current resolution, force the tensor already selected
+      if ((randPtId - inPtId) >= 2*this->Resolution)
+         break;
 
-    //ptIncr = inPtId * numSourcePts;
+      inTensors->GetTuple(randPtId,(vtkFloatingPointType *)tensor);
+      // threshold: if trace is <= 0, don't do expensive computations
+      // This used to be: tensor ->GetComponent(0,0) + 
+      // tensor->GetComponent(1,1) + tensor->GetComponent(2,2);
+      trace = tensor[0][0] + tensor[1][1] + tensor[2][2];
 
-    //tensor = inTensors->GetTuple(inPtId);
-    inTensors->GetTuple(inPtId,(vtkFloatingPointType *)tensor);
+      if(trace <=0)
+        break;
 
-    trans->Identity();
-
-    // threshold: if trace is <= 0, don't do expensive computations
-    // This used to be: tensor ->GetComponent(0,0) + 
-    // tensor->GetComponent(1,1) + tensor->GetComponent(2,2);
-    vtkFloatingPointType trace = tensor[0][0] + tensor[1][1] + tensor[2][2];
-
+      //Compute fa
+      for (j=0; j<3; j++)
+        {
+        for (i=0; i<3; i++)
+          {
+          // transpose
+          //m[i][j] = tensor[i+3*j];
+          m[i][j] = tensor[j][i];
+           }
+       }
+       vtkTensorMathematics::TeemEigenSolver(m,w,v);
+       randPtId++;
+       if (this->RandomSampling)
+         {
+          testValue = vtkTensorMathematics::FractionalAnisotropy(w);
+         }
+       else
+         {
+          testValue = 1;
+         }
+       //Place tensor if FA> uniform random variable
+     } while(testValue < randValue && randPtId < numPts);
+     //Set inPtId to the random position selected.
+     //inPtId = randPtId-1;
+     trans->Identity();
 
     // only display this glyph if either:
     // a) we are masking and the mask is 1 at this location.
@@ -352,7 +384,7 @@ void vtkSuperquadricTensorGlyph::Execute()
             }
           }
         //vtkMath::Jacobi(m, w, v);
-        vtkTensorMathematics::TeemEigenSolver(m,w,v);
+        //vtkTensorMathematics::TeemEigenSolver(m,w,v);
         //copy eigenvectors
         xv[0] = v[0][0]; xv[1] = v[1][0]; xv[2] = v[2][0];
         yv[0] = v[0][1]; yv[1] = v[1][1]; yv[2] = v[2][1];
@@ -618,7 +650,7 @@ void vtkSuperquadricTensorGlyph::Execute()
   trans->Delete();
   matrix->Delete();
 
-  cout << "glyph time: " << clock() - tStart << endl;
+  //cout << "glyph time: " << clock() - tStart << endl;
 }
 
 //----------------------------------------------------------------------------

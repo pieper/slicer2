@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricTensorGlyph.h,v $
-  Date:      $Date: 2006/04/18 17:32:59 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2007/11/13 23:52:41 $
+  Version:   $Revision: 1.6.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkSuperquadricTensorGlyph - scale and orient glyph according to tensor eigenvalues and eigenvectors
@@ -145,6 +145,13 @@ public:
   vtkSetClampMacro(Resolution,int,1,VTK_LARGE_INTEGER);
   vtkGetMacro(Resolution,int);
 
+  // Description:
+  // Active random sampling of the tensors based on their FA value. High FA tensors
+  // are more likely to be plotted than low FA values.
+  vtkBooleanMacro(RandomSampling,int);
+  vtkSetMacro(RandomSampling, int);
+  vtkGetMacro(RandomSampling, int);
+
   vtkSetMacro(Gamma,double);
   vtkGetMacro(Gamma,double);
   
@@ -170,6 +177,7 @@ protected:
   int ScalarMeasure;
   int MaskGlyphsWithScalars;
   int Resolution;
+  int RandomSampling;
   
   double Gamma;
   int ThetaResolution;
