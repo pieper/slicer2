@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkMultipleStreamlineController.cxx,v $
-  Date:      $Date: 2007/03/19 14:43:15 $
-  Version:   $Revision: 1.73.2.1 $
+  Date:      $Date: 2007/11/13 23:41:48 $
+  Version:   $Revision: 1.73.2.2 $
 
 =========================================================================auto=*/
 #include "vtkMultipleStreamlineController.h"
@@ -79,7 +79,7 @@ vtkMultipleStreamlineController::vtkMultipleStreamlineController()
   this->SaveTracts->SetDisplay(this->DisplayTracts);
 
   this->ColorROIFromTracts->SetStreamlines(this->DisplayTracts->GetClippedStreamlinesGroup());
-  this->ColorROIFromTracts->SetActors(this->DisplayTracts->GetActors());
+  this->ColorROIFromTracts->SetDisplay(this->DisplayTracts);
 }
 
 //----------------------------------------------------------------------------

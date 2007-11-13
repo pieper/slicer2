@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkColorROIFromTracts.cxx,v $
-  Date:      $Date: 2006/01/06 17:57:25 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2007/11/13 23:41:24 $
+  Version:   $Revision: 1.6.2.1 $
 
 =========================================================================auto=*/
 
@@ -18,6 +18,7 @@
 #include "vtkPolyData.h"
 #include "vtkPolyDataSource.h"
 #include "vtkCell.h"
+#include "vtkUnsignedCharArray.h"
 #include <vector>
 
 //------------------------------------------------------------------------------
@@ -39,8 +40,8 @@ vtkColorROIFromTracts::vtkColorROIFromTracts()
 
   this->InputROIForColoring = NULL;
   this->OutputROIForColoring = NULL;
+  this->Display = NULL;
   this->Streamlines = NULL;
-  this->Actors = NULL;
   this->WorldToTensorScaledIJK = NULL;
   this->ROIToWorld = NULL;
 }
@@ -64,6 +65,9 @@ vtkColorROIFromTracts::~vtkColorROIFromTracts()
 void vtkColorROIFromTracts::ColorROIFromStreamlines()
 {
 
+  vtkCollection *currStreamlines;
+  vtkHyperStreamline *currStreamline;
+
   if (this->InputROIForColoring == NULL)
     {
       vtkErrorMacro("No ROI input.");
@@ -78,27 +82,24 @@ void vtkColorROIFromTracts::ColorROIFromStreamlines()
     }
   
   // prepare to traverse streamline collection
+
   this->Streamlines->InitTraversal();
-  vtkPolyDataSource *currStreamline = 
-    dynamic_cast<vtkPolyDataSource *> (this->Streamlines->GetNextItemAsObject());
-  
+  currStreamlines = 
+    (vtkCollection *) this->Streamlines->GetNextItemAsObject();
+
   // test we have streamlines
-  if (currStreamline == NULL)
+  if (currStreamlines == NULL)
     {
       vtkErrorMacro("No streamlines have been created yet.");
-      return;      
+      return;
     }
-  
-  this->Actors->InitTraversal();
-  vtkActor *currActor= (vtkActor *)this->Actors->GetNextItemAsObject();
-  
-  // test we have actors and streamlines
-  if (currActor == NULL)
+
+  if (this->Display == NULL)
     {
-      vtkErrorMacro("No streamlines have been created yet.");
-      return;      
+      vtkErrorMacro("You need to set the Display controller before saving tracts.");
+      return;
     }
-  
+
   // Create output
   if (this->OutputROIForColoring != NULL)
     this->OutputROIForColoring->Delete();
@@ -151,16 +152,20 @@ void vtkColorROIFromTracts::ColorROIFromStreamlines()
   TensorScaledIJKToWorld->Inverse();
   
   // init color IDs with the first streamline.
-  double rgb[3];
-  currActor->GetProperty()->GetColor(rgb);
-  double R[1000], G[1000], B[1000];
+  unsigned char rgb[3];
+  currStreamlines->InitTraversal();
+  currStreamline = (vtkHyperStreamline *) currStreamlines->GetNextItemAsObject();
+  if (currStreamline != NULL)
+    this->Display->GetStreamlineRGB(currStreamline,rgb);
+  vtkUnsignedCharArray *RGB = vtkUnsignedCharArray::New();
+  RGB->SetNumberOfComponents(3);
   int arraySize=1000;
   int lastColor = 0;
   int currColor, newColor;
-  R[0]=rgb[0];
-  G[0]=rgb[1];
-  B[0]=rgb[2];
-  
+  RGB->InsertComponent(0,0,rgb[0]);
+  RGB->InsertComponent(0,1,rgb[1]);
+  RGB->InsertComponent(0,2,rgb[2]);
+
   // testing
   //double spacing[3];
   //this->OutputROIForColoring->GetSpacing(spacing);
@@ -168,19 +173,23 @@ void vtkColorROIFromTracts::ColorROIFromStreamlines()
 
   // make color id array (each path has a color ID)
   std::vector<int> colorIDs;
-  colorIDs.resize(this->Streamlines->GetNumberOfItems());
+  colorIDs.resize(this->Display->GetStreamlines()->GetNumberOfItems());
   int tractIdx = 0;
-  while(currActor)
-    {    
+  while(currStreamlines)
+    {
+    currStreamlines->InitTraversal();
+    currStreamline = (vtkHyperStreamline *) currStreamlines->GetNextItemAsObject();
+    while(currStreamline)
+      {
       currColor=0;
       newColor=1;
       // If we have this color already, store its index in currColor
       while (currColor<=lastColor && currColor<arraySize)
         {
-          currActor->GetProperty()->GetColor(rgb);
-          if (rgb[0]==R[currColor] &&
-              rgb[1]==G[currColor] &&
-              rgb[2]==B[currColor])
+          this->Display->GetStreamlineRGB(currStreamline,rgb);
+          if (rgb[0]==RGB->GetComponent(currColor,0) &&
+              rgb[1]==RGB->GetComponent(currColor,1) &&
+              rgb[2]==RGB->GetComponent(currColor,2))
             {
               newColor=0;
               break;
@@ -193,17 +202,18 @@ void vtkColorROIFromTracts::ColorROIFromStreamlines()
           // increment count of colors
           lastColor=currColor;
           // save this color's info in the array
-          R[currColor]=rgb[0];
-          G[currColor]=rgb[1];
-          B[currColor]=rgb[2];
+          RGB->InsertComponent(currColor,0,rgb[0]);
+          RGB->InsertComponent(currColor,1,rgb[1]);
+          RGB->InsertComponent(currColor,2,rgb[2]);
         }
       // now currColor is set to this color's index, which we will
       // use to label voxels
       colorIDs[tractIdx] = currColor;
-      currActor = (vtkActor *) this->Actors->GetNextItemAsObject();
+      currStreamline = (vtkHyperStreamline *) currStreamlines->GetNextItemAsObject();
       tractIdx++;
+      }
+    currStreamlines = (vtkCollection *)this->Streamlines->GetNextItemAsObject();
     }
-      
 
   // Loop over colors
   for (int colorIdx = 0; colorIdx <= lastColor; colorIdx++) 
@@ -211,30 +221,32 @@ void vtkColorROIFromTracts::ColorROIFromStreamlines()
 
       // find paths of current color
       this->Streamlines->InitTraversal();
-      currStreamline = (vtkPolyDataSource *) this->Streamlines->GetNextItemAsObject();
+      currStreamlines = 
+          (vtkCollection *) this->Streamlines->GetNextItemAsObject();
       tractIdx = 0;
 
-      while (currStreamline)
+      while (currStreamlines)
         {
-          
+        currStreamlines->InitTraversal();
+        currStreamline = (vtkHyperStreamline *) currStreamlines->GetNextItemAsObject();
+
+        while(currStreamline)
+          {
           if (colorIDs[tractIdx] == colorIdx)
             {
 
               // Loop over the two paths out from the start point
               for (int pathIdx = 0; pathIdx < 2; pathIdx++)
                 {
-                  
                   // for each point on the path, test
                   // the nearest voxel for path/ROI intersection.
                   vtkPoints * hs = 
                     currStreamline->GetOutput()->GetCell(pathIdx)->GetPoints();
-                  
                   // the seed point is the first point on both paths,
                   // don't count it twice.
                   int ptidx=0;
                   if (pathIdx == 1) 
                     ptidx = 1;
-                  
                   int pt[3];
                   double point[3], point2[3];
                   for (ptidx = 0; ptidx < hs->GetNumberOfPoints(); ptidx++)
@@ -248,17 +260,15 @@ void vtkColorROIFromTracts::ColorROIFromStreamlines()
                       pt[0]= (int) floor(point[0]+0.5);
                       pt[1]= (int) floor(point[1]+0.5);
                       pt[2]= (int) floor(point[2]+0.5);
-                      
+
                       //pt[0]= (int) floor(point[0]/spacing[0]+0.5);
                       //pt[1]= (int) floor(point[1]/spacing[1]+0.5);
                       //pt[2]= (int) floor(point[2]/spacing[2]+0.5);
-                      
                       short *tmp = (short *) this->InputROIForColoring->GetScalarPointer(pt);
                       if (tmp != NULL)
                         {
                           // if we are in the ROI to be colored 
                           if (*tmp > 0) {
-                            
                             // increment the path count
                             //tmp = (short *) this->OutputROIForColoring->GetScalarPointer(pt);
                             //*tmp = (short) (currColor + 1);
@@ -272,10 +282,12 @@ void vtkColorROIFromTracts::ColorROIFromStreamlines()
             } // end if path color is the right one
 
           // Get the streamline
-          currStreamline = (vtkPolyDataSource *) this->Streamlines->GetNextItemAsObject();
+          currStreamline = (vtkHyperStreamline *) currStreamlines->GetNextItemAsObject();
           tractIdx++;
-
-        } // end loop over all paths in this color
+          }
+          // Get next streamline group
+         currStreamlines = (vtkCollection *) this->Streamlines->GetNextItemAsObject();
+         }// end loop over all paths in this color
       
       // Now we have counted all paths of this color, check where it is 
       // max so far (voxels with the most paths from this color).
@@ -302,6 +314,7 @@ void vtkColorROIFromTracts::ColorROIFromStreamlines()
     } // end loop over all colors
 
   // Delete scratch space
+  RGB->Delete();
   currentPathCount->Delete();
   maxPathCount->Delete();
 

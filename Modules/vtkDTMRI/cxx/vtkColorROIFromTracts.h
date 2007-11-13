@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkColorROIFromTracts.h,v $
-  Date:      $Date: 2006/01/06 17:57:25 $
-  Version:   $Revision: 1.2 $
+  Date:      $Date: 2007/11/13 23:41:25 $
+  Version:   $Revision: 1.2.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkColorROIFromTracts - 
@@ -24,6 +24,7 @@
 #include "vtkImageData.h"
 #include "vtkTransform.h"
 #include "vtkCollection.h"
+#include "vtkDisplayTracts.h"
 
 class VTK_DTMRI_EXPORT vtkColorROIFromTracts : public vtkObject
 {
@@ -45,7 +46,7 @@ class VTK_DTMRI_EXPORT vtkColorROIFromTracts : public vtkObject
   // Description
   // Input to this class (for grabbing colors). This 
   // may change to a colorID array.
-  vtkSetObjectMacro(Actors, vtkCollection);
+  vtkSetObjectMacro(Display, vtkDisplayTracts);
 
   // Description
   // Input to this class (tractographic paths)
@@ -74,7 +75,7 @@ class VTK_DTMRI_EXPORT vtkColorROIFromTracts : public vtkObject
   vtkTransform *WorldToTensorScaledIJK;
 
   vtkCollection *Streamlines;
-  vtkCollection *Actors;
+  vtkDisplayTracts *Display;
 
 };
 
