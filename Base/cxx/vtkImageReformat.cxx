@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageReformat.cxx,v $
-  Date:      $Date: 2006/03/06 19:02:26 $
-  Version:   $Revision: 1.37 $
+  Date:      $Date: 2007/11/13 23:53:41 $
+  Version:   $Revision: 1.37.2.1 $
 
 =========================================================================auto=*/
 #include "vtkImageReformat.h"
@@ -1570,7 +1570,7 @@ static void vtkImageReformatExecuteTensor(vtkImageReformat *self,
     {
         self->SetRunTime(clock() - tStart);
         // testing
-        cout << "tensor reformat time: " << clock() - tStart << endl;
+        //cout << "tensor reformat time: " << clock() - tStart << endl;
     }
 }
 
