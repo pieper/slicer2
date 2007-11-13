@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkROISelectTracts.cxx,v $
-  Date:      $Date: 2006/08/24 18:30:48 $
-  Version:   $Revision: 1.7 $
+  Date:      $Date: 2007/11/13 23:44:13 $
+  Version:   $Revision: 1.7.2.1 $
 
 =========================================================================auto=*/
 
@@ -76,7 +76,11 @@ vtkROISelectTracts::~vtkROISelectTracts()
   if (this->InputROI2) this->InputROI2->Delete();
   
   this->ColorStreamlines->Delete();
-
+ if ( this->StreamlineController )
+    {
+    this->StreamlineController->UnRegister(this);
+    this->StreamlineController = NULL;
+    }
 }
 
 void vtkROISelectTracts::ConvertStreamlinesToPolyLines()

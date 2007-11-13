@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkROISelectTracts.h,v $
-  Date:      $Date: 2006/08/15 16:39:53 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2007/11/13 23:44:13 $
+  Version:   $Revision: 1.6.2.1 $
 
 =========================================================================auto=*/
 // .NAME vtkROISelectTracts - 
@@ -68,13 +68,24 @@ class VTK_DTMRI_EXPORT vtkROISelectTracts : public vtkObject
   // Description
   // Class that controls streamlines creation and display
   void SetStreamlineController(vtkMultipleStreamlineController *controller) {
-     StreamlineController = controller;
-     Streamlines = controller->GetStreamlines();
-     this->Register(controller);
+  if (this->StreamlineController != controller)
+    {
+    if (this->StreamlineController != NULL) 
+      { 
+        this->StreamlineController->UnRegister(this); 
+      }
+    this->StreamlineController = controller;
+    if (this->StreamlineController != NULL) 
+      { 
+      this->StreamlineController->Register(this); 
+      }
+    this->Modified();
+    this->Streamlines = controller->GetStreamlines();
+    }
   };
-  
+
   vtkGetObjectMacro(StreamlineController,vtkMultipleStreamlineController);   
-     
+
   // Description
   // Streamlines will be started at locations with this value in the InputROI.
   // The value must be greater than 0. A 0 value is not allowed because it
