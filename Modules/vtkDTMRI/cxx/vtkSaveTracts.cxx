@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSaveTracts.cxx,v $
-  Date:      $Date: 2007/03/13 21:47:07 $
-  Version:   $Revision: 1.13 $
+  Date:      $Date: 2007/11/13 23:45:17 $
+  Version:   $Revision: 1.13.2.1 $
 
 =========================================================================auto=*/
 #include "vtkSaveTracts.h"
@@ -464,7 +464,7 @@ void vtkSaveTracts::SaveStreamlinesAsPolyData(char *filename,
               currColorNode->GetDiffuseColor(rgb_vtk_float);
               if (rgb_vtk_float[0]==R[idx] &&
                   rgb_vtk_float[1]==G[idx] &&
-                  rgb_vtk_float[2]==B[idx])              
+                  rgb_vtk_float[2]==B[idx])
                 {
                   found = 1;
                   currNode->SetColor(currColorNode->GetName());
