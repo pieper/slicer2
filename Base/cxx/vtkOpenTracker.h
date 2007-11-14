@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkOpenTracker.h,v $
-  Date:      $Date: 2007/10/14 02:35:11 $
-  Version:   $Revision: 1.1.2.5 $
+  Date:      $Date: 2007/11/14 19:57:56 $
+  Version:   $Revision: 1.1.2.6 $
 
 =========================================================================auto=*/
 
@@ -52,42 +52,51 @@ public:
 
     vtkSetMacro(MultiRate,float);
 
+    vtkSetMacro(SensorNO,int);
+
     void Init(char *configfile);
     void CloseConnection();
     void PollRealtime();
-    static void callbackF(const Node&, const Event &event, void *data);
-    static void callbackF2(const Node&, const Event &event, void *data);
 
-    
+    // We currently support 4 sensors at the same time
+    // using Aurora tracking device, for example.
+    // NO 4 is used as reference.
+    static void CallbackSensor1(const Node&, const Event &event, void *data);
+    static void CallbackSensor2(const Node&, const Event &event, void *data);
+    static void CallbackSensor3(const Node&, const Event &event, void *data);
+    static void CallbackSensor4(const Node&, const Event &event, void *data);
 
     // t1, t2, t3: target landmarks 
     // s1, s2, s3: source landmarks 
-   void AddPoint(int id, float t1, float t2, float t3, float s1, float s2, float s3);
-   void AddTargetICPPoint(float t1, float t2, float t3);
-   void AddSourceICPPoint(float s1, float s2, float s3);
-   
-   /*! Starts the Landmark Registration
-   \note Number of points SetNumberOfPoints must be set before starting the Registration. At least 2 Source and Targetpoints must be set by AddPoint
-   \return returns a integer. 0 if the registration is done. if it fails returning 1
-   */
-   int DoRegistration();
-   /*! Starts the ICP Registration
-   \note Parameters Must be set in SetICPParams and a target model must be given by SetTargetModel to start the registration.
-   \return returns a integer. 0 if the registration is done. if it fails returning 1
-   */
-   int DoRegistrationICP(void);
-   void SetNumberOfPoints(int no);
-   
-   /*! Set the target Model where the registration is depending on
-   */
-   void SetTargetModel(vtkDataSet *model);
-   /*! Set the target Model where the registration is depending on
-    \param sets the mean distance to rms
-    \param sets 1 if mean distance will checked 0 if not
-    \param sets the maximum mean distance
-    \param sets the maximum iterations
-   */
-   void SetICPParams(int rms, int chkMean, double maxMean, int iter);
+    void AddPoint(int id, float t1, float t2, float t3, float s1, float s2, float s3);
+    void AddTargetICPPoint(float t1, float t2, float t3);
+    void AddSourceICPPoint(float s1, float s2, float s3);
+
+    /*! Starts the Landmark Registration
+      \note Number of points SetNumberOfPoints must be set before starting the Registration. At least 2 Source and Targetpoints must be set by AddPoint
+      \return returns a integer. 0 if the registration is done. if it fails returning 1
+     */
+    int DoRegistration();
+    /*! Starts the ICP Registration
+      \note Parameters Must be set in SetICPParams and a target model must be given by SetTargetModel to start the registration.
+      \return returns a integer. 0 if the registration is done. if it fails returning 1
+     */
+    int DoRegistrationICP(void);
+    void SetNumberOfPoints(int no);
+
+    /*! Set the target Model where the registration is depending on
+     */
+    void SetTargetModel(vtkDataSet *model);
+    /*! Set the target Model where the registration is depending on
+      \param sets the mean distance to rms
+      \param sets 1 if mean distance will checked 0 if not
+      \param sets the maximum mean distance
+      \param sets the maximum iterations
+     */
+    void SetICPParams(int rms, int chkMean, double maxMean, int iter);
+
+    void SetLocatorMatrix();
+
 
 
 protected:
@@ -121,6 +130,10 @@ protected:
     vtkCellArray *strips;
     vtkIterativeClosestPointTransform *ICPTransformation;
     vtkLandmarkTransform *LandmarkGlobalTransformation;
+
+    int SensorNO;
+    float Position[4][3];
+    float Orientation[4][4];
 
 };
 
