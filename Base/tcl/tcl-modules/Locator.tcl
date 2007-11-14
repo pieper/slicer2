@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2007/10/29 15:00:23 $
-#   Version:   $Revision: 1.38.12.2.2.27 $
+#   Date:      $Date: 2007/11/14 19:57:11 $
+#   Version:   $Revision: 1.38.12.2.2.28 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -92,7 +92,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.27 $} {$Date: 2007/10/29 15:00:23 $}]
+        {$Revision: 1.38.12.2.2.28 $} {$Date: 2007/11/14 19:57:11 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -1200,26 +1200,15 @@ proc LocatorBuildGUIForSetup {parent} {
     set f $parent
     foreach x "1 2 3" {
         frame $f.f$x -bg $Gui(activeWorkspace) -relief groove -bd 2 
-        pack $f.f$x -side top -pady 1 -fill x 
+        pack $f.f$x -side top -pady 2 -fill x 
     }
 
     set f $parent.f1
-    foreach x "Top Mid Bot" {
-        frame $f.f$x -bg $Gui(activeWorkspace) 
-        pack $f.f$x -side top -pady 1 -fill x 
-    }
-
-
-    set f $parent.f1.fTop
-#    DevAddLabel $f.lLabel "Set up:"
-#    pack $f.lLabel -side top -pady 2
-
-    set f $parent.f1.fMid
     DevAddFileBrowse $f Locator "OpenTracker,cfg" "Config file:" \
         "" "xml" "\$Volume(DefaultDir)" "Open" \
         "Browse for a config file" "" "Absolute"
 
-    set f $parent.f1.fBot
+    set f $parent.f2
     foreach x "multiBy msPoll" name "{Multiply by:} {Update period (ms):}" {
         DevAddLabel $f.l$x $name 
         eval {entry $f.e$x -textvariable Locator($s,$x) -width 13} $Gui(WEA)
@@ -1227,6 +1216,27 @@ proc LocatorBuildGUIForSetup {parent} {
         grid $f.l$x $f.e$x -pady $Gui(pad) -padx $Gui(pad) -sticky e
         grid $f.e$x -sticky w
     }
+
+    # Sensor NO: 1, 2, 3, or 4
+    DevAddLabel $f.lSensor "Sensor NO:" 
+    eval {menubutton $f.mbSensor \
+        -text "1" \
+        -relief raised -bd 2 -width 13 \
+        -menu $f.mbSensor.m} $Gui(WMBA)
+    eval {menu $f.mbSensor.m} $Gui(WMA)
+    grid $f.lSensor $f.mbSensor -pady $Gui(pad) -padx $Gui(pad) -sticky e
+    grid $f.mbSensor -sticky w
+ 
+    set Locator(mbSensor) $f.mbSensor
+
+    set m $Locator(mbSensor).m
+    foreach s "1 2 3 4" {
+        $m add command -label $s \
+            -command "set Locator(SensorNO) $s; \
+                      $Locator(mbSensor) config -text $s; \
+                      Locator(OpenTracker,src) SetSensorNO $s"
+    }
+
 }
 
 
@@ -2026,6 +2036,8 @@ proc LocatorLoopOpenTracker {} {
     }
 
     Locator(OpenTracker,src) PollRealtime
+
+
     #----------------    
     # NEW LOCATOR
     #----------------
@@ -2042,6 +2054,7 @@ proc LocatorLoopOpenTracker {} {
     set Locator(tx) [$locMatrix GetElement 0 2]
     set Locator(ty) [$locMatrix GetElement 1 2]
     set Locator(tz) [$locMatrix GetElement 2 2]
+
 
     LocatorUseLocatorMatrix
 
