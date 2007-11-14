@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2007/11/14 19:57:11 $
-#   Version:   $Revision: 1.38.12.2.2.28 $
+#   Date:      $Date: 2007/11/14 20:59:37 $
+#   Version:   $Revision: 1.38.12.2.2.29 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -92,7 +92,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.28 $} {$Date: 2007/11/14 19:57:11 $}]
+        {$Revision: 1.38.12.2.2.29 $} {$Date: 2007/11/14 20:59:37 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -966,7 +966,7 @@ proc LocatorBuildGUIForRegistration {parent} {
     DevAddButton $f.bOK "OK" "LocatorAddPointPair" 8 
 
     blt::table $f \
-        0,0 $f.lTitle -padx 1 -pady 7 -fill x -cspan 2 \
+        0,0 $f.lTitle -padx 1 -pady 5 -fill x -cspan 2 \
         1,0 $f.lPatient -padx 1 -pady 1 -anchor e \
         1,1 $f.ePatient -fill x -padx 1 -pady 1 -anchor w \
         1,2 $f.bGet  -fill x -padx 1 -pady 1 -anchor w \
@@ -997,7 +997,7 @@ proc LocatorBuildGUIForRegistration {parent} {
     $Locator(PointsVerScroll) configure -command {$Locator(pointPairListBox) yview}
 
     blt::table $f \
-        0,0 $f.lTitle -padx 10 -pady 7 \
+        0,0 $f.lTitle -padx 10 -pady 5 \
         1,0 $Locator(pointPairListBox) -padx 2 -pady 1 -fill x \
         1,1 $Locator(PointsVerScroll) -fill y -padx 2 -pady 1 \
         2,0 $Locator(PointsHonScroll) -fill x -padx 2 -pady 1
@@ -1013,7 +1013,7 @@ proc LocatorBuildGUIForRegistration {parent} {
     DevAddButton $f.bReg "Register" "LocatorRegister" 8 
     DevAddButton $f.bReset "Reset" "LocatorResetRegistration" 8 
 
-    grid $f.bReg $f.bReset -padx 1 -pady 5 
+    grid $f.bReg $f.bReset -padx 1 -pady 2 
 
 }
 
