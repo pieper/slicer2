@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Neuroendoscopy.tcl,v $
-#   Date:      $Date: 2007/10/27 08:53:17 $
-#   Version:   $Revision: 1.1.2.15 $
+#   Date:      $Date: 2007/11/15 19:03:46 $
+#   Version:   $Revision: 1.1.2.16 $
 # 
 #===============================================================================
 # FILE:        Neuroendoscopy.tcl
@@ -279,7 +279,7 @@ proc NeuroendoscopyInit {} {
     set Module($m,category) "Visualisation"
     
     lappend Module(versions) [ParseCVSInfo $m \
-    {$Revision: 1.1.2.15 $} {$Date: 2007/10/27 08:53:17 $}] 
+    {$Revision: 1.1.2.16 $} {$Date: 2007/11/15 19:03:46 $}] 
        
     # Define Procedures
     #------------------------------------
@@ -3285,137 +3285,9 @@ proc NeuroendoscopyProcessMouseEvent {x y} {
 }
 
 
-#-------------------------------------------------------------------------------
-# .PROC NeuroendoscopyBuildGUI
-# Create the Graphical User Interface.
-# 
-# .ARGS
-# .END
-#-------------------------------------------------------------------------------
-proc NeuroendoscopyBuildGUI {} {
-    global Gui Module Model View Advanced Neuroendoscopy Path PathPlanning Label Mrml Fiducials Locator 
-    
-    
-    set LposTexts "{L<->R} {P<->A} {I<->S}"
-    set RposTexts "{Pitch  } {Roll  } {Yaw  }"
-    set posAxi "x y z"
 
-    set dirTexts "{X} {Y} {Z}"
-    set dirAxi "rx ry rz"
-
-    # first add the Neuroendoscopy label to the View menu in the main Gui
-    $Gui(mView) add separator
-    $Gui(mView) add command -label "Add Neuroendoscopy View" -command "NeuroendoscopyAddNeuroendoscopyView; Render3D"
-    $Gui(mView) add command -label "Remove Neuroendoscopy View" -command "NeuroendoscopyRemoveNeuroendoscopyView; Render3D"
-    
-  #jeanette: add Flatwindow label to the view menu in the main Gui
-  #  $Gui(mView) add command -label "Add Flat Colon View" -command "MainMenu File Import"
-  #  $Gui(mView) add command -label "Remove Flat Colon View" -command "NeuroendoscopyRemoveFlatView"
-
-    # A frame has already been constructed automatically for each tab.
-    # A frame named "Stuff" can be referenced as follows:
-    #   
-    #     $Module(<Module name>,f<Tab name>)
-    #
-    # ie: $Module(Neuroendoscopy,fStuff)
-    # This is a useful comment block that makes reading this easy for all:
-        #-------------------------------------------
-    # Frame Hierarchy:
-    #-------------------------------------------
-    # Help
-    # Advanced
-    #   Top
-    #     Vis
-    #     Title
-    #     Pos
-    #   Mid
-    #     Vis
-    #     Title
-    #     Pos
-    #   Bot
-    #     Vis
-    #     Title
-    #     Pos
-    # Camera    
-    #-------------------------------------------
-
-    #-------------------------------------------
-    # Help frame
-    #-------------------------------------------
-    set help "
-    This module allows you to position an neuroendoscopy camera in the scene and 
-    view through the camera's lens in the second window.
-    You can also create paint the loaded scene with a texture with images taken by the endoscope Camera. The added Textures can also be saved in the MRML file by selecting File -> 'Save Scene As'.
-
-    <P>Tab content descriptions:<BR>
-    <UL>
-    <LI><B>Display</B> 
-    <BR> This Tab permits you to set display parameters. It also allows you to open a separate window to view the flattened colon (if you plan to navigate along the flattened colon)
-    <BR>
-     <UL>
-    <LI><B>Registration Tab</B>
-    <BR> This tab allows to register a tracking device into a scene.
-    ,BR> before tracking a system you have to connect the locator to a tracking device. For this purpose using the Locator module and connect to a tracking server of your choice.
-    <BR><B>with the LM1 Tab you can do a Landmark registratio</B>
-    <BR>- Set the tip of the needle to a landmark in the real scene and press GET
-    <BR>- then choose the corresponding point in the slice view, by clicking the mouse on this point
-    <BR>- press OK and do the same prozedure at least 4 times with different points. 
-    <BR>- press register, the scene is now registrated
-    <BR>you also be able to delete points and reset the registration
-    <BR><B>Iterative Closest Point registration ICP2 - 4</B>
-    <BR>- this performes a ICP registration until the landmark registration is done
-    <BR>- collect at least 50 points from the real object by moving the needle over the survace.
-    <BR>- press stop to stop the collection
-    <BR>- start registration and with the result button you can see the lines. the red is before registration, the green after landmark and the white one is landmark+icp.
-    <UL>
-    <LI><B>Camera</B>
-    <BR><B>Orientation SubTab</B>.
-    <BR>This tab contains controls to navigate the camera and create landmarks.
-    <P><B>To move and rotate the camera</B>:
-    <BR>- select absolute mode (to move along the world's axis) or relative mode (to move along the camera's axis)
-    <BR>- to move the camera with precision, use the sliders or type a world coordinate in the text box, next to the sliders. For the orientation of the camera, the number displayed is the angle of rotation in degrees.
-    <BR>- to move the camera intuitively, use the 3D Gyro (read instructions on the tab). 
-    <BR>- you can also move the camera by combining the shift or control key with mouse button press and motion. For example: Shift+moving the mouse with left button pressed down controls the camera's 'Pitch'. Shift + middle or right mouse button motion controls the camera's 'Roll' and 'Yaw' respectively. Control + Left, middle, or right mouse button press and motion controls the camera's 'L<->R', 'I<->S', and 'P<->A'. The precise amount of camera motion, as you use the key + mouse motion, can be read off from the sliders in the camera tab.
-    <P>
-    <BR><B>To select a landmark</B>:
-    <BR> - Click on the landmark position in the scrollable text area, the line will be highlighted in red and the camera will jump to that landmark in the 3D view.
-    <BR> - or Point the mouse at a landmark in the 3D view and press 'p'.
-    <BR><B> To update a landmark position/orientation</B>:
-    <BR> Select a landmark as described above, then reposition and reorient the camera then press the 'Update' button.
-    <BR><B>To delete a camera landmark</B>:
-    <BR>- Select the landmark a described above 
-    <BR>- Click the <I>Delete</I> button
-    <P>
-    <BR><B>Shape SubTab</B>:
-    <BR>This Tab contains controls to change the appearence of the virtual camera.
-    <BR>- To change the Lens Angle of the Camera use the slider and the angle will change.
-    <BR>- To change the shape of the camera you can click on shapes
-    <BR>- To change the color use the colored buttons to choose another color
-    <BR>- To change the size of the gyro use the slider
-    <BR><B>Probe SubTab</B>:
-    <BR>- a ruler is implemented which can show the distance to an object
-    <BR>- using the sensor locked view to drive the virtual camera with the sensor
-    <BR>- with the camera x y z fields the position relative to the locator can be set, these datas are from the actual set of the endoscope. this must be measured.
-    <BR><B>Texture SubTab</B>:
-    <BR>video4linux required 
-    <BR> before using the texture mapping a calibdata file must be created. Press the undistort video button. Use a chess registration pattern which has a fields with the size of 10mmx10mm. Be sure that the black is really deep.
-    <BR> - the video of the endoscope is shown in the right field.
-    <BR> - use take snapshot to create make an image of the current video
-    <BR> - start the corner detection after. use the pattern before. be sure that each row has the same amount of detected corners (red crosses). if not or the algorithm detects more corners as supposed to be, start snapshot and cornerdetection again.
-    <BR> - count the number detected corners of one row and put it in the field above (Number of Corners in one Row)
-    <BR> - create a calibration file (in slicer2 directory and called calibdata.dat
-    <BR> - if you want you can click on undistort if you want see the result. is the result wrong than start the whole procedure again. (sometimes necessary)
-    <BR> - quit the program
-    <BR> <B>Texture mapping</B>
-    <BR> if the camera is locked to the sensor than press INIT TEXTURE and Show Texture after.
-    <BR> the texture will now placed on the surface of the active model. is the active model is changed (in Model Module) than you are able to put the texture on that object
-    <BR> - add the texture permanantly by pushing Add Texture. tsai algorithm will undistort the image if you add it
-    <LI><B>Advanced</B>
-    <BR>This Tab allows you to change color and size parameters for the camera, focal point, landmarks and path. You can also change the virtual camera's lens angle for a wider view.
-    "
-    regsub -all "\n" $help { } help
-    MainHelpApplyTags Neuroendoscopy $help
-    MainHelpBuildGUI Neuroendoscopy
+proc NeuroendoscopyBuildGUIForDisplayTab {} {
+    global Gui Module Model View Advanced Neuroendoscopy Path PathPlanning Fiducials Locator 
 
     #-------------------------------------------
     # Display frame
@@ -3507,13 +3379,15 @@ proc NeuroendoscopyBuildGUI {} {
     pack $f.cExitFlatView -side bottom -pady 2
     # eval {checkbutton $f.cFlatView -variable Neuroendoscopy(flatview,visibility) -text "Show Flat View" -command "NeuroendoscopyUpdateFlatViewVisibility" -indicatoron 0} $Gui(WCA)    
     
-    
-   
+}
 
 
 
 
- 
+proc NeuroendoscopyBuildGUIForRegistrationTab {} {
+    global Gui Module Model View Advanced Neuroendoscopy Path PathPlanning Fiducials Locator 
+
+
     #-------------------------------------------
     # Registration frame
     #-------------------------------------------
@@ -3758,7 +3632,23 @@ proc NeuroendoscopyBuildGUI {} {
 
 
 
-  
+
+
+}
+
+
+
+proc NeuroendoscopyBuildGUIForCameraTab {} {
+    global Gui Module Model View Advanced Neuroendoscopy Path PathPlanning Fiducials Locator 
+
+
+    set LposTexts "{L<->R} {P<->A} {I<->S}"
+    set RposTexts "{Pitch  } {Roll  } {Yaw  }"
+    set dirTexts "{X} {Y} {Z}"
+    set dirAxi "rx ry rz"
+    set posAxi "x y z"
+
+
     #----------------------------------------------------------------------
     ##########################################################################
     #-------------------------------------------
@@ -4339,6 +4229,141 @@ lappend Locator(actors) $axis
 
      
         ${actor}Actor SetVisibility 0
+
+
+
+}
+
+ 
+
+#-------------------------------------------------------------------------------
+# .PROC NeuroendoscopyBuildGUI
+# Create the Graphical User Interface.
+# 
+# .ARGS
+# .END
+#-------------------------------------------------------------------------------
+proc NeuroendoscopyBuildGUI {} {
+    global Gui Module Model View Advanced Neuroendoscopy Path PathPlanning Label Mrml Fiducials Locator 
+    
+    
+    # first add the Neuroendoscopy label to the View menu in the main Gui
+    $Gui(mView) add separator
+    $Gui(mView) add command -label "Add Neuroendoscopy View" -command "NeuroendoscopyAddNeuroendoscopyView; Render3D"
+    $Gui(mView) add command -label "Remove Neuroendoscopy View" -command "NeuroendoscopyRemoveNeuroendoscopyView; Render3D"
+    
+  #jeanette: add Flatwindow label to the view menu in the main Gui
+  #  $Gui(mView) add command -label "Add Flat Colon View" -command "MainMenu File Import"
+  #  $Gui(mView) add command -label "Remove Flat Colon View" -command "NeuroendoscopyRemoveFlatView"
+
+    # A frame has already been constructed automatically for each tab.
+    # A frame named "Stuff" can be referenced as follows:
+    #   
+    #     $Module(<Module name>,f<Tab name>)
+    #
+    # ie: $Module(Neuroendoscopy,fStuff)
+    # This is a useful comment block that makes reading this easy for all:
+        #-------------------------------------------
+    # Frame Hierarchy:
+    #-------------------------------------------
+    # Help
+    # Advanced
+    #   Top
+    #     Vis
+    #     Title
+    #     Pos
+    #   Mid
+    #     Vis
+    #     Title
+    #     Pos
+    #   Bot
+    #     Vis
+    #     Title
+    #     Pos
+    # Camera    
+    #-------------------------------------------
+
+    #-------------------------------------------
+    # Help frame
+    #-------------------------------------------
+    set help "
+    This module allows you to position an neuroendoscopy camera in the scene and 
+    view through the camera's lens in the second window.
+    You can also create paint the loaded scene with a texture with images taken by the endoscope Camera. The added Textures can also be saved in the MRML file by selecting File -> 'Save Scene As'.
+
+    <P>Tab content descriptions:<BR>
+    <UL>
+    <LI><B>Display</B> 
+    <BR> This Tab permits you to set display parameters. It also allows you to open a separate window to view the flattened colon (if you plan to navigate along the flattened colon)
+    <BR>
+     <UL>
+    <LI><B>Registration Tab</B>
+    <BR> This tab allows to register a tracking device into a scene.
+    ,BR> before tracking a system you have to connect the locator to a tracking device. For this purpose using the Locator module and connect to a tracking server of your choice.
+    <BR><B>with the LM1 Tab you can do a Landmark registratio</B>
+    <BR>- Set the tip of the needle to a landmark in the real scene and press GET
+    <BR>- then choose the corresponding point in the slice view, by clicking the mouse on this point
+    <BR>- press OK and do the same prozedure at least 4 times with different points. 
+    <BR>- press register, the scene is now registrated
+    <BR>you also be able to delete points and reset the registration
+    <BR><B>Iterative Closest Point registration ICP2 - 4</B>
+    <BR>- this performes a ICP registration until the landmark registration is done
+    <BR>- collect at least 50 points from the real object by moving the needle over the survace.
+    <BR>- press stop to stop the collection
+    <BR>- start registration and with the result button you can see the lines. the red is before registration, the green after landmark and the white one is landmark+icp.
+    <UL>
+    <LI><B>Camera</B>
+    <BR><B>Orientation SubTab</B>.
+    <BR>This tab contains controls to navigate the camera and create landmarks.
+    <P><B>To move and rotate the camera</B>:
+    <BR>- select absolute mode (to move along the world's axis) or relative mode (to move along the camera's axis)
+    <BR>- to move the camera with precision, use the sliders or type a world coordinate in the text box, next to the sliders. For the orientation of the camera, the number displayed is the angle of rotation in degrees.
+    <BR>- to move the camera intuitively, use the 3D Gyro (read instructions on the tab). 
+    <BR>- you can also move the camera by combining the shift or control key with mouse button press and motion. For example: Shift+moving the mouse with left button pressed down controls the camera's 'Pitch'. Shift + middle or right mouse button motion controls the camera's 'Roll' and 'Yaw' respectively. Control + Left, middle, or right mouse button press and motion controls the camera's 'L<->R', 'I<->S', and 'P<->A'. The precise amount of camera motion, as you use the key + mouse motion, can be read off from the sliders in the camera tab.
+    <P>
+    <BR><B>To select a landmark</B>:
+    <BR> - Click on the landmark position in the scrollable text area, the line will be highlighted in red and the camera will jump to that landmark in the 3D view.
+    <BR> - or Point the mouse at a landmark in the 3D view and press 'p'.
+    <BR><B> To update a landmark position/orientation</B>:
+    <BR> Select a landmark as described above, then reposition and reorient the camera then press the 'Update' button.
+    <BR><B>To delete a camera landmark</B>:
+    <BR>- Select the landmark a described above 
+    <BR>- Click the <I>Delete</I> button
+    <P>
+    <BR><B>Shape SubTab</B>:
+    <BR>This Tab contains controls to change the appearence of the virtual camera.
+    <BR>- To change the Lens Angle of the Camera use the slider and the angle will change.
+    <BR>- To change the shape of the camera you can click on shapes
+    <BR>- To change the color use the colored buttons to choose another color
+    <BR>- To change the size of the gyro use the slider
+    <BR><B>Probe SubTab</B>:
+    <BR>- a ruler is implemented which can show the distance to an object
+    <BR>- using the sensor locked view to drive the virtual camera with the sensor
+    <BR>- with the camera x y z fields the position relative to the locator can be set, these datas are from the actual set of the endoscope. this must be measured.
+    <BR><B>Texture SubTab</B>:
+    <BR>video4linux required 
+    <BR> before using the texture mapping a calibdata file must be created. Press the undistort video button. Use a chess registration pattern which has a fields with the size of 10mmx10mm. Be sure that the black is really deep.
+    <BR> - the video of the endoscope is shown in the right field.
+    <BR> - use take snapshot to create make an image of the current video
+    <BR> - start the corner detection after. use the pattern before. be sure that each row has the same amount of detected corners (red crosses). if not or the algorithm detects more corners as supposed to be, start snapshot and cornerdetection again.
+    <BR> - count the number detected corners of one row and put it in the field above (Number of Corners in one Row)
+    <BR> - create a calibration file (in slicer2 directory and called calibdata.dat
+    <BR> - if you want you can click on undistort if you want see the result. is the result wrong than start the whole procedure again. (sometimes necessary)
+    <BR> - quit the program
+    <BR> <B>Texture mapping</B>
+    <BR> if the camera is locked to the sensor than press INIT TEXTURE and Show Texture after.
+    <BR> the texture will now placed on the surface of the active model. is the active model is changed (in Model Module) than you are able to put the texture on that object
+    <BR> - add the texture permanantly by pushing Add Texture. tsai algorithm will undistort the image if you add it
+    <LI><B>Advanced</B>
+    <BR>This Tab allows you to change color and size parameters for the camera, focal point, landmarks and path. You can also change the virtual camera's lens angle for a wider view.
+    "
+    regsub -all "\n" $help { } help
+    MainHelpApplyTags Neuroendoscopy $help
+    MainHelpBuildGUI Neuroendoscopy
+
+    NeuroendoscopyBuildGUIForDisplayTab 
+    NeuroendoscopyBuildGUIForRegistrationTab 
+    NeuroendoscopyBuildGUIForCameraTab 
 }
 
 
