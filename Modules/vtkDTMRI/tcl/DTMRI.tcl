@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: DTMRI.tcl,v $
-#   Date:      $Date: 2007/11/13 23:48:57 $
-#   Version:   $Revision: 1.133.2.2 $
+#   Date:      $Date: 2007/11/15 00:25:22 $
+#   Version:   $Revision: 1.133.2.3 $
 # 
 #===============================================================================
 # FILE:        DTMRI.tcl
@@ -481,7 +481,7 @@ proc DTMRIInit {} {
     # Version info (just of this file, not submodule files)
     #------------------------------------
     lappend Module(versions) [ParseCVSInfo $m \
-                  {$Revision: 1.133.2.2 $} {$Date: 2007/11/13 23:48:57 $}]
+                  {$Revision: 1.133.2.3 $} {$Date: 2007/11/15 00:25:22 $}]
 
     # Define Tabs
     # Many of these correspond to submodules.
@@ -1404,10 +1404,13 @@ proc DTMRICalculateIJKtoRASRotationMatrix {transform t} {
     # -------------------------------------
     #$transform SetMatrix [Tensor($t,node)  GetRasToIjk]
     $transform Identity
+
     $transform SetMatrix [Tensor($t,node)  GetWldToIjk]
+    #Forcing update of transform before doing inverse.
+    $transform Update
+
     # Now it's ijk to ras
     $transform Inverse
-
 
     # Remove the voxel scaling from the matrix.
     # -------------------------------------
