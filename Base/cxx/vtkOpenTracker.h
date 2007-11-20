@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkOpenTracker.h,v $
-  Date:      $Date: 2007/11/14 19:57:56 $
-  Version:   $Revision: 1.1.2.6 $
+  Date:      $Date: 2007/11/20 14:37:17 $
+  Version:   $Revision: 1.1.2.7 $
 
 =========================================================================auto=*/
 
@@ -111,14 +111,7 @@ protected:
     vtkPoints *SourceLandmarks;
     vtkPoints *TargetLandmarks;
     vtkMatrix4x4 *LandmarkTransformMatrix;
-
-    void quaternion2xyz(float* orientation, float *normal, float *transnormal); 
     vtkMatrix4x4 *LocatorMatrix;
-
-    void ApplyTransform(float *position, float *norm, float *transnorm);
-
-    void BuildSourceModel(void);
-    void BuildLandmarkSourceModel(void);
     
     vtkDataSet *targetDataSet;
     vtkPolyData *SourceModel;
@@ -134,6 +127,22 @@ protected:
     int SensorNO;
     float Position[4][3];
     float Orientation[4][4];
+    float ReferencePosition[3];
+
+
+    // This is the list of special points. Each point holds these values:
+    // x: the x value difference between the referece and one point from the skull or patient
+    // y: the y value difference 
+    // z: the z value difference
+    vtkPoints *ReferenceDiff;
+ 
+
+    // Internal member functions
+    void Quaternion2xyz(float* orientation, float *normal, float *transnormal); 
+    void ApplyTransform(float *position, float *norm, float *transnorm);
+    void BuildSourceModel(void);
+    void BuildLandmarkSourceModel(void);
+    void UpdateRegistration();
 
 };
 

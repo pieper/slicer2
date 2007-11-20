@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkOpenTracker.cxx,v $
-  Date:      $Date: 2007/11/14 19:58:01 $
-  Version:   $Revision: 1.1.2.6 $
+  Date:      $Date: 2007/11/20 14:37:23 $
+  Version:   $Revision: 1.1.2.7 $
 
   add Author: Christoph Ruetz
 =========================================================================auto=*/
@@ -62,7 +62,12 @@ vtkOpenTracker::vtkOpenTracker()
     this->TargetICPPoints = NULL;
 
     this->SensorNO = 1;
+    this->ReferencePosition[0] = 0.0;
+    this->ReferencePosition[1] = 0.0;
+    this->ReferencePosition[2] = 0.0;
 
+    this->ReferenceDiff = NULL;
+ 
 }
 
 
@@ -89,6 +94,9 @@ vtkOpenTracker::~vtkOpenTracker()
     this->SourceICPPoints->Delete();
     this->SourceICPLandmarkPoints->Delete();
     this->TargetICPPoints->Delete();
+
+    this->ReferenceDiff->Delete();
+
 }
 
 
@@ -111,6 +119,16 @@ void vtkOpenTracker::SetNumberOfPoints(int no)
     this->SourceLandmarks = vtkPoints::New();
     this->SourceLandmarks->SetDataTypeToFloat();
     this->SourceLandmarks->SetNumberOfPoints(no);
+
+
+    if (this->ReferenceDiff)
+    {
+        this->ReferenceDiff->Delete();
+    }
+    this->ReferenceDiff = vtkPoints::New();
+    this->ReferenceDiff->SetDataTypeToFloat();
+    this->ReferenceDiff->SetNumberOfPoints(no);
+
 
     this->NumberOfPoints = no;
 }
@@ -145,7 +163,7 @@ void vtkOpenTracker::CloseConnection()
 
 
 
-void vtkOpenTracker::quaternion2xyz(float* orientation, float *normal, float *transnormal) 
+void vtkOpenTracker::Quaternion2xyz(float* orientation, float *normal, float *transnormal) 
 {
     float q0, qx, qy, qz;
 
@@ -182,7 +200,7 @@ void vtkOpenTracker::SetLocatorMatrix()
     int i = this->SensorNO - 1;
 
 
-    quaternion2xyz(this->Orientation[i], norm, transnorm);
+    Quaternion2xyz(this->Orientation[i], norm, transnorm);
 
 
     // Apply the transform matrix 
@@ -270,18 +288,51 @@ void vtkOpenTracker::CallbackSensor4(const Node&, const Event &event, void *data
 {
     vtkOpenTracker *VOT=(vtkOpenTracker *)data;
 
-    // the original values are in the unit of meters
-    VOT->Position[3][0]=(float)(event.getPosition())[0] * VOT->MultiRate; 
-    VOT->Position[3][1]=(float)(event.getPosition())[1] * VOT->MultiRate;
-    VOT->Position[3][2]=(float)(event.getPosition())[2] * VOT->MultiRate;
 
-    VOT->Orientation[3][0]=(float)(event.getOrientation())[0];
-    VOT->Orientation[3][1]=(float)(event.getOrientation())[1];
-    VOT->Orientation[3][2]=(float)(event.getOrientation())[2];
-    VOT->Orientation[3][3]=(float)(event.getOrientation())[3];
+    float pos[3];
+    pos[0] = (float)(event.getPosition())[0] * VOT->MultiRate; 
+    pos[1] = (float)(event.getPosition())[1] * VOT->MultiRate;
+    pos[2] = (float)(event.getPosition())[2] * VOT->MultiRate;
+
+    float d1 = fabs(VOT->ReferencePosition[0] - pos[0]);
+    float d2 = fabs(VOT->ReferencePosition[1] - pos[1]);
+    float d3 = fabs(VOT->ReferencePosition[2] - pos[2]);
+    
+    // the original values are in the unit of meters
+    VOT->Position[3][0]= pos[0];
+    VOT->Position[3][1]= pos[1];
+    VOT->Position[3][2]= pos[2];
+
+    // Sensor 4 is the reference probe
+    VOT->ReferencePosition[0] = pos[0];
+    VOT->ReferencePosition[1] = pos[1];
+    VOT->ReferencePosition[2] = pos[2];
+
+    VOT->Orientation[3][0] = (float)(event.getOrientation())[0];
+    VOT->Orientation[3][1] = (float)(event.getOrientation())[1];
+    VOT->Orientation[3][2] = (float)(event.getOrientation())[2];
+    VOT->Orientation[3][3] = (float)(event.getOrientation())[3];
+
+/*
+    // Need redo registration due to reference change
+    if (d1 >= 1 || d2 >= 1 || d3 >= 1)
+    { 
+        VOT->UpdateRegistration();
+    }
+*/
 
     VOT->Button = (short)(event.getButton());
     VOT->SetLocatorMatrix();
+}
+
+
+
+void vtkOpenTracker::UpdateRegistration()
+{
+    // Update the target points
+
+    // Call DoRegistration
+    DoRegistration();
 }
 
 
@@ -320,11 +371,20 @@ void vtkOpenTracker::ApplyTransform(float *position, float *norm, float *transno
 
 void vtkOpenTracker::AddPoint(int id, float t1, float t2, float t3, float s1, float s2, float s3)
 {
+    // Slicer space
     this->TargetLandmarks->InsertPoint(id, t1, t2, t3);
     this->TargetLandmarks->Modified();
 
+    // Patient space
     this->SourceLandmarks->InsertPoint(id, s1, s2, s3);
     this->SourceLandmarks->Modified();
+
+    // Save the difference for later registration 
+    float dx = s1 - this->ReferencePosition[0];
+    float dy = s2 - this->ReferencePosition[1];
+    float dz = s3 - this->ReferencePosition[2];
+    this->ReferenceDiff->InsertPoint(id, dx, dy, dz);
+    this->ReferenceDiff->Modified();
 }
 
 
