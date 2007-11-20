@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkOpenTracker.h,v $
-  Date:      $Date: 2007/11/20 14:37:17 $
-  Version:   $Revision: 1.1.2.7 $
+  Date:      $Date: 2007/11/20 16:13:57 $
+  Version:   $Revision: 1.1.2.8 $
 
 =========================================================================auto=*/
 
@@ -96,6 +96,7 @@ public:
     void SetICPParams(int rms, int chkMean, double maxMean, int iter);
 
     void SetLocatorMatrix();
+    void DeleteRegistration();
 
 
 

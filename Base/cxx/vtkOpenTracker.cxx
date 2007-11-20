@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkOpenTracker.cxx,v $
-  Date:      $Date: 2007/11/20 14:37:23 $
-  Version:   $Revision: 1.1.2.7 $
+  Date:      $Date: 2007/11/20 16:14:00 $
+  Version:   $Revision: 1.1.2.8 $
 
   add Author: Christoph Ruetz
 =========================================================================auto=*/
@@ -52,7 +52,6 @@ vtkOpenTracker::vtkOpenTracker()
     this->SourceLandmarks = NULL; 
     this->TargetLandmarks = NULL; 
 
-    this->UseRegistration = 0;
     this->UseICPRegistration = 0;
     this->NumberOfPoints = 0;
     this->MultiRate = 1.0;
@@ -205,7 +204,7 @@ void vtkOpenTracker::SetLocatorMatrix()
 
     // Apply the transform matrix 
     // to the postion, norm and transnorm
-    if (this->UseRegistration || this->UseICPRegistration)
+    if (this->UseICPRegistration)
     {
         ApplyTransform(this->Position[i], norm, transnorm);
     }
@@ -313,13 +312,12 @@ void vtkOpenTracker::CallbackSensor4(const Node&, const Event &event, void *data
     VOT->Orientation[3][2] = (float)(event.getOrientation())[2];
     VOT->Orientation[3][3] = (float)(event.getOrientation())[3];
 
-/*
     // Need redo registration due to reference change
-    if (d1 >= 1 || d2 >= 1 || d3 >= 1)
+    if (VOT->SourceLandmarks != NULL && 
+        (d1 >= 1 || d2 >= 1 || d3 >= 1))
     { 
         VOT->UpdateRegistration();
     }
-*/
 
     VOT->Button = (short)(event.getButton());
     VOT->SetLocatorMatrix();
@@ -327,9 +325,45 @@ void vtkOpenTracker::CallbackSensor4(const Node&, const Event &event, void *data
 
 
 
+void vtkOpenTracker::DeleteRegistration()
+{
+    if (this->TargetLandmarks)
+    {
+        this->TargetLandmarks->Delete();
+    }
+
+    if (this->SourceLandmarks)
+    {
+        this->SourceLandmarks->Delete();
+    }
+
+    if (this->ReferenceDiff)
+    {
+        this->ReferenceDiff->Delete();
+    }
+
+    this->NumberOfPoints = 0;
+}
+
+
+
 void vtkOpenTracker::UpdateRegistration()
 {
-    // Update the target points
+    // Update the source points in patient space
+    int nps = this->SourceLandmarks->GetNumberOfPoints();
+    this->SourceLandmarks->Delete();
+
+    for (int i = 0; i < nps; i++)
+    {
+        double s[3];
+        this->ReferenceDiff->GetPoint(i, s);
+        double x = s[0] + this->ReferencePosition[0];
+        double y = s[1] + this->ReferencePosition[1];
+        double z = s[2] + this->ReferencePosition[2];
+        
+        this->SourceLandmarks->InsertPoint(i, x, y, z);
+        this->SourceLandmarks->Modified();
+    }
 
     // Call DoRegistration
     DoRegistration();
@@ -371,15 +405,15 @@ void vtkOpenTracker::ApplyTransform(float *position, float *norm, float *transno
 
 void vtkOpenTracker::AddPoint(int id, float t1, float t2, float t3, float s1, float s2, float s3)
 {
-    // Slicer space
+    // slicer space
     this->TargetLandmarks->InsertPoint(id, t1, t2, t3);
     this->TargetLandmarks->Modified();
 
-    // Patient space
+    // patient space
     this->SourceLandmarks->InsertPoint(id, s1, s2, s3);
     this->SourceLandmarks->Modified();
 
-    // Save the difference for later registration 
+    // save the difference for later registration 
     float dx = s1 - this->ReferencePosition[0];
     float dy = s2 - this->ReferencePosition[1];
     float dz = s3 - this->ReferencePosition[2];
@@ -421,8 +455,6 @@ int vtkOpenTracker::DoRegistration()
     this->LandmarkTransformMatrix->DeepCopy(landmark->GetMatrix());
     this->LandmarkGlobalTransformation->DeepCopy(landmark);
     landmark->Delete();
-
-    this->UseRegistration = 1;
 
     return 0; 
 }
