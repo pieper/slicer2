@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2007/11/14 20:59:37 $
-#   Version:   $Revision: 1.38.12.2.2.29 $
+#   Date:      $Date: 2007/11/20 16:12:51 $
+#   Version:   $Revision: 1.38.12.2.2.30 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -92,7 +92,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.29 $} {$Date: 2007/11/14 20:59:37 $}]
+        {$Revision: 1.38.12.2.2.30 $} {$Date: 2007/11/20 16:12:51 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -1010,8 +1010,8 @@ proc LocatorBuildGUIForRegistration {parent} {
     grid $f.bLoad $f.bSave $f.bDelete -padx 1 -pady 2
 
     set f $parent.f3
-    DevAddButton $f.bReg "Register" "LocatorRegister" 8 
-    DevAddButton $f.bReset "Reset" "LocatorResetRegistration" 8 
+    DevAddButton $f.bReg "Go" "LocatorRegister" 8 
+    DevAddButton $f.bReset "Remove" "LocatorRemoveRegistration" 8 
 
     grid $f.bReg $f.bReset -padx 1 -pady 2 
 
@@ -1019,10 +1019,10 @@ proc LocatorBuildGUIForRegistration {parent} {
 
 
 
-proc LocatorResetRegistration {} {
+proc LocatorRemoveRegistration {} {
     global Locator
 
-    Locator(OpenTracker,src) SetUseRegistration 0 
+    Locator(OpenTracker,src) DeleteRegistration
 
 }
 
