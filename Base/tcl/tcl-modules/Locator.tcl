@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2007/11/20 16:12:51 $
-#   Version:   $Revision: 1.38.12.2.2.30 $
+#   Date:      $Date: 2007/11/26 19:27:48 $
+#   Version:   $Revision: 1.38.12.2.2.31 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -92,7 +92,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.30 $} {$Date: 2007/11/20 16:12:51 $}]
+        {$Revision: 1.38.12.2.2.31 $} {$Date: 2007/11/26 19:27:48 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -668,10 +668,11 @@ know the location of the tip of this device rather than the Locator.
 
     #--- tab configure
     set i 0
-    foreach t "Setup Registration" {
+    foreach t "Setup PC LM ICP" \
+            l "Setup PivotCalibration LandmarkRegistration ICPRegistration" {
         $f.tsNotebook insert $i $t
         frame $f.tsNotebook.f$t -bg $Gui(activeWorkspace) -bd 2 
-        LocatorBuildGUIFor${t} $f.tsNotebook.f$t
+        LocatorBuildGUIFor${l} $f.tsNotebook.f$t
 
         $f.tsNotebook tab configure $t -window $f.tsNotebook.f$t 
         $f.tsNotebook tab configure $t -activebackground $::Gui(activeWorkspace)
@@ -942,18 +943,118 @@ know the location of the tip of this device rather than the Locator.
 
 
 
-proc LocatorBuildGUIForRegistration {parent} {
+proc LocatorBuildGUIForPivotCalibration {parent} {
     global Locator Gui 
 
     set f $parent
     foreach x "1 2 3" {
-        if {$x != 3} {
+        if {$x != 1} {
             frame $f.f$x -bg $Gui(activeWorkspace) -relief groove -bd 2 
         } else {
             frame $f.f$x -bg $Gui(activeWorkspace)
         }
         pack $f.f$x -side top -pady 1 -fill x 
     }
+
+    set f $parent.f1
+    eval {label $f.lTitle -text "Pivot calibration:"} $Gui(WTA)
+    grid $f.lTitle -padx 1 -pady 2
+
+    set f $parent.f2
+    eval {label $f.lTitle -text "Collect data:"} $Gui(WTA)
+    DevAddButton $f.bStart "Start" "LocatorStartCollectPCData" 10 
+    DevAddButton $f.bStop "Stop" "LocatorStopCollectPCData" 10 
+    blt::table $f \
+        0,0 $f.lTitle -padx 1 -pady 5 -fill x -cspan 2 \
+        1,0 $f.bStart  -padx 1 -pady 3 -anchor e \
+        1,1 $f.bStop  -padx 1 -pady 3 -anchor w
+
+
+    set f $parent.f3
+    foreach x "Up Down" {
+        frame $f.f$x -bg $Gui(activeWorkspace) 
+        pack $f.f$x -side top 
+    }
+
+    set f $parent.f3.fUp
+    eval {label $f.lTitle -text "Calibrate:"} $Gui(WTA)
+    DevAddButton $f.bCompute "Compute" "LocatorComputePivotCalibration" 8 
+    DevAddButton $f.bApply "Apply" "LocatorApplyPivotCalibration" 8 
+    DevAddButton $f.bReset "Reset" "LocatorResetPivotCalibration" 8 
+
+    blt::table $f \
+        0,0 $f.lTitle -padx 1 -pady 5 -fill x -cspan 3 \
+        1,0 $f.bCompute  -fill x -padx 1 -pady 3 -anchor w \
+        1,1 $f.bApply  -fill x -padx 1 -pady 3 -anchor w \
+        1,2 $f.bReset -fill x -padx 1 -pady 3 -anchor w
+
+
+    set f $parent.f3.fDown
+    eval {label $f.lPivot -text "Pivot pos:"} $Gui(WLA)
+    eval {entry $f.ePivotX -width 16 -textvariable Locator(entry,pivotPosX)} $Gui(WEA)
+    eval {label $f.lPivotX -text "x"} $Gui(WLA)
+    eval {entry $f.ePivotY -width 16 -textvariable Locator(entry,pivotPosY)} $Gui(WEA)
+    eval {label $f.lPivotY -text "y"} $Gui(WLA)
+    eval {entry $f.ePivotZ -width 16 -textvariable Locator(entry,pivotPosZ)} $Gui(WEA)
+    eval {label $f.lPivotZ -text "z"} $Gui(WLA)
+ 
+    eval {label $f.lTrans -text "Translation:"} $Gui(WLA)
+    eval {entry $f.eTransX -width 16 -textvariable Locator(entry,pivotTransX)} $Gui(WEA)
+    eval {label $f.lTransX -text "x"} $Gui(WLA)
+    eval {entry $f.eTransY -width 16 -textvariable Locator(entry,pivotTransY)} $Gui(WEA)
+    eval {label $f.lTransY -text "y"} $Gui(WLA)
+    eval {entry $f.eTransZ -width 16 -textvariable Locator(entry,pivotTransZ)} $Gui(WEA)
+    eval {label $f.lTransZ -text "z"} $Gui(WLA)
+ 
+    eval {label $f.lRMSE -text "RMSE:"} $Gui(WLA)
+    eval {entry $f.eRMSE -width 16 -textvariable Locator(entry,pivotRMSE)} $Gui(WEA)
+
+
+    blt::table $f \
+        0,0 $f.lPivot -padx 1 -pady 1 -anchor e \
+        0,1 $f.ePivotX -fill x -padx 1 -pady 1 -anchor w \
+        0,2 $f.lPivotX -fill x -padx 1 -pady 1 -anchor w \
+        1,1 $f.ePivotY -fill x -padx 1 -pady 1 -anchor w \
+        1,2 $f.lPivotY -fill x -padx 1 -pady 1 -anchor w \
+        2,1 $f.ePivotZ -fill x -padx 1 -pady 1 -anchor w \
+        2,2 $f.lPivotZ -fill x -padx 1 -pady 1 -anchor w \
+        3,0 $f.lTrans  -fill x -padx 1 -pady 1 -anchor w \
+        3,1 $f.eTransX -fill x -padx 1 -pady 1 -anchor w \
+        3,2 $f.lTransX -fill x -padx 1 -pady 1 -anchor w \
+        4,1 $f.eTransY -fill x -padx 1 -pady 1 -anchor w \
+        4,2 $f.lTransY -fill x -padx 1 -pady 1 -anchor w \
+        5,1 $f.eTransZ -fill x -padx 1 -pady 1 -anchor w \
+        5,2 $f.lTransZ -fill x -padx 1 -pady 1 -anchor w \
+        6,0 $f.lRMSE -padx 1 -pady 1 -anchor w \
+        6,1 $f.eRMSE -padx 1 -pady 3 -anchor w
+}
+
+
+
+proc LocatorBuildGUIForICPRegistration {parent} {
+    global Locator Gui 
+
+    set f $parent
+}
+
+ 
+
+proc LocatorBuildGUIForLandmarkRegistration {parent} {
+    global Locator Gui 
+
+    set f $parent
+    foreach x "0 1 2 3" {
+        if {$x == 1 || $x == 2} {
+            frame $f.f$x -bg $Gui(activeWorkspace) -relief groove -bd 2 
+        } else {
+            frame $f.f$x -bg $Gui(activeWorkspace)
+        }
+        pack $f.f$x -side top -pady 1 -fill x 
+    }
+
+    set f $parent.f0
+    eval {label $f.lTitle -text "Landmark registration:"} $Gui(WTA)
+    grid $f.lTitle -padx 1 -pady 2
 
     set f $parent.f1
     eval {label $f.lTitle -text "Add a point pair:"} $Gui(WTA)
@@ -988,7 +1089,7 @@ proc LocatorBuildGUIForRegistration {parent} {
     set Locator(PointsVerScroll) $f.vs
     set Locator(PointsHonScroll) $f.hs
     listbox $f.lb \
-        -height 5 -width 24 \
+        -height 4 -width 24 \
         -bg $Gui(activeWorkspace) \
         -xscrollcommand {$::Locator(PointsHonScroll) set} \
         -yscrollcommand {$::Locator(PointsVerScroll) set}
