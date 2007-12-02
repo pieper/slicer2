@@ -1,0 +1,71 @@
+ /*=auto=========================================================================
+
+  Portions (c) Copyright 2007 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: PivotCalibration.h,v $
+  Date:      $Date: 2007/12/02 05:54:34 $
+  Version:   $Revision: 1.1.2.1 $
+
+=========================================================================auto=*/
+
+/**
+ *  class PivotCalibration from Slicer Image-Guided Navigator (The SIGN) 
+ *
+ *  Pivot calibration for tracked tools.
+ *
+ *  This class performs a pivot calibration and computes the transform from the tracked marker to the pivot point
+ *  of the surgical tool using a set of position/orientation samples. The pivot position, the transform, and the
+ *  root mean square error can be obtained.
+ *
+ *  Author Arne Hans
+ **/
+
+#ifndef __PivotCalibration_h
+#define __PivotCalibration_h
+
+#include <vector>
+#include "itkVersorRigid3DTransform.h"
+#include "vtkSlicerBaseWin32Header.h"
+
+
+typedef itk::Versor<double> QuaternionType;
+typedef itk::Vector<double> TranslationType;
+
+class VTK_SLICER_BASE_EXPORT PivotCalibration
+{
+public:
+    PivotCalibration();
+    ~PivotCalibration();
+
+    unsigned int GetNumberOfSamples() const;
+
+    /// Adds a sample
+    /// @param quat orientation (as a quaternion x,y,z,w)
+    /// @param trans position
+    void AddSample(double *quat, double *trans);
+    /// Calculates the pivot calibration
+    void CalculateCalibration();
+
+    /// Gets the position of the pivot point
+    void GetPivotPosition(double pos[3]);
+    /// Gets the translation from the tracked marker to the pivot point
+    void GetTranslation(double trans[3]);
+    /// Gets the root mean square error (RMSE)
+    double GetRMSE();
+
+private:
+
+    double pivotPosition[3];
+    itk::Vector<double> translation;
+    double RMSE;
+    bool validPivotCalibration;
+
+    std::vector<QuaternionType> quaternionSampleCollection;
+    std::vector<TranslationType> translationSampleCollection;
+};
+
+#endif
