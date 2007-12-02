@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2007/11/26 19:27:48 $
-#   Version:   $Revision: 1.38.12.2.2.31 $
+#   Date:      $Date: 2007/12/02 05:56:14 $
+#   Version:   $Revision: 1.38.12.2.2.32 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -92,7 +92,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.31 $} {$Date: 2007/11/26 19:27:48 $}]
+        {$Revision: 1.38.12.2.2.32 $} {$Date: 2007/12/02 05:56:14 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -1027,6 +1027,48 @@ proc LocatorBuildGUIForPivotCalibration {parent} {
         5,2 $f.lTransZ -fill x -padx 1 -pady 1 -anchor w \
         6,0 $f.lRMSE -padx 1 -pady 1 -anchor w \
         6,1 $f.eRMSE -padx 1 -pady 3 -anchor w
+}
+
+
+
+proc LocatorStartCollectPCData {} {
+    global Locator 
+
+    Locator(OpenTracker,src) CollectDataForPivotCalibration 1
+}
+
+
+
+proc LocatorStopCollectPCData {} {
+    global Locator 
+
+    Locator(OpenTracker,src) CollectDataForPivotCalibration 0
+}
+
+
+
+proc LocatorComputePivotCalibration {} {
+    global Locator 
+
+   Locator(OpenTracker,src) ComputePivotCalibration
+
+   # update values for such as Pivot position etc.
+}
+
+
+
+proc LocatorApplyPivotCalibration {} {
+    global Locator 
+
+    Locator(OpenTracker,src) ApplyPivotCalibration 1
+}
+
+
+
+proc LocatorResetPivotCalibration {} {
+    global Locator 
+
+    Locator(OpenTracker,src) ApplyPivotCalibration 0
 }
 
 

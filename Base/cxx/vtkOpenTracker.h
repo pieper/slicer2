@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkOpenTracker.h,v $
-  Date:      $Date: 2007/11/20 16:13:57 $
-  Version:   $Revision: 1.1.2.8 $
+  Date:      $Date: 2007/12/02 05:53:12 $
+  Version:   $Revision: 1.1.2.9 $
 
 =========================================================================auto=*/
 
@@ -24,6 +24,7 @@
 #include "vtkPolyData.h"
 #include "vtkCellArray.h"
 #include "vtkIterativeClosestPointTransform.h"
+#include "PivotCalibration.h"
 
 
 using namespace ot;
@@ -50,7 +51,7 @@ public:
 
     vtkGetMacro(NumberOfPoints,int);
 
-    vtkSetMacro(MultiRate,float);
+    vtkSetMacro(MultiRate,double);
 
     vtkSetMacro(SensorNO,int);
 
@@ -68,9 +69,9 @@ public:
 
     // t1, t2, t3: target landmarks 
     // s1, s2, s3: source landmarks 
-    void AddPoint(int id, float t1, float t2, float t3, float s1, float s2, float s3);
-    void AddTargetICPPoint(float t1, float t2, float t3);
-    void AddSourceICPPoint(float s1, float s2, float s3);
+    void AddPoint(int id, double t1, double t2, double t3, double s1, double s2, double s3);
+    void AddTargetICPPoint(double t1, double t2, double t3);
+    void AddSourceICPPoint(double s1, double s2, double s3);
 
     /*! Starts the Landmark Registration
       \note Number of points SetNumberOfPoints must be set before starting the Registration. At least 2 Source and Targetpoints must be set by AddPoint
@@ -98,7 +99,16 @@ public:
     void SetLocatorMatrix();
     void DeleteRegistration();
 
+    // Gets the position of the pivot point
+    void GetPivotPosition(double pos[3]);
+    // Gets the translation from the tracked marker to the pivot point
+    void GetTranslation(double trans[3]);
+    // Gets the root mean square error (RMSE)
+    double GetRMSE();
 
+    void CollectDataForPivotCalibration(int yes);
+    void ComputePivotCalibration();
+    void ApplyPivotCalibration(int yes);
 
 protected:
     vtkOpenTracker();
@@ -108,7 +118,7 @@ protected:
     short Button;
     int NumberOfPoints;
     int UseRegistration;
-    float MultiRate;
+    double MultiRate;
     vtkPoints *SourceLandmarks;
     vtkPoints *TargetLandmarks;
     vtkMatrix4x4 *LandmarkTransformMatrix;
@@ -125,10 +135,17 @@ protected:
     vtkIterativeClosestPointTransform *ICPTransformation;
     vtkLandmarkTransform *LandmarkGlobalTransformation;
 
+    double PivotPosition[3];
+    double Translation[3];
+    double RMSE;
+    bool CollectPCData;
+    bool UsePivotCalibration;
+    PivotCalibration *PVCalibration;
+
     int SensorNO;
-    float Position[4][3];
-    float Orientation[4][4];
-    float ReferencePosition[3];
+    double Position[4][3];
+    double Orientation[4][4];
+    double ReferencePosition[3];
 
 
     // This is the list of special points. Each point holds these values:
@@ -139,8 +156,8 @@ protected:
  
 
     // Internal member functions
-    void Quaternion2xyz(float* orientation, float *normal, float *transnormal); 
-    void ApplyTransform(float *position, float *norm, float *transnorm);
+    void Quaternion2xyz(double* orientation, double *normal, double *transnormal); 
+    void ApplyTransform(double *position, double *norm, double *transnorm);
     void BuildSourceModel(void);
     void BuildLandmarkSourceModel(void);
     void UpdateRegistration();
