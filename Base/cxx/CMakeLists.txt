@@ -3,6 +3,19 @@
 #
 # Here is where you can add the name of your local core classes.
 #
+# 
+# Find ITK
+#
+FIND_PACKAGE(ITK)
+IF(ITK_FOUND)
+  INCLUDE(${ITK_USE_FILE})
+ELSE(ITK_FOUND)
+  MESSAGE(FATAL_ERROR
+          "Cannot build Slicer Base without ITK.  Please set ITK_DIR.")
+ENDIF(ITK_FOUND)
+
+INCLUDE_DIRECTORIES(${ITK_SOURCE_DIR}/Code/Common)
+
 
 SET (Base_SRCS
 	vtkBoolTess.cxx vtkDCMLister.cxx vtkDCMParser.cxx 
@@ -26,7 +39,7 @@ SET (Base_SRCS
 	vtkImageNeighborhoodFilter.cxx vtkImageOverlay.cxx vtkImagePlot.cxx
 	vtkImageRealtimeScan.cxx vtkImageReformat.cxx vtkImageReformatIJK.cxx
 	vtkImageReplaceRegion.cxx vtkImageResize.cxx vtkImageStatistics.cxx
-	  vtkImageZoom2D.cxx
+	vtkImageZoom2D.cxx
 	vtkIndirectLookupTable.cxx vtkMathUtils.cxx vtkMrmlColorNode.cxx
 	vtkMrmlCrossSectionNode.cxx vtkMrmlData.cxx vtkMrmlDataTetraMesh.cxx
 	vtkMrmlDataVolume.cxx vtkMrmlEndFiducialsNode.cxx vtkMrmlEndHierarchyNode.cxx
@@ -59,6 +72,10 @@ SET (Base_SRCS
         vtkOpenTracker.cxx
 )
 
+SET (Base_NO_WRAP_SRCS
+        PivotCalibration.cxx
+)
+
 # vtkImageWeightedSum was added to VTK at 5.1, don't compile our copy unless it's not in VTK
 IF("${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}" LESS 5.1)
   SET (Base_SRCS ${Base_SRCS} vtkImageWeightedSum.cxx)
@@ -78,21 +95,22 @@ ENDIF("${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}" LESS 5.0)
 # Create the vtkSlicerBase C++ library
 #
 
-ADD_LIBRARY (vtkSlicerBase ${Base_SRCS})
+ADD_LIBRARY (vtkSlicerBase ${Base_SRCS} ${Base_NO_WRAP_SRCS})
 
 
 INCLUDE_DIRECTORIES(
-  /home/hliu/projects/navitrack/NaviTrack/include 
+  /home/liu/projects/navitrack/NaviTrack/include 
 )
 
 FIND_LIBRARY(NAVITRACK_LIB
   NAMES NaviTrack 
-  PATHS /home/hliu/projects/navitrack/NaviTrack-build 
+  PATHS /home/liu/projects/navitrack/NaviTrack-build 
 
 )
 
 TARGET_LINK_LIBRARIES(vtkSlicerBase
   ${NAVITRACK_LIB}
+  ITKCommon
 )
 
 
