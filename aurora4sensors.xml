@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE OpenTracker SYSTEM "C:/projects/igttechdev/libs/opentracker/data/opentracker.dtd">
+
+<OpenTracker>
+	<configuration>
+	</configuration>
+
+	<Callback name="cb4">
+            <NetworkSource mode="unicast" address="localhost" number="4" port="12345"/>
+	</Callback>
+	<Callback name="cb3">
+            <NetworkSource mode="unicast" address="localhost" number="3" port="12345"/>
+	</Callback>
+	<Callback name="cb2">
+            <NetworkSource mode="unicast" address="localhost" number="2" port="12345"/>
+	</Callback>
+	<Callback name="cb1">
+            <NetworkSource mode="unicast" address="localhost" number="1" port="12345"/>
+	</Callback>
+</OpenTracker>
