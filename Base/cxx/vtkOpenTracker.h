@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkOpenTracker.h,v $
-  Date:      $Date: 2007/12/02 05:53:12 $
-  Version:   $Revision: 1.1.2.9 $
+  Date:      $Date: 2007/12/04 20:44:50 $
+  Version:   $Revision: 1.1.2.10 $
 
 =========================================================================auto=*/
 
@@ -55,6 +55,12 @@ public:
 
     vtkSetMacro(SensorNO,int);
 
+
+    vtkGetVector3Macro(PivotPosition,double);
+    vtkGetVector3Macro(Translation,double);
+    vtkGetMacro(RMSE,double);
+
+
     void Init(char *configfile);
     void CloseConnection();
     void PollRealtime();
@@ -98,13 +104,6 @@ public:
 
     void SetLocatorMatrix();
     void DeleteRegistration();
-
-    // Gets the position of the pivot point
-    void GetPivotPosition(double pos[3]);
-    // Gets the translation from the tracked marker to the pivot point
-    void GetTranslation(double trans[3]);
-    // Gets the root mean square error (RMSE)
-    double GetRMSE();
 
     void CollectDataForPivotCalibration(int yes);
     void ComputePivotCalibration();

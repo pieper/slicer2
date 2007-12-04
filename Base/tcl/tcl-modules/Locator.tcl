@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2007/12/02 05:56:14 $
-#   Version:   $Revision: 1.38.12.2.2.32 $
+#   Date:      $Date: 2007/12/04 20:43:47 $
+#   Version:   $Revision: 1.38.12.2.2.33 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -92,7 +92,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.32 $} {$Date: 2007/12/02 05:56:14 $}]
+        {$Revision: 1.38.12.2.2.33 $} {$Date: 2007/12/04 20:43:47 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -1052,7 +1052,19 @@ proc LocatorComputePivotCalibration {} {
 
    Locator(OpenTracker,src) ComputePivotCalibration
 
-   # update values for such as Pivot position etc.
+   # get values and updat to interface
+   set rmse [Locator(OpenTracker,src) GetRMSE]
+   set Locator(entry,pivotRMSE) $rmse
+
+   set pos [Locator(OpenTracker,src) GetPivotPosition] 
+   set Locator(entry,pivotPosX) [lindex $pos 0] 
+   set Locator(entry,pivotPosY) [lindex $pos 1] 
+   set Locator(entry,pivotPosZ) [lindex $pos 2] 
+ 
+   set trans [Locator(OpenTracker,src) GetTranslation] 
+   set Locator(entry,pivotTransX) [lindex $trans 0] 
+   set Locator(entry,pivotTransY) [lindex $trans 1] 
+   set Locator(entry,pivotTransZ) [lindex $trans 2] 
 }
 
 

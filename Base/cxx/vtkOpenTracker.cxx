@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkOpenTracker.cxx,v $
-  Date:      $Date: 2007/12/04 02:51:15 $
-  Version:   $Revision: 1.1.2.10 $
+  Date:      $Date: 2007/12/04 20:44:50 $
+  Version:   $Revision: 1.1.2.11 $
 
   add Author: Christoph Ruetz
 =========================================================================auto=*/
@@ -672,31 +672,6 @@ int vtkOpenTracker::DoRegistrationICP(void)
   fprintf(stderr,"ICP done\n");
 
   return 0; 
-}
-
-
-
-void vtkOpenTracker::GetPivotPosition(double pos[3])
-{
-    pos[0] = this->PivotPosition[0];
-    pos[1] = this->PivotPosition[1];
-    pos[2] = this->PivotPosition[2];
-}
-
-
-
-void vtkOpenTracker::GetTranslation(double trans[3])
-{
-    trans[0] = this->Translation[0];
-    trans[1] = this->Translation[1];
-    trans[2] = this->Translation[2];
-}
-
-
-
-double vtkOpenTracker::GetRMSE()
-{
-    return this->RMSE;
 }
 
 

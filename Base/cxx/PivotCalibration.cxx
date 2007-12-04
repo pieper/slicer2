@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: PivotCalibration.cxx,v $
-  Date:      $Date: 2007/12/02 05:54:34 $
-  Version:   $Revision: 1.1.2.1 $
+  Date:      $Date: 2007/12/04 20:44:39 $
+  Version:   $Revision: 1.1.2.2 $
 =========================================================================auto=*/
 
 #include <PivotCalibration.h>
@@ -24,6 +24,13 @@ using namespace std;
 
 PivotCalibration::PivotCalibration() : validPivotCalibration(false)
 {
+    for (int i = 0; i < 3; i++)
+    {
+        pivotPosition[i] = 0.0;
+        translation[i] = 0.0;
+    }
+    RMSE = 0.0;
+ 
 }
 
 
@@ -63,8 +70,14 @@ void PivotCalibration::CalculateCalibration()
     unsigned int c;
     unsigned int num;
 
-    // Set the number of sample, row and column number of matrix
     num = this->GetNumberOfSamples();
+    if (num == 0)
+    {
+        return;
+    }
+
+
+    // Set the number of sample, row and column number of matrix
     r = num * 3;
     c = 6;
 
@@ -113,7 +126,6 @@ void PivotCalibration::CalculateCalibration()
     x = svd.solve(b);
 
     // Extract the offset components
-    this->translation.Fill(0.0);
     for (i = 0; i < 3; i++)
     {
         this->translation[2-i] = x[i];

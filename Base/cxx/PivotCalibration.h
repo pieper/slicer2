@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: PivotCalibration.h,v $
-  Date:      $Date: 2007/12/02 05:54:34 $
-  Version:   $Revision: 1.1.2.1 $
+  Date:      $Date: 2007/12/04 20:44:39 $
+  Version:   $Revision: 1.1.2.2 $
 
 =========================================================================auto=*/
 
@@ -60,7 +60,7 @@ public:
 private:
 
     double pivotPosition[3];
-    itk::Vector<double> translation;
+    double translation[3];
     double RMSE;
     bool validPivotCalibration;
 
