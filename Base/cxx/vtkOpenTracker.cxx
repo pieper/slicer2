@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkOpenTracker.cxx,v $
-  Date:      $Date: 2007/12/02 05:53:12 $
-  Version:   $Revision: 1.1.2.9 $
+  Date:      $Date: 2007/12/04 02:51:15 $
+  Version:   $Revision: 1.1.2.10 $
 
   add Author: Christoph Ruetz
 =========================================================================auto=*/
@@ -357,16 +357,22 @@ void vtkOpenTracker::DeleteRegistration()
     {
         this->TargetLandmarks->Delete();
     }
+    this->TargetLandmarks = NULL;
+
 
     if (this->SourceLandmarks)
     {
         this->SourceLandmarks->Delete();
     }
+    this->SourceLandmarks = NULL;
+
 
     if (this->ReferenceDiff)
     {
         this->ReferenceDiff->Delete();
     }
+    this->ReferenceDiff = NULL;
+
 
     this->NumberOfPoints = 0;
     this->UseRegistration = 0;
