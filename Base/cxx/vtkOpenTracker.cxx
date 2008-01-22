@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkOpenTracker.cxx,v $
-  Date:      $Date: 2007/12/04 20:44:50 $
-  Version:   $Revision: 1.1.2.11 $
+  Date:      $Date: 2008/01/22 18:51:59 $
+  Version:   $Revision: 1.1.2.12 $
 
   add Author: Christoph Ruetz
 =========================================================================auto=*/
@@ -35,6 +35,7 @@
 #include "vtkObjectFactory.h"
 #include "vtkLandmarkTransform.h"
 #include "vtkTransform.h"
+#include "vtkMath.h"
 
 
 #ifdef _WIN32
@@ -48,6 +49,8 @@ vtkOpenTracker::vtkOpenTracker()
 {
     this->LocatorMatrix = vtkMatrix4x4::New(); // Identity
     this->LandmarkTransformMatrix = vtkMatrix4x4::New(); // Identity
+    this->ReferenceMatrix = vtkMatrix4x4::New(); // Identity
+ 
 
     this->SourceLandmarks = NULL; 
     this->TargetLandmarks = NULL; 
@@ -60,19 +63,28 @@ vtkOpenTracker::vtkOpenTracker()
     this->SourceICPLandmarkPoints = NULL;
     this->TargetICPPoints = NULL;
 
+    this->RegistrationDone = 0;
+ 
+
     this->SensorNO = 1;
-    this->ReferencePosition[0] = 0.0;
-    this->ReferencePosition[1] = 0.0;
-    this->ReferencePosition[2] = 0.0;
-
-    this->ReferenceDiff = NULL;
-
     this->CollectPCData = 0;
     this->PVCalibration = new PivotCalibration;
+ 
 
     this->UseRegistration = 0;
     this->UsePivotCalibration = 0;
 
+    for (int i = 0; i < 3; i++)
+    {
+        this->ReferenceFirstPosition[i] = 0.0;
+        this->ReferenceCurrentPosition[i] = 0.0;
+        this->Translation[i] = 0.0;
+    }
+    for (int i = 0; i < 4; i++)
+    { 
+        this->ReferenceFirstOrientation[i] = 0.0;
+        this->ReferenceCurrentOrientation[i] = 0.0;
+    }
 }
 
 
@@ -100,7 +112,7 @@ vtkOpenTracker::~vtkOpenTracker()
     this->SourceICPLandmarkPoints->Delete();
     this->TargetICPPoints->Delete();
 
-    this->ReferenceDiff->Delete();
+    this->ReferenceMatrix->Delete();
     if (this->PVCalibration)
     {
         delete this->PVCalibration;
@@ -128,15 +140,6 @@ void vtkOpenTracker::SetNumberOfPoints(int no)
     this->SourceLandmarks = vtkPoints::New();
     this->SourceLandmarks->SetDataTypeToDouble();
     this->SourceLandmarks->SetNumberOfPoints(no);
-
-
-    if (this->ReferenceDiff)
-    {
-        this->ReferenceDiff->Delete();
-    }
-    this->ReferenceDiff = vtkPoints::New();
-    this->ReferenceDiff->SetDataTypeToDouble();
-    this->ReferenceDiff->SetNumberOfPoints(no);
 
 
     this->NumberOfPoints = no;
@@ -201,13 +204,20 @@ void vtkOpenTracker::PollRealtime()
 
 
 
-void vtkOpenTracker::SetLocatorMatrix()
+void vtkOpenTracker::SetLocatorMatrix(int sensorNO)
 {
     double norm[3];
     double transnorm[3];
+    double pos[3];
     int j;
-    int i = this->SensorNO - 1;
 
+    if (sensorNO != this->SensorNO)
+    {
+        return;
+    }
+
+
+    int i = this->SensorNO - 1;
 
     // collect data for pivot calibration
     if (this->CollectPCData)
@@ -219,25 +229,23 @@ void vtkOpenTracker::SetLocatorMatrix()
 
 
     // apply pivot calibration
-    if (this->UsePivotCalibration)
+    for (int ii = 0; ii < 3; ii++)
     {
-        for (int ii = 0; ii < 3; ii++)
-        {
-            this->Position[i][ii] += this->Translation[ii];
-        }
+        pos[ii] = this->Position[i][ii] + this->Translation[ii];
     }
 
-
+ 
     // Apply the transform matrix 
     // to the postion, norm and transnorm
     if (this->UseRegistration || this->UseICPRegistration)
     {
-        ApplyTransform(this->Position[i], norm, transnorm);
+        ApplyTransform(pos, norm, transnorm);
     }
+
 
     for (j = 0; j < 3; j++) 
     {
-        this->LocatorMatrix->SetElement(j,0,this->Position[i][j]);
+        this->LocatorMatrix->SetElement(j,0,pos[j]);
         this->LocatorMatrix->SetElement(j,1,norm[j]);
         this->LocatorMatrix->SetElement(j,2,transnorm[j]);
         this->LocatorMatrix->SetElement(j,3,0);
@@ -264,7 +272,8 @@ void vtkOpenTracker::CallbackSensor1(const Node&, const Event &event, void *data
     VOT->Orientation[0][3]=(double)(event.getOrientation())[3];
 
     VOT->Button = (short)(event.getButton());
-    VOT->SetLocatorMatrix();
+    VOT->SetLocatorMatrix(1);
+
 }
 
 
@@ -284,7 +293,8 @@ void vtkOpenTracker::CallbackSensor2(const Node&, const Event &event, void *data
     VOT->Orientation[1][3]=(double)(event.getOrientation())[3];
 
     VOT->Button = (short)(event.getButton());
-    VOT->SetLocatorMatrix();
+    VOT->SetLocatorMatrix(2);
+
 }
 
 
@@ -304,7 +314,7 @@ void vtkOpenTracker::CallbackSensor3(const Node&, const Event &event, void *data
     VOT->Orientation[2][3]=(double)(event.getOrientation())[3];
 
     VOT->Button = (short)(event.getButton());
-    VOT->SetLocatorMatrix();
+    VOT->SetLocatorMatrix(3);
 }
 
 
@@ -314,39 +324,41 @@ void vtkOpenTracker::CallbackSensor4(const Node&, const Event &event, void *data
     vtkOpenTracker *VOT=(vtkOpenTracker *)data;
 
 
+    // Position 
     double pos[3];
-    pos[0] = (double)(event.getPosition())[0] * VOT->MultiRate; 
-    pos[1] = (double)(event.getPosition())[1] * VOT->MultiRate;
-    pos[2] = (double)(event.getPosition())[2] * VOT->MultiRate;
 
-    double d1 = fabs(VOT->ReferencePosition[0] - pos[0]);
-    double d2 = fabs(VOT->ReferencePosition[1] - pos[1]);
-    double d3 = fabs(VOT->ReferencePosition[2] - pos[2]);
-    
-    // the original values are in the unit of meters
-    VOT->Position[3][0]= pos[0];
-    VOT->Position[3][1]= pos[1];
-    VOT->Position[3][2]= pos[2];
-
-    // Sensor 4 is the reference probe
-    VOT->ReferencePosition[0] = pos[0];
-    VOT->ReferencePosition[1] = pos[1];
-    VOT->ReferencePosition[2] = pos[2];
-
-    VOT->Orientation[3][0] = (double)(event.getOrientation())[0];
-    VOT->Orientation[3][1] = (double)(event.getOrientation())[1];
-    VOT->Orientation[3][2] = (double)(event.getOrientation())[2];
-    VOT->Orientation[3][3] = (double)(event.getOrientation())[3];
-
-    // Need redo registration due to reference change
-    if (VOT->SourceLandmarks != NULL && 
-        (d1 >= 1 || d2 >= 1 || d3 >= 1))
+    for (int i = 0; i < 3; i++)
     { 
-        VOT->UpdateRegistration();
+        pos[i] = (double)(event.getPosition())[i] * VOT->MultiRate; 
+        VOT->Position[3][i]= pos[i];
+        VOT->ReferenceCurrentPosition[i] = pos[i];
     }
 
+    // Orientation
+    for (int i = 0; i < 4; i++)
+    {
+        VOT->Orientation[3][i] = (double)(event.getOrientation())[i];
+        VOT->ReferenceCurrentOrientation[i] = VOT->Orientation[3][i];
+    }
+
+    // Sensor 4 is the reference probe
+    if (!VOT->RegistrationDone)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            VOT->ReferenceFirstPosition[i] = pos[i];
+            VOT->ReferenceFirstOrientation[i] = VOT->Orientation[3][i];
+        }
+    }
+    else
+    {
+        VOT->UpdateReferenceMatrix();
+
+    }
+
+
     VOT->Button = (short)(event.getButton());
-    VOT->SetLocatorMatrix();
+    VOT->SetLocatorMatrix(4);
 }
 
 
@@ -367,40 +379,140 @@ void vtkOpenTracker::DeleteRegistration()
     this->SourceLandmarks = NULL;
 
 
-    if (this->ReferenceDiff)
-    {
-        this->ReferenceDiff->Delete();
-    }
-    this->ReferenceDiff = NULL;
-
-
     this->NumberOfPoints = 0;
     this->UseRegistration = 0;
+    this->RegistrationDone = 0;
 
 }
 
 
 
-void vtkOpenTracker::UpdateRegistration()
+void vtkOpenTracker::UpdateReferenceMatrix()
 {
-    // Update the source points in patient space
-    int nps = this->SourceLandmarks->GetNumberOfPoints();
-    this->SourceLandmarks->Delete();
+    double first[3][3];
+    double current[3][3];
+    double invert[3][3];
+    double rotation[3][3];
 
-    for (int i = 0; i < nps; i++)
+
+    double fNormal[3];
+    double fTNormal[3];
+    double fCross[3];
+    double cNormal[3];
+    double cTNormal[3];
+    double cCross[3];
+
+
+    cout << "First orientation: \n";
+    for (int i = 0; i < 4; i++)
     {
-        double s[3];
-        this->ReferenceDiff->GetPoint(i, s);
-        double x = s[0] + this->ReferencePosition[0];
-        double y = s[1] + this->ReferencePosition[1];
-        double z = s[2] + this->ReferencePosition[2];
-        
-        this->SourceLandmarks->InsertPoint(i, x, y, z);
-        this->SourceLandmarks->Modified();
+        cout <<  this->ReferenceFirstOrientation[i] << "  ";
+    }
+    cout << endl;
+
+    cout << "Current orientation: \n";
+    for (int i = 0; i < 4; i++)
+    {
+        cout <<  this->ReferenceCurrentOrientation[i] << "  ";
+    }
+    cout << endl;
+
+    Quaternion2xyz(this->ReferenceFirstOrientation, fNormal, fTNormal); 
+    vtkMath::Cross(fNormal, fTNormal, fCross);
+    vtkMath::Normalize(fNormal);
+    vtkMath::Normalize(fTNormal);
+    vtkMath::Normalize(fCross);
+
+
+    Quaternion2xyz(this->ReferenceCurrentOrientation, cNormal, cTNormal); 
+    vtkMath::Cross(cNormal, cTNormal, cCross);
+    vtkMath::Normalize(cTNormal);
+    vtkMath::Normalize(cNormal);
+    vtkMath::Normalize(cCross);
+ 
+
+    for (int i = 0; i < 3; i++)
+    {
+        first[i][0] = fNormal[i]; 
+        first[i][1] = fTNormal[i]; 
+        first[i][2] = fCross[i]; 
+
+
+        current[i][0] = cNormal[i]; 
+        current[i][1] = cTNormal[i]; 
+        current[i][2] = cCross[i]; 
     }
 
-    // Call DoRegistration
-    DoRegistration();
+
+    cout << "First orientation: \n";
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+            cout << first[i][j] << "  ";
+
+        cout << endl;
+
+    }
+
+
+    cout << "Current orientation: \n";
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+            cout << current[i][j] << "  ";
+
+        cout << endl;
+
+    }
+
+
+
+    // first = rotation * current;
+    // rotation = invert(current) * first;
+    vtkMath::Invert3x3(current, invert);
+    cout << "Invert orientation: \n";
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+            cout << invert[i][j] << "  ";
+
+        cout << endl;
+
+    }
+
+
+   vtkMath::Multiply3x3(invert, first, rotation);
+//    vtkMath::Multiply3x3(first, invert, rotation);
+    cout << "Rotation orientation: \n";
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+            cout << rotation[i][j] << "  ";
+
+        cout << endl;
+
+    }
+
+
+    // translation
+    // double trans[3];
+    // for (int i = 0; i < 3; i++)
+    // {
+    //     trans[i] = this->ReferenceFirstPosition[i] - this->ReferenceCurrentPosition[i];
+    // }
+
+    // build reference matrix
+    this->ReferenceMatrix->Identity();
+    for (int j = 0; j < 3; j++) 
+    {
+        this->ReferenceMatrix->SetElement(j, 0, rotation[j][0]);
+        this->ReferenceMatrix->SetElement(j, 1, rotation[j][1]);
+        this->ReferenceMatrix->SetElement(j, 2, rotation[j][2]);
+    }
+
+//    this->ReferenceMatrix->SetElement(3, 3, 1);
+
+
 }
 
 
@@ -413,16 +525,47 @@ void vtkOpenTracker::ApplyTransform(double *position, double *norm, double *tran
     double n[4];
     double tn[4];
 
+    double pr[4];
+
     for (int i = 0; i < 3; i++)
     {
         p[i] = position[i];
         n[i] = norm[i];
         tn[i] = transnorm[i];
+
+        pr[i] = this->ReferenceCurrentPosition[i];
     }
     p[3] = 1;     // translation affects a poistion
     n[3] = 0;     // translation doesn't affect an orientation
     tn[3] = 0;    // translation doesn't affect an orientation
 
+    pr[3] = 1;
+
+    // rotatation of the reference will chane its position.
+    // pr is its new postion
+    this->ReferenceMatrix->MultiplyPoint(pr, pr);    
+ 
+    // update the reference matrix for its translation components
+    double trans[3];
+    for (int i = 0; i < 3; i++)
+    {
+        trans[i] = this->ReferenceFirstPosition[i] - pr[i]; 
+        this->ReferenceMatrix->SetElement(i, 3, trans[i]);
+    }
+
+
+    /*
+    this->ReferenceMatrix->PrintSelf(std::cout, 5);
+
+
+    // Apply transform due to the move of the reference sensor
+    this->ReferenceMatrix->MultiplyPoint(p, p);    // transform a position
+    this->ReferenceMatrix->MultiplyPoint(n, n);    // transform an orientation
+    this->ReferenceMatrix->MultiplyPoint(tn, tn);  // transform an orientation
+    */
+
+
+    // Additional transform due to patient to slicer registration
     this->LandmarkTransformMatrix->MultiplyPoint(p, p);    // transform a position
     this->LandmarkTransformMatrix->MultiplyPoint(n, n);    // transform an orientation
     this->LandmarkTransformMatrix->MultiplyPoint(tn, tn);  // transform an orientation
@@ -446,13 +589,6 @@ void vtkOpenTracker::AddPoint(int id, double t1, double t2, double t3, double s1
     // patient space
     this->SourceLandmarks->InsertPoint(id, s1, s2, s3);
     this->SourceLandmarks->Modified();
-
-    // save the difference for later registration 
-    double dx = s1 - this->ReferencePosition[0];
-    double dy = s2 - this->ReferencePosition[1];
-    double dz = s3 - this->ReferencePosition[2];
-    this->ReferenceDiff->InsertPoint(id, dx, dy, dz);
-    this->ReferenceDiff->Modified();
 }
 
 
@@ -491,6 +627,8 @@ int vtkOpenTracker::DoRegistration()
     landmark->Delete();
 
     this->UseRegistration = 1;
+    this->RegistrationDone = 1;
+
 
     return 0; 
 }
