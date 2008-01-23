@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkOpenTracker.h,v $
-  Date:      $Date: 2008/01/22 18:51:58 $
-  Version:   $Revision: 1.1.2.11 $
+  Date:      $Date: 2008/01/23 15:45:07 $
+  Version:   $Revision: 1.1.2.12 $
 
 =========================================================================auto=*/
 
@@ -146,19 +146,17 @@ protected:
     double Position[4][3];
     double Orientation[4][4];
 
-    double ReferenceFirstPosition[3];
-    double ReferenceCurrentPosition[3];
-    double ReferenceFirstOrientation[4];
-    double ReferenceCurrentOrientation[4];
-    vtkMatrix4x4 *ReferenceMatrix;
- 
+    vtkMatrix4x4 *ReferenceMatrix1; // original location
+    vtkMatrix4x4 *ReferenceMatrix2; // current location
+
 
     // Internal member functions
     void Quaternion2xyz(double* orientation, double *normal, double *transnormal); 
     void ApplyTransform(double *position, double *norm, double *transnorm);
     void BuildSourceModel(void);
     void BuildLandmarkSourceModel(void);
-    void UpdateReferenceMatrix();
+    void UpdateReferenceMatrices();
+
 
 };
 
