@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: Locator.tcl,v $
-#   Date:      $Date: 2007/12/04 20:43:47 $
-#   Version:   $Revision: 1.38.12.2.2.33 $
+#   Date:      $Date: 2008/01/28 20:45:03 $
+#   Version:   $Revision: 1.38.12.2.2.34 $
 # 
 #===============================================================================
 # FILE:        Locator.tcl
@@ -92,7 +92,7 @@ proc LocatorInit {} {
 
     # Set version info
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.38.12.2.2.33 $} {$Date: 2007/12/04 20:43:47 $}]
+        {$Revision: 1.38.12.2.2.34 $} {$Date: 2008/01/28 20:45:03 $}]
 
     # Patient/Table position
     set Locator(tblPosList)   "Front Side"
@@ -1086,12 +1086,151 @@ proc LocatorResetPivotCalibration {} {
 
 
 proc LocatorBuildGUIForICPRegistration {parent} {
-    global Locator Gui 
+    global Locator Gui Model 
 
     set f $parent
+
+    foreach x "0 1 2 3" {
+        if {$x != 0 && $x != 3} {
+            frame $f.f$x -bg $Gui(activeWorkspace) -relief groove -bd 2 
+        } else {
+            frame $f.f$x -bg $Gui(activeWorkspace)
+        }
+        pack $f.f$x -side top -pady 1 -fill x 
+    }
+
+
+    set f $parent.f0
+    eval {label $f.lTitle -text "ICP registration:"} $Gui(WTA)
+    grid $f.lTitle -padx 1 -pady 2
+
+    set f $parent.f1
+    eval {label $f.lTitle -text "Choose a model:"} $Gui(WTA)
+    DevAddButton $f.bUpdate "Update" "LocatorUpdateModelList" 6 
+
+    # choose a model for ICP registration as the target cloud of points 
+    eval {menubutton $f.mbICP \
+        -text "None" \
+        -relief raised -bd 2 -width 30 \
+        -menu $f.mbICP.m} $Gui(WMBA)
+    eval {menu $f.mbICP.m} $Gui(WMA)
+    blt::table $f \
+    0,0 $f.lTitle -padx 2 -pady 5 -anchor e \
+    0,1 $f.bUpdate  -padx 2 -pady 5 -anchor w \
+    1,0 $f.mbICP  -padx 3 -pady 5 -fill x -cspan 2
+
+    set Locator(mbICP) $f.mbICP
+
+    set f $parent.f2
+    eval {label $f.lTitle -text "Collect data:"} $Gui(WTA)
+    DevAddButton $f.bStart "Start" "LocatorStartCollectICPData" 8 
+    DevAddButton $f.bStop "Stop" "LocatorStopCollectICPData" 8 
+    DevAddButton $f.bLoad "Load" "LocatorLoadICPPoints" 8 
+    DevAddButton $f.bSave "Save" "LocatorSaveICPPoints" 8 
+ 
+    blt::table $f \
+        0,0 $f.lTitle -padx 1 -pady 5 -fill x -cspan 2 \
+        1,0 $f.bStart  -padx 1 -pady 2 -anchor e \
+        1,1 $f.bStop  -padx 1 -pady 2 -anchor w \
+        2,0 $f.bLoad  -padx 1 -pady 2 -anchor e \
+        2,1 $f.bSave  -padx 1 -pady 2 -anchor w
+
+    set f $parent.f3
+    DevAddButton $f.bReg "Go" "LocatorICPRegister" 8 
+    DevAddButton $f.bReset "Remove" "LocatorRemoveICPRegistration" 8 
+
+    grid $f.bReg $f.bReset -padx 1 -pady 3 
+
 }
 
+
+
+proc LocatorICPRegister {} {
+    global Locator Gui Model 
+
+}
+
+
+
+proc LocatorRemoveICPRegistration {} {
+    global Locator Gui Model 
+
+}
+
+
+
+proc LocatorStopCollectICPData {} {
+    global Locator Gui Model 
+
+}
+
+
+
+proc LocatorStartCollectICPData {} {
+    global Locator Gui Model 
+
+}
+
+
+
+proc LocatorSaveICPPoints {} {
+    global Locator Gui Model 
+
+}
+
+
+
+proc LocatorLoadICPPoints {} {
+    global Locator Gui Model 
+
+}
+
+
+
+proc LocatorUpdateModelList {} {
+    global Locator Gui Model 
+
+    set num [llength $Model(idList)]
+    if {$num > 0} {
+        set m $Locator(mbICP).m
+        $m delete 0 [expr {$num -1}]
+        foreach id $Model(idList) {
+            set name [Model($id,node) GetName]
+            $m add command -label $name \
+                -command "set Locator(ICPModelId) $id; \
+                    $Locator(mbICP) config -text $name; \
+                    LocatorSetICPModel $id"
+        }
+    }
+
+
+}
+
+
+
+proc LocatorSetICPModel {id} {
+    global Locator Gui Model 
+
+#    puts "id = $id"
+    set poly $Model($id,polyData)
+    set Locator(ICPModelPoints) [$poly GetPoints]
  
+#   set points [$poly GetPoints]
+#    set n [$points GetNumberOfPoints]
+
+#    puts "num of points in model = $n"
+
+
+#    if {$n > 0} {
+#        for {set i 0} {$i < $n} {incr i} {
+#            set p [$points GetPoint $i]
+#            puts " $i: p = $p"
+#        }
+#    }
+
+}
+
+
 
 proc LocatorBuildGUIForLandmarkRegistration {parent} {
     global Locator Gui 
