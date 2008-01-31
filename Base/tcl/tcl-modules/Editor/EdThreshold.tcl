@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EdThreshold.tcl,v $
-#   Date:      $Date: 2006/03/06 19:24:25 $
-#   Version:   $Revision: 1.24 $
+#   Date:      $Date: 2008/01/31 22:03:46 $
+#   Version:   $Revision: 1.25 $
 # 
 #===============================================================================
 # FILE:        EdThreshold.tcl
@@ -81,10 +81,11 @@ proc EdThresholdBuildVTK {} {
 
     foreach s $Slice(idList) {
         vtkImageThreshold Ed(EdThreshold,thresh$s)
-        Ed(EdThreshold,thresh$s) SetReplaceIn  $Ed(EdThreshold,replaceIn)
-        Ed(EdThreshold,thresh$s) SetReplaceOut $Ed(EdThreshold,replaceOut)
+        # set the values first, as setting them automatically sets the replace flag to 1
         Ed(EdThreshold,thresh$s) SetInValue    0
         Ed(EdThreshold,thresh$s) SetOutValue   $Ed(EdThreshold,bg)
+        Ed(EdThreshold,thresh$s) SetReplaceIn  $Ed(EdThreshold,replaceIn)
+        Ed(EdThreshold,thresh$s) SetReplaceOut $Ed(EdThreshold,replaceOut)
         Ed(EdThreshold,thresh$s) SetOutputScalarTypeToShort
     }
 }
@@ -165,10 +166,18 @@ proc EdThresholdBuildGUI {} {
     lappend Label(colorWidgetList) $f.eName
 
     # Whether to Replace the output
-#    eval {checkbutton $f.cReplaceOutput \
-#        -text "Replace Output" -width 14 -variable Ed(EdThreshold,replaceIn) \
-#        -indicatoron 0} $Gui(WCA) {-command "EdThresholdUpdate; RenderAll"}
-#    grid $f.cReplaceOutput -columnspan 2 -pady $Gui(pad) -sticky e
+    eval {checkbutton $f.cReplaceOutput \
+        -text "Replace Output" -width 14 -variable Ed(EdThreshold,replaceOut) \
+       -indicatoron 0} $Gui(WCA) {-command "EdThresholdUpdate; RenderAll"}
+    TooltipAdd $f.cReplaceOutput "Determines whether to replace the pixel out of range with 0"
+    grid $f.cReplaceOutput -columnspan 2 -pady $Gui(pad) -sticky e
+
+    # Whether to Replace the input
+    eval {checkbutton $f.cReplaceInput \
+        -text "Replace Input" -width 14 -variable Ed(EdThreshold,replaceIn) \
+       -indicatoron 0} $Gui(WCA) {-command "EdThresholdUpdate; RenderAll"}
+    TooltipAdd $f.cReplaceInput "Determines whether to replace the pixel in range with the label in the Output entry box"
+    grid $f.cReplaceInput -columnspan 2 -pady $Gui(pad) -sticky e
 
     #-------------------------------------------
     # Threshold->Sliders frame
@@ -359,12 +368,13 @@ proc EdThresholdUpdate {{value ""}} {
     if {$Label(label) == ""} {
         return
     }
-
+   
     foreach s $Slice(idList) {
-        Ed(EdThreshold,thresh$s) SetReplaceIn     $Ed(EdThreshold,replaceIn)
-        Ed(EdThreshold,thresh$s) SetReplaceOut    $Ed(EdThreshold,replaceOut)
+        # set the values first, as setting them automatically sets the replace flag to 1
         Ed(EdThreshold,thresh$s) SetInValue       $Label(label)
         Ed(EdThreshold,thresh$s) SetOutValue      $Ed(EdThreshold,bg)
+        Ed(EdThreshold,thresh$s) SetReplaceIn     $Ed(EdThreshold,replaceIn)
+        Ed(EdThreshold,thresh$s) SetReplaceOut    $Ed(EdThreshold,replaceOut)
         Ed(EdThreshold,thresh$s) ThresholdBetween $Ed(EdThreshold,lower) $Ed(EdThreshold,upper)
     }
     EdThresholdRenderInteractive
