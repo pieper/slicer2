@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEditorEffects.cxx,v $
-  Date:      $Date: 2006/03/06 19:02:25 $
-  Version:   $Revision: 1.18 $
+  Date:      $Date: 2008/01/31 22:02:27 $
+  Version:   $Revision: 1.19 $
 
 =========================================================================auto=*/
 #include "vtkImageEditorEffects.h"
@@ -52,10 +52,12 @@ void vtkImageEditorEffects::Threshold(float min, float max,
 {
   vtkImageThreshold *thresh = vtkImageThreshold::New();
   thresh->ThresholdBetween(min, max);
-  thresh->SetReplaceIn(replaceIn);
-  thresh->SetReplaceOut(replaceOut);
+  // set the values first, as they automatically set the replace in and out
+  // flags to on
   thresh->SetInValue(in);
   thresh->SetOutValue(out);
+  thresh->SetReplaceIn(replaceIn);
+  thresh->SetReplaceOut(replaceOut);
   thresh->SetOutputScalarTypeToShort(); // needed for later drawing
 
   this->Apply(thresh, thresh);
