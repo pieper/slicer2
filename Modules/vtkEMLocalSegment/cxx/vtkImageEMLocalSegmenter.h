@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMLocalSegmenter.h,v $
-  Date:      $Date: 2006/02/14 21:24:26 $
-  Version:   $Revision: 1.16 $
+  Date:      $Date: 2008/02/05 01:29:34 $
+  Version:   $Revision: 1.17 $
 
 =========================================================================auto=*/
 // .NAME vtkImageEMLocalSegmenter
@@ -39,6 +39,10 @@ class VTK_EMLOCALSEGMENT_EXPORT vtkImageEMLocalSegmenter : public vtkImageEMGene
   vtkTypeMacro(vtkImageEMLocalSegmenter,vtkObject);
 
   void PrintSelf(ostream& os, vtkIndent indent);
+  dsd
+    dsfs
+    sdd
+    sas
 
   // -----------------------------------------------------
   // Message Protocol
