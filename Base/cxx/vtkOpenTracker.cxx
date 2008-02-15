@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkOpenTracker.cxx,v $
-  Date:      $Date: 2008/01/23 15:44:42 $
-  Version:   $Revision: 1.1.2.13 $
+  Date:      $Date: 2008/02/15 23:16:55 $
+  Version:   $Revision: 1.1.2.14 $
 
   add Author: Christoph Ruetz
 =========================================================================auto=*/
@@ -49,6 +49,7 @@ vtkOpenTracker::vtkOpenTracker()
 {
     this->LocatorMatrix = vtkMatrix4x4::New(); // Identity
     this->LandmarkTransformMatrix = vtkMatrix4x4::New(); // Identity
+    this->ICPTransformMatrix = vtkMatrix4x4::New(); // Identity
     this->ReferenceMatrix1 = vtkMatrix4x4::New(); // Identity
     this->ReferenceMatrix2 = vtkMatrix4x4::New(); // Identity
  
@@ -57,6 +58,7 @@ vtkOpenTracker::vtkOpenTracker()
     this->TargetLandmarks = NULL; 
 
     this->UseICPRegistration = 0;
+ 
     this->NumberOfPoints = 0;
     this->MultiRate = 1.0;
 
@@ -65,11 +67,17 @@ vtkOpenTracker::vtkOpenTracker()
     this->TargetICPPoints = NULL;
 
     this->RegistrationDone = 0;
+    this->ICPRegistrationDone = 0;
+    this->ICPPoints = NULL;
+    this->ICPTargetModelPoints = NULL;
+    this->CollectICPData = 0;
+    this->ICPReg = NULL; 
+    this->ICPPointID = 0;
  
 
     this->SensorNO = 1;
     this->CollectPCData = 0;
-    this->PVCalibration = new PivotCalibration;
+    //this->PVCalibration = NULL; 
  
 
     this->UseRegistration = 0;
@@ -95,6 +103,9 @@ vtkOpenTracker* vtkOpenTracker::New()
 vtkOpenTracker::~vtkOpenTracker()
 {
     this->LocatorMatrix->Delete();
+    this->LandmarkTransformMatrix->Delete();
+    this->ICPTransformMatrix->Delete();
+ 
     this->SourceLandmarks->Delete();
     this->TargetLandmarks->Delete();
     this->SourceICPPoints->Delete();
@@ -103,10 +114,7 @@ vtkOpenTracker::~vtkOpenTracker()
 
     this->ReferenceMatrix1->Delete();
     this->ReferenceMatrix2->Delete();
-    if (this->PVCalibration)
-    {
-        delete this->PVCalibration;
-    }
+
 }
 
 
@@ -222,7 +230,25 @@ void vtkOpenTracker::SetLocatorMatrix(int sensorNO)
         // collect data for pivot calibration
         if (this->CollectPCData)
         {
-            this->PVCalibration->AddSample(this->Orientation[i], this->Position[i]);
+            /*
+            cout << "Ori: " << this->Orientation[i][0] <<  "   " << 
+                               this->Orientation[i][1] <<  "   " <<  
+                               this->Orientation[i][2] <<  "   " << 
+                               this->Orientation[i][3] << endl; 
+
+            cout << "Pos: " << this->Position[i][0] <<  "   "  << 
+                               this->Position[i][1] <<  "   "  << 
+                               this->Position[i][2] << endl; 
+                               */
+
+            this->PVCalibration.AddSample(this->Orientation[i], this->Position[i]);
+        }
+
+        // collect data for icp registration 
+        if (this->CollectICPData)
+        {
+            this->ICPPoints->InsertPoint(this->ICPPointID, pos);
+            this->ICPPointID++;
         }
 
 
@@ -382,7 +408,16 @@ void vtkOpenTracker::UpdateReferenceMatrices()
     }
 }
 
- 
+
+
+void vtkOpenTracker::DeleteICPRegistration()
+{
+    // this->ICPPoints->Delete();
+    this->UseICPRegistration = 0;
+    this->ICPRegistrationDone = 0;
+}
+
+
 
 void vtkOpenTracker::DeleteRegistration()
 {
@@ -427,6 +462,7 @@ void vtkOpenTracker::ApplyTransform(double *position, double *norm, double *tran
     n[3] = 0;     // translation doesn't affect an orientation
     tn[3] = 0;    // translation doesn't affect an orientation
 
+
     // transform from the current location of the reference sensor
     // to the global origin (of the field generator in terms of 
     // Aurora tracking system)
@@ -442,12 +478,22 @@ void vtkOpenTracker::ApplyTransform(double *position, double *norm, double *tran
     this->ReferenceMatrix1->MultiplyPoint(n, n);    // transform an orientation
     this->ReferenceMatrix1->MultiplyPoint(tn, tn);  // transform an orientation
 
-
-
     // Additional transform due to patient to slicer registration
-    this->LandmarkTransformMatrix->MultiplyPoint(p, p);    // transform a position
-    this->LandmarkTransformMatrix->MultiplyPoint(n, n);    // transform an orientation
-    this->LandmarkTransformMatrix->MultiplyPoint(tn, tn);  // transform an orientation
+    if (this->UseRegistration)
+    { 
+        this->LandmarkTransformMatrix->MultiplyPoint(p, p);    // transform a position
+        this->LandmarkTransformMatrix->MultiplyPoint(n, n);    // transform an orientation
+        this->LandmarkTransformMatrix->MultiplyPoint(tn, tn);  // transform an orientation
+    }
+
+    // ICP registration 
+    if (this->UseICPRegistration)
+    { 
+        this->ICPTransformMatrix->MultiplyPoint(p, p);    // transform a position
+        this->ICPTransformMatrix->MultiplyPoint(n, n);    // transform an orientation
+        this->ICPTransformMatrix->MultiplyPoint(tn, tn);  // transform an orientation
+    }
+
 
     for (int i = 0; i < 3; i++)
     {
@@ -693,16 +739,91 @@ int vtkOpenTracker::DoRegistrationICP(void)
 
 
 
+int vtkOpenTracker::DoICPRegistration()
+{
+ 
+    if (this->ICPPoints == NULL || this->ICPTargetModelPoints == NULL)
+    {
+        vtkErrorMacro(<< "vtkOpenTracker::DoICPRegistration(): Got NULL pointer.");
+        return 1;
+    }
+    if (this->ICPPoints->GetNumberOfPoints() == 0)
+    {
+        vtkErrorMacro(<< "vtkOpenTracker::DoICPRegistration(): Got empty source pointer.");
+        return 1;
+    }
+    if (this->ICPTargetModelPoints->GetNumberOfPoints() == 0)
+    {
+        vtkErrorMacro(<< "vtkOpenTracker::DoICPRegistration(): Got empty target model points.");
+        return 1;
+    }
+
+
+    if (this->ICPReg)
+    {
+        delete this->ICPReg;
+        this->ICPReg = NULL;
+    }
+
+    this->ICPReg = new ICPRegistration;
+    this->ICPReg->UseVTK();
+
+
+
+    // this->ICPTargetModelPoints holds all points from a loaded model
+    // in Slicer. A human head skull has 660,000 points. It takes a long
+    // time to compute ICP matrix. The lines of code below are trying
+    // to reduce the size of this->ICPTargetModelPoints.
+    vtkPoints *reducedModelPoints = vtkPoints::New();
+    int id = 0;
+    double coord[3];
+    for (int i = 0; i < this->ICPTargetModelPoints->GetNumberOfPoints(); i += 100)
+    {
+        this->ICPTargetModelPoints->GetPoint(i,coord);
+        reducedModelPoints->InsertPoint(id, coord);
+        id++;
+    }
+
+    // ICP computing
+    this->ICPTransformMatrix->DeepCopy(
+        this->ICPReg->RegisterWithICP(reducedModelPoints, this->ICPPoints));
+
+    this->UseICPRegistration = 1;
+    this->ICPRegistrationDone = 1;
+    reducedModelPoints->Delete();
+
+    return 0; 
+
+}
+
+
+ 
+void vtkOpenTracker::CollectDataForICP(int yes)
+{
+    this->CollectICPData = yes;
+
+    if (!yes)
+    {
+        this->ICPPointID = 0;
+    }
+    else
+    {
+        if (this->ICPPoints)
+        {
+            this->ICPPoints->Delete();
+        }
+        this->ICPPoints = vtkPoints::New();
+    }
+}
+
+
+
 void vtkOpenTracker::CollectDataForPivotCalibration(int yes)
 {
     this->CollectPCData = yes;
     if (yes) // start
     {
-        if (this->PVCalibration)
-        {
-            delete this->PVCalibration;
-            this->PVCalibration = new PivotCalibration;
-        }
+        this->PVCalibration.Clear();
     }
 }
 
@@ -710,10 +831,10 @@ void vtkOpenTracker::CollectDataForPivotCalibration(int yes)
 
 void vtkOpenTracker::ComputePivotCalibration()
 {
-    this->PVCalibration->CalculateCalibration();
-    this->PVCalibration->GetPivotPosition(this->PivotPosition);
-    this->PVCalibration->GetTranslation(this->Translation);
-    this->RMSE = this->PVCalibration->GetRMSE();
+    this->PVCalibration.CalculateCalibration();
+    this->PVCalibration.GetPivotPosition(this->PivotPosition);
+    this->PVCalibration.GetTranslation(this->Translation);
+    this->RMSE = this->PVCalibration.GetRMSE();
 }
 
 

@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkOpenTracker.h,v $
-  Date:      $Date: 2008/01/23 15:45:07 $
-  Version:   $Revision: 1.1.2.12 $
+  Date:      $Date: 2008/02/15 23:16:55 $
+  Version:   $Revision: 1.1.2.13 $
 
 =========================================================================auto=*/
 
@@ -25,6 +25,7 @@
 #include "vtkCellArray.h"
 #include "vtkIterativeClosestPointTransform.h"
 #include "PivotCalibration.h"
+#include "ICPRegistration.h"
 
 
 using namespace ot;
@@ -39,6 +40,9 @@ public:
 
     vtkGetObjectMacro(LocatorMatrix,vtkMatrix4x4);
     vtkGetObjectMacro(LandmarkTransformMatrix,vtkMatrix4x4);
+    vtkGetObjectMacro(ICPTransformMatrix,vtkMatrix4x4);
+    vtkSetObjectMacro(ICPTargetModelPoints,vtkPoints);
+
     vtkPolyData * GetSourceModel(void);
     vtkPolyData * GetLandmarkSourceModel(void);
     
@@ -109,6 +113,10 @@ public:
     void ComputePivotCalibration();
     void ApplyPivotCalibration(int yes);
 
+    void CollectDataForICP(int yes);
+    int DoICPRegistration();
+    void DeleteICPRegistration();
+
 protected:
     vtkOpenTracker();
     ~vtkOpenTracker();
@@ -130,7 +138,6 @@ protected:
     vtkPoints *SourceICPPoints;
     vtkPoints *SourceICPLandmarkPoints;
     vtkPoints *TargetICPPoints;
-    int UseICPRegistration;
     vtkCellArray *strips;
     vtkIterativeClosestPointTransform *ICPTransformation;
     vtkLandmarkTransform *LandmarkGlobalTransformation;
@@ -140,7 +147,7 @@ protected:
     double RMSE;
     bool CollectPCData;
     bool UsePivotCalibration;
-    PivotCalibration *PVCalibration;
+    PivotCalibration PVCalibration;
 
     int SensorNO;
     double Position[4][3];
@@ -149,6 +156,15 @@ protected:
     vtkMatrix4x4 *ReferenceMatrix1; // original location
     vtkMatrix4x4 *ReferenceMatrix2; // current location
 
+    bool UseICPRegistration;
+    bool ICPRegistrationDone;
+    vtkPoints *ICPPoints;
+    vtkPoints *ICPTargetModelPoints;
+    bool CollectICPData;
+    ICPRegistration *ICPReg;
+    vtkMatrix4x4 *ICPTransformMatrix;
+    int ICPPointID;
+ 
 
     // Internal member functions
     void Quaternion2xyz(double* orientation, double *normal, double *transnormal); 
