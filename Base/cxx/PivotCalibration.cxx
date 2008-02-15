@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: PivotCalibration.cxx,v $
-  Date:      $Date: 2007/12/04 20:44:39 $
-  Version:   $Revision: 1.1.2.2 $
+  Date:      $Date: 2008/02/15 23:15:19 $
+  Version:   $Revision: 1.1.2.3 $
 =========================================================================auto=*/
 
 #include <PivotCalibration.h>
@@ -54,11 +54,21 @@ void PivotCalibration::AddSample(double *_quat, double *_trans)
 
     quat.Set(_quat[0],_quat[1],_quat[2],_quat[3]);
     this->quaternionSampleCollection.push_back(quat);
+ 
     trans.SetElement(0,_trans[0]);
     trans.SetElement(1,_trans[1]);
     trans.SetElement(2,_trans[2]);
     this->translationSampleCollection.push_back(trans);
 }
+
+
+
+void PivotCalibration::Clear()
+{
+    this->quaternionSampleCollection.clear();
+    this->translationSampleCollection.clear();
+}
+
 
 
 void PivotCalibration::CalculateCalibration()

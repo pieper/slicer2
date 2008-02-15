@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: PivotCalibration.h,v $
-  Date:      $Date: 2007/12/04 20:44:39 $
-  Version:   $Revision: 1.1.2.2 $
+  Date:      $Date: 2008/02/15 23:15:19 $
+  Version:   $Revision: 1.1.2.3 $
 
 =========================================================================auto=*/
 
@@ -56,6 +56,8 @@ public:
     void GetTranslation(double trans[3]);
     /// Gets the root mean square error (RMSE)
     double GetRMSE();
+
+    void Clear();
 
 private:
 
