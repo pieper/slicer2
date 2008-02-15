@@ -74,6 +74,8 @@ SET (Base_SRCS
 
 SET (Base_NO_WRAP_SRCS
         PivotCalibration.cxx
+        ICPRegistration.cxx
+
 )
 
 # vtkImageWeightedSum was added to VTK at 5.1, don't compile our copy unless it's not in VTK
@@ -99,18 +101,20 @@ ADD_LIBRARY (vtkSlicerBase ${Base_SRCS} ${Base_NO_WRAP_SRCS})
 
 
 INCLUDE_DIRECTORIES(
-  /home/liu/projects/navitrack/NaviTrack/include 
+  /workspace/neuroendo/projects/navitrack/NaviTrack/include
+# /home/liu/projects/navitrack/NaviTrack/include 
 )
 
 FIND_LIBRARY(NAVITRACK_LIB
   NAMES NaviTrack 
-  PATHS /home/liu/projects/navitrack/NaviTrack-build 
+  PATHS /workspace/neuroendo/projects/navitrack/NaviTrack-build
 
 )
 
 TARGET_LINK_LIBRARIES(vtkSlicerBase
   ${NAVITRACK_LIB}
   ITKCommon
+  ITKIO
 )
 
 
