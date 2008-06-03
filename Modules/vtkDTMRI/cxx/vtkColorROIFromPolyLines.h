@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkColorROIFromPolyLines.h,v $
-  Date:      $Date: 2006/02/03 23:47:39 $
-  Version:   $Revision: 1.1 $
+  Date:      $Date: 2008/06/03 18:32:08 $
+  Version:   $Revision: 1.1.6.1 $
 
 =========================================================================auto=*/
 // .NAME vtkColorROIFromPolyLines - 
@@ -45,6 +45,10 @@ class VTK_DTMRI_EXPORT vtkColorROIFromPolyLines : public vtkObject
   vtkGetObjectMacro(OutputROIForColoring, vtkImageData);
 
   // Description
+  // Output volume, holding fiber count in each voxel
+  vtkGetObjectMacro(OutputMaxFiberCount, vtkImageData);
+
+  // Description
   // Input to this class (ID number of each polydata's label)
   vtkSetObjectMacro(Labels, vtkIntArray);
 
@@ -69,6 +73,7 @@ class VTK_DTMRI_EXPORT vtkColorROIFromPolyLines : public vtkObject
 
   vtkImageData *InputROIForColoring;
   vtkImageData *OutputROIForColoring;
+  vtkImageData *OutputMaxFiberCount;
 
   vtkTransform *ROIToWorld;
   vtkTransform *WorldToTensorScaledIJK;
