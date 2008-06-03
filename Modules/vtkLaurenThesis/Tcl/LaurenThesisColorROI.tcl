@@ -315,6 +315,12 @@ proc LaurenThesisColorROI {vROI modelGroupName colorBy} {
     castVROI SetInput [Volume($vROI,vol) GetOutput] 
     castVROI Update
 
+    # The positioning is accounted for by the ROIToWorld so set
+    # image origin to slicer convention. This fixes bugs
+    # where origin was in the image data and in the transform, causing
+    # misalignment with the fibers.
+    [castVROI GetOutput] SetOrigin 0 0 0
+
     # create vtk object to do the coloring
     vtkColorROIFromPolyLines colorROI
     colorROI SetInputROIForColoring [castVROI GetOutput]
@@ -376,7 +382,6 @@ proc LaurenThesisColorROI {vROI modelGroupName colorBy} {
     colorROI SetROIToWorld transform
 
     # The models are in world space so no need for another matrix
-
 
     # run the calculation
     puts "Calculating voxel labels from tract clusters."
