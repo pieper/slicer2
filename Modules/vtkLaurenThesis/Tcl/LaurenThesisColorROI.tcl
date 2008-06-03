@@ -390,9 +390,12 @@ proc LaurenThesisColorROI {vROI modelGroupName colorBy} {
     set volumeName "TractColors_[Volume($vROI,node) GetName]"
     set v2 [DevCreateNewCopiedVolume $vROI "Color back from clusters" $volumeName]
     Volume($v2,vol) SetImageData $output
-    MainVolumesUpdate $v2
     # tell the node what type of data so MRML file will be okay
     Volume($v2,node) SetScalarType [$output GetScalarType]
+    Volume($v2,node) SetLabelMap 1
+    Volume($v2,node) InterpolateOff
+    MainVolumesUpdate $v2
+
 
     # export output to the slicer environment:
     # slicer MRML volume creation and display
@@ -400,9 +403,11 @@ proc LaurenThesisColorROI {vROI modelGroupName colorBy} {
     set volumeName "TractCount_[Volume($vROI,node) GetName]"
     set v3 [DevCreateNewCopiedVolume $vROI "Fiber count from clusters" $volumeName]
     Volume($v3,vol) SetImageData $output2
-    MainVolumesUpdate $v3
     # tell the node what type of data so MRML file will be okay
     Volume($v3,node) SetScalarType [$output2 GetScalarType]
+    Volume($v3,node) SetLabelMap 0
+    Volume($v3,node) InterpolateOn
+    MainVolumesUpdate $v3
 
     # Registration
     # put the new volume inside the same transform as the original volume
