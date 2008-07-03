@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: LaurenThesisSeedBrain.tcl,v $
-#   Date:      $Date: 2007/02/20 20:49:33 $
-#   Version:   $Revision: 1.4 $
+#   Date:      $Date: 2008/07/03 18:16:10 $
+#   Version:   $Revision: 1.5 $
 # 
 #===============================================================================
 # FILE:        LaurenThesisSeedBrain.tcl
@@ -714,6 +714,8 @@ proc LaurenThesisSaveScalarVolume {volumeType tTensor vBrainMask directory {doEr
 
         # name we are looking for
         set B0Name [regsub "_Tensor" ${name} "_Baseline"]
+
+        set found 0
 
         foreach  v $Volume(idList) {
             
