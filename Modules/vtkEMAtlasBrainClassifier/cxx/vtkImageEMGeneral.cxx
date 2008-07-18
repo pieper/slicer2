@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkImageEMGeneral.cxx,v $
-  Date:      $Date: 2007/09/18 23:25:42 $
-  Version:   $Revision: 1.6 $
+  Date:      $Date: 2008/07/18 05:26:32 $
+  Version:   $Revision: 1.7 $
 
 =========================================================================auto=*/
 #include "vtkImageEMGeneral.h"
@@ -868,6 +868,7 @@ float vtkImageEMGeneral::CalcSimularityMeasure (vtkImageData *Image1, vtkImageDa
   else result = -1.0;
   if (PrintRes) {
     cout << "Label:                 " << val << endl; 
+    cout << "Total Difference Sum:  " << vtkImageEMGeneral_CountLabel(Final,MathImg->GetOutput(),1) << endl;
     cout << "Total Union Sum:       " << DivMeasure - NumMeasure << endl; 
     cout << "Total Interaction Sum: " << NumMeasure << endl;
     //  cout << "Jakobien sim measure:  " << ((DivMeasure - NumMeasure) > 0.0 ? NumMeasure / (DivMeasure - NumMeasure) : -1) << endl;
