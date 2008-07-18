@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
-#   Date:      $Date: 2006/11/20 19:21:09 $
-#   Version:   $Revision: 1.49 $
+#   Date:      $Date: 2008/07/18 05:25:53 $
+#   Version:   $Revision: 1.50 $
 # 
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
@@ -107,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-                                  {$Revision: 1.49 $} {$Date: 2006/11/20 19:21:09 $}]
+                                  {$Revision: 1.50 $} {$Date: 2008/07/18 05:25:53 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -914,6 +914,7 @@ proc EMAtlasBrainClassifier_InitilizePipeline { } {
     set EMAtlasBrainClassifier(WorkingDirectory) [file normalize $EMAtlasBrainClassifier(WorkingDirectory)]
 
     set Mrml(dir) $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation
+    catch {exec mkdir $EMAtlasBrainClassifier(WorkingDirectory)} 
     catch {exec mkdir $EMAtlasBrainClassifier(WorkingDirectory)/EMSegmentation} 
     # Make sure the MRML directory cooresponds to the actual directory  
     catch {eval cd $Mrml(dir)}
