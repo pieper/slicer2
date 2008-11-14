@@ -7,8 +7,8 @@
 
   Program:   3D Slicer
   Module:    $RCSfile: vtkSuperquadricTensorGlyph.cxx,v $
-  Date:      $Date: 2007/11/13 23:52:31 $
-  Version:   $Revision: 1.14.2.1 $
+  Date:      $Date: 2008/11/14 22:31:21 $
+  Version:   $Revision: 1.14.2.2 $
 
 =========================================================================auto=*/
 #include "vtkSuperquadricTensorGlyph.h"
@@ -320,7 +320,7 @@ void vtkSuperquadricTensorGlyph::Execute()
     // Do random sampling
     double randValue;
     randPtId=inPtId;
-    randValue = pow(vtkMath::Random(0,1),0.8);
+    randValue = pow(((double) vtkMath::Random(0,1)),0.8);
     do {
       //randPtId = (int) floor(vtkMath::Random(0,numPts-1));
       //If we don't find a good tensor after two times our current resolution, force the tensor already selected
