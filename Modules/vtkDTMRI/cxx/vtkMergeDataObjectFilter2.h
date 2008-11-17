@@ -38,9 +38,12 @@
 #ifndef __vtkMergeDataObjectFilter2_h
 #define __vtkMergeDataObjectFilter2_h
 
+#include "vtkDTMRIConfigure.h"
 #include "vtkDataSetToDataSetFilter.h"
+#include "vtkObject.h"
+#include "vtkObjectFactory.h"
 
-class VTK_GRAPHICS_EXPORT vtkMergeDataObjectFilter2 : public vtkDataSetToDataSetFilter
+class VTK_DTMRI_EXPORT vtkMergeDataObjectFilter2 : public vtkDataSetToDataSetFilter
 {
 public:
   static vtkMergeDataObjectFilter2 *New();
