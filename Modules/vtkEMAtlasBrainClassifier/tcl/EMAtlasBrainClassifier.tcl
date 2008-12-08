@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMAtlasBrainClassifier.tcl,v $
-#   Date:      $Date: 2007/10/16 20:36:16 $
-#   Version:   $Revision: 1.49.2.1 $
+#   Date:      $Date: 2008/12/08 21:26:39 $
+#   Version:   $Revision: 1.49.2.2 $
 # 
 #===============================================================================
 # FILE:        EMAtlasBrainClassifier.tcl
@@ -107,7 +107,7 @@ proc EMAtlasBrainClassifierInit {} {
     set Module($m,depend) ""
 
     lappend Module(versions) [ParseCVSInfo $m \
-                                  {$Revision: 1.49.2.1 $} {$Date: 2007/10/16 20:36:16 $}]
+                                  {$Revision: 1.49.2.2 $} {$Date: 2008/12/08 21:26:39 $}]
 
 
     set EMAtlasBrainClassifier(Volume,SPGR) $Volume(idNone)
@@ -2783,7 +2783,8 @@ proc EMAtlasBrainClassifier_BatchMode {{AlgorithmVersion Standard} {Segmentation
                        {GenerateModels 0} {AlignInput 0} \
                        {WorkingDirectory ""} {SaveAlignedT2 1} {SaveSPGR 0} \
                        {SaveT2W 0} {SaveAtlas 1} {SaveXMLFile 1} \
-                       {SaveModels 1} } {
+                       {SaveModels 1} \
+               {NormalizeSPGR "90"} {NormalizeT2W "310"} } {
 
     global Mrml EMAtlasBrainClassifier Volume
     
@@ -2800,6 +2801,8 @@ proc EMAtlasBrainClassifier_BatchMode {{AlgorithmVersion Standard} {Segmentation
     set EMAtlasBrainClassifier(Save,Atlas) $SaveAtlas
     set EMAtlasBrainClassifier(Save,XMLFile) $SaveXMLFile
     set EMAtlasBrainClassifier(Save,Models) $SaveModels
+    set EMAtlasBrainClassifier(Normalize,SPGR) $NormalizeSPGR
+    set EMAtlasBrainClassifier(Normalize,T2W)  $NormalizeT2W
     
     set EMAtlasBrainClassifier(Volume,SPGR) [Volume($SPGRVolID,node) GetID]
     set EMAtlasBrainClassifier(Volume,T2W)  [Volume($T2VolID,node) GetID]
