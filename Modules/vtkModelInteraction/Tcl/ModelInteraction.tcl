@@ -55,9 +55,13 @@ proc ModelInteractionInit {} {
     #   appropriate revision number and date when the module is checked in.
     #   
     lappend Module(versions) [ParseCVSInfo $m \
-        {$Revision: 1.1 $} {$Date: 2006/06/23 21:14:25 $}]
+        {$Revision: 1.1.2.1 $} {$Date: 2009/02/05 00:02:37 $}]
 
     # Initialize module-level (global) variables
+    #------------------------------------
+
+
+    # bindings for mouse/keyboard picking interaction
     #------------------------------------
 
     EvDeclareEventHandler ModelInteractionEvents <KeyPress-s> \
@@ -80,6 +84,27 @@ proc ModelInteractionInit {} {
              }
         }
     
+    # bindings for keyboard interaction with 3D model display
+    #------------------------------------
+    EvDeclareEventHandler ModelInteractionEvents <KeyPress-c> \
+        {
+            ModelInteractionClearClipboard
+        }
+    EvDeclareEventHandler ModelInteractionEvents <KeyPress-e> \
+        {
+            ModelInteractionToggleClipboardVisibility
+        }
+    EvDeclareEventHandler ModelInteractionEvents <KeyPress-f> \
+        {
+            ModelInteractionToggleClipboardHighlight
+        }
+    EvDeclareEventHandler ModelInteractionEvents <KeyPress-a> \
+        {
+            ModelInteractionToggleAllVisibility
+        }
+
+
+
     EvAddWidgetToBindingSet ModelInteractionEvents $Gui(fViewWin) {{ModelInteractionEvents} {tkMouseClickEvents} {tkMotionEvents} {tkRegularEvents}}
 
 
