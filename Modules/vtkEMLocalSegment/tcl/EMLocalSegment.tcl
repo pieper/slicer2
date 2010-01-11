@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMLocalSegment.tcl,v $
-#   Date:      $Date: 2007/12/15 02:25:03 $
-#   Version:   $Revision: 1.82 $
+#   Date:      $Date: 2010/01/11 16:47:18 $
+#   Version:   $Revision: 1.83 $
 # 
 #===============================================================================
 # FILE:        EMLocalSegment.tcl
@@ -269,7 +269,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.82 $} {$Date: 2007/12/15 02:25:03 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.83 $} {$Date: 2010/01/11 16:47:18 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -3000,9 +3000,9 @@ proc EMSegmentStartEM { {save_mode "save"} } {
        $EMSegment(MA-lRun) configure -text "Error occured during Segmentation"
    } else {
        if {$WarningFlag} {
-       $EMSegment(MA-lRun) configure -text "Segmentation completed sucessfull\n with warnings! Please read report!"
+         $EMSegment(MA-lRun) configure -text "Segmentation completed sucessfull\n with warnings! Please read report!"
        } else {
-       $EMSegment(MA-lRun) configure -text "Segmentation completed sucessfull"
+          $EMSegment(MA-lRun) configure -text "Segmentation completed sucessfull"
        }
        incr EMSegment(SegmentIndex)
 
@@ -3026,8 +3026,28 @@ proc EMSegmentStartEM { {save_mode "save"} } {
            } else { Volume($result,node) SetLittleEndian 0}    
            MainVolumesRead $result
        } else {
-           Volume($result,vol) SetImageData [$vtkEMSegment GetOutput]
+
+           # Changed things here to address bug in slicer 2 with not diplaying label maps as floats 
+           # Volume($result,vol) SetImageData [$vtkEMSegment GetOutput]
+          
            $vtkEMSegment Update
+           
+           set EMOutput [$vtkEMSegment GetOutput]
+           if {[$EMOutput GetScalarType] > 4 } {
+             # Slicer2 has a bug with displaying floats as label maps 
+             # so if the input to the EMSegmenter is float, the output is going to be float too
+             # Here is a quick fix 
+             puts "EMSegmentStartEM: Changing scalar type of EMSegmentater output to short!" 
+             vtkImageCast castEMSegment
+             castEMSegment SetInput $EMOutput
+             castEMSegment SetOutputScalarTypeToShort
+             castEMSegment Update
+             Volume($result,vol) SetImageData [ castEMSegment GetOutput]
+             castEMSegment Delete
+           } else { 
+             Volume($result,vol) SetImageData $EMOutput
+           }
+
            # ----------------------------------------------
            # 5. Recover Values 
            # ----------------------------------------------
@@ -3072,9 +3092,11 @@ proc EMSegmentStartEM { {save_mode "save"} } {
            $vtkEMSegment SetImageInput $NumInputImagesSet "" 
      }
 
-     if {([$vtkEMSegment GetErrorFlag] == 0) && ($ErrorFlag == 0)} { 
-         Volume($result,vol) SetImageData [$vtkEMSegment GetOutput]
-     }
+     # Kilian - do not know why I need to do that 
+     # if {([$vtkEMSegment GetErrorFlag] == 0) && ($ErrorFlag == 0)} { 
+     #   
+     #   Volume($result,vol) SetImageData [$vtkEMSegment GetOutput]
+     # }
 
      $vtkEMSegment SetOutput ""
      # Delete instance
