@@ -6,8 +6,8 @@
 # 
 #   Program:   3D Slicer
 #   Module:    $RCSfile: EMLocalSegment.tcl,v $
-#   Date:      $Date: 2010/01/11 16:47:18 $
-#   Version:   $Revision: 1.83 $
+#   Date:      $Date: 2010/03/31 21:31:35 $
+#   Version:   $Revision: 1.84 $
 # 
 #===============================================================================
 # FILE:        EMLocalSegment.tcl
@@ -269,7 +269,7 @@ proc EMSegmentInit {} {
     #   The strings with the $ symbol tell CVS to automatically insert the
     #   appropriate revision number and date when the module is checked in.
     #   
-    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.83 $} {$Date: 2010/01/11 16:47:18 $}]}
+    catch { lappend Module(versions) [ParseCVSInfo $m {$Revision: 1.84 $} {$Date: 2010/03/31 21:31:35 $}]}
 
     # Initialize module-level variables
     #------------------------------------
@@ -5052,17 +5052,15 @@ proc EMSegmentSegmentationBoundaryMax {flag {VolID -1}} {
         return -1
       }
     }
-    set SlideRange [Volume($VolID,node) GetImageRange] 
-    set result(2) [expr ([lindex $SlideRange 1] - [lindex $SlideRange 0] + 1)]
-    set Extent [Volume($VolID,node) GetDimensions]
-    set result(1) [lindex $Extent 1]
-    set result(0) [lindex $Extent 0] 
+
+    set Dims [[Volume($VolID,vol) GetOutput] GetDimensions]
+
     if {$flag} {
-       set EMSegment(SegmentationBoundaryMax,0) $result(0) 
-       set EMSegment(SegmentationBoundaryMax,1) $result(1) 
-       set EMSegment(SegmentationBoundaryMax,2) $result(2) 
+    set EMSegment(SegmentationBoundaryMax,0) $[lindex $Dims 0]
+    set EMSegment(SegmentationBoundaryMax,1) $[lindex $Dims 1]
+    set EMSegment(SegmentationBoundaryMax,2) $[lindex $Dims 2]
     } else {
-       return "$result(0) $result(1) $result(2)"
+    return "$Dims"
     }
 }
 
